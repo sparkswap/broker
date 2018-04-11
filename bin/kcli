@@ -6,9 +6,8 @@
 
 const program = require('caporal');
 
+const { version: CLI_VERSION } = require('../package.json');
 const { createOrder } = require('../broker-cli');
-
-const CLI_VERSION = '0.1';
 
 program
   .version(CLI_VERSION)

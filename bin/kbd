@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-const path = require('path');
-const program = require('commander');
-
 /**
  * Kinesis Broker Daemon
  */
 
-const CLI_VERSION = '0.1';
+const path = require('path');
+const program = require('commander');
+
+const { version: CLI_VERSION } = require('../package.json');
 
 const KINESIS_RPC_HOST = process.env.KINESIS_RPC_HOST || 'locahost:27492';
 const KINESIS_PORTS = process.env.KINESIS_PORTS || null;
