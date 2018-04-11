@@ -19,17 +19,17 @@ const LND_TLS_PATH = process.env.LND_TLS_PATH || '~/.lnd/tls.cert';
 const LND_MACAROON_PATH = process.env.LND_MACAROON_PATH || '~/.lnd/admin.macaroon';
 
 program
-	.version(CLI_VERSION)
-	.usage('[options]')
-	// Kinesis Specific Commands
-	.option('--rpclisten <server>', 'Host and port to set up the RPC server on.', /^.+(:[0-9]*)?$/, KINESIS_RPC_HOST)
-	.option('--ports <portRange>', 'Range of UDP ports for kinesisd to accept peer connections on.', /^[0-9]+-[0-9]+$/, KINESIS_PORTS)
-	.option('--externalhost <hostname>', 'Hostname that peers can use to reach you.', /^.+$/, KINESIS_EXTERNAL_HOST)
-	.option('--datadir <path>', 'Location to store kinesisd data.', /^.+$/, KINESIS_DATA_DIR)
-	// LND Specific commands
-	.option('--lndrpc <server>', 'Location of the LND RPC server to use.', /^.+(:[0-9]*)?$/, LND_RPC_HOST)
-	.option('--lndtls <path>', 'Location of the certificate to use when communicating with LND.', /^.+$/, LND_TLS_PATH)
-	.option('--lndmacaroon <path>', 'Location of the macaroon to use when communicating with LND.', /^.+$/, LND_MACAROON_PATH)
-	.parse(process.argv);
+  .version(CLI_VERSION)
+  .usage('[options]')
+  // Kinesis Specific Commands
+  .option('--rpclisten <server>', 'Host and port to set up the RPC server on.', /^.+(:[0-9]*)?$/, KINESIS_RPC_HOST)
+  .option('--ports <portRange>', 'Range of UDP ports for kinesisd to accept peer connections on.', /^[0-9]+-[0-9]+$/, KINESIS_PORTS)
+  .option('--externalhost <hostname>', 'Hostname that peers can use to reach you.', /^.+$/, KINESIS_EXTERNAL_HOST)
+  .option('--datadir <path>', 'Location to store kinesisd data.', /^.+$/, KINESIS_DATA_DIR)
+  // LND Specific commands
+  .option('--lndrpc <server>', 'Location of the LND RPC server to use.', /^.+(:[0-9]*)?$/, LND_RPC_HOST)
+  .option('--lndtls <path>', 'Location of the certificate to use when communicating with LND.', /^.+$/, LND_TLS_PATH)
+  .option('--lndmacaroon <path>', 'Location of the macaroon to use when communicating with LND.', /^.+$/, LND_MACAROON_PATH)
+  .parse(process.argv);
 
 console.log(program.rpclisten);
