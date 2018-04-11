@@ -1,0 +1,36 @@
+#!/usr/bin/env node
+
+/**
+ * Kinesis Broker CLI
+ */
+
+const program = require('caporal');
+
+const { createOrder } = require('../broker-cli');
+
+const CLI_VERSION = '0.1';
+
+program
+  .version(CLI_VERSION)
+  .description('KINESIS BROKER CLI')
+
+  // Create Order
+  .command('create-order', 'Start the creation of an order with Kinesis')
+  .option('--payto', 'The payto address for the counter symbol', null, null, true)
+  .option('--ownerid', 'The owner id of a kinesis client', null, null, true)
+  .option('--base', 'base crypto currency symbol', null, null, true)
+  .option('--base-amount', 'base crypto amount to be transfered', null, null, true)
+  .option('--counter', 'base crypto currency symbol', null, null, true)
+  .option('--counter-amount', 'base crypto amount to be transfered', null, null, true)
+  .option('--side', 'The market side of an order', null, null, true)
+  .action(createOrder)
+
+  // Place order
+  .command('place-order', 'Place and finalize an order on Kinesis')
+  .option('--order-id', 'The owner id of a kinesis client')
+  .option('--deposit-refund', 'The payment request for a deposit through LND')
+  .option('--fee-refund', 'The payment request for a deposit through LND')
+  .action((args, opts, log) => {
+  });
+
+program.parse(process.argv);

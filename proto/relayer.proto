@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+enum Side {
+
+    BID = 0;
+    ASK = 1;
+}
+
+message CreateOrderRequest {
+
+    string pay_to = 0;
+    string owner_id = 1;
+    string base_symbol = 2;
+    string counter_symbol = 3;
+    int64 base_amount = 4;
+    int64 counter_amount = 5;
+    Side side = 6;
+}
+
+message CreateOrderResponse {
+
+    string order_id = 0;
+    string fee_payment_request = 1;
+    string deposit_payment_request = 2;
+}
+
+message PlaceOrderRequest {
+
+    string order_id = 0;
+    string deposit_refund_payment_request = 2;
+    string fee_refund_payment_request = 1;
+}
+
+message CancelOrderRequest {
+
+    string order_id = 0;
+}
+
+message SubscribeFillRequest {
+
+    string order_id = 0;
+}
+
+message SubscribeFillResponse {
+
+    bytes swap_hash = 0;
+    int64 fill_amount = 1;
+}
+
+message ExecuteOrderRequest {
+
+    string order_id = 0;
+}
+
+message CompleteOrderRequest {
+
+    string order_id = 0;
+    bytes swap_preimage = 1;
+}
+service Maker {
+    rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
+    rpc PlaceOrder (PlaceOrderRequest) returns (google.protobuf.Empty);
+    rpc CancelOrder (CancelOrderRequest) returns (google.protobuf.Empty);
+    rpc SubscribeFill (SubscribeFillRequest) returns (stream SubscribeFillResponse);
+    rpc ExecuteOrder (ExecuteOrderRequest) returns (google.protobuf.Empty);
+    rpc CompleteOrder (CompleteOrderRequest) returns (google.protobuf.Empty);
+}
+
+message google {
+
+    message protobuf {
+
+        message Empty {
+        }
+    }
+}
+
+message CreateFillRequest {
+
+    string order_id = 0;
+    bytes swap_hash = 1;
+    int64 fill_amount = 2;
+}
+
+message CreateFillResponse {
+
+    string fill_id = 0;
+    string fee_payment_request = 1;
+    string deposit_payment_request = 2;
+}
+
+message FillOrderRequest {
+
+    string fill_id = 0;
+    string deposit_refund_payment_request = 2;
+    string fee_refund_payment_request = 1;
+}
+
+message SubscribeExecuteRequest {
+
+    string fill_id = 0;
+}
+
+message SubscribeExecuteResponse {
+
+    string pay_to = 0;
+}
+service Taker {
+    rpc CreateFill (CreateFillRequest) returns (CreateFillResponse);
+    rpc FillOrder (FillOrderRequest) returns (google.protobuf.Empty);
+    rpc SubscribeExecute (SubscribeExecuteRequest) returns (stream SubscribeExecuteResponse);
+}
+
+message MarketEvent {
+
+    string event_id = 0;
+    string order_id = 1;
+    int32 timestamp = 3;
+    EventType event_type = 4;
+    int64 base_amount = 5;
+    int64 counter_amount = 6;
+    int64 fill_amount = 7;
+    Side side = 8;
+
+    enum EventType {
+
+        PLACED = 0;
+        CANCELLED = 1;
+        FILLED = 2;
+    }
+}
+
+message WatchMarketRequest {
+
+    string base_symbol = 0;
+    string counter_symbol = 1;
+    int64 last_updated = 2;
+}
+service OrderBook {
+    rpc WatchMarket (WatchMarketRequest) returns (stream MarketEvent);
+}
