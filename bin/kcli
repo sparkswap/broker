@@ -7,11 +7,61 @@
 const program = require('caporal');
 
 const { version: CLI_VERSION } = require('../package.json');
-// Requires all commands for the broker-cli
-require('../broker-cli');
+const { ENUMS } = require('../broker-cli/utils');
 
+// TODO: Rename this thing...
+const { timeInForceParams: timeinforce } = ENUMS;
+
+const {
+  buy,
+  sell,
+} = require('../broker-cli');
+
+/**
+ * Initial Program Setup
+ */
 program
   .version(CLI_VERSION)
   .description('KINESIS BROKER CLI');
+
+/**
+ * kcli buy
+ *
+ * ex: `kcli buy 10 100 --market 'BTC/LTC' --timeinforce GTC --rpc-address localhost:10009`
+ *
+ * @param amount - required
+ * @param price - optional
+ * @param options
+ * @option market - required
+ * @option timeinforce - optional
+ * @option rpcaddress - optional
+ */
+program
+  .command('buy', 'Submit an order to buy.')
+  .argument('<amount>', 'Amount of base currency to buy.', program.INT)
+  .argument('[price]', 'Worst price that this order should be executed at. (If omitted, the market price will be used)', /^[0-9]{1,20}(\.[0-9]{1,20})?$/)
+  .option('--market <marketName>', 'Relevant market name', /^[A-Z]{2,5}\/[A-Z]{2,5}$/, undefined, true)
+  .option('-t, --timeinforce', 'Time in force policy for this order.', /^PO|FOK|IOC|GTC$/, 'GTC')
+  .option('--rpc-address', 'Location of the RPC server to use.', /^.+(:[0-9]*)?$/)
+  .action(buy);
+
+/**
+ * kcli sell
+ *
+ * @param amount - required
+ * @param price - optional
+ * @param options
+ * @option market - required
+ * @option timeinforce - optional
+ * @option rpcaddress - optional
+ */
+program
+  .command('sell', 'Submit an order to sell.')
+  .argument('<amount>', 'Amount of base currency to buy.', program.INT)
+  .argument('[price]', 'Worst price that this order should be executed at. (If omitted, the market price will be used)', /^[0-9]{1,20}(\.[0-9]{1,20})?$/)
+  .option('--market <marketName>', 'Relevant market name', /^[A-Z]{2,5}\/[A-Z]{2,5}$/, undefined, true)
+  .option('-t, --timeinforce', 'Time in force policy for this order.', /^PO|FOK|IOC|GTC$/, 'GTC')
+  .option('--rpc-address', 'Location of the RPC server to use.', /^.+(:[0-9]*)?$/)
+  .action(sell)
 
 program.parse(process.argv);

@@ -28,15 +28,4 @@ async function createOrder(args, opts, logger, side) {
   }
 };
 
-async function createBuy(args, opts, logger) {
-  return createOrder(args, opts, logger, 'BID')
-}
-
-async function createSell(args, opts, logger) {
-  return createOrder(args, opts, logger, 'SELL')
-}
-
-module.exports = {
-  createBuy,
-  createSell,
-};
+module.exports = createOrder;

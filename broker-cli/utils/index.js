@@ -1,5 +1,5 @@
-const enums = require('./enums');
+const ENUMS = require('./enums');
 
 module.exports = {
-  enums,
+  ENUMS,
 };

@@ -5,4 +5,12 @@ const timeInForceParams = {
 	GTC: 'good-til-cancel'
 };
 
-module.exports = { timeInForceParams };
+const ORDER_TYPES = {
+	BID: 'BID',
+	SELL: 'SELL',
+};
+
+module.exports = {
+	timeInForceParams,
+	ORDER_TYPES,
+};
