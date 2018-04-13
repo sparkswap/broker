@@ -22,7 +22,7 @@ npm i && npm run build
 In order for these steps to be fulfilled, a user must first have the client up and running AND money transfered to an LND wallet.
 
 1. We make a request for a buy
-  - `kcli buy --amount 100 --price 10 --market BTC/LTC -t FOK`
+  - `kcli buy --amount 100 --price 10 --market BTC/LTC -t GTC`
 2. The cli hits the KBD at an `order` endpoint
   - this endpoint will then take those fields and fit the request to the RPC format
     for the relayer. This request would add the LN address and would split the market

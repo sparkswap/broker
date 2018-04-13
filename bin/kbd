@@ -11,7 +11,7 @@ const startServer = require('../broker-daemon');
 
 const { version: CLI_VERSION } = require('../package.json');
 
-const KINESIS_RPC_HOST = process.env.KINESIS_RPC_HOST || '0.0.0.0:51001';
+const KINESIS_RPC_HOST = process.env.KINESIS_RPC_HOST || '0.0.0.0:27492';
 const KINESIS_PORTS = process.env.KINESIS_PORTS || null;
 const KINESIS_EXTERNAL_HOST = process.env.KINESIS_EXTERNAL_HOST || null;
 const KINESIS_DATA_DIR = process.env.KINESIS_DATA_DIR || '~/.kinesis/data';

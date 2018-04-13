@@ -26,7 +26,12 @@ program
  * We do this initialization to provide closures to each of our commands. Although
  * this may use a little more memory, it allows us to couple arguments/handlers in
  * the same file AND prevents us from cluttering the global scope when using caporal
+ *
+ * Available Commands:
+ * - `kcli buy`
+ * - `kcli sell`
  */
+
 buy(program);
 sell(program);
 
