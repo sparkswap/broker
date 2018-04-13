@@ -2,8 +2,8 @@ const grpc = require('grpc');
 const path = require('path');
 const fs = require('fs');
 
-const GRPC_HOST = process.env.GRPC_HOST || '0.0.0.0';
-const GRPC_PORT = process.env.GRPC_PORT || '50078';
+const { RelayerClient } = require('./relayer');
+
 const PROTO_PATH = path.resolve('./broker-daemon/proto/broker.proto');
 const PROTO_GRPC_TYPE = 'proto';
 const PROTO_GRPC_OPTIONS = {
@@ -17,11 +17,42 @@ if (!fs.existsSync(PROTO_PATH)) {
 }
 
 class Action {
-
+  constructor(logger) {
+    this.logger = logger;
+  }
 }
 
-function createOrder() {
-  return 'hello';
+async function createOrder(call, cb) {
+  const {
+    amount,
+    price,
+    market,
+    timeinforce,
+    side,
+  } = call.request;
+
+  // We need to calculate the base amount/counter amount based off of current
+  // prices
+  //
+  // We need to split the market
+
+  const [baseSymbol, counterSymbol] = market.split('/');
+
+  const request = {
+    ownerId: '123455678',
+    payTo: 'ln:12234987',
+    baseSymbol,
+    counterSymbol,
+    baseAmount: '10000',
+    counterAmount: '1000000',
+    side,
+  };
+
+  const relayer = new RelayerClient();
+
+  const order = await relayer.createOrder(request);
+  console.log(order);
+  cb(null, { orderId: order.orderId });
 }
 
 /**
@@ -30,11 +61,12 @@ function createOrder() {
  * @author kinesis
  */
 class GrpcServer {
-  constructor() {
+  constructor(logger) {
+    this.logger = logger;
     this.proto = grpc.load(PROTO_PATH, PROTO_GRPC_TYPE, PROTO_GRPC_OPTIONS);
     this.brokerService = this.proto.Broker.service;
     this.server = new grpc.Server();
-    this.action = new Action;
+    this.action = new Action(this.logger);
 
     this.server.addService(this.brokerService, {
       createOrder: createOrder.bind(this.action),
@@ -48,10 +80,9 @@ class GrpcServer {
    * @param {String} port
    * @returns {void}
    */
-  listen(host = `${GRPC_HOST}:${GRPC_PORT}`) {
+  listen(host) {
     this.server.bind(host, grpc.ServerCredentials.createInsecure());
     this.server.start();
-    this.logger.info('gRPC server started', { host });
   }
 }
 

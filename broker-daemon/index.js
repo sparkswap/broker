@@ -12,8 +12,9 @@ function startServer(args, opts, logger) {
   } = opts;
 
   try {
-    const grpc = new GrpcServer();
+    const grpc = new GrpcServer(logger);
     grpc.listen(rpcAddress);
+    logger.info(`gRPC server started: Server listening on ${rpcAddress}`);
   } catch(e) {
     logger.error(e.toString());
     throw(e);
