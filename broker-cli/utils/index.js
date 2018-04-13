@@ -1,5 +1,5 @@
-const GrpcServer = require('./grpc-server');
+const enums = require('./enums');
 
 module.exports = {
-  GrpcServer,
+  enums,
 };

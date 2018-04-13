@@ -1,5 +1,7 @@
-const createOrder = require('./create-order');
+/**
+ * File is used to require all commands for kcli (bin/kcli)
+ * @author kinesis
+ */
 
-module.exports = {
-  createOrder,
-};
+require('./buy');
+require('./sell');
