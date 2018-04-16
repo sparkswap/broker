@@ -24,8 +24,6 @@ program
   .version(CLI_VERSION)
   // Kinesis Specific Commands
   .option('--rpc-address <server>', 'Host and port to set up the RPC server on.', /^.+(:[0-9]*)?$/, KINESIS_RPC_HOST)
-  .option('--ports <portRange>', 'Range of UDP ports for kinesisd to accept peer connections on.', /^[0-9]+-[0-9]+$/, KINESIS_PORTS)
-  .option('--external-host <hostname>', 'Hostname that peers can use to reach you.', /^.+$/, KINESIS_EXTERNAL_HOST)
   .option('--data-dir <path>', 'Location to store kinesisd data.', /^.+$/, KINESIS_DATA_DIR)
   // LND Specific commands
   .option('--lnd-rpc <server>', 'Location of the LND RPC server to use.', /^.+(:[0-9]*)?$/, LND_RPC_HOST)
