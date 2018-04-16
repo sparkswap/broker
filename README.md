@@ -10,12 +10,34 @@ on MacOS or Ubuntu, but it is not recommeneded, nor supported by Kinesis.
 
 ### Dev Setup
 
-In order for the Kinesis CLI and Kinesis Daemon to be fully functional, the following
+In order for the Kinesis CLI and Kinesis Daemon to be fully functional, the following containers must be running:
 
 - BTCD - Headless daemon to interact with blockchain (no wallet is included)
 - LND - Lightning Network Daemon + Wallet
-- KLCI
-- KND
+- KLCI - CLI for Kinesis Daemon (this is in its own container OR can be used directly from `./bin/klci` from inside the kbd container)
+- KBD - Kinesis Broker Daemon
+
+Order of operations for a broker request:
+KCLI -> KBD -> LND -> KBD -> RELAYER -> KBD -> LND/CLI/Stream
+
+1. A broker will make a request from the CLI
+2. the CLI will post a grpc request to the daemon
+3. Daemon will connect to LND and create a channel to the relayer
+4. Daemon will send off the request to the relayer
+5. Relayer will send a response back to KBD
+6. Daemon will respond by either making operations to LND, output back to CLI or opening a client/server stream
+
+### Authentication between Client and Daemon
+
+None
+
+### Authentication between Daemon and Relayer
+
+None
+
+### Authentication between Daemon and LND
+
+Macaroons and SSL
 
 ### What happens when I make an order?
 
@@ -39,8 +61,3 @@ In order for these steps to be fulfilled, a user must first have the client up a
 ### Additional Resource
 
 - (Commander CLI](https://github.com/tj/commander.js)
-
-### Website stuff
-
-Website for Kines.is is setup on Zeit
-Figure out how to host on Zeit
