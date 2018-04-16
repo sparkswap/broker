@@ -6,31 +6,33 @@
 
 const program = require('caporal');
 
-const { createOrder } = require('../broker-cli');
+const { version: CLI_VERSION } = require('../package.json');
 
-const CLI_VERSION = '0.1';
+const {
+  buyCommand,
+  sellCommand,
+} = require('../broker-cli');
 
+/**
+ * Initial Program Setup
+ */
 program
   .version(CLI_VERSION)
-  .description('KINESIS BROKER CLI')
+  .description('KINESIS BROKER CLI');
 
-  // Create Order
-  .command('create-order', 'Start the creation of an order with Kinesis')
-  .option('--payto', 'The payto address for the counter symbol', null, null, true)
-  .option('--ownerid', 'The owner id of a kinesis client', null, null, true)
-  .option('--base', 'base crypto currency symbol', null, null, true)
-  .option('--base-amount', 'base crypto amount to be transfered', null, null, true)
-  .option('--counter', 'base crypto currency symbol', null, null, true)
-  .option('--counter-amount', 'base crypto amount to be transfered', null, null, true)
-  .option('--side', 'The market side of an order', null, null, true)
-  .action(createOrder)
+/**
+ * Initialize Commands
+ *
+ * We do this initialization to provide closures to each of our commands. Although
+ * this may use a little more memory, it allows us to couple arguments/handlers in
+ * the same file AND prevents us from cluttering the global scope when using caporal
+ *
+ * Available Commands:
+ * - `kcli buy`
+ * - `kcli sell`
+ */
 
-  // Place order
-  .command('place-order', 'Place and finalize an order on Kinesis')
-  .option('--order-id', 'The owner id of a kinesis client')
-  .option('--deposit-refund', 'The payment request for a deposit through LND')
-  .option('--fee-refund', 'The payment request for a deposit through LND')
-  .action((args, opts, log) => {
-  });
+buyCommand(program);
+sellCommand(program);
 
 program.parse(process.argv);
