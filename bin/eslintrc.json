@@ -1,0 +1,30 @@
+{
+  "extends": "airbnb",
+  "parserOptions": {
+    "ecmaVersion": 9
+  },
+  "rules": {
+    "max-len": [2, 120, 8],
+    "object-curly-newline": ["error", {
+      "ExportDeclaration": { "multiline": true, "minProperties": 9 }
+    }],
+    "no-underscore-dangle": "off",
+    "object-property-newline": "off"
+  },
+  "env": {
+    "node": true,
+    "mocha": true
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/*.spec.js"
+      ],
+      "rules": {
+        "no-unused-expressions": "off",
+        "global-require": "off",
+        "class-methods-use-this": "off"
+      }
+    }
+  ]
+}

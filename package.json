@@ -4,6 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "pretest": "eslint --quiet --ignore-path .gitignore .; exit 0",
+    "test-cli": "mocha 'broker-cli/**/*.spec.js'",
+    "test-daemon": "mocha 'broker-daemon/**/*.spec.js'",
+    "test": "npm run test-cli && npm run test-daemon",
     "build": "bash ./scripts/ascii.sh && bash ./scripts/build.sh"
   },
   "repository": {
@@ -19,5 +23,16 @@
   "dependencies": {
     "caporal": "0.10.0",
     "grpc": "1.10.1"
+  },
+  "devDependencies": {
+    "chai": "4.1.2",
+    "eslint": "4.19.1",
+    "eslint-config-airbnb": "16.1.0",
+    "eslint-plugin-import": "2.11.0",
+    "eslint-plugin-jsx-a11y": "6.0.3",
+    "eslint-plugin-react": "7.7.0",
+    "mocha": "5.1.0",
+    "sinon": "4.5.0",
+    "sinon-chai": "3.0.0"
   }
 }
