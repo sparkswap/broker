@@ -2,15 +2,106 @@ version: '3'
 
 services:
   kcli:
-    image: 'node:8'
-    working_dir: '/home/app'
+    image: kcli
+    build:
+      context: ./
+      dockerfile: docker/kinesis/Dockerfile
     volumes:
       - './:/home/app'
-    command: bash -c 'npm i'
-  kbd:
-    image: 'node:8'
+    env_file:
+      - ./docker/kinesis/kcli.env
+    networks:
+      - broker
     working_dir: '/home/app'
-    volumes:
-      - './:/home/app'
     command: bash -c 'npm i'
+    entrypoint: './bin/kcli'
 
+  kbd:
+    image: kbd
+    build:
+      context: ./
+      dockerfile: docker/kinesis/Dockerfile
+    volumes:
+      - './:/home/app'
+    env_file:
+      - ./docker/kinesis/kbd.env
+    working_dir: '/home/app'
+    command: bash -c 'npm i'
+    entrypoint: bash -c './bin/kbd'
+
+  # Extensions of the official LND docker build found here:
+  # https://github.com/lightningnetwork/lnd/tree/master/docker
+  #
+  btcd:
+    image: btcd
+    build:
+      context: ./
+      dockerfile: docker/btcd/Dockerfile
+    volumes:
+      - shared:/rpc
+      - bitcoin:/data
+    environment:
+      - RPCUSER
+      - RPCPASS
+      - NETWORK
+      - DEBUG
+      - MINING_ADDRESS
+    networks:
+      broker:
+      btcd:
+        aliases:
+          - blockchain
+          - rpcserver
+    entrypoint: ["./start-btcd.sh"]
+
+  btcctl:
+    image: btcctl
+    build:
+      context: ./
+      dockerfile: docker/btcd/Dockerfile
+    volumes:
+      - shared:/rpc
+      - bitcoin:/data
+    environment:
+      - RPCUSER
+      - RPCPASS
+      - NETWORK
+    networks:
+      - btcd
+    entrypoint: ["./start-btcctl.sh"]
+
+  # This is the btc node that relayer will interact with for the LND Engine
+  lnd_btc:
+    image: lnd
+    build:
+      context: ./
+      dockerfile: docker/lnd/Dockerfile
+    environment:
+      - RPCUSER
+      - RPCPASS
+      - NETWORK
+      - CHAIN
+      - DEBUG
+    networks:
+      - btcd
+    volumes:
+      - 'shared:/rpc'
+      - 'secure:/secure/'
+    expose:
+      - '10009'
+    entrypoint: ["./start-lnd.sh"]
+
+
+# This information was taken from the LND docker setup (found in ./docker)
+#
+volumes:
+  redis-data:
+  secure:
+  shared:
+  bitcoin:
+  litecoin:
+
+networks:
+  broker:
+  btcd:
+  ltcd:

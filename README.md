@@ -5,19 +5,12 @@
 
 ### Before you begin
 
-You must have node installed (version can be found in .node-version or .nvmrc). It is recommended that you use a version manager like [NVM](https://github.com/creationix/nvm).
-
-After NVM is installed you can run the following commands:
-
-```
-npm i && npm run build
-```
-
-### Additional Resource
-
-- (Commander CLI](https://github.com/tj/commander.js)
+You must have docker installed before you can the run kcli or kbd. It is possible to run these applications standalone
+on MacOS or Ubuntu, but it is not recommeneded, nor supported by Kinesis.
 
 ### Dev Setup
+
+In order for the Kinesis CLI and Kinesis Daemon to be fully functional, the following
 
 - BTCD - Headless daemon to interact with blockchain (no wallet is included)
 - LND - Lightning Network Daemon + Wallet
@@ -42,3 +35,12 @@ In order for these steps to be fulfilled, a user must first have the client up a
 8. Relayer will say all good to the go
 9. KCLI returns a successfully response
 10. KBD will receive an event for a new order
+
+### Additional Resource
+
+- (Commander CLI](https://github.com/tj/commander.js)
+
+### Website stuff
+
+Website for Kines.is is setup on Zeit
+Figure out how to host on Zeit

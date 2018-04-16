@@ -13,12 +13,18 @@ const {
   sellCommand,
 } = require('../broker-cli');
 
+const helpText = `
+  KCLI_RPC_SERVER=${process.env.KCLI_RPC_SERVER}
+  OWNER_ID=1234
+`;
+
 /**
  * Initial Program Setup
  */
 program
   .version(CLI_VERSION)
-  .description('KINESIS BROKER CLI');
+  .description('KINESIS BROKER CLI')
+  .help(helpText, { name: 'GLOBAL ENVIRONMENT VARIABLES' });
 
 /**
  * Initialize Commands

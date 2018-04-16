@@ -1,6 +1,6 @@
 FROM golang:1.10
 
-LABEL maintainer="Danny Pazuchowski <danny@kines.is>"
+LABEL maintainer="Danny Paz <kinesis.exchange>"
 
 # Expose lnd ports (server, rpc).
 EXPOSE 9735 10009
