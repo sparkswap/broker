@@ -9,8 +9,8 @@ const program = require('caporal');
 const { version: CLI_VERSION } = require('../package.json');
 
 const {
-  buy,
-  sell,
+  buyCommand,
+  sellCommand,
 } = require('../broker-cli');
 
 /**
@@ -32,7 +32,7 @@ program
  * - `kcli sell`
  */
 
-buy(program);
-sell(program);
+buyCommand(program);
+sellCommand(program);
 
 program.parse(process.argv);

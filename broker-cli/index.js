@@ -3,10 +3,10 @@
  * @author kinesis
  */
 
-const buy = require('./buy');
-const sell = require('./sell');
+const buyCommand = require('./buy');
+const sellCommand = require('./sell');
 
 module.exports = {
-  buy,
-  sell,
+  buyCommand,
+  sellCommand,
 };
