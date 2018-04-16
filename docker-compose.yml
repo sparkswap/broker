@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  kcli:
+    image: 'node:8'
+    working_dir: '/home/app'
+    volumes:
+      - './:/home/app'
+    command: bash -c 'npm i'
+  kbd:
+    image: 'node:8'
+    working_dir: '/home/app'
+    volumes:
+      - './:/home/app'
+    command: bash -c 'npm i'
+
