@@ -16,3 +16,10 @@ npm i && npm run build
 ### Additional Resource
 
 - (Commander CLI](https://github.com/tj/commander.js)
+
+### Dev Setup
+
+- BTCD - Headless daemon to interact with blockchain (no wallet is included)
+- LND - Lightning Network Daemon + Wallet
+- KLCI
+- KND
