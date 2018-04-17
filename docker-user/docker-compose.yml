@@ -53,8 +53,10 @@ services:
       context: ./
       dockerfile: lnd/Dockerfile
     environment:
-      - RPCUSER=kuser
-      - RPCPASS=kpass
+      - RPC_USER=kuser
+      - RPC_PASS=kpass
+      - RPC_HOST=blockchain
+      - RPC_CERT_PATH=/rpc/rpc.cert
       - NETWORK=simnet
       - CHAIN=bitcoin
       - DEBUG=info
@@ -64,6 +66,7 @@ services:
       - DATA_DIR=data
       - LOG_DIR=log
       - NODE=btcd
+      - SECURE_DIRECTORY=/secure
     networks:
       - btcd
     volumes:

@@ -34,3 +34,12 @@ We will open a channel back.
 4. Grab test scripts from relayer and automate the creation of a wallet
 5. Given an LND url, Relayer URL, we need to connect to peers (LND)
 6. Start hosting relayers on digital ocean for testing (sim or test)
+
+NYSE, CXE
+
+All the crypto exchanges use TCP in some way to send order data
+We are currently using HTTP/2
+Most crypto exchanges
+
+Traditional exchanges do UDP, multicast... so that everyone gets the information at the same time. When you do the same with websockets, because it is conntection based, different users will get order data at the time.
+
