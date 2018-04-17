@@ -7,8 +7,8 @@ PARAMS=$(echo \
     "--txindex" \
     "--$NETWORK" \
     "--debuglevel=$DEBUG" \
-    "--rpcuser=$RPCUSER" \
-    "--rpcpass=$RPCPASS"
+    "--rpcuser=$RPC_USER" \
+    "--rpcpass=$RPC_PASS"
 )
 
 # Set the mining flag only if address is non empty.

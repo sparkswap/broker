@@ -20,8 +20,8 @@ services:
       - shared:/rpc
       - bitcoin:/data
     environment:
-      - RPCUSER=kuser
-      - RPCPASS=kpass
+      - RPC_USER=kuser
+      - RPC_PASS=kpass
       - NETWORK=simnet
       - DEBUG=info
     networks:
@@ -31,21 +31,6 @@ services:
           - rpcserver
     entrypoint: ["./start-btcd.sh"]
 
-  btcctl:
-    image: btcctl
-    build:
-      context: ./
-      dockerfile: btcd/Dockerfile
-    volumes:
-      - shared:/rpc
-      - bitcoin:/data
-    environment:
-      - RPCUSER
-      - RPCPASS
-      - NETWORK
-    networks:
-      - btcd
-    entrypoint: ["./start-btcctl.sh"]
 
   lnd_btc:
     image: lnd
