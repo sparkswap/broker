@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+  kcli:
+    image: kcli
+    build:
+      context: ./
+      dockerfile: kinesis/Dockerfile
+    volumes:
+      - '../:/home/app'
+    env_file:
+      - ./kinesis/kcli.env
+    environment:
+      - LND_URL
+    networks:
+      - broker
+    working_dir: '/home/app'
+    command: bash -c 'npm i'
+    entrypoint: './bin/kcli'
+
+  kbd:
+    image: kbd
+    build:
+      context: ./
+      dockerfile: kinesis/Dockerfile
+    volumes:
+      - '../:/home/app'
+    env_file:
+      - ./kinesis/kbd.env
+    environment:
+      - LND_URL
+    networks:
+      - broker
+    working_dir: '/home/app'
+    command: bash -c 'npm i'
+    entrypoint: bash -c './bin/kbd'
+
+networks:
+  broker:

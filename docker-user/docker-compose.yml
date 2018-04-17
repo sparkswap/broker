@@ -1,0 +1,85 @@
+version: '3'
+
+################################################################################
+#
+# NOTE: This docker-compose only contains LND setup for BTC. LTC and other coins
+# are not currently implemented for the kinesis exchange
+#
+# The official LND docker setup can be found here:
+# https://github.com/lightningnetwork/lnd/tree/master/docker
+#
+################################################################################
+
+services:
+  btcd:
+    image: btcd
+    build:
+      context: ./
+      dockerfile: btcd/Dockerfile
+    volumes:
+      - shared:/rpc
+      - bitcoin:/data
+    environment:
+      - RPCUSER=kuser
+      - RPCPASS=kpass
+      - NETWORK=simnet
+      - DEBUG=info
+    networks:
+      btcd:
+        aliases:
+          - blockchain
+          - rpcserver
+    entrypoint: ["./start-btcd.sh"]
+
+  btcctl:
+    image: btcctl
+    build:
+      context: ./
+      dockerfile: btcd/Dockerfile
+    volumes:
+      - shared:/rpc
+      - bitcoin:/data
+    environment:
+      - RPCUSER
+      - RPCPASS
+      - NETWORK
+    networks:
+      - btcd
+    entrypoint: ["./start-btcctl.sh"]
+
+  lnd_btc:
+    image: lnd
+    build:
+      context: ./
+      dockerfile: lnd/Dockerfile
+    environment:
+      - RPCUSER=kuser
+      - RPCPASS=kpass
+      - NETWORK=simnet
+      - CHAIN=bitcoin
+      - DEBUG=info
+      - RPC_LISTEN=0.0.0.0:10101
+      - LISTEN=0.0.0.0:10111
+      - REST_LISTEN=0.0.0.0:8101
+      - DATA_DIR=data
+      - LOG_DIR=log
+      - NODE=btcd
+    networks:
+      - btcd
+    volumes:
+      - 'shared:/rpc'
+      - 'secure:/secure/'
+    expose:
+      - '10101'
+      - '10111'
+      - '8101'
+    entrypoint: ["./start-lnd.sh"]
+
+
+volumes:
+  secure:
+  shared:
+  bitcoin:
+
+networks:
+  btcd:
