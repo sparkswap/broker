@@ -26,8 +26,11 @@ We will open a channel back.
 2. Authentication between client and relayer
 3. Payment channels with the relayer
 
-### Tasks to do for docker stuff
 
-1. When the daemon is started, we need to create a btc instance AND lnd instance
-2. Create a wallet for the 'client'
-3. Given the relayer URL, we need to connect to that peers LND
+#### Tasks to do docker stuff
+1. create a wallet
+2. figure out why lnd is exiting on successful commands need this to stop :(
+3. figure out why macaroons aren't generating correctly (currently I have them disabled)
+4. Grab test scripts from relayer and automate the creation of a wallet
+5. Given an LND url, Relayer URL, we need to connect to peers (LND)
+6. Start hosting relayers on digital ocean for testing (sim or test)

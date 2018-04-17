@@ -57,6 +57,8 @@ From this point forward, whenever we want to check on the status of containers, 
 
 #### Funding your account
 
+Once the LND/BTC containers are up, lets log into the LND container and create a new wallet
+
 The broker will take the following information:
 
 1. Wallet
