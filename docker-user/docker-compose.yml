@@ -24,6 +24,20 @@ services:
       - RPC_PASS=kpass
       - NETWORK=simnet
       - DEBUG=info
+      - DATA_DIR=/data
+      - LOG_DIR=/data
+      - RPC_KEY=/rpc/rpc.key
+      - RPC_CERT=/rpc/rpc.cert
+      - RPC_LISTEN=0.0.0.0
+    expose:
+      - '8333' # mainnet p2p
+      - '8444' # mainnet rpc
+      - '18333' # testnet p2p
+      - '18334' # testnet rpc
+      - '18555' # simnet p2p
+      - '18556' # simnet rpc
+      - '28901' # segnet p2p
+      - '28902' # segnet rpc
     networks:
       btcd:
         aliases:

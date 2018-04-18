@@ -8,11 +8,11 @@ PARAMS=$(echo \
     "--debuglevel=$DEBUG" \
     "--rpcuser=$RPC_USER" \
     "--rpcpass=$RPC_PASS" \
-    "--datadir=/data" \
-    "--logdir=/data" \
-    "--rpccert=/rpc/rpc.cert" \
-    "--rpckey=/rpc/rpc.key" \
-    "--rpclisten=0.0.0.0" \
+    "--datadir=$DATA_DIR" \
+    "--logdir=$LOG_DIR" \
+    "--rpccert=$RPC_CERT" \
+    "--rpckey=$RPC_KEY" \
+    "--rpclisten=$RPC_LISTEN" \
     "--txindex"
 )
 

@@ -5,8 +5,8 @@ set -e
 
 PARAMS=$(echo \
     "--$NETWORK" \
-    --rpccert="/rpc/rpc.cert" \
-    --rpcserver="rpcserver" \
+    "--rpccert=$RPC_CERT" \
+    "--rpckey=$RPC_KEY" \
     "--rpcuser=$RPCUSER" \
     "--rpcpass=$RPCPASS"
 )

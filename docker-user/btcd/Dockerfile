@@ -2,18 +2,6 @@ FROM golang:1.9
 
 LABEL maintainer="Danny Paz <kinesis.exchange>"
 
-# Expose mainnet ports (server, rpc)
-EXPOSE 8333 8334
-
-# Expose testnet ports (server, rpc)
-EXPOSE 18333 18334
-
-# Expose simnet ports (server, rpc)
-EXPOSE 18555 18556
-
-# Expose segnet ports (server, rpc)
-EXPOSE 28901 28902
-
 # Grab and install the latest version of roasbeef's fork of btcd and all
 # related dependencies.
 RUN go get -u github.com/Masterminds/glide
