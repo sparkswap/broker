@@ -2,7 +2,7 @@
 
 ##########################################
 #
-# This file contains logic to create a wallet w/ the default LND setup for a broker.
+# This file contains logic to fund a wallet w/ the default LND setup for a broker.
 #
 # Information in this script is based off the LND docker setup:
 # https://github.com/lightningnetwork/lnd/tree/master/docker
@@ -22,17 +22,24 @@ set -e -u
 WALLET_ADDR=${WALLET_ADDR}
 
 # Restart the btcd container w/ the mining-address for our account
-btcd --simnet --txindex --rpcuser=$RPC_USER --rpcpass=kek --mining-address
-btcctl --simnet --rpcuser=kek --rpcpass=kek generate 400
+docker-compose rm btcd
+MINING_ADDRESS=$WALLET_ADDR docker-compose up -d btcd
+
+GENERATE_CMD='btcctl --simnet --rpcuser="$RPC_USER" --rpcpass="$RPC_PASS" --rpccert="$RPC_CERT" generate 400'
+docker-compose exec btcd /bin/sh -c "$GENERATE_CMD"
 
 # wait a little bit
-sleep(5)
+sleep 10
 
 # Check segwit to make sure we are A-OK
-SEGWIT_RESPONSE=$(btcctl --simnet --rpcuser=kek --rpcpass=kek getblockchaininfo | grep -A 1 segwit)
+SEGWIT_CMD='btcctl --simnet --rpcuser="$RPC_USER" --rpcpass="$RPC_PASS" --rpccert="$RPC_CERT" getblockchaininfo'
+RAW_SEGWIT_RESPONSE=$(docker-compose exec btcd /bin/sh -c "$SEGWIT_CMD")
+SEGWIT_RESPONSE=$(node ./scripts/parse-lnd.js segwit $RAW_SEGWIT_RESPONSE)
+
+echo "Segwit: $SEGWIT_RESPONSE"
 
 # Check our balance to see if the account is funded.
-BALANCE_CMD="lncli --tlscertpath="$TLS_CERT_PATH" --rpcserver=localhost:10101 --macaroonpath="$ADMIN_MACAROON" walletbalance"
+BALANCE_CMD='lncli --tlscertpath="$TLS_CERT_PATH" --rpcserver=localhost:10101 --macaroonpath="$ADMIN_MACAROON" walletbalance'
 RAW_BALANCE=$(docker-compose exec lnd_btc /bin/sh -c "$BALANCE_CMD")
 
 echo "Balance $RAW_BALANCE"

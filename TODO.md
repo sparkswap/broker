@@ -42,4 +42,3 @@ We are currently using HTTP/2
 Most crypto exchanges
 
 Traditional exchanges do UDP, multicast... so that everyone gets the information at the same time. When you do the same with websockets, because it is conntection based, different users will get order data at the time.
-
