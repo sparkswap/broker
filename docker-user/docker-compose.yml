@@ -48,8 +48,8 @@ services:
       - RPC_LISTEN=0.0.0.0:10101
       - LISTEN=0.0.0.0:10111
       - REST_LISTEN=0.0.0.0:8101
-      - DATA_DIR=data
-      - LOG_DIR=log
+      - DATA_DIR=/data
+      - LOG_DIR=/data
       - NODE=btcd
       - SECURE_DIRECTORY=/secure
     networks:
@@ -57,6 +57,7 @@ services:
     volumes:
       - 'shared:/rpc'
       - 'secure:/secure/'
+      - 'lnd:/data'
     expose:
       - '10101'
       - '10111'
@@ -68,6 +69,7 @@ volumes:
   secure:
   shared:
   bitcoin:
+  lnd:
 
 networks:
   btcd:

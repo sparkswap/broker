@@ -35,11 +35,12 @@ exec lnd \
     --restlisten="$REST_LISTEN" \
     --datadir="$DATA_DIR" \
     --logdir="$LOG_DIR" \
-    --debuglevel="$DEBUG" \
     "--$CHAIN.$NETWORK" \
     "--$CHAIN.active" \
     "--$CHAIN.node"="$NODE" \
     "--$NODE.rpccert"="$RPC_CERT_PATH" \
     "--$NODE.rpchost"="$RPC_HOST" \
-    "--$NODE.rpcuser"="$RPC_PASS" \
-    "--$NODE.rpcpass"="$RPC_USER"
+    "--$NODE.rpcuser"="$RPC_USER" \
+    "--$NODE.rpcpass"="$RPC_PASS" \
+    --debuglevel="$DEBUG" \
+    "$@"

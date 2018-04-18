@@ -4,11 +4,16 @@
 set -e
 
 PARAMS=$(echo \
-    "--txindex" \
     "--$NETWORK" \
     "--debuglevel=$DEBUG" \
     "--rpcuser=$RPC_USER" \
-    "--rpcpass=$RPC_PASS"
+    "--rpcpass=$RPC_PASS" \
+    "--datadir=/data" \
+    "--logdir=/data" \
+    "--rpccert=/rpc/rpc.cert" \
+    "--rpckey=/rpc/rpc.key" \
+    "--rpclisten=0.0.0.0" \
+    "--txindex"
 )
 
 # Set the mining flag only if address is non empty.
