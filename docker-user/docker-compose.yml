@@ -56,6 +56,10 @@ services:
       - RPC_PASS=kpass
       - RPC_HOST=blockchain
       - RPC_CERT_PATH=/rpc/rpc.cert
+      - ADMIN_MACAROON=/secure/admin.macaroon
+      - READ_ONLY_MACAROON=/secure/readonly.macaroon
+      - TLS_CERT_PATH=/secure/tls.cert
+      - TLS_KEY_PATH=/secure/tls.key
       - NETWORK=simnet
       - CHAIN=bitcoin
       - DEBUG=info

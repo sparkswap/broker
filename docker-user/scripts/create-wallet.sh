@@ -2,23 +2,22 @@
 
 ##########################################
 #
-# This file is a super work in-progress but contains all the steps to perform
-# a bitcoin transfer w/ LND
+# This file contains logic to create a wallet w/ the default LND setup for a broker.
 #
-# This is based off of information here: https://github.com/lightningnetwork/lnd/tree/master/docker
+# Information in this script is based off the LND docker setup:
+# https://github.com/lightningnetwork/lnd/tree/master/docker
 #
 ##########################################
 
 set -e
 
-docker exec -it ln
+# lncli command to run against the lnd_btc container
+LNCLI_COMMAND='lncli --tlscertpath="$TLS_CERT_PATH" --rpcserver=localhost:10101 --macaroonpath="$ADMIN_MACAROON" newaddress np2wkh'
 
-# Run the "Alice" container and log into it:
-docker-compose run -d --name alice lnd_btc
+# Executes the command and stores the output from the lnd_btc container
+RAW_WALLET_ADDR=$(docker-compose exec lnd_btc /bin/sh -c "$LNCLI_COMMAND")
 
-# Generate a new backward compatible nested p2sh address for Alice:
-ALICE_ADDRESS=$(docker exec -it alice lncli newaddress np2wkh | python parse_lnd.py address)
+# parses the response into a string that we can use in other scripts
+WALLET_ADDR=$(node ./scripts/parse-lnd.js wallet $RAW_WALLET_ADDR)
 
-exit 1
-
-echo "Exported Alice's address: $ALICE_ADDRESS"
+echo "Exported wallet address: $WALLET_ADDR"
