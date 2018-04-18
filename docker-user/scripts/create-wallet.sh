@@ -7,9 +7,13 @@
 # Information in this script is based off the LND docker setup:
 # https://github.com/lightningnetwork/lnd/tree/master/docker
 #
+# NOTE: This script is incomplete because of the `--noencryptwallet` flag that is
+#       included in the lnd_btc container. If this flag was removed, we would need to
+#       create a wallet w/ pass and nmemonic
+#
 ##########################################
 
-set -e
+set -e -u
 
 # lncli command to run against the lnd_btc container
 LNCLI_COMMAND='lncli --tlscertpath="$TLS_CERT_PATH" --rpcserver=localhost:10101 --macaroonpath="$ADMIN_MACAROON" newaddress np2wkh'

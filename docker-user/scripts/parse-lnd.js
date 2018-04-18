@@ -1,12 +1,9 @@
 const [ command, ...data ] = process.argv.slice(2);
-
-function parseWalletAddr(data) {
-  const payload = JSON.parse(data.join(''));
-  return payload.address;
-}
+const payload = JSON.parse(data.join(''));
 
 switch (command.toLowerCase()) {
   case 'wallet':
-    const walletAddr = parseWalletAddr(data);
-    return console.log(walletAddr);
+    return console.log(payload.address);
+  case 'segwit':
+    return console.log(payload.bip9_softforks.segwit.status);
 }
