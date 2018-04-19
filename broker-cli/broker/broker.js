@@ -1,8 +1,11 @@
 const grpc = require('grpc');
 const path = require('path');
 
-const GRPC_ADDRESS = process.env.GRPC_ADDRESS || '0.0.0.0:51001';
-// TODO: change this before release
+const GRPC_ADDRESS = process.env.BROKER_DAEMON_HOST;
+
+if (!GRPC_ADDRESS) throw new Error('No BROKER_DAEMON_HOST has been specified.');
+
+// TODO: Change this to use npm instead of a relative path to the daemon
 const PROTO_PATH = path.resolve('./broker-daemon/proto/broker.proto');
 const PROTO_GRPC_TYPE = 'proto';
 const PROTO_GRPC_OPTIONS = {
@@ -10,8 +13,6 @@ const PROTO_GRPC_OPTIONS = {
   binaryAsBase64: true,
   longsAsStrings: true,
 };
-
-console.log(PROTO_PATH);
 
 class Broker {
   constructor(address) {

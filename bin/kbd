@@ -11,24 +11,24 @@ const startServer = require('../broker-daemon');
 
 const { version: CLI_VERSION } = require('../package.json');
 
-const KINESIS_RPC_HOST = process.env.KINESIS_RPC_HOST || '0.0.0.0:27492';
-const KINESIS_PORTS = process.env.KINESIS_PORTS || null;
-const KINESIS_EXTERNAL_HOST = process.env.KINESIS_EXTERNAL_HOST || null;
-const KINESIS_DATA_DIR = process.env.KINESIS_DATA_DIR || '~/.kinesis/data';
+const RPC_ADDRESS = process.env.RPC_ADDRESS || '0.0.0.0:27492';
+const DATA_DIR = process.env.DATA_DIR || '~/.kinesis/data';
+const LND_RPC_HOST = process.env.LND_RPC_HOST || '0.0.0.0:10009';
 
-const LND_RPC_HOST = process.env.LND_RPC_HOST || 'localhost:10009';
-const LND_TLS_PATH = process.env.LND_TLS_PATH || '~/.lnd/tls.cert';
-const LND_MACAROON_PATH = process.env.LND_MACAROON_PATH || '~/.lnd/admin.macaroon';
+// TODO: Do not provide defaults for these certs because they could
+//   exist in an array of places?
+const LND_TLS_CERT = process.env.LND_TLS_CERT || '~/.lnd/tls.cert';
+const LND_MACAROON = process.env.LND_MACAROON || '~/.lnd/admin.macaroon';
 
 program
   .version(CLI_VERSION)
   // Kinesis Specific Commands
-  .option('--rpc-address <server>', 'Host and port to set up the RPC server on.', /^.+(:[0-9]*)?$/, KINESIS_RPC_HOST)
-  .option('--data-dir <path>', 'Location to store kinesisd data.', /^.+$/, KINESIS_DATA_DIR)
+  .option('--rpc-address <server>', 'Host and port to set up the RPC server on.', /^.+(:[0-9]*)?$/, RPC_ADDRESS)
+  .option('--data-dir <path>', 'Location to store kinesisd data.', /^.+$/, DATA_DIR)
   // LND Specific commands
   .option('--lnd-rpc <server>', 'Location of the LND RPC server to use.', /^.+(:[0-9]*)?$/, LND_RPC_HOST)
-  .option('--lnd-tls <path>', 'Location of the certificate to use when communicating with LND.', /^.+$/, LND_TLS_PATH)
-  .option('--lnd-macaroon <path>', 'Location of the macaroon to use when communicating with LND.', /^.+$/, LND_MACAROON_PATH)
+  .option('--lnd-tls <path>', 'Location of the certificate to use when communicating with LND.', /^.+$/, LND_TLS_CERT)
+  .option('--lnd-macaroon <path>', 'Location of the macaroon to use when communicating with LND.', /^.+$/, LND_MACAROON)
   .action(startServer);
 
 program.parse(process.argv);
