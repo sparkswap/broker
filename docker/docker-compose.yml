@@ -8,14 +8,11 @@ services:
       dockerfile: kinesis/Dockerfile
     volumes:
       - '../:/home/app'
-    env_file:
-      - ./kinesis/kcli.env
     environment:
-      - LND_URL
+      - BROKER_DAEMON_HOST=0.0.0.0:27492
     networks:
       - broker
     working_dir: '/home/app'
-    command: bash -c 'npm i'
     entrypoint: './bin/kcli'
 
   kbd:
@@ -25,15 +22,20 @@ services:
       dockerfile: kinesis/Dockerfile
     volumes:
       - '../:/home/app'
-    env_file:
-      - ./kinesis/kbd.env
     environment:
-      - LND_URL
+      - NODE_PATH=.
+      - RPC_ADDRESS=0.0.0.0:27492
+      - DATA_DIR=/data
+      - LND_RPC_HOST=0.0.0.0:10009
+      - LND_TLS_CERT=/secure/tls.cert
+      - LND_MACAROON=/secure/admin.macaroon
     networks:
       - broker
     working_dir: '/home/app'
-    command: bash -c 'npm i'
     entrypoint: bash -c './bin/kbd'
+
+volumes:
+  data:
 
 networks:
   broker:
