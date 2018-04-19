@@ -14,7 +14,6 @@ const {
 } = require('../broker-cli');
 
 const helpText = `
-  KCLI_RPC_SERVER=${process.env.KCLI_RPC_SERVER}
   OWNER_ID=1234
 `;
 
