@@ -2,6 +2,8 @@
 
 <img src="https://kines.is/logo.png" alt="Kinesis Exchange" width="550">
 
+[![CircleCI](https://circleci.com/gh/kinesis-exchange/broker.svg?style=svg)](https://circleci.com/gh/kinesis-exchange/broker)
+
 This repo contains source for the following products
 
 - kinesis-broker-daemon or kbd
