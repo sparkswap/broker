@@ -11,6 +11,8 @@ This repo contains source for the following products
 
 You will need to have nvm (and our current node version) installed on your machine.
 
+You will also need to install a plugin for your editor for [Standard](https://standardjs.com/)
+
 ### Getting Started
 
 In order for the Kinesis CLI and Kinesis Daemon to be fully functional, the following containers must be running:
