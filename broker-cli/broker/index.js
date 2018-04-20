@@ -1,3 +1,3 @@
-const Broker = require('./broker');
+const Broker = require('./broker')
 
-module.exports = Broker;
+module.exports = Broker
