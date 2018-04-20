@@ -12,6 +12,9 @@
     "build": "bash ./scripts/ascii.sh && bash ./scripts/build.sh",
     "format": "standard --fix"
   },
+  "standard": {
+    "env": ["mocha"]
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kinesis-exchange/broker.git"
