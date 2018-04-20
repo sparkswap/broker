@@ -4,5 +4,5 @@ module.exports = (program) => {
   // ENGINE_RPC_HOST
   // ENGINE_TYPE
   program
-    .command('config', 'All current configuration settings');
-};
+    .command('config', 'All current configuration settings')
+}

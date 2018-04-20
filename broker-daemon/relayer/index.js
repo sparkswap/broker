@@ -1,5 +1,5 @@
-const RelayerClient = require('./relayer-client');
+const RelayerClient = require('./relayer-client')
 
 module.exports = {
   RelayerClient
-};
+}

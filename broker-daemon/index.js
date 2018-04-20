@@ -1,4 +1,4 @@
-const GrpcServer = require('./grpc-server');
+const GrpcServer = require('./grpc-server')
 
 /**
  * Interface for the KBD client
@@ -9,25 +9,25 @@ const GrpcServer = require('./grpc-server');
  * @param {Logger} logger
  */
 
-function startServer(args, opts, logger) {
+function startServer (args, opts, logger) {
   const {
-    rpcAddress,
-    dataDir,
-    engineType,
-    exchangeHost,
-    lndRpc,
-    lndTls,
-    lndMacaroon,
-  } = opts;
+    rpcAddress
+    // dataDir,
+    // engineType,
+    // exchangeHost,
+    // lndRpc,
+    // lndTls,
+    // lndMacaroon
+  } = opts
 
   try {
-    const grpc = new GrpcServer(logger);
-    grpc.listen(rpcAddress);
-    logger.info(`gRPC server started: Server listening on ${rpcAddress}`);
-  } catch(e) {
-    logger.error(e.toString());
-    throw(e);
+    const grpc = new GrpcServer(logger)
+    grpc.listen(rpcAddress)
+    logger.info(`gRPC server started: Server listening on ${rpcAddress}`)
+  } catch (e) {
+    logger.error(e.toString())
+    throw (e)
   }
 }
 
-module.exports = startServer;
+module.exports = startServer
