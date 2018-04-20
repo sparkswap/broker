@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "preinstall": "npm rebuild",
     "pretest": "eslint --quiet --ignore-path .gitignore .; exit 0",
     "test-cli": "mocha 'broker-cli/**/*.spec.js'",
     "test-daemon": "mocha 'broker-daemon/**/*.spec.js'",

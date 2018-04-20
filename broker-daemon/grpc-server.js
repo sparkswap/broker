@@ -1,6 +1,7 @@
 const grpc = require('grpc');
 const path = require('path');
 const fs = require('fs');
+const { status } = require('grpc');
 
 const { RelayerClient } = require('./relayer');
 
@@ -50,9 +51,15 @@ async function createOrder(call, cb) {
 
   const relayer = new RelayerClient();
 
-  const order = await relayer.createOrder(request);
-  console.log(order);
-  cb(null, { orderId: order.orderId });
+  try {
+    this.logger.info('Attempting to create order');
+    const order = await relayer.createOrder(request);
+    cb(null, { orderId: order.orderId });
+  } catch (e) {
+    this.logger.error('Something messed up');
+    return cb({ message: e.message, code: status.INTERNAL });
+    throw(e);
+  }
 }
 
 /**

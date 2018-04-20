@@ -1,11 +1,20 @@
 const GrpcServer = require('./grpc-server');
 
+/**
+ * Interface for the KBD client
+ *
+ * @NOTE: the method signature is from the #action mathod in Caporal
+ * @param {Object} args
+ * @param {Object} opts
+ * @param {Logger} logger
+ */
+
 function startServer(args, opts, logger) {
   const {
     rpcAddress,
-    ports,
-    externalHost,
     dataDir,
+    engineType,
+    exchangeHost,
     lndRpc,
     lndTls,
     lndMacaroon,

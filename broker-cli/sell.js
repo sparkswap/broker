@@ -9,6 +9,7 @@
  * @option rpcaddress - optional
  */
 
+const Broker = require('./broker');
 const { ENUMS } = require('./utils');
 
 const { ORDER_TYPES } = ENUMS;
@@ -27,7 +28,7 @@ async function sell(args, opts, logger) {
   };
 
   try {
-    const orderResult = await new broker(rpcAddress).createOrder(request);
+    const orderResult = await new Broker(rpcAddress).createOrder(request);
     logger.info(orderResult);
   } catch(e) {
     logger.error(e.toString());

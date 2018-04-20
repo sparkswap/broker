@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  kcli:
+    build:
+      context: ./
+      dockerfile: docker/kinesis/Dockerfile
+    volumes:
+      - './:/home/app'
+    environment:
+      - BROKER_DAEMON_HOST=kbd:27492
+    networks:
+      - broker
+      - relayer
+    working_dir: '/home/app'
+    entrypoint: './bin/kcli'
+
+  kbd:
+    build:
+      context: ./
+      dockerfile: docker/kinesis/Dockerfile
+    volumes:
+      - './:/home/app'
+      - 'kcli:/data'
+      - 'relayer_secure:/secure/:ro'
+    environment:
+      - NODE_PATH=.
+      - RPC_ADDRESS=0.0.0.0:27492
+      - DATA_DIR=/data
+      - LND_RPC_HOST=0.0.0.0:10009
+      - LND_TLS_CERT=/secure/tls.cert
+      - LND_MACAROON=/secure/admin.macaroon
+      - ENGINE_TYPE=lnd
+      # This address is specifically tied to the relayer network
+      - EXCHANGE_RPC_HOST=relayer:28492
+      - GRPC_VERBOSITY=error
+      - GRPC_TRACE=all
+    networks:
+      - broker
+      - relayer
+    working_dir: '/home/app'
+    entrypoint: bash -c './bin/kbd'
+
+volumes:
+  kcli:
+  relayer_secure:
+    external: true
+
+networks:
+  broker:
+  relayer:
+    external:
+      name: relayer_relayer

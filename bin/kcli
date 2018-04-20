@@ -11,6 +11,7 @@ const { version: CLI_VERSION } = require('../package.json');
 const {
   buyCommand,
   sellCommand,
+  configCommand,
 } = require('../broker-cli');
 
 /**
@@ -32,6 +33,7 @@ program
  * - `kcli sell`
  */
 
+configCommand(program);
 buyCommand(program);
 sellCommand(program);
 
