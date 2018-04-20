@@ -11,19 +11,15 @@ const { version: CLI_VERSION } = require('../package.json');
 const {
   buyCommand,
   sellCommand,
+  configCommand,
 } = require('../broker-cli');
-
-const helpText = `
-  OWNER_ID=1234
-`;
 
 /**
  * Initial Program Setup
  */
 program
   .version(CLI_VERSION)
-  .description('KINESIS BROKER CLI')
-  .help(helpText, { name: 'GLOBAL ENVIRONMENT VARIABLES' });
+  .description('KINESIS BROKER CLI');
 
 /**
  * Initialize Commands
@@ -37,6 +33,7 @@ program
  * - `kcli sell`
  */
 
+configCommand(program);
 buyCommand(program);
 sellCommand(program);
 

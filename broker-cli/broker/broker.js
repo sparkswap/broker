@@ -16,6 +16,7 @@ const PROTO_GRPC_OPTIONS = {
 
 class Broker {
   constructor(address) {
+    // TODO: default to the ENV variable, but overriden by the address that is passed in
     this.address = BROKER_DAEMON_HOST;
     this.proto = grpc.load(PROTO_PATH, PROTO_GRPC_TYPE, PROTO_GRPC_OPTIONS);
     // TODO: we will need to add auth for daemon for a non-local address

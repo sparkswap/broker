@@ -15,25 +15,24 @@ You will need to have nvm (and our current node version) installed on your machi
 
 In order for the Kinesis CLI and Kinesis Daemon to be fully functional, the following containers must be running:
 
-- rousabeef/BTCD - Headless daemon to interact with blockchain (no wallet in this package)
+- roasbeef/BTCD - Headless daemon to interact with blockchain (no wallet in this package)
 - LND - Lightning Network Daemon + Wallet
 
 Once our wallet is setup, we need to specify the lnd url here:
 
-- KLCI - CLI for Kinesis Daemon (this is in its own container OR can be used directly from `./bin/klci` from inside the kbd container)
+- KCLI - CLI for Kinesis Daemon (this is in its own container OR can be used directly from `./bin/klci` from inside the kbd container)
 - KBD - Kinesis Broker Daemon - handle interactions between LND and the Kinesis Exchange (Relayer)
 
-NOTE: This repo only provides functionality and support for the CLI and Daemon. All other processes are required, but are not stored in this repo.
+#### Order of operations
 
 Order of operations for a broker request:
 KCLI -> KBD -> LND -> KBD -> RELAYER -> KBD -> LND/CLI/Stream
 
-1. A broker will make a request from the CLI
-2. the CLI will post a grpc request to the daemon
-3. Daemon will connect to LND and create a channel to the relayer
-4. Daemon will send off the request to the relayer
-5. Relayer will send a response back to KBD
-6. Daemon will respond by either making operations to LND, output back to CLI or opening a client/server stream
+1. A user will make a request from the CLI
+2. the CLI will post a grpc request to the Broker Daemon
+3. Daemon will send off the request to the relayer
+4. Relayer will send a response back to KBD
+5. Daemon will respond by either making operations to LND, output back to CLI or opening a client/server stream
 
 ### What happens when I make an order?
 
@@ -54,13 +53,13 @@ In order for these steps to be fulfilled, a user must first have the client up a
 9. KCLI returns a successfully response
 10. KBD will receive an event for a new order
 
-### Authentication between Client and Daemon
+### Authentication between CLI (KCLI) and Broker Daemon (KBD)
 
 None
 
-### Authentication between Daemon and Relayer
+### Authentication between Broker Daemon (KBD) and Relayer
 
-None
+None, yet...
 
 ### Authentication between Daemon and LND
 
