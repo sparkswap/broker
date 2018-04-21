@@ -139,3 +139,11 @@ message WatchMarketRequest {
 service OrderBook {
     rpc WatchMarket (WatchMarketRequest) returns (stream MarketEvent);
 }
+
+message GetPublicKeyResponse {
+
+    string public_key = 0;
+}
+service PaymentNetwork {
+    rpc GetPublicKey (google.protobuf.Empty) returns (GetPublicKeyResponse);
+}

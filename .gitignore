@@ -62,3 +62,6 @@ typings/
 
 # Mac
 .DS_Store
+
+# Proto build files
+proto/relayer/
