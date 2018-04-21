@@ -145,5 +145,5 @@ message GetPublicKeyResponse {
     string public_key = 0;
 }
 service PaymentNetwork {
-    rpc getPublicKey (google.protobuf.Empty) returns (GetPublicKeyResponse);
+    rpc GetPublicKey (google.protobuf.Empty) returns (GetPublicKeyResponse);
 }
