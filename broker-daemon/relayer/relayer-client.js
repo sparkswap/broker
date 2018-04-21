@@ -22,8 +22,10 @@ class RelayerClient {
   constructor () {
     this.address = EXCHANGE_RPC_HOST
     this.proto = grpc.load(PROTO_PATH, PROTO_GRPC_TYPE, PROTO_GRPC_OPTIONS)
+
     // TODO: we will need to add auth for daemon for a non-local address
     this.maker = new this.proto.Maker(this.address, grpc.credentials.createInsecure())
+    this.orderbook = new this.proto.OrderBook(this.address, grpc.credentials.createInsecure())
   }
 
   /**
@@ -41,6 +43,12 @@ class RelayerClient {
         return resolve(res)
       })
     })
+  }
+
+  async watchMarket (params) {
+    // TODO: Add better logging because there is no connection deadline here
+    //   but we still want to verify if the connection is OK.
+    return this.orderbook.watchMarket(params)
   }
 }
 

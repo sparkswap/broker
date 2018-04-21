@@ -23,6 +23,29 @@ class Action {
   }
 }
 
+async function watchMarket (call) {
+  // TODO: Some validation on here. Maybe the client can call out for valid markets
+  // from the relayer so we dont event make a request if it is invalid
+  const { market } = call.request
+  const [baseSymbol, counterSymbol] = market.split('/')
+
+  // TODO: Rethink the lastUpdated null value for relayer
+  const request = { baseSymbol, counterSymbol, lastUpdated: 0 }
+  const relayer = new RelayerClient()
+
+  try {
+    const watchOrder = await relayer.watchMarket(request)
+
+    watchOrder.on('data', (order) => call.write(order))
+    watchOrder.on('end', () => this.logger.info('Finished sending'))
+  } catch (e) {
+    this.logger.error('watchMarket failed', { error: e.toString() })
+
+    // Figure out a better way to handle errors for call
+    call.destroy()
+  }
+}
+
 async function createOrder (call, cb) {
   const {
     // amount,
@@ -34,8 +57,6 @@ async function createOrder (call, cb) {
 
   // We need to calculate the base amount/counter amount based off of current
   // prices
-  //
-  // We need to split the market
 
   const [baseSymbol, counterSymbol] = market.split('/')
 
@@ -56,7 +77,7 @@ async function createOrder (call, cb) {
     const order = await relayer.createOrder(request)
     cb(null, { orderId: order.orderId })
   } catch (e) {
-    this.logger.error('Something messed up')
+    this.logger.error('createOrder failed', { error: e.toString() })
 
     // eslint-disable-next-line
     return cb({ message: e.message, code: status.INTERNAL })
@@ -77,7 +98,8 @@ class GrpcServer {
     this.action = new Action(this.logger)
 
     this.server.addService(this.brokerService, {
-      createOrder: createOrder.bind(this.action)
+      createOrder: createOrder.bind(this.action),
+      watchMarket: watchMarket.bind(this.action)
     })
   }
 
