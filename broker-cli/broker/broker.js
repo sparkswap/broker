@@ -37,7 +37,7 @@ class Broker {
     })
   }
 
-  async watchMarket (params) {
+  async watchOrder (params) {
     // TODO: Add a duration for gRPC
     return this.broker.watchMarket(params)
   }
