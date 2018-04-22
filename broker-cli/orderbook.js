@@ -1,19 +1,22 @@
 /**
- * kcli buy
+ * kcli orderbook
  *
- * ex: `kcli buy 10 100 --market 'BTC/LTC' --timeinforce GTC --rpc-address localhost:10009`
+ * ex: `kcli orderbook --market 'BTC/LTC'
  *
- * @param amount - required
- * @param price - optional
  * @param options
  * @option market - required
- * @option timeinforce - optional
- * @option rpcaddress - optional
  */
 
 const Broker = require('./broker')
 
-function createUI(market) {
+/**
+ * Prints log statements for a psuedo UI for the orderbook
+ *
+ * TODO: Use a util like clui to represent columns/rows
+ * @param {String} market
+ * @returns {Void}
+ */
+function createUI (market) {
   console.log(`MARKET: ${market.toUpperCase()}`)
   console.log('                                                                       ')
   console.log('                ASK                |                BID                ')
@@ -35,6 +38,7 @@ async function orderbook (args, opts, logger) {
 
     // TODO: We should save orders to an internal DB or figure out a way to store
     // this info instead of in memory?
+    // (this probably needs to be done in the daemon itself)
     const orders = []
 
     // Lets initialize the view AND just to be sure, we will clear the view
