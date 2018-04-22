@@ -13,7 +13,9 @@
     "format": "standard --fix"
   },
   "standard": {
-    "env": ["mocha"]
+    "env": [
+      "mocha"
+    ]
   },
   "repository": {
     "type": "git",
