@@ -32,6 +32,7 @@ async function orderbook (args, opts, logger) {
 
   try {
     const watchOrder = await new Broker(rpcAddress).watchMarket(request)
+
     // TODO: We should save orders to an internal DB or figure out a way to store
     // this info instead of in memory?
     const orders = []
