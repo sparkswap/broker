@@ -13,6 +13,14 @@
 
 const Broker = require('./broker')
 
+function createUI(market) {
+  console.log(`MARKET: ${market.toUpperCase()}`)
+  console.log('                                                                       ')
+  console.log('                ASK                |                BID                ')
+  console.log('      price      |      depth      |      price      |      depth      ')
+  console.log('-----------------------------------------------------------------------')
+}
+
 async function orderbook (args, opts, logger) {
   const { market, rpcAddress = null } = opts
 
@@ -24,24 +32,29 @@ async function orderbook (args, opts, logger) {
 
   try {
     const watchOrder = await new Broker(rpcAddress).watchMarket(request)
-    // UI
+    // TODO: We should save orders to an internal DB or figure out a way to store
+    // this info instead of in memory?
+    const orders = []
 
-    logger.info(`MARKET: ${market.toUpperCase()}`)
-    logger.info('                                                                       ')
-    logger.info('                ASK                |                BID                ')
-    logger.info('      price      |      depth      |      price      |      depth      ')
-    logger.info('-----------------------------------------------------------------------')
+    // Lets initialize the view AND just to be sure, we will clear the view
+    console.clear()
+    createUI(market)
 
     watchOrder.on('data', (order) => {
-      const { baseAmount, counterAmount, side } = order
+      const { orderId, baseAmount, counterAmount, side } = order
 
       if (side === 'ASK') {
-        logger.info(`      ${baseAmount}      |    ${counterAmount}      |                 |                 `)
+        orders.push({ [orderId]: `      ${baseAmount}      |    ${counterAmount}      |                 |                 ` })
       } else {
-        logger.info(`                 |                 |      ${baseAmount}      |      ${counterAmount}    `)
+        orders.push({ [orderId]: `                 |                 |      ${baseAmount}      |      ${counterAmount}    ` })
       }
+
+      console.clear()
+      createUI(market)
+      orders.forEach((order) => console.log(Object.values(order)[0]))
     })
 
+    watchOrder.on('cancelled', () => logger.info('Stream was cancelled by the server'))
     watchOrder.on('end', () => logger.info('End of stream'))
   } catch (e) {
     logger.error(e.toString())
