@@ -23,7 +23,7 @@ async function orderbook (args, opts, logger) {
   const request = { market }
 
   try {
-    const watchOrder = await new Broker(rpcAddress).watchOrder(request)
+    const watchOrder = await new Broker(rpcAddress).watchMarket(request)
     // UI
 
     logger.info(`MARKET: ${market.toUpperCase()}`)
