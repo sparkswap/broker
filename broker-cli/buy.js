@@ -1,21 +1,23 @@
+const Broker = require('./broker')
+const { ENUMS, validations } = require('./utils')
+
+const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
+
 /**
  * kcli buy
  *
+ * ex: `kcli buy 10 100 --market 'BTC/LTC'
  * ex: `kcli buy 10 100 --market 'BTC/LTC' --timeinforce GTC --rpc-address localhost:10009`
  *
- * @param amount - required
- * @param price - optional
- * @param options
- * @option market - required
- * @option timeinforce - optional
- * @option rpcaddress - optional
+ * @param {Object} args
+ * @param {String} args.amount
+ * @param {String} args.price
+ * @param {Object} opts
+ * @param {String} opts.market
+ * @param {String} [timeinforce] opts.timeinforce
+ * @param {String} [rpcaddress] opts.rpcaddress
+ * @param {Logger} logger
  */
-
-const Broker = require('./broker')
-const { ENUMS } = require('./utils')
-
-const { ORDER_TYPES } = ENUMS
-
 async function buy (args, opts, logger) {
   const { amount, price } = args
   const { timeinforce, market, rpcAddress = null } = opts
@@ -40,10 +42,10 @@ async function buy (args, opts, logger) {
 module.exports = (program) => {
   program
     .command('buy', 'Submit an order to buy.')
-    .argument('<amount>', 'Amount of base currency to buy.', program.INT)
-    .argument('[price]', 'Worst price that this order should be executed at. (If omitted, the market price will be used)', /^[0-9]{1,20}(\.[0-9]{1,20})?$/)
-    .option('--market <marketName>', 'Relevant market name', /^[A-Z]{2,5}\/[A-Z]{2,5}$/, undefined, true)
-    .option('-t, --timeinforce', 'Time in force policy for this order.', /^PO|FOK|IOC|GTC$/, 'GTC')
-    .option('--rpc-address', 'Location of the RPC server to use.', /^.+(:[0-9]*)?$/)
+    .argument('<amount>', 'Amount of base currency to buy.', validations.isPrice)
+    .argument('[price]', 'Worst price that this order should be executed at. (If omitted, the market price will be used)', validations.isPrice)
+    .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
+    .option('-t, --timeinforce', 'Time in force policy for this order.', Object.keys(TIME_IN_FORCE), 'GTC')
+    .option('--rpc-address', 'Location of the RPC server to use.', validations.isRPCHost)
     .action(buy)
 }

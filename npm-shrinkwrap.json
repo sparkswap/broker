@@ -495,6 +495,12 @@
       "integrity": "sha512-A46qtFgd+g7pDZinpnwiRJtxbC1hpgf0uzP3iG89scHk0AUC7A1TGxf5OiiOUv/JMZR8GOt8hL900hV0bOy5xA==",
       "dev": true
     },
+    "dirty-chai": {
+      "version": "2.0.1",
+      "resolved": "https://registry.npmjs.org/dirty-chai/-/dirty-chai-2.0.1.tgz",
+      "integrity": "sha512-ys79pWKvDMowIDEPC6Fig8d5THiC0DJ2gmTeGzVAoEH18J8OzLud0Jh7I9IWg3NSk8x2UocznUuFmfHCXYZx9w==",
+      "dev": true
+    },
     "doctrine": {
       "version": "2.1.0",
       "resolved": "https://registry.npmjs.org/doctrine/-/doctrine-2.1.0.tgz",
@@ -3200,6 +3206,11 @@
         "spdx-correct": "3.0.0",
         "spdx-expression-parse": "3.0.0"
       }
+    },
+    "validator": {
+      "version": "9.4.1",
+      "resolved": "https://registry.npmjs.org/validator/-/validator-9.4.1.tgz",
+      "integrity": "sha512-YV5KjzvRmSyJ1ee/Dm5UED0G+1L4GZnLN3w6/T+zZm8scVua4sOhYKWTUrKa0H/tMiJyO9QLHMPN+9mB/aMunA=="
     },
     "whatwg-fetch": {
       "version": "2.0.4",

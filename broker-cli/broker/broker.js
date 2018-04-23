@@ -1,31 +1,32 @@
 const grpc = require('grpc')
 const path = require('path')
 
-const BROKER_DAEMON_HOST = process.env.BROKER_DAEMON_HOST
+const BROKER_DAEMON_HOST = process.env.BROKER_DAEMON_HOST || 'localhost:27492'
 
-if (!BROKER_DAEMON_HOST) throw new Error('No BROKER_DAEMON_HOST has been specified.')
-
-// TODO: Change this to use npm instead of a relative path to the daemon
-const PROTO_PATH = path.resolve('./broker-daemon/proto/broker.proto')
-const PROTO_GRPC_TYPE = 'proto'
-const PROTO_GRPC_OPTIONS = {
-  convertFieldsToCamelCase: true,
-  binaryAsBase64: true,
-  longsAsStrings: true
-}
-
+// TODO: Break actions in the broker out into seperate modules
 class Broker {
   constructor (address) {
-    // TODO: default to the ENV variable, but overriden by the address that is passed in
-    this.address = BROKER_DAEMON_HOST
-    this.proto = grpc.load(PROTO_PATH, PROTO_GRPC_TYPE, PROTO_GRPC_OPTIONS)
+    // TODO: Remove proto out of broker file (into its own module?)
+    // TODO: Change this to use npm instead of a relative path to the daemon
+    this.protoPath = path.resolve('./broker-daemon/proto/broker.proto')
+    this.protoFileType = 'proto'
+    this.protoOptions = {
+      convertFieldsToCamelCase: true,
+      binaryAsBase64: true,
+      longsAsStrings: true
+    }
+    this.proto = grpc.load(this.protoPath, this.protoFileType, this.protoOptions)
+
     // TODO: we will need to add auth for daemon for a non-local address
+    this.address = address || BROKER_DAEMON_HOST
     this.broker = new this.proto.Broker(this.address, grpc.credentials.createInsecure())
   }
 
   /**
+   * Makes a call to the broker daemon to create an order
    *
    * @param {Object} params
+   * @returns {Promise}
    */
   async createOrder (params) {
     // TODO: Add a duration for gRPC
@@ -37,8 +38,14 @@ class Broker {
     })
   }
 
+  /**
+   * Opens a stream with the broker daemon to watch for market events from
+   * the exchange
+   *
+   * @param {Object} params
+   * @returns {Promise}
+   */
   async watchMarket (params) {
-    // TODO: Add a duration for gRPC
     return this.broker.watchMarket(params)
   }
 }

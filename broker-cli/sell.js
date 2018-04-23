@@ -1,34 +1,40 @@
+const Broker = require('./broker')
+const { ENUMS, validations } = require('./utils')
+
+const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
+
 /**
  * kcli sell
  *
- * @param amount - required
- * @param price - optional
- * @param options
- * @option market - required
- * @option timeinforce - optional
- * @option rpcaddress - optional
+ * ex: `kcli sell 100 --market 'BTC/LTC'
+ *
+ * @param {Object} args
+ * @param {String} args.amount
+ * @param {Object} opts
+ * @param {String} opts.market
+ * @param {String} [timeinforce] opts.timeinforce
+ * @param {String} [rpcaddress] opts.rpcaddress
+ * @param {Logger} logger
  */
-
-const Broker = require('./broker')
-const { ENUMS } = require('./utils')
-
-const { ORDER_TYPES } = ENUMS
-
 async function sell (args, opts, logger) {
-  const { amount, price } = args
+  const { amount } = args
   const { timeinforce, market, rpcAddress = null } = opts
   const side = ORDER_TYPES.SELL
 
   const request = {
     amount,
-    price,
     timeinforce,
     market,
     side
   }
 
   try {
+    // TODO: Figure out where this actually goes. Do we want to create an order
+    // or do we use the fill functionality?
     const orderResult = await new Broker(rpcAddress).createOrder(request)
+
+    // TODO: send a friendly message the logger. The current functionality will simple
+    // return the object from the broker.proto file
     logger.info(orderResult)
   } catch (e) {
     logger.error(e.toString())
@@ -38,10 +44,9 @@ async function sell (args, opts, logger) {
 module.exports = (program) => {
   program
     .command('sell', 'Submit an order to sell.')
-    .argument('<amount>', 'Amount of base currency to buy.', program.INT)
-    .argument('[price]', 'Worst price that this order should be executed at. (If omitted, the market price will be used)', /^[0-9]{1,20}(\.[0-9]{1,20})?$/)
-    .option('--market <marketName>', 'Relevant market name', /^[A-Z]{2,5}\/[A-Z]{2,5}$/, undefined, true)
-    .option('-t, --timeinforce', 'Time in force policy for this order.', /^PO|FOK|IOC|GTC$/, 'GTC')
-    .option('--rpc-address', 'Location of the RPC server to use.', /^.+(:[0-9]*)?$/)
+    .argument('<amount>', 'Amount of counter currency to sell.', validations.isPrice)
+    .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
+    .option('-t, --timeinforce', 'Time in force policy for this order.', Object.keys(TIME_IN_FORCE), 'GTC')
+    .option('--rpc-address', 'Location of the RPC server to use.', validations.isRPCHost)
     .action(sell)
 }
