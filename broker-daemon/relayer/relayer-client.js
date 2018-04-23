@@ -1,27 +1,16 @@
 const grpc = require('grpc')
-const path = require('path')
 
-const EXCHANGE_RPC_HOST = process.env.EXCHANGE_RPC_HOST
+const { loadProto } = require('../utils')
 
-if (!EXCHANGE_RPC_HOST) {
-  throw new Error('EXCHANGE_RPC_HOST needs to be specified.')
-}
-
-// TODO: change this before release
-const PROTO_PATH = path.resolve('./proto/relayer.proto')
-const PROTO_GRPC_TYPE = 'proto'
-const PROTO_GRPC_OPTIONS = {
-  convertFieldsToCamelCase: true,
-  binaryAsBase64: true,
-  longsAsStrings: true
-}
-
+// TODO: Add this to config for CLI
+const EXCHANGE_RPC_HOST = process.env.EXCHANGE_RPC_HOST || 'localhost:28492'
+const RELAYER_PROTO_PATH = './proto/relayer.proto'
 const TIMEOUT_IN_SECONDS = 5
 
 class RelayerClient {
   constructor () {
     this.address = EXCHANGE_RPC_HOST
-    this.proto = grpc.load(PROTO_PATH, PROTO_GRPC_TYPE, PROTO_GRPC_OPTIONS)
+    this.proto = loadProto(RELAYER_PROTO_PATH)
 
     // TODO: we will need to add auth for daemon for a non-local address
     this.maker = new this.proto.Maker(this.address, grpc.credentials.createInsecure())
@@ -29,8 +18,10 @@ class RelayerClient {
   }
 
   /**
+   * Creates an order w/ the exchange
    *
    * @param {Object} params
+   * @returns {Promise}
    */
   async createOrder (params) {
     // gRPC uses the term `deadline` which is a timeout feature that is an absolute
@@ -45,6 +36,11 @@ class RelayerClient {
     })
   }
 
+  /**
+   * Opens a stream with the exchange to watch for market events
+   *
+   * @param {Object} params
+   */
   async watchMarket (params) {
     // TODO: Add better logging because there is no connection deadline here
     //   but we still want to verify if the connection is OK.

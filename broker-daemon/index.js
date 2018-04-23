@@ -1,11 +1,17 @@
 const GrpcServer = require('./grpc-server')
 
 /**
- * Interface for the KBD client
+ * Creates an RPC server with params from kbd cli
  *
- * @NOTE: the method signature is from the #action mathod in Caporal
  * @param {Object} args
  * @param {Object} opts
+ * @param {String} opts.rpcAddress
+ * @param {String} opts.dataDir
+ * @param {String} opts.engineType
+ * @param {String} opts.exchangeHost
+ * @param {String} [lndRpc] opts.lndRpc
+ * @param {String} [lndTls] opts.lndTls
+ * @param {String} [lndMacaroon] opts.lndMacaroon
  * @param {Logger} logger
  */
 
@@ -26,7 +32,6 @@ function startServer (args, opts, logger) {
     logger.info(`gRPC server started: Server listening on ${rpcAddress}`)
   } catch (e) {
     logger.error(e.toString())
-    throw (e)
   }
 }
 
