@@ -3201,6 +3201,11 @@
         "spdx-expression-parse": "3.0.0"
       }
     },
+    "validator": {
+      "version": "9.4.1",
+      "resolved": "https://registry.npmjs.org/validator/-/validator-9.4.1.tgz",
+      "integrity": "sha512-YV5KjzvRmSyJ1ee/Dm5UED0G+1L4GZnLN3w6/T+zZm8scVua4sOhYKWTUrKa0H/tMiJyO9QLHMPN+9mB/aMunA=="
+    },
     "whatwg-fetch": {
       "version": "2.0.4",
       "resolved": "https://registry.npmjs.org/whatwg-fetch/-/whatwg-fetch-2.0.4.tgz",

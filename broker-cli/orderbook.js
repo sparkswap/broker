@@ -1,18 +1,10 @@
-/**
- * kcli orderbook
- *
- * ex: `kcli orderbook --market 'BTC/LTC'
- *
- * @param options
- * @option market - required
- */
-
 const Broker = require('./broker')
+const { validations } = require('./utils')
 
 /**
  * Prints log statements for a psuedo UI for the orderbook
  *
- * TODO: Use a util like clui to represent columns/rows
+ * TODO: Use a util like clui/smart-table to represent columns/rows
  * @param {String} market
  * @returns {Void}
  */
@@ -24,13 +16,19 @@ function createUI (market) {
   console.log('-----------------------------------------------------------------------')
 }
 
+/**
+ * kcli orderbook
+ *
+ * ex: `kcli orderbook --market 'BTC/LTC'
+ *
+ * @param {Object} args
+ * @param {Object} opts
+ * @param {String} opts.market
+ * @param {String} [rpcaddress] opts.rpcaddress
+ * @param {Logger} logger
+ */
 async function orderbook (args, opts, logger) {
   const { market, rpcAddress = null } = opts
-
-  if (!market) {
-    logger.error('No market specified')
-  }
-
   const request = { market }
 
   try {
@@ -69,7 +67,7 @@ async function orderbook (args, opts, logger) {
 module.exports = (program) => {
   program
     .command('orderbook', 'View the order book for a specific market.')
-    .option('--market <marketName>', 'Relevant market name', /^[A-Z]{2,5}\/[A-Z]{2,5}$/, null, true)
-    .option('--rpc-address <server>', 'Location of the RPC server to use.', /^.+(:[0-9]*)?$/)
+    .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
+    .option('--rpc-address <server>', 'Location of the RPC server to use.', validations.isRPCHost)
     .action(orderbook)
 }
