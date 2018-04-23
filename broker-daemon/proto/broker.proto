@@ -1,5 +1,12 @@
 syntax = "proto3";
 
+message google {
+    message protobuf {
+        message Empty {
+        }
+    }
+}
+
 enum Side {
   BID = 0;
   ASK = 1;
@@ -38,7 +45,13 @@ message WatchMarketResponse {
   }
 }
 
+message CreateFillRequest {
+  string market = 0;
+  int64 amount = 1;
+}
+
 service Broker {
   rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
   rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
+  rpc CreateFill (CreateFillRequest) returns (google.protobuf.Empty);
 }

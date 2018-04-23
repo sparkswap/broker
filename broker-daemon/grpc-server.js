@@ -23,6 +23,30 @@ class Action {
   }
 }
 
+async function createFill(call, cb) {
+  const { amount } = call.request
+  const relayer = new RelayerClient()
+
+  // string order_id = 0;
+  // bytes swap_hash = 1;
+  // int64 fill_amount = 2;
+  const request = {
+    orderId: '1234',
+    swapHash: Buffer.from('My Fake Swaphash', 'utf8'),
+    fillAmount: amount
+  }
+
+  try {
+    await relayer.createFill(request)
+    cb(null, {})
+  } catch (e) {
+    this.logger.error('createOrder failed', { error: e.toString() })
+
+    // eslint-disable-next-line
+    return cb({ message: e.message, code: status.INTERNAL })
+  }
+}
+
 async function watchMarket (call) {
   // TODO: Some validation on here. Maybe the client can call out for valid markets
   // from the relayer so we dont event make a request if it is invalid
@@ -99,7 +123,8 @@ class GrpcServer {
 
     this.server.addService(this.brokerService, {
       createOrder: createOrder.bind(this.action),
-      watchMarket: watchMarket.bind(this.action)
+      watchMarket: watchMarket.bind(this.action),
+      createFill: createFill.bind(this.action)
     })
   }
 
