@@ -29,6 +29,7 @@
   "homepage": "https://github.com/kinesis-exchange/broker#readme",
   "dependencies": {
     "caporal": "0.10.0",
+    "colors": "1.2.1",
     "grpc": "1.10.1"
   },
   "devDependencies": {
