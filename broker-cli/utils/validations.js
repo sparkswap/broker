@@ -16,7 +16,7 @@ function isPrice (str) {
  *
  * @param {String} marketName
  */
-function validMarketNameLength(marketName) {
+function validMarketNameLength (marketName) {
   return (marketName.length >= 2 && marketName.length <= 5)
 }
 
@@ -39,7 +39,8 @@ function isRPCHost (str) {
   return isUrl(str, {
     // We can disable this for now because we use URLs that are local to the container
     // However, we should remove this in the future to be more strict in our input checking
-    require_valid_protocol: false
+    require_valid_protocol: false,
+    require_tld: false
   })
 }
 
