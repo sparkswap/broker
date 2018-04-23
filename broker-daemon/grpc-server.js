@@ -23,7 +23,7 @@ class Action {
   }
 }
 
-async function createFill(call, cb) {
+async function createFill (call, cb) {
   const { amount } = call.request
   const relayer = new RelayerClient()
 
@@ -97,7 +97,6 @@ async function createOrder (call, cb) {
   const relayer = new RelayerClient()
 
   try {
-    this.logger.info('Attempting to create order')
     const order = await relayer.createOrder(request)
     cb(null, { orderId: order.orderId })
   } catch (e) {

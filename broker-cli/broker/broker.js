@@ -1,7 +1,7 @@
 const grpc = require('grpc')
 const path = require('path')
 
-const BROKER_DAEMON_HOST = process.env.BROKER_DAEMON_HOST
+const BROKER_DAEMON_HOST = process.env.BROKER_DAEMON_HOST || 'localhost:27492'
 
 if (!BROKER_DAEMON_HOST) throw new Error('No BROKER_DAEMON_HOST has been specified.')
 
