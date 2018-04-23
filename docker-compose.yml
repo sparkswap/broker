@@ -35,6 +35,8 @@ services:
       - EXCHANGE_RPC_HOST=relayer:28492
       - GRPC_VERBOSITY=error
       - GRPC_TRACE=all
+    ports:
+      - "27492:27492"
     networks:
       - broker
       - relayer

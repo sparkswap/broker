@@ -4,22 +4,23 @@
  * Kinesis Broker CLI
  */
 
-const program = require('caporal');
+const program = require('caporal')
 
-const { version: CLI_VERSION } = require('../package.json');
+const { version: CLI_VERSION } = require('../package.json')
 
 const {
   buyCommand,
   sellCommand,
   configCommand,
-} = require('../broker-cli');
+  orderbookCommand
+} = require('../broker-cli')
 
 /**
  * Initial Program Setup
  */
 program
   .version(CLI_VERSION)
-  .description('KINESIS BROKER CLI');
+  .description('KINESIS BROKER CLI')
 
 /**
  * Initialize Commands
@@ -33,8 +34,9 @@ program
  * - `kcli sell`
  */
 
-configCommand(program);
-buyCommand(program);
-sellCommand(program);
+configCommand(program)
+buyCommand(program)
+sellCommand(program)
+orderbookCommand(program)
 
-program.parse(process.argv);
+program.parse(process.argv)

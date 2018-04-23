@@ -17,6 +17,28 @@ message CreateOrderResponse {
   string orderId = 0;
 }
 
+message WatchMarketRequest {
+  string market = 0;
+}
+
+message WatchMarketResponse {
+  string event_id = 0;
+  string order_id = 1;
+  int32 timestamp = 3;
+  EventType event_type = 4;
+  int64 base_amount = 5;
+  int64 counter_amount = 6;
+  int64 fill_amount = 7;
+  Side side = 8;
+
+  enum EventType {
+    PLACED = 0;
+    CANCELLED = 1;
+    FILLED = 2;
+  }
+}
+
 service Broker {
   rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
+  rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
 }
