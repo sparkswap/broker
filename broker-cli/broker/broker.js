@@ -41,6 +41,15 @@ class Broker {
     // TODO: Add a duration for gRPC
     return this.broker.watchMarket(params)
   }
+
+  async createFill (params) {
+    return new Promise((resolve, reject) => {
+      this.broker.createFill(params, (err, res) => {
+        if (err) return reject(err)
+        return resolve(res)
+      })
+    })
+  }
 }
 
 module.exports = Broker

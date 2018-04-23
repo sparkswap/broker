@@ -10,26 +10,21 @@
  */
 
 const Broker = require('./broker')
-const { ENUMS } = require('./utils')
-
-const { ORDER_TYPES } = ENUMS
 
 async function sell (args, opts, logger) {
-  const { amount, price } = args
-  const { timeinforce, market, rpcAddress = null } = opts
-  const side = ORDER_TYPES.SELL
+  const { amount } = args
+  const { market, rpcAddress = null } = opts
 
   const request = {
     amount,
-    price,
-    timeinforce,
-    market,
-    side
+    market
   }
 
   try {
-    const orderResult = await new Broker(rpcAddress).createOrder(request)
-    logger.info(orderResult)
+    // This is totally a demo branch thing. fillOrder is not the first step of the
+    // fill process
+    const fillResult = await new Broker(rpcAddress).createFill(request)
+    logger.info(fillResult)
   } catch (e) {
     logger.error(e.toString())
   }
@@ -37,11 +32,9 @@ async function sell (args, opts, logger) {
 
 module.exports = (program) => {
   program
-    .command('sell', 'Submit an order to sell.')
+    .command('sell', 'Submit a sell order.')
     .argument('<amount>', 'Amount of base currency to buy.', program.INT)
-    .argument('[price]', 'Worst price that this order should be executed at. (If omitted, the market price will be used)', /^[0-9]{1,20}(\.[0-9]{1,20})?$/)
     .option('--market <marketName>', 'Relevant market name', /^[A-Z]{2,5}\/[A-Z]{2,5}$/, undefined, true)
-    .option('-t, --timeinforce', 'Time in force policy for this order.', /^PO|FOK|IOC|GTC$/, 'GTC')
     .option('--rpc-address', 'Location of the RPC server to use.', /^.+(:[0-9]*)?$/)
     .action(sell)
 }
