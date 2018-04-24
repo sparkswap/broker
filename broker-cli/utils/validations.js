@@ -1,6 +1,4 @@
-const isInt = require('validator/lib/isInt')
-const isAlpha = require('validator/lib/isAlpha')
-const isUrl = require('validator/lib/isUrl')
+const { isInt, isAlpha, isUrl } = require('validator')
 
 /**
  * Checks if the specified string is a valid price for kinesis
