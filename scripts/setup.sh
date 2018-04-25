@@ -18,11 +18,6 @@ mkdir -p $ROOT_DIR/docker/lnd-engine
 # Copy all files from LND Engine to docker
 cp -rf $ROOT_DIR/node_modules/lnd-engine/docker/* $ROOT_DIR/docker/lnd-engine
 
-echo "Creating the exchange network"
-
-# Create a global network for containers
-docker network create $DEFAULT_NETWORK_NAME 2>/dev/null || true
-
 echo "Starting all containers"
 
 # Steps for success:
@@ -33,4 +28,4 @@ docker-compose down
 docker-compose build --force-rm
 
 (cd $ROOT_DIR && docker-compose up -d)
-(cd $ROOT_DIR/docker/lnd-engine && docker-compose up -d)
+(cd $ROOT_DIR/docker/lnd-engine && docker-compose -p broker up -d)

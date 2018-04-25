@@ -12,7 +12,6 @@ services:
     networks:
       - broker
       - relayer
-      - kinesis-exchange
     working_dir: '/home/app'
     entrypoint: './bin/kcli'
 
@@ -41,7 +40,6 @@ services:
     networks:
       - broker
       - relayer
-      - kinesis-exchange
     working_dir: '/home/app'
     entrypoint: bash -c './bin/kbd'
 
@@ -55,5 +53,3 @@ networks:
   relayer:
     external:
       name: relayer_relayer
-  kinesis-exchange:
-    external: true
