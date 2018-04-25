@@ -4,13 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "preinstall": "npm rebuild",
     "pretest": "standard",
     "test-cli": "NODE_PATH=. mocha 'broker-cli/**/*.spec.js'",
     "test-daemon": "NODE_PATH=. mocha 'broker-daemon/**/*.spec.js'",
     "test": "npm run test-cli && npm run test-daemon",
     "build": "bash ./scripts/ascii.sh && bash ./scripts/build.sh",
-    "format": "standard --fix"
+    "format": "standard --fix",
+    "setup": "bash ./scripts/setup.sh"
   },
   "standard": {
     "env": [
@@ -31,7 +31,8 @@
   "dependencies": {
     "caporal": "0.10.0",
     "grpc": "1.10.1",
-    "validator": "9.4.1"
+    "validator": "9.4.1",
+    "lnd-engine": "kinesis-exchange/lnd-engine"
   },
   "devDependencies": {
     "chai": "4.1.2",

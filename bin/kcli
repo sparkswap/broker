@@ -12,7 +12,8 @@ const {
   buyCommand,
   sellCommand,
   configCommand,
-  orderbookCommand
+  orderbookCommand,
+  setupCommand
 } = require('../broker-cli')
 
 /**
@@ -29,12 +30,12 @@ program
  * this may use a little more memory, it allows us to couple arguments/handlers in
  * the same file AND prevents us from cluttering the global scope when using caporal
  *
- * Available Commands:
- * - `kcli buy`
- * - `kcli sell`
+ * Please use `kcli --help` to see available commands
  */
 
+setupCommand(program)
 configCommand(program)
+
 buyCommand(program)
 sellCommand(program)
 orderbookCommand(program)

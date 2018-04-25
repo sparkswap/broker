@@ -1868,6 +1868,9 @@
         "type-check": "0.3.2"
       }
     },
+    "lnd-engine": {
+      "version": "github:kinesis-exchange/lnd-engine#a9f70a6ed304519c85b829d03ef1b51c5afa7b9a"
+    },
     "load-json-file": {
       "version": "2.0.0",
       "resolved": "https://registry.npmjs.org/load-json-file/-/load-json-file-2.0.0.tgz",
