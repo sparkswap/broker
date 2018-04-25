@@ -10,7 +10,9 @@
     "test": "npm run test-cli && npm run test-daemon",
     "build": "bash ./scripts/ascii.sh && bash ./scripts/build.sh",
     "format": "standard --fix",
-    "setup": "bash ./scripts/setup.sh"
+    "lnd-up": "npm explore lnd-engine -- docker-compose up -d",
+    "lnd-down": "npm explore lnd-engine -- docker-compose down",
+    "lnd-ps": "npm explore lnd-engine -- docker-compose ps"
   },
   "standard": {
     "env": [
