@@ -1,4 +1,4 @@
-const { chai } = require('test/test-helper.spec')
+const { chai } = require('test/test-helper')
 const { expect } = chai
 
 const {

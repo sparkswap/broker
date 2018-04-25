@@ -4,11 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "preinstall": "npm rebuild",
     "pretest": "standard",
     "test-cli": "NODE_PATH=. mocha 'broker-cli/**/*.spec.js'",
     "test-daemon": "NODE_PATH=. mocha 'broker-daemon/**/*.spec.js'",
-    "test": "npm run test-cli && npm run test-daemon",
+    "test": "NODE_PATH=. nyc mocha 'broker-cli/**/*.spec.js' 'broker-daemon/**/*.spec.js'",
     "build": "bash ./scripts/ascii.sh && bash ./scripts/build.sh",
     "format": "standard --fix"
   },
@@ -37,6 +36,9 @@
     "chai": "4.1.2",
     "dirty-chai": "2.0.1",
     "mocha": "5.1.0",
+    "mock-require": "3.0.2",
+    "nyc": "11.7.1",
+    "rewire": "4.0.1",
     "sinon": "4.5.0",
     "sinon-chai": "3.0.0",
     "standard": "11.0.1"
