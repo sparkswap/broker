@@ -1,6 +1,6 @@
 {
   "name": "broker",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "lockfileVersion": 1,
   "requires": true,
   "dependencies": {
@@ -2105,6 +2105,9 @@
         "prelude-ls": "1.1.2",
         "type-check": "0.3.2"
       }
+    },
+    "lnd-engine": {
+      "version": "github:kinesis-exchange/lnd-engine#a9f70a6ed304519c85b829d03ef1b51c5afa7b9a"
     },
     "load-json-file": {
       "version": "2.0.0",
