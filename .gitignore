@@ -65,6 +65,3 @@ typings/
 
 # Proto build files
 proto/relayer/
-
-# lnd-engine docker files
-docker/lnd-engine/
