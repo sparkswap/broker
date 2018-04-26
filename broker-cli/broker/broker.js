@@ -48,6 +48,19 @@ class Broker {
   async watchMarket (params) {
     return this.broker.watchMarket(params)
   }
+
+  /**
+   * Calls a healthcheck endpoint on the broker to determine connectivity
+   *
+   */
+  async healthCheck () {
+    return new Promise((resolve, reject) => {
+      this.broker.healthCheck({}, (err, res) => {
+        if (err) return reject(err)
+        return resolve(res)
+      })
+    })
+  }
 }
 
 module.exports = Broker

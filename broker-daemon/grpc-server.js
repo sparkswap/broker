@@ -5,7 +5,8 @@ const GrpcAction = require('./grpc-action')
 
 const {
   createOrder,
-  watchMarket
+  watchMarket,
+  healthCheck
 } = require('./broker-actions')
 
 const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
@@ -29,7 +30,8 @@ class GrpcServer {
 
     this.server.addService(this.brokerService, {
       createOrder: createOrder.bind(this.action),
-      watchMarket: watchMarket.bind(this.action)
+      watchMarket: watchMarket.bind(this.action),
+      healthCheck: healthCheck.bind(this.action)
     })
   }
 

@@ -21,4 +21,5 @@ sed 's|^import \"google/api/annotations.proto\";||' ./proto/lnd-rpc.proto > /tmp
 
 # Rest of the installation process
 npm i
+npm rebuild grpc --target_arch=x64 --target_platform=linux --target_libc=glibc
 npm test
