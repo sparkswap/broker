@@ -1,6 +1,4 @@
-const isInt = require('validator/lib/isInt')
-const isAlpha = require('validator/lib/isAlpha')
-const isUrl = require('validator/lib/isUrl')
+const { isInt, isAlpha, isURL } = require('validator')
 
 /**
  * Checks if the specified string is a valid price for kinesis
@@ -36,7 +34,7 @@ function isMarketName (str) {
 }
 
 function isRPCHost (str) {
-  return isUrl(str, {
+  return isURL(str, {
     // We can disable this for now because we use URLs that are local to the container
     // However, we should remove this in the future to be more strict in our input checking
     require_valid_protocol: false,

@@ -1,7 +1,7 @@
 const grpc = require('grpc')
 const path = require('path')
 
-const BROKER_DAEMON_HOST = process.env.BROKER_DAEMON_HOST || 'localhost:27492'
+const BROKER_DAEMON_HOST = process.env.BROKER_DAEMON_HOST
 
 // TODO: Break actions in the broker out into seperate modules
 class Broker {
@@ -18,7 +18,7 @@ class Broker {
     this.proto = grpc.load(this.protoPath, this.protoFileType, this.protoOptions)
 
     // TODO: we will need to add auth for daemon for a non-local address
-    this.address = address || BROKER_DAEMON_HOST
+    this.address = address || BROKER_DAEMON_HOST || 'localhost:27492'
     this.broker = new this.proto.Broker(this.address, grpc.credentials.createInsecure())
   }
 

@@ -7,8 +7,11 @@
  */
 const sinon = require('sinon')
 const chai = require('chai')
+const sinonChai = require('sinon-chai')
 const dirtyChai = require('dirty-chai')
+const rewire = require('rewire')
 
+chai.use(sinonChai)
 chai.use(dirtyChai)
 
 beforeEach(function () {
@@ -20,5 +23,7 @@ afterEach(function () {
 })
 
 module.exports = {
-  chai
+  chai,
+  sinon,
+  rewire
 }
