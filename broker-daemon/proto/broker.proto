@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 enum Side {
   BID = 0;
   ASK = 1;
@@ -38,7 +40,12 @@ message WatchMarketResponse {
   }
 }
 
+message HealthCheckResponse {
+  string engine_status = 0;
+}
+
 service Broker {
   rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
   rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
+  rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse)
 }

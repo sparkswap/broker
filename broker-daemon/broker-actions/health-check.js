@@ -1,7 +1,5 @@
 const { status } = require('grpc')
 
-const RelayerClient = require('../relayer')
-
 /**
  * Creates an order w/ the exchange
  *
@@ -15,34 +13,9 @@ const RelayerClient = require('../relayer')
  * @param {fn} cb
  */
 async function createOrder (call, cb) {
-  const {
-    // amount,
-    // price,
-    market,
-    // timeinforce,
-    side
-  } = call.request
-
-  // We need to calculate the base amount/counter amount based off of current
-  // prices
-
-  const [baseSymbol, counterSymbol] = market.split('/')
-
-  const request = {
-    ownerId: '123455678',
-    payTo: 'ln:12234987',
-    baseSymbol,
-    counterSymbol,
-    baseAmount: '10000',
-    counterAmount: '1000000',
-    side
-  }
-
-  const relayer = new RelayerClient()
-
   try {
-    const order = await relayer.createOrder(request)
-    cb(null, { orderId: order.orderId })
+    // Contact the engine and see what is up
+    cb(null, { engineStatus: 'We good dawg' })
   } catch (e) {
     this.logger.error('createOrder failed', { error: e.toString() })
 

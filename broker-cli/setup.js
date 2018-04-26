@@ -4,7 +4,7 @@ const { validations } = require('./utils')
 /**
  * kcli setup
  *
- * Test the connection
+ * Tests the engine connection
  * See if a channel is open for the relayer
  * If not create one and prompt the user for action
  *
@@ -18,10 +18,9 @@ const { validations } = require('./utils')
 
 async function setup (args, opts, logger) {
   const { rpcAddress = null } = opts
-  const request = {}
 
   try {
-    const orderResult = await new Broker(rpcAddress).createOrder(request)
+    const orderResult = await new Broker(rpcAddress)
     logger.info(orderResult)
   } catch (e) {
     logger.error(e.toString())

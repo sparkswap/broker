@@ -42,8 +42,6 @@ class RelayerClient {
    * @param {Object} params
    */
   async watchMarket (params) {
-    // TODO: Add better logging because there is no connection deadline here
-    //   but we still want to verify if the connection is OK.
     return this.orderbook.watchMarket(params)
   }
 }
