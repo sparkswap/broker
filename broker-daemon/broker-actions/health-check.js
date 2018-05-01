@@ -15,22 +15,24 @@ const { LND_HOST, LND_TLS_CERT, LND_MACAROON } = process.env
  * @param {String} [timeinforce] call.request.timeinforce
  * @param {fn} cb
  */
-async function createOrder (call, cb) {
+async function healthCheck (call, cb) {
   try {
-    // Contact the engine and see what is up
+    // TODO: Remove these because they are the default options
     const options = {
       logger: this.logger,
       tlsCertPath: LND_TLS_CERT,
       macaroonPath: LND_MACAROON
     }
     const res = await new LndEngine(LND_HOST, options).getInfo()
+    // TODO: Instead of using the publicKey we should just be checking a status
+    // to make sure everything is running correctly
     cb(null, { engineStatus: res.identityPubkey })
   } catch (e) {
-    this.logger.error('createOrder failed', { error: e })
+    this.logger.error('healthCheck failed', { error: e })
 
     // eslint-disable-next-line
     return cb({ message: e.message, code: status.INTERNAL })
   }
 }
 
-module.exports = createOrder
+module.exports = healthCheck
