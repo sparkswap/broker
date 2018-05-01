@@ -1,4 +1,7 @@
 const { status } = require('grpc')
+const LndEngine = require('lnd-engine')
+
+const { LND_HOST, LND_TLS_CERT, LND_MACAROON } = process.env
 
 /**
  * Creates an order w/ the exchange
@@ -15,9 +18,15 @@ const { status } = require('grpc')
 async function createOrder (call, cb) {
   try {
     // Contact the engine and see what is up
-    cb(null, { engineStatus: 'We good dawg' })
+    const options = {
+      logger: this.logger,
+      tlsCertPath: LND_TLS_CERT,
+      macaroonPath: LND_MACAROON
+    }
+    const res = await new LndEngine(LND_HOST, options).getInfo()
+    cb(null, { engineStatus: res.identityPubkey })
   } catch (e) {
-    this.logger.error('createOrder failed', { error: e.toString() })
+    this.logger.error('createOrder failed', { error: e })
 
     // eslint-disable-next-line
     return cb({ message: e.message, code: status.INTERNAL })

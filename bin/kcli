@@ -14,7 +14,7 @@ const {
   configCommand,
   orderbookCommand,
   setupCommand,
-  healthCheckCommand
+  healthcheckCommand
 } = require('../broker-cli')
 
 /**
@@ -36,7 +36,7 @@ program
 
 setupCommand(program)
 configCommand(program)
-healthCheckCommand(program)
+healthcheckCommand(program)
 
 buyCommand(program)
 sellCommand(program)

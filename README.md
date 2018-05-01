@@ -114,3 +114,6 @@ Our clients/servers will then use the tls.key + a macaroon to make requests to a
 
 NOTE: Specifically w/ LND, macaroon auth will fail if the db/macaroons are not created at the same time, so we need to wipe out the macaroons in the /secure/ folder before each new run.
 
+### Using an engine for development
+
+You can change the dependency to a specific branch by using `kinesis-exchange/engine#my-branch`, then delete npm-shrinkwrap and reinstall everything w/ `npm i`
