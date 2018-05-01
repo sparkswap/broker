@@ -4,10 +4,12 @@
 
 [![CircleCI](https://circleci.com/gh/kinesis-exchange/broker.svg?style=svg&circle-token=11fe800209ce8a6839b3c071f8f61ee8a345b026)](https://circleci.com/gh/kinesis-exchange/broker)
 
-This repo contains source for the following products
+This repo contains source for the following products:
 
 - kinesis-broker-daemon or kbd
 - kinesis-broker-cli or kcli
+
+Use `npm start` to install dependencies and build the cli/daemon
 
 ### Before you begin
 
