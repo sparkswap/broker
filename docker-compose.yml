@@ -24,8 +24,8 @@ services:
       # This is populated externally w/ an engine
       - 'shared:/shared'
     environment:
-      - GRPC_VERBOSITY=INFO
-      - GRPC_TRACE=all
+      # - GRPC_VERBOSITY=INFO
+      # - GRPC_TRACE=all
       - RPC_ADDRESS=0.0.0.0:27492
       - DATA_DIR=/data
       - LND_HOST=lnd_btc:10009
