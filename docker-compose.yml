@@ -11,7 +11,6 @@ services:
       - BROKER_DAEMON_HOST=kbd:27492
     networks:
       - broker
-      - relayer
     working_dir: '/home/app'
     entrypoint: './bin/kcli'
 
@@ -21,35 +20,32 @@ services:
       dockerfile: docker/kinesis/Dockerfile
     volumes:
       - './:/home/app'
-      - 'kcli:/data'
-      - 'relayer_secure:/secure/:ro'
+      - '/data'
+      # This is populated externally w/ an engine
+      - 'shared:/shared'
     environment:
-      - NODE_PATH=.
+      # - GRPC_VERBOSITY=INFO
+      # - GRPC_TRACE=all
       - RPC_ADDRESS=0.0.0.0:27492
       - DATA_DIR=/data
-      - LND_RPC_HOST=0.0.0.0:10009
-      - LND_TLS_CERT=/secure/tls.cert
-      - LND_MACAROON=/secure/admin.macaroon
-      - ENGINE_TYPE=lnd
+      - LND_HOST=lnd_btc:10009
+      - LND_TLS_CERT=/shared/lnd-engine-tls.cert
+      - LND_MACAROON=/shared/lnd-engine-admin.macaroon
+      - GRPC_SSL_CIPHER_SUITES=HIGH+ECDSA
       # This address is specifically tied to the relayer network
+      - ENGINE_TYPE=lnd
       - EXCHANGE_RPC_HOST=relayer:28492
-      - GRPC_VERBOSITY=error
-      - GRPC_TRACE=all
     ports:
       - "27492:27492"
     networks:
       - broker
-      - relayer
+      - lnd
     working_dir: '/home/app'
     entrypoint: bash -c './bin/kbd'
 
 volumes:
-  kcli:
-  relayer_secure:
-    external: true
+  shared:
 
 networks:
   broker:
-  relayer:
-    external:
-      name: relayer_relayer
+  lnd:

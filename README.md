@@ -4,10 +4,12 @@
 
 [![CircleCI](https://circleci.com/gh/kinesis-exchange/broker.svg?style=svg&circle-token=11fe800209ce8a6839b3c071f8f61ee8a345b026)](https://circleci.com/gh/kinesis-exchange/broker)
 
-This repo contains source for the following products
+This repo contains source for the following products:
 
 - kinesis-broker-daemon or kbd
 - kinesis-broker-cli or kcli
+
+Use `npm start` to install dependencies and build the cli/daemon
 
 ### Before you begin
 
@@ -114,3 +116,6 @@ Our clients/servers will then use the tls.key + a macaroon to make requests to a
 
 NOTE: Specifically w/ LND, macaroon auth will fail if the db/macaroons are not created at the same time, so we need to wipe out the macaroons in the /secure/ folder before each new run.
 
+### Using an engine for development
+
+You can change the dependency to a specific branch by using `kinesis-exchange/engine#my-branch`, then delete npm-shrinkwrap and reinstall everything w/ `npm i`
