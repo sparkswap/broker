@@ -6,62 +6,54 @@
 
 This repo contains source for the following products:
 
-- kinesis-broker-daemon or kbd
-- kinesis-broker-cli or kcli
-
-Use `npm start` to install dependencies and build the cli/daemon
+- KCLI - CLI for Kinesis Daemon (this is in its own container OR can be used directly from `./bin/klci` from inside the kbd container)
+- KBD - Kinesis Broker Daemon - handle interactions between LND and the Kinesis Exchange (Relayer)
 
 ### Before you begin
 
 You will need to have nvm (and our current node version) installed on your machine.
 
-You will also need to install a plugin for your editor for [Standard](https://standardjs.com/)
+It is also recommended that you install a [Standard](https://standardjs.com/) plugin for your editor. We currently follow StandardJS formatting.
+
+Additonally, you must have ssh/private access to the `kinesis-exchange/lnd-engine` to be able to use `npm i`.
 
 ### Getting Started
 
-In order for the Kinesis CLI and Kinesis Daemon to be fully functional, the following containers must be running:
+Use `npm start` to install dependencies and build the cli/daemon
 
-- roasbeef/BTCD - Headless daemon to interact with blockchain (no wallet in this package)
-- LND - Lightning Network Daemon + Wallet
+In order for KCLI/KBD to work, you will need to start an `Engine`. We currently have `kinesis-exchange/lnd-engine` installed in the repo. Use the command `npm run lup` to start the engine. Use `npm run lps` to make sure the service is running successfully.
 
-Once our wallet is setup, we need to specify the lnd url here:
+Then, start the containers for KCLI/KBD with `docker-compose up -d`. You can then check if they are running w/ `docker-compose ps`
 
-- KCLI - CLI for Kinesis Daemon (this is in its own container OR can be used directly from `./bin/klci` from inside the kbd container)
-- KBD - Kinesis Broker Daemon - handle interactions between LND and the Kinesis Exchange (Relayer)
+NOTE: running `docker-compose ps` at the root will NOT display containers for the engine. This is due to the location of the docker-compose file.
 
-#### Order of operations
+### Using the CLI
 
-Order of operations for a broker request:
-KCLI -> KBD -> LND -> KBD -> RELAYER -> KBD -> LND/CLI/Stream
+Once all containers are started succesfully, we can check to make sure the CLI/KBD is running w/ the engine.
 
-1. A user will make a request from the CLI
-2. the CLI will post a grpc request to the Broker Daemon
-3. Daemon will send off the request to the relayer
-4. Relayer will send a response back to KBD
-5. Daemon will respond by either making operations to LND, output back to CLI or opening a client/server stream
+We can run the following healthcheck command `./bin/kcli healthcheck` to verify that we can hit LND/BTCD.
 
-### What happens when I make an order?
+Alternatively, we have created a CLI container where we can run the check:
 
-In order for these steps to be fulfilled, a user must first have the client up and running AND money transfered to an LND wallet.
+```
+docker-compose run kcli healthcheck
+```
 
-1. We make a request for a buy
-  - `kcli buy --amount 100 --price 10 --market BTC/LTC -t GTC`
-2. The cli hits the KBD at an `order` endpoint
-  - this endpoint will then take those fields and fit the request to the RPC format
-    for the relayer. This request would add the LN address and would split the market
-    name and calculate other information
-3. KBD would hit the relayer with the create-order request
-4. Relayer returns a response giving fee/deposit invoices
-5. KBD will then take those invoices and pay them with the LND wallet
-6. KBD will then create fee/deposit refund invoices for the relayer
-7. KBD will send a request to the `place-order` endpoint to complete the order
-8. Relayer will say all good to the go
-9. KCLI returns a successfully response
-10. KBD will receive an event for a new order
+NOTE: This will initialize a new container on every run, which is very process heavy.
+
+### Development
+
+There are times where you will want to work on an Engine and check the functionality directly w/ the broker. In order to do this, in package.json, you can change the dependency to a specific branch like so:  `kinesis-exchange/engine#my-branch`, then MAKE SURE to delete npm-shrinkwrap and reinstall everything w/ `npm i`.
+
+Specifically related to the `LND-Engine` you have the following commands available through npm:
+
+1. `npm run lup` - starts the engine
+2. `npm run ld` - kills the engine
+3. `npm run lps` - gives you information on the running state of the containers
 
 ### Authentication between CLI (KCLI) and Broker Daemon (KBD)
 
-None
+None, yet...
 
 ### Authentication between Broker Daemon (KBD) and Relayer
 
@@ -69,53 +61,10 @@ None, yet...
 
 ### Authentication between Daemon and LND
 
-Macaroons and SSL
+TLS certs and Macaroons are shared through the `/shared` directory located at the root of the `kbd` container. The `/shared` volume is created in the lnd-engine and is shared through the broker project through the use of `-p` on the startup commands located in package.json.
 
 ### Additional Resource
 
 - (Commander CLI](https://github.com/tj/commander.js)
 - [LND interactions](https://dev.lightning.community/overview/)
 - [LND setup](https://dev.lightning.community/tutorial/01-lncli/index.html)
-
-### SETUP
-
-The guide below will run you through the steps of setup for LND and funding a wallet on a network. This is a bare minimum to get started on the Kinesis exchange.
-
-We need to setup your LND/BTC wallet.
-
-Our example we will use BTC and simnet.
-
-Run the following commands to build some LND containers:
-
-Once the images are built we can `up` the containers by running:
-
-From this point forward, whenever we want to check on the status of containers, or run commands against them, we will need to `cd` in to the appropriate directory (either `docker` or `docker-user`). Docker-compose will only work when there is a docker-compose file at the root of your `pwd` OR if you specify the directory by using `docker-compose -f my/fake/directory/docker-compose.yml`. It is easier if we simply change directories.
-
-#### Goals
-
-1. Using docker we will start BTC and LND
-2. We will fund the account
-    - Fake funding through simnet
-    - Funding through a faucet on testnet
-
-#### Funding your account
-
-Once the LND/BTC containers are up, lets log into the LND container and create a new wallet
-
-The broker will take the following information:
-
-1. Wallet
-2. Relayer address
-3. Node address
-
-### Authentication
-
-Authentication for LND happens on the server side. We will generate a client cert (tls.cert) and a private server key (tls.key). Only the LND_BTC instance needs to know about both keys.
-
-Our clients/servers will then use the tls.key + a macaroon to make requests to all LND instances. All services will have some form of TLS/SSL for client/server communication.
-
-NOTE: Specifically w/ LND, macaroon auth will fail if the db/macaroons are not created at the same time, so we need to wipe out the macaroons in the /secure/ folder before each new run.
-
-### Using an engine for development
-
-You can change the dependency to a specific branch by using `kinesis-exchange/engine#my-branch`, then delete npm-shrinkwrap and reinstall everything w/ `npm i`
