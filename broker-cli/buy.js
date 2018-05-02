@@ -35,7 +35,6 @@ async function buy (args, opts, logger) {
     const orderResult = await new Broker(rpcAddress).createOrder(request)
     logger.info(orderResult)
   } catch (e) {
-    console.log(Broker)
     logger.error(e.toString())
   }
 };
