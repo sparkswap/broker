@@ -7,8 +7,8 @@
     "project_name": "broker"
   },
   "scripts": {
-    "preinstall": "bash ./scripts/preinstall.sh",
-    "postinstall": "bash ./scripts/postinstall.sh",
+    "prebuild": "bash ./scripts/prebuild.sh",
+    "build": "bash ./scripts/build.sh",
     "format": "standard --fix",
     "pretest": "npm run format",
     "test": "NODE_PATH=. nyc mocha 'broker-cli/**/*.spec.js' 'broker-daemon/**/*.spec.js'",

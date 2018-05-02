@@ -19,7 +19,7 @@ Additonally, you must have ssh/private access to the `kinesis-exchange/lnd-engin
 
 ### Getting Started
 
-Use `npm i` to install dependencies and build the cli/daemon
+Use `npm i && npm run build` to install dependencies and build the cli/daemon
 
 In order for KCLI/KBD to work, you will need to start an `Engine`. We currently have `kinesis-exchange/lnd-engine` installed in the repo. Use the command `npm run lup` to start the engine. Use `npm run lps` to make sure the service is running successfully.
 
