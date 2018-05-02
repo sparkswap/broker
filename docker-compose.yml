@@ -34,7 +34,9 @@ services:
       - GRPC_SSL_CIPHER_SUITES=HIGH+ECDSA
       # This address is specifically tied to the relayer network
       - ENGINE_TYPE=lnd
-      - EXCHANGE_RPC_HOST=relayer:28492
+      # This is a temporary workaround for preventing the use of external networks
+      # for the relayer. In a testnet/mainnet setting, this will be a public IP.
+      - EXCHANGE_RPC_HOST=docker.for.mac.internal:28492
     ports:
       - "27492:27492"
     networks:
