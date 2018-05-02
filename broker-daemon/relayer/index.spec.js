@@ -1,9 +1,7 @@
 const { chai } = require('test/test-helper')
 const { expect } = chai
 
-const {
-  RelayerClient
-} = require('./index')
+const RelayerClient = require('./index')
 
 describe('relayer index', () => {
   it('defines RelayerClient', () => {
