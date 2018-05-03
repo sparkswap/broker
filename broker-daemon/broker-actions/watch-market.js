@@ -1,5 +1,3 @@
-const RelayerClient = require('../relayer')
-
 /**
  * Creates a stream with the exchange that watches for market events
  *
@@ -11,17 +9,17 @@ async function watchMarket (call) {
   // TODO: Some validation on here. Maybe the client can call out for valid markets
   // from the relayer so we dont event make a request if it is invalid
   const { market } = call.request
-  const [baseSymbol, counterSymbol] = market.split('/')
-
-  // TODO: Rethink the lastUpdated null value for relayer
-  const request = { baseSymbol, counterSymbol, lastUpdated: 0 }
-  const relayer = new RelayerClient()
 
   try {
-    const watchOrder = await relayer.watchMarket(request)
+    const currentState = await this.marketEventManager.getState(market)
 
-    watchOrder.on('data', (order) => call.write(order))
-    watchOrder.on('end', () => this.logger.info('Finished sending'))
+    currentState.forEach((event) => {
+      call.write(event.serialize())
+    })
+
+    this.marketEventManager.on(`market:${market}`, (event) => {
+      call.write(event.serialize())
+    })
   } catch (e) {
     this.logger.error('watchMarket failed', { error: e.toString() })
 
