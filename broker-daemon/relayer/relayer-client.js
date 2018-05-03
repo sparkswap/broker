@@ -15,6 +15,7 @@ class RelayerClient {
     // TODO: we will need to add auth for daemon for a non-local address
     this.maker = new this.proto.Maker(this.address, grpc.credentials.createInsecure())
     this.orderbook = new this.proto.OrderBook(this.address, grpc.credentials.createInsecure())
+    this.health = new this.proto.Health(this.address, grpc.credentials.createInsecure())
   }
 
   /**
@@ -43,6 +44,17 @@ class RelayerClient {
    */
   async watchMarket (params) {
     return this.orderbook.watchMarket(params)
+  }
+
+  async healthCheck (params) {
+    const deadline = new Date().setSeconds(new Date().getSeconds() + TIMEOUT_IN_SECONDS)
+    
+    return new Promise((resolve, reject) => {
+      this.health.check(params, { deadline }, (err, res) => {
+        if (err) return reject(err)
+        return resolve(res)
+      })
+    })
   }
 }
 
