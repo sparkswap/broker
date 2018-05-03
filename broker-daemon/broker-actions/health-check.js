@@ -5,13 +5,10 @@ const LndEngine = require('lnd-engine')
 const { LND_HOST, LND_TLS_CERT, LND_MACAROON } = process.env
 
 async function healthCheck(call, cb) {
-  
   const lndResStatus = await lndStatus()
   const relayerResStatus = await relayerStatus()
 
-  console.log(relayerResStatus)
-
-  // cb(null, { statuses: {lndStatus: lndResStatus, relayerStatus: relayerResStatus } })
+  cb(null, {lndStatus: lndResStatus, relayerStatus: relayerResStatus})
 }
 
 async function lndStatus() {
@@ -34,7 +31,7 @@ async function lndStatus() {
 async function relayerStatus () {
   const relayer = new RelayerClient()
     try {
-      await relayer.healthCheck('Health')
+      await relayer.healthCheck({service: 'Health'})
       return STATUS_CODES.OK
 
     } catch (e) {

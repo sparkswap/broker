@@ -41,7 +41,8 @@ message WatchMarketResponse {
 }
 
 message HealthCheckResponse {
-  string engine_status = 0;
+  string lndStatus = 0;
+  string relayerStatus = 1;
 }
 
 service Broker {
