@@ -1,4 +1,6 @@
 const GrpcServer = require('./grpc-server')
+const level = require('level')
+const sublevel = require('sublevelup')
 
 /**
  * Creates an RPC server with params from kbd cli
@@ -17,8 +19,8 @@ const GrpcServer = require('./grpc-server')
 
 function startServer (args, opts, logger) {
   const {
-    rpcAddress
-    // dataDir,
+    rpcAddress,
+    dataDir
     // engineType,
     // exchangeHost,
     // lndRpc,
@@ -27,7 +29,8 @@ function startServer (args, opts, logger) {
   } = opts
 
   try {
-    const grpc = new GrpcServer(logger)
+    const store = sublevel(level(dataDir))
+    const grpc = new GrpcServer(logger, store)
     grpc.listen(rpcAddress)
     logger.info(`gRPC server started: Server listening on ${rpcAddress}`)
   } catch (e) {

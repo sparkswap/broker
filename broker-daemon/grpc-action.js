@@ -5,8 +5,9 @@
  * @author kinesis.exchange
  */
 class GrpcAction {
-  constructor (logger) {
+  constructor (logger, marketEventManager) {
     this.logger = logger
+    this.marketEventManager = marketEventManager
   }
 }
 
