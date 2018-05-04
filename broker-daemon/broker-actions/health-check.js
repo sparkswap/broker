@@ -39,4 +39,4 @@ const STATUS_CODES = Object.freeze({
   OK: 'OK'
 })
 
-module.exports = healthCheck
+module.exports = { healthCheck }
