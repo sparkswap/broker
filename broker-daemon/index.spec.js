@@ -10,6 +10,7 @@ describe('broker daemon', () => {
   let level
   let sublevel
   let logger
+  let EventEmitter
 
   beforeEach(() => {
     listen = sinon.stub()
@@ -29,6 +30,9 @@ describe('broker daemon', () => {
       info: sinon.spy(),
       error: sinon.spy()
     }
+
+    EventEmitter = sinon.stub()
+    brokerDaemon.__set__('EventEmitter', EventEmitter)
   })
 
   describe('startServer', () => {
@@ -49,14 +53,25 @@ describe('broker daemon', () => {
       expect(sublevel).to.have.been.calledWith(fakeLevel)
     })
 
+    it('creates an event handler', () => {
+      startServer(null, {}, logger)
+
+      expect(EventEmitter).to.have.been.calledOnce()
+      expect(EventEmitter).to.have.been.calledWithExactly()
+      expect(EventEmitter).to.have.been.calledWithNew()
+    })
+
     it('creates a server', () => {
       const fakeSublevel = 'mysublevel'
       sublevel.returns(fakeSublevel)
 
+      const fakeEventHandler = {}
+      EventEmitter.returns(fakeEventHandler)
+
       startServer(null, {}, logger)
 
       expect(GrpcServer).to.have.been.calledOnce()
-      expect(GrpcServer).to.have.been.calledWith(logger, fakeSublevel)
+      expect(GrpcServer).to.have.been.calledWith(logger, fakeSublevel, fakeEventHandler)
       expect(GrpcServer).to.have.been.calledWithNew()
     })
 

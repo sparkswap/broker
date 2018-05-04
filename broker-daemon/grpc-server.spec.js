@@ -71,6 +71,14 @@ describe('GrpcServer', () => {
       expect(server.store).to.be.eql(store)
     })
 
+    it('assigns an eventHandler', () => {
+      const eventHandler = 'myevents'
+      const server = new GrpcServer(null, null, eventHandler)
+
+      expect(server).to.have.property('eventHandler')
+      expect(server.eventHandler).to.be.eql(eventHandler)
+    })
+
     it('assigns the proto path', () => {
       const protoPath = GrpcServer.__get__('BROKER_PROTO_PATH')
 
