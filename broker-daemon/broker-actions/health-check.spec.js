@@ -13,42 +13,35 @@ describe('healthCheck', () => {
   let lndStatusSpy
   let relayerStatusSpy
   let cbSpy
-  //   let lndStatusStub
-  //   let relayerStatusStub
-  let revert
-  let revert2
+  let revertLnd
+  let revertRelayer
 
   beforeEach(() => {
     lndStatusSpy = sinon.spy()
     relayerStatusSpy = sinon.spy()
     cbSpy = sinon.spy()
-    // lndStatusStub = sinon.stub().callsFake(() => lndStatusSpy)
-    // relayerStatusStub = sinon.stub()
 
-    revert = program.__set__('lndStatus', lndStatusSpy)
-    revert2 = program.__set__('relayerStatus', relayerStatusSpy)
+    revertLnd = program.__set__('lndStatus', lndStatusSpy)
+    revertRelayer = program.__set__('relayerStatus', relayerStatusSpy)
   })
 
   afterEach(() => {
-    revert()
-    revert2()
+    revertLnd()
+    revertRelayer()
   })
 
-  it('calls lndStatus to retrieve lnd health status', () => {
-    healthCheck(null, cbSpy)
+  it('calls lndStatus to retrieve lnd health status', async () => {
+    await healthCheck(null, cbSpy)
     expect(lndStatusSpy).to.have.been.called()
   })
 
-  it('calls relayer to retrieve relayer health status', () => {
-    healthCheck(null, cbSpy)
+  it('calls relayer to retrieve relayer health status', async () => {
+    await healthCheck(null, cbSpy)
     expect(relayerStatusSpy).to.have.been.called()
   })
 
-  it('calls callback to return status values', () => {
-    healthCheck(null, cbSpy)
+  it('calls callback to return status values', async () => {
+    await healthCheck(null, cbSpy)
     expect(cbSpy).to.have.been.called()
   })
-
-//   expect(cbSpy).to.have.been.called()
-//   calledWith(null, {lndStatus: lndStatusStub, relayerStatus: relayerStatusStub})
 })

@@ -6,7 +6,6 @@ const { LND_HOST, LND_TLS_CERT, LND_MACAROON } = process.env
 async function healthCheck (call, cb) {
   const lndResStatus = await lndStatus()
   const relayerResStatus = await relayerStatus()
-
   cb(null, {lndStatus: lndResStatus, relayerStatus: relayerResStatus})
 }
 
