@@ -1,5 +1,6 @@
 const level = require('level')
 const sublevel = require('sublevelup')
+const EventEmitter = require('events')
 
 const GrpcServer = require('./grpc-server')
 
@@ -31,7 +32,8 @@ function startServer (args, opts, logger) {
 
   try {
     const store = sublevel(level(dataDir))
-    const grpc = new GrpcServer(logger, store)
+    const eventHandler = new EventEmitter()
+    const grpc = new GrpcServer(logger, store, eventHandler)
     grpc.listen(rpcAddress)
     logger.info(`gRPC server started: Server listening on ${rpcAddress}`)
   } catch (e) {
