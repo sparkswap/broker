@@ -1,5 +1,6 @@
 const grpc = require('grpc')
 
+const { MarketEvent } = require('../models')
 const { loadProto } = require('../utils')
 
 // TODO: Add this to config for CLI
@@ -7,7 +8,8 @@ const EXCHANGE_RPC_HOST = process.env.EXCHANGE_RPC_HOST || 'localhost:28492'
 const RELAYER_PROTO_PATH = './proto/relayer.proto'
 
 class RelayerClient {
-  constructor () {
+  constructor (logger) {
+    this.logger = logger || console
     this.address = EXCHANGE_RPC_HOST
     this.proto = loadProto(RELAYER_PROTO_PATH)
 
@@ -37,10 +39,44 @@ class RelayerClient {
   /**
    * Opens a stream with the exchange to watch for market events
    *
+   * @param {LevelUP} store
    * @param {Object} params
+   * @returns {Promise<void>} a promise that resolves when the market is up to date with the remote relayer
    */
-  async watchMarket (params) {
-    return this.orderbook.watchMarket(params)
+  watchMarket (store, params) {
+    return new Promise(async (resolve, reject) => {
+      const RESPONSE_TYPES = this.proto.WatchMarketResponse.ResponseTypes
+
+      this.logger.info('Setting up market watcher', params)
+
+      let watcher
+
+      try {
+        watcher = await this.orderbook.watchMarket(request)
+      } catch(e) {
+        return reject(e)
+      }
+
+      this.watcher.on('end', () => {
+        this.logger.info('Remote ended stream', request)
+        // TODO: retry stream?
+        throw new Error(`Remote relayer ended stream for ${this.marketName}`)
+      })
+
+      this.watcher.on('data', async (response) => {
+        if(response.type === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
+          return resolve()
+        }
+
+        if(![RESPONSE_TYPES.EXISTING_EVENT, RESPONSE_TYPES.NEW_EVENT].includes(response.type)) {
+          // No other responses are implemented
+          return;
+        }
+
+        const event = new MarketEvent(response.martketEvent)
+        await this.store.put(event.key, event.value)
+      })
+    })
   }
 
   async healthCheck (params) {
