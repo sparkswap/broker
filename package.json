@@ -42,7 +42,6 @@
     "level": "3.0.0",
     "level-sublevel": "6.6.1",
     "lnd-engine": "kinesis-exchange/lnd-engine",
-    "map-reduce": "6.0.2",
     "validator": "9.4.1"
   },
   "devDependencies": {

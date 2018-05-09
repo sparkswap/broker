@@ -39,12 +39,14 @@ class RelayerClient {
   /**
    * Opens a stream with the exchange to watch for market events
    *
+   * @param {EventEmitter} eventHandler
    * @param {LevelUP} store
    * @param {Object} params
    * @returns {Promise<void>} a promise that resolves when the market is up to date with the remote relayer
    */
-  watchMarket (store, params) {
+  watchMarket (store, { baseSymbol, counterSymbol, lastUpdated }) {
     return new Promise(async (resolve, reject) => {
+      const params = { baseSymbol, counterSymbol, lastUpdated }
       const RESPONSE_TYPES = this.proto.WatchMarketResponse.ResponseTypes
 
       this.logger.info('Setting up market watcher', params)
@@ -52,29 +54,29 @@ class RelayerClient {
       let watcher
 
       try {
-        watcher = await this.orderbook.watchMarket(request)
-      } catch(e) {
+        watcher = await this.orderbook.watchMarket(params)
+      } catch (e) {
         return reject(e)
       }
 
-      this.watcher.on('end', () => {
-        this.logger.info('Remote ended stream', request)
+      watcher.on('end', () => {
+        this.logger.info('Remote ended stream', params)
         // TODO: retry stream?
-        throw new Error(`Remote relayer ended stream for ${this.marketName}`)
+        throw new Error(`Remote relayer ended stream for ${baseSymbol}/${counterSymbol}`)
       })
 
-      this.watcher.on('data', async (response) => {
-        if(response.type === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
+      watcher.on('data', async (response) => {
+        if (response.type === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
           return resolve()
         }
 
-        if(![RESPONSE_TYPES.EXISTING_EVENT, RESPONSE_TYPES.NEW_EVENT].includes(response.type)) {
+        if (![RESPONSE_TYPES.EXISTING_EVENT, RESPONSE_TYPES.NEW_EVENT].includes(response.type)) {
           // No other responses are implemented
-          return;
+          return
         }
 
         const event = new MarketEvent(response.martketEvent)
-        await this.store.put(event.key, event.value)
+        store.put(event.key, event.value)
       })
     })
   }
