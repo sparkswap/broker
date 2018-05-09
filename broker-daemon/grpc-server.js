@@ -17,14 +17,16 @@ const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
  * @author kinesis
  */
 class GrpcServer {
-  constructor (logger) {
+  constructor (logger, store, eventHandler) {
     this.logger = logger
+    this.store = store
+    this.eventHandler = eventHandler
 
     this.protoPath = BROKER_PROTO_PATH
     this.proto = loadProto(this.protoPath)
 
     this.server = new grpc.Server()
-    this.action = new GrpcAction(this.logger)
+    this.action = new GrpcAction(this.logger, this.store)
 
     this.brokerService = this.proto.Broker.service
 
