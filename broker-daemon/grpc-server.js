@@ -1,8 +1,9 @@
 const grpc = require('grpc')
 
 const { loadProto } = require('./utils')
+const RelayerClient = require('./relayer')
 const GrpcAction = require('./grpc-action')
-
+const Orderbook = require('./orderbook')
 const {
   createOrder,
   watchMarket,
@@ -26,7 +27,8 @@ class GrpcServer {
     this.proto = loadProto(this.protoPath)
 
     this.server = new grpc.Server()
-    this.action = new GrpcAction(this.logger, this.store)
+    this.relayer = new RelayerClient()
+    this.action = new GrpcAction(this.logger, this.store, this.relayer)
 
     this.brokerService = this.proto.Broker.service
 
@@ -35,6 +37,30 @@ class GrpcServer {
       watchMarket: watchMarket.bind(this.action),
       healthCheck: healthCheck.bind(this.action)
     })
+  }
+
+  /**
+   * Listens to the assigned markets
+   *
+   * @param {Array<String>} markets
+   * @returns {Promise<void>} promise that resolves when markets are caught up to the remote
+   */
+  async initializeMarkets (markets) {
+    this.orderbooks = {}
+    return Promise.all(markets.map((marketName) => {
+      return this.initializeMarket(marketName)
+    }))
+  }
+
+  /**
+   * Listens to the assigned market
+   *
+   * @param {String} marketName
+   * @returns {Promise<void>} promise that resolves when market is caught up to the remote
+   */
+  async initializeMarket (marketName) {
+    this.orderbook[marketName] = new Orderbook(marketName, this.relayer, this.store.sublevel(marketName), this.logger)
+    return this.orderbook[marketName].initialize()
   }
 
   /**

@@ -13,16 +13,18 @@ const GrpcServer = require('./grpc-server')
  * @param {String} opts.dataDir
  * @param {String} opts.engineType
  * @param {String} opts.exchangeHost
+ * @param {String} opts.markets
  * @param {String} [lndRpc] opts.lndRpc
  * @param {String} [lndTls] opts.lndTls
  * @param {String} [lndMacaroon] opts.lndMacaroon
  * @param {Logger} logger
  */
 
-function startServer (args, opts, logger) {
+async function startServer (args, opts, logger) {
   const {
     rpcAddress,
-    dataDir
+    dataDir,
+    markets
     // engineType,
     // exchangeHost,
     // lndRpc,
@@ -30,15 +32,17 @@ function startServer (args, opts, logger) {
     // lndMacaroon
   } = opts
 
-  try {
-    const store = sublevel(level(dataDir))
-    const eventHandler = new EventEmitter()
-    const grpc = new GrpcServer(logger, store, eventHandler)
-    grpc.listen(rpcAddress)
-    logger.info(`gRPC server started: Server listening on ${rpcAddress}`)
-  } catch (e) {
-    logger.error(e.toString())
-  }
+  const store = sublevel(level(dataDir))
+  const eventHandler = new EventEmitter()
+  const grpc = new GrpcServer(logger, store, eventHandler)
+
+  const marketNames = (markets || '').split(',')
+  logger.info(`Initializing ${marketNames.length} markets`)
+  await grpc.initializeMarkets(marketNames)
+  logger.info(`Caught up to ${marketNames.length} markets`)
+
+  grpc.listen(rpcAddress)
+  logger.info(`gRPC server started: Server listening on ${rpcAddress}`)
 }
 
 module.exports = startServer

@@ -1,7 +1,5 @@
 const { status } = require('grpc')
 
-const RelayerClient = require('../relayer')
-
 /**
  * Creates an order w/ the exchange
  *
@@ -38,10 +36,8 @@ async function createOrder (call, cb) {
     side
   }
 
-  const relayer = new RelayerClient()
-
   try {
-    const order = await relayer.createOrder(request)
+    const order = await this.relayer.createOrder(request)
     cb(null, { orderId: order.orderId })
   } catch (e) {
     this.logger.error('createOrder failed', { error: e.toString() })
