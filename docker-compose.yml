@@ -43,7 +43,7 @@ services:
       - broker
       - lnd
     working_dir: '/home/app'
-    entrypoint: bash -c './bin/kbd'
+    entrypoint: bash -c './scripts/build-kbd.sh'
 
 volumes:
   shared:
