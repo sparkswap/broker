@@ -10,3 +10,5 @@ echo ""
 rm -rf ./proto/relayer
 git clone git@github.com:kinesis-exchange/relayer-proto.git ./proto/relayer
 cp ./proto/relayer/lib/relayer.proto ./proto/
+
+npm test
