@@ -18,7 +18,7 @@ class MarketEvent {
 
   get value () {
     const { orderId, eventType, payload } = this
-    return { orderId, eventType, ...payload }
+    return JSON.stringify({ orderId, eventType, ...payload })
   }
 
   serialize () {
@@ -32,10 +32,14 @@ class MarketEvent {
     }
   }
 
+  toString () {
+    return JSON.stringify(this.serialize())
+  }
+
   static fromStorage (key, value) {
     const [timestamp, eventId] = key.split(this.sep)
 
-    return new this({ timestamp, eventId, ...value })
+    return new this({ timestamp, eventId, ...JSON.parse(value) })
   }
 }
 

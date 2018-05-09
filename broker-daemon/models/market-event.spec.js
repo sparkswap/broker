@@ -49,10 +49,10 @@ describe('MarketEvent', () => {
       const eventType = MarketEvent.TYPES.PLACED
 
       const key = `${timestamp}:${eventId}`
-      const value = {
+      const value = JSON.stringify({
         eventType,
         orderId
-      }
+      })
 
       const event = MarketEvent.fromStorage(key, value)
 
@@ -77,11 +77,11 @@ describe('MarketEvent', () => {
       }
 
       const key = `${timestamp}:${eventId}`
-      const value = {
+      const value = JSON.stringify({
         eventType,
         orderId,
         ...payload
-      }
+      })
 
       const event = MarketEvent.fromStorage(key, value)
 
@@ -163,10 +163,10 @@ describe('MarketEvent', () => {
       const event = new MarketEvent({ eventId, orderId, timestamp, eventType })
 
       expect(event).to.have.property('value')
-      expect(event.value).to.be.eql({
+      expect(event.value).to.be.eql(JSON.stringify({
         orderId,
         eventType
-      })
+      }))
     })
 
     it('includes mixed payloads in values for storage', () => {
@@ -188,10 +188,13 @@ describe('MarketEvent', () => {
       }
 
       const event = new MarketEvent(eventProps)
-      expect(event.value).to.have.property('my')
-      expect(event.value.my).to.be.eql(payload.my)
-      expect(event.value).to.have.property('are')
-      expect(event.value.are).to.be.eql(payload.are)
+      expect(event.value).to.be.a('string')
+
+      const parsedValue = JSON.parse(event.value)
+      expect(parsedValue).to.have.property('my')
+      expect(parsedValue.my).to.be.eql(payload.my)
+      expect(parsedValue).to.have.property('are')
+      expect(parsedValue.are).to.be.eql(payload.are)
     })
   })
 
