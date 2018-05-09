@@ -2,6 +2,9 @@ const RelayerClient = require('../relayer')
 const LndEngine = require('lnd-engine')
 
 const { LND_HOST, LND_TLS_CERT, LND_MACAROON } = process.env
+const STATUS_CODES = Object.freeze({
+  OK: 'OK'
+})
 
 async function healthCheck (call, cb) {
   const lndResStatus = await lndStatus()
@@ -20,7 +23,7 @@ async function lndStatus () {
     await new LndEngine(LND_HOST, options).getInfo()
     return STATUS_CODES.OK
   } catch (e) {
-    return e.message
+    return e.toString()
   }
 }
 
@@ -30,12 +33,8 @@ async function relayerStatus () {
     await relayer.healthCheck({service: 'Health'})
     return STATUS_CODES.OK
   } catch (e) {
-    return e.message
+    return e.toString()
   }
 }
-
-const STATUS_CODES = Object.freeze({
-  OK: 'OK'
-})
 
 module.exports = { healthCheck }

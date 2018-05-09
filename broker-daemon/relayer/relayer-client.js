@@ -48,7 +48,7 @@ class RelayerClient {
 
   async healthCheck (params) {
     const deadline = new Date().setSeconds(new Date().getSeconds() + TIMEOUT_IN_SECONDS)
-    
+
     return new Promise((resolve, reject) => {
       this.health.check(params, { deadline }, (err, res) => {
         if (err) return reject(err)
