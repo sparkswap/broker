@@ -8,8 +8,8 @@ echo ""
 
 # Download the relayer proto
 rm -rf ./proto/relayer
-git clone git@github.com:kinesis-exchange/relayer-proto.git ./proto/relayer
-cp ./proto/relayer/lib/relayer.proto ./proto/
+git clone git@github.com:kinesis-exchange/relayer.git ./proto/relayer
+cp ./proto/relayer/proto/relayer.proto ./proto/
 
 # Rebuild gRPC for docker target
 npm rebuild grpc --target_arch=x64 --target_platform=linux --target_libc=glibc
