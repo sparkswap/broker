@@ -6,12 +6,19 @@ const STATUS_CODES = Object.freeze({
   OK: 'OK'
 })
 
+/**
+ * @param {Object} call
+ * @param {fn} cb
+ */
 async function healthCheck (call, cb) {
   const lndResStatus = await lndStatus()
   const relayerResStatus = await relayerStatus()
   cb(null, {lndStatus: lndResStatus, relayerStatus: relayerResStatus})
 }
 
+/**
+ * @return {String}
+ */
 async function lndStatus () {
   try {
     // TODO: Remove these because they are the default options
@@ -27,6 +34,9 @@ async function lndStatus () {
   }
 }
 
+/**
+ * @return {String}
+ */
 async function relayerStatus () {
   const relayer = new RelayerClient()
   try {
