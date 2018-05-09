@@ -40,8 +40,9 @@
     "caporal": "0.10.0",
     "grpc": "1.10.1",
     "level": "3.0.0",
+    "level-sublevel": "6.6.1",
     "lnd-engine": "kinesis-exchange/lnd-engine",
-    "sublevelup": "4.0.0",
+    "map-reduce": "6.0.2",
     "validator": "9.4.1"
   },
   "devDependencies": {

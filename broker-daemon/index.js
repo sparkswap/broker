@@ -1,5 +1,5 @@
 const level = require('level')
-const sublevel = require('sublevelup')
+const sublevel = require('level-sublevel')
 const EventEmitter = require('events')
 
 const GrpcServer = require('./grpc-server')
