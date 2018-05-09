@@ -40,7 +40,7 @@ async function lndStatus () {
 async function relayerStatus () {
   const relayer = new RelayerClient()
   try {
-    await relayer.healthCheck({service: 'Health'})
+    await relayer.healthCheck()
     return STATUS_CODES.OK
   } catch (e) {
     return e.toString()
