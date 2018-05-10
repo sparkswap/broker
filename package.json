@@ -19,7 +19,7 @@
     "coverage": "docker-compose exec $npm_package_config_daemon npm run docker-coverage",
     "docker-coverage": "nyc npm run docker-test",
     "docker-test": "docker-compose exec $npm_package_config_daemon npm run test-broker",
-    "ci-test": "npm run format && npm test"
+    "ci-test": "npm run format && npm test-broker"
   },
   "standard": {
     "env": [
