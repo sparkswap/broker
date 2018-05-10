@@ -17,11 +17,7 @@ chai.use(sinonChai)
 chai.use(dirtyChai)
 chai.use(chaiAsPromised)
 
-let sandbox
-
-beforeEach(function () {
-  sandbox = sinon.sandbox.create()
-})
+let sandbox = sinon.sandbox.create()
 
 afterEach(function () {
   sandbox.restore()
