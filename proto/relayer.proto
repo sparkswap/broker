@@ -6,6 +6,23 @@ enum Side {
     ASK = 1;
 }
 
+message HealthCheckResponse {
+
+    string status = 0;
+}
+service Health {
+    rpc Check (google.protobuf.Empty) returns (HealthCheckResponse);
+}
+
+message google {
+
+    message protobuf {
+
+        message Empty {
+        }
+    }
+}
+
 message CreateOrderRequest {
 
     string pay_to = 0;
@@ -27,8 +44,8 @@ message CreateOrderResponse {
 message PlaceOrderRequest {
 
     string order_id = 0;
-    string deposit_refund_payment_request = 2;
-    string fee_refund_payment_request = 1;
+    string deposit_refund_payment_request = 1;
+    string fee_refund_payment_request = 2;
 }
 
 message CancelOrderRequest {
@@ -66,15 +83,6 @@ service Maker {
     rpc CompleteOrder (CompleteOrderRequest) returns (google.protobuf.Empty);
 }
 
-message google {
-
-    message protobuf {
-
-        message Empty {
-        }
-    }
-}
-
 message CreateFillRequest {
 
     string order_id = 0;
@@ -92,8 +100,8 @@ message CreateFillResponse {
 message FillOrderRequest {
 
     string fill_id = 0;
-    string deposit_refund_payment_request = 2;
-    string fee_refund_payment_request = 1;
+    string deposit_refund_payment_request = 1;
+    string fee_refund_payment_request = 2;
 }
 
 message SubscribeExecuteRequest {
@@ -159,12 +167,4 @@ message GetPublicKeyResponse {
 }
 service PaymentNetwork {
     rpc GetPublicKey (google.protobuf.Empty) returns (GetPublicKeyResponse);
-}
-
-message HealthCheckResponse {
-
-    string status = 1;
-}
-service Health {
-    rpc Check (google.protobuf.Empty) returns (HealthCheckResponse);
 }
