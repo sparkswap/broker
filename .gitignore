@@ -65,3 +65,10 @@ typings/
 
 # Proto build files
 proto/relayer/
+
+# lnd-engine docker files
+docker/lnd
+docker/btcd
+docker/lnd-docker-compose.yml
+docker/*.md
+
