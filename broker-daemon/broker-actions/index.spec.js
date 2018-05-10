@@ -7,8 +7,6 @@ const {
   healthCheck
 } = require('./index')
 
-const dan = 'lol'
-
 describe('broker actions  index', () => {
   it('defines createOrder', () => {
     expect(createOrder).to.not.be.null()
