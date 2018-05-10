@@ -1,5 +1,6 @@
 const Broker = require('./broker')
-const { validations } = require('./utils')
+const { ENUMS, validations } = require('./utils')
+const { STATUS_CODES } = ENUMS
 
 /**
  * kcli healthcheck
@@ -18,8 +19,13 @@ async function healthCheck (args, opts, logger) {
   const { rpcAddress = null } = opts
 
   try {
-    const res = await new Broker(rpcAddress).healthCheck()
-    logger.info(`Engine Status: ${res.engineStatus}`)
+    const { engineStatus, relayerStatus } = await new Broker(rpcAddress).healthCheck()
+    const res = {
+      engineStatus,
+      relayerStatus,
+      daemonStatus: STATUS_CODES.OK
+    }
+    logger.info(`HealthCheck: ${JSON.stringify(res)}`)
   } catch (e) {
     logger.error(e.toString())
   }

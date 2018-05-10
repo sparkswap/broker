@@ -1,21 +1,25 @@
-const { status } = require('grpc')
+const RelayerClient = require('../relayer')
 const LndEngine = require('lnd-engine')
 
 const { LND_HOST, LND_TLS_CERT, LND_MACAROON } = process.env
+const STATUS_CODES = Object.freeze({
+  OK: 'OK'
+})
 
 /**
- * Creates an order w/ the exchange
- *
  * @param {Object} call
- * @param {Object} call.request
- * @param {String} call.request.amount
- * @param {String} call.request.price
- * @param {String} call.request.market
- * @param {String} call.request.side
- * @param {String} [timeinforce] call.request.timeinforce
  * @param {fn} cb
  */
 async function healthCheck (call, cb) {
+  const engineResStatus = await engineStatus()
+  const relayerResStatus = await relayerStatus()
+  cb(null, {engineStatus: engineResStatus, relayerStatus: relayerResStatus})
+}
+
+/**
+ * @return {String}
+ */
+async function engineStatus () {
   try {
     // TODO: Remove these because they are the default options
     const options = {
@@ -23,15 +27,23 @@ async function healthCheck (call, cb) {
       tlsCertPath: LND_TLS_CERT,
       macaroonPath: LND_MACAROON
     }
-    const res = await new LndEngine(LND_HOST, options).getInfo()
-    // TODO: Instead of using the publicKey we should just be checking a status
-    // to make sure everything is running correctly
-    cb(null, { engineStatus: res.identityPubkey })
+    await new LndEngine(LND_HOST, options).getInfo()
+    return STATUS_CODES.OK
   } catch (e) {
-    this.logger.error('healthCheck failed', { error: e })
+    return e.toString()
+  }
+}
 
-    // eslint-disable-next-line
-    return cb({ message: e.message, code: status.INTERNAL })
+/**
+ * @return {String}
+ */
+async function relayerStatus () {
+  const relayer = new RelayerClient()
+  try {
+    await relayer.healthCheck({})
+    return STATUS_CODES.OK
+  } catch (e) {
+    return e.toString()
   }
 }
 
