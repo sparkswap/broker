@@ -99,6 +99,15 @@ describe('broker daemon', () => {
       expect(initializeMarkets).to.have.been.calledWith(sinon.match(fakeMarkets))
     })
 
+    it('does not initialize a null value market', async () => {
+      const fakeMarkets = null
+      await startServer(null, {
+        markets: fakeMarkets
+      }, logger)
+
+      expect(initializeMarkets).to.have.been.calledWith([])
+    })
+
     it('starts listening', async () => {
       const fakeRpcAddress = '1.1.1.1:3000'
       await startServer(null, {

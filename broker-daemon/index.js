@@ -36,7 +36,7 @@ async function startServer (args, opts, logger) {
   const eventHandler = new EventEmitter()
   const grpc = new GrpcServer(logger, store, eventHandler)
 
-  const marketNames = (markets || '').split(',')
+  const marketNames = (markets || '').split(',').filter(m => m)
   logger.info(`Initializing ${marketNames.length} markets`)
   await grpc.initializeMarkets(marketNames)
   logger.info(`Caught up to ${marketNames.length} markets`)
