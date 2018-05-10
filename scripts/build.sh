@@ -8,7 +8,7 @@ echo ""
 
 # Download the relayer proto
 rm -rf ./proto/relayer
-git clone git@github.com:kinesis-exchange/relayer-proto.git ./proto/relayer
-cp ./proto/relayer/lib/relayer.proto ./proto/
+git clone git@github.com:kinesis-exchange/relayer.git ./proto/relayer
+cp ./proto/relayer/proto/relayer.proto ./proto/
 
 npm test
