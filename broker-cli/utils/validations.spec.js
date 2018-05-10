@@ -4,7 +4,7 @@ const { expect } = chai
 const {
   isPrice,
   isMarketName,
-  isRPCHost
+  isHost
 } = require('./validations')
 
 describe('Validations', () => {
@@ -71,27 +71,27 @@ describe('Validations', () => {
     })
   })
 
-  describe('isRPCHost', () => {
+  describe('isHost', () => {
     const expectedError = 'Invalid RPC Host name'
 
     it('returns a valid container name host', () => {
       const validHost = 'kinesis:10009'
-      expect(isRPCHost(validHost)).to.eql(validHost)
+      expect(isHost(validHost)).to.eql(validHost)
     })
 
     it('returns a valid localhost host', () => {
       const validHost = 'localhost:10009'
-      expect(isRPCHost(validHost)).to.eql(validHost)
+      expect(isHost(validHost)).to.eql(validHost)
     })
 
     it('returns a valid url host', () => {
       const validHost = 'http://test.exchange.kines.is'
-      expect(isRPCHost(validHost)).to.eql(validHost)
+      expect(isHost(validHost)).to.eql(validHost)
     })
 
     it('throws an error when host is invalid', () => {
       const invalidHost = 'bad url'
-      expect(() => isRPCHost(invalidHost)).to.throw(expectedError)
+      expect(() => isHost(invalidHost)).to.throw(expectedError)
     })
   })
 })

@@ -47,6 +47,6 @@ module.exports = (program) => {
     .argument('<amount>', 'Amount of counter currency to sell.', validations.isPrice)
     .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
     .option('-t, --timeinforce', 'Time in force policy for this order.', Object.keys(TIME_IN_FORCE), 'GTC')
-    .option('--rpc-address', 'Location of the RPC server to use.', validations.isRPCHost)
+    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
     .action(sell)
 }

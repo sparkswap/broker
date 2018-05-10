@@ -1,4 +1,4 @@
-const { isInt, isAlpha, isURL } = require('validator')
+const { isInt, isAlpha, isURL, matches } = require('validator')
 
 /**
  * Checks if the specified string is a valid price for kinesis
@@ -57,7 +57,7 @@ function isMarketName (str) {
  * @returns {String}
  * @throws {Error} returns an error if the given string is invalid for an RPC host
  */
-function isRPCHost (str) {
+function isHost (str) {
   // We can disable the `valid_protocol` and `tld` options for now because we use URLs
   // that are local to the container. However, we should remove this in the future to
   // be more strict in our input checking
@@ -71,8 +71,17 @@ function isRPCHost (str) {
   throw new Error('Invalid RPC Host name')
 }
 
+function isPath (str) {
+  if (matches(str, /^.+$/)) {
+    return str
+  }
+
+  throw new Error('Path format is incorrect')
+}
+
 module.exports = {
   isPrice,
   isMarketName,
-  isRPCHost
+  isHost,
+  isPath
 }

@@ -30,6 +30,6 @@ async function setup (args, opts, logger) {
 module.exports = (program) => {
   program
     .command('setup', 'Setup the daemon for the Kinesis Exchange')
-    .option('--rpc-address', 'Location of the RPC server to use.', validations.isRPCHost)
+    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
     .action(setup)
 }
