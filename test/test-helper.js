@@ -9,10 +9,12 @@ const sinon = require('sinon')
 const chai = require('chai')
 const sinonChai = require('sinon-chai')
 const dirtyChai = require('dirty-chai')
+const chaiAsPromised = require('chai-as-promised')
 const rewire = require('rewire')
 
 chai.use(sinonChai)
 chai.use(dirtyChai)
+chai.use(chaiAsPromised)
 
 beforeEach(function () {
   this.sandbox = sinon.sandbox.create()
