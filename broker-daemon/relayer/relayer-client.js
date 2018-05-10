@@ -24,7 +24,7 @@ class RelayerClient {
    * @returns {Promise}
    */
   async createOrder (params) {
-    const deadline = helpers.deadline()
+    const deadline = helpers.grpcDeadline()
 
     return new Promise((resolve, reject) => {
       this.maker.createOrder(params, { deadline }, (err, res) => {
@@ -44,7 +44,7 @@ class RelayerClient {
   }
 
   async healthCheck (params) {
-    const deadline = helpers.deadline()
+    const deadline = helpers.grpcDeadline()
 
     return new Promise((resolve, reject) => {
       this.health.check(params, { deadline }, (err, res) => {
