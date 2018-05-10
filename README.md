@@ -51,6 +51,13 @@ Specifically related to the `LND-Engine` you have the following commands availab
 2. `npm run ld` - kills the engine
 3. `npm run lps` - gives you information on the running state of the containers
 
+### Running tests
+
+- `npm test` will run all tests in the kbd docker container
+- `npm run coverage` will run tests w/ code coverage in the container
+
+Why are all tests run in the container? This is due to dependencies that need to run/build on the target architecture (which is linux). This is also consistent with how tests are ran on CI
+
 ### Authentication between CLI (KCLI) and Broker Daemon (KBD)
 
 None, yet...
