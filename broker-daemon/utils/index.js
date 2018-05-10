@@ -2,5 +2,6 @@
  * @author kinesis
  */
 const loadProto = require('./load-proto')
+const getRecords = require('./get-records')
 
-module.exports = { loadProto }
+module.exports = { loadProto, getRecords }

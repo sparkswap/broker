@@ -15,6 +15,8 @@ describe('GrpcServer', () => {
   let healthCheckBind
   let watchMarket
   let watchMarketBind
+  let RelayerClient
+  let Orderbook
 
   beforeEach(() => {
     GrpcAction = sinon.stub()
@@ -26,6 +28,9 @@ describe('GrpcServer', () => {
       }
     })
     GrpcServer.__set__('loadProto', loadProto)
+
+    RelayerClient = sinon.stub()
+    GrpcServer.__set__('RelayerClient', RelayerClient)
 
     addService = sinon.stub()
     grpcServer = sinon.stub().returns({
@@ -52,6 +57,10 @@ describe('GrpcServer', () => {
       bind: watchMarketBind
     }
     GrpcServer.__set__('watchMarket', watchMarket)
+
+    Orderbook = sinon.stub()
+    Orderbook.prototype.initialize = sinon.stub()
+    GrpcServer.__set__('Orderbook', Orderbook)
   })
 
   describe('new', () => {
@@ -117,6 +126,15 @@ describe('GrpcServer', () => {
       expect(grpcServer).to.have.been.calledWithNew()
       expect(server).to.have.property('server')
       expect(server.server).to.be.equal(instanceServer)
+    })
+
+    it('creates a relayer client', () => {
+      const server = new GrpcServer()
+
+      expect(RelayerClient).to.have.been.calledOnce()
+      expect(RelayerClient).to.have.been.calledWithNew()
+      expect(server).to.have.property('relayer')
+      expect(server.relayer).to.be.instanceOf(RelayerClient)
     })
 
     it('creates a grpc action', () => {
@@ -240,11 +258,136 @@ describe('GrpcServer', () => {
       }))
     })
 
+    it('creates an empty orderbooks hash', () => {
+      const server = new GrpcServer()
+
+      expect(server).to.have.property('orderbooks')
+      expect(server.orderbooks).to.be.eql({})
+    })
+
     it('defines a #listen method', () => {
       const server = new GrpcServer()
 
       expect(server).to.have.property('listen')
       expect(server.listen).to.be.a('function')
+    })
+  })
+
+  describe('initializeMarket', () => {
+    let store
+
+    beforeEach(() => {
+      store = {
+        sublevel: sinon.stub()
+      }
+
+      Orderbook.prototype.initialize.resolves()
+    })
+
+    it('creates an orderbook for the market', async () => {
+      const marketName = 'ABC/XYZ'
+      const server = new GrpcServer(null, store)
+
+      await server.initializeMarket(marketName)
+
+      expect(Orderbook).to.have.been.calledOnce()
+      expect(Orderbook).to.have.been.calledWithNew()
+      expect(Orderbook).to.have.been.calledWith(marketName)
+    })
+
+    it('assigns the orderbook to the market hash', async () => {
+      const marketName = 'ABC/XYZ'
+      const server = new GrpcServer(null, store)
+
+      await server.initializeMarket(marketName)
+
+      expect(server.orderbooks).to.have.property(marketName)
+      expect(server.orderbooks[marketName]).to.be.instanceOf(Orderbook)
+    })
+
+    it('provides a relayer', async () => {
+      const marketName = 'ABC/XYZ'
+      const server = new GrpcServer(null, store)
+
+      await server.initializeMarket(marketName)
+
+      expect(Orderbook).to.have.been.calledWith(sinon.match.any, sinon.match.instanceOf(RelayerClient))
+    })
+
+    it('creates a sublevel store for the orderbook', async () => {
+      const marketName = 'ABC/XYZ'
+      const fakeSublevel = 'mysublevel'
+      store.sublevel.returns(fakeSublevel)
+      const server = new GrpcServer(null, store)
+
+      await server.initializeMarket(marketName)
+
+      expect(store.sublevel).to.have.been.calledOnce()
+      expect(store.sublevel).to.have.been.calledWith(marketName)
+      expect(Orderbook).to.have.been.calledWith(sinon.match.any, sinon.match.any, fakeSublevel)
+    })
+
+    it('provides a logger', async () => {
+      const marketName = 'ABC/XYZ'
+      const fakeLogger = 'mylogger'
+      const server = new GrpcServer(fakeLogger, store)
+
+      await server.initializeMarket(marketName)
+
+      expect(Orderbook).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, fakeLogger)
+    })
+
+    it('initializes the market', async () => {
+      const marketName = 'ABC/XYZ'
+      const server = new GrpcServer(null, store)
+
+      await server.initializeMarket(marketName)
+
+      expect(Orderbook.prototype.initialize).to.have.been.calledOnce()
+    })
+
+    // TODO: test this a better way
+    it('resolves once the orderbook resolves', () => {
+      const marketName = 'ABC/XYZ'
+      const server = new GrpcServer(null, store)
+
+      const promise = server.initializeMarket(marketName)
+
+      expect(promise).to.be.a('promise')
+    })
+  })
+
+  describe('#initializeMarkets', () => {
+    let store
+
+    beforeEach(() => {
+      store = {
+        sublevel: sinon.stub()
+      }
+
+      Orderbook.prototype.initialize.resolves()
+    })
+
+    it('initializes all markets', async () => {
+      const marketNames = ['ABC/XYZ', 'BTC/LTC']
+      const server = new GrpcServer(null, store)
+
+      await server.initializeMarkets(marketNames)
+
+      expect(Orderbook).to.have.been.calledTwice()
+      expect(Orderbook).to.have.been.calledWith(marketNames[0])
+      expect(Orderbook).to.have.been.calledWith(marketNames[1])
+      expect(Object.keys(server.orderbooks)).to.have.lengthOf(2)
+    })
+
+    // TODO: test this a better way
+    it('resolves once all orderbooks have resolved', () => {
+      const marketName = 'ABC/XYZ'
+      const server = new GrpcServer(null, store)
+
+      const promise = server.initializeMarkets([marketName])
+
+      expect(promise).to.be.a('promise')
     })
   })
 

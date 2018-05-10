@@ -7,13 +7,13 @@ const sellCommand = require('./sell')
 const orderbookCommand = require('./orderbook')
 const configCommand = require('./config')
 const setupCommand = require('./setup')
-const healthcheckCommand = require('./health-check')
+const healthCheckCommand = require('./health-check')
 
 module.exports = {
   buyCommand,
   sellCommand,
   configCommand,
   orderbookCommand,
-  healthcheckCommand,
+  healthCheckCommand,
   setupCommand
 }

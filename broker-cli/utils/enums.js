@@ -14,7 +14,12 @@ const ORDER_TYPES = Object.freeze({
   SELL: 'SELL'
 })
 
+const STATUS_CODES = Object.freeze({
+  OK: 'OK'
+})
+
 module.exports = {
   TIME_IN_FORCE,
-  ORDER_TYPES
+  ORDER_TYPES,
+  STATUS_CODES
 }
