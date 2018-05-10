@@ -20,5 +20,13 @@ describe('GrpcAction', () => {
       expect(action).to.have.property('store')
       expect(action.store).to.be.eql(store)
     })
+
+    it('assigns a relayer client', () => {
+      const relayer = 'myrelayer'
+      const action = new GrpcAction(null, null, relayer)
+
+      expect(action).to.have.property('relayer')
+      expect(action.relayer).to.be.eql(relayer)
+    })
   })
 })

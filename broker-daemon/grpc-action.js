@@ -5,9 +5,10 @@
  * @author kinesis.exchange
  */
 class GrpcAction {
-  constructor (logger, store) {
+  constructor (logger, store, relayer) {
     this.logger = logger
     this.store = store
+    this.relayer = relayer
   }
 }
 

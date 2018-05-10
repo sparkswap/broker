@@ -15,6 +15,7 @@ const RPC_ADDRESS = process.env.RPC_ADDRESS || '0.0.0.0:27492'
 const DATA_DIR = process.env.DATA_DIR || '~/.kinesis/data'
 const ENGINE_TYPE = process.env.ENGINE_TYPE || 'lnd'
 const EXCHANGE_RPC_HOST = process.env.EXCHANGE_RPC_HOST || '0.0.0.0:28492'
+const MARKETS = process.env.MARKETS || ''
 
 // TODO: Do not provide defaults for these certs because they could
 //   exist in an array of places?
@@ -27,6 +28,7 @@ program
   .version(CLI_VERSION)
   .option('--rpc-address <server>', 'Host and port to set up the RPC server on.', /^.+(:[0-9]*)?$/, RPC_ADDRESS)
   .option('--data-dir <path>', 'Location to store kinesisd data.', /^.+$/, DATA_DIR)
+  .option('--markets <markets>', 'Comma-separated market names to track on startup', null, MARKETS)
   .option('--engine-type', 'The type of Kinesis engine. Example: lnd', null, ENGINE_TYPE)
   .option('--exchange-host', 'The host address for the Kinesis Relayer', null, EXCHANGE_RPC_HOST)
 
