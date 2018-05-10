@@ -60,6 +60,7 @@ class GrpcServer {
    * @returns {Promise<void>} promise that resolves when market is caught up to the remote
    */
   async initializeMarket (marketName) {
+    // TODO: warn or no-op on a repeat market name
     this.orderbooks[marketName] = new Orderbook(marketName, this.relayer, this.store.sublevel(marketName), this.logger)
     return this.orderbooks[marketName].initialize()
   }
