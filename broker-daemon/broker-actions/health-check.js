@@ -47,4 +47,4 @@ async function relayerStatus () {
   }
 }
 
-module.exports = { healthCheck }
+module.exports = healthCheck

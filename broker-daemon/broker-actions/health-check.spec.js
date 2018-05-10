@@ -8,7 +8,7 @@ const {
 const { expect } = chai
 const programPath = path.resolve('broker-daemon', 'broker-actions', 'health-check')
 const program = rewire(programPath)
-const { healthCheck } = program
+const healthCheck = program
 describe('healthCheck', () => {
   let engineStatusStub
   let relayerStatusStub
