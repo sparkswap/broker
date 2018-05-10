@@ -1,6 +1,6 @@
 const grpc = require('grpc')
 
-const { loadProto, helpers } = require('../utils')
+const { loadProto } = require('../utils')
 
 // TODO: Add this to config for CLI
 const EXCHANGE_RPC_HOST = process.env.EXCHANGE_RPC_HOST || 'localhost:28492'
@@ -24,7 +24,7 @@ class RelayerClient {
    * @returns {Promise}
    */
   async createOrder (params) {
-    const deadline = helpers.grpcDeadline()
+    const deadline = grpcDeadline()
 
     return new Promise((resolve, reject) => {
       this.maker.createOrder(params, { deadline }, (err, res) => {
@@ -44,7 +44,7 @@ class RelayerClient {
   }
 
   async healthCheck (params) {
-    const deadline = helpers.grpcDeadline()
+    const deadline = grpcDeadline()
 
     return new Promise((resolve, reject) => {
       this.health.check(params, { deadline }, (err, res) => {
@@ -53,6 +53,12 @@ class RelayerClient {
       })
     })
   }
+}
+
+// gRPC uses the term `deadline` which is a timeout feature that is an absolute
+// point in time, instead of a duration.
+function grpcDeadline (timeoutInSeconds = 5) {
+  new Date().setSeconds(new Date().getSeconds() + timeoutInSeconds)
 }
 
 module.exports = RelayerClient
