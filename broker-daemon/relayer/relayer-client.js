@@ -66,6 +66,7 @@ class RelayerClient {
       })
 
       watcher.on('data', async (response) => {
+        console.log(response)
         if (response.type === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
           return resolve()
         }
@@ -75,7 +76,7 @@ class RelayerClient {
           return
         }
 
-        const event = new MarketEvent(response.martketEvent)
+        const event = new MarketEvent(response.marketEvent)
         store.put(event.key, event.value)
       })
     })

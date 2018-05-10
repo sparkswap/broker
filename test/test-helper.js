@@ -11,6 +11,7 @@ const sinonChai = require('sinon-chai')
 const dirtyChai = require('dirty-chai')
 const chaiAsPromised = require('chai-as-promised')
 const rewire = require('rewire')
+const delay = require('timeout-as-promise')
 
 chai.use(sinonChai)
 chai.use(dirtyChai)
@@ -27,5 +28,6 @@ afterEach(function () {
 module.exports = {
   chai,
   sinon,
-  rewire
+  rewire,
+  delay
 }
