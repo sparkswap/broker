@@ -17,17 +17,19 @@ chai.use(sinonChai)
 chai.use(dirtyChai)
 chai.use(chaiAsPromised)
 
+let sandbox
+
 beforeEach(function () {
-  this.sandbox = sinon.sandbox.create()
+  sandbox = sinon.sandbox.create()
 })
 
 afterEach(function () {
-  this.sandbox.restore()
+  sandbox.restore()
 })
 
 module.exports = {
   chai,
-  sinon,
+  sinon: sandbox,
   rewire,
   delay
 }
