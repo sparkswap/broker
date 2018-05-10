@@ -64,8 +64,11 @@ class Orderbook {
   static createStore (baseStore, eventStore) {
     const store = baseStore.sublevel('orderbook')
 
-    eventStore.pre((op, add) => {
-      const event = MarketEvent.fromStorage(op.key, op.value)
+    eventStore.pre((dbOperation, add) => {
+      if (dbOperation.type !== 'put') {
+        return
+      }
+      const event = MarketEvent.fromStorage(dbOperation.key, dbOperation.value)
       const order = Order.fromEvent(event)
 
       if (event.eventType === MarketEvent.TYPES.PLACED) {

@@ -114,6 +114,30 @@ describe('Orderbook', () => {
       expect(eventStore.pre).to.have.been.calledWithMatch(sinon.match.func)
     })
 
+    it('ignores non-put operations on the event store', () => {
+      const marketName = 'XYZ/ABC'
+      const orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+
+      expect(orderbook).to.have.property('store')
+      expect(eventStore.pre).to.have.been.calledOnce()
+      expect(eventStore.pre).to.have.been.calledWithMatch(sinon.match.func)
+
+      const preHook = eventStore.pre.args[0][0]
+      const add = sinon.stub()
+
+      const eventKey = 'yourkey'
+
+      preHook(
+        {
+          type: 'del',
+          key: eventKey
+        },
+        add
+      )
+
+      expect(add).to.not.have.been.called()
+    })
+
     it('creates orders when events with PLACED status are added to the store', () => {
       const marketName = 'XYZ/ABC'
       const orderbook = new Orderbook(marketName, relayer, baseStore, logger)
@@ -182,11 +206,13 @@ describe('Orderbook', () => {
       })
 
       const eventKey = 'yourkey'
+      const eventValue = 'yourvalue'
 
       preHook(
         {
-          type: 'del',
-          key: eventKey
+          type: 'put',
+          key: eventKey,
+          value: eventValue
         },
         add
       )
@@ -223,11 +249,13 @@ describe('Orderbook', () => {
       })
 
       const eventKey = 'yourkey'
+      const eventValue = 'yourvalue'
 
       preHook(
         {
-          type: 'del',
-          key: eventKey
+          type: 'put',
+          key: eventKey,
+          value: eventValue
         },
         add
       )
