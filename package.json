@@ -7,15 +7,16 @@
     "project_name": "broker"
   },
   "scripts": {
+    "ci-test": "npm run format && npm run test",
     "prebuild": "bash ./scripts/prebuild.sh",
     "build": "bash ./scripts/build.sh",
     "destroy": "bash ./scripts/destroy.sh",
-    "format": "standard --fix; exit 0",
-    "pretest": "npm run format",
+    "format": "standard --fix",
+    "pretest": "npm run format; exit 0",
     "test": "NODE_PATH=. nyc mocha 'broker-cli/**/*.spec.js' 'broker-daemon/**/*.spec.js'",
-    "pretest-cli": "npm run format",
+    "pretest-cli": "npm run format; exit 0",
     "test-cli": "NODE_PATH=. mocha 'broker-cli/**/*.spec.js'",
-    "pretest-daemon": "npm run format",
+    "pretest-daemon": "npm run format; exit 0",
     "test-daemon": "NODE_PATH=. mocha 'broker-daemon/**/*.spec.js'"
   },
   "standard": {
