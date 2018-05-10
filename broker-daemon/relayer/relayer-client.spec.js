@@ -11,6 +11,7 @@ describe('RelayerClient', () => {
   let proto
   let Maker
   let OrderBook
+  let Health
   let ResponseTypes = {
     EXISTING_EVENT: 'EXISTING_EVENT',
     EXISTING_EVENTS_DONE: 'EXISTING_EVENTS_DONE',
@@ -23,9 +24,11 @@ describe('RelayerClient', () => {
 
     Maker = sinon.stub()
     OrderBook = sinon.stub()
+    Health = sinon.stub()
     proto = {
       Maker,
       OrderBook,
+      Health,
       WatchMarketResponse: {
         ResponseTypes
       }
@@ -210,6 +213,6 @@ describe('RelayerClient', () => {
   })
 
   describe.skip('healthCheck', () => {
-    
+
   })
 })
