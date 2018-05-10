@@ -77,7 +77,7 @@ describe('RelayerClient', () => {
 
       expect(Maker).to.have.been.calledOnce()
       expect(Maker).to.have.been.calledWithNew()
-      expect(Maker).to.have.been.calledWith('localhost:28492', fakeCreds)
+      expect(Maker).to.have.been.calledWith('docker.for.mac.host.internal:28492', fakeCreds)
       expect(relayer).to.have.property('maker')
       expect(relayer.maker).to.be.instanceOf(Maker)
     })
@@ -90,7 +90,7 @@ describe('RelayerClient', () => {
 
       expect(OrderBook).to.have.been.calledOnce()
       expect(OrderBook).to.have.been.calledWithNew()
-      expect(OrderBook).to.have.been.calledWith('localhost:28492', fakeCreds)
+      expect(OrderBook).to.have.been.calledWith('docker.for.mac.host.internal:28492', fakeCreds)
       expect(relayer).to.have.property('orderbook')
       expect(relayer.orderbook).to.be.instanceOf(OrderBook)
     })

@@ -4,20 +4,22 @@
   "description": "",
   "main": "index.js",
   "config": {
-    "project_name": "broker"
+    "project_name": "broker",
+    "daemon": "kbd"
   },
   "scripts": {
-    "ci-test": "npm run format && npm run test",
     "prebuild": "bash ./scripts/prebuild.sh",
     "build": "bash ./scripts/build.sh",
     "destroy": "bash ./scripts/destroy.sh",
     "format": "standard --fix",
-    "pretest": "npm run format; exit 0",
-    "test": "NODE_PATH=. nyc mocha 'broker-cli/**/*.spec.js' 'broker-daemon/**/*.spec.js'",
-    "pretest-cli": "npm run format; exit 0",
-    "test-cli": "NODE_PATH=. mocha 'broker-cli/**/*.spec.js'",
-    "pretest-daemon": "npm run format; exit 0",
-    "test-daemon": "NODE_PATH=. mocha 'broker-daemon/**/*.spec.js'"
+    "format-non-fail": "npm run format; exit 0",
+    "pretest": "npm run format-non-fail",
+    "test": "npm run docker-test",
+    "test-broker": "NODE_PATH=. mocha 'broker-cli/**/*.spec.js' 'broker-daemon/**/*.spec.js'",
+    "coverage": "docker-compose exec $npm_package_config_daemon npm run docker-coverage",
+    "docker-coverage": "nyc npm run docker-test",
+    "docker-test": "docker-compose exec $npm_package_config_daemon npm run test-broker",
+    "ci-test": "npm run format && npm test"
   },
   "standard": {
     "env": [
