@@ -208,4 +208,8 @@ describe('RelayerClient', () => {
       expect(store.put).to.have.been.calledWith(MarketEvent.prototype.key, MarketEvent.prototype.value)
     })
   })
+
+  describe.skip('healthCheck', () => {
+    
+  })
 })
