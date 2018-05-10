@@ -1,6 +1,6 @@
 const createOrder = require('./create-order')
 const watchMarket = require('./watch-market')
-const healthCheck = require('./health-check')
+const { healthCheck } = require('./health-check')
 
 module.exports = {
   createOrder,
