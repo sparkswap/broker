@@ -115,7 +115,7 @@ describe('RelayerClient', () => {
       params = {
         baseSymbol: 'XYZ',
         counterSymbol: 'CBAA',
-        lastUpdated: null
+        lastUpdated: '123'
       }
 
       stream = {
@@ -141,6 +141,14 @@ describe('RelayerClient', () => {
 
       expect(watchMarket).to.have.been.calledOnce()
       expect(watchMarket).to.have.been.calledWith(params)
+    })
+
+    it('uses a 0 (int64 null value) for lastUpdated when a falsey value is passed', () => {
+      params.lastUpdated = null
+      relayer.watchMarket(store, params)
+
+      expect(watchMarket).to.have.been.calledOnce()
+      expect(watchMarket).to.have.been.calledWith(sinon.match({ lastUpdated: '0' }))
     })
 
     it('errors out when stream creation fails', () => {

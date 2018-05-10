@@ -46,6 +46,9 @@ class RelayerClient {
    */
   watchMarket (store, { baseSymbol, counterSymbol, lastUpdated }) {
     return new Promise(async (resolve, reject) => {
+      // TODO: fix null value for lastUpdated
+      lastUpdated = lastUpdated || '0'
+
       const params = { baseSymbol, counterSymbol, lastUpdated }
       const RESPONSE_TYPES = this.proto.WatchMarketResponse.ResponseTypes
 
