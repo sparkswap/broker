@@ -46,7 +46,7 @@ services:
     working_dir: '/home/app'
     entrypoint: bash -c './scripts/build-kbd.sh'
 
-  # These services are imported
+  # These services are imported from the lnd-engine
   repl:
     extends:
       file: ./docker/lnd-docker-compose.yml
