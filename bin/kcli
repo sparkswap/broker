@@ -3,9 +3,10 @@
 /**
  * Kinesis Broker CLI
  */
-
+const { engines: { node: currentVersion } } = require('../package.json')
+const compareVersions = require('compare-versions')
+require('colors')
 const program = require('caporal')
-
 const { version: CLI_VERSION } = require('../package.json')
 
 const {
@@ -16,6 +17,13 @@ const {
   setupCommand,
   healthCheckCommand
 } = require('../broker-cli')
+
+const clientVersion = process.version.substring(1)
+
+if (compareVersions(clientVersion, currentVersion) !== 0) {
+  console.error(`Wrong node version, required version: ${currentVersion}, your version: ${clientVersion}`.red)
+  process.exit(1)
+}
 
 /**
  * Initial Program Setup
