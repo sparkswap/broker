@@ -1,4 +1,4 @@
-version: '3'
+version: '2'
 
 services:
   kcli:
@@ -46,8 +46,35 @@ services:
     working_dir: '/home/app'
     entrypoint: bash -c './scripts/build-kbd.sh'
 
+  # These services are imported from the lnd-engine
+  repl:
+    extends:
+      file: ./docker/lnd-docker-compose.yml
+      service: repl
+    build:
+      context: ./
+
+  lnd_btc:
+    extends:
+      file: ./docker/lnd-docker-compose.yml
+      service: lnd_btc
+    build:
+      context: ./
+
+  btcd:
+    extends:
+      file: ./docker/lnd-docker-compose.yml
+      service: btcd
+    build:
+      context: ./
+
+
+
 volumes:
   shared:
+  # These volumes are used in lnd/btc
+  lnd:
+  bitcoin:
 
 networks:
   broker:
