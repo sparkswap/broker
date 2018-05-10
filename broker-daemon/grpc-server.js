@@ -37,6 +37,8 @@ class GrpcServer {
       watchMarket: watchMarket.bind(this.action),
       healthCheck: healthCheck.bind(this.action)
     })
+
+    this.orderbooks = {}
   }
 
   /**
@@ -46,7 +48,6 @@ class GrpcServer {
    * @returns {Promise<void>} promise that resolves when markets are caught up to the remote
    */
   async initializeMarkets (markets) {
-    this.orderbooks = {}
     return Promise.all(markets.map((marketName) => {
       return this.initializeMarket(marketName)
     }))
@@ -59,8 +60,8 @@ class GrpcServer {
    * @returns {Promise<void>} promise that resolves when market is caught up to the remote
    */
   async initializeMarket (marketName) {
-    this.orderbook[marketName] = new Orderbook(marketName, this.relayer, this.store.sublevel(marketName), this.logger)
-    return this.orderbook[marketName].initialize()
+    this.orderbooks[marketName] = new Orderbook(marketName, this.relayer, this.store.sublevel(marketName), this.logger)
+    return this.orderbooks[marketName].initialize()
   }
 
   /**
