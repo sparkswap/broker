@@ -11,9 +11,9 @@ const STATUS_CODES = Object.freeze({
  * @param {fn} cb
  */
 async function healthCheck (call, cb) {
-  const lndResStatus = await engineStatus()
+  const engineResStatus = await engineStatus()
   const relayerResStatus = await relayerStatus()
-  cb(null, {engineStatus: lndResStatus, relayerStatus: relayerResStatus})
+  cb(null, {engineStatus: engineResStatus, relayerStatus: relayerResStatus})
 }
 
 /**
