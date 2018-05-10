@@ -10,7 +10,7 @@ const programPath = path.resolve('broker-daemon', 'broker-actions', 'health-chec
 const program = rewire(programPath)
 const { healthCheck } = program
 describe('healthCheck', () => {
-  let lndStatusStub
+  let engineStatusStub
   let relayerStatusStub
   let cbSpy
   let revertLnd
@@ -18,9 +18,9 @@ describe('healthCheck', () => {
 
   beforeEach(() => {
     cbSpy = sinon.spy()
-    lndStatusStub = sinon.stub().callsFake(() => 'OK')
+    engineStatusStub = sinon.stub().callsFake(() => 'OK')
     relayerStatusStub = sinon.stub().callsFake(() => 'OK')
-    revertLnd = program.__set__('lndStatus', lndStatusStub)
+    revertLnd = program.__set__('engineStatus', engineStatusStub)
     revertRelayer = program.__set__('relayerStatus', relayerStatusStub)
   })
 
@@ -29,9 +29,9 @@ describe('healthCheck', () => {
     revertRelayer()
   })
 
-  it('calls lndStatus to retrieve lnd health status', async () => {
+  it('calls engineStatus to retrieve lnd health status', async () => {
     await healthCheck(null, cbSpy)
-    expect(lndStatusStub).to.have.been.called()
+    expect(engineStatusStub).to.have.been.called()
   })
 
   it('calls relayer to retrieve relayer health status', async () => {
@@ -41,6 +41,6 @@ describe('healthCheck', () => {
 
   it('calls callback to return status values', async () => {
     await healthCheck(null, cbSpy)
-    expect(cbSpy).to.have.been.calledWith(null, {lndStatus: 'OK', relayerStatus: 'OK'})
+    expect(cbSpy).to.have.been.calledWith(null, {engineStatus: 'OK', relayerStatus: 'OK'})
   })
 })

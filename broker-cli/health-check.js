@@ -19,9 +19,9 @@ async function healthCheck (args, opts, logger) {
   const { rpcAddress = null } = opts
 
   try {
-    const { lndStatus, relayerStatus } = await new Broker(rpcAddress).healthCheck()
+    const { engineStatus, relayerStatus } = await new Broker(rpcAddress).healthCheck()
     const res = {
-      lndStatus,
+      engineStatus,
       relayerStatus,
       daemonStatus: STATUS_CODES.OK
     }
