@@ -17,6 +17,7 @@ describe('RelayerClient', () => {
     EXISTING_EVENTS_DONE: 'EXISTING_EVENTS_DONE',
     NEW_EVENT: 'NEW_EVENT'
   }
+  let exchangeRpcHost = 'localhost:1337'
 
   beforeEach(() => {
     MarketEvent = sinon.stub()
@@ -34,9 +35,12 @@ describe('RelayerClient', () => {
       }
     }
     loadProto = sinon.stub().returns(proto)
+
     RelayerClient.__set__('loadProto', loadProto)
+    RelayerClient.__set__('EXCHANGE_RPC_HOST', exchangeRpcHost)
 
     grpcCredentialsInsecure = sinon.stub()
+
     RelayerClient.__set__('grpc', {
       credentials: {
         createInsecure: grpcCredentialsInsecure
@@ -77,7 +81,7 @@ describe('RelayerClient', () => {
 
       expect(Maker).to.have.been.calledOnce()
       expect(Maker).to.have.been.calledWithNew()
-      expect(Maker).to.have.been.calledWith('docker.for.mac.host.internal:28492', fakeCreds)
+      expect(Maker).to.have.been.calledWith(exchangeRpcHost, fakeCreds)
       expect(relayer).to.have.property('maker')
       expect(relayer.maker).to.be.instanceOf(Maker)
     })
@@ -90,7 +94,7 @@ describe('RelayerClient', () => {
 
       expect(OrderBook).to.have.been.calledOnce()
       expect(OrderBook).to.have.been.calledWithNew()
-      expect(OrderBook).to.have.been.calledWith('docker.for.mac.host.internal:28492', fakeCreds)
+      expect(OrderBook).to.have.been.calledWith(exchangeRpcHost, fakeCreds)
       expect(relayer).to.have.property('orderbook')
       expect(relayer.orderbook).to.be.instanceOf(OrderBook)
     })
