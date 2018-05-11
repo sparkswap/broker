@@ -51,6 +51,33 @@ function isMarketName (str) {
 }
 
 /**
+ * Checks the provided list of marketnames lengths
+ *
+ * @param {String} marketNames comma separated
+ * @returns {Bool} returns true if all market names are valid
+ */
+function validMarketNames (marketNames) {
+  return marketNames.split(',').every(isMarketName)
+}
+
+/**
+ * Checks the provided list of marketnames lengths
+ *
+ * @param {String} marketNames comma separated
+ * @returns {String} returns string if all market names are valid
+ * @throws {Error} returns an error if not all marketnames are valid
+ */
+function areValidMarketNames (marketNames) {
+  try {
+    if (marketNames === '' || validMarketNames(marketNames)) {
+      return marketNames
+    }
+  } catch (e) {
+    throw new Error('One or more market names is invalid')
+  }
+}
+
+/**
  * Checks if a specified string is a valid RPC host.
  *
  * @param {String} str - rpc host address
@@ -68,9 +95,16 @@ function isHost (str) {
     return str
   }
 
-  throw new Error('Invalid RPC Host name')
+  throw new Error('Invalid Host name')
 }
 
+/**
+ * Checks if a specified string is a valid RPC host.
+ *
+ * @param {String} str - path to file
+ * @returns {String} the path
+ * @throws {Error} returns an error if the given string is not a valid path
+ */
 function isPath (str) {
   if (matches(str, /^.+$/)) {
     return str
@@ -83,5 +117,6 @@ module.exports = {
   isPrice,
   isMarketName,
   isHost,
-  isPath
+  isPath,
+  areValidMarketNames
 }

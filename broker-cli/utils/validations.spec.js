@@ -4,7 +4,9 @@ const { expect } = chai
 const {
   isPrice,
   isMarketName,
-  isHost
+  isHost,
+  areValidMarketNames,
+  isPath
 } = require('./validations')
 
 describe('Validations', () => {
@@ -72,7 +74,7 @@ describe('Validations', () => {
   })
 
   describe('isHost', () => {
-    const expectedError = 'Invalid RPC Host name'
+    const expectedError = 'Invalid Host name'
 
     it('returns a valid container name host', () => {
       const validHost = 'kinesis:10009'
@@ -92,6 +94,39 @@ describe('Validations', () => {
     it('throws an error when host is invalid', () => {
       const invalidHost = 'bad url'
       expect(() => isHost(invalidHost)).to.throw(expectedError)
+    })
+  })
+
+  describe('areValidMarketNames', () => {
+    const expectedError = 'One or more market names is invalid'
+
+    it('returns comma separated market names if all market names are valid', () => {
+      const marketNames = 'BTC/LTC,BTC/ETH'
+      expect(areValidMarketNames(marketNames)).to.eql(marketNames)
+    })
+
+    it('throws an error if marketnames are not comma separated', () => {
+      const invalidMarketNames = 'BTC/LTC BTC/ETH'
+      expect(() => areValidMarketNames(invalidMarketNames)).to.throw(expectedError)
+    })
+
+    it('returns empty string if empty string is passed in', () => {
+      const marketNames = ''
+      expect(areValidMarketNames(marketNames)).to.eql(marketNames)
+    })
+  })
+
+  describe('isPath', () => {
+    const expectedError = 'Path format is incorrect'
+
+    it('returns directory path if path is valid', () => {
+      const path = '/home/myfolder'
+      expect(isPath(path)).to.eql(path)
+    })
+
+    it('throws an error if marketnames are not comma separated', () => {
+      const path = '/home/myfolder/\n'
+      expect(() => isPath(path)).to.throw(expectedError)
     })
   })
 })
