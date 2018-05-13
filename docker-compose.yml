@@ -51,22 +51,20 @@ services:
     extends:
       file: ./docker/lnd-docker-compose.yml
       service: repl
-    build:
-      context: ./
 
   lnd_btc:
     extends:
       file: ./docker/lnd-docker-compose.yml
       service: lnd_btc
     build:
-      context: ./
+      context: ./docker
 
   btcd:
     extends:
       file: ./docker/lnd-docker-compose.yml
       service: btcd
     build:
-      context: ./
+      context: ./docker
 
 
 
