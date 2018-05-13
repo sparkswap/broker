@@ -4,24 +4,29 @@
  * Kinesis Broker Daemon
  */
 
-const path = require('path')
 const program = require('caporal')
 
-const startServer = require('../broker-daemon')
+const BrokerDaemon = require('../broker-daemon')
 
 const { version: CLI_VERSION } = require('../package.json')
 
-const RPC_ADDRESS = process.env.RPC_ADDRESS || '0.0.0.0:27492'
-const DATA_DIR = process.env.DATA_DIR || '~/.kinesis/data'
-const ENGINE_TYPE = process.env.ENGINE_TYPE || 'lnd'
-const EXCHANGE_RPC_HOST = process.env.EXCHANGE_RPC_HOST || '0.0.0.0:28492'
-const MARKETS = process.env.MARKETS || ''
+// KBD Specific ENV variables
+const {
+  RPC_ADDRESS,
+  DATA_DIR,
+  ENGINE_TYPE,
+  EXCHANGE_RPC_HOST,
+  MARKETS
+} = process.env
 
-// TODO: Do not provide defaults for these certs because they could
-//   exist in an array of places?
-const LND_TLS_CERT = process.env.LND_TLS_CERT || '~/.lnd/tls.cert'
-const LND_MACAROON = process.env.LND_MACAROON || '~/.lnd/admin.macaroon'
-const LND_RPC_HOST = process.env.ENGINE_RPC_HOST || '0.0.0.0:10009'
+// LND Specific ENV variables. ONLY used if ENGINE_TYPE is LND
+// TODO: this may not be the correct way to set environment variables for a particular engine
+const {
+  LND_TLS_CERT,
+  LND_MACAROON,
+  // TODO: rename this variable
+  ENGINE_RPC_HOST: LND_RPC_HOST
+} = process.env
 
 // TODO: Add validations to ./bin/kbd when they become available
 program
@@ -33,10 +38,23 @@ program
   .option('--exchange-host', 'The host address for the Kinesis Relayer', null, EXCHANGE_RPC_HOST)
 
   // LND Specific commands
-  // These will be validated based off of the engine type
+  // TODO: These may need to be validated based off of the engine type
   .option('--lnd-rpc <server>', 'Location of the LND RPC server to use.', /^.+(:[0-9]*)?$/, LND_RPC_HOST)
   .option('--lnd-tls <path>', 'Location of the certificate to use when communicating with LND.', /^.+$/, LND_TLS_CERT)
   .option('--lnd-macaroon <path>', 'Location of the macaroon to use when communicating with LND.', /^.+$/, LND_MACAROON)
-  .action(startServer)
+  .action((args, opts) => {
+    const {
+      rpcAddress,
+      dataDir,
+      markets
+      // engineType,
+      // exchangeHost,
+      // lndRpc,
+      // lndTls,
+      // lndMacaroon
+    } = opts
+
+    return new BrokerDaemon(rpcAddress, dataDir, markets)
+  })
 
 program.parse(process.argv)

@@ -26,6 +26,7 @@ services:
     environment:
       # - GRPC_VERBOSITY=INFO
       # - GRPC_TRACE=all
+      - NODE_PATH=.
       - RPC_ADDRESS=0.0.0.0:27492
       - DATA_DIR=/data
       - LND_HOST=lnd_btc:10009
