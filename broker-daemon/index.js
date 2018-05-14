@@ -3,6 +3,7 @@ const sublevel = require('level-sublevel')
 const EventEmitter = require('events')
 
 const GrpcServer = require('./grpc-server')
+const { logger } = require('./utils')
 
 /**
  * Creates an RPC server with params from kbd cli
@@ -20,7 +21,7 @@ const GrpcServer = require('./grpc-server')
  * @param {Logger} logger
  */
 
-async function startServer (args, opts, logger) {
+async function startServer (args, opts) {
   const {
     rpcAddress,
     dataDir,
@@ -36,6 +37,7 @@ async function startServer (args, opts, logger) {
   const eventHandler = new EventEmitter()
   const grpc = new GrpcServer(logger, store, eventHandler)
 
+  this.logger = logger
   const marketNames = (markets || '').split(',').filter(m => m)
   logger.info(`Initializing ${marketNames.length} markets`)
   await grpc.initializeMarkets(marketNames)
