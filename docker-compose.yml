@@ -40,7 +40,10 @@ services:
       - EXCHANGE_RPC_HOST=docker.for.mac.host.internal:28492
       - MARKETS
     ports:
-      - "27492:27492"
+      - '27492:27492'
+    expose:
+      - '27492'
+
     networks:
       - broker
       - lnd
