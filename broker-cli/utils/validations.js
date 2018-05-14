@@ -1,4 +1,4 @@
-const { isInt, isAlpha, isURL } = require('validator')
+const { isInt, isAlpha, isURL, matches } = require('validator')
 
 /**
  * Checks if the specified string is a valid price for kinesis
@@ -51,13 +51,40 @@ function isMarketName (str) {
 }
 
 /**
- * Checks if a specified string is a valid RPC host.
+ * Checks the provided list of marketnames lengths
  *
- * @param {String} str - rpc host address
- * @returns {String}
- * @throws {Error} returns an error if the given string is invalid for an RPC host
+ * @param {String} marketNames comma separated
+ * @returns {Bool} returns true if all market names are valid
  */
-function isRPCHost (str) {
+function validMarketNames (marketNames) {
+  return marketNames.split(',').every(isMarketName)
+}
+
+/**
+ * Checks the provided list of marketnames lengths
+ *
+ * @param {String} marketNames comma separated
+ * @returns {String} returns string if all market names are valid
+ * @throws {Error} returns an error if not all marketnames are valid
+ */
+function areValidMarketNames (marketNames) {
+  try {
+    if (marketNames === '' || validMarketNames(marketNames)) {
+      return marketNames
+    }
+  } catch (e) {
+    throw new Error('One or more market names is invalid')
+  }
+}
+
+/**
+ * Checks if a specified string is a valid host.
+ *
+ * @param {String} str - host address
+ * @returns {String}
+ * @throws {Error} returns an error if the given string is invalid for an host
+ */
+function isHost (str) {
   // We can disable the `valid_protocol` and `tld` options for now because we use URLs
   // that are local to the container. However, we should remove this in the future to
   // be more strict in our input checking
@@ -68,11 +95,29 @@ function isRPCHost (str) {
     return str
   }
 
-  throw new Error('Invalid RPC Host name')
+  throw new Error('Invalid Host name')
+}
+
+/**
+ * Checks if a specified string is a valid path.
+ *
+ * @param {String} str - path to file
+ * @returns {String} the path
+ * @throws {Error} returns an error if the given string is not a valid path
+ */
+// TODO: better path checking
+function isFormattedPath (str) {
+  if (matches(str, /^.+$/)) {
+    return str
+  }
+
+  throw new Error('Path format is incorrect')
 }
 
 module.exports = {
   isPrice,
   isMarketName,
-  isRPCHost
+  isHost,
+  isFormattedPath,
+  areValidMarketNames
 }

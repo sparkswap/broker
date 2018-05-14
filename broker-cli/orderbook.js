@@ -68,6 +68,6 @@ module.exports = (program) => {
   program
     .command('orderbook', 'View the order book for a specific market.')
     .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
-    .option('--rpc-address <server>', 'Location of the RPC server to use.', validations.isRPCHost)
+    .option('--rpc-address <server>', 'Location of the RPC server to use.', validations.isHost)
     .action(orderbook)
 }
