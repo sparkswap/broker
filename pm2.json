@@ -1,0 +1,16 @@
+{
+  "name": "kinesis-broker",
+  "script": "./scripts/start-kbd.sh",
+  "instances": "1",
+  "max_restarts": 4,
+  "exec_interpreter" : "bash",
+  "exec_mode"  : "fork_mode",
+  "min_uptime": 5000,
+  "watch": [
+    "broker-daemon"
+  ],
+  "env": {
+    "NODE_ENV": "development",
+    "NODE_PATH": "."
+  }
+}

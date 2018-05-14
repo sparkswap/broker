@@ -26,6 +26,7 @@ services:
     environment:
       # - GRPC_VERBOSITY=INFO
       # - GRPC_TRACE=all
+      - NODE_PATH=.
       - RPC_ADDRESS=0.0.0.0:27492
       - DATA_DIR=/data
       - LND_HOST=lnd_btc:10009
@@ -39,12 +40,14 @@ services:
       - EXCHANGE_RPC_HOST=docker.for.mac.host.internal:28492
       - MARKETS
     ports:
-      - "27492:27492"
+      - '27492:27492'
+    expose:
+      - '27492'
     networks:
       - broker
       - lnd
     working_dir: '/home/app'
-    entrypoint: bash -c './scripts/build-kbd.sh'
+    entrypoint: bash -c 'npm run build-kbd && npm start'
 
   # These services are imported from the lnd-engine
   repl:
@@ -53,6 +56,8 @@ services:
       service: repl
 
   lnd_btc:
+    depends_on:
+      - btcd
     extends:
       file: ./docker/lnd-docker-compose.yml
       service: lnd_btc
@@ -65,7 +70,6 @@ services:
       service: btcd
     build:
       context: ./docker
-
 
 
 volumes:

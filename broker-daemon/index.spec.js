@@ -1,122 +1,72 @@
 const path = require('path')
-const { chai, sinon, rewire } = require('test/test-helper')
-const { expect } = chai
+const { expect, sinon, rewire } = require('test/test-helper')
 
-const brokerDaemon = rewire(path.resolve('broker-daemon'))
+const BrokerDaemon = rewire(path.resolve('broker-daemon', 'index'))
 
 describe('broker daemon', () => {
-  let GrpcServer
-  let listen
-  let initializeMarkets
+  let grpcServer
+  let eventEmitter
   let level
   let sublevel
   let logger
-  let EventEmitter
+  let brokerDaemon
+  let grpcServerListenSpy
+  let initializeMarketsSpy
 
   beforeEach(() => {
-    listen = sinon.stub()
-    initializeMarkets = sinon.stub()
-    initializeMarkets.resolves(true)
-
-    GrpcServer = sinon.stub().returns({
-      listen,
-      initializeMarkets
-    })
-    brokerDaemon.__set__('GrpcServer', GrpcServer)
-
-    level = sinon.stub()
-    brokerDaemon.__set__('level', level)
-
-    sublevel = sinon.stub()
-    brokerDaemon.__set__('sublevel', sublevel)
-
+    level = sinon.stub().returns('fake-level')
+    sublevel = sinon.stub().returns('fake-sublevel')
+    grpcServerListenSpy = sinon.spy()
+    initializeMarketsSpy = sinon.spy()
+    grpcServer = sinon.stub()
+    grpcServer.prototype.listen = grpcServerListenSpy
+    grpcServer.prototype.initializeMarkets = initializeMarketsSpy
+    eventEmitter = sinon.stub()
     logger = {
       error: sinon.spy(),
       info: sinon.spy()
     }
-    brokerDaemon.__set__('logger', logger)
 
-    EventEmitter = sinon.stub()
-    brokerDaemon.__set__('EventEmitter', EventEmitter)
+    BrokerDaemon.__set__('level', level)
+    BrokerDaemon.__set__('sublevel', sublevel)
+    BrokerDaemon.__set__('events', eventEmitter)
+    BrokerDaemon.__set__('GrpcServer', grpcServer)
+    BrokerDaemon.__set__('logger', logger)
+
+    brokerDaemon = new BrokerDaemon()
   })
 
-  describe('startServer', () => {
-    const startServer = brokerDaemon
+  describe('grpc server', () => {
+    it('starts a grpc server', async () => {
+      await brokerDaemon
+      expect(grpcServerListenSpy).to.have.been.calledWith(brokerDaemon.rpcAddress)
+    })
+  })
 
-    it('creates a store', async () => {
-      const fakeDataDir = 'my-data'
-      const fakeLevel = 'mylevel'
-      level.returns(fakeLevel)
+  describe('rpcAddress', () => {
+    let defaultAddress
+    let rpcAddress
 
-      await startServer(null, {
-        dataDir: fakeDataDir
-      })
-
-      expect(level).to.have.been.calledOnce()
-      expect(level).to.have.been.calledWith(fakeDataDir)
-      expect(sublevel).to.have.been.calledOnce()
-      expect(sublevel).to.have.been.calledWith(fakeLevel)
+    beforeEach(() => {
+      defaultAddress = '0.0.0.0:27492'
+      rpcAddress = 'rpcAddress'
+      BrokerDaemon.__set__('RPC_ADDRESS', rpcAddress)
     })
 
-    it('creates an event handler', async () => {
-      await startServer(null, {})
-
-      expect(EventEmitter).to.have.been.calledOnce()
-      expect(EventEmitter).to.have.been.calledWithExactly()
-      expect(EventEmitter).to.have.been.calledWithNew()
+    it('sets a default address if parameter and env is not set', async () => {
+      await brokerDaemon
+      expect(brokerDaemon.rpcAddress).to.be.eql(defaultAddress)
     })
 
-    it('creates a server', async () => {
-      const fakeSublevel = 'mysublevel'
-      sublevel.returns(fakeSublevel)
-
-      const fakeEventHandler = {}
-      EventEmitter.returns(fakeEventHandler)
-
-      await startServer(null, {})
-
-      expect(GrpcServer).to.have.been.calledOnce()
-      expect(GrpcServer).to.have.been.calledWith(logger, fakeSublevel, fakeEventHandler)
-      expect(GrpcServer).to.have.been.calledWithNew()
+    it('sets an rpc address from an ENV variable', async () => {
+      await brokerDaemon
+      expect(brokerDaemon.rpcAddress).to.be.eql(rpcAddress)
     })
 
-    it('initializes markets', async () => {
-      const fakeMarkets = 'ABC/XYZ'
-      await startServer(null, {
-        markets: fakeMarkets
-      })
-
-      expect(initializeMarkets).to.have.been.calledOnce()
-      expect(initializeMarkets).to.have.been.calledWith(sinon.match([fakeMarkets]))
-    })
-
-    it('initializes multiple markets', async () => {
-      const fakeMarkets = ['ABC/XYZ', 'BTC/LTC']
-      await startServer(null, {
-        markets: fakeMarkets.join(',')
-      })
-
-      expect(initializeMarkets).to.have.been.calledOnce()
-      expect(initializeMarkets).to.have.been.calledWith(sinon.match(fakeMarkets))
-    })
-
-    it('does not initialize a null value market', async () => {
-      const fakeMarkets = null
-      await startServer(null, {
-        markets: fakeMarkets
-      })
-
-      expect(initializeMarkets).to.have.been.calledWith([])
-    })
-
-    it('starts listening', async () => {
-      const fakeRpcAddress = '1.1.1.1:3000'
-      await startServer(null, {
-        rpcAddress: fakeRpcAddress
-      })
-
-      expect(listen).to.have.been.calledOnce()
-      expect(listen).to.have.been.calledWith(fakeRpcAddress)
+    it('sets an RPC address from parameters', async () => {
+      let customRpcAddress = '127.0.0.1'
+      brokerDaemon = await new BrokerDaemon(customRpcAddress)
+      expect(brokerDaemon.rpcAddress).to.be.eql(customRpcAddress)
     })
   })
 })

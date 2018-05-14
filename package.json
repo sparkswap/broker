@@ -10,6 +10,7 @@
   "scripts": {
     "prebuild": "bash ./scripts/prebuild.sh",
     "build": "bash ./scripts/build.sh",
+    "build-kbd": "bash ./scripts/build-kbd.sh",
     "destroy": "bash ./scripts/destroy.sh",
     "format": "standard --fix",
     "format-non-fail": "npm run format; exit 0",
@@ -19,7 +20,8 @@
     "coverage": "docker-compose exec $npm_package_config_daemon npm run docker-coverage",
     "docker-coverage": "nyc npm run docker-test",
     "docker-test": "docker-compose exec $npm_package_config_daemon npm run test-broker",
-    "ci-test": "npm run format && npm run test-broker"
+    "ci-test": "npm run format && npm run test-broker",
+    "start": "pm2-docker pm2.json --watch"
   },
   "standard": {
     "env": [
@@ -45,6 +47,7 @@
     "level": "3.0.1",
     "level-sublevel": "6.6.1",
     "lnd-engine": "kinesis-exchange/lnd-engine",
+    "pm2": "2.10.3",
     "validator": "10.2.0",
     "winston": "3.0.0-rc5"
   },

@@ -17,7 +17,7 @@ chai.use(sinonChai)
 chai.use(dirtyChai)
 chai.use(chaiAsPromised)
 
-let sandbox = sinon.sandbox.create()
+let sandbox = sinon.createSandbox()
 
 afterEach(function () {
   sandbox.restore()
@@ -25,6 +25,7 @@ afterEach(function () {
 
 module.exports = {
   chai,
+  expect: chai.expect,
   sinon: sandbox,
   rewire,
   delay
