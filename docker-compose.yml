@@ -43,12 +43,11 @@ services:
       - '27492:27492'
     expose:
       - '27492'
-
     networks:
       - broker
       - lnd
     working_dir: '/home/app'
-    entrypoint: bash -c './scripts/build-kbd.sh'
+    entrypoint: bash -c 'npm run build-kbd && npm start'
 
   # These services are imported from the lnd-engine
   repl:
@@ -57,6 +56,8 @@ services:
       service: repl
 
   lnd_btc:
+    depends_on:
+      - btcd
     extends:
       file: ./docker/lnd-docker-compose.yml
       service: lnd_btc

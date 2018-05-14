@@ -1,8 +1,10 @@
 {
   "name": "kinesis-broker",
-  "script": "broker-daemon/start.js",
+  "script": "./scripts/start-kbd.sh",
   "instances": "1",
   "max_restarts": 4,
+  "exec_interpreter" : "bash",
+  "exec_mode"  : "fork_mode",
   "min_uptime": 5000,
   "watch": [
     "broker-daemon"
@@ -10,9 +12,5 @@
   "env": {
     "NODE_ENV": "development",
     "NODE_PATH": "."
-  },
-  "watch_options": {
-    "usePolling": true,
-    "interval": 5007
   }
 }

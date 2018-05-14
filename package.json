@@ -10,6 +10,7 @@
   "scripts": {
     "prebuild": "bash ./scripts/prebuild.sh",
     "build": "bash ./scripts/build.sh",
+    "build-kbd": "bash ./scripts/build-kbd.sh",
     "destroy": "bash ./scripts/destroy.sh",
     "format": "standard --fix",
     "format-non-fail": "npm run format; exit 0",
