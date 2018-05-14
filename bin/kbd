@@ -7,6 +7,7 @@
 const program = require('caporal')
 
 const BrokerDaemon = require('../broker-daemon')
+const { validations } = require('../broker-cli/utils')
 
 const { version: CLI_VERSION } = require('../package.json')
 
@@ -31,17 +32,17 @@ const {
 // TODO: Add validations to ./bin/kbd when they become available
 program
   .version(CLI_VERSION)
-  .option('--rpc-address <server>', 'Host and port to set up the RPC server on.', /^.+(:[0-9]*)?$/, RPC_ADDRESS)
-  .option('--data-dir <path>', 'Location to store kinesisd data.', /^.+$/, DATA_DIR)
-  .option('--markets <markets>', 'Comma-separated market names to track on startup', null, MARKETS)
+  .option('--rpc-address <server>', 'Host and port to set up the RPC server on.', validations.isHost, RPC_ADDRESS)
+  .option('--data-dir <path>', 'Location to store kinesis data.', validations.isFormattedPath, DATA_DIR)
+  .option('--markets <markets>', 'Comma-separated market names to track on startup', validations.areValidMarketNames, MARKETS)
   .option('--engine-type', 'The type of Kinesis engine. Example: lnd', null, ENGINE_TYPE)
-  .option('--exchange-host', 'The host address for the Kinesis Relayer', null, EXCHANGE_RPC_HOST)
+  .option('--exchange-host', 'The host address for the Kinesis Relayer', validations.isHost, EXCHANGE_RPC_HOST)
 
   // LND Specific commands
-  // TODO: These may need to be validated based off of the engine type
-  .option('--lnd-rpc <server>', 'Location of the LND RPC server to use.', /^.+(:[0-9]*)?$/, LND_RPC_HOST)
-  .option('--lnd-tls <path>', 'Location of the certificate to use when communicating with LND.', /^.+$/, LND_TLS_CERT)
-  .option('--lnd-macaroon <path>', 'Location of the macaroon to use when communicating with LND.', /^.+$/, LND_MACAROON)
+  // These will be validated based off of the engine type
+  .option('--lnd-rpc <server>', 'Location of the LND RPC server to use.', validations.isHost, LND_RPC_HOST)
+  .option('--lnd-tls <path>', 'Location of the certificate to use when communicating with LND.', validations.isFormattedPath, LND_TLS_CERT)
+  .option('--lnd-macaroon <path>', 'Location of the macaroon to use when communicating with LND.', validations.isFormattedPath, LND_MACAROON)
   .action((args, opts) => {
     const {
       rpcAddress,

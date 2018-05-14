@@ -25,6 +25,7 @@ afterEach(function () {
 
 module.exports = {
   chai,
+  expect: chai.expect,
   sinon: sandbox,
   rewire,
   delay

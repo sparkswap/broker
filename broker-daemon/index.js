@@ -3,6 +3,7 @@ const sublevel = require('level-sublevel')
 const EventEmitter = require('events')
 
 const GrpcServer = require('./grpc-server')
+const { logger } = require('./utils')
 
 const {
   RPC_ADDRESS,
@@ -37,20 +38,26 @@ class BrokerDaemon {
     this.lndMacaroon = LND_MACAROON
     this.lndRpcHost = LND_RPC_HOST
 
-    this.logger = console
+    this.logger = logger
     this.store = sublevel(level(this.dataDir))
     this.eventHandler = new EventEmitter()
     this.server = new GrpcServer(this.logger, this.store, this.eventHandler)
     this.marketNames = (markets || '').split(',').filter(m => m)
 
+    try {
+      this.initialize()
+    } catch (e) {
+      console.error('BrokerDaemon failed to initialize')
+      throw (e)
+    }
+  }
+
+  async initialize () {
     console.info(`Initializing ${this.marketNames.length} markets`)
-    this.server.initializeMarkets(this.marketNames)
-      .then(() => {
-        console.info(`Caught up to ${this.marketNames.length} markets`)
-        this.server.listen(this.rpcAddress)
-        console.info(`gRPC server started: Server listening on ${this.rpcAddress}`)
-      })
-      .catch(console.error)
+    await this.server.initializeMarkets(this.marketNames)
+    console.info(`Caught up to ${this.marketNames.length} markets`)
+    this.server.listen(this.rpcAddress)
+    console.info(`gRPC server started: Server listening on ${this.rpcAddress}`)
   }
 }
 
