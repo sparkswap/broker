@@ -47,17 +47,18 @@ class BrokerDaemon {
     try {
       this.initialize()
     } catch (e) {
-      console.error('BrokerDaemon failed to initialize')
+      logger.error('BrokerDaemon failed to initialize')
       throw (e)
     }
   }
 
   async initialize () {
-    console.info(`Initializing ${this.marketNames.length} markets`)
+    logger.info(`Initializing ${this.marketNames.length} markets`)
     await this.server.initializeMarkets(this.marketNames)
-    console.info(`Caught up to ${this.marketNames.length} markets`)
+    logger.info(`Caught up to ${this.marketNames.length} markets`)
+    console.info(this.rpcAddress)
     this.server.listen(this.rpcAddress)
-    console.info(`gRPC server started: Server listening on ${this.rpcAddress}`)
+    logger.info(`gRPC server started: Server listening on ${this.rpcAddress}`)
   }
 }
 
