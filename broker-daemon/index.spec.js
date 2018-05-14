@@ -31,9 +31,10 @@ describe('broker daemon', () => {
     brokerDaemon.__set__('sublevel', sublevel)
 
     logger = {
-      info: sinon.spy(),
-      error: sinon.spy()
+      error: sinon.spy(),
+      info: sinon.spy()
     }
+    brokerDaemon.__set__('logger', logger)
 
     EventEmitter = sinon.stub()
     brokerDaemon.__set__('EventEmitter', EventEmitter)
@@ -49,7 +50,7 @@ describe('broker daemon', () => {
 
       await startServer(null, {
         dataDir: fakeDataDir
-      }, logger)
+      })
 
       expect(level).to.have.been.calledOnce()
       expect(level).to.have.been.calledWith(fakeDataDir)
@@ -58,7 +59,7 @@ describe('broker daemon', () => {
     })
 
     it('creates an event handler', async () => {
-      await startServer(null, {}, logger)
+      await startServer(null, {})
 
       expect(EventEmitter).to.have.been.calledOnce()
       expect(EventEmitter).to.have.been.calledWithExactly()
@@ -72,7 +73,7 @@ describe('broker daemon', () => {
       const fakeEventHandler = {}
       EventEmitter.returns(fakeEventHandler)
 
-      await startServer(null, {}, logger)
+      await startServer(null, {})
 
       expect(GrpcServer).to.have.been.calledOnce()
       expect(GrpcServer).to.have.been.calledWith(logger, fakeSublevel, fakeEventHandler)
@@ -83,7 +84,7 @@ describe('broker daemon', () => {
       const fakeMarkets = 'ABC/XYZ'
       await startServer(null, {
         markets: fakeMarkets
-      }, logger)
+      })
 
       expect(initializeMarkets).to.have.been.calledOnce()
       expect(initializeMarkets).to.have.been.calledWith(sinon.match([fakeMarkets]))
@@ -93,7 +94,7 @@ describe('broker daemon', () => {
       const fakeMarkets = ['ABC/XYZ', 'BTC/LTC']
       await startServer(null, {
         markets: fakeMarkets.join(',')
-      }, logger)
+      })
 
       expect(initializeMarkets).to.have.been.calledOnce()
       expect(initializeMarkets).to.have.been.calledWith(sinon.match(fakeMarkets))
@@ -103,7 +104,7 @@ describe('broker daemon', () => {
       const fakeMarkets = null
       await startServer(null, {
         markets: fakeMarkets
-      }, logger)
+      })
 
       expect(initializeMarkets).to.have.been.calledWith([])
     })
@@ -112,7 +113,7 @@ describe('broker daemon', () => {
       const fakeRpcAddress = '1.1.1.1:3000'
       await startServer(null, {
         rpcAddress: fakeRpcAddress
-      }, logger)
+      })
 
       expect(listen).to.have.been.calledOnce()
       expect(listen).to.have.been.calledWith(fakeRpcAddress)

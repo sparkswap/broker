@@ -3,6 +3,7 @@ const sublevel = require('level-sublevel')
 const EventEmitter = require('events')
 
 const GrpcServer = require('./grpc-server')
+const { logger } = require('./utils')
 
 /**
  * Creates an RPC server with params from kbd cli
@@ -17,10 +18,9 @@ const GrpcServer = require('./grpc-server')
  * @param {String} [lndRpc] opts.lndRpc
  * @param {String} [lndTls] opts.lndTls
  * @param {String} [lndMacaroon] opts.lndMacaroon
- * @param {Logger} logger
  */
 
-async function startServer (args, opts, logger) {
+async function startServer (args, opts) {
   const {
     rpcAddress,
     dataDir,
