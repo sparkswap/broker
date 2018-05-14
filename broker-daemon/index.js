@@ -18,7 +18,6 @@ const { logger } = require('./utils')
  * @param {String} [lndRpc] opts.lndRpc
  * @param {String} [lndTls] opts.lndTls
  * @param {String} [lndMacaroon] opts.lndMacaroon
- * @param {Logger} logger
  */
 
 async function startServer (args, opts) {
@@ -37,7 +36,6 @@ async function startServer (args, opts) {
   const eventHandler = new EventEmitter()
   const grpc = new GrpcServer(logger, store, eventHandler)
 
-  this.logger = logger
   const marketNames = (markets || '').split(',').filter(m => m)
   logger.info(`Initializing ${marketNames.length} markets`)
   await grpc.initializeMarkets(marketNames)
