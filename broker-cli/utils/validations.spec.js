@@ -6,7 +6,7 @@ const {
   isMarketName,
   isHost,
   areValidMarketNames,
-  isPath
+  isFormattedPath
 } = require('./validations')
 
 describe('Validations', () => {
@@ -121,12 +121,12 @@ describe('Validations', () => {
 
     it('returns directory path if path is valid', () => {
       const path = '/home/myfolder'
-      expect(isPath(path)).to.eql(path)
+      expect(isFormattedPath(path)).to.eql(path)
     })
 
-    it('throws an error if marketnames are not comma separated', () => {
+    it('throws an error if given path does not have correct format', () => {
       const path = '/home/myfolder/\n'
-      expect(() => isPath(path)).to.throw(expectedError)
+      expect(() => isFormattedPath(path)).to.throw(expectedError)
     })
   })
 })

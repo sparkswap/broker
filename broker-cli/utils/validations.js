@@ -78,11 +78,11 @@ function areValidMarketNames (marketNames) {
 }
 
 /**
- * Checks if a specified string is a valid RPC host.
+ * Checks if a specified string is a valid host.
  *
- * @param {String} str - rpc host address
+ * @param {String} str - host address
  * @returns {String}
- * @throws {Error} returns an error if the given string is invalid for an RPC host
+ * @throws {Error} returns an error if the given string is invalid for an host
  */
 function isHost (str) {
   // We can disable the `valid_protocol` and `tld` options for now because we use URLs
@@ -99,13 +99,14 @@ function isHost (str) {
 }
 
 /**
- * Checks if a specified string is a valid RPC host.
+ * Checks if a specified string is a valid path.
  *
  * @param {String} str - path to file
  * @returns {String} the path
  * @throws {Error} returns an error if the given string is not a valid path
  */
-function isPath (str) {
+// TODO: better path checking
+function isFormattedPath (str) {
   if (matches(str, /^.+$/)) {
     return str
   }
@@ -117,6 +118,6 @@ module.exports = {
   isPrice,
   isMarketName,
   isHost,
-  isPath,
+  isFormattedPath,
   areValidMarketNames
 }
