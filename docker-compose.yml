@@ -68,7 +68,6 @@ services:
       context: ./docker
 
 
-
 volumes:
   shared:
   # These volumes are used in lnd/btc

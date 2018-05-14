@@ -5,8 +5,7 @@
   "max_restarts": 4,
   "min_uptime": 5000,
   "watch": [
-    "broker-daemon",
-    "src"
+    "broker-daemon"
   ],
   "env": {
     "NODE_ENV": "development"
