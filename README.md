@@ -15,43 +15,27 @@ You will need to have nvm (and our current node version) installed on your machi
 
 It is also recommended that you install a [Standard](https://standardjs.com/) plugin for your editor. We currently follow StandardJS formatting.
 
-Additonally, you must have ssh/private access to the `kinesis-exchange/lnd-engine`.
+Additonally, you must have ssh/private access to the lnd-engine repo: `kinesis-exchange/lnd-engine`.
 
 ### Getting Started
 
-Use `npm run build`. This command will install dependencies, install proto files from the relayer, build all docker containers and start all processes.
+Run the following commands in order:
 
-Once the script is done running, you can then check the status of all containers w/ `docker-compose ps`
+1. `npm run build` - This command will install local dependencies, install proto files and build all broker containers
+2. `docker-compose up -d` - starts all the containers
 
-### Using the CLI
+### Workflow
 
-Once all containers are started succesfully, we can check to make sure the CLI/KBD is running w/ the engine.
+#### Using the CLI
 
-We can run the following healthcheck command `./bin/kcli healthcheck` to verify that we can hit LND/BTCD.
+You can run `./bin/kcli -h` to view all available commands. (this can be done in the kcli container using `docker-compose run kcli bash -c './bin/kcli -h'`)
 
-Alternatively, we have created a CLI container where we can run the check: `docker-compose run kcli bash -c './bin/kcli healthcheck'`
+NOTE: Running a command on the kcli container will initialize a new container on every run, which can become very process heavy.
 
-```
-docker-compose run kcli healthcheck
-```
-
-NOTE: This will initialize a new container on every run, which is very process heavy.
-
-### Development
-
-
-### Running tests
+#### Running tests
 
 - `npm test` will run all tests
 - `npm run coverage` will run tests w/ code coverage
-
-### Authentication between CLI (KCLI) and Broker Daemon (KBD)
-
-None, yet...
-
-### Authentication between Broker Daemon (KBD) and Relayer
-
-None, yet...
 
 ### Authentication between Daemon and LND
 
