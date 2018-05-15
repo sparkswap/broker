@@ -9,6 +9,10 @@
   "watch": [
     "broker-daemon"
   ],
+  "watch_options": {
+    "usePolling": true,
+    "interval": 5007
+  },
   "env": {
     "NODE_ENV": "development",
     "NODE_PATH": "."
