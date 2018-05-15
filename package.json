@@ -13,14 +13,12 @@
     "build-kbd": "bash ./scripts/build-kbd.sh",
     "destroy": "bash ./scripts/destroy.sh",
     "format": "standard --fix",
-    "format-non-fail": "npm run format; exit 0",
-    "pretest": "npm run format-non-fail",
-    "test": "npm run docker-test",
-    "test-broker": "NODE_PATH=. mocha 'broker-cli/**/*.spec.js' 'broker-daemon/**/*.spec.js'",
-    "coverage": "docker-compose exec $npm_package_config_daemon npm run docker-coverage",
-    "docker-coverage": "nyc npm run docker-test",
-    "docker-test": "docker-compose exec $npm_package_config_daemon npm run test-broker",
-    "ci-test": "npm run format && npm run test-broker",
+    "pretest": "npm run format; exit 0",
+    "test": "NODE_PATH=. mocha 'broker-cli/**/*.spec.js' 'broker-daemon/**/*.spec.js'",
+    "coverage": "nyc npm test",
+    "docker-coverage": "docker-compose exec $npm_package_config_daemon npm run coverage",
+    "docker-test": "docker-compose exec $npm_package_config_daemon npm test",
+    "ci-test": "npm run format && npm test",
     "start": "pm2-docker pm2.json --watch"
   },
   "standard": {
@@ -39,6 +37,9 @@
     "url": "https://github.com/kinesis-exchange/broker/issues"
   },
   "homepage": "https://github.com/kinesis-exchange/broker#readme",
+  "optionalDependencies": {
+    "lnd-engine": "kinesis-exchange/lnd-engine"
+  },
   "dependencies": {
     "caporal": "0.10.0",
     "colors": "1.2.4",
@@ -46,7 +47,6 @@
     "grpc": "1.11.3",
     "level": "3.0.1",
     "level-sublevel": "6.6.1",
-    "lnd-engine": "kinesis-exchange/lnd-engine",
     "pm2": "2.10.3",
     "validator": "10.2.0",
     "winston": "3.0.0-rc5"

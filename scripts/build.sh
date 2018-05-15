@@ -6,14 +6,22 @@ echo ""
 echo "It's time to BUILD! All resistance is futile."
 echo ""
 
+echo "Removing dependency lock files"
+rm -f ./package-lock.json
+rm -f ./npm-shrinkwrap.json
+
+echo "Removing node_modules"
+rm -rf ./node_modules
+
+echo "Reinstalling dependencies"
 npm i
 
-# Download the relayer proto
+echo "Downloading relayer proto files"
 rm -rf ./proto/relayer
 git clone git@github.com:kinesis-exchange/relayer.git ./proto/relayer
 cp ./proto/relayer/proto/relayer.proto ./proto/
 
-# Delete all files added from lnd-engine
+echo "Reinitializing lnd-engine docker files"
 rm -rf ./docker/btcd
 rm -rf ./docker/lnd
 rm -f ./docker/docker-compose.yml
@@ -26,8 +34,12 @@ cp ./node_modules/lnd-engine/docker-compose.yml ./docker/lnd-docker-compose.yml
 # Rename the readme file for docker
 mv ./docker/README.md ./docker/LND-README.md
 
+echo "Rebuilding all broker related docker containers/services"
+docker-compose down -v
+docker-compose build --force-rm
+docker-compose up -d
 
-# Run tests on the docker container and handle failures if containers are not running
+echo "Running tests against the repository"
 if npm test ; then
   exit 0
 else
