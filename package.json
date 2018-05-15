@@ -37,9 +37,6 @@
     "url": "https://github.com/kinesis-exchange/broker/issues"
   },
   "homepage": "https://github.com/kinesis-exchange/broker#readme",
-  "optionalDependencies": {
-    "lnd-engine": "kinesis-exchange/lnd-engine"
-  },
   "dependencies": {
     "caporal": "0.10.0",
     "colors": "1.2.4",
