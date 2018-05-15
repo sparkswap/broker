@@ -10,7 +10,7 @@
   "scripts": {
     "prebuild": "bash ./scripts/prebuild.sh",
     "build": "bash ./scripts/build.sh",
-    "build-kbd": "bash ./scripts/build-kbd.sh",
+    "build-xs": "bash ./scripts/build-xs.sh",
     "destroy": "bash ./scripts/destroy.sh",
     "format": "standard --fix",
     "pretest": "npm run format; exit 0",
@@ -19,7 +19,7 @@
     "docker-coverage": "docker-compose exec $npm_package_config_daemon npm run coverage",
     "docker-test": "docker-compose exec $npm_package_config_daemon npm test",
     "ci-test": "npm run format && npm test",
-    "start": "pm2-docker pm2.json --watch"
+    "start-kbd": "pm2-docker pm2.json --watch"
   },
   "standard": {
     "env": [

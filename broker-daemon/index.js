@@ -56,7 +56,6 @@ class BrokerDaemon {
     logger.info(`Initializing ${this.marketNames.length} markets`)
     await this.server.initializeMarkets(this.marketNames)
     logger.info(`Caught up to ${this.marketNames.length} markets`)
-    console.info(this.rpcAddress)
     this.server.listen(this.rpcAddress)
     logger.info(`gRPC server started: Server listening on ${this.rpcAddress}`)
   }

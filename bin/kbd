@@ -7,6 +7,8 @@
 const program = require('caporal')
 
 const BrokerDaemon = require('../broker-daemon')
+
+// TODO: Change this path to be KBD specific
 const { validations } = require('../broker-cli/utils')
 
 const { version: CLI_VERSION } = require('../package.json')

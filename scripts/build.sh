@@ -44,6 +44,7 @@ docker-compose build --force-rm
 docker-compose up -d
 
 echo "Running tests against the repository"
+
 if npm test ; then
   exit 0
 else

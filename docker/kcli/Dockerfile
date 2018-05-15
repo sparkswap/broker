@@ -8,6 +8,7 @@ COPY package.json /home/app
 COPY package-lock.json /home/app
 COPY broker-cli /home/app/broker-cli
 COPY bin/kcli /home/app/bin/kcli
+COPY broker-daemon/proto/broker.proto /home/app/broker-daemon/proto/broker.proto
 
 WORKDIR /home/app
 

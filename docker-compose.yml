@@ -12,14 +12,14 @@ services:
       - BROKER_DAEMON_HOST=kbd:27492
     networks:
       - broker
-    working_dir: '/home/app'
 
   kbd:
     build:
       context: ./
       dockerfile: docker/kbd/Dockerfile
     volumes:
-      - './:/home/app'
+      - './bin:/home/app/bin'
+      - './broker-daemon:/home/app/broker-daemon/'
       - '/data'
       # This is populated externally w/ an engine
       - 'shared:/shared'
@@ -47,7 +47,7 @@ services:
       - broker
       - lnd
     working_dir: '/home/app'
-    entrypoint: bash -c 'npm run build-kbd && npm start'
+    entrypoint: bash -c 'npm run start-kbd'
 
   # These services are imported from the lnd-engine
   repl:
