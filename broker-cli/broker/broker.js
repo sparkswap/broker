@@ -46,6 +46,10 @@ class Broker {
    * @returns {Promise}
    */
   async watchMarket (params) {
+    console.log(params)
+    console.log(this.address)
+    console.log('MAERTINE IN HERE')
+
     return this.broker.watchMarket(params)
   }
 

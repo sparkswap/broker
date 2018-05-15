@@ -50,7 +50,7 @@ class RelayerClient {
       lastUpdated = lastUpdated || '0'
 
       const params = { baseSymbol, counterSymbol, lastUpdated }
-      const RESPONSE_TYPES = this.proto.WatchMarketResponse.ResponseTypes
+      const RESPONSE_TYPE = this.proto.WatchMarketResponse.ResponseType
 
       this.logger.info('Setting up market watcher', params)
 
@@ -69,16 +69,20 @@ class RelayerClient {
       })
 
       watcher.on('data', async (response) => {
-        if (response.type === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
+        console.log(response)
+        console.log('banana')
+
+        if (response.type === RESPONSE_TYPE.EXISTING_EVENTS_DONE) {
           return resolve()
         }
 
-        if (![RESPONSE_TYPES.EXISTING_EVENT, RESPONSE_TYPES.NEW_EVENT].includes(response.type)) {
+        if (![RESPONSE_TYPE.EXISTING_EVENT, RESPONSE_TYPE.NEW_EVENT].includes(response.type)) {
           // No other responses are implemented
           return
         }
 
         const event = new MarketEvent(response.marketEvent)
+        console.log(response.marketEvent)
         store.put(event.key, event.value)
       })
     })
