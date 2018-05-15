@@ -17,7 +17,6 @@ class Orderbook {
     const lastUpdated = await this.lastUpdate()
     const params = { baseSymbol, counterSymbol, lastUpdated }
 
-    this.logger.info('hello its us')
     await this.relayer.watchMarket(this.eventStore, params)
 
     this.logger.info(`Market ${this.marketName} initialized.`)

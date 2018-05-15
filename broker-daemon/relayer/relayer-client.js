@@ -68,11 +68,10 @@ class RelayerClient {
         throw new Error(`Remote relayer ended stream for ${baseSymbol}/${counterSymbol}`)
       })
 
-      watcher.on('data', async (response) => {
-        console.log(response)
-        console.log('banana')
+      watcher.on('error', (err) => this.logger.error(err))
 
-        if (response.type === RESPONSE_TYPE.EXISTING_EVENTS_DONE) {
+      watcher.on('data', async (response) => {
+        if (RESPONSE_TYPE[response.type] === RESPONSE_TYPE.EXISTING_EVENTS_DONE) {
           return resolve()
         }
 
