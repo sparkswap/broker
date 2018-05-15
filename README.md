@@ -39,13 +39,11 @@ NOTE: This will initialize a new container on every run, which is very process h
 
 ### Development
 
-There are times where you will want to work on an Engine and check the functionality directly w/ the broker. In order to do this, in package.json, you can change the dependency to a specific branch like so:  `kinesis-exchange/engine#my-branch`, then MAKE SURE to delete npm-shrinkwrap/package-lock and reinstall everything w/ `npm run build`.
 
 ### Running tests
 
 - `npm test` will run all tests
 - `npm run coverage` will run tests w/ code coverage
-
 
 ### Authentication between CLI (KCLI) and Broker Daemon (KBD)
 

@@ -39,9 +39,7 @@ mv ./docker/README.md ./docker/LND-README.md
 
 
 echo "Rebuilding all broker related docker containers/services"
-docker-compose down -v
 docker-compose build --force-rm
-docker-compose up -d
 
 echo "Running tests against the repository"
 
