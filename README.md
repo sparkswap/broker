@@ -19,9 +19,9 @@ Additonally, you must have ssh/private access to the `kinesis-exchange/lnd-engin
 
 ### Getting Started
 
-Use `npm run build` to install dependencies and build the cli/daemon
+Use `npm run build`. This command will install dependencies, install proto files from the relayer, build all docker containers and start all processes.
 
-Then, start the containers for KCLI/KBD with `docker-compose up -d`. You can then check if they are running w/ `docker-compose ps`
+Once the script is done running, you can then check the status of all containers w/ `docker-compose ps`
 
 ### Using the CLI
 
@@ -29,7 +29,7 @@ Once all containers are started succesfully, we can check to make sure the CLI/K
 
 We can run the following healthcheck command `./bin/kcli healthcheck` to verify that we can hit LND/BTCD.
 
-Alternatively, we have created a CLI container where we can run the check:
+Alternatively, we have created a CLI container where we can run the check: `docker-compose run kcli bash -c './bin/kcli healthcheck'`
 
 ```
 docker-compose run kcli healthcheck
@@ -43,10 +43,9 @@ There are times where you will want to work on an Engine and check the functiona
 
 ### Running tests
 
-- `npm test` will run all tests in the kbd docker container
-- `npm run coverage` will run tests w/ code coverage in the container
+- `npm test` will run all tests
+- `npm run coverage` will run tests w/ code coverage
 
-Why are all tests run in the container? This is due to dependencies that need to run/build on the target architecture (which is linux). This is also consistent with how tests are ran on CI
 
 ### Authentication between CLI (KCLI) and Broker Daemon (KBD)
 
