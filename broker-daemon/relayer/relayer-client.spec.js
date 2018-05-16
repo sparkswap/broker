@@ -6,6 +6,7 @@ const RelayerClient = rewire(path.resolve('broker-daemon', 'relayer', 'relayer-c
 
 describe('RelayerClient', () => {
   let grpcCredentialsInsecure
+  let pathResolve
   let MarketEvent
   let loadProto
   let proto
@@ -26,6 +27,10 @@ describe('RelayerClient', () => {
     Maker = sinon.stub()
     OrderBook = sinon.stub()
     Health = sinon.stub()
+
+    pathResolve = sinon.stub()
+    RelayerClient.__set__('path', { resolve: pathResolve })
+
     proto = {
       Maker,
       OrderBook,
@@ -65,10 +70,14 @@ describe('RelayerClient', () => {
     })
 
     it('loads the proto', () => {
+      const fakePath = 'mypath'
+      pathResolve.returns(fakePath)
       const relayer = new RelayerClient()
 
+      expect(pathResolve).to.have.been.calledOnce()
+      expect(pathResolve).to.have.been.calledWith('./proto/relayer.proto')
       expect(loadProto).to.have.been.calledOnce()
-      expect(loadProto).to.have.been.calledWith('./proto/relayer.proto')
+      expect(loadProto).to.have.been.calledWith(fakePath)
       expect(relayer).to.have.property('proto')
       expect(relayer.proto).to.be.equal(proto)
     })

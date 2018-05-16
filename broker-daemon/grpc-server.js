@@ -1,14 +1,9 @@
 const grpc = require('grpc')
+const path = require('path')
 
-const { loadProto } = require('./utils')
 const RelayerClient = require('./relayer')
-const GrpcAction = require('./grpc-action')
 const Orderbook = require('./orderbook')
-const {
-  createOrder,
-  watchMarket,
-  healthCheck
-} = require('./broker-actions')
+const BrokerService = require('./broker-service')
 
 const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
 
@@ -23,20 +18,14 @@ class GrpcServer {
     this.store = store
     this.eventHandler = eventHandler
 
-    this.protoPath = BROKER_PROTO_PATH
-    this.proto = loadProto(this.protoPath)
+    this.protoPath = path.resolve(BROKER_PROTO_PATH)
 
     this.server = new grpc.Server()
     this.relayer = new RelayerClient()
-    this.action = new GrpcAction(this.logger, this.store, this.relayer)
 
-    this.brokerService = this.proto.Broker.service
+    this.brokerService = new BrokerService(this.protoPath, this)
 
-    this.server.addService(this.brokerService, {
-      createOrder: createOrder.bind(this.action),
-      watchMarket: watchMarket.bind(this.action),
-      healthCheck: healthCheck.bind(this.action)
-    })
+    this.server.addService(this.brokerService.definition, this.brokerService.implementation)
 
     this.orderbooks = {}
   }

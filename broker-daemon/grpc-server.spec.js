@@ -5,29 +5,22 @@ const { expect } = chai
 const GrpcServer = rewire(path.resolve('broker-daemon', 'grpc-server'))
 
 describe('GrpcServer', () => {
-  let GrpcAction
-  let loadProto
   let grpcServer
   let addService
-  let createOrder
-  let createOrderBind
-  let healthCheck
-  let healthCheckBind
-  let watchMarket
-  let watchMarketBind
+  let BrokerService
+  let brokerService
   let RelayerClient
   let Orderbook
+  let pathResolve
+  let protoPath
 
   beforeEach(() => {
-    GrpcAction = sinon.stub()
-    GrpcServer.__set__('GrpcAction', GrpcAction)
-
-    loadProto = sinon.stub().returns({
-      Broker: {
-        service: 'broker-service'
-      }
-    })
-    GrpcServer.__set__('loadProto', loadProto)
+    brokerService = {
+      definition: 'mydef',
+      implementation: 'myimp'
+    }
+    BrokerService = sinon.stub().returns(brokerService)
+    GrpcServer.__set__('BrokerService', BrokerService)
 
     RelayerClient = sinon.stub()
     GrpcServer.__set__('RelayerClient', RelayerClient)
@@ -40,23 +33,11 @@ describe('GrpcServer', () => {
       Server: grpcServer
     })
 
-    createOrderBind = sinon.stub()
-    createOrder = {
-      bind: createOrderBind
-    }
-    GrpcServer.__set__('createOrder', createOrder)
-
-    healthCheckBind = sinon.stub()
-    healthCheck = {
-      bind: healthCheckBind
-    }
-    GrpcServer.__set__('healthCheck', healthCheck)
-
-    watchMarketBind = sinon.stub()
-    watchMarket = {
-      bind: watchMarketBind
-    }
-    GrpcServer.__set__('watchMarket', watchMarket)
+    protoPath = 'mypath'
+    pathResolve = sinon.stub().returns(protoPath)
+    GrpcServer.__set__('path', {
+      resolve: pathResolve
+    })
 
     Orderbook = sinon.stub()
     Orderbook.prototype.initialize = sinon.stub()
@@ -89,29 +70,14 @@ describe('GrpcServer', () => {
     })
 
     it('assigns the proto path', () => {
-      const protoPath = GrpcServer.__get__('BROKER_PROTO_PATH')
+      const BROKER_PROTO_PATH = GrpcServer.__get__('BROKER_PROTO_PATH')
 
       const server = new GrpcServer()
 
+      expect(pathResolve).to.have.been.calledOnce()
+      expect(pathResolve).to.have.been.calledWith(BROKER_PROTO_PATH)
       expect(server).to.have.property('protoPath')
       expect(server.protoPath).to.be.eql(protoPath)
-    })
-
-    it('loads the proto', () => {
-      const protoPath = GrpcServer.__get__('BROKER_PROTO_PATH')
-      const fakeProto = {
-        Broker: {
-          service: 'broker-service'
-        }
-      }
-      loadProto.returns(fakeProto)
-
-      const server = new GrpcServer()
-
-      expect(loadProto).to.have.been.calledOnce()
-      expect(loadProto).to.have.been.calledWith(protoPath)
-      expect(server).to.have.property('proto')
-      expect(server.proto).to.be.equal(fakeProto)
     })
 
     it('creates a grpc server', () => {
@@ -137,125 +103,26 @@ describe('GrpcServer', () => {
       expect(server.relayer).to.be.instanceOf(RelayerClient)
     })
 
-    it('creates a grpc action', () => {
-      const fakeAction = {}
-      GrpcAction.returns(fakeAction)
-
+    it('creates a broker service', () => {
       const logger = 'mylogger'
       const store = 'mystore'
 
       const server = new GrpcServer(logger, store)
 
-      expect(GrpcAction).to.have.been.calledOnce()
-      expect(GrpcAction).to.have.been.calledWith(logger, store)
-      expect(GrpcAction).to.have.been.calledWithNew()
-      expect(server).to.have.property('action')
-      expect(server.action).to.be.equal(fakeAction)
-    })
-
-    it('stores the broker service', () => {
-      const brokerService = 'broker-service'
-      loadProto.returns({
-        Broker: {
-          service: brokerService
-        }
-      })
-
-      const server = new GrpcServer()
-
+      expect(BrokerService).to.have.been.calledOnce()
+      expect(BrokerService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer: sinon.match.instanceOf(RelayerClient) }))
+      expect(BrokerService).to.have.been.calledWithNew()
       expect(server).to.have.property('brokerService')
       expect(server.brokerService).to.be.equal(brokerService)
     })
 
     it('adds the broker service', () => {
-      const brokerService = 'broker-service'
-      loadProto.returns({
-        Broker: {
-          service: brokerService
-        }
-      })
-
       const server = new GrpcServer()
 
       expect(server).to.have.property('server')
       expect(server.server.addService).to.be.equal(addService)
       expect(addService).to.have.been.calledOnce()
-      expect(addService).to.have.been.calledWith(brokerService)
-    })
-
-    it('adds the create order action', () => {
-      const brokerService = 'broker-service'
-      loadProto.returns({
-        Broker: {
-          service: brokerService
-        }
-      })
-
-      let fakeAction = {}
-      GrpcAction.returns(fakeAction)
-
-      let fakeBound = function () {}
-      createOrderBind.returns(fakeBound)
-
-      const server = new GrpcServer()
-
-      expect(server).to.have.property('server')
-      expect(server.server.addService).to.be.equal(addService)
-      expect(createOrderBind).to.have.been.calledOnce()
-      expect(createOrderBind).to.have.been.calledWith(fakeAction)
-      expect(addService).to.have.been.calledWith(brokerService, sinon.match({
-        createOrder: fakeBound
-      }))
-    })
-
-    it('adds the watch market action', () => {
-      const brokerService = 'broker-service'
-      loadProto.returns({
-        Broker: {
-          service: brokerService
-        }
-      })
-
-      let fakeAction = {}
-      GrpcAction.returns(fakeAction)
-
-      let fakeBound = function () {}
-      watchMarketBind.returns(fakeBound)
-
-      const server = new GrpcServer()
-
-      expect(server).to.have.property('server')
-      expect(server.server.addService).to.be.equal(addService)
-      expect(watchMarketBind).to.have.been.calledOnce()
-      expect(watchMarketBind).to.have.been.calledWith(fakeAction)
-      expect(addService).to.have.been.calledWith(brokerService, sinon.match({
-        watchMarket: fakeBound
-      }))
-    })
-
-    it('adds the health check action', () => {
-      const brokerService = 'broker-service'
-      loadProto.returns({
-        Broker: {
-          service: brokerService
-        }
-      })
-
-      let fakeAction = {}
-      GrpcAction.returns(fakeAction)
-
-      let fakeBound = function () {}
-      healthCheckBind.returns(fakeBound)
-
-      const server = new GrpcServer()
-
-      expect(server).to.have.property('server')
-      expect(server.server.addService).to.be.equal(addService)
-      expect(healthCheckBind).to.have.been.calledOnce()
-      expect(healthCheckBind).to.have.been.calledWith(fakeAction)
-      expect(addService).to.have.been.calledWith(brokerService, sinon.match({
-        healthCheck: fakeBound
-      }))
+      expect(addService).to.have.been.calledWith(brokerService.definition, brokerService.implementation)
     })
 
     it('creates an empty orderbooks hash', () => {

@@ -1,7 +1,8 @@
 const grpc = require('grpc')
+const path = require('path')
 
 const { MarketEvent } = require('../models')
-const { loadProto } = require('../utils')
+const { loadProto } = require('grpc-methods')
 
 // TODO: Add this to config for CLI
 const EXCHANGE_RPC_HOST = process.env.EXCHANGE_RPC_HOST || 'localhost:28492'
@@ -11,7 +12,7 @@ class RelayerClient {
   constructor (logger) {
     this.logger = logger || console
     this.address = EXCHANGE_RPC_HOST
-    this.proto = loadProto(RELAYER_PROTO_PATH)
+    this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
 
     // TODO: we will need to add auth for daemon for a non-local address
     this.maker = new this.proto.Maker(this.address, grpc.credentials.createInsecure())
