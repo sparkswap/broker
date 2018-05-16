@@ -19,6 +19,9 @@ async function createOrder ({ params, relayer }, { CreateOrderResponse, Side, Ti
     side
   } = params
 
+  // default time in force is GTC
+  timeinforce = timeinforce || TimeInForce.GTC
+
   if (!Object.keys(TimeInForce).includes(timeinforce)) {
     throw new PublicError(`${timeinforce} is an invalid parameter for timeinforce`)
   }
