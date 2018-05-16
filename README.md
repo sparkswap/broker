@@ -15,46 +15,27 @@ You will need to have nvm (and our current node version) installed on your machi
 
 It is also recommended that you install a [Standard](https://standardjs.com/) plugin for your editor. We currently follow StandardJS formatting.
 
-Additonally, you must have ssh/private access to the `kinesis-exchange/lnd-engine`.
+Additonally, you must have ssh/private access to the lnd-engine repo: `kinesis-exchange/lnd-engine`.
 
 ### Getting Started
 
-Use `npm run build` to install dependencies and build the cli/daemon
+Run the following commands in order:
 
-Then, start the containers for KCLI/KBD with `docker-compose up -d`. You can then check if they are running w/ `docker-compose ps`
+1. `npm run build` - This command will install local dependencies, install proto files and build all broker containers
+2. `docker-compose up -d` - starts all the containers
 
-### Using the CLI
+### Workflow
 
-Once all containers are started succesfully, we can check to make sure the CLI/KBD is running w/ the engine.
+#### Using the CLI
 
-We can run the following healthcheck command `./bin/kcli healthcheck` to verify that we can hit LND/BTCD.
+You can run `./bin/kcli -h` to view all available commands. (this can be done in the kcli container using `docker-compose run kcli bash -c './bin/kcli -h'`)
 
-Alternatively, we have created a CLI container where we can run the check:
+NOTE: Running a command on the kcli container will initialize a new container on every run, which can become very process heavy.
 
-```
-docker-compose run kcli healthcheck
-```
+#### Running tests
 
-NOTE: This will initialize a new container on every run, which is very process heavy.
-
-### Development
-
-There are times where you will want to work on an Engine and check the functionality directly w/ the broker. In order to do this, in package.json, you can change the dependency to a specific branch like so:  `kinesis-exchange/engine#my-branch`, then MAKE SURE to delete npm-shrinkwrap/package-lock and reinstall everything w/ `npm run build`.
-
-### Running tests
-
-- `npm test` will run all tests in the kbd docker container
-- `npm run coverage` will run tests w/ code coverage in the container
-
-Why are all tests run in the container? This is due to dependencies that need to run/build on the target architecture (which is linux). This is also consistent with how tests are ran on CI
-
-### Authentication between CLI (KCLI) and Broker Daemon (KBD)
-
-None, yet...
-
-### Authentication between Broker Daemon (KBD) and Relayer
-
-None, yet...
+- `npm test` will run all tests
+- `npm run coverage` will run tests w/ code coverage
 
 ### Authentication between Daemon and LND
 

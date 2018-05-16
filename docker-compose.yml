@@ -4,22 +4,22 @@ services:
   kcli:
     build:
       context: ./
-      dockerfile: docker/kinesis/Dockerfile
+      dockerfile: docker/kcli/Dockerfile
     volumes:
-      - './:/home/app'
+      - './bin:/home/app/bin'
+      - './broker-cli:/home/app/broker-cli/'
     environment:
       - BROKER_DAEMON_HOST=kbd:27492
     networks:
       - broker
-    working_dir: '/home/app'
-    entrypoint: './bin/kcli'
 
   kbd:
     build:
       context: ./
-      dockerfile: docker/kinesis/Dockerfile
+      dockerfile: docker/kbd/Dockerfile
     volumes:
-      - './:/home/app'
+      - './bin:/home/app/bin'
+      - './broker-daemon:/home/app/broker-daemon/'
       - '/data'
       # This is populated externally w/ an engine
       - 'shared:/shared'
@@ -47,7 +47,7 @@ services:
       - broker
       - lnd
     working_dir: '/home/app'
-    entrypoint: bash -c 'npm run build-kbd && npm start'
+    entrypoint: bash -c 'npm run start-kbd'
 
   # These services are imported from the lnd-engine
   repl:
