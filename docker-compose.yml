@@ -49,12 +49,6 @@ services:
     working_dir: '/home/app'
     entrypoint: bash -c 'npm run start-kbd'
 
-  # These services are imported from the lnd-engine
-  repl:
-    extends:
-      file: ./docker/lnd-docker-compose.yml
-      service: repl
-
   lnd_btc:
     depends_on:
       - btcd
