@@ -70,4 +70,5 @@ proto/relayer/
 docker/lnd
 docker/btcd
 docker/lnd-docker-compose.yml
+docker/lnd-repl/Dockerfile
 docker/*.md
