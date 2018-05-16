@@ -54,6 +54,14 @@ describe('Broker', () => {
         expect(broker.address).to.eql(specifiedAddress)
       })
     })
+
+    describe('services', () => {
+      xit('creates the admin service client')
+
+      xit('creates the order service client')
+
+      xit('creates the orderbook service client')
+    })
   })
 
   describe('createOrder', () => {

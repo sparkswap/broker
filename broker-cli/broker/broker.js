@@ -19,7 +19,9 @@ class Broker {
 
     // TODO: we will need to add auth for daemon for a non-local address
     this.address = address || BROKER_DAEMON_HOST || 'localhost:27492'
-    this.broker = new this.proto.Broker(this.address, grpc.credentials.createInsecure())
+    this.admin = new this.proto.Admin(this.address, grpc.credentials.createInsecure())
+    this.order = new this.proto.Order(this.address, grpc.credentials.createInsecure())
+    this.orderBook = new this.proto.OrderBook(this.address, grpc.credentials.createInsecure())
   }
 
   /**
@@ -31,7 +33,7 @@ class Broker {
   async createOrder (params) {
     // TODO: Add a duration for gRPC
     return new Promise((resolve, reject) => {
-      this.broker.createOrder(params, (err, res) => {
+      this.order.createOrder(params, (err, res) => {
         if (err) return reject(err)
         return resolve(res)
       })
@@ -46,7 +48,7 @@ class Broker {
    * @returns {Promise}
    */
   async watchMarket (params) {
-    return this.broker.watchMarket(params)
+    return this.orderBook.watchMarket(params)
   }
 
   /**
@@ -55,7 +57,7 @@ class Broker {
    */
   async healthCheck () {
     return new Promise((resolve, reject) => {
-      this.broker.healthCheck({}, (err, res) => {
+      this.admin.healthCheck({}, (err, res) => {
         if (err) return reject(err)
         return resolve(res)
       })

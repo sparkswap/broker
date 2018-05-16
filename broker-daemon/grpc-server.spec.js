@@ -7,20 +7,38 @@ const GrpcServer = rewire(path.resolve('broker-daemon', 'grpc-server'))
 describe('GrpcServer', () => {
   let grpcServer
   let addService
-  let BrokerService
-  let brokerService
+  let AdminService
+  let adminService
+  let OrderService
+  let orderService
+  let OrderBookService
+  let orderBookService
   let RelayerClient
   let Orderbook
   let pathResolve
   let protoPath
 
   beforeEach(() => {
-    brokerService = {
+    adminService = {
       definition: 'mydef',
       implementation: 'myimp'
     }
-    BrokerService = sinon.stub().returns(brokerService)
-    GrpcServer.__set__('BrokerService', BrokerService)
+    AdminService = sinon.stub().returns(adminService)
+    GrpcServer.__set__('AdminService', AdminService)
+
+    orderService = {
+      definition: 'mydef',
+      implementation: 'myimp'
+    }
+    OrderService = sinon.stub().returns(orderService)
+    GrpcServer.__set__('OrderService', OrderService)
+
+    orderBookService = {
+      definition: 'mydef',
+      implementation: 'myimp'
+    }
+    OrderBookService = sinon.stub().returns(orderBookService)
+    GrpcServer.__set__('OrderBookService', OrderBookService)
 
     RelayerClient = sinon.stub()
     GrpcServer.__set__('RelayerClient', RelayerClient)
@@ -103,26 +121,67 @@ describe('GrpcServer', () => {
       expect(server.relayer).to.be.instanceOf(RelayerClient)
     })
 
-    it('creates a broker service', () => {
+    it('creates a admin service', () => {
       const logger = 'mylogger'
       const store = 'mystore'
 
       const server = new GrpcServer(logger, store)
 
-      expect(BrokerService).to.have.been.calledOnce()
-      expect(BrokerService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer: sinon.match.instanceOf(RelayerClient) }))
-      expect(BrokerService).to.have.been.calledWithNew()
-      expect(server).to.have.property('brokerService')
-      expect(server.brokerService).to.be.equal(brokerService)
+      expect(AdminService).to.have.been.calledOnce()
+      expect(AdminService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer: sinon.match.instanceOf(RelayerClient) }))
+      expect(AdminService).to.have.been.calledWithNew()
+      expect(server).to.have.property('adminService')
+      expect(server.adminService).to.be.equal(adminService)
     })
 
-    it('adds the broker service', () => {
+    it('adds the admin service', () => {
       const server = new GrpcServer()
 
       expect(server).to.have.property('server')
       expect(server.server.addService).to.be.equal(addService)
-      expect(addService).to.have.been.calledOnce()
-      expect(addService).to.have.been.calledWith(brokerService.definition, brokerService.implementation)
+      expect(addService).to.have.been.calledWith(adminService.definition, adminService.implementation)
+    })
+
+    it('creates a order service', () => {
+      const logger = 'mylogger'
+      const store = 'mystore'
+
+      const server = new GrpcServer(logger, store)
+
+      expect(OrderService).to.have.been.calledOnce()
+      expect(OrderService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer: sinon.match.instanceOf(RelayerClient) }))
+      expect(OrderService).to.have.been.calledWithNew()
+      expect(server).to.have.property('orderService')
+      expect(server.orderService).to.be.equal(orderService)
+    })
+
+    it('adds the order service', () => {
+      const server = new GrpcServer()
+
+      expect(server).to.have.property('server')
+      expect(server.server.addService).to.be.equal(addService)
+      expect(addService).to.have.been.calledWith(orderService.definition, orderService.implementation)
+    })
+
+    it('creates a orderBook service', () => {
+      const logger = 'mylogger'
+      const store = 'mystore'
+
+      const server = new GrpcServer(logger, store)
+
+      expect(OrderBookService).to.have.been.calledOnce()
+      expect(OrderBookService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer: sinon.match.instanceOf(RelayerClient) }))
+      expect(OrderBookService).to.have.been.calledWithNew()
+      expect(server).to.have.property('orderBookService')
+      expect(server.orderBookService).to.be.equal(orderBookService)
+    })
+
+    it('adds the orderBook service', () => {
+      const server = new GrpcServer()
+
+      expect(server).to.have.property('server')
+      expect(server.server.addService).to.be.equal(addService)
+      expect(addService).to.have.been.calledWith(orderBookService.definition, orderBookService.implementation)
     })
 
     it('creates an empty orderbooks hash', () => {

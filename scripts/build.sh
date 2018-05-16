@@ -16,6 +16,10 @@ rm -rf ./node_modules
 echo "Reinstalling dependencies"
 npm i
 
+echo "Building broker proto files"
+rm -rf ./broker-daemon/proto/broker.proto
+npm run broker-proto
+
 echo "Downloading relayer proto files"
 rm -rf ./proto/relayer
 git clone git@github.com:kinesis-exchange/relayer.git ./proto/relayer
