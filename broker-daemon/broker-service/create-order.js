@@ -10,7 +10,7 @@ const { PublicError } = require('grpc-methods')
  * @param {function} responses.CreateOrderResponse - constructor for CreateOrderResponse messages
  * @return {responses.CreateOrderResponse}
  */
-async function createOrder ({ params, relayer }, { CreateOrderResponse, Side, TimeInForce }) {
+async function createOrder ({ params, relayer, orderbooks }, { CreateOrderResponse, Side, TimeInForce }) {
   const {
     // amount,
     // price,
@@ -34,10 +34,14 @@ async function createOrder ({ params, relayer }, { CreateOrderResponse, Side, Ti
     throw new PublicError(`Only GTC orders are currently supported`)
   }
 
-  // We need to calculate the base amount/counter amount based off of current
-  // prices
+  if(!orderbooks[market]) {
+    throw new PublicError(`${market} is not being tracked as a market. Configure kbd to track ${market} using the MARKETS environment variable.`)
+  }
 
   const [baseSymbol, counterSymbol] = market.split('/')
+
+  // We need to calculate the base amount/counter amount based off of current
+  // prices
 
   const request = {
     ownerId: '123455678',

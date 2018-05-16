@@ -22,12 +22,11 @@ class GrpcServer {
 
     this.server = new grpc.Server()
     this.relayer = new RelayerClient()
+    this.orderbooks = {}
 
     this.brokerService = new BrokerService(this.protoPath, this)
 
     this.server.addService(this.brokerService.definition, this.brokerService.implementation)
-
-    this.orderbooks = {}
   }
 
   /**

@@ -21,6 +21,7 @@ describe('BrokerService', () => {
 
   let eventHandler
   let relayer
+  let orderbooks
 
   let server
 
@@ -47,6 +48,7 @@ describe('BrokerService', () => {
 
     eventHandler = sinon.stub()
     relayer = sinon.stub()
+    orderbooks = {}
 
     GrpcMethod = sinon.stub()
     fakeRegistered = sinon.stub()
@@ -67,7 +69,7 @@ describe('BrokerService', () => {
   })
 
   beforeEach(() => {
-    server = new BrokerService(protoPath, { logger, eventHandler, relayer })
+    server = new BrokerService(protoPath, { logger, eventHandler, relayer, orderbooks })
   })
 
   it('assigns a proto path', () => {
@@ -142,6 +144,11 @@ describe('BrokerService', () => {
       it('relayer', () => {
         expect(callArgs[2]).to.have.property('relayer')
         expect(callArgs[2].relayer).to.be.equal(relayer)
+      })
+
+      it('orderbooks', () => {
+        expect(callArgs[2]).to.have.property('orderbooks')
+        expect(callArgs[2].orderbooks).to.be.equal(orderbooks)
       })
     })
 
