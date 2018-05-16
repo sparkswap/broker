@@ -1,33 +1,33 @@
-const RelayerClient = require('../relayer')
+const neverResolve = new Promise(() => {})
 
 /**
  * Creates a stream with the exchange that watches for market events
  *
- * @param {Object} call
- * @param {Object} call.request
- * @param {String} call.request.market
+ * @param {GrpcServerStreamingMethod~request} request - request object
+ * @param {Object} request.params - Request parameters from the client
+ * @param {function} request.send - Send a chunk of data to the client
+ * @param {Object} request.logger - logger for messages about the method
+ * @param {RelayerClient} request.relayer - grpc Client for interacting with the relayer
+ * @param {Object} responses
+ * @param {function} responses.WatchMarketResponse - constructor for WatchMarketResponse messages
+ * @return {void}
  */
-async function watchMarket (call) {
+async function watchMarket ({ params, send, logger, relayer }, { WatchMarketResponse }) {
   // TODO: Some validation on here. Maybe the client can call out for valid markets
   // from the relayer so we dont event make a request if it is invalid
-  const { market } = call.request
+  const { market } = params
   const [baseSymbol, counterSymbol] = market.split('/')
 
   // TODO: Rethink the lastUpdated null value for relayer
   const request = { baseSymbol, counterSymbol, lastUpdated: 0 }
-  const relayer = new RelayerClient()
 
-  try {
-    const watchOrder = await relayer.watchMarket(request)
+  const watchOrder = await relayer.watchMarket(request)
 
-    watchOrder.on('data', (order) => call.write(order))
-    watchOrder.on('end', () => this.logger.info('Finished sending'))
-  } catch (e) {
-    this.logger.error('watchMarket failed', { error: e.toString() })
+  watchOrder.on('data', (order) => send(new WatchMarketResponse(order)))
+  watchOrder.on('end', () => logger.info('Finished sending'))
 
-    // Figure out a better way to handle errors for call
-    call.destroy()
-  }
+  // We want to keep this stream open, so we `await` a promise that will never resolve
+  await neverResolve
 }
 
 module.exports = watchMarket
