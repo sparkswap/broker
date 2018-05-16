@@ -1,5 +1,3 @@
-const { status } = require('grpc')
-
 /**
  * Creates an order with the relayer
  *
