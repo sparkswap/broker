@@ -1,4 +1,3 @@
-const RelayerClient = require('../relayer')
 const LndEngine = require('lnd-engine')
 
 const { LND_HOST, LND_TLS_CERT, LND_MACAROON } = process.env
@@ -7,13 +6,18 @@ const STATUS_CODES = Object.freeze({
 })
 
 /**
- * @param {Object} call
- * @param {fn} cb
+ * Check the health of all the system components
+ *
+ * @param {GrpcUnaryMethod~request} request - request object
+ * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
+ * @param {Object} responses
+ * @param {function} responses.HealthCheckResponse - constructor for HealthCheckResponse messages
+ * @return {responses.HealthCheckResponse}
  */
-async function healthCheck (call, cb) {
+async function healthCheck ({ relayer }, { HealthCheckResponse }) {
   const engineResStatus = await engineStatus()
-  const relayerResStatus = await relayerStatus()
-  cb(null, {engineStatus: engineResStatus, relayerStatus: relayerResStatus})
+  const relayerResStatus = await relayerStatus(relayer)
+  return new HealthCheckResponse({ engineStatus: engineResStatus, relayerStatus: relayerResStatus })
 }
 
 /**
@@ -35,10 +39,10 @@ async function engineStatus () {
 }
 
 /**
+ * @param {RelayerClient} relayer - grpc Client for interacting with the Relayer
  * @return {String}
  */
-async function relayerStatus () {
-  const relayer = new RelayerClient()
+async function relayerStatus (relayer) {
   try {
     await relayer.healthCheck({})
     return STATUS_CODES.OK
