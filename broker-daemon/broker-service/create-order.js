@@ -1,4 +1,5 @@
 const { PublicError } = require('grpc-methods')
+const { createMarketOrder, createGoodTilCancelledOrder } = require('../orders')
 
 /**
  * Creates a local order and interacts with the relayer to enact it
@@ -12,15 +13,14 @@ const { PublicError } = require('grpc-methods')
  */
 async function createOrder ({ params, relayer, orderbooks }, { CreateOrderResponse, Side, TimeInForce }) {
   const {
-    // amount,
-    // price,
+    amount,
+    price,
     market,
-    timeinforce,
     side
   } = params
 
   // default time in force is GTC
-  timeinforce = timeinforce || TimeInForce.GTC
+  const timeinforce = params.timeinforce || TimeInForce.GTC
 
   if (!Object.keys(TimeInForce).includes(timeinforce)) {
     throw new PublicError(`${timeinforce} is an invalid parameter for timeinforce`)
@@ -30,32 +30,19 @@ async function createOrder ({ params, relayer, orderbooks }, { CreateOrderRespon
     throw new PublicError(`${side} is an invalid parameter for side`)
   }
 
-  if (timeinforce !== TimeInForce.GTC) {
-    throw new PublicError(`Only GTC orders are currently supported`)
-  }
-
-  if(!orderbooks[market]) {
+  if (!orderbooks[market]) {
     throw new PublicError(`${market} is not being tracked as a market. Configure kbd to track ${market} using the MARKETS environment variable.`)
   }
 
-  const [baseSymbol, counterSymbol] = market.split('/')
-
-  // We need to calculate the base amount/counter amount based off of current
-  // prices
-
-  const request = {
-    ownerId: '123455678',
-    payTo: 'ln:12234987',
-    baseSymbol,
-    counterSymbol,
-    baseAmount: '10000',
-    counterAmount: '1000000',
-    side
+  if (!price) {
+    return createMarketOrder(orderbooks[market], { side, amount })
   }
 
-  const order = await relayer.createOrder(request)
-
-  return new CreateOrderResponse({ orderId: order.orderId })
+  if (timeinforce === TimeInForce.GTC) {
+    return createGoodTilCancelledOrder(orderbooks[market], { side, amount, price })
+  } else {
+    throw new PublicError(`Only ${TimeInForce.GTC} orders are currently supported`)
+  }
 }
 
 module.exports = createOrder
