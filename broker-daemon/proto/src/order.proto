@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+enum Side {
+  BID = 0;
+  ASK = 1;
+}
+
+message CreateOrderRequest {
+  int64 amount = 0;
+  int64 price = 1;
+  string market = 2;
+  optional string timeinforce = 3;
+  Side side = 4;
+}
+
+message CreateOrderResponse {
+  string orderId = 0;
+}
+
+service Order {
+  rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
+}

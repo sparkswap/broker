@@ -3,7 +3,9 @@ const path = require('path')
 
 const RelayerClient = require('./relayer')
 const Orderbook = require('./orderbook')
-const BrokerService = require('./broker-service')
+const AdminService = require('./admin-service')
+const OrderService = require('./order-service')
+const OrderBookService = require('./orderbook-service')
 
 const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
 
@@ -22,12 +24,18 @@ class GrpcServer {
 
     this.server = new grpc.Server()
     this.relayer = new RelayerClient()
-
     this.orderbooks = {}
 
-    this.brokerService = new BrokerService(this.protoPath, this)
+    this.adminService = new AdminService(this.protoPath, this)
+    this.server.addService(this.adminService.definition, this.adminService.implementation)
 
-    this.server.addService(this.brokerService.definition, this.brokerService.implementation)
+    this.orderService = new OrderService(this.protoPath, this)
+    this.server.addService(this.orderService.definition, this.orderService.implementation)
+
+    this.orderBookService = new OrderBookService(this.protoPath, this)
+    this.server.addService(this.orderBookService.definition, this.orderBookService.implementation)
+
+    this.orderbooks = {}
   }
 
   /**
