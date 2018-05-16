@@ -32,7 +32,13 @@ describe('BrokerService', () => {
       },
       CreateOrderResponse: sinon.stub(),
       WatchMarketResponse: sinon.stub(),
-      HealthCheckResponse: sinon.stub()
+      HealthCheckResponse: sinon.stub(),
+      Side: {
+        BID: 'BID'
+      },
+      TimeInForce: {
+        GTC: 'GTC'
+      }
     }
     logger = {
       info: sinon.stub(),
@@ -139,8 +145,9 @@ describe('BrokerService', () => {
       })
     })
 
-    it('passes in the response', () => {
-      expect(callArgs[3]).to.be.eql({ CreateOrderResponse: proto.CreateOrderResponse })
+    it('passes in the response and other proto parts', () => {
+      const { CreateOrderResponse, Side, TimeInForce } = proto
+      expect(callArgs[3]).to.be.eql({ CreateOrderResponse, Side, TimeInForce })
     })
   })
 
