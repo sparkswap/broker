@@ -6,7 +6,7 @@ const {
 } = require('test/test-helper')
 
 const { expect } = chai
-const programPath = path.resolve('broker-daemon', 'broker-actions', 'health-check')
+const programPath = path.resolve(__dirname, 'health-check')
 const program = rewire(programPath)
 const healthCheck = program
 describe('healthCheck', () => {
