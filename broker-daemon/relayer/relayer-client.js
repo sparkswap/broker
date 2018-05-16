@@ -2,7 +2,7 @@ const grpc = require('grpc')
 const path = require('path')
 
 const { MarketEvent } = require('../models')
-const { loadProto } = require('grpc-methods')
+const { loadProto } = require('../utils')
 
 // TODO: Add this to config for CLI
 const EXCHANGE_RPC_HOST = process.env.EXCHANGE_RPC_HOST || 'localhost:28492'
