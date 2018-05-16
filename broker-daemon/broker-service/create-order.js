@@ -1,25 +1,23 @@
 const { status } = require('grpc')
 
 /**
- * Creates an order w/ the exchange
+ * Creates an order with the relayer
  *
- * @param {Object} call
- * @param {Object} call.request
- * @param {String} call.request.amount
- * @param {String} call.request.price
- * @param {String} call.request.market
- * @param {String} call.request.side
- * @param {String} [timeinforce] call.request.timeinforce
- * @param {fn} cb
+ * @param {GrpcUnaryMethod~request} request - request object
+ * @param {Object} request.params - Request parameters from the client
+ * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
+ * @param {Object} responses
+ * @param {function} responses.CreateOrderResponse - constructor for CreateOrderResponse messages
+ * @return {responses.CreateOrderResponse}
  */
-async function createOrder (call, cb) {
+async function createOrder ({ params, relayer }, { CreateOrderResponse }) {
   const {
     // amount,
     // price,
     market,
     // timeinforce,
     side
-  } = call.request
+  } = params
 
   // We need to calculate the base amount/counter amount based off of current
   // prices
@@ -36,15 +34,9 @@ async function createOrder (call, cb) {
     side
   }
 
-  try {
-    const order = await this.relayer.createOrder(request)
-    cb(null, { orderId: order.orderId })
-  } catch (e) {
-    this.logger.error('createOrder failed', { error: e.toString() })
+  const order = await relayer.createOrder(request)
 
-    // eslint-disable-next-line
-    return cb({ message: e.message, code: status.INTERNAL })
-  }
+  return new CreateOrderResponse({ orderId: order.orderId })
 }
 
 module.exports = createOrder
