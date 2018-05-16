@@ -1,5 +1,8 @@
+const { PublicError } = require('grpc-methods')
+const { createMarketOrder, createGoodTilCancelledOrder } = require('../orders')
+
 /**
- * Creates an order with the relayer
+ * Creates a local order and interacts with the relayer to enact it
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Object} request.params - Request parameters from the client
@@ -8,33 +11,38 @@
  * @param {function} responses.CreateOrderResponse - constructor for CreateOrderResponse messages
  * @return {responses.CreateOrderResponse}
  */
-async function createOrder ({ params, relayer }, { CreateOrderResponse }) {
+async function createOrder ({ params, relayer, orderbooks }, { CreateOrderResponse, Side, TimeInForce }) {
   const {
-    // amount,
-    // price,
+    amount,
+    price,
     market,
-    // timeinforce,
     side
   } = params
 
-  // We need to calculate the base amount/counter amount based off of current
-  // prices
+  // default time in force is GTC
+  const timeinforce = params.timeinforce || TimeInForce.GTC
 
-  const [baseSymbol, counterSymbol] = market.split('/')
-
-  const request = {
-    ownerId: '123455678',
-    payTo: 'ln:12234987',
-    baseSymbol,
-    counterSymbol,
-    baseAmount: '10000',
-    counterAmount: '1000000',
-    side
+  if (!Object.keys(TimeInForce).includes(timeinforce)) {
+    throw new PublicError(`${timeinforce} is an invalid parameter for timeinforce`)
   }
 
-  const order = await relayer.createOrder(request)
+  if (!Object.keys(Side).includes(side)) {
+    throw new PublicError(`${side} is an invalid parameter for side`)
+  }
 
-  return new CreateOrderResponse({ orderId: order.orderId })
+  if (!orderbooks[market]) {
+    throw new PublicError(`${market} is not being tracked as a market. Configure kbd to track ${market} using the MARKETS environment variable.`)
+  }
+
+  if (!price) {
+    return createMarketOrder(orderbooks[market], { side, amount })
+  }
+
+  if (timeinforce === TimeInForce.GTC) {
+    return createGoodTilCancelledOrder(orderbooks[market], { side, amount, price })
+  } else {
+    throw new PublicError(`Only ${TimeInForce.GTC} orders are currently supported`)
+  }
 }
 
 module.exports = createOrder

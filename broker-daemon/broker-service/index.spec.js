@@ -21,6 +21,7 @@ describe('BrokerService', () => {
 
   let eventHandler
   let relayer
+  let orderbooks
 
   let server
 
@@ -32,7 +33,13 @@ describe('BrokerService', () => {
       },
       CreateOrderResponse: sinon.stub(),
       WatchMarketResponse: sinon.stub(),
-      HealthCheckResponse: sinon.stub()
+      HealthCheckResponse: sinon.stub(),
+      Side: {
+        BID: 'BID'
+      },
+      TimeInForce: {
+        GTC: 'GTC'
+      }
     }
     logger = {
       info: sinon.stub(),
@@ -41,6 +48,7 @@ describe('BrokerService', () => {
 
     eventHandler = sinon.stub()
     relayer = sinon.stub()
+    orderbooks = {}
 
     GrpcMethod = sinon.stub()
     fakeRegistered = sinon.stub()
@@ -61,7 +69,7 @@ describe('BrokerService', () => {
   })
 
   beforeEach(() => {
-    server = new BrokerService(protoPath, { logger, eventHandler, relayer })
+    server = new BrokerService(protoPath, { logger, eventHandler, relayer, orderbooks })
   })
 
   it('assigns a proto path', () => {
@@ -137,10 +145,16 @@ describe('BrokerService', () => {
         expect(callArgs[2]).to.have.property('relayer')
         expect(callArgs[2].relayer).to.be.equal(relayer)
       })
+
+      it('orderbooks', () => {
+        expect(callArgs[2]).to.have.property('orderbooks')
+        expect(callArgs[2].orderbooks).to.be.equal(orderbooks)
+      })
     })
 
-    it('passes in the response', () => {
-      expect(callArgs[3]).to.be.eql({ CreateOrderResponse: proto.CreateOrderResponse })
+    it('passes in the response and other proto parts', () => {
+      const { CreateOrderResponse, Side, TimeInForce } = proto
+      expect(callArgs[3]).to.be.eql({ CreateOrderResponse, Side, TimeInForce })
     })
   })
 
