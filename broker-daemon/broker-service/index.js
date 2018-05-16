@@ -5,7 +5,7 @@ const watchMarket = require('./watch-market')
 const healthCheck = require('./health-check')
 
 class BrokerService {
-  constructor (protoPath, { logger, relayer }) {
+  constructor (protoPath, { logger, relayer, orderbooks }) {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
     this.logger = logger
@@ -21,7 +21,7 @@ class BrokerService {
 
     this.implementation = {
       createOrder: new GrpcUnaryMethod(createOrder, this.messageId('createOrder'), { logger, relayer }, { CreateOrderResponse }).register(),
-      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer }, { WatchMarketResponse }).register(),
+      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks }, { WatchMarketResponse }).register(),
       healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer }, { HealthCheckResponse }).register()
     }
   }
