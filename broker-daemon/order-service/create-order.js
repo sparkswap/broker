@@ -21,7 +21,9 @@ async function createOrder ({ params, relayer, logger, orderbooks }, { CreateOrd
     timeInForce
   } = params
 
-  if (!orderbooks[market]) {
+  const orderbook = orderbooks.get(market)
+
+  if (!orderbook) {
     throw new PublicError(`${market} is not being tracked as a market. Configure kbd to track ${market} using the MARKETS environment variable.`)
   }
 
@@ -40,7 +42,7 @@ async function createOrder ({ params, relayer, logger, orderbooks }, { CreateOrd
   // prices
   const counterAmount = bigInt(amount).multiply(bigInt(price))
 
-  const [baseSymbol, counterSymbol] = orderbooks[market].marketName.split('/')
+  const { baseSymbol, counterSymbol } = orderbook
 
   const request = {
     ownerId: '123455678',

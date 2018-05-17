@@ -149,7 +149,7 @@ describe('GrpcServer', () => {
       const server = new GrpcServer(logger, store)
 
       expect(OrderService).to.have.been.calledOnce()
-      expect(OrderService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer: sinon.match.instanceOf(RelayerClient), orderbooks: {} }))
+      expect(OrderService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer: sinon.match.instanceOf(RelayerClient), orderbooks: sinon.match.instanceOf(Map) }))
       expect(OrderService).to.have.been.calledWithNew()
       expect(server).to.have.property('orderService')
       expect(server.orderService).to.be.equal(orderService)
@@ -184,11 +184,11 @@ describe('GrpcServer', () => {
       expect(addService).to.have.been.calledWith(orderBookService.definition, orderBookService.implementation)
     })
 
-    it('creates an empty orderbooks hash', () => {
+    it('creates an empty orderbooks map', () => {
       const server = new GrpcServer()
 
       expect(server).to.have.property('orderbooks')
-      expect(server.orderbooks).to.be.eql({})
+      expect(server.orderbooks).to.be.eql(new Map())
     })
 
     it('defines a #listen method', () => {
@@ -227,8 +227,7 @@ describe('GrpcServer', () => {
 
       await server.initializeMarket(marketName)
 
-      expect(server.orderbooks).to.have.property(marketName)
-      expect(server.orderbooks[marketName]).to.be.instanceOf(Orderbook)
+      expect(server.orderbooks.get(marketName)).to.be.instanceOf(Orderbook)
     })
 
     it('provides a relayer', async () => {
@@ -303,7 +302,7 @@ describe('GrpcServer', () => {
       expect(Orderbook).to.have.been.calledTwice()
       expect(Orderbook).to.have.been.calledWith(marketNames[0])
       expect(Orderbook).to.have.been.calledWith(marketNames[1])
-      expect(Object.keys(server.orderbooks)).to.have.lengthOf(2)
+      expect(server.orderbooks.size).to.be.equal(2)
     })
 
     // TODO: test this a better way
