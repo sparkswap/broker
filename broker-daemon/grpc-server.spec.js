@@ -166,11 +166,11 @@ describe('GrpcServer', () => {
     it('creates a orderBook service', () => {
       const logger = 'mylogger'
       const store = 'mystore'
-
+      const orderbooks = {}
       const server = new GrpcServer(logger, store)
 
       expect(OrderBookService).to.have.been.calledOnce()
-      expect(OrderBookService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer: sinon.match.instanceOf(RelayerClient) }))
+      expect(OrderBookService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer: sinon.match.instanceOf(RelayerClient), orderbooks }))
       expect(OrderBookService).to.have.been.calledWithNew()
       expect(server).to.have.property('orderBookService')
       expect(server.orderBookService).to.be.equal(orderBookService)
