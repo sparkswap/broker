@@ -1,7 +1,7 @@
 const { chai } = require('test/test-helper')
 const { expect } = chai
 
-const Broker = require('./broker')
+const Broker = require('./index')
 
 describe('Broker', () => {
   let broker

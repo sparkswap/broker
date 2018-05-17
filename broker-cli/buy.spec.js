@@ -35,7 +35,7 @@ describe('buy', () => {
     brokerStub = sinon.stub()
     brokerStub.prototype.createOrder = createOrderSpy
 
-    revert = program.__set__('Broker', brokerStub)
+    revert = program.__set__('BrokerDaemonClient', brokerStub)
 
     args = { amount, price }
     opts = { market, timeinforce, rpcAddress }

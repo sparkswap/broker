@@ -1,5 +1,5 @@
-const Broker = require('./broker')
-const { ENUMS, validations } = require('./utils')
+const BrokerDaemonClient = require('./broker-daemon-client')
+const { ENUMS, validations } = require('./shared')
 
 const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
 
@@ -32,7 +32,7 @@ async function buy (args, opts, logger) {
   }
 
   try {
-    const orderResult = await new Broker(rpcAddress).createOrder(request)
+    const orderResult = await new BrokerDaemonClient(rpcAddress).createOrder(request)
     logger.info(orderResult)
   } catch (e) {
     logger.error(e.toString())
