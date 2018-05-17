@@ -1,11 +1,19 @@
 const grpc = require('grpc')
 const path = require('path')
+const LndEngine = require('lnd-engine')
 
 const RelayerClient = require('./relayer')
 const Orderbook = require('./orderbook')
 const AdminService = require('./admin-service')
 const OrderService = require('./order-service')
 const OrderBookService = require('./orderbook-service')
+const WalletService = require('./wallet-service')
+
+const {
+  LND_HOST,
+  LND_TLS_CERT,
+  LND_MACAROON
+} = process.env
 
 const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
 
@@ -15,6 +23,11 @@ const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
  * @author kinesis
  */
 class GrpcServer {
+  /**
+   * @param {Logger} logger
+   * @param {LevelDb} store
+   * @param {EventEmitter} eventHandler
+   */
   constructor (logger, store, eventHandler) {
     this.logger = logger
     this.store = store
@@ -24,6 +37,7 @@ class GrpcServer {
 
     this.server = new grpc.Server()
     this.relayer = new RelayerClient()
+    this.engine = new LndEngine(LND_HOST, { logger: this.logger, tlsCertPath: LND_TLS_CERT, macaroonPath: LND_MACAROON })
 
     this.adminService = new AdminService(this.protoPath, this)
     this.server.addService(this.adminService.definition, this.adminService.implementation)
@@ -33,6 +47,9 @@ class GrpcServer {
 
     this.orderBookService = new OrderBookService(this.protoPath, this)
     this.server.addService(this.orderBookService.definition, this.orderBookService.implementation)
+
+    this.walletService = new WalletService(this.protoPath, this)
+    this.server.addService(this.walletService.definition, this.walletService.implementation)
 
     this.orderbooks = {}
   }

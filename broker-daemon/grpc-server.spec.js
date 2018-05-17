@@ -13,10 +13,13 @@ describe('GrpcServer', () => {
   let orderService
   let OrderBookService
   let orderBookService
+  let WalletService
+  let walletService
   let RelayerClient
   let Orderbook
   let pathResolve
   let protoPath
+  let LndEngine
 
   beforeEach(() => {
     adminService = {
@@ -40,6 +43,13 @@ describe('GrpcServer', () => {
     OrderBookService = sinon.stub().returns(orderBookService)
     GrpcServer.__set__('OrderBookService', OrderBookService)
 
+    walletService = {
+      definition: 'mydef',
+      implementation: 'myimp'
+    }
+    WalletService = sinon.stub().returns(walletService)
+    GrpcServer.__set__('WalletService', WalletService)
+
     RelayerClient = sinon.stub()
     GrpcServer.__set__('RelayerClient', RelayerClient)
 
@@ -50,6 +60,9 @@ describe('GrpcServer', () => {
     GrpcServer.__set__('grpc', {
       Server: grpcServer
     })
+
+    LndEngine = sinon.stub()
+    GrpcServer.__set__('LndEngine', LndEngine)
 
     protoPath = 'mypath'
     pathResolve = sinon.stub().returns(protoPath)

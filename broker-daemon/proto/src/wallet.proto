@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+message NewWalletAddressResponse {
+  string address = 0;
+}
+
+service Wallet {
+  rpc NewWalletAddress (google.protobuf.Empty) returns (NewWalletAddressResponse);
+}
