@@ -65,6 +65,7 @@ typings/
 
 # Proto build files
 proto/relayer/
+broker-daemon/proto/broker.proto
 
 # lnd-engine docker files
 docker/

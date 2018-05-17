@@ -1,14 +1,31 @@
-const { chai } = require('test/test-helper')
-const { expect } = chai
+const path = require('path')
+const { expect, rewire, sinon } = require('test/test-helper')
 
-const BrokerDaemonClient = require('./index')
+const BrokerDaemonClient = rewire(path.resolve(__dirname))
 
 describe('BrokerDaemonClient', () => {
   let broker
   let rpcAddress
+  let loadStub
+  let createInsecureCredsStub
 
   beforeEach(() => {
     rpcAddress = null
+    createInsecureCredsStub = sinon.stub()
+    loadStub = sinon.stub().returns({
+      Admin: sinon.stub(),
+      Order: sinon.stub(),
+      OrderBook: sinon.stub(),
+      Wallet: sinon.stub()
+    })
+
+    BrokerDaemonClient.__set__('grpc', {
+      load: loadStub,
+      credentials: {
+        createInsecure: createInsecureCredsStub
+      }
+    })
+
     broker = new BrokerDaemonClient(rpcAddress)
   })
 
