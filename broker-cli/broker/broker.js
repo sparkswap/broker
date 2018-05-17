@@ -22,6 +22,7 @@ class Broker {
     this.admin = new this.proto.Admin(this.address, grpc.credentials.createInsecure())
     this.order = new this.proto.Order(this.address, grpc.credentials.createInsecure())
     this.orderBook = new this.proto.OrderBook(this.address, grpc.credentials.createInsecure())
+    this.wallet = new this.proto.Wallet(this.address, grpc.credentials.createInsecure())
   }
 
   /**
@@ -58,6 +59,15 @@ class Broker {
   async healthCheck () {
     return new Promise((resolve, reject) => {
       this.admin.healthCheck({}, (err, res) => {
+        if (err) return reject(err)
+        return resolve(res)
+      })
+    })
+  }
+
+  async newWalletAddress () {
+    return new Promise((resolve, reject) => {
+      this.wallet.newWalletAddress({}, (err, res) => {
         if (err) return reject(err)
         return resolve(res)
       })
