@@ -27,7 +27,10 @@ describe('OrderService', () => {
       Order: {
         service: 'fakeService'
       },
-      CreateOrderResponse: sinon.stub()
+      CreateOrderResponse: sinon.stub(),
+      TimeInForce: {
+        GTC: 0
+      }
     }
     logger = {
       info: sinon.stub(),
@@ -129,7 +132,13 @@ describe('OrderService', () => {
     })
 
     it('passes in the response', () => {
-      expect(callArgs[3]).to.be.eql({ CreateOrderResponse: proto.CreateOrderResponse })
+      expect(callArgs[3]).to.be.an('object')
+      expect(callArgs[3]).to.have.property('CreateOrderResponse', proto.CreateOrderResponse)
+    })
+
+    it('passes in the enum', () => {
+      expect(callArgs[3]).to.be.an('object')
+      expect(callArgs[3]).to.have.property('TimeInForce', proto.TimeInForce)
     })
   })
 })

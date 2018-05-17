@@ -12,11 +12,12 @@ class OrderService {
     this.serviceName = 'Order'
 
     const {
-      CreateOrderResponse
+      CreateOrderResponse,
+      TimeInForce
     } = this.proto
 
     this.implementation = {
-      createOrder: new GrpcUnaryMethod(createOrder, this.messageId('createOrder'), { logger, relayer }, { CreateOrderResponse }).register()
+      createOrder: new GrpcUnaryMethod(createOrder, this.messageId('createOrder'), { logger, relayer }, { CreateOrderResponse, TimeInForce }).register()
     }
   }
 
