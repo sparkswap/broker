@@ -2,7 +2,7 @@ const grpc = require('grpc')
 const path = require('path')
 
 const { MarketEvent } = require('../models')
-const { loadProto } = require('grpc-methods')
+const { loadProto } = require('../utils')
 
 // TODO: Add this to config for CLI
 const EXCHANGE_RPC_HOST = process.env.EXCHANGE_RPC_HOST || 'localhost:28492'
@@ -51,7 +51,7 @@ class RelayerClient {
       lastUpdated = lastUpdated || '0'
 
       const params = { baseSymbol, counterSymbol, lastUpdated }
-      const RESPONSE_TYPES = this.proto.WatchMarketResponse.ResponseTypes
+      const RESPONSE_TYPES = this.proto.WatchMarketResponse.ResponseType
 
       this.logger.info('Setting up market watcher', params)
 
@@ -70,15 +70,20 @@ class RelayerClient {
       })
 
       watcher.on('data', async (response) => {
-        if (response.type === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
+        this.logger.info(`response type is ${response.type}`)
+        if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
+          this.logger.info(`Resolving because response type is: ${response.type}`)
           return resolve()
         }
 
-        if (![RESPONSE_TYPES.EXISTING_EVENT, RESPONSE_TYPES.NEW_EVENT].includes(response.type)) {
+        if (![RESPONSE_TYPES.EXISTING_EVENT, RESPONSE_TYPES.NEW_EVENT].includes(RESPONSE_TYPES[response.type])) {
+          this.logger.info(`Returning because response type is: ${response.type}`)
+
           // No other responses are implemented
           return
         }
 
+        this.logger.info(`Creating a market event: ${response.marketEvent}`)
         const event = new MarketEvent(response.marketEvent)
         store.put(event.key, event.value)
       })

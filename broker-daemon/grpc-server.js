@@ -24,6 +24,7 @@ class GrpcServer {
 
     this.server = new grpc.Server()
     this.relayer = new RelayerClient()
+    this.orderbooks = {}
 
     this.adminService = new AdminService(this.protoPath, this)
     this.server.addService(this.adminService.definition, this.adminService.implementation)
