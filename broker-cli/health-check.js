@@ -1,4 +1,4 @@
-const Broker = require('./broker')
+const BrokerDaemonClient = require('./broker-daemon-client')
 const { ENUMS, validations } = require('./utils')
 const { STATUS_CODES } = ENUMS
 
@@ -19,7 +19,7 @@ async function healthCheck (args, opts, logger) {
   const { rpcAddress = null } = opts
 
   try {
-    const { engineStatus, relayerStatus } = await new Broker(rpcAddress).healthCheck()
+    const { engineStatus, relayerStatus } = await new BrokerDaemonClient(rpcAddress).healthCheck()
     const res = {
       engineStatus,
       relayerStatus,

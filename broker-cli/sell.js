@@ -1,4 +1,4 @@
-const Broker = require('./broker')
+const BrokerDaemonClient = require('./broker-daemon-client')
 const { ENUMS, validations } = require('./utils')
 
 const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
@@ -31,7 +31,7 @@ async function sell (args, opts, logger) {
   try {
     // TODO: Figure out where this actually goes. Do we want to create an order
     // or do we use the fill functionality?
-    const orderResult = await new Broker(rpcAddress).createOrder(request)
+    const orderResult = await new BrokerDaemonClient(rpcAddress).createOrder(request)
 
     // TODO: send a friendly message the logger. The current functionality will simple
     // return the object from the broker.proto file

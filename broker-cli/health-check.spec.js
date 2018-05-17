@@ -33,7 +33,7 @@ describe('healthCheck', () => {
     brokerStub = sinon.stub()
     brokerStub.prototype.healthCheck = healthCheckSpy
 
-    revert = program.__set__('Broker', brokerStub)
+    revert = program.__set__('BrokerDaemonClient', brokerStub)
 
     logger = {
       info: infoSpy,

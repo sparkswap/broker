@@ -1,4 +1,4 @@
-const Broker = require('./broker')
+const BrokerDaemonClient = require('./broker-daemon-client')
 const { validations } = require('./utils')
 
 /**
@@ -32,7 +32,7 @@ async function orderbook (args, opts, logger) {
   const request = { market }
 
   try {
-    const watchOrder = await new Broker(rpcAddress).watchMarket(request)
+    const watchOrder = await new BrokerDaemonClient(rpcAddress).watchMarket(request)
 
     // TODO: We should save orders to an internal DB or figure out a way to store
     // this info instead of in memory?

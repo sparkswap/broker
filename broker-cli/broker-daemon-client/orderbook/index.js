@@ -1,0 +1,17 @@
+/**
+ * Opens a stream with the broker daemon to watch for market events from
+ * the exchange
+ *
+ * @function
+ * @param {Object} params
+ * @returns {grpc.ServerStream}
+ */
+async function watchMarket (params) {
+  // TODO: loggin
+  // TODO: document what params need to be passed in
+  return this.orderBook.watchMarket(params)
+}
+
+module.exports = {
+  watchMarket
+}
