@@ -12,7 +12,7 @@
  * @return {void}
  */
 
-async function watchMarket ({ params, send, logger, relayer, orderbooks }, { WatchMarketResponse }) {
+async function watchMarket ({ params, send, logger, orderbooks }, { WatchMarketResponse }) {
   // TODO: Some validation on here. Maybe the client can call out for valid markets
   // from the relayer so we dont event make a request if it is invalid
   const { market } = params
