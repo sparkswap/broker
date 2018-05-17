@@ -338,4 +338,22 @@ describe('Orderbook', () => {
       expect(retrieved).to.be.equal(orders)
     })
   })
+
+  describe('get baseSymbol', () => {
+    it('returns the base symbol', async () => {
+      const marketName = 'XYZ/ABC'
+      const orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+
+      expect(orderbook.baseSymbol).to.be.equal('XYZ')
+    })
+  })
+
+  describe('get counterSymbol', () => {
+    it('returns the counter symbol', async () => {
+      const marketName = 'XYZ/ABC'
+      const orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+
+      expect(orderbook.counterSymbol).to.be.equal('ABC')
+    })
+  })
 })

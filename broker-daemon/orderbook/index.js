@@ -10,10 +10,18 @@ class Orderbook {
     this.logger = logger
   }
 
+  get baseSymbol () {
+    return this.marketName.split('/')[0]
+  }
+
+  get counterSymbol () {
+    return this.marketName.split('/')[1]
+  }
+
   async initialize () {
     this.logger.info(`Initializing market ${this.marketName}...`)
 
-    const [ baseSymbol, counterSymbol ] = this.marketName.split('/')
+    const { baseSymbol, counterSymbol } = this
     const lastUpdated = await this.lastUpdate()
     const params = { baseSymbol, counterSymbol, lastUpdated }
 

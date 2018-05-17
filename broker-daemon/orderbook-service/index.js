@@ -3,7 +3,7 @@ const { GrpcServerStreamingMethod, loadProto } = require('grpc-methods')
 const watchMarket = require('./watch-market')
 
 class OrderBookService {
-  constructor (protoPath, { logger, relayer }) {
+  constructor (protoPath, { logger, relayer, orderbooks }) {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
     this.logger = logger
@@ -16,7 +16,7 @@ class OrderBookService {
     } = this.proto
 
     this.implementation = {
-      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer }, { WatchMarketResponse }).register()
+      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks }, { WatchMarketResponse }).register()
     }
   }
 
