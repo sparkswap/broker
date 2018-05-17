@@ -149,7 +149,7 @@ describe('GrpcServer', () => {
       const server = new GrpcServer(logger, store)
 
       expect(OrderService).to.have.been.calledOnce()
-      expect(OrderService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer: sinon.match.instanceOf(RelayerClient) }))
+      expect(OrderService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer: sinon.match.instanceOf(RelayerClient), orderbooks: {} }))
       expect(OrderService).to.have.been.calledWithNew()
       expect(server).to.have.property('orderService')
       expect(server.orderService).to.be.equal(orderService)

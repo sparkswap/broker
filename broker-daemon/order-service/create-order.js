@@ -12,7 +12,7 @@ const bigInt = require('big-integer')
  * @param {function} responses.CreateOrderResponse - constructor for CreateOrderResponse messages
  * @return {responses.CreateOrderResponse}
  */
-async function createOrder ({ params, relayer, logger }, { CreateOrderResponse, TimeInForce }) {
+async function createOrder ({ params, relayer, logger, orderbooks }, { CreateOrderResponse, TimeInForce }) {
   const {
     amount,
     price,
