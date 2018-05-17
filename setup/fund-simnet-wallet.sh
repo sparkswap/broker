@@ -16,9 +16,9 @@
 set -e -u
 
 # Hit the kcli endpoint to generate a new wallet address
-echo "Generating new wallet address through KCLI"
+echo "Generating new deposit address through KCLI"
 
-WALLET_ADDR=$(./bin/kcli deposit)
+WALLET_ADDR=$(./bin/kcli new-deposit-address)
 
 # Restart the btcd container w/ the mining-address for our account
 echo "Restarting BTCD with the generated wallet address"

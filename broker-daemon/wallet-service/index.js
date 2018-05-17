@@ -26,7 +26,7 @@ class WalletService {
     const { NewDepositAddressResponse } = this.proto
 
     this.implementation = {
-      newAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engine }, { NewDepositAddressResponse }).register()
+      newDepositAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engine }, { NewDepositAddressResponse }).register()
     }
   }
 
