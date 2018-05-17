@@ -1,12 +1,13 @@
 const { GrpcUnaryMethod, loadProto } = require('grpc-methods')
 
-const newWalletAddress = require('./new-wallet-address')
+const newDepositAddress = require('./new-deposit-address')
 
 /**
  * WalletService provides interactions with an engine's crypto wallet
  */
 class WalletService {
   /**
+   * @class
    * @param {String} protoPath
    * @param {Object} options
    * @param {Logger} options.logger
@@ -22,13 +23,20 @@ class WalletService {
     this.definition = this.proto.Wallet.service
     this.serviceName = 'Wallet'
 
-    const { NewAddressResponse } = this.proto
+    const { NewDepositAddressResponse } = this.proto
 
     this.implementation = {
-      newAddress: new GrpcUnaryMethod(newWalletAddress, this.messageId('newAddress'), { logger, engine }, { NewAddressResponse }).register()
+      newAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engine }, { NewDepositAddressResponse }).register()
     }
   }
 
+  /**
+   * Returns a message ID for a given method name
+   *
+   * @function
+   * @param {String} methodName
+   * @return {String} [serviceName:methodName]
+   */
   messageId (methodName) {
     return `[${this.serviceName}:${methodName}]`
   }

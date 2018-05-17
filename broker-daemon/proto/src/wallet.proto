@@ -2,10 +2,10 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
-message NewAddressResponse {
+message NewDepositAddressResponse {
   string address = 0;
 }
 
 service Wallet {
-  rpc NewAddress (google.protobuf.Empty) returns (NewAddressResponse);
+  rpc NewDepositAddress (google.protobuf.Empty) returns (NewDepositAddressResponse);
 }

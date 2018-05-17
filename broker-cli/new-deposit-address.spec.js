@@ -6,10 +6,10 @@ const {
 } = require('test/test-helper')
 
 const { expect } = chai
-const program = rewire(path.resolve('broker-cli', 'deposit'))
+const program = rewire(path.resolve('broker-cli', 'new-deposit-address'))
 
-describe('deposit', () => {
-  const deposit = program.__get__('deposit')
+describe('newDepositAddress', () => {
+  const deposit = program.__get__('newDepositAddress')
 
   let rpcAddress
   let args
@@ -32,7 +32,7 @@ describe('deposit', () => {
     newWalletStub = sinon.stub().returns(brokerResponse)
 
     brokerStub = sinon.stub()
-    brokerStub.prototype.newWalletAddress = newWalletStub
+    brokerStub.prototype.newDepositAddress = newWalletStub
 
     revert = program.__set__('BrokerDaemonClient', brokerStub)
 

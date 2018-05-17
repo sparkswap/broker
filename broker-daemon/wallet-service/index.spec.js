@@ -19,7 +19,7 @@ describe('WalletService', () => {
     protoPath = 'example/path.proto'
     loadProtoStub = sinon.stub().returns({
       Wallet: { service: sinon.stub() },
-      NewAddressResponse: responseSpy
+      NewDepositAddressResponse: responseSpy
     })
     logger = sinon.stub()
     engine = sinon.stub()
@@ -44,13 +44,13 @@ describe('WalletService', () => {
   })
 
   it('creates a unary method for newAddress', () => {
-    const expectedMessageId = '[Wallet:newAddress]'
+    const expectedMessageId = '[Wallet:newDepositAddress]'
 
     expect(unaryMethodStub).to.have.been.calledWith(
       newWalletSpy,
       expectedMessageId,
       { logger, engine },
-      { NewAddressResponse: responseSpy }
+      { NewDepositAddressResponse: responseSpy }
     )
   })
 })

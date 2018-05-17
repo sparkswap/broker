@@ -8,9 +8,9 @@
  * @param {function} responses.NewAddressResponse - constructor for HealthCheckResponse messages
  * @return {responses.NewAddressResponse}
  */
-async function newWalletAddress ({ logger, engine }, { NewAddressResponse }) {
-  const address = await engine.newAddress()
-  return new NewAddressResponse({ address })
+async function newDepositAddress ({ logger, engine }, { NewDepositAddressResponse }) {
+  const address = await engine.newDepositAddress()
+  return new NewDepositAddressResponse({ address })
 }
 
-module.exports = newWalletAddress
+module.exports = newDepositAddress

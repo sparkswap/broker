@@ -7,7 +7,7 @@ const {
   configCommand,
   orderbookCommand,
   healthCheckCommand,
-  depositCommand
+  newDepositAddressCommand
 } = require('./index')
 
 describe('broker index', () => {
@@ -36,8 +36,8 @@ describe('broker index', () => {
     expect(healthCheckCommand).to.not.be.undefined()
   })
 
-  it('defines depositCommand', () => {
-    expect(depositCommand).to.not.be.null()
-    expect(depositCommand).to.not.be.undefined()
+  it('defines newDepositAddressCommand', () => {
+    expect(newDepositAddressCommand).to.not.be.null()
+    expect(newDepositAddressCommand).to.not.be.undefined()
   })
 })
