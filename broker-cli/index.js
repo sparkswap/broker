@@ -1,4 +1,7 @@
 /**
+ * Commands for Broker-CLI
+ *
+ * @module broker-cli/index
  * @author kinesis
  */
 
@@ -6,8 +9,8 @@ const buyCommand = require('./buy')
 const sellCommand = require('./sell')
 const orderbookCommand = require('./orderbook')
 const configCommand = require('./config')
-const setupCommand = require('./setup')
 const healthCheckCommand = require('./health-check')
+const newDepositAddressCommand = require('./new-deposit-address')
 
 module.exports = {
   buyCommand,
@@ -15,5 +18,5 @@ module.exports = {
   configCommand,
   orderbookCommand,
   healthCheckCommand,
-  setupCommand
+  newDepositAddressCommand
 }

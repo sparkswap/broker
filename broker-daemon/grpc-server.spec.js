@@ -13,10 +13,13 @@ describe('GrpcServer', () => {
   let orderService
   let OrderBookService
   let orderBookService
+  let WalletService
+  let walletService
   let RelayerClient
   let Orderbook
   let pathResolve
   let protoPath
+  let LndEngine
 
   beforeEach(() => {
     adminService = {
@@ -40,6 +43,13 @@ describe('GrpcServer', () => {
     OrderBookService = sinon.stub().returns(orderBookService)
     GrpcServer.__set__('OrderBookService', OrderBookService)
 
+    walletService = {
+      definition: 'mydef',
+      implementation: 'myimp'
+    }
+    WalletService = sinon.stub().returns(walletService)
+    GrpcServer.__set__('WalletService', WalletService)
+
     RelayerClient = sinon.stub()
     GrpcServer.__set__('RelayerClient', RelayerClient)
 
@@ -50,6 +60,9 @@ describe('GrpcServer', () => {
     GrpcServer.__set__('grpc', {
       Server: grpcServer
     })
+
+    LndEngine = sinon.stub()
+    GrpcServer.__set__('LndEngine', LndEngine)
 
     protoPath = 'mypath'
     pathResolve = sinon.stub().returns(protoPath)
@@ -174,6 +187,27 @@ describe('GrpcServer', () => {
       expect(OrderBookService).to.have.been.calledWithNew()
       expect(server).to.have.property('orderBookService')
       expect(server.orderBookService).to.be.equal(orderBookService)
+    })
+
+    it('adds the wallet service', () => {
+      const server = new GrpcServer()
+
+      expect(server).to.have.property('server')
+      expect(server.server.addService).to.be.equal(addService)
+      expect(addService).to.have.been.calledWith(walletService.definition, walletService.implementation)
+    })
+
+    it('creates a wallet service', () => {
+      const logger = 'mylogger'
+      const store = 'mystore'
+
+      const server = new GrpcServer(logger, store)
+
+      expect(WalletService).to.have.been.calledOnce()
+      expect(WalletService).to.have.been.calledWith(protoPath, sinon.match({ logger, engine: sinon.match.instanceOf(LndEngine) }))
+      expect(WalletService).to.have.been.calledWithNew()
+      expect(server).to.have.property('walletService')
+      expect(server.walletService).to.be.equal(walletService)
     })
 
     it('adds the orderBook service', () => {
