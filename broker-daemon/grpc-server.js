@@ -24,7 +24,7 @@ class GrpcServer {
 
     this.server = new grpc.Server()
     this.relayer = new RelayerClient()
-    this.orderbooks = {}
+    this.orderbooks = new Map()
 
     this.adminService = new AdminService(this.protoPath, this)
     this.server.addService(this.adminService.definition, this.adminService.implementation)
@@ -34,8 +34,6 @@ class GrpcServer {
 
     this.orderBookService = new OrderBookService(this.protoPath, this)
     this.server.addService(this.orderBookService.definition, this.orderBookService.implementation)
-
-    this.orderbooks = {}
   }
 
   /**
@@ -58,8 +56,8 @@ class GrpcServer {
    */
   async initializeMarket (marketName) {
     // TODO: warn or no-op on a repeat market name
-    this.orderbooks[marketName] = new Orderbook(marketName, this.relayer, this.store.sublevel(marketName), this.logger)
-    return this.orderbooks[marketName].initialize()
+    this.orderbooks.set(marketName, new Orderbook(marketName, this.relayer, this.store.sublevel(marketName), this.logger))
+    return this.orderbooks.get(marketName).initialize()
   }
 
   /**

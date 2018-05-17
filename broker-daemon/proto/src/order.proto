@@ -5,12 +5,18 @@ enum Side {
   ASK = 1;
 }
 
+enum TimeInForce {
+  GTC = 0;
+  FOK = 1;
+  IOC = 2;
+}
+
 message CreateOrderRequest {
-  int64 amount = 0;
-  int64 price = 1;
-  string market = 2;
-  optional string timeinforce = 3;
-  Side side = 4;
+  string market = 0;
+  Side side = 1;
+  int64 amount = 2;
+  optional int64 price = 3;
+  optional TimeInForce time_in_force = 4;
 }
 
 message CreateOrderResponse {
