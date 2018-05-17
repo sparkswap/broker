@@ -1,5 +1,5 @@
 const BrokerDaemonClient = require('./broker-daemon-client')
-const { ENUMS, validations } = require('./shared')
+const { ENUMS, validations } = require('./utils')
 const { STATUS_CODES } = ENUMS
 
 /**

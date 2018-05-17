@@ -1,5 +1,5 @@
 const BrokerDaemonClient = require('./broker-daemon-client')
-const { validations } = require('./shared')
+const { validations } = require('./utils')
 
 /**
  * Prints log statements for a psuedo UI for the orderbook

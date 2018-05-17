@@ -68,10 +68,10 @@ service OrderBook {
     rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
 }
 
-message NewWalletAddressResponse {
+message NewAddressResponse {
 
     string address = 0;
 }
 service Wallet {
-    rpc NewWalletAddress (google.protobuf.Empty) returns (NewWalletAddressResponse);
+    rpc NewAddress (google.protobuf.Empty) returns (NewAddressResponse);
 }

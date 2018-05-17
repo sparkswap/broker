@@ -2,7 +2,7 @@
 
 ##########################################
 #
-# This file contains logic to fund a wallet w/ the default LND setup for a broker.
+# This file contains logic to fund a wallet on SIMNET w/ the default LND setup for a broker-daemon.
 #
 # Information in this script is based off the LND docker setup:
 # https://github.com/lightningnetwork/lnd/tree/master/docker
@@ -15,25 +15,32 @@
 
 set -e -u
 
-# Given the information from the previous script (create-wallet) we will now take
-# a wallet address and fund it with some fake money on simnet
-#
-# If WALLET_ADDR is not provided, the script will error out
-WALLET_ADDR=${WALLET_ADDR}
+# Hit the kcli endpoint to generate a new wallet address
+echo "Generating new wallet address through KCLI"
+
+WALLET_ADDR=$(./bin/kcli deposit)
 
 # Restart the btcd container w/ the mining-address for our account
+echo "Restarting BTCD with the generated wallet address"
+
 docker-compose rm btcd
 MINING_ADDRESS=$WALLET_ADDR docker-compose up -d btcd
+
+# Take a wallet address and fund it with some simnet BTC
+echo "Generating blocks to be mined w/ supplied wallet address"
 
 GENERATE_CMD='btcctl --simnet --rpcuser="$RPC_USER" --rpcpass="$RPC_PASS" --rpccert="$RPC_CERT" generate 400'
 docker-compose exec -T btcd /bin/sh -c "$GENERATE_CMD"
 
-# wait a little bit
-sleep 10
+echo "Waiting 5 seconds for segwit response..."
+
+sleep 5
 
 # Check segwit to make sure we are A-OK
 SEGWIT_CMD='btcctl --simnet --rpcuser="$RPC_USER" --rpcpass="$RPC_PASS" --rpccert="$RPC_CERT" getblockchaininfo'
 RAW_SEGWIT_RESPONSE=$(docker-compose exec -T btcd /bin/sh -c "$SEGWIT_CMD")
-SEGWIT_RESPONSE=$(node ./scripts/parse-lnd.js segwit $RAW_SEGWIT_RESPONSE)
+SEGWIT_RESPONSE=$(node ./setup/parse-lnd-response.js segwit $RAW_SEGWIT_RESPONSE)
 
-echo "Segwit: $SEGWIT_RESPONSE"
+echo "Segwit Response: $SEGWIT_RESPONSE"
+
+echo "Checking wallet balance (NOT IMPLEMENTED YET)"

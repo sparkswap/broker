@@ -1,15 +1,16 @@
 /**
- * Check the health of all the system components
+ * Generates a new wallet address from the specified engine
  *
+ * @function
  * @param {GrpcUnaryMethod~request} request - request object
- * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
+ * @param {RelayerClient} request.engine
  * @param {Object} responses
- * @param {function} responses.HealthCheckResponse - constructor for HealthCheckResponse messages
- * @return {responses.HealthCheckResponse}
+ * @param {function} responses.NewAddressResponse - constructor for HealthCheckResponse messages
+ * @return {responses.NewAddressResponse}
  */
-async function newWalletAddress ({ engine }, { NewWalletAddressResponse }) {
+async function newWalletAddress ({ logger, engine }, { NewAddressResponse }) {
   const address = await engine.newAddress()
-  return new NewWalletAddressResponse({ address })
+  return new NewAddressResponse({ address })
 }
 
 module.exports = newWalletAddress

@@ -9,7 +9,7 @@ const wallet = require('./wallet')
 const BROKER_DAEMON_HOST = process.env.BROKER_DAEMON_HOST
 
 // TODO: Break actions in the broker out into seperate modules
-class Broker {
+class BrokerDaemonClient {
   constructor (address) {
     // TODO: Remove proto out of broker file (into its own module?)
     // TODO: Change this to use npm instead of a relative path to the daemon
@@ -36,4 +36,4 @@ class Broker {
   }
 }
 
-module.exports = Broker
+module.exports = BrokerDaemonClient

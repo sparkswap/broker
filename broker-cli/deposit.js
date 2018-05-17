@@ -1,5 +1,5 @@
 const BrokerDaemonClient = require('./broker-daemon-client')
-const { validations } = require('./shared')
+const { validations } = require('./utils')
 
 /**
  * kcli deposit

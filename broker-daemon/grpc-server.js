@@ -24,8 +24,9 @@ const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
  */
 class GrpcServer {
   /**
+   * @class
    * @param {Logger} logger
-   * @param {LevelDb} store
+   * @param {sublevel} store
    * @param {EventEmitter} eventHandler
    */
   constructor (logger, store, eventHandler) {

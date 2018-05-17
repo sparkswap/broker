@@ -22,10 +22,10 @@ class WalletService {
     this.definition = this.proto.Wallet.service
     this.serviceName = 'Wallet'
 
-    const { NewWalletAddressResponse } = this.proto
+    const { NewAddressResponse } = this.proto
 
     this.implementation = {
-      newWalletAddress: new GrpcUnaryMethod(newWalletAddress, this.messageId('healthCheck'), { logger, engine }, { NewWalletAddressResponse }).register()
+      newAddress: new GrpcUnaryMethod(newWalletAddress, this.messageId('newAddress'), { logger, engine }, { NewAddressResponse }).register()
     }
   }
 

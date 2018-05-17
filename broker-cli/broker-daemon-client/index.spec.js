@@ -1,15 +1,15 @@
 const { chai } = require('test/test-helper')
 const { expect } = chai
 
-const Broker = require('./index')
+const BrokerDaemonClient = require('./index')
 
-describe('Broker', () => {
+describe('BrokerDaemonClient', () => {
   let broker
   let rpcAddress
 
   beforeEach(() => {
     rpcAddress = null
-    broker = new Broker(rpcAddress)
+    broker = new BrokerDaemonClient(rpcAddress)
   })
 
   describe('constructor', () => {
@@ -44,13 +44,13 @@ describe('Broker', () => {
       xit('sets the broker daemon address to env variable', () => {
         const newAddress = 'new_address'
         // TODO: figure out how to stub env vars
-        broker = new Broker(null)
+        broker = new BrokerDaemonClient(null)
         expect(broker.address).to.contain(newAddress)
       })
 
       it('sets broker daemon address to the specified address', () => {
         const specifiedAddress = 'specified'
-        broker = new Broker(specifiedAddress)
+        broker = new BrokerDaemonClient(specifiedAddress)
         expect(broker.address).to.eql(specifiedAddress)
       })
     })
