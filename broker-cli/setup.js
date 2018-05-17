@@ -1,4 +1,4 @@
-const Broker = require('./broker')
+const BrokerDaemonClient = require('./broker-daemon-client')
 const { validations } = require('./utils')
 
 /**
@@ -20,7 +20,7 @@ async function setup (args, opts, logger) {
   const { rpcAddress = null } = opts
 
   try {
-    const orderResult = await new Broker(rpcAddress)
+    const orderResult = await new BrokerDaemonClient(rpcAddress)
     logger.info(orderResult)
   } catch (e) {
     logger.error(e.toString())
