@@ -14,9 +14,9 @@ describe('RelayerClient', () => {
   let OrderBook
   let Health
   let ResponseType = {
-    EXISTING_EVENT: 2,
-    EXISTING_EVENTS_DONE: 3,
-    NEW_EVENT: 1
+    EXISTING_EVENT: 'EXISTING_EVENT',
+    EXISTING_EVENTS_DONE: 'EXISTING_EVENTS_DONE',
+    NEW_EVENT: 'NEW_EVENT'
   }
 
   let exchangeRpcHost = 'localhost:1337'
@@ -186,7 +186,7 @@ describe('RelayerClient', () => {
     })
 
     it('resolves when existing events are done', async () => {
-      const fakeDone = { type: 'EXISTING_EVENTS_DONE' }
+      const fakeDone = { type: ResponseType.EXISTING_EVENTS_DONE }
       stream.on.withArgs('data').callsFake(async (evt, fn) => {
         await delay(10)
         fn(fakeDone)
@@ -196,8 +196,8 @@ describe('RelayerClient', () => {
     })
 
     it('puts existing events into the store', async () => {
-      const fakeResponse = { type: 'EXISTING_EVENT', marketEvent: 'fakeEvent' }
-      const fakeDone = { type: 'EXISTING_EVENTS_DONE' }
+      const fakeResponse = { type: ResponseType.EXISTING_EVENT, marketEvent: 'fakeEvent' }
+      const fakeDone = { type: ResponseType.EXISTING_EVENTS_DONE }
       stream.on.withArgs('data').callsFake(async (evt, fn) => {
         await delay(10)
         fn(fakeResponse)
@@ -215,8 +215,8 @@ describe('RelayerClient', () => {
     })
 
     it('puts new events into the store', async () => {
-      const fakeResponse = { type: 'EXISTING_EVENT', marketEvent: 'fakeEvent' }
-      const fakeDone = { type: 'EXISTING_EVENTS_DONE' }
+      const fakeResponse = { type: ResponseType.EXISTING_EVENT, marketEvent: 'fakeEvent' }
+      const fakeDone = { type: ResponseType.EXISTING_EVENTS_DONE }
       stream.on.withArgs('data').callsFake(async (evt, fn) => {
         await delay(10)
         fn(fakeResponse)
