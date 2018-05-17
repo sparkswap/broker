@@ -27,6 +27,7 @@ async function createOrder ({ params, relayer, logger, orderbooks }, { CreateOrd
     throw new PublicError(`${market} is not being tracked as a market. Configure kbd to track ${market} using the MARKETS environment variable.`)
   }
 
+  // Price is optional. If no price is provided, we treat it as a Market Order.
   if (!price) {
     throw new PublicError(`Market orders are not currently supported`)
   }
