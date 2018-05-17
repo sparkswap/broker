@@ -37,6 +37,12 @@ NOTE: Running a command on the kcli container will initialize a new container on
 - `npm test` will run all tests
 - `npm run coverage` will run tests w/ code coverage
 
+#### Funding a wallet on SIMNET
+
+Using the `deposit` command on KCLI, we've created a script `setup/fund-simnet-wallet.sh` that generates BTC for a broker-daemon wallet
+
+Use the following command to generate $$$: `npm run money`
+
 ### Authentication between Daemon and LND
 
 TLS certs and Macaroons are shared through the `/shared` directory located at the root of the `kbd` container. The `/shared` volume is created in the lnd-engine and is shared through the broker project through the use of `-p` on the startup commands located in package.json.
