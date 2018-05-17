@@ -9,28 +9,28 @@ describe('WalletService', () => {
   let logger
   let engine
   let unaryMethodStub
-  let responseSpy
+  let responseStub
   let wallet
   let registerSpy
-  let newWalletSpy
+  let newDepositAddress
 
   before(() => {
-    responseSpy = sinon.spy()
+    responseStub = sinon.stub()
     protoPath = 'example/path.proto'
     loadProtoStub = sinon.stub().returns({
       Wallet: { service: sinon.stub() },
-      NewDepositAddressResponse: responseSpy
+      NewDepositAddressResponse: responseStub
     })
     logger = sinon.stub()
     engine = sinon.stub()
-    newWalletSpy = sinon.spy()
+    newDepositAddress = sinon.spy()
     unaryMethodStub = sinon.stub()
     registerSpy = sinon.spy()
     unaryMethodStub.prototype.register = registerSpy
 
     WalletService.__set__('loadProto', loadProtoStub)
     WalletService.__set__('GrpcUnaryMethod', unaryMethodStub)
-    WalletService.__set__('newWalletAddress', newWalletSpy)
+    WalletService.__set__('newDepositAddress', newDepositAddress)
 
     wallet = new WalletService(protoPath, { logger, engine })
   })
@@ -47,10 +47,10 @@ describe('WalletService', () => {
     const expectedMessageId = '[Wallet:newDepositAddress]'
 
     expect(unaryMethodStub).to.have.been.calledWith(
-      newWalletSpy,
+      newDepositAddress,
       expectedMessageId,
       { logger, engine },
-      { NewDepositAddressResponse: responseSpy }
+      { NewDepositAddressResponse: responseStub }
     )
   })
 })

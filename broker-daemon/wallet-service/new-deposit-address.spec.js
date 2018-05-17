@@ -3,28 +3,29 @@ const { expect, rewire, sinon } = require('test/test-helper')
 
 const newDepositAddress = rewire(path.resolve(__dirname, 'new-deposit-address'))
 
-describe('newWalletAddress', () => {
+describe('newDepositAddress', () => {
   let logger
   let engine
   let newAddressStub
-  let resSpy
   let newAddressResponse
+  let responseStub
 
   before(() => {
     logger = sinon.stub()
-    resSpy = sinon.spy()
     newAddressResponse = '12345'
     newAddressStub = sinon.stub().returns(newAddressResponse)
+    responseStub = sinon.stub()
     engine = { newDepositAddress: newAddressStub }
 
-    newDepositAddress({ logger, engine }, { NewAddressResponse: resSpy })
+    newDepositAddress({ logger, engine }, { NewDepositAddressResponse: responseStub })
   })
 
-  it('calls an engine', () => {
+  it('calls an engine with newDepositAddress', () => {
     expect(newAddressStub).to.have.been.called()
   })
 
   it('constructs a NewAddressResponse', () => {
-    expect(newAddressStub).to.have.been.called()
+    const address = newAddressResponse
+    expect(responseStub).to.have.been.calledWith({ address })
   })
 })
