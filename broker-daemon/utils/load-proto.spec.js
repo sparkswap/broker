@@ -19,7 +19,7 @@ describe('loadGrpcProto', () => {
 
   beforeEach(() => {
     loadSpy = sinon.spy()
-    protoPath = 'relayer.proto'
+    protoPath = 'broker.proto'
     fs = { existsSync: () => protoPath }
 
     revertFs = loadProto.__set__('fs', fs)
