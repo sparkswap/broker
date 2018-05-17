@@ -189,6 +189,27 @@ describe('GrpcServer', () => {
       expect(server.orderBookService).to.be.equal(orderBookService)
     })
 
+    it('adds the wallet service', () => {
+      const server = new GrpcServer()
+
+      expect(server).to.have.property('server')
+      expect(server.server.addService).to.be.equal(addService)
+      expect(addService).to.have.been.calledWith(walletService.definition, walletService.implementation)
+    })
+
+    it('creates a wallet service', () => {
+      const logger = 'mylogger'
+      const store = 'mystore'
+
+      const server = new GrpcServer(logger, store)
+
+      expect(WalletService).to.have.been.calledOnce()
+      expect(WalletService).to.have.been.calledWith(protoPath, sinon.match({ logger, engine: sinon.match.instanceOf(LndEngine) }))
+      expect(WalletService).to.have.been.calledWithNew()
+      expect(server).to.have.property('walletService')
+      expect(server.walletService).to.be.equal(walletService)
+    })
+
     it('adds the orderBook service', () => {
       const server = new GrpcServer()
 
