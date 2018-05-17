@@ -70,15 +70,20 @@ class RelayerClient {
       })
 
       watcher.on('data', async (response) => {
+        this.logger.info(`response type is ${response.type}`)
         if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
+          this.logger.info(`Resolving because response type is: ${response.type}`)
           return resolve()
         }
 
         if (![RESPONSE_TYPES.EXISTING_EVENT, RESPONSE_TYPES.NEW_EVENT].includes(RESPONSE_TYPES[response.type])) {
+          this.logger.info(`Returning because response type is: ${response.type}`)
+
           // No other responses are implemented
           return
         }
 
+        this.logger.info(`Creating a market event: ${response.marketEvent}`)
         const event = new MarketEvent(response.marketEvent)
         store.put(event.key, event.value)
       })
