@@ -1,9 +1,5 @@
-const {
-  chai,
-  sinon
-} = require('test/test-helper')
+const { sinon, expect } = require('test/test-helper')
 
-const { expect } = chai
 const watchMarket = require('./watch-market')
 
 describe('watchMarket', () => {

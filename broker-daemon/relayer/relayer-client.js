@@ -4,11 +4,30 @@ const path = require('path')
 const { MarketEvent } = require('../models')
 const { loadProto } = require('../utils')
 
-// TODO: Add this to config for CLI
+/**
+ * @todo Add this config to CLI
+ * @constant
+ * @type {String}
+ * @default
+ */
 const EXCHANGE_RPC_HOST = process.env.EXCHANGE_RPC_HOST || 'localhost:28492'
+
+/**
+ * @constant
+ * @type {String}
+ * @default
+ */
 const RELAYER_PROTO_PATH = './proto/relayer.proto'
 
+/**
+ * Interface for daemon to interact with a Kinesis Relayer
+ *
+ * @author kinesis
+ */
 class RelayerClient {
+  /**
+   * @param {Logger} logger
+   */
   constructor (logger) {
     this.logger = logger || console
     this.address = EXCHANGE_RPC_HOST
@@ -90,6 +109,12 @@ class RelayerClient {
     })
   }
 
+  /**
+   * Checks the health of the relayer
+   *
+   * @param {Object} params
+   * @returns {Promise}
+   */
   async healthCheck (params) {
     const deadline = grpcDeadline()
 
@@ -102,8 +127,13 @@ class RelayerClient {
   }
 }
 
-// gRPC uses the term `deadline` which is a timeout feature that is an absolute
-// point in time, instead of a duration.
+/**
+ * gRPC uses the term `deadline` which is a timeout feature that is an absolute
+ * point in time, instead of a duration.
+ *
+ * @param {Number} [timeoutInSeconds=5]
+ * @return {Date}
+ */
 function grpcDeadline (timeoutInSeconds = 5) {
   new Date().setSeconds(new Date().getSeconds() + timeoutInSeconds)
 }
