@@ -1,11 +1,10 @@
 const path = require('path')
 const {
-  chai,
   sinon,
-  rewire
+  rewire,
+  expect
 } = require('test/test-helper')
 
-const { expect } = chai
 const programPath = path.resolve('broker-cli', 'health-check')
 const program = rewire(programPath)
 

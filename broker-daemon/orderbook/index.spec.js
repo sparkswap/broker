@@ -1,6 +1,5 @@
 const path = require('path')
-const { chai, rewire, sinon } = require('test/test-helper')
-const { expect } = chai
+const { rewire, sinon, expect } = require('test/test-helper')
 
 const Orderbook = rewire(path.resolve('broker-daemon', 'orderbook', 'index'))
 

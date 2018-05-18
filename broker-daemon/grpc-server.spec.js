@@ -1,6 +1,5 @@
 const path = require('path')
-const { chai, sinon, rewire } = require('test/test-helper')
-const { expect } = chai
+const { expect, sinon, rewire } = require('test/test-helper')
 
 const GrpcServer = rewire(path.resolve('broker-daemon', 'grpc-server'))
 
