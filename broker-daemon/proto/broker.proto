@@ -47,11 +47,11 @@ message WatchMarketRequest {
 }
 
 message WatchMarketResponse {
-  int64 base_amount = 0;
-  int64 counter_amount = 1;
-  Side side = 2;
-}
 
+    int64 base_amount = 5;
+    int64 counter_amount = 6;
+    Side side = 8;
+}
 service OrderBook {
     rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
 }

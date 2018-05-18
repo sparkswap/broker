@@ -44,6 +44,7 @@
     "grpc": "1.11.3",
     "grpc-methods": "github:kinesis-exchange/grpc-methods",
     "level": "3.0.1",
+    "level-live-stream": "1.4.12",
     "level-sublevel": "6.6.1",
     "pm2": "2.10.3",
     "validator": "10.2.0",

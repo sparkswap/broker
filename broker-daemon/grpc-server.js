@@ -34,8 +34,6 @@ class GrpcServer {
 
     this.orderBookService = new OrderBookService(this.protoPath, this)
     this.server.addService(this.orderBookService.definition, this.orderBookService.implementation)
-
-    this.orderbooks = {}
   }
 
   /**
