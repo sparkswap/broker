@@ -1,6 +1,5 @@
 const path = require('path')
-const { chai, sinon, rewire, delay } = require('test/test-helper')
-const { expect } = chai
+const { sinon, rewire, delay, expect } = require('test/test-helper')
 
 const RelayerClient = rewire(path.resolve('broker-daemon', 'relayer', 'relayer-client'))
 

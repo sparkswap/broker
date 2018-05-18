@@ -1,11 +1,10 @@
 const path = require('path')
 const {
-  chai,
   sinon,
-  rewire
+  rewire,
+  expect
 } = require('test/test-helper')
 
-const { expect } = chai
 const program = rewire(path.resolve('broker-cli', 'new-deposit-address'))
 
 describe('newDepositAddress', () => {
