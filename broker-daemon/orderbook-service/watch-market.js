@@ -1,6 +1,7 @@
 /**
  * Creates a stream with the exchange that watches for market events
  *
+ * @function
  * @param {GrpcServerStreamingMethod~request} request - request object
  * @param {Object} request.params - Request parameters from the client
  * @param {function} request.send - Send a chunk of data to the client
