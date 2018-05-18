@@ -43,4 +43,6 @@ SEGWIT_RESPONSE=$(node ./setup/parse-lnd-response.js segwit $RAW_SEGWIT_RESPONSE
 
 echo "Segwit Response: $SEGWIT_RESPONSE"
 
-echo "Checking wallet balance (NOT IMPLEMENTED YET)"
+echo "Checking wallet balance"
+
+./bin/kcli wallet balance
