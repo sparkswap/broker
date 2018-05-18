@@ -19,7 +19,7 @@ const PROTO_OPTIONS = {
  */
 function loadGrpcProto (protoPath) {
   if (!fs.existsSync(protoPath)) {
-    throw new Error(`relayer.proto does not exist at ${protoPath}. please run 'npm run build'`)
+    throw new Error(`Proto does not exist at ${protoPath}. please run 'npm run build'`)
   }
 
   return grpc.load(protoPath, PROTO_FILE_TYPE, PROTO_OPTIONS)

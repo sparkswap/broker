@@ -19,7 +19,8 @@
     "docker-test": "docker-compose exec $npm_package_config_daemon npm test",
     "ci-test": "bash ./scripts/ci-test.sh",
     "start-kbd": "pm2-docker pm2.json --watch",
-    "broker-proto": "pbjs -t proto3 admin.proto order.proto orderbook.proto -p ./broker-daemon/proto/src -o ./broker-daemon/proto/broker.proto"
+    "money": "bash ./setup/fund-simnet-wallet.sh",
+    "broker-proto": "pbjs -t proto3 admin.proto order.proto orderbook.proto wallet.proto -p ./broker-daemon/proto/src -o ./broker-daemon/proto/broker.proto"
   },
   "standard": {
     "env": [
@@ -38,6 +39,7 @@
   },
   "homepage": "https://github.com/kinesis-exchange/broker#readme",
   "dependencies": {
+    "big-integer": "1.6.28",
     "caporal": "0.10.0",
     "colors": "1.2.4",
     "compare-versions": "3.1.0",

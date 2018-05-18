@@ -1,15 +1,32 @@
-const { chai } = require('test/test-helper')
-const { expect } = chai
+const path = require('path')
+const { expect, rewire, sinon } = require('test/test-helper')
 
-const Broker = require('./index')
+const BrokerDaemonClient = rewire(path.resolve(__dirname))
 
-describe('Broker', () => {
+describe('BrokerDaemonClient', () => {
   let broker
   let rpcAddress
+  let loadStub
+  let createInsecureCredsStub
 
   beforeEach(() => {
     rpcAddress = null
-    broker = new Broker(rpcAddress)
+    createInsecureCredsStub = sinon.stub()
+    loadStub = sinon.stub().returns({
+      Admin: sinon.stub(),
+      Order: sinon.stub(),
+      OrderBook: sinon.stub(),
+      Wallet: sinon.stub()
+    })
+
+    BrokerDaemonClient.__set__('grpc', {
+      load: loadStub,
+      credentials: {
+        createInsecure: createInsecureCredsStub
+      }
+    })
+
+    broker = new BrokerDaemonClient(rpcAddress)
   })
 
   describe('constructor', () => {
@@ -44,13 +61,13 @@ describe('Broker', () => {
       xit('sets the broker daemon address to env variable', () => {
         const newAddress = 'new_address'
         // TODO: figure out how to stub env vars
-        broker = new Broker(null)
+        broker = new BrokerDaemonClient(null)
         expect(broker.address).to.contain(newAddress)
       })
 
       it('sets broker daemon address to the specified address', () => {
         const specifiedAddress = 'specified'
-        broker = new Broker(specifiedAddress)
+        broker = new BrokerDaemonClient(specifiedAddress)
         expect(broker.address).to.eql(specifiedAddress)
       })
     })
