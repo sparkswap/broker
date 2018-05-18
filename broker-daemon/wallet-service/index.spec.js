@@ -13,17 +13,20 @@ describe('WalletService', () => {
   let wallet
   let registerSpy
   let newDepositAddress
+  let balanceSpy
 
   before(() => {
     responseStub = sinon.stub()
     protoPath = 'example/path.proto'
     loadProtoStub = sinon.stub().returns({
       Wallet: { service: sinon.stub() },
-      NewDepositAddressResponse: responseStub
+      NewDepositAddressResponse: responseStub,
+      BalanceResponse: responseStub
     })
     logger = sinon.stub()
     engine = sinon.stub()
     newDepositAddress = sinon.spy()
+    balanceSpy = sinon.spy()
     unaryMethodStub = sinon.stub()
     registerSpy = sinon.spy()
     unaryMethodStub.prototype.register = registerSpy
@@ -31,6 +34,7 @@ describe('WalletService', () => {
     WalletService.__set__('loadProto', loadProtoStub)
     WalletService.__set__('GrpcUnaryMethod', unaryMethodStub)
     WalletService.__set__('newDepositAddress', newDepositAddress)
+    WalletService.__set__('balance', balanceSpy)
 
     wallet = new WalletService(protoPath, { logger, engine })
   })
@@ -43,14 +47,27 @@ describe('WalletService', () => {
     expect(loadProtoStub).to.have.been.calledWith(protoPath)
   })
 
-  it('creates a unary method for newAddress', () => {
-    const expectedMessageId = '[Wallet:newDepositAddress]'
+  describe('grpc implementations', () => {
+    it('creates a unary method for newAddress', () => {
+      const expectedMessageId = '[Wallet:newDepositAddress]'
 
-    expect(unaryMethodStub).to.have.been.calledWith(
-      newDepositAddress,
-      expectedMessageId,
-      { logger, engine },
-      { NewDepositAddressResponse: responseStub }
-    )
+      expect(unaryMethodStub).to.have.been.calledWith(
+        newDepositAddress,
+        expectedMessageId,
+        { logger, engine },
+        { NewDepositAddressResponse: responseStub }
+      )
+    })
+
+    it('creates a unary method for balance', () => {
+      const expectedMessageId = '[Wallet:balance]'
+
+      expect(unaryMethodStub).to.have.been.calledWith(
+        balanceSpy,
+        expectedMessageId,
+        { logger, engine },
+        { BalanceResponse: responseStub }
+      )
+    })
   })
 })

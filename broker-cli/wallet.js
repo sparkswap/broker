@@ -25,7 +25,7 @@ const SUPPORTED_COMMANDS = Object.freeze({
  * @param {String} [rpcAddress] broker rpc address
  * @return {Promise}
  */
-async function balance (rpcAddress) {
+async function walletBalance (rpcAddress) {
   return new BrokerDaemonClient(rpcAddress).walletBalance()
 }
 
@@ -49,8 +49,8 @@ async function wallet (args, opts, logger) {
   try {
     switch (command) {
       case SUPPORTED_COMMANDS.BALANCE:
-        const { balance: walletBalance } = await balance(rpcAddress)
-        logger.info(`Total Balance: ${walletBalance}`)
+        const { balance } = await walletBalance(rpcAddress)
+        logger.info(`Total Balance: ${balance}`)
         break
       default:
         throw new Error('Command not found')
