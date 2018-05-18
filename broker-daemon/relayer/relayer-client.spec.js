@@ -17,6 +17,7 @@ describe('RelayerClient', () => {
     EXISTING_EVENTS_DONE: 'EXISTING_EVENTS_DONE',
     NEW_EVENT: 'NEW_EVENT'
   }
+  let fakeConsole
 
   let exchangeRpcHost = 'localhost:1337'
 
@@ -44,6 +45,12 @@ describe('RelayerClient', () => {
     RelayerClient.__set__('loadProto', loadProto)
     RelayerClient.__set__('EXCHANGE_RPC_HOST', exchangeRpcHost)
 
+    fakeConsole = {
+      info: sinon.stub(),
+      error: sinon.stub()
+    }
+    RelayerClient.__set__('console', fakeConsole)
+
     grpcCredentialsInsecure = sinon.stub()
 
     RelayerClient.__set__('grpc', {
@@ -66,7 +73,7 @@ describe('RelayerClient', () => {
       const relayer = new RelayerClient()
 
       expect(relayer).to.have.property('logger')
-      expect(relayer.logger).to.be.equal(console)
+      expect(relayer.logger).to.be.equal(fakeConsole)
     })
 
     it('loads the proto', () => {
