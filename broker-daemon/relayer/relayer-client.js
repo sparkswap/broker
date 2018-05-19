@@ -65,19 +65,20 @@ class RelayerClient {
    * @returns {Promise<void>} a promise that resolves when the market is up to date with the remote relayer
    */
   watchMarket (store, { baseSymbol, counterSymbol, lastUpdated }) {
-    return new Promise(async (resolve, reject) => {
+    const RESPONSE_TYPES = this.proto.WatchMarketResponse.ResponseType
+
+    const params = {
+      baseSymbol,
+      counterSymbol,
       // TODO: fix null value for lastUpdated
-      lastUpdated = lastUpdated || '0'
+      lastUpdated: (lastUpdated || '0')
+    }
 
-      const params = { baseSymbol, counterSymbol, lastUpdated }
-      const RESPONSE_TYPES = this.proto.WatchMarketResponse.ResponseType
-
+    return new Promise(async (resolve, reject) => {
       this.logger.info('Setting up market watcher', params)
 
-      let watcher
-
       try {
-        watcher = await this.orderbook.watchMarket(params)
+        var watcher = this.orderbook.watchMarket(params)
       } catch (e) {
         return reject(e)
       }
@@ -96,15 +97,17 @@ class RelayerClient {
         }
 
         if (![RESPONSE_TYPES.EXISTING_EVENT, RESPONSE_TYPES.NEW_EVENT].includes(RESPONSE_TYPES[response.type])) {
-          this.logger.info(`Returning because response type is: ${response.type}`)
-
-          // No other responses are implemented
-          return
+          return this.logger.info(`Returning because response type is: ${response.type}`)
         }
 
         this.logger.info(`Creating a market event: ${response.marketEvent}`)
-        const event = new MarketEvent(response.marketEvent)
-        store.put(event.key, event.value)
+        const { key, value } = new MarketEvent(response.marketEvent)
+        store.put(key, value)
+      })
+
+      watcher.on('error', (err) => {
+        this.logger.error('Relayer watchMarket grpc failed', err)
+        reject(err)
       })
     })
   }
