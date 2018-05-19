@@ -142,7 +142,7 @@ describe('RelayerClient', () => {
         on: sinon.stub()
       }
 
-      watchMarket = sinon.stub().resolves(stream)
+      watchMarket = sinon.stub().returns(stream)
 
       OrderBook.prototype.watchMarket = watchMarket
 
@@ -191,7 +191,7 @@ describe('RelayerClient', () => {
     xit('throws if the relayer ends the stream', async () => {
     })
 
-    it('resolves when existing events are done', async () => {
+    it.only('resolves when existing events are done', async () => {
       const fakeDone = { type: ResponseType.EXISTING_EVENTS_DONE }
       stream.on.withArgs('data').callsFake(async (evt, fn) => {
         await delay(10)
