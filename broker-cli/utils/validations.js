@@ -95,7 +95,7 @@ function isHost (str) {
     return str
   }
 
-  throw new Error('Invalid Host name')
+  throw new Error()
 }
 
 /**

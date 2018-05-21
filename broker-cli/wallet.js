@@ -7,27 +7,25 @@ const BrokerDaemonClient = require('./broker-daemon-client')
 const { validations } = require('./utils')
 
 /**
- * Supported commands for `kcli wallet`
- *
- * @constant
- * @type {Object<key, String>}
- * @default
- */
-const SUPPORTED_COMMANDS = Object.freeze({
-  BALANCE: 'balance',
-  NEW_DEPOSIT_ADDRESS: 'new-deposit-address'
-})
-
-/**
  * Calls the broker for the daemons wallet balance
  *
  * @see SUPPORTED_COMMANDS
  * @function
- * @param {String} [rpcAddress] broker rpc address
- * @return {Promise}
+ * @param {Object} args
+ * @param {Object} opts
+ * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {Logger} logger
+ * @return {Void}
  */
-async function walletBalance (rpcAddress) {
-  return new BrokerDaemonClient(rpcAddress).walletBalance()
+async function walletBalance (args, opts, logger) {
+  const { rpcAddress = null } = opts
+
+  try {
+    const { balance } = await new BrokerDaemonClient(rpcAddress).walletBalance()
+    logger.info(`Total Balance: ${balance}`)
+  } catch (e) {
+    logger.error(e)
+  }
 }
 
 /**
@@ -36,53 +34,31 @@ async function walletBalance (rpcAddress) {
  * ex: `kcli wallet new-deposit-address`
  *
  * @function
- * @param {String} [rpcAddress] broker rpc address
- * @param {Logger} logger
- * @return {Promise}
- */
-async function newDepositAddress (rpcAddress) {
-  return new BrokerDaemonClient(rpcAddress).newDepositAddress()
-}
-
-/**
- * kcli wallet
- *
- * ex: `kcli wallet`
- *
- * @see SUPPORTED_COMMANDS
- * @function
  * @param {Object} args
- * @param {String} args.command
  * @param {Object} opts
  * @param {String} [opts.rpcAddress] broker rpc address
  * @param {Logger} logger
+ * @return {Void}
  */
-async function wallet (args, opts, logger) {
-  const { command } = args
+async function newDepositAddress (args, opts, logger) {
   const { rpcAddress = null } = opts
 
   try {
-    switch (command) {
-      case SUPPORTED_COMMANDS.BALANCE:
-        const { balance } = await walletBalance(rpcAddress)
-        logger.info(`Total Balance: ${balance}`)
-        break
-      case SUPPORTED_COMMANDS.NEW_DEPOSIT_ADDRESS:
-        const { address } = await newDepositAddress(rpcAddress)
-        logger.info(address)
-        break
-      default:
-        throw new Error('Command not found')
-    }
+    const { address } = await new BrokerDaemonClient(rpcAddress).newDepositAddress()
+    logger.info(address)
   } catch (e) {
-    logger.error(e.toString())
+    logger.error(e)
   }
 }
 
 module.exports = (program) => {
   program
-    .command('wallet', 'Checks the connection between Broker and the Exchange')
-    .argument('<command>', `Available commands: ${Object.values(SUPPORTED_COMMANDS).join(', ')}`, Object.values(SUPPORTED_COMMANDS))
+    .command('wallet', 'Commands to handle a wallet instance')
+    .help('Available Commands: balance, new-deposit-address')
+    .command('wallet balance', 'Current daemon wallet balance')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
-    .action(wallet)
+    .action(walletBalance)
+    .command('wallet new-deposit-address', 'Generates a new wallet address for a daemon instance')
+    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .action(newDepositAddress)
 }
