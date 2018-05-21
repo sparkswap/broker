@@ -25,7 +25,7 @@ describe('buy', () => {
     const amount = '10'
     const price = '10'
     const rpcAddress = undefined
-    const timeinforce = 'GTC'
+    const timeInForce = 'GTC'
 
     infoSpy = sinon.spy()
     errorSpy = sinon.spy()
@@ -37,7 +37,7 @@ describe('buy', () => {
     revert = program.__set__('BrokerDaemonClient', brokerStub)
 
     args = { amount, price }
-    opts = { market, timeinforce, rpcAddress }
+    opts = { market, timeInForce, rpcAddress }
     logger = {
       info: infoSpy,
       error: errorSpy
@@ -52,7 +52,7 @@ describe('buy', () => {
     const expectedRequest = {
       amount: args.amount,
       price: args.price,
-      timeinforce: opts.timeinforce,
+      timeInForce: opts.timeInForce,
       market: opts.market,
       side: 'BID'
     }

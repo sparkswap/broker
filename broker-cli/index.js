@@ -10,7 +10,6 @@ const sellCommand = require('./sell')
 const orderbookCommand = require('./orderbook')
 const configCommand = require('./config')
 const healthCheckCommand = require('./health-check')
-const newDepositAddressCommand = require('./new-deposit-address')
 const walletCommand = require('./wallet')
 
 module.exports = {
@@ -19,6 +18,5 @@ module.exports = {
   configCommand,
   orderbookCommand,
   healthCheckCommand,
-  newDepositAddressCommand,
   walletCommand
 }

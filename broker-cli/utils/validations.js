@@ -41,7 +41,7 @@ function isMarketName (str) {
       isAlpha(counter) &&
       validMarketNameLength(counter)
     ) {
-      return str
+      return str.toUpperCase()
     }
 
     throw new Error()
