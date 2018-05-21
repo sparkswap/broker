@@ -9,7 +9,7 @@ function newDepositAddress () {
 
 function walletBalance () {
   return new Promise((resolve, reject) => {
-    this.wallet.balance({}, (err, res) => {
+    this.wallet.getBalance({}, (err, res) => {
       if (err) return reject(err)
       return resolve(res)
     })

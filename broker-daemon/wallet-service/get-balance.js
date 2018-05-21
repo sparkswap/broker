@@ -5,13 +5,13 @@
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {RelayerClient} request.engine
  * @param {Object} responses
- * @param {function} responses.BalanceResponse
- * @return {responses.NewAddressResponse}
+ * @param {function} responses.GetBalanceResponse
+ * @return {responses.GetBalanaceResponse}
  */
-async function newDepositAddress ({ logger, engine }, { BalanceResponse }) {
+async function getBalance ({ logger, engine }, { GetBalanceResponse }) {
   const { totalBalance: balance } = await engine.walletBalance()
   logger.info(`Received wallet balance: ${balance}`)
-  return new BalanceResponse({ balance })
+  return new GetBalanceResponse({ balance })
 }
 
-module.exports = newDepositAddress
+module.exports = getBalance

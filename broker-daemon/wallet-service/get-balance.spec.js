@@ -1,9 +1,9 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
 
-const balance = rewire(path.resolve(__dirname, 'balance'))
+const balance = rewire(path.resolve(__dirname, 'get-balance'))
 
-describe('balance', () => {
+describe('get-balance', () => {
   let balanceResponseStub
   let logger
   let walletBalanceStub
@@ -21,7 +21,7 @@ describe('balance', () => {
 
     logger = { info: sinon.stub() }
 
-    balance({ logger, engine }, { BalanceResponse: balanceResponseStub })
+    balance({ logger, engine }, { GetBalanceResponse: balanceResponseStub })
   })
 
   it('calls an engine with walletBalance', () => {
