@@ -7,6 +7,18 @@ const BrokerDaemonClient = require('./broker-daemon-client')
 const { validations } = require('./utils')
 
 /**
+ * Supported commands for `kcli wallet`
+ *
+ * @constant
+ * @type {Object<key, String>}
+ * @default
+ */
+const SUPPORTED_COMMANDS = Object.freeze({
+  BALANCE: 'balance',
+  NEW_DEPOSIT_ADDRESS: 'new-deposit-address'
+})
+
+/**
  * Calls the broker for the daemons wallet balance
  *
  * @see SUPPORTED_COMMANDS
@@ -17,7 +29,7 @@ const { validations } = require('./utils')
  * @param {Logger} logger
  * @return {Void}
  */
-async function walletBalance (args, opts, logger) {
+async function balance (args, opts, logger) {
   const { rpcAddress = null } = opts
 
   try {
@@ -55,10 +67,15 @@ module.exports = (program) => {
   program
     .command('wallet', 'Commands to handle a wallet instance')
     .help('Available Commands: balance, new-deposit-address')
+    .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
+    .action(async (args, opts, logger) => {
+      const { command } = args
+
+      if (command === SUPPORTED_COMMANDS.BALANCE) return balance(args, opts, logger)
+      if (command === SUPPORTED_COMMANDS.NEW_DEPOSIT_ADDRESS) return newDepositAddress(args, opts, logger)
+    })
     .command('wallet balance', 'Current daemon wallet balance')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
-    .action(walletBalance)
     .command('wallet new-deposit-address', 'Generates a new wallet address for a daemon instance')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
-    .action(newDepositAddress)
 }
