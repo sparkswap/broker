@@ -142,7 +142,7 @@ describe('RelayerClient', () => {
         on: sinon.stub()
       }
 
-      watchMarket = sinon.stub().resolves(stream)
+      watchMarket = sinon.stub().returns(stream)
 
       OrderBook.prototype.watchMarket = watchMarket
 
@@ -182,9 +182,10 @@ describe('RelayerClient', () => {
 
       await delay(10)
 
-      expect(stream.on).to.have.been.calledTwice()
+      expect(stream.on).to.have.been.calledThrice()
       expect(stream.on).to.have.been.calledWith('data')
       expect(stream.on).to.have.been.calledWith('end')
+      expect(stream.on).to.have.been.calledWith('error')
     })
 
     // TODO: figure out how to test an async throw
