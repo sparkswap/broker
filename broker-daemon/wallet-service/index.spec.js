@@ -59,7 +59,7 @@ describe('WalletService', () => {
       )
     })
 
-    it.only('creates a unary method for getBalance', () => {
+    it('creates a unary method for getBalance', () => {
       const expectedMessageId = '[Wallet:getBalance]'
 
       expect(unaryMethodStub).to.have.been.calledWith(
