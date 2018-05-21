@@ -182,16 +182,17 @@ describe('RelayerClient', () => {
 
       await delay(10)
 
-      expect(stream.on).to.have.been.calledTwice()
+      expect(stream.on).to.have.been.calledThrice()
       expect(stream.on).to.have.been.calledWith('data')
       expect(stream.on).to.have.been.calledWith('end')
+      expect(stream.on).to.have.been.calledWith('error')
     })
 
     // TODO: figure out how to test an async throw
     xit('throws if the relayer ends the stream', async () => {
     })
 
-    it.only('resolves when existing events are done', async () => {
+    it('resolves when existing events are done', async () => {
       const fakeDone = { type: ResponseType.EXISTING_EVENTS_DONE }
       stream.on.withArgs('data').callsFake(async (evt, fn) => {
         await delay(10)

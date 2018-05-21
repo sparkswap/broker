@@ -52,12 +52,11 @@ class BrokerDaemon {
       logger.info(`Initializing ${this.marketNames.length} markets`)
       await this.server.initializeMarkets(this.marketNames)
       logger.info(`Caught up to ${this.marketNames.length} markets`)
+      this.server.listen(this.rpcAddress)
+      logger.info(`gRPC server started: Server listening on ${this.rpcAddress}`)
     } catch (e) {
       logger.error('BrokerDaemon failed to initialize', e)
     }
-
-    this.server.listen(this.rpcAddress)
-    logger.info(`gRPC server started: Server listening on ${this.rpcAddress}`)
   }
 }
 
