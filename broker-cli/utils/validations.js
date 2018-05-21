@@ -41,7 +41,7 @@ function isMarketName (str) {
       isAlpha(counter) &&
       validMarketNameLength(counter)
     ) {
-      return str
+      return str.toUpperCase()
     }
 
     throw new Error()
@@ -95,7 +95,7 @@ function isHost (str) {
     return str
   }
 
-  throw new Error('Invalid Host name')
+  throw new Error()
 }
 
 /**
