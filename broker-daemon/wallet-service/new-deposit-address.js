@@ -5,7 +5,7 @@
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {RelayerClient} request.engine
  * @param {Object} responses
- * @param {function} responses.NewAddressResponse - constructor for HealthCheckResponse messages
+ * @param {function} responses.NewAddressResponse
  * @return {responses.NewAddressResponse}
  */
 async function newDepositAddress ({ logger, engine }, { NewDepositAddressResponse }) {

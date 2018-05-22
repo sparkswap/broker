@@ -69,7 +69,7 @@ class GrpcServer {
    * @param {Array<String>} markets
    * @returns {Promise<void>} promise that resolves when markets are caught up to the remote
    */
-  async initializeMarkets (markets) {
+  initializeMarkets (markets) {
     return Promise.all(markets.map((marketName) => {
       return this.initializeMarket(marketName)
     }))

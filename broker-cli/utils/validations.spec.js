@@ -73,8 +73,6 @@ describe('Validations', () => {
   })
 
   describe('isHost', () => {
-    const expectedError = 'Invalid Host name'
-
     it('returns a valid container name host', () => {
       const validHost = 'kinesis:10009'
       expect(isHost(validHost)).to.eql(validHost)
@@ -92,7 +90,7 @@ describe('Validations', () => {
 
     it('throws an error when host is invalid', () => {
       const invalidHost = 'bad url'
-      expect(() => isHost(invalidHost)).to.throw(expectedError)
+      expect(() => isHost(invalidHost)).to.throw()
     })
   })
 

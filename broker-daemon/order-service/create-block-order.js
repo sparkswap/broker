@@ -9,10 +9,10 @@ const { PublicError } = require('grpc-methods')
  * @param {Object} request.logger
  * @param {Object} request.orderStore
  * @param {Object} responses
- * @param {function} responses.CreateOrderResponse - constructor for CreateOrderResponse messages
- * @return {responses.CreateOrderResponse}
+ * @param {function} responses.CreateBlockOrderResponse - constructor for CreateBlockOrderResponse messages
+ * @return {responses.CreateBlockOrderResponse}
  */
-async function createOrder ({ params, logger, orderWorker }, { CreateOrderResponse, TimeInForce }) {
+async function createBlockOrder ({ params, logger, orderWorker }, { CreateBlockOrderResponse, TimeInForce }) {
   const {
     amount,
     price,
@@ -39,7 +39,7 @@ async function createOrder ({ params, logger, orderWorker }, { CreateOrderRespon
     timeInForce: 'GTC'
   })
 
-  return new CreateOrderResponse({ orderId: orderId })
+  return new CreateBlockOrderResponse({ blockOrderId: orderId })
 }
 
-module.exports = createOrder
+module.exports = createBlockOrder

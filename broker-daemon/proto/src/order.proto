@@ -11,7 +11,7 @@ enum TimeInForce {
   IOC = 2;
 }
 
-message CreateOrderRequest {
+message CreateBlockOrderRequest {
   string market = 0;
   Side side = 1;
   int64 amount = 2;
@@ -19,10 +19,10 @@ message CreateOrderRequest {
   optional TimeInForce time_in_force = 4;
 }
 
-message CreateOrderResponse {
-  string orderId = 0;
+message CreateBlockOrderResponse {
+  string block_order_id = 0;
 }
 
 service Order {
-  rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
+  rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse);
 }
