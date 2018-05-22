@@ -4,6 +4,8 @@ const LndEngine = require('lnd-engine')
 
 const RelayerClient = require('./relayer')
 const Orderbook = require('./orderbook')
+const OrderWorker = require('./order-worker')
+
 const AdminService = require('./admin-service')
 const OrderService = require('./order-service')
 const OrderBookService = require('./orderbook-service')
@@ -32,6 +34,7 @@ class GrpcServer {
   constructor (logger, store, eventHandler) {
     this.logger = logger
     this.store = store
+    this.orderStore = this.store.sublevel('orders')
     this.eventHandler = eventHandler
 
     this.protoPath = path.resolve(BROKER_PROTO_PATH)
@@ -40,6 +43,7 @@ class GrpcServer {
     this.relayer = new RelayerClient()
     this.engine = new LndEngine(LND_HOST, { logger: this.logger, tlsCertPath: LND_TLS_CERT, macaroonPath: LND_MACAROON })
     this.orderbooks = new Map()
+    this.orderWorker = new OrderWorker({ orderbooks: this.orderbooks, store: this.orderStore, logger: this.logger })
 
     this.adminService = new AdminService(this.protoPath, this)
     this.server.addService(this.adminService.definition, this.adminService.implementation)

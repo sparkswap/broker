@@ -1,5 +1,7 @@
 const { PublicError } = require('grpc-methods')
 const bigInt = require('big-integer')
+const safeid = require('generate-safe-id')
+const Order = require('../order-worker/order')
 
 /**
  * Creates an order with the relayer
@@ -7,12 +9,13 @@ const bigInt = require('big-integer')
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Object} request.params - Request parameters from the client
  * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
- * @param {Object} logger
+ * @param {Object} request.logger
+ * @param {Object} request.orderStore
  * @param {Object} responses
  * @param {function} responses.CreateOrderResponse - constructor for CreateOrderResponse messages
  * @return {responses.CreateOrderResponse}
  */
-async function createOrder ({ params, relayer, logger, orderbooks }, { CreateOrderResponse, TimeInForce }) {
+async function createOrder ({ params, relayer, logger, orderbooks, orderStore }, { CreateOrderResponse, TimeInForce }) {
   const {
     amount,
     price,
@@ -37,27 +40,11 @@ async function createOrder ({ params, relayer, logger, orderbooks }, { CreateOrd
     throw new PublicError('Only Good-til-cancelled orders are currently supported')
   }
 
-  logger.info(`Creating a sample order directly on the relayer. This is NOT production behavior.`)
+  const order = new Order({ id: safeid(), marketName: orderbook.marketName, side, amount, price, timeInForce })
 
-  // We need to calculate the base amount/counter amount based off of current
-  // prices
-  const counterAmount = bigInt(amount).multiply(bigInt(price))
+  await store.put(order.key, order.value)
 
-  const { baseSymbol, counterSymbol } = orderbook
-
-  const request = {
-    ownerId: '123455678',
-    payTo: 'ln:12234987',
-    baseSymbol,
-    counterSymbol,
-    baseAmount: amount,
-    counterAmount: counterAmount.toString(),
-    side
-  }
-
-  const order = await relayer.createOrder(request)
-
-  return new CreateOrderResponse({ orderId: order.orderId })
+  return new CreateOrderResponse({ orderId: order.id })
 }
 
 module.exports = createOrder
