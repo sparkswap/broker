@@ -1,14 +1,13 @@
 const EventEmitter = require('events')
 const safeid = require('generate-safe-id')
 const { BlockOrder } = require('../models')
-const OrderWorker = require('./order-worker')
+const OrderStateMachine = require('./order-state-machine')
 
 class BlockOrderWorker extends EventEmitter {
   constructor({ orderbooks, store, logger, relayer }) {
     this.orderbooks = orderbooks
     this.store = store
     this.logger = logger
-    this.orderWorker = new OrderWorker({ relayer, store: this.store.sublevel('orders'), logger })
   }
 
   async createBlockOrder({ marketName, side, amount, price, timeInForce }) {
@@ -52,9 +51,23 @@ class BlockOrderWorker extends EventEmitter {
     const baseAmount = order.amount
     const counterAmount = baseAmount.multiply(order.price)
 
-    await this.orderWorker.createOrder({ baseSymbol, counterSymbol, baseAmount, counterAmount, side })
+    await this.createOrder(blockOrder.id, { baseSymbol, counterSymbol, baseAmount, counterAmount, side })
 
     this.logger.info('Created an order for the block order', blockOrder)
+  }
+
+  async createOrder(blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
+    this.logger.info('Creating an order on the Relayer')
+
+    const store = this.store.sublevel(blockOrderId).sublevel('orders')
+
+    const order = new OrderStateMachine({ relayer: this.relayer, logger: this.logger, store: store })
+
+    this.logger.debug('Created new order state machine')
+
+    const { orderId } = await order.create({ side, baseSymbol, counterSymbol, baseAmount, counterAmount })
+
+    this.logger.info('Created order on the relayer', { orderId })
   }
 }
 
