@@ -1,44 +1,60 @@
-const createLiveStream = require('level-live-stream')
 const EventEmitter = require('events')
+const safeid = require('generate-safe-id')
 const Order = require('./order')
+const RelayerOrderWorker = require('./relayer-order-worker')
 
 class OrderWorker extends EventEmitter {
-  constructor({ orderbooks, store, logger }) {
+  constructor({ orderbooks, store, logger, relayer }) {
     this.orderbooks = orderbooks
     this.store = store
     this.logger = logger
-    this.liveStream = createLiveStream(this.store)
+    this.relayerOrderWorker = new RelayerOrderWorker({ relayer, store: this.store.sublevel('relayer-orders'), logger })
+  }
 
-    this.liveStream
-      .on('data', (opts) => {
-        if (opts === undefined) {
-          this.logger.info('Undefined event in the stream, likely from a delete event')
+  async createOrder({ marketName, side, amount, price, timeInForce }) {
+    const id = safeid()
 
-        } else if (opts.type && opts.type === 'del') {
-          this.logger.info(`Delete event in the stream, info: ${opts}`)
-          // do nothing right now (we will need to figure out what to send to the cli so that it resets all the records)
-        } else if (opts.key && opts.key === 'sync') {
-          this.logger.info('Sync event signifying end of old events being added to stream, following events are new')
-          // also do nothing right now ({sync: true} is part of level stream, it is added to the stream after all
-          // old events have been added to the streak before any new events are added to the stream.)
-        } else {
-          this.logger.info(`New event being added to stream, event info: ${opts}`)
-          const order = Order.fromStorage(opts.key, opts.value)
-          this.handleOrder(order)
-        }
-      })
+    const orderbook = this.orderbooks.get(marketName)
+
+    if (!orderbook) {
+      throw new Error(`${marketName} is not being tracked as a market. Configure kbd to track ${marketName} using the MARKETS environment variable.`)
+    }
+
+    const order = new Order({ id, marketName, side, amount, price, timeInForce })
+
+    await this.store.put(order.key, order.value)
+
+    this.handleOrder(order)
+
+    return id
   }
 
   handleOrder(order) {
+    this.logger.info('Handling order', order)
+
     const orderbook = this.orderbooks.get(order.marketName)
 
     if(!orderbook) {
+      // TODO: set an error state on the order
+      // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
       return this.emit('error', new Error(`No orderbook is initialized for created order in the ${order.marketName} market.`))
     }
 
-    this.logger.info('Handling found order', order)
+    if(!price) {
+      // TODO: set an error state on the order
+      // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
+      return this.emit('error', new Error('Only market orders are supported.'))
+    }
 
-    // TODO: handle order
+    // TODO: actual sophisticated order handling instead of just pass through
+    
+    const { baseSymbol, counterSymbol } = orderbook
+    const baseAmount = order.amount
+    const counterAmount = baseAmount.multiply(order.price)
+
+    await this.relayerOrderWorker.createOrder({ baseSymbol, counterSymbol, baseAmount, counterAmount, side })
+
+    this.logger.info('Created an order for the block', order)
   }
 }
 

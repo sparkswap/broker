@@ -1,6 +1,5 @@
 const { PublicError } = require('grpc-methods')
 const bigInt = require('big-integer')
-const safeid = require('generate-safe-id')
 const Order = require('../order-worker/order')
 
 /**
@@ -15,7 +14,7 @@ const Order = require('../order-worker/order')
  * @param {function} responses.CreateOrderResponse - constructor for CreateOrderResponse messages
  * @return {responses.CreateOrderResponse}
  */
-async function createOrder ({ params, relayer, logger, orderbooks, orderStore }, { CreateOrderResponse, TimeInForce }) {
+async function createOrder ({ params, logger, orderWorker }, { CreateOrderResponse, TimeInForce }) {
   const {
     amount,
     price,
@@ -23,12 +22,6 @@ async function createOrder ({ params, relayer, logger, orderbooks, orderStore },
     side,
     timeInForce
   } = params
-
-  const orderbook = orderbooks.get(market)
-
-  if (!orderbook) {
-    throw new PublicError(`${market} is not being tracked as a market. Configure kbd to track ${market} using the MARKETS environment variable.`)
-  }
 
   // Price is optional. If no price is provided, we treat it as a Market Order.
   if (!price) {
@@ -40,11 +33,15 @@ async function createOrder ({ params, relayer, logger, orderbooks, orderStore },
     throw new PublicError('Only Good-til-cancelled orders are currently supported')
   }
 
-  const order = new Order({ id: safeid(), marketName: orderbook.marketName, side, amount, price, timeInForce })
+  const orderId = await orderWorker.createOrder({
+    marketName: market,
+    side: side,
+    amount,
+    price,
+    timeInForce: 'GTC'
+  })
 
-  await store.put(order.key, order.value)
-
-  return new CreateOrderResponse({ orderId: order.id })
+  return new CreateOrderResponse({ orderId: orderId })
 }
 
 module.exports = createOrder

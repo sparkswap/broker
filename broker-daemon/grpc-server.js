@@ -34,7 +34,6 @@ class GrpcServer {
   constructor (logger, store, eventHandler) {
     this.logger = logger
     this.store = store
-    this.orderStore = this.store.sublevel('orders')
     this.eventHandler = eventHandler
 
     this.protoPath = path.resolve(BROKER_PROTO_PATH)
@@ -43,7 +42,13 @@ class GrpcServer {
     this.relayer = new RelayerClient()
     this.engine = new LndEngine(LND_HOST, { logger: this.logger, tlsCertPath: LND_TLS_CERT, macaroonPath: LND_MACAROON })
     this.orderbooks = new Map()
-    this.orderWorker = new OrderWorker({ orderbooks: this.orderbooks, store: this.orderStore, logger: this.logger })
+    this.orderWorker = new OrderWorker({ relayer: this.relayer, orderbooks: this.orderbooks, store: this.store.sublevel('orders'), logger: this.logger })
+
+    // TODO: Make this way better
+    // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
+    this.orderWorker.on('error', (err) => {
+      this.logger.error('OrderWorker error encountered', err)
+    })
 
     this.adminService = new AdminService(this.protoPath, this)
     this.server.addService(this.adminService.definition, this.adminService.implementation)
