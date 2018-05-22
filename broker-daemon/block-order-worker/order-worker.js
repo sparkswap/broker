@@ -1,4 +1,4 @@
-class RelayerOrderWorker {
+class OrderWorker {
   constructor({ relayer, store, logger }) {
     this.relayer = relayer
     this.store = store
@@ -10,4 +10,4 @@ class RelayerOrderWorker {
   }
 }
 
-module.exports = RelayerOrderWorker
+module.exports = OrderWorker
