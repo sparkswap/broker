@@ -44,8 +44,8 @@ class GrpcServer {
     this.adminService = new AdminService(this.protoPath, this)
     this.server.addService(this.adminService.definition, this.adminService.implementation)
 
-    this.orderService = new OrderService(this.protoPath, this)
-    this.server.addService(this.orderService.definition, this.orderService.implementation)
+    this.rderService = new OrderService(this.protoPath, this)
+    this.server.addService(this.blockOrderService.definition, this.blockOrderService.implementation)
 
     this.orderBookService = new OrderBookService(this.protoPath, this)
     this.server.addService(this.orderBookService.definition, this.orderBookService.implementation)

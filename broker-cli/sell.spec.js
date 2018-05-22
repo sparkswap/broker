@@ -15,7 +15,7 @@ describe('sell', () => {
   let revert
   let infoSpy
   let errorSpy
-  let createOrderSpy
+  let createBlockOrderSpy
   let brokerStub
 
   const sell = program.__get__('sell')
@@ -28,10 +28,10 @@ describe('sell', () => {
 
     infoSpy = sinon.spy()
     errorSpy = sinon.spy()
-    createOrderSpy = sinon.spy()
+    createBlockOrderSpy = sinon.spy()
 
     brokerStub = sinon.stub()
-    brokerStub.prototype.createOrder = createOrderSpy
+    brokerStub.prototype.createBlockOrder = createBlockOrderSpy
 
     revert = program.__set__('BrokerDaemonClient', brokerStub)
 
@@ -55,7 +55,7 @@ describe('sell', () => {
       side: 'SELL'
     }
     sell(args, opts, logger)
-    expect(createOrderSpy).to.have.been.called()
-    expect(createOrderSpy).to.have.been.calledWith(expectedRequest)
+    expect(createBlockOrderSpy).to.have.been.called()
+    expect(createBlockOrderSpy).to.have.been.calledWith(expectedRequest)
   })
 })
