@@ -1,6 +1,4 @@
 const { PublicError } = require('grpc-methods')
-const bigInt = require('big-integer')
-const Order = require('../order-worker/order')
 
 /**
  * Creates an order with the relayer
