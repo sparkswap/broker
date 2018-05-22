@@ -1,6 +1,6 @@
 const bigInt = require('big-integer')
 
-class Order {
+class BlockOrder {
   constructor({ id, marketName, side, amount, price, timeInForce }) {
     this.id = id
     this.marketName = marketName
@@ -34,4 +34,4 @@ class Order {
   }
 }
 
-module.exports = Order
+module.exports = BlockOrder

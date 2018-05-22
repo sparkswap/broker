@@ -1,17 +1,17 @@
 const EventEmitter = require('events')
 const safeid = require('generate-safe-id')
-const Order = require('./order')
-const RelayerOrderWorker = require('./relayer-order-worker')
+const { BlockOrder } = require('../models')
+const OrderWorker = require('./order-worker')
 
-class OrderWorker extends EventEmitter {
+class BlockOrderWorker extends EventEmitter {
   constructor({ orderbooks, store, logger, relayer }) {
     this.orderbooks = orderbooks
     this.store = store
     this.logger = logger
-    this.relayerOrderWorker = new RelayerOrderWorker({ relayer, store: this.store.sublevel('relayer-orders'), logger })
+    this.orderWorker = new OrderWorker({ relayer, store: this.store.sublevel('orders'), logger })
   }
 
-  async createOrder({ marketName, side, amount, price, timeInForce }) {
+  async createBlockOrder({ marketName, side, amount, price, timeInForce }) {
     const id = safeid()
 
     const orderbook = this.orderbooks.get(marketName)
@@ -20,24 +20,24 @@ class OrderWorker extends EventEmitter {
       throw new Error(`${marketName} is not being tracked as a market. Configure kbd to track ${marketName} using the MARKETS environment variable.`)
     }
 
-    const order = new Order({ id, marketName, side, amount, price, timeInForce })
+    const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
 
-    await this.store.put(order.key, order.value)
+    await this.store.put(blockOrder.key, blockOrder.value)
 
-    this.handleOrder(order)
+    this.handleBlockOrder(blockOrder)
 
     return id
   }
 
-  handleOrder(order) {
-    this.logger.info('Handling order', order)
+  handleBlockOrder(blockOrder) {
+    this.logger.info('Handling block order', blockOrder)
 
-    const orderbook = this.orderbooks.get(order.marketName)
+    const orderbook = this.orderbooks.get(blockOrder.marketName)
 
     if(!orderbook) {
       // TODO: set an error state on the order
       // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
-      return this.emit('error', new Error(`No orderbook is initialized for created order in the ${order.marketName} market.`))
+      return this.emit('error', new Error(`No orderbook is initialized for created order in the ${blockOrder.marketName} market.`))
     }
 
     if(!price) {
@@ -52,9 +52,9 @@ class OrderWorker extends EventEmitter {
     const baseAmount = order.amount
     const counterAmount = baseAmount.multiply(order.price)
 
-    await this.relayerOrderWorker.createOrder({ baseSymbol, counterSymbol, baseAmount, counterAmount, side })
+    await this.orderWorker.createOrder({ baseSymbol, counterSymbol, baseAmount, counterAmount, side })
 
-    this.logger.info('Created an order for the block', order)
+    this.logger.info('Created an order for the block order', blockOrder)
   }
 }
 

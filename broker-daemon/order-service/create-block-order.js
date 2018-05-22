@@ -12,7 +12,7 @@ const { PublicError } = require('grpc-methods')
  * @param {function} responses.CreateBlockOrderResponse - constructor for CreateBlockOrderResponse messages
  * @return {responses.CreateBlockOrderResponse}
  */
-async function createBlockOrder ({ params, logger, orderWorker }, { CreateBlockOrderResponse, TimeInForce }) {
+async function createBlockOrder ({ params, logger, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce }) {
   const {
     amount,
     price,
@@ -31,7 +31,7 @@ async function createBlockOrder ({ params, logger, orderWorker }, { CreateBlockO
     throw new PublicError('Only Good-til-cancelled orders are currently supported')
   }
 
-  const orderId = await orderWorker.createOrder({
+  const orderId = await blockOrderWorker.createBlockOrder({
     marketName: market,
     side: side,
     amount,
