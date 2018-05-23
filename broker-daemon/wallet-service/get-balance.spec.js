@@ -16,7 +16,9 @@ describe('get-balance', () => {
     balanceResponseStub = sinon.stub()
 
     const engine = {
-      walletBalance: walletBalanceStub
+      balance: {
+        total: walletBalanceStub
+      }
     }
 
     logger = { info: sinon.stub() }
@@ -24,7 +26,7 @@ describe('get-balance', () => {
     balance({ logger, engine }, { GetBalanceResponse: balanceResponseStub })
   })
 
-  it('calls an engine with walletBalance', () => {
+  it('calls an engine.balance#total', () => {
     expect(walletBalanceStub).to.have.been.called()
   })
 
