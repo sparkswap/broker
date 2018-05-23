@@ -23,6 +23,6 @@ message CreateOrderResponse {
   string orderId = 0;
 }
 
-service Order {
+service OrderService {
   rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
 }
