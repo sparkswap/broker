@@ -35,8 +35,6 @@ describe('OrderService', () => {
       error: sinon.stub()
     }
 
-    blockOrderWorker = sinon.stub()
-
     GrpcMethod = sinon.stub()
     fakeRegistered = sinon.stub()
     register = sinon.stub().returns(fakeRegistered)

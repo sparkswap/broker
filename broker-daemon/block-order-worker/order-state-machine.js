@@ -32,6 +32,7 @@ const OrderStateMachine = StateMachine.factory({
         payload: this.payload
       })
 
+      // somehow spit an error if this fails?
       await this.store.put(this.id, value)
 
       this.logger.debug('Saved state machine in store', { id: this.id })
