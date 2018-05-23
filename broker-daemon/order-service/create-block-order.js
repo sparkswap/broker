@@ -9,10 +9,10 @@ const bigInt = require('big-integer')
  * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
  * @param {Object} logger
  * @param {Object} responses
- * @param {function} responses.CreateOrderResponse - constructor for CreateOrderResponse messages
- * @return {responses.CreateOrderResponse}
+ * @param {function} responses.CreateBlockOrderResponse - constructor for CreateBlockOrderResponse messages
+ * @return {responses.CreateBlockOrderResponse}
  */
-async function createOrder ({ params, relayer, logger, orderbooks }, { CreateOrderResponse, TimeInForce }) {
+async function createBlockOrder ({ params, relayer, logger, orderbooks }, { CreateBlockOrderResponse, TimeInForce }) {
   const {
     amount,
     price,
@@ -55,9 +55,9 @@ async function createOrder ({ params, relayer, logger, orderbooks }, { CreateOrd
     side
   }
 
-  const order = await relayer.createOrder(request)
+  const order = await relayer.createBlockOrder(request)
 
-  return new CreateOrderResponse({ orderId: order.orderId })
+  return new CreateBlockOrderResponse({ orderId: order.orderId })
 }
 
-module.exports = createOrder
+module.exports = createBlockOrder
