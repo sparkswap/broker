@@ -27,7 +27,7 @@ class Orderbook {
 
     await this.relayer.watchMarket(this.eventStore, params)
 
-    this.logger.info(`Market ${this.marketName} initialized.`)
+    return this.logger.info(`Market ${this.marketName} initialized.`)
   }
 
   /**

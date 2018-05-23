@@ -1,17 +1,17 @@
 const path = require('path')
 const {
-  chai,
   sinon,
-  rewire
+  rewire,
+  expect
 } = require('test/test-helper')
 
-const { expect } = chai
 const programPath = path.resolve(__dirname, 'health-check')
 const program = rewire(programPath)
 const healthCheck = program
 describe('healthCheck', () => {
   let HealthCheckResponse
   let relayerStub
+  let loggerStub
   let engineStatusStub
   let relayerStatusStub
   let revertLnd
@@ -19,6 +19,10 @@ describe('healthCheck', () => {
 
   beforeEach(() => {
     relayerStub = sinon.stub()
+    loggerStub = {
+      info: sinon.stub(),
+      debug: sinon.stub()
+    }
     HealthCheckResponse = sinon.stub()
     engineStatusStub = sinon.stub().callsFake(() => 'OK')
     relayerStatusStub = sinon.stub().callsFake(() => 'OK')
@@ -32,18 +36,18 @@ describe('healthCheck', () => {
   })
 
   it('calls engineStatus to retrieve lnd health status', async () => {
-    await healthCheck({ relayer: relayerStub }, { HealthCheckResponse })
+    await healthCheck({ relayer: relayerStub, logger: loggerStub }, { HealthCheckResponse })
     expect(engineStatusStub).to.have.been.called()
   })
 
   it('calls relayer to retrieve relayer health status', async () => {
-    await healthCheck({ relayer: relayerStub }, { HealthCheckResponse })
+    await healthCheck({ relayer: relayerStub, logger: loggerStub }, { HealthCheckResponse })
     expect(relayerStatusStub).to.have.been.called()
     expect(relayerStatusStub).to.have.been.calledWith(relayerStub)
   })
 
   it('returns status values', async () => {
-    const res = await healthCheck({ relary: relayerStub }, { HealthCheckResponse })
+    const res = await healthCheck({ relayer: relayerStub, logger: loggerStub }, { HealthCheckResponse })
     expect(res).to.be.an.instanceOf(HealthCheckResponse)
     expect(HealthCheckResponse).to.have.been.calledOnce()
     expect(HealthCheckResponse).to.have.been.calledWith(sinon.match({ engineStatus: 'OK', relayerStatus: 'OK' }))

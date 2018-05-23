@@ -1,5 +1,4 @@
-const { chai } = require('test/test-helper')
-const { expect } = chai
+const { expect } = require('test/test-helper')
 
 const {
   buyCommand,
@@ -7,7 +6,7 @@ const {
   configCommand,
   orderbookCommand,
   healthCheckCommand,
-  newDepositAddressCommand
+  walletCommand
 } = require('./index')
 
 describe('broker index', () => {
@@ -36,8 +35,8 @@ describe('broker index', () => {
     expect(healthCheckCommand).to.not.be.undefined()
   })
 
-  it('defines newDepositAddressCommand', () => {
-    expect(newDepositAddressCommand).to.not.be.null()
-    expect(newDepositAddressCommand).to.not.be.undefined()
+  it('defines walletCommand', () => {
+    expect(walletCommand).to.not.be.null()
+    expect(walletCommand).to.not.be.undefined()
   })
 })

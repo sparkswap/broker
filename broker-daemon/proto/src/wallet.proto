@@ -6,6 +6,11 @@ message NewDepositAddressResponse {
   string address = 0;
 }
 
+message GetBalanceResponse {
+  int64 balance = 0;
+}
+
 service Wallet {
   rpc NewDepositAddress (google.protobuf.Empty) returns (NewDepositAddressResponse);
+  rpc GetBalance (google.protobuf.Empty) returns (GetBalanceResponse);
 }

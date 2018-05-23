@@ -7,6 +7,16 @@ function newDepositAddress () {
   })
 }
 
+function walletBalance () {
+  return new Promise((resolve, reject) => {
+    this.wallet.getBalance({}, (err, res) => {
+      if (err) return reject(err)
+      return resolve(res)
+    })
+  })
+}
+
 module.exports = {
-  newDepositAddress
+  newDepositAddress,
+  walletBalance
 }

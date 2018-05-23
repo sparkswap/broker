@@ -1,7 +1,5 @@
 const path = require('path')
-const { chai, rewire, sinon } = require('test/test-helper')
-
-const { expect } = chai
+const { expect, rewire, sinon } = require('test/test-helper')
 
 const OrderBookService = rewire(path.resolve(__dirname))
 

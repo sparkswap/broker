@@ -1,5 +1,4 @@
-const { chai } = require('test/test-helper')
-const { expect } = chai
+const { expect } = require('test/test-helper')
 
 const {
   TIME_IN_FORCE,

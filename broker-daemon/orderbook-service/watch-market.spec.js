@@ -1,5 +1,5 @@
 const {
-  chai,
+  expect,
   sinon,
   rewire
 } = require('test/test-helper')
@@ -7,7 +7,6 @@ const {
 const path = require('path')
 const bigInt = require('big-integer')
 
-const { expect } = chai
 const watchMarketPath = path.resolve(__dirname, 'watch-market')
 const watchMarket = rewire(watchMarketPath)
 

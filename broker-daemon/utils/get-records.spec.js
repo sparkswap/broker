@@ -1,5 +1,4 @@
-const { chai, sinon } = require('test/test-helper')
-const { expect } = chai
+const { sinon, expect } = require('test/test-helper')
 
 const getRecords = require('./get-records')
 
