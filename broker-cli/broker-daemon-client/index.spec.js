@@ -13,10 +13,10 @@ describe('BrokerDaemonClient', () => {
     rpcAddress = null
     createInsecureCredsStub = sinon.stub()
     loadStub = sinon.stub().returns({
-      Admin: sinon.stub(),
-      Order: sinon.stub(),
-      OrderBook: sinon.stub(),
-      Wallet: sinon.stub()
+      AdminService: sinon.stub(),
+      OrderService: sinon.stub(),
+      OrderBookService: sinon.stub(),
+      WalletService: sinon.stub()
     })
 
     BrokerDaemonClient.__set__('grpc', {

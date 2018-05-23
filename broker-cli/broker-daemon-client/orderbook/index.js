@@ -9,7 +9,7 @@
 async function watchMarket (params) {
   // TODO: loggin
   // TODO: document what params need to be passed in
-  return this.orderBook.watchMarket(params)
+  return this.orderBookService.watchMarket(params)
 }
 
 module.exports = {
