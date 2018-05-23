@@ -24,6 +24,8 @@ class BlockOrderWorker extends EventEmitter {
 
     await this.store.put(blockOrder.key, blockOrder.value)
 
+    this.logger(`Created and stored block order`, { id: blockOrder.id })
+
     // this is intentionally not `await`ed so we can return to the caller
     this.handleBlockOrder(blockOrder)
 
@@ -52,6 +54,8 @@ class BlockOrderWorker extends EventEmitter {
     const { baseSymbol, counterSymbol } = orderbook
     const baseAmount = blockOrder.amount
     const counterAmount = baseAmount.multiply(blockOrder.price)
+
+    this.logger.info(`Creating single order for BlockOrder ${blockOrder.id}`)
 
     await this.createOrder(blockOrder.id, { baseSymbol, counterSymbol, baseAmount, counterAmount, side: blockOrder.side })
 
