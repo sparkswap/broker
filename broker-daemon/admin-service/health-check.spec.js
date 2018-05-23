@@ -64,26 +64,28 @@ describe('health-check', () => {
   describe('getEngineStatus', () => {
     let getEngineStatus
     let engineStub
-    let getInfoStub
+    let isOkayStub
     let statusOK
 
     beforeEach(() => {
-      getInfoStub = sinon.stub()
+      isOkayStub = sinon.stub()
       engineStub = {
-        getInfo: getInfoStub
+        health: {
+          isOK: isOkayStub
+        }
       }
       statusOK = healthCheck.__get__('STATUS_CODES').OK
       getEngineStatus = healthCheck.__get__('getEngineStatus')
     })
 
-    it('returns an OK if engine#getInfo is a successful call', async () => {
+    it('returns an OK if engine.health#isOk a successful call', async () => {
       const res = await getEngineStatus(engineStub)
       expect(res).to.eql(statusOK)
     })
 
-    it('returns an error if engine#getInfo fails', async () => {
+    it('returns an error if engine.health#isOk fails', async () => {
       const error = 'MY ERROR'
-      getInfoStub.throws(error)
+      isOkayStub.throws(error)
       const res = await getEngineStatus(engineStub)
       expect(res).to.eql(error)
     })
