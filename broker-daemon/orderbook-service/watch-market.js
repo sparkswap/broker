@@ -1,5 +1,6 @@
+const streamFunction = require('level-live-stream')
+const bigInt = require('big-integer')
 const neverResolve = new Promise(() => {})
-
 /**
  * Creates a stream with the exchange that watches for market events
  *
@@ -18,9 +19,8 @@ async function watchMarket ({ params, send, logger, orderbooks }, { WatchMarketR
   // TODO: Some validation on here. Maybe the client can call out for valid markets
   // from the relayer so we dont event make a request if it is invalid
   const { market } = params
-  const orderbook = orderbooks[market]
-  const liveStream = require('level-live-stream')(orderbook.store)
-
+  const orderbook = orderbooks.get(market)
+  const liveStream = streamFunction(orderbook.store)
   liveStream
     .on('data', (opts) => {
       if (opts === undefined) {
@@ -36,7 +36,7 @@ async function watchMarket ({ params, send, logger, orderbooks }, { WatchMarketR
       } else {
         logger.info(`New event being added to stream, event info: ${opts}`)
         const parsedValue = JSON.parse(opts.value)
-        send(new WatchMarketResponse(parseFloat(parsedValue.baseAmount), parseFloat(parsedValue.counterAmount), parsedValue.side))
+        send(new WatchMarketResponse(bigInt(parsedValue.baseAmount), bigInt(parsedValue.counterAmount), parsedValue.side))
       }
     })
 

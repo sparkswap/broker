@@ -1,41 +1,75 @@
 const {
   chai,
-  sinon
+  sinon,
+  rewire
 } = require('test/test-helper')
 
+const path = require('path')
+const bigInt = require('big-integer')
+
 const { expect } = chai
-const watchMarket = require('./watch-market')
+const watchMarketPath = path.resolve(__dirname, 'watch-market')
+const watchMarket = rewire(watchMarketPath)
 
 describe('watchMarket', () => {
+  let store
   let params
   let sendStub
   let logger
   let orderbooks
-  let orderbookStub
-  let fakeOrder
-  let fakeOrder2
   let WatchMarketResponse
+  let streamFunction
+  let liveStream
+  let revertFunction
+  let neverResolveStub
+  let revertNeverResolve
 
   beforeEach(() => {
+    logger = {
+      info: sinon.stub()
+    }
     params = { market: 'BTC/LTC' }
     sendStub = sinon.stub()
-    logger = { error: sinon.stub() }
-    fakeOrder = { baseAmount: '100', counterAmount: '1000', side: 'BID' }
-    fakeOrder2 = { baseAmount: '200', counterAmount: '1000', side: 'BID' }
-    orderbookStub = sinon.stub().callsFake(() => [fakeOrder, fakeOrder2])
-    orderbooks = { 'BTC/LTC': { all: orderbookStub } }
+    liveStream = {
+      on: sinon.stub()
+    }
+    store = sinon.stub()
+    orderbooks = new Map([['BTC/LTC', { store: store }]])
     WatchMarketResponse = sinon.stub()
+    streamFunction = sinon.stub().returns(liveStream)
+    neverResolveStub = sinon.stub().returns(Promise.resolve())
+    revertFunction = watchMarket.__set__('streamFunction', streamFunction)
+    revertNeverResolve = watchMarket.__set__('neverResolve', neverResolveStub)
   })
 
-  it('grabs records from the orderbook', async () => {
-    await watchMarket({ params, send: sendStub, logger, orderbooks }, { WatchMarketResponse })
-    expect(orderbookStub).to.have.been.called()
+  afterEach(() => {
+    revertFunction()
+    revertNeverResolve()
   })
 
-  it('returns orders to the cli', async () => {
+  it('creates a liveStream from the store', () => {
+    watchMarket({ params, send: sendStub, logger, orderbooks }, { WatchMarketResponse })
+
+    expect(streamFunction).to.have.been.calledWith(store)
+  })
+
+  it('sets an data handler', () => {
+    watchMarket({ params, send: sendStub, logger, orderbooks }, { WatchMarketResponse })
+
+    expect(liveStream.on).to.have.been.calledWith('data', sinon.match.func)
+  })
+
+  it('processes records through eachRecord', async () => {
+    const fakeOrder = { key: 'key', value: JSON.stringify({ baseAmount: '100', counterAmount: '1000', side: 'BID' }) }
+
+    liveStream.on.withArgs('data').callsArgWithAsync(1, fakeOrder)
+
     await watchMarket({ params, send: sendStub, logger, orderbooks }, { WatchMarketResponse })
-    expect(WatchMarketResponse).to.have.been.calledTwice()
-    expect(WatchMarketResponse).to.have.been.calledWith(sinon.match(parseFloat(fakeOrder.baseAmount), parseFloat(fakeOrder.counterAmount), fakeOrder.side))
-    expect(WatchMarketResponse).to.have.been.calledWith(sinon.match(parseFloat(fakeOrder2.baseAmount), parseFloat(fakeOrder2.counterAmount), fakeOrder2.side))
+
+    expect(sendStub).to.have.been.calledOnce()
+    expect(WatchMarketResponse).to.have.been.calledOnce()
+    expect(WatchMarketResponse).to.have.been.calledWith(sinon.match(bigInt('100'), bigInt('1000'), 'BID'))
+
+    neverResolveStub()
   })
 })
