@@ -23,6 +23,6 @@ message CreateBlockOrderResponse {
   string block_order_id = 0;
 }
 
-service Order {
+service OrderService {
   rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse);
 }

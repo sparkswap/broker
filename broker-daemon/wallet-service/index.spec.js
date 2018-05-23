@@ -19,7 +19,7 @@ describe('WalletService', () => {
     responseStub = sinon.stub()
     protoPath = 'example/path.proto'
     loadProtoStub = sinon.stub().returns({
-      Wallet: { service: sinon.stub() },
+      WalletService: { service: sinon.stub() },
       NewDepositAddressResponse: responseStub,
       GetBalanceResponse: responseStub
     })
@@ -49,7 +49,7 @@ describe('WalletService', () => {
 
   describe('grpc implementations', () => {
     it('creates a unary method for newAddress', () => {
-      const expectedMessageId = '[Wallet:newDepositAddress]'
+      const expectedMessageId = '[WalletService:newDepositAddress]'
 
       expect(unaryMethodStub).to.have.been.calledWith(
         newDepositAddress,
@@ -60,7 +60,7 @@ describe('WalletService', () => {
     })
 
     it('creates a unary method for getBalance', () => {
-      const expectedMessageId = '[Wallet:getBalance]'
+      const expectedMessageId = '[WalletService:getBalance]'
 
       expect(unaryMethodStub).to.have.been.calledWith(
         balanceSpy,
