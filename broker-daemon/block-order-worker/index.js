@@ -51,6 +51,7 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   async getBlockOrder (blockOrderId) {
+    this.logger.info('Getting block order', { id: blockOrderId })
     // TODO
   }
 

@@ -16,7 +16,10 @@ async function getBlockOrder ({ params, logger, blockOrderWorker }, { GetBlockOr
     blockOrderId
   } = params
 
-  throw new PublicError('Unimplemented')
+  const blockOrder = await blockOrderWorker.getBlockOrder(blockOrderId)
+
+  // TODO: make this real
+  return new GetBlockOrderResponse({ status: 'ACTIVE' })
 }
 
 module.exports = getBlockOrder
