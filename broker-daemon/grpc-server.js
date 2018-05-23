@@ -15,6 +15,11 @@ const {
   LND_MACAROON
 } = process.env
 
+/**
+ * @constant
+ * @type {String}
+ * @default
+ */
 const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
 
 /**
