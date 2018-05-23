@@ -1,6 +1,8 @@
-const LndEngine = require('lnd-engine')
-
-const { LND_HOST, LND_TLS_CERT, LND_MACAROON } = process.env
+/**
+ * @constant
+ * @type {Object}
+ * @default
+ */
 const STATUS_CODES = Object.freeze({
   OK: 'OK'
 })
@@ -28,13 +30,7 @@ async function healthCheck ({ relayer, logger }, { HealthCheckResponse }) {
  */
 async function engineStatus () {
   try {
-    // TODO: Remove these because they are the default options
-    const options = {
-      logger: this.logger,
-      tlsCertPath: LND_TLS_CERT,
-      macaroonPath: LND_MACAROON
-    }
-    await new LndEngine(LND_HOST, options).getInfo()
+    await this.engine.getInfo()
     return STATUS_CODES.OK
   } catch (e) {
     return e.toString()
