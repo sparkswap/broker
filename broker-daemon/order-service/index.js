@@ -1,4 +1,5 @@
-const { GrpcUnaryMethod, loadProto } = require('grpc-methods')
+const { GrpcUnaryMethod } = require('grpc-methods')
+const { loadProto } = require('../utils')
 
 const createBlockOrder = require('./create-block-order')
 
@@ -8,8 +9,8 @@ class OrderService {
     this.proto = loadProto(this.protoPath)
     this.logger = logger
 
-    this.definition = this.proto.Order.service
-    this.serviceName = 'Order'
+    this.definition = this.proto.OrderService.service
+    this.serviceName = 'OrderService'
 
     const {
       CreateBlockOrderResponse,

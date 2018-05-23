@@ -1,4 +1,5 @@
 const { PublicError } = require('grpc-methods')
+const bigInt = require('big-integer')
 
 /**
  * Creates an order with the relayer
@@ -6,13 +7,12 @@ const { PublicError } = require('grpc-methods')
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Object} request.params - Request parameters from the client
  * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
- * @param {Object} request.logger
- * @param {Object} request.orderStore
+ * @param {Object} logger
  * @param {Object} responses
  * @param {function} responses.CreateBlockOrderResponse - constructor for CreateBlockOrderResponse messages
  * @return {responses.CreateBlockOrderResponse}
  */
-async function createBlockOrder ({ params, logger, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce }) {
+async function createBlockOrder ({ params, relayer, logger, orderbooks }, { CreateBlockOrderResponse, TimeInForce }) {
   const {
     amount,
     price,
@@ -20,6 +20,12 @@ async function createBlockOrder ({ params, logger, blockOrderWorker }, { CreateB
     side,
     timeInForce
   } = params
+
+  const orderbook = orderbooks.get(market)
+
+  if (!orderbook) {
+    throw new PublicError(`${market} is not being tracked as a market. Configure kbd to track ${market} using the MARKETS environment variable.`)
+  }
 
   // Price is optional. If no price is provided, we treat it as a Market Order.
   if (!price) {
@@ -31,15 +37,27 @@ async function createBlockOrder ({ params, logger, blockOrderWorker }, { CreateB
     throw new PublicError('Only Good-til-cancelled orders are currently supported')
   }
 
-  const orderId = await blockOrderWorker.createBlockOrder({
-    marketName: market,
-    side: side,
-    amount,
-    price,
-    timeInForce: 'GTC'
-  })
+  logger.info(`Creating a sample order directly on the relayer. This is NOT production behavior.`)
 
-  return new CreateBlockOrderResponse({ blockOrderId: orderId })
+  // We need to calculate the base amount/counter amount based off of current
+  // prices
+  const counterAmount = bigInt(amount).multiply(bigInt(price))
+
+  const { baseSymbol, counterSymbol } = orderbook
+
+  const request = {
+    ownerId: '123455678',
+    payTo: 'ln:12234987',
+    baseSymbol,
+    counterSymbol,
+    baseAmount: amount,
+    counterAmount: counterAmount.toString(),
+    side
+  }
+
+  const order = await relayer.createBlockOrder(request)
+
+  return new CreateBlockOrderResponse({ orderId: order.orderId })
 }
 
 module.exports = createBlockOrder

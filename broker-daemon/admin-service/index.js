@@ -1,4 +1,5 @@
-const { GrpcUnaryMethod, loadProto } = require('grpc-methods')
+const { GrpcUnaryMethod } = require('grpc-methods')
+const { loadProto } = require('../utils')
 
 const healthCheck = require('./health-check')
 
@@ -8,8 +9,8 @@ class AdminService {
     this.proto = loadProto(this.protoPath)
     this.logger = logger
 
-    this.definition = this.proto.Admin.service
-    this.serviceName = 'Admin'
+    this.definition = this.proto.AdminService.service
+    this.serviceName = 'AdminService'
 
     const {
       HealthCheckResponse

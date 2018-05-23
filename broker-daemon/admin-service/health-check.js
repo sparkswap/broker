@@ -10,13 +10,16 @@ const STATUS_CODES = Object.freeze({
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
+ * @param {Object} request.logger
  * @param {Object} responses
  * @param {function} responses.HealthCheckResponse - constructor for HealthCheckResponse messages
  * @return {responses.HealthCheckResponse}
  */
-async function healthCheck ({ relayer }, { HealthCheckResponse }) {
+async function healthCheck ({ relayer, logger }, { HealthCheckResponse }) {
   const engineResStatus = await engineStatus()
+  logger.debug(`Received status from engine`, { engineStatus: engineResStatus })
   const relayerResStatus = await relayerStatus(relayer)
+  logger.debug(`Received status from relayer`, { relayerStatus: relayerResStatus })
   return new HealthCheckResponse({ engineStatus: engineResStatus, relayerStatus: relayerResStatus })
 }
 

@@ -22,7 +22,7 @@ describe('OrderService', () => {
   beforeEach(() => {
     protoPath = 'fakePath'
     proto = {
-      Order: {
+      OrderService: {
         service: 'fakeService'
       },
       CreateBlockOrderResponse: sinon.stub(),
@@ -76,13 +76,13 @@ describe('OrderService', () => {
 
   it('assigns the definition', () => {
     expect(server).to.have.property('definition')
-    expect(server.definition).to.be.equal(proto.Order.service)
+    expect(server.definition).to.be.equal(proto.OrderService.service)
   })
 
   it('creates a name', () => {
     expect(server).to.have.property('serviceName')
     expect(server.serviceName).to.be.a('string')
-    expect(server.serviceName).to.be.eql('Order')
+    expect(server.serviceName).to.be.eql('OrderService')
   })
 
   it('exposes an implementation', () => {
@@ -114,7 +114,7 @@ describe('OrderService', () => {
     })
 
     it('provides a message id', () => {
-      expect(callArgs[1]).to.be.equal('[Order:createBlockOrder]')
+      expect(callArgs[1]).to.be.equal('[OrderService:createBlockOrder]')
     })
 
     describe('request options', () => {
