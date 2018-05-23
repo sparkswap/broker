@@ -43,6 +43,7 @@
     "caporal": "0.10.0",
     "colors": "1.2.4",
     "compare-versions": "3.1.0",
+    "generate-safe-id": "1.0.2",
     "grpc": "1.11.3",
     "grpc-methods": "github:kinesis-exchange/grpc-methods",
     "javascript-state-machine": "3.0.1",

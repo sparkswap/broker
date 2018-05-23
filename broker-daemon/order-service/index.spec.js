@@ -35,8 +35,7 @@ describe('OrderService', () => {
       error: sinon.stub()
     }
 
-    relayer = sinon.stub()
-    orderbooks = sinon.stub()
+    blockOrderWorker = sinon.stub()
 
     GrpcMethod = sinon.stub()
     fakeRegistered = sinon.stub()
