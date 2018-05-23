@@ -67,7 +67,7 @@ describe('watchMarket', () => {
 
     expect(sendStub).to.have.been.calledOnce()
     expect(WatchMarketResponse).to.have.been.calledOnce()
-    expect(WatchMarketResponse).to.have.been.calledWith(sinon.match(bigInt('100'), bigInt('1000'), 'BID'))
+    expect(WatchMarketResponse).to.have.been.calledWith(sinon.match(bigInt('100').toString(), bigInt('1000').toString(), 'BID'))
 
     neverResolveStub()
   })

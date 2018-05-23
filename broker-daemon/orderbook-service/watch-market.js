@@ -30,14 +30,14 @@ async function watchMarket ({ params, send, logger, orderbooks }, { WatchMarketR
       } else if (opts.type && opts.type === 'del') {
         logger.info(`Delete event in the stream, info: ${opts}`)
         // do nothing right now (we will need to figure out what to send to the cli so that it resets all the records)
-      } else if (opts.key && opts.key === 'sync') {
+      } else if (opts.sync) {
         logger.info('Sync event signifying end of old events being added to stream, following events are new')
         // also do nothing right now ({sync: true} is part of level stream, it is added to the stream after all
         // old events have been added to the streak before any new events are added to the stream.)
       } else {
         logger.info(`New event being added to stream, event info: ${opts}`)
         const parsedValue = JSON.parse(opts.value)
-        send(new WatchMarketResponse(bigInt(parsedValue.baseAmount), bigInt(parsedValue.counterAmount), parsedValue.side))
+        send(new WatchMarketResponse(bigInt(parsedValue.baseAmount).toString(), bigInt(parsedValue.counterAmount).toString(), parsedValue.side))
       }
     })
 
