@@ -22,7 +22,7 @@ describe('AdminService', () => {
   beforeEach(() => {
     protoPath = 'fakePath'
     proto = {
-      Admin: {
+      AdminService: {
         service: 'fakeService'
       },
       HealthCheckResponse: sinon.stub()
@@ -73,13 +73,13 @@ describe('AdminService', () => {
 
   it('assigns the definition', () => {
     expect(server).to.have.property('definition')
-    expect(server.definition).to.be.equal(proto.Admin.service)
+    expect(server.definition).to.be.equal(proto.AdminService.service)
   })
 
   it('creates a name', () => {
     expect(server).to.have.property('serviceName')
     expect(server.serviceName).to.be.a('string')
-    expect(server.serviceName).to.be.eql('Admin')
+    expect(server.serviceName).to.be.eql('AdminService')
   })
 
   it('exposes an implementation', () => {
@@ -111,7 +111,7 @@ describe('AdminService', () => {
     })
 
     it('provides a message id', () => {
-      expect(callArgs[1]).to.be.equal('[Admin:healthCheck]')
+      expect(callArgs[1]).to.be.equal('[AdminService:healthCheck]')
     })
 
     describe('request options', () => {

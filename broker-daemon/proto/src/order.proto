@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "common.proto";
+
 enum Side {
   BID = 0;
   ASK = 1;
@@ -23,6 +25,38 @@ message CreateBlockOrderResponse {
   string block_order_id = 0;
 }
 
-service Order {
+enum BlockOrderStatus {
+  ACTIVE = 0;
+  CANCELLED = 1;
+  COMPLETED = 2;
+}
+
+enum OrderStatus {
+  CREATED = 0;
+  PLACED = 1;
+  FILLED = 2;
+  EXECUTED = 3;
+  COMPLETED = 4;
+}
+
+message Order {
+  string order_id = 0;
+  OrderStatus order_status = 1;
+  int64 amount = 2;
+  int64 price = 3;
+}
+
+message GetBlockOrderRequest {
+  string block_order_id = 0;
+}
+
+message GetBlockOrderResponse {
+  BlockOrderStatus status = 0;
+  optional Error error = 1;
+  repeated Order orders = 2;
+}
+
+service OrderService {
   rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse);
+  rpc GetBlockOrder (GetBlockOrderRequest) returns (GetBlockOrderResponse);
 }

@@ -4,13 +4,14 @@ const { BlockOrder } = require('../models')
 const OrderStateMachine = require('./order-state-machine')
 
 class BlockOrderWorker extends EventEmitter {
-  constructor({ orderbooks, store, logger, relayer }) {
+  constructor ({ orderbooks, store, logger, relayer }) {
+    super()
     this.orderbooks = orderbooks
     this.store = store
     this.logger = logger
   }
 
-  async createBlockOrder({ marketName, side, amount, price, timeInForce }) {
+  async createBlockOrder ({ marketName, side, amount, price, timeInForce }) {
     const id = safeid()
 
     const orderbook = this.orderbooks.get(marketName)
@@ -23,40 +24,45 @@ class BlockOrderWorker extends EventEmitter {
 
     await this.store.put(blockOrder.key, blockOrder.value)
 
+    // intentionally not awaiting this promise so we can return to the caller
     this.handleBlockOrder(blockOrder)
 
     return id
   }
 
-  handleBlockOrder(blockOrder) {
+  async getBlockOrder (blockOrderId) {
+    // TODO 
+  }
+
+  async handleBlockOrder (blockOrder) {
     this.logger.info('Handling block order', blockOrder)
 
     const orderbook = this.orderbooks.get(blockOrder.marketName)
 
-    if(!orderbook) {
+    if (!orderbook) {
       // TODO: set an error state on the order
       // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
       return this.emit('error', new Error(`No orderbook is initialized for created order in the ${blockOrder.marketName} market.`))
     }
 
-    if(!price) {
+    if (!blockOrder.price) {
       // TODO: set an error state on the order
       // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
       return this.emit('error', new Error('Only market orders are supported.'))
     }
 
     // TODO: actual sophisticated order handling instead of just pass through
-    
-    const { baseSymbol, counterSymbol } = orderbook
-    const baseAmount = order.amount
-    const counterAmount = baseAmount.multiply(order.price)
 
-    await this.createOrder(blockOrder.id, { baseSymbol, counterSymbol, baseAmount, counterAmount, side })
+    const { baseSymbol, counterSymbol } = orderbook
+    const baseAmount = blockOrder.amount
+    const counterAmount = baseAmount.multiply(blockOrder.price)
+
+    await this.createOrder(blockOrder.id, { baseSymbol, counterSymbol, baseAmount, counterAmount, side: blockOrder.side })
 
     this.logger.info('Created an order for the block order', blockOrder)
   }
 
-  async createOrder(blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
+  async createOrder (blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
     this.logger.info('Creating an order on the Relayer')
 
     const store = this.store.sublevel(blockOrderId).sublevel('orders')
@@ -71,4 +77,4 @@ class BlockOrderWorker extends EventEmitter {
   }
 }
 
-module.exports = OrderWorker
+module.exports = BlockOrderWorker

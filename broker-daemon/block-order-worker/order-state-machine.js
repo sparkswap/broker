@@ -9,19 +9,19 @@ const OrderStateMachine = StateMachine.factory({
     return { store, logger, relayer, payload: {} }
   },
   methods: {
-    onBeforeTransition: function(lifecycle) {
+    onBeforeTransition: function (lifecycle) {
       this.logger.info(`BEFORE: ${lifecycle.transition}`)
     },
-    onLeaveState: function(lifecycle) {
+    onLeaveState: function (lifecycle) {
       this.logger.info(`LEAVE: ${lifecycle.from}`)
     },
-    onEnterState: function(lifecycle) {
+    onEnterState: function (lifecycle) {
       this.logger.info(`ENTER: ${lifecycle.to}`)
     },
-    onAfterTransition: function(lifecycle) {
+    onAfterTransition: function (lifecycle) {
       this.logger.info(`AFTER: ${lifecycle.transition}`)
 
-      if(lifecycle.transition === 'goto') {
+      if (lifecycle.transition === 'goto') {
         this.logger.debug('Skipping database save since we are using a goto')
         return
       }
@@ -31,9 +31,10 @@ const OrderStateMachine = StateMachine.factory({
         payload: this.payload
       })
 
-      store.put(this.id, storeValue)
+      // somehow spit an error if this fails?
+      this.store.put(this.id, value)
     },
-    onTransition: function(lifecycle) {
+    onTransition: function (lifecycle) {
       this.logger.info(`DURING: ${lifecycle.transition} (from ${lifecycle.from} to ${lifecycle.to})`)
     },
     onBeforeCreate: async function (lifecycle, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
@@ -68,7 +69,7 @@ OrderStateMachine.fromStore = function (initParams, { key, value }) {
   const orderStateMachine = new OrderStateMachine(initParams)
 
   orderStateMachine.id = key
-  Object.assign(orderStateMachin.payload, parsedValue.payload)
+  Object.assign(orderStateMachine.payload, parsedValue.payload)
 
   orderStateMachine.goto(parsedValue.state)
 
