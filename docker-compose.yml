@@ -14,6 +14,9 @@ services:
       - broker
 
   kbd:
+    depends_on:
+      # If you are using a separate instance of lnd, this is unnecessary
+      - lnd_btc
     build:
       context: ./
       dockerfile: docker/kbd/Dockerfile
