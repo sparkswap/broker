@@ -52,7 +52,7 @@ class GrpcServer {
     // TODO: Make this way better
     // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
     this.blockOrderWorker.on('error', (err) => {
-      this.logger.error('BlockOrderWorker error encountered', err)
+      this.logger.error('BlockOrderWorker error encountered', { message: err.message, stack: err.stack })
     })
 
     this.adminService = new AdminService(this.protoPath, this)

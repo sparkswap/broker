@@ -11,6 +11,10 @@ class BlockOrderWorker extends EventEmitter {
     this.logger = logger
   }
 
+  handleError(err) {
+    this.emit('error', err || new Error('Unknown error'))
+  }
+
   async createBlockOrder ({ marketName, side, amount, price, timeInForce }) {
     const id = safeid()
 
@@ -24,10 +28,10 @@ class BlockOrderWorker extends EventEmitter {
 
     await this.store.put(blockOrder.key, blockOrder.value)
 
-    this.logger(`Created and stored block order`, { id: blockOrder.id })
+    this.logger.info(`Created and stored block order`, { id: blockOrder.id })
 
     // this is intentionally not `await`ed so we can return to the caller
-    this.handleBlockOrder(blockOrder)
+    this.handleBlockOrder(blockOrder).catch(this.handleError.bind(this))
 
     return id
   }
