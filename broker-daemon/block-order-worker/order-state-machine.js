@@ -5,8 +5,8 @@ const OrderStateMachine = StateMachine.factory({
     { name: 'create', from: 'none', to: 'created' },
     { name: 'goto', from: '*', to: (s) => s }
   ],
-  data: function (store, logger, relayer) {
-    return { store, logger, relayer, payload: {} }
+  data: function ({ store, logger, relayer, engine }) {
+    return { store, logger, relayer, engine, payload: {} }
   },
   methods: {
     onBeforeTransition: function (lifecycle) {
@@ -18,7 +18,7 @@ const OrderStateMachine = StateMachine.factory({
     onEnterState: function (lifecycle) {
       this.logger.info(`ENTER: ${lifecycle.to}`)
     },
-    onAfterTransition: function (lifecycle) {
+    onAfterTransition: async function (lifecycle) {
       this.logger.info(`AFTER: ${lifecycle.transition}`)
 
       if (lifecycle.transition === 'goto') {
@@ -31,12 +31,20 @@ const OrderStateMachine = StateMachine.factory({
         payload: this.payload
       })
 
-      this.store.put(this.id, value)
+      await this.store.put(this.id, value)
+
+      this.logger.debug('Saved state machine in store', { id: this.id })
     },
     onTransition: function (lifecycle) {
       this.logger.info(`DURING: ${lifecycle.transition} (from ${lifecycle.from} to ${lifecycle.to})`)
     },
     onBeforeCreate: async function (lifecycle, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
+      // TODO: move payTo translation somewhere else
+      const payTo = `ln:${await this.engine.info.publicKey()}`
+      const ownerId = 'TODO: create real owner ids'
+
+      this.payload.payTo = payTo
+      this.payload.ownerId = ownerId
       this.payload.side = side
       this.payload.baseSymbol = baseSymbol
       this.payload.counterSymbol = counterSymbol
@@ -44,13 +52,16 @@ const OrderStateMachine = StateMachine.factory({
       this.payload.counterAmount = counterAmount
 
       const { orderId, feePaymentRequest, depositPaymentRequest } = await this.relayer.createOrder({
-        // TODO: payTo, ownerId
+        payTo,
+        ownerId,
         side,
         baseSymbol,
         counterSymbol,
         baseAmount,
         counterAmount
       })
+
+      this.logger.info(`Created order ${orderId} on the relayer`)
 
       this.payload.orderId = orderId
       this.id = orderId
@@ -74,3 +85,5 @@ OrderStateMachine.fromStore = function (initParams, { key, value }) {
 
   return orderStateMachine
 }
+
+module.exports = OrderStateMachine

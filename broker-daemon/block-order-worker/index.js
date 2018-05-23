@@ -4,11 +4,13 @@ const { BlockOrder } = require('../models')
 const OrderStateMachine = require('./order-state-machine')
 
 class BlockOrderWorker extends EventEmitter {
-  constructor ({ orderbooks, store, logger, relayer }) {
+  constructor ({ orderbooks, store, logger, relayer, engine }) {
     super()
     this.orderbooks = orderbooks
     this.store = store
     this.logger = logger
+    this.relayer = relayer
+    this.engine = engine
   }
 
   handleError(err) {
@@ -56,8 +58,8 @@ class BlockOrderWorker extends EventEmitter {
     // TODO: actual sophisticated order handling instead of just pass through
 
     const { baseSymbol, counterSymbol } = orderbook
-    const baseAmount = blockOrder.amount
-    const counterAmount = baseAmount.multiply(blockOrder.price)
+    const baseAmount = blockOrder.amount.toString()
+    const counterAmount = blockOrder.amount.multiply(blockOrder.price).toString()
 
     this.logger.info(`Creating single order for BlockOrder ${blockOrder.id}`)
 
@@ -71,7 +73,7 @@ class BlockOrderWorker extends EventEmitter {
 
     const store = this.store.sublevel(blockOrderId).sublevel('orders')
 
-    const order = new OrderStateMachine({ relayer: this.relayer, logger: this.logger, store: store })
+    const order = new OrderStateMachine({ relayer: this.relayer, engine: this.engine, logger: this.logger, store: store })
 
     this.logger.debug('Created new order state machine')
 
