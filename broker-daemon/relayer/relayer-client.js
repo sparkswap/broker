@@ -118,11 +118,11 @@ class RelayerClient {
    * @param {Object} params
    * @returns {Promise}
    */
-  async healthCheck (params) {
+  async healthCheck () {
     const deadline = grpcDeadline()
 
     return new Promise((resolve, reject) => {
-      this.health.check(params, { deadline }, (err, res) => {
+      this.health.check({}, { deadline }, (err, res) => {
         if (err) return reject(err)
         return resolve(res)
       })
