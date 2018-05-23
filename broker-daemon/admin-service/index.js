@@ -8,8 +8,8 @@ class AdminService {
     this.proto = loadProto(this.protoPath)
     this.logger = logger
 
-    this.definition = this.proto.AdminService.service
-    this.serviceName = 'AdminService'
+    this.definition = this.proto.Admin.service
+    this.serviceName = 'Admin'
 
     const {
       HealthCheckResponse

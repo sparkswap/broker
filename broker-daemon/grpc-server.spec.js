@@ -19,7 +19,6 @@ describe('GrpcServer', () => {
   let pathResolve
   let protoPath
   let LndEngine
-  let store
 
   beforeEach(() => {
     adminService = {
@@ -73,22 +72,19 @@ describe('GrpcServer', () => {
     Orderbook = sinon.stub()
     Orderbook.prototype.initialize = sinon.stub()
     GrpcServer.__set__('Orderbook', Orderbook)
-
-    store = {
-      sublevel: sinon.stub()
-    }
   })
 
   describe('new', () => {
     it('assigns a logger', () => {
       const logger = 'mylogger'
-      const server = new GrpcServer(logger, store)
+      const server = new GrpcServer(logger)
 
       expect(server).to.have.property('logger')
       expect(server.logger).to.be.eql(logger)
     })
 
     it('assigns a store', () => {
+      const store = 'mystore'
       const server = new GrpcServer(null, store)
 
       expect(server).to.have.property('store')
@@ -97,7 +93,7 @@ describe('GrpcServer', () => {
 
     it('assigns an eventHandler', () => {
       const eventHandler = 'myevents'
-      const server = new GrpcServer(null, store, eventHandler)
+      const server = new GrpcServer(null, null, eventHandler)
 
       expect(server).to.have.property('eventHandler')
       expect(server.eventHandler).to.be.eql(eventHandler)
@@ -106,7 +102,7 @@ describe('GrpcServer', () => {
     it('assigns the proto path', () => {
       const BROKER_PROTO_PATH = GrpcServer.__get__('BROKER_PROTO_PATH')
 
-      const server = new GrpcServer(null, store)
+      const server = new GrpcServer()
 
       expect(pathResolve).to.have.been.calledOnce()
       expect(pathResolve).to.have.been.calledWith(BROKER_PROTO_PATH)
@@ -119,7 +115,7 @@ describe('GrpcServer', () => {
         addService
       }
       grpcServer.returns(instanceServer)
-      const server = new GrpcServer(null, store)
+      const server = new GrpcServer()
 
       expect(grpcServer).to.have.been.calledOnce()
       expect(grpcServer).to.have.been.calledWith()
@@ -129,7 +125,7 @@ describe('GrpcServer', () => {
     })
 
     it('creates a relayer client', () => {
-      const server = new GrpcServer(null, store)
+      const server = new GrpcServer()
 
       expect(RelayerClient).to.have.been.calledOnce()
       expect(RelayerClient).to.have.been.calledWithNew()
@@ -139,6 +135,7 @@ describe('GrpcServer', () => {
 
     it('creates a admin service', () => {
       const logger = 'mylogger'
+      const store = 'mystore'
 
       const server = new GrpcServer(logger, store)
 
@@ -150,7 +147,7 @@ describe('GrpcServer', () => {
     })
 
     it('adds the admin service', () => {
-      const server = new GrpcServer(null, store)
+      const server = new GrpcServer()
 
       expect(server).to.have.property('server')
       expect(server.server.addService).to.be.equal(addService)
@@ -159,6 +156,7 @@ describe('GrpcServer', () => {
 
     it('creates a order service', () => {
       const logger = 'mylogger'
+      const store = 'mystore'
 
       const server = new GrpcServer(logger, store)
 
@@ -170,7 +168,7 @@ describe('GrpcServer', () => {
     })
 
     it('adds the order service', () => {
-      const server = new GrpcServer(null, store)
+      const server = new GrpcServer()
 
       expect(server).to.have.property('server')
       expect(server.server.addService).to.be.equal(addService)
@@ -179,6 +177,7 @@ describe('GrpcServer', () => {
 
     it('creates a orderBook service', () => {
       const logger = 'mylogger'
+      const store = 'mystore'
       const orderbooks = {}
       const server = new GrpcServer(logger, store)
 
@@ -190,7 +189,7 @@ describe('GrpcServer', () => {
     })
 
     it('adds the wallet service', () => {
-      const server = new GrpcServer(null, store)
+      const server = new GrpcServer()
 
       expect(server).to.have.property('server')
       expect(server.server.addService).to.be.equal(addService)
@@ -199,6 +198,7 @@ describe('GrpcServer', () => {
 
     it('creates a wallet service', () => {
       const logger = 'mylogger'
+      const store = 'mystore'
 
       const server = new GrpcServer(logger, store)
 
@@ -210,7 +210,7 @@ describe('GrpcServer', () => {
     })
 
     it('adds the orderBook service', () => {
-      const server = new GrpcServer(null, store)
+      const server = new GrpcServer()
 
       expect(server).to.have.property('server')
       expect(server.server.addService).to.be.equal(addService)
@@ -218,14 +218,14 @@ describe('GrpcServer', () => {
     })
 
     it('creates an empty orderbooks map', () => {
-      const server = new GrpcServer(null, store)
+      const server = new GrpcServer()
 
       expect(server).to.have.property('orderbooks')
       expect(server.orderbooks).to.be.eql(new Map())
     })
 
     it('defines a #listen method', () => {
-      const server = new GrpcServer(null, store)
+      const server = new GrpcServer()
 
       expect(server).to.have.property('listen')
       expect(server.listen).to.be.a('function')
@@ -233,7 +233,13 @@ describe('GrpcServer', () => {
   })
 
   describe('initializeMarket', () => {
+    let store
+
     beforeEach(() => {
+      store = {
+        sublevel: sinon.stub()
+      }
+
       Orderbook.prototype.initialize.resolves()
     })
 
@@ -274,6 +280,7 @@ describe('GrpcServer', () => {
 
       await server.initializeMarket(marketName)
 
+      expect(store.sublevel).to.have.been.calledOnce()
       expect(store.sublevel).to.have.been.calledWith(marketName)
       expect(Orderbook).to.have.been.calledWith(sinon.match.any, sinon.match.any, fakeSublevel)
     })
@@ -309,7 +316,13 @@ describe('GrpcServer', () => {
   })
 
   describe('#initializeMarkets', () => {
+    let store
+
     beforeEach(() => {
+      store = {
+        sublevel: sinon.stub()
+      }
+
       Orderbook.prototype.initialize.resolves()
     })
 

@@ -10,6 +10,6 @@ message WatchMarketResponse {
   Side side = 8;
 }
 
-service OrderBookService {
+service OrderBook {
   rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
 }

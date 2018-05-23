@@ -1,7 +1,7 @@
 const bigInt = require('big-integer')
 
 class BlockOrder {
-  constructor ({ id, marketName, side, amount, price, timeInForce }) {
+  constructor({ id, marketName, side, amount, price, timeInForce }) {
     this.id = id
     this.marketName = marketName
     this.side = side
@@ -10,11 +10,11 @@ class BlockOrder {
     this.timeInForce = timeInForce
   }
 
-  get key () {
+  get key() {
     return this.id
   }
 
-  get value () {
+  get value() {
     const { marketName, side, amount, price, timeInForce } = this
 
     return JSON.stringify({
@@ -26,7 +26,7 @@ class BlockOrder {
     })
   }
 
-  static fromStorage (key, value) {
+  static fromStorage(key, value) {
     const { marketName, side, amount, price, timeInForce } = JSON.parse(value)
     const id = key
 

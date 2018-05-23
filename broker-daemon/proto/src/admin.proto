@@ -7,6 +7,6 @@ message HealthCheckResponse {
   string relayer_status = 1;
 }
 
-service AdminService {
+service Admin {
   rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
 }

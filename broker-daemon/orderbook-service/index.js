@@ -8,8 +8,8 @@ class OrderBookService {
     this.proto = loadProto(this.protoPath)
     this.logger = logger
 
-    this.definition = this.proto.OrderBookService.service
-    this.serviceName = 'OrderBookService'
+    this.definition = this.proto.OrderBook.service
+    this.serviceName = 'OrderBook'
 
     const {
       WatchMarketResponse
