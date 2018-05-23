@@ -10,7 +10,7 @@ message GetBalanceResponse {
   int64 balance = 0;
 }
 
-service Wallet {
+service WalletService {
   rpc NewDepositAddress (google.protobuf.Empty) returns (NewDepositAddressResponse);
   rpc GetBalance (google.protobuf.Empty) returns (GetBalanceResponse);
 }
