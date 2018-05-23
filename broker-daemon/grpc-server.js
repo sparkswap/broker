@@ -4,6 +4,8 @@ const LndEngine = require('lnd-engine')
 
 const RelayerClient = require('./relayer')
 const Orderbook = require('./orderbook')
+const BlockOrderWorker = require('./block-order-worker')
+
 const AdminService = require('./admin-service')
 const OrderService = require('./order-service')
 const OrderBookService = require('./orderbook-service')
@@ -40,6 +42,13 @@ class GrpcServer {
     this.relayer = new RelayerClient()
     this.engine = new LndEngine(LND_HOST, { logger: this.logger, tlsCertPath: LND_TLS_CERT, macaroonPath: LND_MACAROON })
     this.orderbooks = new Map()
+    this.blockOrderWorker = new BlockOrderWorker({ relayer: this.relayer, orderbooks: this.orderbooks, store: this.store.sublevel('block-orders'), logger: this.logger })
+
+    // TODO: Make this way better
+    // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
+    this.blockOrderWorker.on('error', (err) => {
+      this.logger.error('BlockOrderWorker error encountered', err)
+    })
 
     this.adminService = new AdminService(this.protoPath, this)
     this.server.addService(this.adminService.definition, this.adminService.implementation)
