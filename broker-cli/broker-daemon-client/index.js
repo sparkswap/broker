@@ -24,10 +24,10 @@ class BrokerDaemonClient {
 
     // TODO: we will need to add auth for daemon for a non-local address
     this.address = address || BROKER_DAEMON_HOST || 'localhost:27492'
-    this.admin = new this.proto.Admin(this.address, grpc.credentials.createInsecure())
-    this.order = new this.proto.Order(this.address, grpc.credentials.createInsecure())
-    this.orderBook = new this.proto.OrderBook(this.address, grpc.credentials.createInsecure())
-    this.wallet = new this.proto.Wallet(this.address, grpc.credentials.createInsecure())
+    this.adminService = new this.proto.AdminService(this.address, grpc.credentials.createInsecure())
+    this.orderService = new this.proto.OrderService(this.address, grpc.credentials.createInsecure())
+    this.orderBookService = new this.proto.OrderBookService(this.address, grpc.credentials.createInsecure())
+    this.walletService = new this.proto.WalletService(this.address, grpc.credentials.createInsecure())
 
     Object.assign(this, order)
     Object.assign(this, orderbook)
