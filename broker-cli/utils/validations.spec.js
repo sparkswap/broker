@@ -5,7 +5,8 @@ const {
   isMarketName,
   isHost,
   areValidMarketNames,
-  isFormattedPath
+  isFormattedPath,
+  isBlockOrderId
 } = require('./validations')
 
 describe('Validations', () => {
@@ -124,6 +125,25 @@ describe('Validations', () => {
     it('throws an error if given path does not have correct format', () => {
       const path = '/home/myfolder/\n'
       expect(() => isFormattedPath(path)).to.throw(expectedError)
+    })
+  })
+
+  describe('isBlockOrderId', () => {
+    const expectedError = 'Block order IDs only contain upper and lower case letters, numbers, dashes (-) and underscores (_).'
+
+    it('returns id if it is valid', () => {
+      const id = 'Cl9vzL7xhzsAHqVnEU0s1X2ClMffWcPSMR85mwb7'
+      expect(isBlockOrderId(id)).to.eql(id)
+    })
+
+    it('throws an error if the id contains bad characters', () => {
+      const id = '$:Cl9vzL7xhzsAHqVnEU0s1X2ClMffWcPSMR85mwb7'
+      expect(() => isBlockOrderId(id)).to.throw(expectedError)
+    })
+
+    it('throws an error if the id is falsey', () => {
+      const id = ''
+      expect(() => isBlockOrderId(id)).to.throw(expectedError)
     })
   })
 })

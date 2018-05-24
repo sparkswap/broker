@@ -19,7 +19,7 @@ async function createBlockOrder (params) {
 
 /**
  * Retrieve information about an existing block order
- * 
+ *
  * @param  {Object} params
  * @return {Object}
  */
