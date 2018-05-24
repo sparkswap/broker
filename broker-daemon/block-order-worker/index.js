@@ -11,10 +11,19 @@ class BlockOrderWorker extends EventEmitter {
     this.logger = logger
     this.relayer = relayer
     this.engine = engine
+
+    // TODO: Make this way better
+    // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
+    this.on('error', (err) => {
+      this.logger.error('BlockOrderWorker error encountered', { message: err.message, stack: err.stack })
+      if(!err) {
+        this.logger.error('BlockOrderWorker error event triggered with no error')
+      }
+    })
   }
 
   handleError(err) {
-    this.emit('error', err || new Error('Unknown error'))
+    this.emit('error', err)
   }
 
   async createBlockOrder ({ marketName, side, amount, price, timeInForce }) {

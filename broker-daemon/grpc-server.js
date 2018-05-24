@@ -49,12 +49,6 @@ class GrpcServer {
     this.orderbooks = new Map()
     this.blockOrderWorker = new BlockOrderWorker({ relayer: this.relayer, engine: this.engine, orderbooks: this.orderbooks, store: this.store.sublevel('block-orders'), logger: this.logger })
 
-    // TODO: Make this way better
-    // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
-    this.blockOrderWorker.on('error', (err) => {
-      this.logger.error('BlockOrderWorker error encountered', { message: err.message, stack: err.stack })
-    })
-
     this.adminService = new AdminService(this.protoPath, this)
     this.server.addService(this.adminService.definition, this.adminService.implementation)
 
