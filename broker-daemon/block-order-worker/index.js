@@ -58,13 +58,13 @@ class BlockOrderWorker extends EventEmitter {
     if (!orderbook) {
       // TODO: set an error state on the order
       // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
-      return throw new Error(`No orderbook is initialized for created order in the ${blockOrder.marketName} market.`)
+      throw new Error(`No orderbook is initialized for created order in the ${blockOrder.marketName} market.`)
     }
 
     if (!blockOrder.price) {
       // TODO: set an error state on the order
       // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
-      return throw new Error('Only market orders are supported.')
+      throw new Error('Market orders are not supported: please provide a limit price.')
     }
 
     // TODO: actual sophisticated order handling instead of just pass through
