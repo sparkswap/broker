@@ -1,7 +1,8 @@
 const {
   expect,
   sinon,
-  rewire
+  rewire,
+  delay
 } = require('test/test-helper')
 
 const path = require('path')
@@ -20,8 +21,6 @@ describe('watchMarket', () => {
   let streamFunction
   let liveStream
   let revertFunction
-  let neverResolveStub
-  let revertNeverResolve
 
   beforeEach(() => {
     logger = {
@@ -35,15 +34,13 @@ describe('watchMarket', () => {
     store = sinon.stub()
     orderbooks = new Map([['BTC/LTC', { store: store }]])
     WatchMarketResponse = sinon.stub()
+    WatchMarketResponse.EventType = { PUT: 'PUT', DEL: 'DEL' }
     streamFunction = sinon.stub().returns(liveStream)
-    neverResolveStub = sinon.stub().returns(Promise.resolve())
     revertFunction = watchMarket.__set__('streamFunction', streamFunction)
-    revertNeverResolve = watchMarket.__set__('neverResolve', neverResolveStub)
   })
 
   afterEach(() => {
     revertFunction()
-    revertNeverResolve()
   })
 
   it('creates a liveStream from the store', () => {
@@ -58,17 +55,38 @@ describe('watchMarket', () => {
     expect(liveStream.on).to.have.been.calledWith('data', sinon.match.func)
   })
 
-  it('processes records through eachRecord', async () => {
+  it('sends add events', async () => {
     const fakeOrder = { key: 'key', value: JSON.stringify({ baseAmount: '100', counterAmount: '1000', side: 'BID' }) }
+    const marketEvent = {
+      orderId: fakeOrder.key,
+      baseAmount: bigInt('100').toString(),
+      counterAmount: bigInt('1000').toString(),
+      side: 'BID'
+    }
 
     liveStream.on.withArgs('data').callsArgWithAsync(1, fakeOrder)
 
-    await watchMarket({ params, send: sendStub, logger, orderbooks }, { WatchMarketResponse })
+    watchMarket({ params, send: sendStub, logger, orderbooks }, { WatchMarketResponse })
 
+    await delay(10)
     expect(sendStub).to.have.been.calledOnce()
     expect(WatchMarketResponse).to.have.been.calledOnce()
-    expect(WatchMarketResponse).to.have.been.calledWith(sinon.match(bigInt('100').toString(), bigInt('1000').toString(), 'BID'))
+    expect(WatchMarketResponse).to.have.been.calledWith({type: 'PUT', marketEvent: marketEvent})
+  })
 
-    neverResolveStub()
+  it('sends delete events if type is del', async () => {
+    const fakeOrder = { key: 'key', type: 'del' }
+    const marketEvent = {
+      orderId: fakeOrder.key
+    }
+
+    liveStream.on.withArgs('data').callsArgWithAsync(1, fakeOrder)
+
+    watchMarket({ params, send: sendStub, logger, orderbooks }, { WatchMarketResponse })
+
+    await delay(10)
+    expect(sendStub).to.have.been.calledOnce()
+    expect(WatchMarketResponse).to.have.been.calledOnce()
+    expect(WatchMarketResponse).to.have.been.calledWith({type: 'DEL', marketEvent: marketEvent})
   })
 })
