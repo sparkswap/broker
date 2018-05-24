@@ -27,20 +27,26 @@ async function watchMarket ({ params, send, logger, orderbooks }, { WatchMarketR
       if (opts === undefined) {
         logger.info('Undefined event in the stream, likely from a delete event')
         // do nothing right now, this is a side effect of deleting a record from the DB
-      } else if (opts.type && opts.type === 'del') {
-        logger.info(`Delete event in the stream, info: ${opts}`)
-        // do nothing right now (we will need to figure out what to send to the cli so that it resets all the records)
       } else if (opts.sync) {
         logger.info('Sync event signifying end of old events being added to stream, following events are new')
         // also do nothing right now ({sync: true} is part of level stream, it is added to the stream after all
-        // old events have been added to the streak before any new events are added to the stream.)
+        // old events have been added to the stream before any new events are added to the stream.)
       } else {
         logger.info(`New event being added to stream, event info: ${opts}`)
-        const parsedValue = JSON.parse(opts.value)
-        send(new WatchMarketResponse(bigInt(parsedValue.baseAmount).toString(), bigInt(parsedValue.counterAmount).toString(), parsedValue.side))
+        if (opts.type === 'del') {
+          send(new WatchMarketResponse({
+            type: WatchMarketResponse.EventType.DEL,
+            marketEvent: { orderId: opts.key }
+          }))
+        } else {
+          const parsedValue = JSON.parse(opts.value)
+          send(new WatchMarketResponse({
+            type: WatchMarketResponse.EventType.PUT,
+            marketEvent: { orderId: opts.key, baseAmount: bigInt(parsedValue.baseAmount).toString(), counterAmount: bigInt(parsedValue.counterAmount).toString(), side: parsedValue.side }
+          }))
+        }
       }
     })
-
   await neverResolve
 }
 
