@@ -4,7 +4,7 @@ const { expect, rewire, sinon } = require('test/test-helper')
 const OrderService = rewire(path.resolve(__dirname))
 
 describe('OrderService', () => {
-  let createOrderStub
+  let createBlockOrderStub
 
   let GrpcMethod
   let register
@@ -23,10 +23,10 @@ describe('OrderService', () => {
   beforeEach(() => {
     protoPath = 'fakePath'
     proto = {
-      Order: {
+      OrderService: {
         service: 'fakeService'
       },
-      CreateOrderResponse: sinon.stub(),
+      CreateBlockOrderResponse: sinon.stub(),
       TimeInForce: {
         GTC: 0
       }
@@ -48,8 +48,8 @@ describe('OrderService', () => {
     loadProto = sinon.stub().returns(proto)
     OrderService.__set__('loadProto', loadProto)
 
-    createOrderStub = sinon.stub()
-    OrderService.__set__('createOrder', createOrderStub)
+    createBlockOrderStub = sinon.stub()
+    OrderService.__set__('createBlockOrder', createBlockOrderStub)
   })
 
   beforeEach(() => {
@@ -78,13 +78,13 @@ describe('OrderService', () => {
 
   it('assigns the definition', () => {
     expect(server).to.have.property('definition')
-    expect(server.definition).to.be.equal(proto.Order.service)
+    expect(server.definition).to.be.equal(proto.OrderService.service)
   })
 
   it('creates a name', () => {
     expect(server).to.have.property('serviceName')
     expect(server.serviceName).to.be.a('string')
-    expect(server.serviceName).to.be.eql('Order')
+    expect(server.serviceName).to.be.eql('OrderService')
   })
 
   it('exposes an implementation', () => {
@@ -92,7 +92,7 @@ describe('OrderService', () => {
     expect(server.implementation).to.be.an('object')
   })
 
-  describe('#createOrder', () => {
+  describe('#createBlockOrder', () => {
     let callOrder = 0
     let callArgs
 
@@ -101,22 +101,22 @@ describe('OrderService', () => {
     })
 
     it('exposes an implementation', () => {
-      expect(server.implementation).to.have.property('createOrder')
-      expect(server.implementation.createOrder).to.be.a('function')
+      expect(server.implementation).to.have.property('createBlockOrder')
+      expect(server.implementation.createBlockOrder).to.be.a('function')
     })
 
     it('creates a GrpcMethod', () => {
       expect(GrpcMethod).to.have.been.called()
       expect(GrpcMethod).to.have.been.calledWithNew()
-      expect(server.implementation.createOrder).to.be.equal(fakeRegistered)
+      expect(server.implementation.createBlockOrder).to.be.equal(fakeRegistered)
     })
 
     it('provides the method', () => {
-      expect(callArgs[0]).to.be.equal(createOrderStub)
+      expect(callArgs[0]).to.be.equal(createBlockOrderStub)
     })
 
     it('provides a message id', () => {
-      expect(callArgs[1]).to.be.equal('[Order:createOrder]')
+      expect(callArgs[1]).to.be.equal('[OrderService:createBlockOrder]')
     })
 
     describe('request options', () => {
@@ -135,7 +135,7 @@ describe('OrderService', () => {
 
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('CreateOrderResponse', proto.CreateOrderResponse)
+      expect(callArgs[3]).to.have.property('CreateBlockOrderResponse', proto.CreateBlockOrderResponse)
     })
 
     it('passes in the enum', () => {

@@ -2,7 +2,7 @@ const grpc = require('grpc')
 const path = require('path')
 
 const { MarketEvent } = require('../models')
-const { loadProto } = require('../utils')
+const { loadProto, grpcDeadline } = require('../utils')
 
 /**
  * @todo Add this config to CLI
@@ -118,27 +118,16 @@ class RelayerClient {
    * @param {Object} params
    * @returns {Promise}
    */
-  async healthCheck (params) {
+  async healthCheck () {
     const deadline = grpcDeadline()
 
     return new Promise((resolve, reject) => {
-      this.health.check(params, { deadline }, (err, res) => {
+      this.health.check({}, { deadline }, (err, res) => {
         if (err) return reject(err)
         return resolve(res)
       })
     })
   }
-}
-
-/**
- * gRPC uses the term `deadline` which is a timeout feature that is an absolute
- * point in time, instead of a duration.
- *
- * @param {Number} [timeoutInSeconds=5]
- * @return {Date}
- */
-function grpcDeadline (timeoutInSeconds = 5) {
-  new Date().setSeconds(new Date().getSeconds() + timeoutInSeconds)
 }
 
 module.exports = RelayerClient

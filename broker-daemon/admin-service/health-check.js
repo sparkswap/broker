@@ -1,9 +1,43 @@
-const LndEngine = require('lnd-engine')
-
-const { LND_HOST, LND_TLS_CERT, LND_MACAROON } = process.env
+/**
+ * @constant
+ * @type {Object}
+ * @default
+ */
 const STATUS_CODES = Object.freeze({
   OK: 'OK'
 })
+
+/**
+ * Gets an engine status for a specified engine
+ *
+ * @param {Engine} engine
+ * @return {String} OK
+ * @return {String} error message if engine call fails
+ */
+async function getEngineStatus (engine) {
+  try {
+    await engine.health.isOK()
+    return STATUS_CODES.OK
+  } catch (e) {
+    return e.toString()
+  }
+}
+
+/**
+ * Gets the relayer status through relayer's health check
+ *
+ * @param {RelayerClient} relayer - grpc Client for interacting with the Relayer
+ * @return {String} OK
+ * @return {String} error message if engine call fails
+ */
+async function getRelayerStatus (relayer) {
+  try {
+    await relayer.healthCheck()
+    return STATUS_CODES.OK
+  } catch (e) {
+    return e.toString()
+  }
+}
 
 /**
  * Check the health of all the system components
@@ -15,43 +49,12 @@ const STATUS_CODES = Object.freeze({
  * @param {function} responses.HealthCheckResponse - constructor for HealthCheckResponse messages
  * @return {responses.HealthCheckResponse}
  */
-async function healthCheck ({ relayer, logger }, { HealthCheckResponse }) {
-  const engineResStatus = await engineStatus()
-  logger.debug(`Received status from engine`, { engineStatus: engineResStatus })
-  const relayerResStatus = await relayerStatus(relayer)
-  logger.debug(`Received status from relayer`, { relayerStatus: relayerResStatus })
-  return new HealthCheckResponse({ engineStatus: engineResStatus, relayerStatus: relayerResStatus })
-}
-
-/**
- * @return {String}
- */
-async function engineStatus () {
-  try {
-    // TODO: Remove these because they are the default options
-    const options = {
-      logger: this.logger,
-      tlsCertPath: LND_TLS_CERT,
-      macaroonPath: LND_MACAROON
-    }
-    await new LndEngine(LND_HOST, options).getInfo()
-    return STATUS_CODES.OK
-  } catch (e) {
-    return e.toString()
-  }
-}
-
-/**
- * @param {RelayerClient} relayer - grpc Client for interacting with the Relayer
- * @return {String}
- */
-async function relayerStatus (relayer) {
-  try {
-    await relayer.healthCheck({})
-    return STATUS_CODES.OK
-  } catch (e) {
-    return e.toString()
-  }
+async function healthCheck ({ relayer, logger, engine }, { HealthCheckResponse }) {
+  const engineStatus = await getEngineStatus(engine)
+  logger.debug(`Received status from engine`, { engineStatus })
+  const relayerStatus = await getRelayerStatus(relayer)
+  logger.debug(`Received status from relayer`, { relayerStatus })
+  return new HealthCheckResponse({ engineStatus, relayerStatus })
 }
 
 module.exports = healthCheck

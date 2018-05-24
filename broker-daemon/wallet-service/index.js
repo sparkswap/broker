@@ -22,8 +22,8 @@ class WalletService {
     this.logger = logger
     this.engine = engine
 
-    this.definition = this.proto.Wallet.service
-    this.serviceName = 'Wallet'
+    this.definition = this.proto.WalletService.service
+    this.serviceName = 'WalletService'
 
     const {
       NewDepositAddressResponse,

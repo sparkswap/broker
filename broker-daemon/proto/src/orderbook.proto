@@ -23,8 +23,6 @@ message MarketEvent {
   Side side = 3;
 }
 
-
-
-service OrderBook {
+service OrderBookService {
   rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
 }

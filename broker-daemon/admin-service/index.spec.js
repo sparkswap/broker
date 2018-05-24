@@ -16,13 +16,14 @@ describe('AdminService', () => {
   let logger
 
   let relayer
+  let engine
 
   let server
 
   beforeEach(() => {
     protoPath = 'fakePath'
     proto = {
-      Admin: {
+      AdminService: {
         service: 'fakeService'
       },
       HealthCheckResponse: sinon.stub()
@@ -33,6 +34,7 @@ describe('AdminService', () => {
     }
 
     relayer = sinon.stub()
+    engine = sinon.stub()
 
     GrpcMethod = sinon.stub()
     fakeRegistered = sinon.stub()
@@ -48,7 +50,7 @@ describe('AdminService', () => {
   })
 
   beforeEach(() => {
-    server = new AdminService(protoPath, { logger, relayer })
+    server = new AdminService(protoPath, { logger, relayer, engine })
   })
 
   it('assigns a proto path', () => {
@@ -73,13 +75,13 @@ describe('AdminService', () => {
 
   it('assigns the definition', () => {
     expect(server).to.have.property('definition')
-    expect(server.definition).to.be.equal(proto.Admin.service)
+    expect(server.definition).to.be.equal(proto.AdminService.service)
   })
 
   it('creates a name', () => {
     expect(server).to.have.property('serviceName')
     expect(server.serviceName).to.be.a('string')
-    expect(server.serviceName).to.be.eql('Admin')
+    expect(server.serviceName).to.be.eql('AdminService')
   })
 
   it('exposes an implementation', () => {
@@ -111,7 +113,7 @@ describe('AdminService', () => {
     })
 
     it('provides a message id', () => {
-      expect(callArgs[1]).to.be.equal('[Admin:healthCheck]')
+      expect(callArgs[1]).to.be.equal('[AdminService:healthCheck]')
     })
 
     describe('request options', () => {
@@ -120,9 +122,14 @@ describe('AdminService', () => {
         expect(callArgs[2].logger).to.be.equal(logger)
       })
 
-      it('relayer', () => {
+      it('passes in a relayer', () => {
         expect(callArgs[2]).to.have.property('relayer')
         expect(callArgs[2].relayer).to.be.equal(relayer)
+      })
+
+      it('passes in an engine', () => {
+        expect(callArgs[2]).to.have.property('engine')
+        expect(callArgs[2].engine).to.be.equal(engine)
       })
     })
 
