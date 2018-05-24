@@ -17,7 +17,7 @@ class BlockOrderWorker extends EventEmitter {
     // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
     this.on('error', (err) => {
       this.logger.error('BlockOrderWorker: error encountered', { message: err.message, stack: err.stack })
-      if(!err) {
+      if (!err) {
         this.logger.error('BlockOrderWorker: error event triggered with no error')
       }
     })
@@ -25,7 +25,7 @@ class BlockOrderWorker extends EventEmitter {
     this.on('blockOrder:create', async (blockOrder) => {
       try {
         this.workBlockOrder(blockOrder)
-      } catch(err) {
+      } catch (err) {
         this.emit('error', err)
       }
     })
@@ -55,10 +55,10 @@ class BlockOrderWorker extends EventEmitter {
 
   async getBlockOrder (blockOrderId) {
     this.logger.info('Getting block order', { id: blockOrderId })
-    
+
     const value = await promisify(this.store.get)(blockOrderId)
 
-    if(!value) {
+    if (!value) {
       throw new Error(`No Block Order found with ID: ${blockOrderId}`)
     }
 

@@ -9,7 +9,7 @@ class BlockOrder {
     this.price = price ? bigInt(price) : null
     this.timeInForce = timeInForce
 
-    if(!BlockOrder.STATUSES[status]) {
+    if (!BlockOrder.STATUSES[status]) {
       throw new Error(`Block Order status of ${status} is invalid`)
     }
 
@@ -31,6 +31,17 @@ class BlockOrder {
       timeInForce,
       status
     })
+  }
+
+  serialize () {
+    return {
+      market: this.marketName,
+      side: this.side,
+      amount: this.amount.toString(),
+      price: this.price ? this.price.toString() : null,
+      timeInForce: this.timeInForce,
+      status: this.status
+    }
   }
 
   static fromStorage (key, value) {

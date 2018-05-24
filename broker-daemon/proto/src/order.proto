@@ -53,7 +53,15 @@ message GetBlockOrderRequest {
 message GetBlockOrderResponse {
   BlockOrderStatus status = 0;
   optional Error error = 1;
-  repeated Order orders = 2;
+
+  string market = 10;
+  Side side = 11;
+  int64 amount = 12;
+  optional int64 price = 13;
+  optional TimeInForce time_in_force = 14;
+
+  int64 fill_amount = 20;
+  repeated Order open_orders = 21;
 }
 
 service OrderService {
