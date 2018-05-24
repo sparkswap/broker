@@ -97,10 +97,9 @@ class BlockOrderWorker extends EventEmitter {
     // TODO: actual sophisticated order handling instead of just pass through
 
     // order params
-    const { baseSymbol, counterSymbol } = orderbook
+    const { baseSymbol, counterSymbol, side } = blockOrder
     const baseAmount = blockOrder.amount.toString()
     const counterAmount = blockOrder.amount.multiply(blockOrder.price).toString()
-    const side = blockOrder.side
 
     // state machine params
     const { relayer, engine, logger } = this

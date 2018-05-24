@@ -24,6 +24,22 @@ class BlockOrder {
   }
 
   /**
+   * Convenience getter for baseSymbol
+   * @return {String} Base symbol from market name (e.g. BTC from BTC/LTC)
+   */
+  get baseSymbol () {
+    return this.marketName.split('/')[0]
+  }
+
+  /**
+   * Convenience getter for counterSymbol
+   * @return {String} Counter symbol from market name (e.g. LTC from BTC/LTC)
+   */
+  get counterSymbol () {
+    return this.marketName.split('/')[1]
+  }
+
+  /**
    * get key for storage in leveldb
    * @return {String} Block order id
    */
