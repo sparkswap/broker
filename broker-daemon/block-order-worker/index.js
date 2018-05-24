@@ -43,7 +43,7 @@ class BlockOrderWorker extends EventEmitter {
 
     await this.store.put(blockOrder.key, blockOrder.value)
 
-    this.logger.info(`Created and stored block order`, { id: blockOrder.id })
+    this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
 
     this.emit('blockOrder:create', blockOrder)
 
@@ -51,7 +51,7 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   async workBlockOrder (blockOrder) {
-    this.logger.info('Working block order', blockOrder)
+    this.logger.info('Working block order', { blockOrderId: blockOrder.id })
 
     const orderbook = this.orderbooks.get(blockOrder.marketName)
 
@@ -69,28 +69,24 @@ class BlockOrderWorker extends EventEmitter {
 
     // TODO: actual sophisticated order handling instead of just pass through
 
+    // order params
     const { baseSymbol, counterSymbol } = orderbook
     const baseAmount = blockOrder.amount.toString()
     const counterAmount = blockOrder.amount.multiply(blockOrder.price).toString()
     const side = blockOrder.side
 
-    this.logger.info(`Creating single order for BlockOrder ${blockOrder.id}`)
+    // state machine params
+    const { relayer, engine, logger } = this
+    const store = this.store.sublevel(blockOrder.id).sublevel('orders')
 
-    await this.createOrder(blockOrder.id, { baseSymbol, counterSymbol, baseAmount, counterAmount, side })
-  }
+    this.logger.info('Creating single order for BlockOrder', { blockOrderId: blockOrder.id })
 
-  async createOrder (blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
-    this.logger.debug('Creating an order on the Relayer')
+    const order = await OrderStateMachine.create(
+      { relayer, engine, logger, store },
+      { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
+    )
 
-    const store = this.store.sublevel(blockOrderId).sublevel('orders')
-
-    const order = new OrderStateMachine({ relayer: this.relayer, engine: this.engine, logger: this.logger, store: store })
-
-    this.logger.debug('Created new order state machine')
-
-    const { orderId } = await order.create({ side, baseSymbol, counterSymbol, baseAmount, counterAmount })
-
-    this.logger.info('Created order on the relayer', { orderId })
+    this.logger.info('Created single order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.id })
   }
 }
 

@@ -71,11 +71,16 @@ const OrderStateMachine = StateMachine.factory({
       this.id = orderId
       this.payload.feePaymentRequest = feePaymentRequest
       this.payload.depositPaymentRequest = depositPaymentRequest
-
-      return { orderId, feePaymentRequest, depositPaymentRequest }
     }
   }
 })
+
+OrderStateMachine.create = async function (initParams, createParams) {
+  const osm = new OrderStateMachine(initParams)
+  await osm.create(createParams)
+
+  return osm
+}
 
 OrderStateMachine.fromStore = function (initParams, { key, value }) {
   const parsedValue = JSON.parse(value)
