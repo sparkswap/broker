@@ -15,15 +15,19 @@ class BlockOrderWorker extends EventEmitter {
     // TODO: Make this way better
     // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
     this.on('error', (err) => {
-      this.logger.error('BlockOrderWorker error encountered', { message: err.message, stack: err.stack })
+      this.logger.error('BlockOrderWorker: error encountered', { message: err.message, stack: err.stack })
       if(!err) {
-        this.logger.error('BlockOrderWorker error event triggered with no error')
+        this.logger.error('BlockOrderWorker: error event triggered with no error')
       }
     })
-  }
 
-  handleError(err) {
-    this.emit('error', err)
+    this.on('blockOrder:create', async (blockOrder) => {
+      try {
+        this.workBlockOrder(blockOrder)
+      } catch(err) {
+        this.emit('error', err)
+      }
+    })
   }
 
   async createBlockOrder ({ marketName, side, amount, price, timeInForce }) {
@@ -41,27 +45,26 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info(`Created and stored block order`, { id: blockOrder.id })
 
-    // this is intentionally not `await`ed so we can return to the caller
-    this.handleBlockOrder(blockOrder).catch(this.handleError.bind(this))
+    this.emit('blockOrder:create', blockOrder)
 
     return id
   }
 
-  async handleBlockOrder (blockOrder) {
-    this.logger.info('Handling block order', blockOrder)
+  async workBlockOrder (blockOrder) {
+    this.logger.info('Working block order', blockOrder)
 
     const orderbook = this.orderbooks.get(blockOrder.marketName)
 
     if (!orderbook) {
       // TODO: set an error state on the order
       // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
-      return this.emit('error', new Error(`No orderbook is initialized for created order in the ${blockOrder.marketName} market.`))
+      return throw new Error(`No orderbook is initialized for created order in the ${blockOrder.marketName} market.`)
     }
 
     if (!blockOrder.price) {
       // TODO: set an error state on the order
       // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
-      return this.emit('error', new Error('Only market orders are supported.'))
+      return throw new Error('Only market orders are supported.')
     }
 
     // TODO: actual sophisticated order handling instead of just pass through
@@ -69,16 +72,15 @@ class BlockOrderWorker extends EventEmitter {
     const { baseSymbol, counterSymbol } = orderbook
     const baseAmount = blockOrder.amount.toString()
     const counterAmount = blockOrder.amount.multiply(blockOrder.price).toString()
+    const side = blockOrder.side
 
     this.logger.info(`Creating single order for BlockOrder ${blockOrder.id}`)
 
-    await this.createOrder(blockOrder.id, { baseSymbol, counterSymbol, baseAmount, counterAmount, side: blockOrder.side })
-
-    this.logger.info('Created an order for the block order', blockOrder)
+    await this.createOrder(blockOrder.id, { baseSymbol, counterSymbol, baseAmount, counterAmount, side })
   }
 
   async createOrder (blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
-    this.logger.info('Creating an order on the Relayer')
+    this.logger.debug('Creating an order on the Relayer')
 
     const store = this.store.sublevel(blockOrderId).sublevel('orders')
 
