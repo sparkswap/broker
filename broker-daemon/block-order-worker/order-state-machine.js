@@ -15,15 +15,16 @@ const OrderStateMachine = StateMachine.factory({
     onLeaveState: function (lifecycle) {
       this.logger.info(`LEAVE: ${lifecycle.from}`)
     },
-    onEnterState: function (lifecycle) {
+    onEnterState: async function (lifecycle) {
       this.logger.info(`ENTER: ${lifecycle.to}`)
-    },
-    onAfterTransition: async function (lifecycle) {
-      this.logger.info(`AFTER: ${lifecycle.transition}`)
 
       if (lifecycle.transition === 'goto') {
         this.logger.debug('Skipping database save since we are using a goto')
         return
+      }
+
+      if (lifecycle.to === 'none') {
+        this.logger.debug('Skipping database save for the \'none\' state')
       }
 
       const value = JSON.stringify({
@@ -34,6 +35,9 @@ const OrderStateMachine = StateMachine.factory({
       await this.store.put(this.id, value)
 
       this.logger.debug('Saved state machine in store', { id: this.id })
+    },
+    onAfterTransition: function (lifecycle) {
+      this.logger.info(`AFTER: ${lifecycle.transition}`)
     },
     onTransition: function (lifecycle) {
       this.logger.info(`DURING: ${lifecycle.transition} (from ${lifecycle.from} to ${lifecycle.to})`)
