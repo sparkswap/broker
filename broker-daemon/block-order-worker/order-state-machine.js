@@ -1,4 +1,5 @@
 const { promisify } = require('util')
+const { getRecords } = require('../utils')
 const StateMachine = require('javascript-state-machine')
 
 const OrderStateMachine = StateMachine.factory({
@@ -84,7 +85,11 @@ OrderStateMachine.create = async function (initParams, createParams) {
   return osm
 }
 
-OrderStateMachine.fromStore = function (initParams, { key, value }) {
+OrderStateMachine.getAll = async function ({ store, ...initParams }) {
+  return getRecords(store, (key, value) => this.fromStorage({ store, ...initParams }, { key, value }))
+}
+
+OrderStateMachine.fromStorage = function (initParams, { key, value }) {
   const parsedValue = JSON.parse(value)
 
   const orderStateMachine = new OrderStateMachine(initParams)

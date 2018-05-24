@@ -34,13 +34,23 @@ class BlockOrder {
   }
 
   serialize () {
+    const openOrders = (this.openOrders || []).map( (order) => {
+      return {
+        orderId: order.payload.orderId,
+        amount: order.payload.baseAmount,
+        price: bigInt(order.payload.counterAmount).divide(order.payload.baseAmount).toString(),
+        orderStatus: order.state.toUpperCase()
+      }
+    })
+
     return {
       market: this.marketName,
       side: this.side,
       amount: this.amount.toString(),
       price: this.price ? this.price.toString() : null,
       timeInForce: this.timeInForce,
-      status: this.status
+      status: this.status,
+      openOrders: openOrders
     }
   }
 
