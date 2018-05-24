@@ -1,4 +1,5 @@
 const EventEmitter = require('events')
+const { promisify } = require('util')
 const safeid = require('generate-safe-id')
 const { BlockOrder } = require('../models')
 const OrderStateMachine = require('./order-state-machine')
@@ -39,9 +40,11 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`${marketName} is not being tracked as a market. Configure kbd to track ${marketName} using the MARKETS environment variable.`)
     }
 
-    const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
+    const status = BlockOrder.STATUSES.ACTIVE
 
-    await this.store.put(blockOrder.key, blockOrder.value)
+    const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce, status })
+
+    await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
     this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
 
@@ -52,7 +55,16 @@ class BlockOrderWorker extends EventEmitter {
 
   async getBlockOrder (blockOrderId) {
     this.logger.info('Getting block order', { id: blockOrderId })
-    // TODO
+    
+    const value = await promisify(this.store.get)(blockOrderId)
+
+    if(!value) {
+      throw new Error(`No Block Order found with ID: ${blockOrderId}`)
+    }
+
+    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+
+    return blockOrder
   }
 
   async workBlockOrder (blockOrder) {

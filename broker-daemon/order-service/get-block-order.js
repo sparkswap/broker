@@ -18,8 +18,7 @@ async function getBlockOrder ({ params, logger, blockOrderWorker }, { GetBlockOr
 
   const blockOrder = await blockOrderWorker.getBlockOrder(blockOrderId)
 
-  // TODO: make this real
-  return new GetBlockOrderResponse({ status: 'ACTIVE' })
+  return new GetBlockOrderResponse({ status: blockOrder.status })
 }
 
 module.exports = getBlockOrder

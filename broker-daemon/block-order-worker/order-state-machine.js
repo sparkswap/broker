@@ -1,3 +1,4 @@
+const { promisify } = require('util')
 const StateMachine = require('javascript-state-machine')
 
 const OrderStateMachine = StateMachine.factory({
@@ -33,7 +34,7 @@ const OrderStateMachine = StateMachine.factory({
       })
 
       // somehow spit an error if this fails?
-      await this.store.put(this.id, value)
+      await promisify(this.store.put)(this.id, value)
 
       this.logger.debug('Saved state machine in store', { id: this.id })
     },
