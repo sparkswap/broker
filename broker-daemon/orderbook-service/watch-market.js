@@ -1,4 +1,4 @@
-const streamFunction = require('level-live-stream')
+const createLiveStream = require('level-live-stream')
 const bigInt = require('big-integer')
 const neverResolve = new Promise(() => {})
 /**
@@ -21,7 +21,8 @@ async function watchMarket ({ params, send, logger, orderbooks }, { WatchMarketR
   // from the relayer so we dont event make a request if it is invalid
   const { market } = params
   const orderbook = orderbooks.get(market)
-  const liveStream = streamFunction(orderbook.store)
+  const liveStream = createLiveStream(orderbook.store)
+  const DB_ACTIONS = { DEL: 'del', PUT: 'put' }
   liveStream
     .on('data', (opts) => {
       if (opts === undefined) {
@@ -33,18 +34,24 @@ async function watchMarket ({ params, send, logger, orderbooks }, { WatchMarketR
         // old events have been added to the stream before any new events are added to the stream.)
       } else {
         logger.info(`New event being added to stream, event info: ${opts}`)
-        if (opts.type === 'del') {
-          send(new WatchMarketResponse({
+        if (opts.type === DB_ACTIONS.DEL) {
+          params = {
             type: WatchMarketResponse.EventType.DEL,
             marketEvent: { orderId: opts.key }
-          }))
+          }
         } else {
           const parsedValue = JSON.parse(opts.value)
-          send(new WatchMarketResponse({
+          params = {
             type: WatchMarketResponse.EventType.PUT,
-            marketEvent: { orderId: opts.key, baseAmount: bigInt(parsedValue.baseAmount).toString(), counterAmount: bigInt(parsedValue.counterAmount).toString(), side: parsedValue.side }
-          }))
+            marketEvent: {
+              orderId: opts.key,
+              baseAmount: bigInt(parsedValue.baseAmount).toString(),
+              counterAmount: bigInt(parsedValue.counterAmount).toString(),
+              side: parsedValue.side
+            }
+          }
         }
+        send(new WatchMarketResponse(params))
       }
     })
   await neverResolve

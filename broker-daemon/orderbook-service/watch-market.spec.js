@@ -18,7 +18,7 @@ describe('watchMarket', () => {
   let logger
   let orderbooks
   let WatchMarketResponse
-  let streamFunction
+  let createLiveStream
   let liveStream
   let revertFunction
 
@@ -35,8 +35,8 @@ describe('watchMarket', () => {
     orderbooks = new Map([['BTC/LTC', { store: store }]])
     WatchMarketResponse = sinon.stub()
     WatchMarketResponse.EventType = { PUT: 'PUT', DEL: 'DEL' }
-    streamFunction = sinon.stub().returns(liveStream)
-    revertFunction = watchMarket.__set__('streamFunction', streamFunction)
+    createLiveStream = sinon.stub().returns(liveStream)
+    revertFunction = watchMarket.__set__('createLiveStream', createLiveStream)
   })
 
   afterEach(() => {
@@ -46,7 +46,7 @@ describe('watchMarket', () => {
   it('creates a liveStream from the store', () => {
     watchMarket({ params, send: sendStub, logger, orderbooks }, { WatchMarketResponse })
 
-    expect(streamFunction).to.have.been.calledWith(store)
+    expect(createLiveStream).to.have.been.calledWith(store)
   })
 
   it('sets an data handler', () => {
