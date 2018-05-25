@@ -9,9 +9,9 @@ describe('RelayerClient', () => {
   let MarketEvent
   let loadProto
   let proto
-  let Maker
-  let OrderBook
-  let Health
+  let MakerService
+  let OrderBookService
+  let HealthService
   let ResponseType = {
     EXISTING_EVENT: 'EXISTING_EVENT',
     EXISTING_EVENTS_DONE: 'EXISTING_EVENTS_DONE',
@@ -25,17 +25,17 @@ describe('RelayerClient', () => {
     MarketEvent = sinon.stub()
     RelayerClient.__set__('MarketEvent', MarketEvent)
 
-    Maker = sinon.stub()
-    OrderBook = sinon.stub()
-    Health = sinon.stub()
+    MakerService = sinon.stub()
+    OrderBookService = sinon.stub()
+    HealthService = sinon.stub()
 
     pathResolve = sinon.stub()
     RelayerClient.__set__('path', { resolve: pathResolve })
 
     proto = {
-      Maker,
-      OrderBook,
-      Health,
+      MakerService,
+      OrderBookService,
+      HealthService,
       WatchMarketResponse: {
         ResponseType
       }
@@ -95,11 +95,11 @@ describe('RelayerClient', () => {
 
       const relayer = new RelayerClient()
 
-      expect(Maker).to.have.been.calledOnce()
-      expect(Maker).to.have.been.calledWithNew()
-      expect(Maker).to.have.been.calledWith(exchangeRpcHost, fakeCreds)
+      expect(MakerService).to.have.been.calledOnce()
+      expect(MakerService).to.have.been.calledWithNew()
+      expect(MakerService).to.have.been.calledWith(exchangeRpcHost, fakeCreds)
       expect(relayer).to.have.property('maker')
-      expect(relayer.maker).to.be.instanceOf(Maker)
+      expect(relayer.maker).to.be.instanceOf(MakerService)
     })
 
     it('creates the OrderBook service', () => {
@@ -108,11 +108,11 @@ describe('RelayerClient', () => {
 
       const relayer = new RelayerClient()
 
-      expect(OrderBook).to.have.been.calledOnce()
-      expect(OrderBook).to.have.been.calledWithNew()
-      expect(OrderBook).to.have.been.calledWith(exchangeRpcHost, fakeCreds)
+      expect(OrderBookService).to.have.been.calledOnce()
+      expect(OrderBookService).to.have.been.calledWithNew()
+      expect(OrderBookService).to.have.been.calledWith(exchangeRpcHost, fakeCreds)
       expect(relayer).to.have.property('orderbook')
-      expect(relayer.orderbook).to.be.instanceOf(OrderBook)
+      expect(relayer.orderbook).to.be.instanceOf(OrderBookService)
     })
   })
 
@@ -144,7 +144,7 @@ describe('RelayerClient', () => {
 
       watchMarket = sinon.stub().returns(stream)
 
-      OrderBook.prototype.watchMarket = watchMarket
+      OrderBookService.prototype.watchMarket = watchMarket
 
       MarketEvent.prototype.key = 'key'
       MarketEvent.prototype.value = 'value'

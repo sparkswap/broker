@@ -10,7 +10,7 @@ message HealthCheckResponse {
 
     string status = 0;
 }
-service Health {
+service HealthService {
     rpc Check (google.protobuf.Empty) returns (HealthCheckResponse);
 }
 
@@ -74,7 +74,7 @@ message CompleteOrderRequest {
     string order_id = 0;
     bytes swap_preimage = 1;
 }
-service Maker {
+service MakerService {
     rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
     rpc PlaceOrder (PlaceOrderRequest) returns (google.protobuf.Empty);
     rpc CancelOrder (CancelOrderRequest) returns (google.protobuf.Empty);
@@ -113,7 +113,7 @@ message SubscribeExecuteResponse {
 
     string pay_to = 0;
 }
-service Taker {
+service TakerService {
     rpc CreateFill (CreateFillRequest) returns (CreateFillResponse);
     rpc FillOrder (FillOrderRequest) returns (google.protobuf.Empty);
     rpc SubscribeExecute (SubscribeExecuteRequest) returns (stream SubscribeExecuteResponse);
@@ -157,7 +157,7 @@ message WatchMarketRequest {
     string counter_symbol = 1;
     int64 last_updated = 2;
 }
-service OrderBook {
+service OrderBookService {
     rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
 }
 
@@ -165,6 +165,6 @@ message GetPublicKeyResponse {
 
     string public_key = 0;
 }
-service PaymentNetwork {
+service PaymentNetworkService {
     rpc GetPublicKey (google.protobuf.Empty) returns (GetPublicKeyResponse);
 }
