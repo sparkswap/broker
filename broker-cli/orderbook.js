@@ -1,5 +1,6 @@
 const BrokerDaemonClient = require('./broker-daemon-client')
 const { validations } = require('./utils')
+const bigInt = require('big-integer')
 require('colors')
 
 /**
@@ -7,6 +8,9 @@ require('colors')
  *
  * TODO: Use a util like clui/smart-table to represent columns/rows
  * @param {String} market
+ * @param {Array.<{price: price, depth: depth>}} asks with price and depth
+ * @param {Array.<{price: price, depth: depth>}} bids with price and depth
+
  * @returns {Void}
  */
 function createUI (market, asks, bids) {
@@ -37,8 +41,8 @@ function createUI (market, asks, bids) {
       if (orders[i]) {
         // TODO: pull the 8 out of here and make it per-currency configuration
         // TODO: make display of amounts consistent with inputs (buys, prices, etc)
-        let price = String(` ${(orders[i].counterAmount / orders[i].baseAmount).toFixed(8)} `)
-        let depth = String(` ${(orders[i].baseAmount * 1e-8).toFixed(8)} `)
+        let price = String(` ${orders[i].price} `)
+        let depth = String(` ${orders[i].depth} `)
 
         row[index] = [price, depth].map((field, j) => {
           while (field.length < 17) {
@@ -78,36 +82,34 @@ async function orderbook (args, opts, logger) {
 
   try {
     const watchOrder = await new BrokerDaemonClient(rpcAddress).watchMarket(request)
-
     // TODO: We should save orders to an internal DB or figure out a way to store
     // this info instead of in memory?
     // (this probably needs to be done in the daemon itself)
     const bids = new Map()
     const asks = new Map()
-    let sortedAsks = []
-    let sortedBids = []
 
     // Lets initialize the view AND just to be sure, we will clear the view
     console.clear()
-    createUI(market, Array.from(asks.values()), Array.from(bids.values()))
+    createUI(market, [], [])
 
     watchOrder.on('data', (order) => {
       const { orderId, baseAmount, counterAmount, side } = order.marketEvent
       const { type } = order
-
-      if (type === BrokerDaemonClient.proto.WatchMarketResponse.EventType.DEL) {
+      if (type === BrokerDaemonClient.prototype.proto.WatchMarketResponse.EventType.DEL) {
         asks.delete(orderId)
         bids.delete(orderId)
       } else {
         if (side === 'ASK') {
-          asks.set(orderId, { counterAmount, baseAmount })
+          asks.set(orderId, { counterAmount: bigInt(counterAmount), baseAmount: bigInt(baseAmount) })
         } else {
-          bids.set(orderId, { counterAmount, baseAmount })
+          bids.set(orderId, { counterAmount: bigInt(counterAmount), baseAmount: bigInt(baseAmount) })
         }
       }
 
-      sortedAsks = Array.from(asks.values()).sort(sortAsksByPrice)
-      sortedBids = Array.from(bids.values()).sort(sortBidsByPrice)
+      let transformedAsks = Array.from(asks.values()).map(ask => { return calculatePriceandDepth(ask) })
+      let transformedBids = Array.from(bids.values()).map(bid => { return calculatePriceandDepth(bid) })
+      let sortedAsks = transformedAsks.sort(function (a, b) { return (a.price > b.price) ? 1 : ((b.price > a.price) ? -1 : 0) })
+      let sortedBids = transformedBids.sort(function (a, b) { return (a.price < b.price) ? 1 : ((b.price < a.price) ? -1 : 0) })
       console.clear()
       createUI(market, sortedAsks, sortedBids)
     })
@@ -119,30 +121,18 @@ async function orderbook (args, opts, logger) {
   }
 };
 
-function sortAsksByPrice (firstAsk, secondAsk) {
-  const firstAskPrice = firstAsk.counterAmount / firstAsk.baseAmount
-  const secondAskPrice = secondAsk.counterAmount / secondAsk.baseAmount
+/**
+ * Takes in an order object with counterAmount and baseAmount and outputs new object with
+ * price and depth
+ *
+ * @param {Object} order with counter amount and base amount
+ * @returns {Object} order with price and depth
+ */
 
-  let comparison = 0
-  if (firstAskPrice < secondAskPrice) {
-    comparison = -1
-  } else if (firstAskPrice > secondAskPrice) {
-    comparison = 1
-  }
-  return comparison
-}
-
-function sortBidsByPrice (firstBid, secondBid) {
-  const firstBidPrice = firstBid.counterAmount / firstBid.baseAmount
-  const secondBidPrice = secondBid.counterAmount / secondBid.baseAmount
-
-  let comparison = 0
-  if (firstBidPrice > secondBidPrice) {
-    comparison = -1
-  } else if (firstBidPrice < secondBidPrice) {
-    comparison = 1
-  }
-  return comparison
+function calculatePriceandDepth (order) {
+  let price = (order.counterAmount / order.baseAmount).toFixed(8)
+  let depth = (order.baseAmount * 1e-8).toFixed(8)
+  return {price, depth}
 }
 
 module.exports = (program) => {
