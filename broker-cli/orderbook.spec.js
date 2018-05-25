@@ -110,35 +110,58 @@ describe('orderbook', () => {
     expect(createUIStub).to.have.been.calledWith(market, [{ depth: '0.00000010', price: '100.00000000' }], [])
   })
 
-  // it('sorts bids and asks by price', async () => {
-  //   const firstAsk = { type: 'PUT', marketEvent: { orderId: 'orderId', counterAmount: '10000', baseAmount: '10', side: 'ASK' } }
-  //   const secondAsk = { type: 'PUT', marketEvent: { orderId: 'orderId', counterAmount: '1000', baseAmount: '10', side: 'ASK' } }
-  //   const firstBid = { type: 'PUT', marketEvent: { orderId: 'orderId', counterAmount: '1000', baseAmount: '10', side: 'BID' } }
-  //   const secondBid = { type: 'PUT', marketEvent: { orderId: 'orderId', counterAmount: '10000', baseAmount: '10', side: 'BID' } }
-  //
-  //   stream.on.withArgs('data').callsArgWithAsync(1, firstAsk)
-  //   stream.on.withArgs('data').callsArgWithAsync(1, secondAsk)
-  //   stream.on.withArgs('data').callsArgWithAsync(1, firstBid)
-  //   stream.on.withArgs('data').callsArgWithAsync(1, secondBid)
-  //
-  //   orderbook(args, opts, logger)
-  //
-  //   await delay(100)
-  //
-  //   expect(createUIStub).to.have.been.calledWith(market, [{ baseAmount: '10', counterAmount: '10000' }], [])
-  // })
+  it('sorts bids and asks by price', async () => {
+    const firstAsk = { type: 'ADD', marketEvent: { orderId: 'orderId', counterAmount: '10000', baseAmount: '10', side: 'ASK' } }
+    const secondAsk = { type: 'ADD', marketEvent: { orderId: 'orderId2', counterAmount: '1000', baseAmount: '10', side: 'ASK' } }
+    const firstBid = { type: 'ADD', marketEvent: { orderId: 'orderId3', counterAmount: '1000', baseAmount: '10', side: 'BID' } }
+    const secondBid = { type: 'ADD', marketEvent: { orderId: 'orderId4', counterAmount: '10000', baseAmount: '10', side: 'BID' } }
 
-  // it('deletes bids or asks on delete events coming from the broker daemon', async () => {
-  //   await orderbook(args, opts, logger)
-  //   expect(createUIStub).to.have.been.called()
-  //   expect(createUIStub).to.have.been.calledWith(market, [], [])
-  // })
+    stream.on.withArgs('data').callsFake(async (evt, fn) => {
+      await delay(10)
+      fn(firstAsk)
+      await delay(10)
+      fn(secondAsk)
+      await delay(10)
+      fn(firstBid)
+      await delay(10)
+      fn(secondBid)
+    })
 
-  // watchOrder.on('cancelled', () => logger.info('Stream was cancelled by the server'))
-  // watchOrder.on('end', () => logger.info('End of stream'))
+    orderbook(args, opts, logger)
 
-  // it('makes a request to the broker', () => {
-  //   orderbook(args, opts, logger)
-  //   expect(healthCheckSpy).to.have.been.called()
-  // })
+    await delay(100)
+
+    expect(createUIStub).to.have.been.calledWith(
+      market, [
+        { depth: '0.00000010', price: '100.00000000' },
+        { depth: '0.00000010', price: '1000.00000000' }
+      ], [
+        { depth: '0.00000010', price: '1000.00000000' },
+        { depth: '0.00000010', price: '100.00000000' }
+      ])
+  })
+
+  it('deletes bids or asks on delete events coming from the broker daemon', async () => {
+    const firstAsk = { type: 'ADD', marketEvent: { orderId: 'orderId', counterAmount: '1000', baseAmount: '10', side: 'ASK' } }
+    const secondAsk = { type: 'ADD', marketEvent: { orderId: 'orderId2', counterAmount: '10000', baseAmount: '10', side: 'ASK' } }
+    const deleteFirstAsk = { type: 'DELETE', marketEvent: { orderId: 'orderId' } }
+
+    stream.on.withArgs('data').callsFake(async (evt, fn) => {
+      await delay(10)
+      fn(firstAsk)
+      await delay(10)
+      fn(secondAsk)
+      await delay(10)
+      fn(deleteFirstAsk)
+    })
+
+    orderbook(args, opts, logger)
+
+    await delay(100)
+
+    expect(createUIStub).to.have.been.calledWith(market, [], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ depth: '0.00000010', price: '100.00000000' }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ depth: '0.00000010', price: '100.00000000' }, { depth: '0.00000010', price: '1000.00000000' }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ depth: '0.00000010', price: '1000.00000000' }], [])
+  })
 })
