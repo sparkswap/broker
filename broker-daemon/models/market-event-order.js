@@ -1,6 +1,6 @@
 const MarketEvent = require('./market-event')
 
-class Order {
+class MarketEventOrder {
   constructor ({ orderId, createdAt, baseAmount, counterAmount, side }) {
     this.orderId = orderId
     this.createdAt = createdAt
@@ -49,9 +49,9 @@ class Order {
 }
 
 // TODO: get from proto?
-Order.SIDES = Object.freeze({
+MarketEventOrder.SIDES = Object.freeze({
   ASK: 'ASK',
   BID: 'BID'
 })
 
-module.exports = Order
+module.exports = MarketEventOrder

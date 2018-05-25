@@ -1,9 +1,9 @@
 const path = require('path')
 const { expect, rewire } = require('test/test-helper')
 
-const Order = rewire(path.resolve('broker-daemon', 'models', 'order'))
+const MarketEventOrder = rewire(path.resolve('broker-daemon', 'models', 'markt-event-order'))
 
-describe('Order', () => {
+describe('MarketEventOrder', () => {
   let MarketEvent
 
   before(() => {
@@ -15,33 +15,33 @@ describe('Order', () => {
       }
     }
 
-    Order.__set__('MarketEvent', MarketEvent)
+    MarketEventOrder.__set__('MarketEvent', MarketEvent)
   })
 
   describe('::SIDES', () => {
     it('defines 2 sides', () => {
-      expect(Order).to.have.property('SIDES')
-      expect(Object.keys(Order.SIDES)).to.have.lengthOf(2)
+      expect(MarketEventOrder).to.have.property('SIDES')
+      expect(Object.keys(MarketEventOrder.SIDES)).to.have.lengthOf(2)
     })
 
     it('freezes sides', () => {
-      expect(Order.SIDES).to.be.frozen()
+      expect(MarketEventOrder.SIDES).to.be.frozen()
     })
 
     it('defines a BID side', () => {
-      expect(Order.SIDES).to.have.property('BID')
-      expect(Order.SIDES.BID).to.be.eql('BID')
+      expect(MarketEventOrder.SIDES).to.have.property('BID')
+      expect(MarketEventOrder.SIDES.BID).to.be.eql('BID')
     })
 
     it('defines a ASK side', () => {
-      expect(Order.SIDES).to.have.property('ASK')
-      expect(Order.SIDES.ASK).to.be.eql('ASK')
+      expect(MarketEventOrder.SIDES).to.have.property('ASK')
+      expect(MarketEventOrder.SIDES.ASK).to.be.eql('ASK')
     })
   })
 
   describe('::fromStorage', () => {
     it('defines a static method for creating orderss from storage', () => {
-      expect(Order).itself.to.respondTo('fromStorage')
+      expect(MarketEventOrder).itself.to.respondTo('fromStorage')
     })
 
     it('creates orders from a key and value', () => {
@@ -49,7 +49,7 @@ describe('Order', () => {
       const createdAt = '12234324235'
       const baseAmount = 123214234
       const counterAmount = 123214324
-      const side = Order.SIDES.BID
+      const side = MarketEventOrder.SIDES.BID
 
       const key = orderId
       const value = JSON.stringify({
@@ -59,7 +59,7 @@ describe('Order', () => {
         side
       })
 
-      const order = Order.fromStorage(key, value)
+      const order = MarketEventOrder.fromStorage(key, value)
 
       expect(order).to.have.property('orderId')
       expect(order.orderId).to.be.eql(orderId)
@@ -76,7 +76,7 @@ describe('Order', () => {
 
   describe('::fromEvent', () => {
     it('defines a static method for creating orderss from an event', () => {
-      expect(Order).itself.to.respondTo('fromEvent')
+      expect(MarketEventOrder).itself.to.respondTo('fromEvent')
     })
 
     it('creates orders from a PLACED event', () => {
@@ -84,7 +84,7 @@ describe('Order', () => {
       const createdAt = '12234324235'
       const baseAmount = 123214234
       const counterAmount = 123214324
-      const side = Order.SIDES.BID
+      const side = MarketEventOrder.SIDES.BID
 
       const event = {
         eventId: 'asodifj',
@@ -98,7 +98,7 @@ describe('Order', () => {
         }
       }
 
-      const order = Order.fromEvent(event)
+      const order = MarketEventOrder.fromEvent(event)
 
       expect(order).to.have.property('orderId')
       expect(order.orderId).to.be.eql(orderId)
@@ -122,7 +122,7 @@ describe('Order', () => {
         eventType: MarketEvent.TYPES.CANCELLED
       }
 
-      const order = Order.fromEvent(event)
+      const order = MarketEventOrder.fromEvent(event)
 
       expect(order).to.have.property('orderId')
       expect(order.orderId).to.be.eql(orderId)
@@ -138,7 +138,7 @@ describe('Order', () => {
         eventType: MarketEvent.TYPES.FILLED
       }
 
-      const order = Order.fromEvent(event)
+      const order = MarketEventOrder.fromEvent(event)
 
       expect(order).to.have.property('orderId')
       expect(order.orderId).to.be.eql(orderId)
@@ -151,9 +151,9 @@ describe('Order', () => {
       const createdAt = '12234324235'
       const baseAmount = 123214234
       const counterAmount = 123214324
-      const side = Order.SIDES.BID
+      const side = MarketEventOrder.SIDES.BID
 
-      const order = new Order({ orderId, createdAt, baseAmount, counterAmount, side })
+      const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side })
 
       expect(order).to.have.property('orderId')
       expect(order.orderId).to.be.eql(orderId)
@@ -174,9 +174,9 @@ describe('Order', () => {
       const createdAt = '12234324235'
       const baseAmount = 123214234
       const counterAmount = 123214324
-      const side = Order.SIDES.BID
+      const side = MarketEventOrder.SIDES.BID
 
-      const order = new Order({ orderId, createdAt, baseAmount, counterAmount, side })
+      const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side })
 
       expect(order).to.have.property('key')
       expect(order.key).to.be.eql(orderId)
@@ -189,9 +189,9 @@ describe('Order', () => {
       const createdAt = '12234324235'
       const baseAmount = 123214234
       const counterAmount = 123214324
-      const side = Order.SIDES.BID
+      const side = MarketEventOrder.SIDES.BID
 
-      const order = new Order({ orderId, createdAt, baseAmount, counterAmount, side })
+      const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side })
 
       expect(order).to.have.property('value')
       expect(order.value).to.be.eql(JSON.stringify({
@@ -209,9 +209,9 @@ describe('Order', () => {
       const createdAt = '12234324235'
       const baseAmount = 123214234
       const counterAmount = 123214324
-      const side = Order.SIDES.BID
+      const side = MarketEventOrder.SIDES.BID
 
-      const order = new Order({ orderId, createdAt, baseAmount, counterAmount, side })
+      const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side })
 
       expect(order).to.have.property('price')
       expect(order.price).to.be.eql(counterAmount / baseAmount)
