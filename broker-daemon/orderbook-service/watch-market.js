@@ -22,7 +22,7 @@ async function watchMarket ({ params, send, logger, orderbooks }, { WatchMarketR
   const { market } = params
   const orderbook = orderbooks.get(market)
   const liveStream = createLiveStream(orderbook.store)
-  const DB_ACTIONS = { DEL: 'del', PUT: 'put' }
+  const DB_ACTIONS = { DELETE: 'del', ADD: 'put' }
   liveStream
     .on('data', (opts) => {
       if (opts === undefined) {
@@ -34,15 +34,15 @@ async function watchMarket ({ params, send, logger, orderbooks }, { WatchMarketR
         // old events have been added to the stream before any new events are added to the stream.)
       } else {
         logger.info(`New event being added to stream, event info: ${opts}`)
-        if (opts.type === DB_ACTIONS.DEL) {
+        if (opts.type === DB_ACTIONS.DELETE) {
           params = {
-            type: WatchMarketResponse.EventType.DEL,
+            type: WatchMarketResponse.EventType.DELETE,
             marketEvent: { orderId: opts.key }
           }
         } else {
           const parsedValue = JSON.parse(opts.value)
           params = {
-            type: WatchMarketResponse.EventType.PUT,
+            type: WatchMarketResponse.EventType.ADD,
             marketEvent: {
               orderId: opts.key,
               baseAmount: bigInt(parsedValue.baseAmount).toString(),

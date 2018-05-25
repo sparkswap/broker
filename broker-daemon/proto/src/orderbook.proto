@@ -11,8 +11,8 @@ message WatchMarketResponse {
 
   enum EventType {
 
-      DEL = 1;
-      PUT = 2;
+      ADD = 1;
+      DELETE = 2;
   }
 }
 

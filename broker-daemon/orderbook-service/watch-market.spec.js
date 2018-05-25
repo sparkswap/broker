@@ -34,7 +34,7 @@ describe('watchMarket', () => {
     store = sinon.stub()
     orderbooks = new Map([['BTC/LTC', { store: store }]])
     WatchMarketResponse = sinon.stub()
-    WatchMarketResponse.EventType = { PUT: 'PUT', DEL: 'DEL' }
+    WatchMarketResponse.EventType = { ADD: 'ADD', DELETE: 'DELETE' }
     createLiveStream = sinon.stub().returns(liveStream)
     revertFunction = watchMarket.__set__('createLiveStream', createLiveStream)
   })
@@ -71,7 +71,7 @@ describe('watchMarket', () => {
     await delay(10)
     expect(sendStub).to.have.been.calledOnce()
     expect(WatchMarketResponse).to.have.been.calledOnce()
-    expect(WatchMarketResponse).to.have.been.calledWith({type: 'PUT', marketEvent: marketEvent})
+    expect(WatchMarketResponse).to.have.been.calledWith({type: 'ADD', marketEvent: marketEvent})
   })
 
   it('sends delete events if type is del', async () => {
@@ -87,6 +87,6 @@ describe('watchMarket', () => {
     await delay(10)
     expect(sendStub).to.have.been.calledOnce()
     expect(WatchMarketResponse).to.have.been.calledOnce()
-    expect(WatchMarketResponse).to.have.been.calledWith({type: 'DEL', marketEvent: marketEvent})
+    expect(WatchMarketResponse).to.have.been.calledWith({type: 'DELETE', marketEvent: marketEvent})
   })
 })

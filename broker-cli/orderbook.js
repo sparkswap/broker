@@ -95,7 +95,7 @@ async function orderbook (args, opts, logger) {
     watchOrder.on('data', (order) => {
       const { orderId, baseAmount, counterAmount, side } = order.marketEvent
       const { type } = order
-      if (type === BrokerDaemonClient.prototype.proto.WatchMarketResponse.EventType.DEL) {
+      if (type === BrokerDaemonClient.prototype.proto.WatchMarketResponse.EventType.DELETE) {
         asks.delete(orderId)
         bids.delete(orderId)
       } else {

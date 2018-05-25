@@ -42,7 +42,7 @@ describe('orderbook', () => {
     brokerStub.prototype.watchMarket = watchMarketStub
     brokerStub.prototype.proto = {
       WatchMarketResponse: {
-        EventType: { PUT: 'PUT', DEL: 'DEL' }
+        EventType: { ADD: 'ADD', DELETE: 'DELETE' }
       }
     }
 
@@ -89,7 +89,7 @@ describe('orderbook', () => {
   })
 
   it('adds a bid to the UI', async () => {
-    const addEvent = { type: 'PUT', marketEvent: { orderId: 'orderId', counterAmount: '1000', baseAmount: '10', side: 'BID' } }
+    const addEvent = { type: 'ADD', marketEvent: { orderId: 'orderId', counterAmount: '1000', baseAmount: '10', side: 'BID' } }
     stream.on.withArgs('data').callsArgWithAsync(1, addEvent)
     orderbook(args, opts, logger)
 
@@ -100,7 +100,7 @@ describe('orderbook', () => {
   })
 
   it('adds an ask to the UI', async () => {
-    const addEvent = { type: 'PUT', marketEvent: { orderId: 'orderId', counterAmount: '1000', baseAmount: '10', side: 'ASK' } }
+    const addEvent = { type: 'ADD', marketEvent: { orderId: 'orderId', counterAmount: '1000', baseAmount: '10', side: 'ASK' } }
     stream.on.withArgs('data').callsArgWithAsync(1, addEvent)
     orderbook(args, opts, logger)
 
