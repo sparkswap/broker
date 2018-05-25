@@ -33,6 +33,7 @@ rm -f ./docker/LND-README.md
 
 echo "Installing lnd-engine"
 git clone git@github.com:kinesis-exchange/lnd-engine.git ./node_modules/lnd-engine
+(cd ./node_modules/lnd-engine && git checkout feature/thick)
 # Remove git file or npm will complain
 rm -rf ./node_modules/lnd-engine/.git
 
@@ -42,7 +43,6 @@ cp ./node_modules/lnd-engine/docker-compose.yml ./docker/lnd-docker-compose.yml
 
 # Rename the readme file for docker
 mv ./docker/README.md ./docker/LND-README.md
-
 
 echo "Rebuilding all broker related docker containers/services"
 docker-compose build --force-rm
