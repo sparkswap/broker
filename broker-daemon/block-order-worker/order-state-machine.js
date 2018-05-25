@@ -94,14 +94,12 @@ const OrderStateMachine = StateMachine.factory({
 
       try {
         this.order.addCreatedParams(await this.relayer.createOrder(this.order.createParams))
-      } catch(e) {
-        console.log("caught error in onBeforeCreate, rethrowing")
+      } catch (e) {
+        console.log('caught error in onBeforeCreate, rethrowing')
         throw e
       }
 
       this.logger.info(`Created order ${this.order.orderId} on the relayer`)
-
-      return
     }
   }
 })
