@@ -1,4 +1,6 @@
 const StateMachine = require('javascript-state-machine')
+const { Order } = require('../models')
+
 /**
  * @class Finite State Machine for managing order lifecycle
  */
@@ -25,13 +27,13 @@ const OrderStateMachine = StateMachine.factory({
    * So we pass it all the objects we'll need later.
    *
    * @param  {sublevel} options.store         Sublevel partition for storing this order in
-   * @param  {Object} options.logger  
+   * @param  {Object} options.logger
    * @param  {RelayerClient} options.relayer
    * @param  {Engine} options.engine
    * @return {Object}                         Data to attach to the state machine
    */
   data: function ({ store, logger, relayer, engine }) {
-    return { store, logger, relayer, engine, payload: {} }
+    return { store, logger, relayer, engine, order: {} }
   },
   methods: {
     onBeforeTransition: function (lifecycle) {
@@ -56,16 +58,12 @@ const OrderStateMachine = StateMachine.factory({
 
       if (lifecycle.to === 'none') {
         this.logger.debug('Skipping database save for the \'none\' state')
+        return
       }
 
-      const value = JSON.stringify({
-        state: this.state,
-        payload: this.payload
-      })
+      await this.store.put(this.order.key, Object.assign(this.order.valueObject, { __state: this.state }))
 
-      await this.store.put(this.id, value)
-
-      this.logger.debug('Saved state machine in store', { id: this.id })
+      this.logger.debug('Saved state machine in store', { orderId: this.order.orderId })
     },
     onAfterTransition: function (lifecycle) {
       this.logger.info(`AFTER: ${lifecycle.transition}`)
@@ -78,7 +76,7 @@ const OrderStateMachine = StateMachine.factory({
      * This function gets called before the `create` transition (triggered by a call to `create`)
      * Actual creation is done in `onBeforeCreate` so that the transition can be cancelled if creation
      * on the Relayer fails.
-     * 
+     *
      * @param  {Object} lifecycle             Lifecycle object passed by javascript-state-machine
      * @param  {String} options.side          Side of the market being taken (i.e. BID or ASK)
      * @param  {String} options.baseSymbol    Base symbol (e.g. BTC)
@@ -92,30 +90,18 @@ const OrderStateMachine = StateMachine.factory({
       const payTo = `ln:${await this.engine.info.publicKey()}`
       const ownerId = 'TODO: create real owner ids'
 
-      this.payload.payTo = payTo
-      this.payload.ownerId = ownerId
-      this.payload.side = side
-      this.payload.baseSymbol = baseSymbol
-      this.payload.counterSymbol = counterSymbol
-      this.payload.baseAmount = baseAmount
-      this.payload.counterAmount = counterAmount
+      this.order = new Order({ baseSymbol, counterSymbol, side, baseAmount, counterAmount, payTo, ownerId })
 
-      const { orderId, feePaymentRequest, depositPaymentRequest } = await this.relayer.createOrder({
-        payTo,
-        ownerId,
-        side,
-        baseSymbol,
-        counterSymbol,
-        baseAmount,
-        counterAmount
-      })
+      try {
+        this.order.addCreatedParams(await this.relayer.createOrder(this.order.createParams))
+      } catch(e) {
+        console.log("caught error in onBeforeCreate, rethrowing")
+        throw e
+      }
 
-      this.logger.info(`Created order ${orderId} on the relayer`)
+      this.logger.info(`Created order ${this.order.orderId} on the relayer`)
 
-      this.payload.orderId = orderId
-      this.id = orderId
-      this.payload.feePaymentRequest = feePaymentRequest
-      this.payload.depositPaymentRequest = depositPaymentRequest
+      return
     }
   }
 })
@@ -124,7 +110,7 @@ const OrderStateMachine = StateMachine.factory({
  * Instantiate and create an order
  * @param  {Object} initParams   Params to pass to the OrderStateMachine constructor (also to the `data` function)
  * @param  {Object} createParams Params to pass to the create method (also to the `onBeforeCreate` method)
- * @return {OrderStateMachine}
+ * @return {Promise<OrderStateMachine>}
  */
 OrderStateMachine.create = async function (initParams, createParams) {
   const osm = new OrderStateMachine(initParams)
@@ -145,10 +131,9 @@ OrderStateMachine.fromStore = function (initParams, { key, value }) {
 
   const orderStateMachine = new OrderStateMachine(initParams)
 
-  orderStateMachine.id = key
-  Object.assign(orderStateMachine.payload, parsedValue.payload)
+  orderStateMachine.order = Order.fromObject(key, parsedValue)
 
-  orderStateMachine.goto(parsedValue.state)
+  orderStateMachine.goto(parsedValue.__state)
 
   return orderStateMachine
 }

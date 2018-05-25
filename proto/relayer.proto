@@ -37,8 +37,8 @@ message CreateOrderRequest {
 message CreateOrderResponse {
 
     string order_id = 0;
-    string fee_payment_request = 1;
-    string deposit_payment_request = 2;
+    string fee_request = 1;
+    string deposit_request = 2;
 }
 
 message PlaceOrderRequest {

@@ -1,7 +1,7 @@
 const path = require('path')
 const { expect, rewire } = require('test/test-helper')
 
-const MarketEventOrder = rewire(path.resolve('broker-daemon', 'models', 'markt-event-order'))
+const MarketEventOrder = rewire(path.resolve('broker-daemon', 'models', 'market-event-order'))
 
 describe('MarketEventOrder', () => {
   let MarketEvent

@@ -7,7 +7,6 @@ const OrderStateMachine = require('./order-state-machine')
  * @class Create and work Block Orders
  */
 class BlockOrderWorker extends EventEmitter {
-
   /**
    * Create a new BlockOrderWorker instance
    * @param  {Map} options.orderbooks         Collection of all active Orderbooks
@@ -29,15 +28,15 @@ class BlockOrderWorker extends EventEmitter {
     // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
     this.on('error', (err) => {
       this.logger.error('BlockOrderWorker: error encountered', { message: err.message, stack: err.stack })
-      if(!err) {
+      if (!err) {
         this.logger.error('BlockOrderWorker: error event triggered with no error')
       }
     })
 
     this.on('blockOrder:create', async (blockOrder) => {
       try {
-        this.workBlockOrder(blockOrder)
-      } catch(err) {
+        await this.workBlockOrder(blockOrder)
+      } catch (err) {
         this.emit('error', err)
       }
     })
