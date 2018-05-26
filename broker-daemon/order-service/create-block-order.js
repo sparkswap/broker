@@ -55,9 +55,9 @@ async function createBlockOrder ({ params, relayer, logger, orderbooks }, { Crea
     side
   }
 
-  const order = await relayer.createBlockOrder(request)
+  const order = await relayer.createOrder(request)
 
-  return new CreateBlockOrderResponse({ orderId: order.orderId })
+  return new CreateBlockOrderResponse({ blockOrderId: order.orderId })
 }
 
 module.exports = createBlockOrder
