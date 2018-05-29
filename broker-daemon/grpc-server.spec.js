@@ -16,6 +16,7 @@ describe('GrpcServer', () => {
   let walletService
   let RelayerClient
   let Orderbook
+  let BlockOrderWorker
   let pathResolve
   let protoPath
   let LndEngine
@@ -73,6 +74,9 @@ describe('GrpcServer', () => {
     Orderbook = sinon.stub()
     Orderbook.prototype.initialize = sinon.stub()
     GrpcServer.__set__('Orderbook', Orderbook)
+
+    BlockOrderWorker = sinon.stub()
+    GrpcServer.__set__('BlockOrderWorker', BlockOrderWorker)
 
     store = {
       sublevel: sinon.stub()
@@ -224,9 +228,52 @@ describe('GrpcServer', () => {
       expect(server.orderbooks).to.be.eql(new Map())
     })
 
-    xit('creates a BlockOrderWorker')
+    it('creates a BlockOrderWorker', () => {
+      const server = new GrpcServer(null, store)
 
-    xit('assigns the BlockOrderWorker')
+      expect(BlockOrderWorker).to.have.been.calledOnce()
+      expect(BlockOrderWorker).to.have.been.calledWithNew()
+    })
+
+    it('creates a sublevel for block orders', () => {
+      const fakeBlockOrderSublevel = sinon.stub()
+      store.sublevel.withArgs('block-orders').returns(fakeBlockOrderSublevel)
+      const server = new GrpcServer(null, store)
+
+      expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ store: fakeBlockOrderSublevel }))
+    })
+
+    it('provides the relayer to the BlockOrderWorker', () => {
+      const server = new GrpcServer(null, store)
+
+      expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ relayer: sinon.match.instanceOf(RelayerClient) }))
+    })
+
+    it('provides the engine to the BlockOrderWorker', () => {
+      const server = new GrpcServer(null, store)
+
+      expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ engine: sinon.match.instanceOf(LndEngine) }))
+    })
+
+    it('provides the orderbooks to the BlockOrderWorker', () => {
+      const server = new GrpcServer(null, store)
+
+      expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ orderbooks: sinon.match.instanceOf(Map) }))
+    })
+
+    it('provides the logger to the BlockOrderWorker', () => {
+      const logger = 'mylogger'
+      const server = new GrpcServer(logger, store)
+
+      expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ logger: logger }))
+    })
+
+    it('assigns the BlockOrderWorker', () => {
+      const server = new GrpcServer(null, store)
+
+      expect(server).to.have.property('blockOrderWorker')
+      expect(server.blockOrderWorker).to.be.instanceOf(BlockOrderWorker)
+    })
 
     it('defines a #listen method', () => {
       const server = new GrpcServer(null, store)
