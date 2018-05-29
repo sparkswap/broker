@@ -97,10 +97,10 @@ describe('orderbook', () => {
     await delay(10)
 
     expect(createUIStub).to.have.been.calledTwice()
-    expect(createUIStub).to.have.been.calledWith(market, [], [{ depth: 0.00000010, price: bigInt(100) }])
+    expect(createUIStub).to.have.been.calledWith(market, [], [{ depth: bigInt(10), price: bigInt(100) }])
   })
 
-  it.only('adds a bid with a large counter amount', async () => {
+  it('adds a bid with a large counter amount', async () => {
     const addEvent = { type: 'ADD', marketEvent: { orderId: 'orderId', counterAmount: '922337203685477580733', baseAmount: '10', side: 'BID' } }
     const expectedValue = bigInt(addEvent.marketEvent.counterAmount).divide(bigInt(addEvent.marketEvent.baseAmount))
     stream.on.withArgs('data').callsArgWithAsync(1, addEvent)
@@ -108,7 +108,7 @@ describe('orderbook', () => {
 
     await delay(10)
 
-    expect(createUIStub).to.have.been.calledWith(market, [], [{ depth: 0.00000010, price: expectedValue }])
+    expect(createUIStub).to.have.been.calledWith(market, [], [{ depth: bigInt(10), price: expectedValue }])
   })
 
   it('adds an ask to the UI', async () => {
@@ -119,7 +119,7 @@ describe('orderbook', () => {
     await delay(10)
 
     expect(createUIStub).to.have.been.calledTwice()
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: 0.00000010, price: bigInt(100) }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ depth: bigInt(10), price: bigInt(100) }], [])
   })
 
   it('sorts bids and asks by price', async () => {
@@ -145,11 +145,11 @@ describe('orderbook', () => {
 
     expect(createUIStub).to.have.been.calledWith(
       market, [
-        { depth: 0.00000010, price: bigInt(100) },
-        { depth: 0.00000010, price: bigInt(1000) }
+        { depth: bigInt(10), price: bigInt(100) },
+        { depth: bigInt(10), price: bigInt(1000) }
       ], [
-        { depth: 0.00000010, price: bigInt(1000) },
-        { depth: 0.00000010, price: bigInt(100) }
+        { depth: bigInt(10), price: bigInt(1000) },
+        { depth: bigInt(10), price: bigInt(100) }
       ])
   })
 
@@ -172,8 +172,8 @@ describe('orderbook', () => {
     await delay(100)
 
     expect(createUIStub).to.have.been.calledWith(market, [], [])
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: 0.00000010, price: bigInt(100) }], [])
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: 0.00000010, price: bigInt(100) }, { depth: 0.00000010, price: bigInt(1000) }], [])
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: 0.00000010, price: bigInt(1000) }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ depth: bigInt(10), price: bigInt(100) }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ depth: bigInt(10), price: bigInt(100) }, { depth: bigInt(10), price: bigInt(1000) }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ depth: bigInt(10), price: bigInt(1000) }], [])
   })
 })

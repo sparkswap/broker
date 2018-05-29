@@ -42,7 +42,7 @@ function createUI (market, asks, bids) {
         // TODO: pull the 8 out of here and make it per-currency configuration
         // TODO: make display of amounts consistent with inputs (buys, prices, etc)
         let price = String(` ${orders[i].price} `)
-        let depth = String(` ${orders[i].depth.toFixed(8)} `)
+        let depth = String(` ${orders[i].depth} `)
 
         row[index] = [price, depth].map((field, j) => {
           while (field.length < 17) {
@@ -132,8 +132,7 @@ async function orderbook (args, opts, logger) {
 
 function calculatePriceandDepth (order) {
   let price = (order.counterAmount.divide(order.baseAmount))
-  let depth = order.baseAmount * 1e-8
-  return {price, depth}
+  return {price, depth: order.baseAmount}
 }
 
 module.exports = (program) => {
