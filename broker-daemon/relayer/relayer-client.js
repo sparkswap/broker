@@ -37,6 +37,7 @@ class RelayerClient {
     this.maker = new this.proto.MakerService(this.address, grpc.credentials.createInsecure())
     this.orderbook = new this.proto.OrderBookService(this.address, grpc.credentials.createInsecure())
     this.health = new this.proto.HealthService(this.address, grpc.credentials.createInsecure())
+    this.paymentNetwork = new this.proto.PaymentNetworkService(this.address, grpc.credentials.createInsecure())
   }
 
   /**
@@ -123,6 +124,15 @@ class RelayerClient {
 
     return new Promise((resolve, reject) => {
       this.health.check({}, { deadline }, (err, res) => {
+        if (err) return reject(err)
+        return resolve(res)
+      })
+    })
+  }
+
+  publicKey () {
+    return new Promise((resolve, reject) => {
+      this.paymentNetwork.getPublicKey({}, { deadline: grpcDeadline() }, (err, res) => {
         if (err) return reject(err)
         return resolve(res)
       })

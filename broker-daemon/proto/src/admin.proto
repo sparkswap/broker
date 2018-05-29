@@ -7,6 +7,15 @@ message HealthCheckResponse {
   string relayer_status = 1;
 }
 
+message OpenChannelRequest {
+  optional int64 funding_amount = 0;
+}
+
+message OpenChannelResponse {
+  string success = 0;
+}
+
 service AdminService {
   rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
+  rpc OpenChannel (OpenChannelRequest) returns (OpenChannelResponse);
 }

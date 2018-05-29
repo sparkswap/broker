@@ -11,7 +11,7 @@ describe('get-balance', () => {
 
   before(() => {
     logger = sinon.stub()
-    expectedResponse = { totalBalance: 1000 }
+    expectedResponse = 1000
     walletBalanceStub = sinon.stub().returns(expectedResponse)
     balanceResponseStub = sinon.stub()
 
@@ -29,8 +29,6 @@ describe('get-balance', () => {
   })
 
   it('constructs a BalanceResponse', () => {
-    expect(balanceResponseStub).to.have.been.calledWith(
-      sinon.match({ balance: expectedResponse.totalBalance })
-    )
+    expect(balanceResponseStub).to.have.been.calledWith({ balance: expectedResponse })
   })
 })

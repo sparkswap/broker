@@ -60,6 +60,11 @@ services:
       service: lnd_btc
     build:
       context: ./docker
+    environment:
+      - LISTEN=0.0.0.0:10211
+      - EXTERNAL_ADDRESS=docker.for.mac.host.internal:10211
+    ports:
+      - '10211:10211'
 
   btcd:
     extends:
