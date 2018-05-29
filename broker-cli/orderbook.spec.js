@@ -100,6 +100,17 @@ describe('orderbook', () => {
     expect(createUIStub).to.have.been.calledWith(market, [], [{ depth: 0.00000010, price: bigInt(100) }])
   })
 
+  it.only('adds a bid with a large counter amount', async () => {
+    const addEvent = { type: 'ADD', marketEvent: { orderId: 'orderId', counterAmount: '922337203685477580733', baseAmount: '10', side: 'BID' } }
+    const expectedValue = bigInt(addEvent.marketEvent.counterAmount).divide(bigInt(addEvent.marketEvent.baseAmount))
+    stream.on.withArgs('data').callsArgWithAsync(1, addEvent)
+    orderbook(args, opts, logger)
+
+    await delay(10)
+
+    expect(createUIStub).to.have.been.calledWith(market, [], [{ depth: 0.00000010, price: expectedValue }])
+  })
+
   it('adds an ask to the UI', async () => {
     const addEvent = { type: 'ADD', marketEvent: { orderId: 'orderId', counterAmount: '1000', baseAmount: '10', side: 'ASK' } }
     stream.on.withArgs('data').callsArgWithAsync(1, addEvent)

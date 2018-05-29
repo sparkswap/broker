@@ -41,7 +41,7 @@ function createUI (market, asks, bids) {
       if (orders[i]) {
         // TODO: pull the 8 out of here and make it per-currency configuration
         // TODO: make display of amounts consistent with inputs (buys, prices, etc)
-        let price = String(` ${orders[i].price.toJSNumber().toFixed(8)} `)
+        let price = String(` ${orders[i].price} `)
         let depth = String(` ${orders[i].depth.toFixed(8)} `)
 
         row[index] = [price, depth].map((field, j) => {
@@ -109,8 +109,8 @@ async function orderbook (args, opts, logger) {
 
       let transformedAsks = Array.from(asks.values()).map(ask => { return calculatePriceandDepth(ask) })
       let transformedBids = Array.from(bids.values()).map(bid => { return calculatePriceandDepth(bid) })
-      let sortedAsks = transformedAsks.sort(function (a, b) { return (a.price - b.price) })
-      let sortedBids = transformedBids.sort(function (a, b) { return (b.price - a.price) })
+      let sortedAsks = transformedAsks.sort(function (a, b) { return (a.price.subtract(b.price)) })
+      let sortedBids = transformedBids.sort(function (a, b) { return (b.price.subtract(a.price)) })
       console.clear()
       createUI(market, sortedAsks, sortedBids)
     })
@@ -132,7 +132,7 @@ async function orderbook (args, opts, logger) {
 
 function calculatePriceandDepth (order) {
   let price = (order.counterAmount.divide(order.baseAmount))
-  let depth = (order.baseAmount * 1e-8)
+  let depth = order.baseAmount * 1e-8
   return {price, depth}
 }
 
