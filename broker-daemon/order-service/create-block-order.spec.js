@@ -3,7 +3,7 @@ const { expect, rewire, sinon } = require('test/test-helper')
 
 const createBlockOrder = rewire(path.resolve(__dirname, 'create-block-order'))
 
-describe.only('createBlockOrder', () => {
+describe('createBlockOrder', () => {
   let PublicError
   let CreateBlockOrderResponse
   let blockOrderWorker
