@@ -30,7 +30,7 @@ async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrde
     throw new PublicError('Only Good-til-cancelled orders are currently supported')
   }
 
-  const orderId = await blockOrderWorker.createBlockOrder({
+  const blockOrderId = await blockOrderWorker.createBlockOrder({
     marketName: market,
     side: side,
     amount,
@@ -38,7 +38,7 @@ async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrde
     timeInForce: 'GTC'
   })
 
-  return new CreateBlockOrderResponse({ blockOrderId: orderId })
+  return new CreateBlockOrderResponse({ blockOrderId })
 }
 
 module.exports = createBlockOrder
