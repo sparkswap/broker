@@ -5,6 +5,7 @@ const {
   expect,
   delay
 } = require('test/test-helper')
+const bigInt = require('big-integer')
 
 const programPath = path.resolve('broker-cli', 'orderbook')
 const program = rewire(programPath)
@@ -59,8 +60,8 @@ describe('orderbook', () => {
     revert()
   })
 
-  it('makes a request to the broker', () => {
-    orderbook(args, opts, logger)
+  it('makes a request to the broker', async () => {
+    await orderbook(args, opts, logger)
     expect(watchMarketStub).to.have.been.called()
   })
 
@@ -96,7 +97,7 @@ describe('orderbook', () => {
     await delay(10)
 
     expect(createUIStub).to.have.been.calledTwice()
-    expect(createUIStub).to.have.been.calledWith(market, [], [{ depth: '0.00000010', price: '100.00000000' }])
+    expect(createUIStub).to.have.been.calledWith(market, [], [{ depth: 0.00000010, price: bigInt(100) }])
   })
 
   it('adds an ask to the UI', async () => {
@@ -107,7 +108,7 @@ describe('orderbook', () => {
     await delay(10)
 
     expect(createUIStub).to.have.been.calledTwice()
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: '0.00000010', price: '100.00000000' }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ depth: 0.00000010, price: bigInt(100) }], [])
   })
 
   it('sorts bids and asks by price', async () => {
@@ -133,11 +134,11 @@ describe('orderbook', () => {
 
     expect(createUIStub).to.have.been.calledWith(
       market, [
-        { depth: '0.00000010', price: '100.00000000' },
-        { depth: '0.00000010', price: '1000.00000000' }
+        { depth: 0.00000010, price: bigInt(100) },
+        { depth: 0.00000010, price: bigInt(1000) }
       ], [
-        { depth: '0.00000010', price: '1000.00000000' },
-        { depth: '0.00000010', price: '100.00000000' }
+        { depth: 0.00000010, price: bigInt(1000) },
+        { depth: 0.00000010, price: bigInt(100) }
       ])
   })
 
@@ -160,8 +161,8 @@ describe('orderbook', () => {
     await delay(100)
 
     expect(createUIStub).to.have.been.calledWith(market, [], [])
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: '0.00000010', price: '100.00000000' }], [])
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: '0.00000010', price: '100.00000000' }, { depth: '0.00000010', price: '1000.00000000' }], [])
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: '0.00000010', price: '1000.00000000' }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ depth: 0.00000010, price: bigInt(100) }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ depth: 0.00000010, price: bigInt(100) }, { depth: 0.00000010, price: bigInt(1000) }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ depth: 0.00000010, price: bigInt(1000) }], [])
   })
 })

@@ -41,8 +41,8 @@ function createUI (market, asks, bids) {
       if (orders[i]) {
         // TODO: pull the 8 out of here and make it per-currency configuration
         // TODO: make display of amounts consistent with inputs (buys, prices, etc)
-        let price = String(` ${orders[i].price} `)
-        let depth = String(` ${orders[i].depth} `)
+        let price = String(` ${orders[i].pricetoJSNumber().toFixed(8)} `)
+        let depth = String(` ${orders[i].depth.pricetoJSNumber().toFixed(8)} `)
 
         row[index] = [price, depth].map((field, j) => {
           while (field.length < 17) {
@@ -81,7 +81,8 @@ async function orderbook (args, opts, logger) {
   const request = { market }
 
   try {
-    const watchOrder = await new BrokerDaemonClient(rpcAddress).watchMarket(request)
+    const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)
+    const watchOrder = await brokerDaemonClient.watchMarket(request)
     // TODO: We should save orders to an internal DB or figure out a way to store
     // this info instead of in memory?
     // (this probably needs to be done in the daemon itself)
@@ -95,7 +96,7 @@ async function orderbook (args, opts, logger) {
     watchOrder.on('data', (order) => {
       const { orderId, baseAmount, counterAmount, side } = order.marketEvent
       const { type } = order
-      if (type === BrokerDaemonClient.prototype.proto.WatchMarketResponse.EventType.DELETE) {
+      if (type === brokerDaemonClient.proto.WatchMarketResponse.EventType.DELETE) {
         asks.delete(orderId)
         bids.delete(orderId)
       } else {
@@ -130,8 +131,8 @@ async function orderbook (args, opts, logger) {
  */
 
 function calculatePriceandDepth (order) {
-  let price = (order.counterAmount / order.baseAmount).toFixed(8)
-  let depth = (order.baseAmount * 1e-8).toFixed(8)
+  let price = (order.counterAmount.divide(order.baseAmount))
+  let depth = (order.baseAmount * 1e-8)
   return {price, depth}
 }
 
