@@ -41,8 +41,8 @@ function createUI (market, asks, bids) {
       if (orders[i]) {
         // TODO: pull the 8 out of here and make it per-currency configuration
         // TODO: make display of amounts consistent with inputs (buys, prices, etc)
-        let price = String(` ${orders[i].pricetoJSNumber().toFixed(8)} `)
-        let depth = String(` ${orders[i].depth.pricetoJSNumber().toFixed(8)} `)
+        let price = String(` ${orders[i].price.toJSNumber().toFixed(8)} `)
+        let depth = String(` ${orders[i].depth.toJSNumber().toFixed(8)} `)
 
         row[index] = [price, depth].map((field, j) => {
           while (field.length < 17) {
