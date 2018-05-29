@@ -224,6 +224,10 @@ describe('GrpcServer', () => {
       expect(server.orderbooks).to.be.eql(new Map())
     })
 
+    xit('creates a BlockOrderWorker')
+
+    xit('assigns the BlockOrderWorker')
+
     it('defines a #listen method', () => {
       const server = new GrpcServer(null, store)
 
