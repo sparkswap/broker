@@ -109,8 +109,8 @@ async function orderbook (args, opts, logger) {
 
       let transformedAsks = Array.from(asks.values()).map(ask => { return calculatePriceandDepth(ask) })
       let transformedBids = Array.from(bids.values()).map(bid => { return calculatePriceandDepth(bid) })
-      let sortedAsks = transformedAsks.sort(function (a, b) { return (a.price > b.price) ? 1 : ((b.price > a.price) ? -1 : 0) })
-      let sortedBids = transformedBids.sort(function (a, b) { return (a.price < b.price) ? 1 : ((b.price < a.price) ? -1 : 0) })
+      let sortedAsks = transformedAsks.sort(function (a, b) { return (a.price - b.price) })
+      let sortedBids = transformedBids.sort(function (a, b) { return (b.price - a.price) })
       console.clear()
       createUI(market, sortedAsks, sortedBids)
     })
