@@ -33,7 +33,7 @@ class BlockOrderWorker extends EventEmitter {
       }
     })
 
-    this.on('blockOrder:create', async (blockOrder) => {
+    this.on('BlockOrder:create', async (blockOrder) => {
       try {
         await this.workBlockOrder(blockOrder)
       } catch (err) {
@@ -66,7 +66,7 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
 
-    this.emit('blockOrder:create', blockOrder)
+    this.emit('BlockOrder:create', blockOrder)
 
     return id
   }
