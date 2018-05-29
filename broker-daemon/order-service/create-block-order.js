@@ -5,14 +5,13 @@ const { PublicError } = require('grpc-methods')
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Object} request.params - Request parameters from the client
- * @param {Object} request.logger
  * @param {Object} request.blockOrderWorker
  * @param {Object} responses
  * @param {function} responses.CreateBlockOrderResponse - constructor for CreateBlockOrderResponse messages
  * @param {Object} responses.TimeInForce - Time In Force enum
  * @return {responses.CreateBlockOrderResponse}
  */
-async function createBlockOrder ({ params, logger, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce }) {
+async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce }) {
   const {
     amount,
     price,
