@@ -74,6 +74,11 @@ class BlockOrderWorker extends EventEmitter {
     return id
   }
 
+  /**
+   * Get an existing block order
+   * @param  {String} blockOrderId ID of the block order
+   * @return {BlockOrder}
+   */
   async getBlockOrder (blockOrderId) {
     this.logger.info('Getting block order', { id: blockOrderId })
 
