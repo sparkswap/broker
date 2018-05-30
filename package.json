@@ -19,7 +19,7 @@
     "docker-test": "docker-compose exec $npm_package_config_daemon npm test",
     "ci-test": "bash ./scripts/ci-test.sh",
     "start-kbd": "pm2-docker pm2.json --watch",
-    "money": "bash ./setup/fund-simnet-wallet.sh",
+    "fund": "bash ./setup/fund-simnet-wallet.sh",
     "broker-proto": "pbjs -t proto3 admin.proto order.proto orderbook.proto wallet.proto -p ./broker-daemon/proto/src -o ./broker-daemon/proto/broker.proto"
   },
   "standard": {
