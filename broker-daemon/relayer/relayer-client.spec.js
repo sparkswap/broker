@@ -174,7 +174,7 @@ describe('RelayerClient', () => {
     it('errors out when stream creation fails', () => {
       watchMarket.throws(new Error('fake error'))
 
-      return expect(relayer.watchMarket(store, params)).to.be.rejectedWith(Error)
+      return expect(relayer.watchMarket(store, params)).to.eventually.be.rejectedWith(Error)
     })
 
     it('listens for events on the watchMarket stream', async () => {

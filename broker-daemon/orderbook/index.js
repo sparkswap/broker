@@ -1,4 +1,4 @@
-const { MarketEvent, Order } = require('../models')
+const { MarketEvent, MarketEventOrder } = require('../models')
 const { getRecords } = require('../utils')
 
 class Orderbook {
@@ -33,11 +33,11 @@ class Orderbook {
   /**
    * Returns all records in the current orderbook
    *
-   * @returns {Promise<Array>} A promise that resolves an array of Order records
+   * @returns {Promise<Array>} A promise that resolves an array of MarketEventOrder records
    */
   async all () {
     this.logger.info(`Retrieving all records for ${this.marketName}`)
-    return getRecords(this.store, Order.fromStorage.bind(Order))
+    return getRecords(this.store, MarketEventOrder.fromStorage.bind(MarketEventOrder))
   }
 
   /**
@@ -77,7 +77,7 @@ class Orderbook {
         return
       }
       const event = MarketEvent.fromStorage(dbOperation.key, dbOperation.value)
-      const order = Order.fromEvent(event)
+      const order = MarketEventOrder.fromEvent(event)
 
       if (event.eventType === MarketEvent.TYPES.PLACED) {
         add({ key: order.key, value: order.value, type: 'put', prefix: store })

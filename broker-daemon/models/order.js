@@ -1,12 +1,24 @@
-const MarketEvent = require('./market-event')
-
 class Order {
-  constructor ({ orderId, createdAt, baseAmount, counterAmount, side }) {
-    this.orderId = orderId
-    this.createdAt = createdAt
+  constructor ({ baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo }) {
+    this.baseSymbol = baseSymbol
+    this.counterSymbol = counterSymbol
+    this.side = side
     this.baseAmount = baseAmount
     this.counterAmount = counterAmount
-    this.side = side
+    this.ownerId = ownerId
+    this.payTo = payTo
+  }
+
+  addCreatedParams ({ orderId, feePaymentRequest, depositPaymentRequest }) {
+    this.orderId = orderId
+    this.feePaymentRequest = feePaymentRequest
+    this.depositPaymentRequest = depositPaymentRequest
+  }
+
+  get createParams () {
+    const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo } = this
+
+    return { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo }
   }
 
   get key () {
@@ -14,37 +26,53 @@ class Order {
   }
 
   get value () {
-    const { createdAt, baseAmount, counterAmount, side } = this
-    return JSON.stringify({ createdAt, baseAmount, counterAmount, side })
+    return JSON.stringify(this.valueObject)
   }
 
-  // TODO: Better math library to handle this?
-  get price () {
-    return this.counterAmount / this.baseAmount
-  }
+  get valueObject () {
+    const {
+      baseSymbol,
+      counterSymbol,
+      side,
+      baseAmount,
+      counterAmount,
+      ownerId,
+      payTo,
+      feePaymentRequest,
+      depositPaymentRequest
+    } = this
 
-  static fromEvent (event) {
-    const params = {
-      orderId: event.orderId
+    return {
+      baseSymbol,
+      counterSymbol,
+      side,
+      baseAmount,
+      counterAmount,
+      ownerId,
+      payTo,
+      feePaymentRequest,
+      depositPaymentRequest
     }
-
-    if (event.eventType === MarketEvent.TYPES.PLACED) {
-      Object.assign(params, {
-        createdAt: event.timestamp,
-        baseAmount: event.payload.baseAmount,
-        counterAmount: event.payload.counterAmount,
-        side: event.payload.side
-      })
-    }
-
-    return new this(params)
   }
 
   static fromStorage (key, value) {
-    return new this({
-      orderId: key,
-      ...JSON.parse(value)
-    })
+    return this.fromObject(key, JSON.parse(value))
+  }
+
+  static fromObject (key, valueObject) {
+    const orderId = key
+
+    const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo, ...otherParams } = valueObject
+
+    // instantiate with the correct set of params
+    const order = new this({ baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo })
+
+    const { feePaymentRequest, depositPaymentRequest } = otherParams
+
+    // add any (white-listed) leftover params into the object
+    Object.assign(order, { orderId, feePaymentRequest, depositPaymentRequest })
+
+    return order
   }
 }
 
