@@ -60,8 +60,7 @@ describe('OrderStateMachine', () => {
     })
 
     it('does not save a copy in the store', () => {
-      const osm = new OrderStateMachine({ store, logger, relayer, engine })
-
+      new OrderStateMachine({ store, logger, relayer, engine }) // eslint-disable-line
       return expect(store.put).to.not.have.been.called
     })
   })

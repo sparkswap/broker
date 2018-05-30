@@ -41,7 +41,7 @@ describe('createBlockOrder', () => {
       side: 'BID',
       timeInForce: 'GTC'
     }
-    const response = await createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })
+    await createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })
 
     expect(blockOrderWorker.createBlockOrder).to.have.been.calledOnce()
     expect(blockOrderWorker.createBlockOrder).to.have.been.calledWith({ marketName: 'XYZ/ABC', side: 'BID', amount: '100', price: '1000', timeInForce: 'GTC' })
@@ -73,7 +73,7 @@ describe('createBlockOrder', () => {
       side: 'BID',
       timeInForce: 'GTC'
     }
-    const response = await createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })
+    await createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })
 
     expect(CreateBlockOrderResponse).to.have.been.calledOnce()
     expect(CreateBlockOrderResponse).to.have.been.calledWith({ blockOrderId: fakeOrderId })
