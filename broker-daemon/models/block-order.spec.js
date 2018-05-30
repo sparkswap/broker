@@ -105,7 +105,7 @@ describe('BlockOrder', () => {
 
     it('throws if it has an invalid status', () => {
       params.status = 'OOPS'
-      
+
       expect(() => {
         const blockOrder = new BlockOrder(params)
       }).to.throw()

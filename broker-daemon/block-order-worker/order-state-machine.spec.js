@@ -17,7 +17,7 @@ describe('OrderStateMachine', () => {
 
     store = {
       sublevel: sinon.stub(),
-      put: sinon.stub()
+      put: sinon.stub().callsArgAsync(2)
     }
     logger = {
       info: sinon.stub(),

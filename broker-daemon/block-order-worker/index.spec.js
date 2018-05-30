@@ -47,7 +47,7 @@ describe('BlockOrderWorker', () => {
     }
     store = {
       sublevel: sinon.stub().returns(secondLevel),
-      put: sinon.stub()
+      put: sinon.stub().callsArgAsync(2)
     }
     logger = {
       info: sinon.stub(),
@@ -148,7 +148,7 @@ describe('BlockOrderWorker', () => {
 
       expect(BlockOrder).to.have.been.calledOnce()
       expect(BlockOrder).to.have.been.calledWithNew()
-      expect(BlockOrder).to.have.been.calledWith({ id: fakeId, ...params })
+      expect(BlockOrder).to.have.been.calledWith({ id: fakeId, status: BlockOrder.STATUSES.ACTIVE, ...params })
     })
 
     it('saves a block order in the store', async () => {
