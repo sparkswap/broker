@@ -72,12 +72,12 @@ class BlockOrder {
   }
 
   serialize () {
-    const openOrders = (this.openOrders || []).map((order) => {
+    const openOrders = (this.openOrders || []).map((osm) => {
       return {
-        orderId: order.payload.orderId,
-        amount: order.payload.baseAmount,
-        price: bigInt(order.payload.counterAmount).divide(order.payload.baseAmount).toString(),
-        orderStatus: order.state.toUpperCase()
+        orderId: osm.order.orderId,
+        amount: osm.order.baseAmount,
+        price: bigInt(osm.order.counterAmount).divide(osm.order.baseAmount).toString(),
+        orderStatus: osm.state.toUpperCase()
       }
     })
 
