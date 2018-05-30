@@ -244,7 +244,7 @@ describe('BlockOrderWorker', () => {
       expect(bO).to.have.property('openOrders', orders)
     })
 
-    it.only('throws a not found error if no order exists', async () => {
+    it('throws a not found error if no order exists', async () => {
       const BlockOrderNotFoundError = BlockOrderWorker.__get__('BlockOrderNotFoundError')
 
       const err = new Error('fake error')

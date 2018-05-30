@@ -5,6 +5,7 @@ const OrderService = rewire(path.resolve(__dirname))
 
 describe('OrderService', () => {
   let createBlockOrderStub
+  let getBlockOrderStub
 
   let GrpcMethod
   let register
@@ -26,6 +27,7 @@ describe('OrderService', () => {
         service: 'fakeService'
       },
       CreateBlockOrderResponse: sinon.stub(),
+      GetBlockOrderResponse: sinon.stub(),
       TimeInForce: {
         GTC: 0
       }
@@ -47,6 +49,9 @@ describe('OrderService', () => {
 
     createBlockOrderStub = sinon.stub()
     OrderService.__set__('createBlockOrder', createBlockOrderStub)
+
+    getBlockOrderStub = sinon.stub()
+    OrderService.__set__('getBlockOrder', getBlockOrderStub)
   })
 
   beforeEach(() => {
@@ -134,6 +139,49 @@ describe('OrderService', () => {
     it('passes in the enum', () => {
       expect(callArgs[3]).to.be.an('object')
       expect(callArgs[3]).to.have.property('TimeInForce', proto.TimeInForce)
+    })
+  })
+
+  describe('#getBlockOrder', () => {
+    let callOrder = 1
+    let callArgs
+
+    beforeEach(() => {
+      callArgs = GrpcMethod.args[callOrder]
+    })
+
+    it('exposes an implementation', () => {
+      expect(server.implementation).to.have.property('getBlockOrder')
+      expect(server.implementation.getBlockOrder).to.be.a('function')
+    })
+
+    it('creates a GrpcMethod', () => {
+      expect(GrpcMethod).to.have.been.called()
+      expect(GrpcMethod).to.have.been.calledWithNew()
+      expect(server.implementation.getBlockOrder).to.be.equal(fakeRegistered)
+    })
+
+    it('provides the method', () => {
+      expect(callArgs[0]).to.be.equal(getBlockOrderStub)
+    })
+
+    it('provides a message id', () => {
+      expect(callArgs[1]).to.be.equal('[OrderService:getBlockOrder]')
+    })
+
+    describe('request options', () => {
+      it('passes in the logger', () => {
+        expect(callArgs[2]).to.have.property('logger', logger)
+      })
+
+      it('block order worker', () => {
+        expect(callArgs[2]).to.have.property('blockOrderWorker', blockOrderWorker)
+      })
+    })
+
+    it('passes in the response', () => {
+      expect(callArgs[3]).to.be.an('object')
+      expect(callArgs[3]).to.have.property('GetBlockOrderResponse', proto.GetBlockOrderResponse)
     })
   })
 })
