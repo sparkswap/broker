@@ -34,10 +34,12 @@ describe('BlockOrderWorker', () => {
       CANCELLED: 'CANCELLED',
       COMPLETED: 'COMPLETED'
     }
+    BlockOrder.fromStorage = sinon.stub()
     BlockOrderWorker.__set__('BlockOrder', BlockOrder)
 
     OrderStateMachine = sinon.stub()
     OrderStateMachine.create = sinon.stub()
+    OrderStateMachine.getAll = sinon.stub()
     BlockOrderWorker.__set__('OrderStateMachine', OrderStateMachine)
 
     orderbooks = new Map([['BTC/LTC', sinon.stub()]])
@@ -47,7 +49,8 @@ describe('BlockOrderWorker', () => {
     }
     store = {
       sublevel: sinon.stub().returns(secondLevel),
-      put: sinon.stub().callsArgAsync(2)
+      put: sinon.stub().callsArgAsync(2),
+      get: sinon.stub()
     }
     logger = {
       info: sinon.stub(),
@@ -182,6 +185,63 @@ describe('BlockOrderWorker', () => {
 
       expect(eventsEmit).to.have.been.calledOnce()
       expect(eventsEmit).to.have.been.calledWith('BlockOrder:create', sinon.match.instanceOf(BlockOrder))
+    })
+  })
+
+  describe('getBlockOrder', () => {
+    let worker
+    let blockOrder = JSON.stringify({
+      marketName: 'BTC/LTC',
+      side: 'BID',
+      amount: '100',
+      price: '1000'
+    })
+    let blockOrderId = 'fakeId'
+    let orders = [
+      {
+        id: 'someId'
+      }
+    ]
+
+    beforeEach(() => {
+      store.get.callsArgWithAsync(1, null, blockOrder)
+      OrderStateMachine.getAll.resolves(orders)
+      BlockOrder.fromStorage.returns({ id: blockOrderId })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+    })
+
+    it('retrieves a block order from the store', async () => {
+      const fakeId = 'myid'
+      await worker.getBlockOrder(fakeId)
+
+      expect(store.get).to.have.been.calledOnce()
+      expect(store.get).to.have.been.calledWith(fakeId)
+    })
+
+    it('inflates the BlockOrder model', async () => {
+      const fakeId = 'myid'
+      const bO = await worker.getBlockOrder(fakeId)
+
+      expect(BlockOrder.fromStorage).to.have.been.calledOnce()
+      expect(BlockOrder.fromStorage).to.have.been.calledWith(fakeId, blockOrder)
+
+      expect(bO).to.be.have.property('id', blockOrderId)
+    })
+
+    it('retrieves all open orders associated with a block order', async () => {
+      const fakeId = 'myid'
+      const fakeStore = 'mystore'
+      secondLevel.sublevel.returns(fakeStore)
+
+      const bO = await worker.getBlockOrder(fakeId)
+
+      expect(store.sublevel).to.have.been.calledOnce()
+      expect(store.sublevel).to.have.been.calledWith(blockOrderId)
+      expect(secondLevel.sublevel).to.have.been.calledOnce()
+      expect(secondLevel.sublevel).to.have.been.calledWith('orders')
+      expect(OrderStateMachine.getAll).to.have.been.calledOnce()
+      expect(OrderStateMachine.getAll).to.have.been.calledWith(sinon.match({ store: fakeStore }))
+      expect(bO).to.have.property('openOrders', orders)
     })
   })
 
