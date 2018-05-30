@@ -24,6 +24,8 @@ function createUI (market, asks, bids) {
     colWidths: [mainTableWidth, mainTableWidth]
   })
 
+  // The extensive options are required because the default for cli-table is to have
+  // borders between every row and column.
   const innerTableOptions = {
     head: ['Price', 'Depth'],
     style: { head: ['gray'] },
@@ -60,7 +62,6 @@ function createUI (market, asks, bids) {
   // TODO: collapse orders at the same price point into a single line
 
   asks.forEach((ask) => {
-    // TODO: pull the 8 out of here and make it per-currency configuration
     // TODO: make display of amounts consistent with inputs (buys, prices, etc)
     let price = String(` ${ask.price} `)
     let depth = String(` ${ask.depth} `)
@@ -68,7 +69,6 @@ function createUI (market, asks, bids) {
   })
 
   bids.forEach((bid) => {
-    // TODO: pull the 8 out of here and make it per-currency configuration
     // TODO: make display of amounts consistent with inputs (buys, prices, etc)
     let price = String(` ${bid.price} `)
     let depth = String(` ${bid.depth} `)
@@ -102,6 +102,8 @@ async function orderbook (args, opts, logger) {
     // (this probably needs to be done in the daemon itself)
     const bids = new Map()
     const asks = new Map()
+    let sortedAsks = []
+    let sortedBids = []
 
     // Lets initialize the view AND just to be sure, we will clear the view
     console.clear()
@@ -123,14 +125,14 @@ async function orderbook (args, opts, logger) {
 
       let transformedAsks = Array.from(asks.values()).map(ask => { return calculatePriceandDepth(ask) })
       let transformedBids = Array.from(bids.values()).map(bid => { return calculatePriceandDepth(bid) })
-      let sortedAsks = transformedAsks.sort(function (a, b) { return (a.price.compare(b.price)) })
-      let sortedBids = transformedBids.sort(function (a, b) { return (b.price.compare(a.price)) })
+      sortedAsks = transformedAsks.sort(function (a, b) { return (a.price.compare(b.price)) })
+      sortedBids = transformedBids.sort(function (a, b) { return (b.price.compare(a.price)) })
       console.clear()
       createUI(market, sortedAsks, sortedBids)
+    })
 
-      process.stdout.on('resize', function () {
-        createUI(market, sortedAsks, sortedBids)
-      })
+    process.stdout.on('resize', function () {
+      createUI(market, sortedAsks, sortedBids)
     })
 
     watchOrder.on('cancelled', () => logger.info('Stream was cancelled by the server'))
@@ -161,8 +163,10 @@ function calculatePriceandDepth (order) {
  */
 
 function calculateTableWidths (windowWidth) {
-  const mainTableWidth = Math.round((windowWidth - 4) / 2)
-  const innerTableWidth = Math.round((mainTableWidth - 4) / 2)
+  const borderOffset = 4
+  const numTables = 2
+  const mainTableWidth = Math.round((windowWidth - borderOffset) / numTables)
+  const innerTableWidth = Math.round((mainTableWidth - borderOffset) / numTables)
 
   return {mainTableWidth, innerTableWidth}
 }
