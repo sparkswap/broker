@@ -28,6 +28,8 @@ class BlockOrder {
     }
 
     this.status = status
+
+    this.openOrders = []
   }
 
   /**
@@ -76,7 +78,7 @@ class BlockOrder {
    * @return {Object} Object to be serialized into a GRPC message
    */
   serialize () {
-    const openOrders = (this.openOrders || []).map(({ order, state }) => {
+    const openOrders = this.openOrders.map(({ order, state }) => {
       return {
         orderId: order.orderId,
         amount: order.baseAmount,
