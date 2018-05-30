@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-import "common.proto";
-
 enum Side {
   BID = 0;
   ASK = 1;
@@ -52,7 +50,6 @@ message GetBlockOrderRequest {
 
 message GetBlockOrderResponse {
   BlockOrderStatus status = 0;
-  optional Error error = 1;
 
   string market = 10;
   Side side = 11;
