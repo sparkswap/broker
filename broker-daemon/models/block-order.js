@@ -76,12 +76,12 @@ class BlockOrder {
    * @return {Object} Object to be serialized into a GRPC message
    */
   serialize () {
-    const openOrders = (this.openOrders || []).map((osm) => {
+    const openOrders = (this.openOrders || []).map(({ order, state }) => {
       return {
-        orderId: osm.order.orderId,
-        amount: osm.order.baseAmount,
-        price: bigInt(osm.order.counterAmount).divide(osm.order.baseAmount).toString(),
-        orderStatus: osm.state.toUpperCase()
+        orderId: order.orderId,
+        amount: order.baseAmount,
+        price: bigInt(order.counterAmount).divide(order.baseAmount).toString(),
+        orderStatus: state.toUpperCase()
       }
     })
 
