@@ -71,6 +71,7 @@ const OrderStateMachine = StateMachine.factory({
     onTransition: function (lifecycle) {
       this.logger.info(`DURING: ${lifecycle.transition} (from ${lifecycle.from} to ${lifecycle.to})`)
     },
+
     /**
      * Create the order on the relayer during transition.
      * This function gets called before the `create` transition (triggered by a call to `create`)
@@ -87,7 +88,8 @@ const OrderStateMachine = StateMachine.factory({
      */
     onBeforeCreate: async function (lifecycle, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
       // TODO: move payTo translation somewhere else
-      const payTo = `ln:${await this.engine.info.publicKey()}`
+      // TODO: figure out a way to cache the publicKey instead of making a request
+      const payTo = `ln:${await this.engine.getPublicKey()}`
       const ownerId = 'TODO: create real owner ids'
 
       this.order = new Order({ baseSymbol, counterSymbol, side, baseAmount, counterAmount, payTo, ownerId })
