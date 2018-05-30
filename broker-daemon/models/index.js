@@ -1,9 +1,11 @@
 const MarketEvent = require('./market-event')
-const Order = require('./order')
+const MarketEventOrder = require('./market-event-order')
 const BlockOrder = require('./block-order')
+const Order = require('./order')
 
 module.exports = {
   MarketEvent,
-  Order,
-  BlockOrder
+  MarketEventOrder,
+  BlockOrder,
+  Order
 }

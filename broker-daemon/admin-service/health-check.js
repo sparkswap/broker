@@ -16,7 +16,7 @@ const STATUS_CODES = Object.freeze({
  */
 async function getEngineStatus (engine) {
   try {
-    await engine.getInfo()
+    await engine.health.isOK()
     return STATUS_CODES.OK
   } catch (e) {
     return e.toString()

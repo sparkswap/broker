@@ -15,7 +15,7 @@ describe('newDepositAddress', () => {
     newAddressResponse = '12345'
     newAddressStub = sinon.stub().returns(newAddressResponse)
     responseStub = sinon.stub()
-    engine = { newAddress: newAddressStub }
+    engine = { wallet: { newAddress: newAddressStub } }
 
     newDepositAddress({ logger, engine }, { NewDepositAddressResponse: responseStub })
   })

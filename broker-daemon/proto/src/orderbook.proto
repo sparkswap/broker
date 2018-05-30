@@ -5,9 +5,22 @@ message WatchMarketRequest {
 }
 
 message WatchMarketResponse {
-  int64 base_amount = 5;
-  int64 counter_amount = 6;
-  Side side = 8;
+
+  EventType type = 0;
+  MarketEvent market_event = 1;
+
+  enum EventType {
+
+      ADD = 1;
+      DELETE = 2;
+  }
+}
+
+message MarketEvent {
+  string orderId = 0;
+  int64 base_amount = 1;
+  int64 counter_amount = 2;
+  Side side = 3;
 }
 
 service OrderBookService {

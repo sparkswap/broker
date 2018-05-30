@@ -4,7 +4,19 @@ const safeid = require('generate-safe-id')
 const { BlockOrder } = require('../models')
 const OrderStateMachine = require('./order-state-machine')
 
+/**
+ * @class Create and work Block Orders
+ */
 class BlockOrderWorker extends EventEmitter {
+  /**
+   * Create a new BlockOrderWorker instance
+   * @param  {Map} options.orderbooks         Collection of all active Orderbooks
+   * @param  {sublevel} options.store         Sublevel in which to store block orders and child orders
+   * @param  {Object} options.logger
+   * @param  {RelayerClient} options.relayer
+   * @param  {Engine} options.engine
+   * @return {BlockOrderWorker}
+   */
   constructor ({ orderbooks, store, logger, relayer, engine }) {
     super()
     this.orderbooks = orderbooks
@@ -22,15 +34,24 @@ class BlockOrderWorker extends EventEmitter {
       }
     })
 
-    this.on('blockOrder:create', async (blockOrder) => {
+    this.on('BlockOrder:create', async (blockOrder) => {
       try {
-        this.workBlockOrder(blockOrder)
+        await this.workBlockOrder(blockOrder)
       } catch (err) {
         this.emit('error', err)
       }
     })
   }
 
+  /**
+   * Create a new block order
+   * @param  {String} options.marketName  Name of the market to creat the block order in (e.g. BTC/LTC)
+   * @param  {String} options.side        Side of the market to take (e.g. BID or ASK)
+   * @param  {String} options.amount      Amount of base currency (in base units) to transact
+   * @param  {String} options.price       Price at which to transact
+   * @param  {String} options.timeInForce Time restriction (e.g. GTC, FOK)
+   * @return {String}                     ID for the created Block Order
+   */
   async createBlockOrder ({ marketName, side, amount, price, timeInForce }) {
     const id = safeid()
 
@@ -48,7 +69,7 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
 
-    this.emit('blockOrder:create', blockOrder)
+    this.emit('BlockOrder:create', blockOrder)
 
     return id
   }
@@ -72,6 +93,11 @@ class BlockOrderWorker extends EventEmitter {
     return blockOrder
   }
 
+  /**
+   * work a block order that gets created
+   * @param  {BlockOrder} blockOrder Block Order to work
+   * @return {void}
+   */
   async workBlockOrder (blockOrder) {
     this.logger.info('Working block order', { blockOrderId: blockOrder.id })
 
@@ -92,10 +118,9 @@ class BlockOrderWorker extends EventEmitter {
     // TODO: actual sophisticated order handling instead of just pass through
 
     // order params
-    const { baseSymbol, counterSymbol } = orderbook
+    const { baseSymbol, counterSymbol, side } = blockOrder
     const baseAmount = blockOrder.amount.toString()
     const counterAmount = blockOrder.amount.multiply(blockOrder.price).toString()
-    const side = blockOrder.side
 
     // state machine params
     const { relayer, engine, logger } = this

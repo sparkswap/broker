@@ -5,14 +5,13 @@ const { PublicError } = require('grpc-methods')
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Object} request.params - Request parameters from the client
- * @param {Object} request.logger
  * @param {Object} request.blockOrderWorker
  * @param {Object} responses
  * @param {function} responses.CreateBlockOrderResponse - constructor for CreateBlockOrderResponse messages
  * @param {Object} responses.TimeInForce - Time In Force enum
  * @return {responses.CreateBlockOrderResponse}
  */
-async function createBlockOrder ({ params, logger, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce }) {
+async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce }) {
   const {
     amount,
     price,
@@ -31,7 +30,7 @@ async function createBlockOrder ({ params, logger, blockOrderWorker }, { CreateB
     throw new PublicError('Only Good-til-cancelled orders are currently supported')
   }
 
-  const orderId = await blockOrderWorker.createBlockOrder({
+  const blockOrderId = await blockOrderWorker.createBlockOrder({
     marketName: market,
     side: side,
     amount,
@@ -39,7 +38,7 @@ async function createBlockOrder ({ params, logger, blockOrderWorker }, { CreateB
     timeInForce: 'GTC'
   })
 
-  return new CreateBlockOrderResponse({ blockOrderId: orderId })
+  return new CreateBlockOrderResponse({ blockOrderId })
 }
 
 module.exports = createBlockOrder

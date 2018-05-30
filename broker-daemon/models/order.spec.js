@@ -1,23 +1,8 @@
-const path = require('path')
-const { expect, rewire } = require('test/test-helper')
+const { expect } = require('test/test-helper')
 
-const Order = rewire(path.resolve('broker-daemon', 'models', 'order'))
+const Order = require('./order')
 
 describe('Order', () => {
-  let MarketEvent
-
-  before(() => {
-    MarketEvent = {
-      TYPES: {
-        PLACED: 'PLACED',
-        CANCELLED: 'CANCELLED',
-        FILLED: 'FILLED'
-      }
-    }
-
-    Order.__set__('MarketEvent', MarketEvent)
-  })
-
   describe('::SIDES', () => {
     it('defines 2 sides', () => {
       expect(Order).to.have.property('SIDES')
@@ -45,176 +30,206 @@ describe('Order', () => {
     })
 
     it('creates orders from a key and value', () => {
-      const orderId = 'myorder'
-      const createdAt = '12234324235'
-      const baseAmount = 123214234
-      const counterAmount = 123214324
-      const side = Order.SIDES.BID
+      const params = {
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        baseAmount: '10000',
+        counterAmount: '100000',
+        ownerId: 'fakeID',
+        payTo: 'ln:123019230jasofdij'
+      }
+      const orderId = 'myid'
 
-      const key = orderId
-      const value = JSON.stringify({
-        createdAt,
-        baseAmount,
-        counterAmount,
-        side
-      })
+      const order = Order.fromStorage(orderId, JSON.stringify(params))
 
-      const order = Order.fromStorage(key, value)
+      expect(order).to.have.property('orderId', orderId)
+      expect(order).to.have.property('baseSymbol', params.baseSymbol)
+      expect(order).to.have.property('counterSymbol', params.counterSymbol)
+      expect(order).to.have.property('side', params.side)
+      expect(order).to.have.property('baseAmount', params.baseAmount)
+      expect(order).to.have.property('counterAmount', params.counterAmount)
+      expect(order).to.have.property('ownerId', params.ownerId)
+      expect(order).to.have.property('payTo', params.payTo)
+    })
 
-      expect(order).to.have.property('orderId')
-      expect(order.orderId).to.be.eql(orderId)
-      expect(order).to.have.property('createdAt')
-      expect(order.createdAt).to.be.eql(createdAt)
-      expect(order).to.have.property('baseAmount')
-      expect(order.baseAmount).to.be.eql(baseAmount)
-      expect(order).to.have.property('counterAmount')
-      expect(order.counterAmount).to.be.eql(counterAmount)
-      expect(order).to.have.property('side')
-      expect(order.side).to.be.eql(side)
+    it('assigns parameters from after order creation to the order object', () => {
+      const params = {
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        baseAmount: '10000',
+        counterAmount: '100000',
+        ownerId: 'fakeID',
+        payTo: 'ln:123019230jasofdij',
+        feePaymentRequest: 'myrequest',
+        depositPaymentRequest: 'yourrequest'
+      }
+      const orderId = 'myid'
+
+      const order = Order.fromStorage(orderId, JSON.stringify(params))
+
+      expect(order).to.have.property('orderId', orderId)
+      expect(order).to.have.property('feePaymentRequest', params.feePaymentRequest)
+      expect(order).to.have.property('depositPaymentRequest', params.depositPaymentRequest)
     })
   })
 
-  describe('::fromEvent', () => {
-    it('defines a static method for creating orderss from an event', () => {
-      expect(Order).itself.to.respondTo('fromEvent')
+  describe('::fromObject', () => {
+    it('defines a static method for creating orders from a plain object', () => {
+      expect(Order).itself.to.respondTo('fromObject')
     })
 
-    it('creates orders from a PLACED event', () => {
-      const orderId = 'myorder'
-      const createdAt = '12234324235'
-      const baseAmount = 123214234
-      const counterAmount = 123214324
-      const side = Order.SIDES.BID
-
-      const event = {
-        eventId: 'asodifj',
-        orderId,
-        timestamp: createdAt,
-        eventType: MarketEvent.TYPES.PLACED,
-        payload: {
-          baseAmount,
-          counterAmount,
-          side
-        }
+    it('creates Orders from a plain object', () => {
+      const params = {
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        baseAmount: '10000',
+        counterAmount: '100000',
+        ownerId: 'fakeID',
+        payTo: 'ln:123019230jasofdij'
       }
+      const orderId = 'myid'
 
-      const order = Order.fromEvent(event)
+      const order = Order.fromObject(orderId, params)
 
-      expect(order).to.have.property('orderId')
-      expect(order.orderId).to.be.eql(orderId)
-      expect(order).to.have.property('createdAt')
-      expect(order.createdAt).to.be.eql(createdAt)
-      expect(order).to.have.property('baseAmount')
-      expect(order.baseAmount).to.be.eql(baseAmount)
-      expect(order).to.have.property('counterAmount')
-      expect(order.counterAmount).to.be.eql(counterAmount)
-      expect(order).to.have.property('side')
-      expect(order.side).to.be.eql(side)
+      expect(order).to.have.property('orderId', orderId)
+      expect(order).to.have.property('baseSymbol', params.baseSymbol)
+      expect(order).to.have.property('counterSymbol', params.counterSymbol)
+      expect(order).to.have.property('side', params.side)
+      expect(order).to.have.property('baseAmount', params.baseAmount)
+      expect(order).to.have.property('counterAmount', params.counterAmount)
+      expect(order).to.have.property('ownerId', params.ownerId)
+      expect(order).to.have.property('payTo', params.payTo)
     })
 
-    it('creates stub orders from a CANCELLED event', () => {
-      const orderId = 'myorder'
-
-      const event = {
-        eventId: 'asodifj',
-        orderId,
-        timestamp: '123142344',
-        eventType: MarketEvent.TYPES.CANCELLED
+    it('assigns parameters from after order creation to the order object', () => {
+      const params = {
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        baseAmount: '10000',
+        counterAmount: '100000',
+        ownerId: 'fakeID',
+        payTo: 'ln:123019230jasofdij',
+        feePaymentRequest: 'myrequest',
+        depositPaymentRequest: 'yourrequest'
       }
+      const orderId = 'myid'
 
-      const order = Order.fromEvent(event)
+      const order = Order.fromObject(orderId, params)
 
-      expect(order).to.have.property('orderId')
-      expect(order.orderId).to.be.eql(orderId)
-    })
-
-    it('creates stub orders from a FILLED event', () => {
-      const orderId = 'myorder'
-
-      const event = {
-        eventId: 'asodifj',
-        orderId,
-        timestamp: '123142344',
-        eventType: MarketEvent.TYPES.FILLED
-      }
-
-      const order = Order.fromEvent(event)
-
-      expect(order).to.have.property('orderId')
-      expect(order.orderId).to.be.eql(orderId)
+      expect(order).to.have.property('orderId', orderId)
+      expect(order).to.have.property('feePaymentRequest', params.feePaymentRequest)
+      expect(order).to.have.property('depositPaymentRequest', params.depositPaymentRequest)
     })
   })
 
   describe('new', () => {
     it('creates an order', () => {
-      const orderId = 'myorder'
-      const createdAt = '12234324235'
-      const baseAmount = 123214234
-      const counterAmount = 123214324
-      const side = Order.SIDES.BID
+      const params = {
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        baseAmount: '10000',
+        counterAmount: '100000',
+        ownerId: 'fakeID',
+        payTo: 'ln:123019230jasofdij'
+      }
 
-      const order = new Order({ orderId, createdAt, baseAmount, counterAmount, side })
+      const order = new Order(params)
 
-      expect(order).to.have.property('orderId')
-      expect(order.orderId).to.be.eql(orderId)
-      expect(order).to.have.property('createdAt')
-      expect(order.createdAt).to.be.eql(createdAt)
-      expect(order).to.have.property('baseAmount')
-      expect(order.baseAmount).to.be.eql(baseAmount)
-      expect(order).to.have.property('counterAmount')
-      expect(order.counterAmount).to.be.eql(counterAmount)
-      expect(order).to.have.property('side')
-      expect(order.side).to.be.eql(side)
+      expect(order).to.have.property('baseSymbol', params.baseSymbol)
+      expect(order).to.have.property('counterSymbol', params.counterSymbol)
+      expect(order).to.have.property('side', params.side)
+      expect(order).to.have.property('baseAmount', params.baseAmount)
+      expect(order).to.have.property('counterAmount', params.counterAmount)
+      expect(order).to.have.property('ownerId', params.ownerId)
+      expect(order).to.have.property('payTo', params.payTo)
     })
   })
 
-  describe('get key', () => {
-    it('defines a key getter', () => {
-      const orderId = 'myorder'
-      const createdAt = '12234324235'
-      const baseAmount = 123214234
-      const counterAmount = 123214324
-      const side = Order.SIDES.BID
+  describe('instance', () => {
+    let params
+    let order
 
-      const order = new Order({ orderId, createdAt, baseAmount, counterAmount, side })
+    beforeEach(() => {
+      params = {
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        baseAmount: '10000',
+        counterAmount: '100000',
+        ownerId: 'fakeID',
+        payTo: 'ln:123019230jasofdij'
+      }
 
-      expect(order).to.have.property('key')
-      expect(order.key).to.be.eql(orderId)
+      order = new Order(params)
     })
-  })
 
-  describe('get value', () => {
-    it('defines a value getter for storage', () => {
-      const orderId = 'myorder'
-      const createdAt = '12234324235'
-      const baseAmount = 123214234
-      const counterAmount = 123214324
-      const side = Order.SIDES.BID
+    describe('get key', () => {
+      it('defines a key getter', () => {
+        const fakeId = 'fakeId'
+        order.orderId = fakeId
 
-      const order = new Order({ orderId, createdAt, baseAmount, counterAmount, side })
-
-      expect(order).to.have.property('value')
-      expect(order.value).to.be.eql(JSON.stringify({
-        createdAt,
-        baseAmount,
-        counterAmount,
-        side
-      }))
+        expect(order).to.have.property('key', fakeId)
+      })
     })
-  })
 
-  describe('get price', () => {
-    it('defines a price getter', () => {
-      const orderId = 'myorder'
-      const createdAt = '12234324235'
-      const baseAmount = 123214234
-      const counterAmount = 123214324
-      const side = Order.SIDES.BID
+    describe('get value', () => {
+      it('defines a value getter for storage', () => {
+        expect(order).to.have.property('value', JSON.stringify(params))
+      })
+    })
 
-      const order = new Order({ orderId, createdAt, baseAmount, counterAmount, side })
+    describe('get valueObject', () => {
+      it('defines a getter for retrieving a plain object', () => {
+        const valueObject = Object.assign({
+          feePaymentRequest: undefined,
+          depositPaymentRequest: undefined
+        }, params)
+        expect(order).to.have.property('valueObject')
+        expect(order.valueObject).to.be.eql(valueObject)
+      })
+    })
 
-      expect(order).to.have.property('price')
-      expect(order.price).to.be.eql(counterAmount / baseAmount)
+    describe('get createParams', () => {
+      it('defines a getter for params required to create an order on the relayer', () => {
+        expect(order).to.have.property('createParams')
+        expect(order.createParams).to.be.eql({
+          baseSymbol: params.baseSymbol,
+          counterSymbol: params.counterSymbol,
+          side: params.side,
+          baseAmount: params.baseAmount,
+          counterAmount: params.counterAmount,
+          ownerId: params.ownerId,
+          payTo: params.payTo
+        })
+      })
+    })
+
+    describe('#addCreatedParams', () => {
+      let createdParams = {
+        orderId: 'myid',
+        feePaymentRequest: 'myrequest',
+        depositPaymentRequest: 'yourrequest'
+      }
+
+      it('updates the object with the params from creating on the relayer', () => {
+        order.addCreatedParams(createdParams)
+
+        expect(order).to.have.property('orderId', createdParams.orderId)
+        expect(order).to.have.property('feePaymentRequest', createdParams.feePaymentRequest)
+        expect(order).to.have.property('depositPaymentRequest', createdParams.depositPaymentRequest)
+      })
+
+      it('includes the updated params with the saved value', () => {
+        order.addCreatedParams(createdParams)
+
+        expect(order.value).to.include(`"feePaymentRequest":"${createdParams.feePaymentRequest}"`)
+        expect(order.value).to.include(`"depositPaymentRequest":"${createdParams.depositPaymentRequest}"`)
+      })
     })
   })
 })
