@@ -9,7 +9,7 @@
  * @return {responses.GetBalanaceResponse}
  */
 async function getBalance ({ logger, engine }, { GetBalanceResponse }) {
-  const { totalBalance: balance } = await engine.balance.total()
+  const { totalBalance: balance } = await engine.getTotalBalance()
   logger.info(`Received wallet balance: ${balance}`)
   return new GetBalanceResponse({ balance })
 }
