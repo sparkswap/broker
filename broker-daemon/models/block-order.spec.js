@@ -15,7 +15,8 @@ describe('BlockOrder', () => {
         side: 'BID',
         amount: '10000',
         price: '100',
-        timeInForce: 'GTC'
+        timeInForce: 'GTC',
+        status: 'ACTIVE'
       }
       const id = 'myid'
 
@@ -29,6 +30,7 @@ describe('BlockOrder', () => {
       expect(blockOrder).to.have.property('price')
       expect(blockOrder.price.toString()).to.be.equal(params.price)
       expect(blockOrder).to.have.property('timeInForce', params.timeInForce)
+      expect(blockOrder).to.have.property('status', params.status)
     })
   })
 
@@ -42,7 +44,8 @@ describe('BlockOrder', () => {
         side: 'BID',
         amount: '10000',
         price: '100',
-        timeInForce: 'GTC'
+        timeInForce: 'GTC',
+        status: 'ACTIVE'
       }
     })
 
@@ -93,6 +96,20 @@ describe('BlockOrder', () => {
 
       expect(blockOrder).to.have.property('timeInForce', params.timeInForce)
     })
+
+    it('assigns a status', () => {
+      const blockOrder = new BlockOrder(params)
+
+      expect(blockOrder).to.have.property('status', params.status)
+    })
+
+    it('throws if it has an invalid status', () => {
+      params.status = 'OOPS'
+      
+      expect(() => {
+        const blockOrder = new BlockOrder(params)
+      }).to.throw()
+    })
   })
 
   describe('instance', () => {
@@ -106,7 +123,8 @@ describe('BlockOrder', () => {
         side: 'BID',
         amount: '10000',
         price: '100',
-        timeInForce: 'GTC'
+        timeInForce: 'GTC',
+        status: 'ACTIVE'
       }
 
       blockOrder = new BlockOrder(params)

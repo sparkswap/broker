@@ -29,6 +29,11 @@ describe('BlockOrderWorker', () => {
     BlockOrderWorker.__set__('safeid', safeid)
 
     BlockOrder = sinon.stub()
+    BlockOrder.STATUSES = {
+      ACTIVE: 'ACTIVE',
+      CANCELLED: 'CANCELLED',
+      COMPLETED: 'COMPLETED'
+    }
     BlockOrderWorker.__set__('BlockOrder', BlockOrder)
 
     OrderStateMachine = sinon.stub()

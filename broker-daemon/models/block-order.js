@@ -72,7 +72,7 @@ class BlockOrder {
   }
 
   serialize () {
-    const openOrders = (this.openOrders || []).map( (order) => {
+    const openOrders = (this.openOrders || []).map((order) => {
       return {
         orderId: order.payload.orderId,
         amount: order.payload.baseAmount,
