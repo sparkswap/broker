@@ -34,9 +34,9 @@ class RelayerClient {
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
 
     // TODO: we will need to add auth for daemon for a non-local address
-    this.maker = new this.proto.Maker(this.address, grpc.credentials.createInsecure())
-    this.orderbook = new this.proto.OrderBook(this.address, grpc.credentials.createInsecure())
-    this.health = new this.proto.Health(this.address, grpc.credentials.createInsecure())
+    this.maker = new this.proto.MakerService(this.address, grpc.credentials.createInsecure())
+    this.orderbook = new this.proto.OrderBookService(this.address, grpc.credentials.createInsecure())
+    this.health = new this.proto.HealthService(this.address, grpc.credentials.createInsecure())
   }
 
   /**
