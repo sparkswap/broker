@@ -9,7 +9,7 @@
  * @return {responses.NewAddressResponse}
  */
 async function newDepositAddress ({ logger, engine }, { NewDepositAddressResponse }) {
-  const address = await engine.wallet.newAddress()
+  const address = await engine.createNewAddress()
   return new NewDepositAddressResponse({ address })
 }
 

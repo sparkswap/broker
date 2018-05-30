@@ -15,8 +15,7 @@ describe('OrderService', () => {
   let protoPath
   let logger
 
-  let relayer
-  let orderbooks
+  let blockOrderWorker
 
   let server
 
@@ -36,8 +35,7 @@ describe('OrderService', () => {
       error: sinon.stub()
     }
 
-    relayer = sinon.stub()
-    orderbooks = sinon.stub()
+    blockOrderWorker = sinon.stub()
 
     GrpcMethod = sinon.stub()
     fakeRegistered = sinon.stub()
@@ -53,7 +51,7 @@ describe('OrderService', () => {
   })
 
   beforeEach(() => {
-    server = new OrderService(protoPath, { logger, relayer, orderbooks })
+    server = new OrderService(protoPath, { logger, blockOrderWorker })
   })
 
   it('assigns a proto path', () => {
@@ -124,12 +122,8 @@ describe('OrderService', () => {
         expect(callArgs[2]).to.have.property('logger', logger)
       })
 
-      it('relayer', () => {
-        expect(callArgs[2]).to.have.property('relayer', relayer)
-      })
-
-      it('orderbooks', () => {
-        expect(callArgs[2]).to.have.property('orderbooks', orderbooks)
+      it('block order worker', () => {
+        expect(callArgs[2]).to.have.property('blockOrderWorker', blockOrderWorker)
       })
     })
 

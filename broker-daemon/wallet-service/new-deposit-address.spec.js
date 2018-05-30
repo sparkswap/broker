@@ -15,12 +15,12 @@ describe('newDepositAddress', () => {
     newAddressResponse = '12345'
     newAddressStub = sinon.stub().returns(newAddressResponse)
     responseStub = sinon.stub()
-    engine = { wallet: { newAddress: newAddressStub } }
+    engine = { createNewAddress: newAddressStub }
 
     newDepositAddress({ logger, engine }, { NewDepositAddressResponse: responseStub })
   })
 
-  it('calls an engine with newDepositAddress', () => {
+  it('calls an engine with createNewAddress', () => {
     expect(newAddressStub).to.have.been.called()
   })
 
