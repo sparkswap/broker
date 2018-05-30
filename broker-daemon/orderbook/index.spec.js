@@ -11,9 +11,9 @@ describe('Orderbook', () => {
     CANCELLED: 'CANCELLED',
     FILLED: 'FILLED'
   }
-  let OrderFromStorage
-  let OrderFromStorageBind
-  let OrderFromEvent
+  let MarketEventOrderFromStorage
+  let MarketEventOrderFromStorageBind
+  let MarketEventOrderFromEvent
   let getRecords
   let baseStore
   let orderbookStore
@@ -30,13 +30,13 @@ describe('Orderbook', () => {
       TYPES: EventTypes
     })
 
-    OrderFromStorageBind = sinon.stub()
-    OrderFromStorage = sinon.stub()
-    OrderFromStorage.bind = OrderFromStorageBind
-    OrderFromEvent = sinon.stub()
-    Orderbook.__set__('Order', {
-      fromStorage: OrderFromStorage,
-      fromEvent: OrderFromEvent
+    MarketEventOrderFromStorageBind = sinon.stub()
+    MarketEventOrderFromStorage = sinon.stub()
+    MarketEventOrderFromStorage.bind = MarketEventOrderFromStorageBind
+    MarketEventOrderFromEvent = sinon.stub()
+    Orderbook.__set__('MarketEventOrder', {
+      fromStorage: MarketEventOrderFromStorage,
+      fromEvent: MarketEventOrderFromEvent
     })
 
     getRecords = sinon.stub()
@@ -155,7 +155,7 @@ describe('Orderbook', () => {
       }
 
       EventFromStorage.returns(event)
-      OrderFromEvent.returns({
+      MarketEventOrderFromEvent.returns({
         key: orderKey,
         value: orderValue
       })
@@ -199,7 +199,7 @@ describe('Orderbook', () => {
       }
 
       EventFromStorage.returns(event)
-      OrderFromEvent.returns({
+      MarketEventOrderFromEvent.returns({
         key: orderKey,
         value: orderValue
       })
@@ -242,7 +242,7 @@ describe('Orderbook', () => {
       }
 
       EventFromStorage.returns(event)
-      OrderFromEvent.returns({
+      MarketEventOrderFromEvent.returns({
         key: orderKey,
         value: orderValue
       })
@@ -325,7 +325,7 @@ describe('Orderbook', () => {
       const marketName = 'XYZ/ABC'
       const orderbook = new Orderbook(marketName, relayer, baseStore, logger)
       const bound = 'mybind'
-      OrderFromStorageBind.returns(bound)
+      MarketEventOrderFromStorageBind.returns(bound)
 
       const orders = []
       getRecords.resolves(orders)
