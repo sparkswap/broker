@@ -71,6 +71,10 @@ class BlockOrder {
     })
   }
 
+  /**
+   * serialize a block order for transmission via grpc
+   * @return {Object} Object to be serialized into a GRPC message
+   */
   serialize () {
     const openOrders = (this.openOrders || []).map((osm) => {
       return {
