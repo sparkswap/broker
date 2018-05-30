@@ -28,9 +28,7 @@ describe('OrderStateMachine', () => {
       createOrder: sinon.stub()
     }
     engine = {
-      info: {
-        publicKey: sinon.stub()
-      }
+      getPublicKey: sinon.stub()
     }
   })
 
@@ -108,11 +106,11 @@ describe('OrderStateMachine', () => {
 
     it('creates a payTo for the order', async () => {
       const fakeKey = 'mykey'
-      engine.info.publicKey.resolves(fakeKey)
+      engine.getPublicKey.resolves(fakeKey)
 
       await osm.create(params)
 
-      expect(engine.info.publicKey).to.have.been.calledOnce()
+      expect(engine.getPublicKey).to.have.been.calledOnce()
       expect(Order).to.have.been.calledWith(sinon.match({ payTo: `ln:${fakeKey}` }))
     })
 
