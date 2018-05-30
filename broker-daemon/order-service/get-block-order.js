@@ -16,9 +16,16 @@ async function getBlockOrder ({ params, logger, blockOrderWorker }, { GetBlockOr
     blockOrderId
   } = params
 
-  const blockOrder = await blockOrderWorker.getBlockOrder(blockOrderId)
+  try {
+    const blockOrder = await blockOrderWorker.getBlockOrder(blockOrderId)
+    return new GetBlockOrderResponse(blockOrder.serialize())
+  } catch(err) {
+    if(err.notFound) {
+      throw new PublicError(`No Block Order with ID ${blockOrderId}`)
+    }
 
-  return new GetBlockOrderResponse(blockOrder.serialize())
+    throw err
+  }
 }
 
 module.exports = getBlockOrder

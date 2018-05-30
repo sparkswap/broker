@@ -243,6 +243,14 @@ describe('BlockOrderWorker', () => {
       expect(OrderStateMachine.getAll).to.have.been.calledWith(sinon.match({ store: fakeStore }))
       expect(bO).to.have.property('openOrders', orders)
     })
+
+    it('throws a not found error if no order exists', async () => {
+      const err = new Error('fake error')
+      err.notFound = true
+      store.get.callsArgWithAsync(1, err)
+
+      expect(worker.getBlockOrder('fakeId')).to.be.rejectedWith(Error)
+    })
   })
 
   describe('workBlockOrder', () => {

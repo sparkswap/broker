@@ -82,10 +82,18 @@ class BlockOrderWorker extends EventEmitter {
   async getBlockOrder (blockOrderId) {
     this.logger.info('Getting block order', { id: blockOrderId })
 
-    const value = await promisify(this.store.get)(blockOrderId)
+    let value
 
-    if (!value) {
-      throw new Error(`No Block Order found with ID: ${blockOrderId}`)
+    try {
+      value = await promisify(this.store.get)(blockOrderId)
+    } catch (e) {
+      if (e.notFound) {
+        let err = new Error(`No Block Order found with ID: ${blockOrderId}`)
+        err.notFound = true
+        throw err
+      } else {
+        throw e
+      }
     }
 
     const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
