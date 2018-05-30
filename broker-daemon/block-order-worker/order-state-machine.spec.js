@@ -241,6 +241,71 @@ describe('OrderStateMachine', () => {
     })
   })
 
+  describe('::getAll', () => {
+    let getRecords
+    let fakeRecords
+    let fakeOrder
+    let state
+    let store
+    let logger
+
+    beforeEach(() => {
+      state = 'created'
+
+      fakeRecords = [ ['fakeKey', JSON.stringify({
+        my: 'object',
+        __state: state
+      })] ]
+      getRecords = sinon.stub().callsFake((store, eachRecord) => {
+        return new Promise((resolve, reject) => {
+          resolve(fakeRecords.map(([ key, val ]) => eachRecord(key, val)))
+        })
+      })
+
+      OrderStateMachine.__set__('getRecords', getRecords)
+
+      store = {
+        put: sinon.stub()
+      }
+
+      logger = {
+        info: sinon.stub(),
+        debug: sinon.stub(),
+        error: sinon.stub()
+      }
+
+      fakeOrder = 'myorder'
+      Order.fromObject = sinon.stub().returns(fakeOrder)
+    })
+
+    it('gets all records from the store', async () => {
+      await OrderStateMachine.getAll({ store, logger })
+
+      expect(getRecords).to.have.been.calledOnce()
+      expect(getRecords).to.have.been.calledWith(store)
+    })
+
+    it('instantiates an OrderStateMachine for each record', async () => {
+      const osms = await OrderStateMachine.getAll({ store, logger })
+
+      expect(osms).to.have.lengthOf(1)
+      expect(osms[0]).to.be.instanceOf(OrderStateMachine)
+    })
+
+    it('moves the OrderStateMachine to the correct state', async () => {
+      const osms = await OrderStateMachine.getAll({ store, logger })
+
+      expect(osms).to.have.lengthOf(1)
+      expect(osms[0]).to.have.property('state', state)
+    })
+
+    it('assigns the order to the state machine', async () => {
+      const osms = await OrderStateMachine.getAll({ store, logger })
+
+      expect(osms[0].order).to.be.eql(fakeOrder)
+    })
+  })
+
   describe('::fromStore', () => {
     let key
     let state
