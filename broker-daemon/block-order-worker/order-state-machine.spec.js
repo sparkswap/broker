@@ -144,14 +144,14 @@ describe('OrderStateMachine', () => {
       await osm.create(params)
 
       expect(store.put).to.have.been.calledOnce()
-      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match(fakeValueObject))
+      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match('"my":"object"'))
     })
 
     it('saves the current state in the store', async () => {
       await osm.create(params)
 
       expect(store.put).to.have.been.calledOnce()
-      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match({ __state: 'created' }))
+      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match('"__state":"created"'))
     })
 
     it('throws an error in creation on the relayer fails', () => {
@@ -237,7 +237,7 @@ describe('OrderStateMachine', () => {
 
       expect(osm.state).to.be.equal('created')
       expect(store.put).to.have.been.calledOnce()
-      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match({ __state: 'created' }))
+      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match('"__state":"created"'))
     })
   })
 
