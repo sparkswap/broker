@@ -108,7 +108,7 @@ describe('BlockOrder', () => {
       params.status = 'OOPS'
 
       expect(() => {
-        const blockOrder = new BlockOrder(params)
+        new BlockOrder(params) // eslint-disable-line
       }).to.throw()
     })
   })
@@ -169,7 +169,7 @@ describe('BlockOrder', () => {
         blockOrder = new BlockOrder(params)
         const serialized = blockOrder.serialize()
 
-        return expect(blockOrder.price).to.be.null
+        return expect(serialized.price).to.be.null
       })
 
       it('serializes the time in force', () => {
