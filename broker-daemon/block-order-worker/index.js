@@ -3,6 +3,7 @@ const { promisify } = require('util')
 const safeid = require('generate-safe-id')
 const { BlockOrder } = require('../models')
 const OrderStateMachine = require('./order-state-machine')
+const { BlockOrderNotFoundError } = require('./errors')
 
 /**
  * @class Create and work Block Orders
@@ -88,9 +89,7 @@ class BlockOrderWorker extends EventEmitter {
       value = await promisify(this.store.get)(blockOrderId)
     } catch (e) {
       if (e.notFound) {
-        let err = new Error(`No Block Order found with ID: ${blockOrderId}`)
-        err.notFound = true
-        throw err
+        throw new BlockOrderNotFoundError(blockOrderId, e)
       } else {
         throw e
       }

@@ -244,12 +244,14 @@ describe('BlockOrderWorker', () => {
       expect(bO).to.have.property('openOrders', orders)
     })
 
-    it('throws a not found error if no order exists', async () => {
+    it.only('throws a not found error if no order exists', async () => {
+      const BlockOrderNotFoundError = BlockOrderWorker.__get__('BlockOrderNotFoundError')
+
       const err = new Error('fake error')
       err.notFound = true
       store.get.callsArgWithAsync(1, err)
 
-      expect(worker.getBlockOrder('fakeId')).to.be.rejectedWith(Error)
+      return expect(worker.getBlockOrder('fakeId')).to.eventually.be.rejectedWith(BlockOrderNotFoundError)
     })
   })
 
