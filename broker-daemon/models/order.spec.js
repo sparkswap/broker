@@ -29,9 +29,50 @@ describe('Order', () => {
       expect(Order).itself.to.respondTo('fromStorage')
     })
 
-    xit('creates orders from a key and value')
+    it('creates orders from a key and value', () => {
+      const params = {
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        baseAmount: '10000',
+        counterAmount: '100000',
+        ownerId: 'fakeID',
+        payTo: 'ln:123019230jasofdij'
+      }
+      const orderId = 'myid'
 
-    xit('assigns parameters from after order creation to the order object')
+      const order = Order.fromStorage(orderId, JSON.stringify(params))
+
+      expect(order).to.have.property('orderId', orderId)
+      expect(order).to.have.property('baseSymbol', params.baseSymbol)
+      expect(order).to.have.property('counterSymbol', params.counterSymbol)
+      expect(order).to.have.property('side', params.side)
+      expect(order).to.have.property('baseAmount', params.baseAmount)
+      expect(order).to.have.property('counterAmount', params.counterAmount)
+      expect(order).to.have.property('ownerId', params.ownerId)
+      expect(order).to.have.property('payTo', params.payTo)
+    })
+
+    it('assigns parameters from after order creation to the order object', () => {
+      const params = {
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        baseAmount: '10000',
+        counterAmount: '100000',
+        ownerId: 'fakeID',
+        payTo: 'ln:123019230jasofdij',
+        feePaymentRequest: 'myrequest',
+        depositPaymentRequest: 'yourrequest'
+      }
+      const orderId = 'myid'
+
+      const order = Order.fromStorage(orderId, JSON.stringify(params))
+
+      expect(order).to.have.property('orderId', orderId)
+      expect(order).to.have.property('feePaymentRequest', params.feePaymentRequest)
+      expect(order).to.have.property('depositPaymentRequest', params.depositPaymentRequest)
+    })
   })
 
   describe('::fromObject', () => {
@@ -39,34 +80,156 @@ describe('Order', () => {
       expect(Order).itself.to.respondTo('fromObject')
     })
 
-    xit('creates Orders from a plain object')
+    it('creates Orders from a plain object', () => {
+      const params = {
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        baseAmount: '10000',
+        counterAmount: '100000',
+        ownerId: 'fakeID',
+        payTo: 'ln:123019230jasofdij'
+      }
+      const orderId = 'myid'
 
-    xit('assigns parameters from after order creation to the order object')
+      const order = Order.fromObject(orderId, params)
+
+      expect(order).to.have.property('orderId', orderId)
+      expect(order).to.have.property('baseSymbol', params.baseSymbol)
+      expect(order).to.have.property('counterSymbol', params.counterSymbol)
+      expect(order).to.have.property('side', params.side)
+      expect(order).to.have.property('baseAmount', params.baseAmount)
+      expect(order).to.have.property('counterAmount', params.counterAmount)
+      expect(order).to.have.property('ownerId', params.ownerId)
+      expect(order).to.have.property('payTo', params.payTo)
+    })
+
+    it('assigns parameters from after order creation to the order object', () => {
+      const params = {
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        baseAmount: '10000',
+        counterAmount: '100000',
+        ownerId: 'fakeID',
+        payTo: 'ln:123019230jasofdij',
+        feePaymentRequest: 'myrequest',
+        depositPaymentRequest: 'yourrequest'
+      }
+      const orderId = 'myid'
+
+      const order = Order.fromObject(orderId, params)
+
+      expect(order).to.have.property('orderId', orderId)
+      expect(order).to.have.property('feePaymentRequest', params.feePaymentRequest)
+      expect(order).to.have.property('depositPaymentRequest', params.depositPaymentRequest)
+    })
   })
 
   describe('new', () => {
-    xit('creates an order')
+    it('creates an order', () => {
+      const params = {
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        baseAmount: '10000',
+        counterAmount: '100000',
+        ownerId: 'fakeID',
+        payTo: 'ln:123019230jasofdij'
+      }
+
+      const order = new Order(params)
+
+      expect(order).to.have.property('baseSymbol', params.baseSymbol)
+      expect(order).to.have.property('counterSymbol', params.counterSymbol)
+      expect(order).to.have.property('side', params.side)
+      expect(order).to.have.property('baseAmount', params.baseAmount)
+      expect(order).to.have.property('counterAmount', params.counterAmount)
+      expect(order).to.have.property('ownerId', params.ownerId)
+      expect(order).to.have.property('payTo', params.payTo)
+    })
   })
 
-  describe('get key', () => {
-    xit('defines a key getter')
-  })
+  describe('instance', () => {
+    let params
+    let order
 
-  describe('get value', () => {
-    xit('defines a value getter for storage')
-  })
+    beforeEach(() => {
+      params = {
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        baseAmount: '10000',
+        counterAmount: '100000',
+        ownerId: 'fakeID',
+        payTo: 'ln:123019230jasofdij'
+      }
 
-  describe('get valueObject', () => {
-    xit('defines a getter for retrieving a plain object')
-  })
+      order = new Order(params)
+    })
 
-  describe('get createParams', () => {
-    xit('defines a getter for params required to create an order on the relayer')
-  })
+    describe('get key', () => {
+      it('defines a key getter', () => {
+        const fakeId = 'fakeId'
+        order.orderId = fakeId
 
-  describe('#addCreatedParams', () => {
-    xit('updates the object with the params from creating on the relayer')
+        expect(order).to.have.property('key', fakeId)
+      })
+    })
 
-    xit('includes the updated params with the saved value')
+    describe('get value', () => {
+      it('defines a value getter for storage', () => {
+        expect(order).to.have.property('value', JSON.stringify(params))
+      })
+    })
+
+    describe('get valueObject', () => {
+      it('defines a getter for retrieving a plain object', () => {
+        const valueObject = Object.assign({
+          feePaymentRequest: undefined,
+          depositPaymentRequest: undefined
+        }, params)
+        expect(order).to.have.property('valueObject')
+        expect(order.valueObject).to.be.eql(valueObject)
+      })
+    })
+
+    describe('get createParams', () => {
+      it('defines a getter for params required to create an order on the relayer', () => {
+        expect(order).to.have.property('createParams')
+        expect(order.createParams).to.be.eql({
+          baseSymbol: params.baseSymbol,
+          counterSymbol: params.counterSymbol,
+          side: params.side,
+          baseAmount: params.baseAmount,
+          counterAmount: params.counterAmount,
+          ownerId: params.ownerId,
+          payTo: params.payTo
+        })
+      })
+    })
+
+    describe('#addCreatedParams', () => {
+      let createdParams = {
+        orderId: 'myid',
+        feePaymentRequest: 'myrequest',
+        depositPaymentRequest: 'yourrequest'
+      }
+
+      it('updates the object with the params from creating on the relayer', () => {
+        order.addCreatedParams(createdParams)
+
+        expect(order).to.have.property('orderId', createdParams.orderId)
+        expect(order).to.have.property('feePaymentRequest', createdParams.feePaymentRequest)
+        expect(order).to.have.property('depositPaymentRequest', createdParams.depositPaymentRequest)
+      })
+
+      it('includes the updated params with the saved value', () => {
+        order.addCreatedParams(createdParams)
+
+        expect(order.value).to.include(`"feePaymentRequest":"${createdParams.feePaymentRequest}"`)
+        expect(order.value).to.include(`"depositPaymentRequest":"${createdParams.depositPaymentRequest}"`)
+      })
+    })
   })
 })
