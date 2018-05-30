@@ -115,6 +115,12 @@ OrderStateMachine.create = async function (initParams, createParams) {
   return osm
 }
 
+/**
+ * Retrieve and instantiate all order state machines from a given store
+ * @param  {sublevel}    options.store      Sublevel that contains the saved order state machines
+ * @param  {...Object}   options.initParams Other parameters to initialize the state machines with
+ * @return {Array<OrderStateMachine>}
+ */
 OrderStateMachine.getAll = async function ({ store, ...initParams }) {
   return getRecords(store, (key, value) => this.fromStore({ store, ...initParams }, { key, value }))
 }
