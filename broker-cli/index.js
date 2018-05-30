@@ -11,8 +11,10 @@ const orderbookCommand = require('./orderbook')
 const configCommand = require('./config')
 const healthCheckCommand = require('./health-check')
 const walletCommand = require('./wallet')
+const initCommand = require('./init')
 
 module.exports = {
+  initCommand,
   buyCommand,
   sellCommand,
   configCommand,
