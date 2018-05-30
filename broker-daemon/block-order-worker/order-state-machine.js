@@ -64,7 +64,7 @@ const OrderStateMachine = StateMachine.factory({
       }
 
       // somehow spit an error if this fails?
-      await promisify(this.store.put)(this.order.key, Object.assign(this.order.valueObject, { __state: this.state }))
+      await promisify(this.store.put)(this.order.key, JSON.stringify(Object.assign(this.order.valueObject, { __state: this.state })))
 
       this.logger.debug('Saved state machine in store', { orderId: this.order.orderId })
     },
@@ -116,7 +116,7 @@ OrderStateMachine.create = async function (initParams, createParams) {
 }
 
 OrderStateMachine.getAll = async function ({ store, ...initParams }) {
-  return getRecords(store, (key, value) => this.fromStorage({ store, ...initParams }, { key, value }))
+  return getRecords(store, (key, value) => this.fromStore({ store, ...initParams }, { key, value }))
 }
 
 /**
