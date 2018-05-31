@@ -31,7 +31,6 @@ const OrderStateMachine = StateMachine.factory({
      * @type {Object}
      */
     { name: 'goto', from: '*', to: (s) => s },
-
     /**
      * reject transition: a created order was rejected during placement
      * @type {Object}
@@ -78,12 +77,17 @@ const OrderStateMachine = StateMachine.factory({
       })
     },
 
-    persist: async function (host) {
-      if (!host.key) {
+    /**
+     * Save the current state of the state machine to the store using the `host` as a carrier
+     * @param  {Object}        host Host object to store in the data store with state machine metadata attached
+     * @return {Promise<void>}      Promise that resolves when the state is persisted
+     */
+    persist: async function ({ key, valueObject }) {
+      if (!key) {
         throw new Error(`An order key is required to save state`)
       }
 
-      if (!host.valueObject) {
+      if (!valueObject) {
         // console.log('this.order', this.order)
         throw new Error(`An Order object is required to save state`)
       }
@@ -95,16 +99,16 @@ const OrderStateMachine = StateMachine.factory({
         error = this.error.message
 
         if (!error) {
-          this.logger.error('Saving state machine error state with no error message', { key: host.key })
+          this.logger.error('Saving state machine error state with no error message', { key })
         }
       }
 
       const stateMachine = { state, history, error }
 
-      const value = JSON.stringify(Object.assign(host.valueObject, { __stateMachine: stateMachine }))
+      const value = JSON.stringify(Object.assign(valueObject, { __stateMachine: stateMachine }))
 
       // somehow spit an error if this fails?
-      await promisify(this.store.put)(host.key, value)
+      await promisify(this.store.put)(key, value)
 
       this.logger.debug('Saved state machine in store', { orderId: this.order.orderId })
     },
@@ -166,6 +170,11 @@ const OrderStateMachine = StateMachine.factory({
       this.logger.info(`Created order ${this.order.orderId} on the relayer`)
     },
 
+    /**
+     * Attempt to place the order as soon as its created
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {void}
+     */
     onAfterCreate: function (lifecycle) {
       this.logger.info(`Create transition completed, triggering place`)
 
