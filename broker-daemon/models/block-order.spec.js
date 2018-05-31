@@ -1,7 +1,8 @@
-const { expect } = require('test/test-helper')
+const { expect, sinon } = require('test/test-helper')
 const bigInt = require('big-integer')
 
 const BlockOrder = require('./block-order')
+const OrderStateMachine = require('../block-order-worker/order-state-machine')
 
 describe('BlockOrder', () => {
   describe('::fromStorage', () => {
@@ -15,7 +16,8 @@ describe('BlockOrder', () => {
         side: 'BID',
         amount: '10000',
         price: '100',
-        timeInForce: 'GTC'
+        timeInForce: 'GTC',
+        status: 'ACTIVE'
       }
       const id = 'myid'
 
@@ -29,6 +31,7 @@ describe('BlockOrder', () => {
       expect(blockOrder).to.have.property('price')
       expect(blockOrder.price.toString()).to.be.equal(params.price)
       expect(blockOrder).to.have.property('timeInForce', params.timeInForce)
+      expect(blockOrder).to.have.property('status', params.status)
     })
   })
 
@@ -42,7 +45,8 @@ describe('BlockOrder', () => {
         side: 'BID',
         amount: '10000',
         price: '100',
-        timeInForce: 'GTC'
+        timeInForce: 'GTC',
+        status: 'ACTIVE'
       }
     })
 
@@ -93,6 +97,20 @@ describe('BlockOrder', () => {
 
       expect(blockOrder).to.have.property('timeInForce', params.timeInForce)
     })
+
+    it('assigns a status', () => {
+      const blockOrder = new BlockOrder(params)
+
+      expect(blockOrder).to.have.property('status', params.status)
+    })
+
+    it('throws if it has an invalid status', () => {
+      params.status = 'OOPS'
+
+      expect(() => {
+        new BlockOrder(params) // eslint-disable-line
+      }).to.throw()
+    })
   })
 
   describe('instance', () => {
@@ -106,10 +124,138 @@ describe('BlockOrder', () => {
         side: 'BID',
         amount: '10000',
         price: '100',
-        timeInForce: 'GTC'
+        timeInForce: 'GTC',
+        status: 'ACTIVE'
       }
 
       blockOrder = new BlockOrder(params)
+    })
+
+    describe('#serialize', () => {
+      it('creates a plain object', () => {
+        const serialized = blockOrder.serialize()
+
+        expect(serialized).to.be.an('object')
+      })
+
+      it('serializes the market name', () => {
+        const serialized = blockOrder.serialize()
+
+        expect(serialized).to.have.property('market', params.marketName)
+      })
+
+      it('serializes the side', () => {
+        const serialized = blockOrder.serialize()
+
+        expect(serialized).to.have.property('side', params.side)
+      })
+
+      it('converts the amount to a string', () => {
+        const serialized = blockOrder.serialize()
+
+        expect(serialized).to.have.property('amount', params.amount)
+        expect(serialized.amount).to.be.a('string')
+      })
+
+      it('converts the price to a string', () => {
+        const serialized = blockOrder.serialize()
+
+        expect(serialized).to.have.property('amount', params.amount)
+        expect(serialized.amount).to.be.a('string')
+      })
+
+      it('provides null if the price is not present', () => {
+        params.price = undefined
+        blockOrder = new BlockOrder(params)
+        const serialized = blockOrder.serialize()
+
+        return expect(serialized.price).to.be.null
+      })
+
+      it('serializes the time in force', () => {
+        const serialized = blockOrder.serialize()
+
+        expect(serialized).to.have.property('timeInForce', params.timeInForce)
+      })
+
+      it('serializes the status', () => {
+        const serialized = blockOrder.serialize()
+
+        expect(serialized).to.have.property('status', params.status)
+      })
+
+      describe('openOrders', () => {
+        let osm
+
+        beforeEach(() => {
+          osm = OrderStateMachine.fromStore({
+            logger: {
+              info: sinon.stub(),
+              debug: sinon.stub(),
+              error: sinon.stub()
+            }
+          }, { key: 'mykey',
+            value: JSON.stringify({
+              baseSymbol: 'BTC',
+              counterSymbol: 'XYZ',
+              side: 'BID',
+              baseAmount: '1000',
+              counterAmount: '10000',
+              ownerId: 'fakeID',
+              payTo: 'ln:1231243fasdf',
+              feePaymentRequest: 'lnbcasodifjoija',
+              depositPaymentRequest: 'lnbcaosdifjaosdfj',
+              __state: 'CREATED'
+            })})
+        })
+
+        it('assigns an empty array if openOrders is not defined', () => {
+          const serialized = blockOrder.serialize()
+
+          expect(serialized).to.have.property('openOrders')
+          expect(serialized.openOrders).to.be.eql([])
+        })
+
+        it('serializes all of the orders', () => {
+          blockOrder.openOrders = [ osm ]
+
+          const serialized = blockOrder.serialize()
+
+          expect(serialized.openOrders).to.have.lengthOf(1)
+        })
+
+        it('serializes the order id', () => {
+          blockOrder.openOrders = [ osm ]
+
+          const serialized = blockOrder.serialize()
+
+          expect(serialized.openOrders[0]).to.have.property('orderId', 'mykey')
+        })
+
+        it('serializes the amount', () => {
+          blockOrder.openOrders = [ osm ]
+
+          const serialized = blockOrder.serialize()
+
+          expect(serialized.openOrders[0]).to.have.property('amount', '1000')
+        })
+
+        it('converts the price', () => {
+          blockOrder.openOrders = [ osm ]
+
+          const serialized = blockOrder.serialize()
+
+          expect(serialized.openOrders[0]).to.have.property('price', '10')
+        })
+
+        it('serializes the state of the order', () => {
+          blockOrder.openOrders = [ osm ]
+
+          const serialized = blockOrder.serialize()
+
+          expect(serialized.openOrders[0]).to.have.property('orderStatus', 'CREATED')
+        })
+      })
     })
 
     describe('get key', () => {

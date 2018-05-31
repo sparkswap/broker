@@ -1,3 +1,5 @@
+const { promisify } = require('util')
+const { getRecords } = require('../utils')
 const StateMachine = require('javascript-state-machine')
 const { Order } = require('../models')
 
@@ -61,7 +63,8 @@ const OrderStateMachine = StateMachine.factory({
         return
       }
 
-      await this.store.put(this.order.key, Object.assign(this.order.valueObject, { __state: this.state }))
+      // somehow spit an error if this fails?
+      await promisify(this.store.put)(this.order.key, JSON.stringify(Object.assign(this.order.valueObject, { __state: this.state })))
 
       this.logger.debug('Saved state machine in store', { orderId: this.order.orderId })
     },
@@ -112,6 +115,16 @@ OrderStateMachine.create = async function (initParams, createParams) {
   await osm.create(createParams)
 
   return osm
+}
+
+/**
+ * Retrieve and instantiate all order state machines from a given store
+ * @param  {sublevel}    options.store      Sublevel that contains the saved order state machines
+ * @param  {...Object}   options.initParams Other parameters to initialize the state machines with
+ * @return {Array<OrderStateMachine>}
+ */
+OrderStateMachine.getAll = async function ({ store, ...initParams }) {
+  return getRecords(store, (key, value) => this.fromStore({ store, ...initParams }, { key, value }))
 }
 
 /**

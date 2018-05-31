@@ -17,7 +17,7 @@ describe('OrderStateMachine', () => {
 
     store = {
       sublevel: sinon.stub(),
-      put: sinon.stub()
+      put: sinon.stub().callsArgAsync(2)
     }
     logger = {
       info: sinon.stub(),
@@ -142,14 +142,14 @@ describe('OrderStateMachine', () => {
       await osm.create(params)
 
       expect(store.put).to.have.been.calledOnce()
-      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match(fakeValueObject))
+      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match('"my":"object"'))
     })
 
     it('saves the current state in the store', async () => {
       await osm.create(params)
 
       expect(store.put).to.have.been.calledOnce()
-      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match({ __state: 'created' }))
+      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match('"__state":"created"'))
     })
 
     it('throws an error in creation on the relayer fails', () => {
@@ -235,7 +235,72 @@ describe('OrderStateMachine', () => {
 
       expect(osm.state).to.be.equal('created')
       expect(store.put).to.have.been.calledOnce()
-      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match({ __state: 'created' }))
+      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match('"__state":"created"'))
+    })
+  })
+
+  describe('::getAll', () => {
+    let getRecords
+    let fakeRecords
+    let fakeOrder
+    let state
+    let store
+    let logger
+
+    beforeEach(() => {
+      state = 'created'
+
+      fakeRecords = [ ['fakeKey', JSON.stringify({
+        my: 'object',
+        __state: state
+      })] ]
+      getRecords = sinon.stub().callsFake((store, eachRecord) => {
+        return new Promise((resolve, reject) => {
+          resolve(fakeRecords.map(([ key, val ]) => eachRecord(key, val)))
+        })
+      })
+
+      OrderStateMachine.__set__('getRecords', getRecords)
+
+      store = {
+        put: sinon.stub()
+      }
+
+      logger = {
+        info: sinon.stub(),
+        debug: sinon.stub(),
+        error: sinon.stub()
+      }
+
+      fakeOrder = 'myorder'
+      Order.fromObject = sinon.stub().returns(fakeOrder)
+    })
+
+    it('gets all records from the store', async () => {
+      await OrderStateMachine.getAll({ store, logger })
+
+      expect(getRecords).to.have.been.calledOnce()
+      expect(getRecords).to.have.been.calledWith(store)
+    })
+
+    it('instantiates an OrderStateMachine for each record', async () => {
+      const osms = await OrderStateMachine.getAll({ store, logger })
+
+      expect(osms).to.have.lengthOf(1)
+      expect(osms[0]).to.be.instanceOf(OrderStateMachine)
+    })
+
+    it('moves the OrderStateMachine to the correct state', async () => {
+      const osms = await OrderStateMachine.getAll({ store, logger })
+
+      expect(osms).to.have.lengthOf(1)
+      expect(osms[0]).to.have.property('state', state)
+    })
+
+    it('assigns the order to the state machine', async () => {
+      const osms = await OrderStateMachine.getAll({ store, logger })
+
+      expect(osms[0].order).to.be.eql(fakeOrder)
     })
   })
 
