@@ -55,11 +55,17 @@ const OrderStateMachine = StateMachine.factory({
      * @param  {...Array} arguments      Arguments to the apply to the transition
      * @return {void}
      */
-    transitionToNext: function (transitionName, ...args) {
+    nextTransition: function (transitionName, ...args) {
+      this.logger.debug(`Queuing transition: ${transitionName}`)
       process.nextTick(async () => {
+        this.logger.debug(`Running transition: ${transitionName}`)
         try {
+          if (!this.transitions().includes(transitionName)) {
+            throw new Error(`${transitionName} is invalid transition from ${this.state}`)
+          }
+
           await this[transitionName](...args)
-        } catch(e) {
+        } catch (e) {
           // TODO: bubble/handle error
           // TODO: rejected state to clean up paid invoices, etc
           this.logger.error(`Error encountered while running ${transitionName} transition`, e)
@@ -90,6 +96,15 @@ const OrderStateMachine = StateMachine.factory({
       if (lifecycle.to === 'none') {
         this.logger.debug('Skipping database save for the \'none\' state')
         return
+      }
+
+      if (!this.order.key) {
+        throw new Error(`An order key is required to save state`)
+      }
+
+      if (!this.order.valueObject) {
+        // console.log('this.order', this.order)
+        throw new Error(`An Order object is required to save state`)
       }
 
       // somehow spit an error if this fails?
@@ -129,13 +144,13 @@ const OrderStateMachine = StateMachine.factory({
       this.order.addCreatedParams(await this.relayer.createOrder(this.order.createParams))
 
       this.logger.info(`Created order ${this.order.orderId} on the relayer`)
-    }
+    },
 
     onAfterCreate: function (lifecycle) {
       this.logger.info(`Create transition completed, triggering place`)
 
-      this.transitionToNext('place')
-    }
+      this.nextTransition('place')
+    },
 
     /**
      * Place the order on the relayer during transition.
@@ -148,8 +163,14 @@ const OrderStateMachine = StateMachine.factory({
      */
     onBeforePlace: async function (lifecycle) {
       throw new Error('Placing orders is currently un-implemented')
-    }
+    },
 
+    /**
+     * Handle rejection by assigning the error to the state machine
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @param  {Object} error     Error that triggered rejection
+     * @return {void}
+     */
     onBeforeReject: function (lifecycle, error) {
       this.error = error
     }

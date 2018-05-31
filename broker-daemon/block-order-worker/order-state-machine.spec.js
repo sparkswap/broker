@@ -1,5 +1,5 @@
 const path = require('path')
-const { expect, rewire, sinon } = require('test/test-helper')
+const { expect, rewire, sinon, delay } = require('test/test-helper')
 
 const OrderStateMachine = rewire(path.resolve(__dirname, 'order-state-machine'))
 
@@ -60,6 +60,68 @@ describe('OrderStateMachine', () => {
     it('does not save a copy in the store', () => {
       new OrderStateMachine({ store, logger, relayer, engine }) // eslint-disable-line
       return expect(store.put).to.not.have.been.called
+    })
+  })
+
+  describe('#nextTransition', () => {
+    let osm
+
+    beforeEach(() => {
+      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      osm.goto('created')
+    })
+
+    it('transitions on next tick', () => {
+      osm.place = sinon.stub()
+      const state = osm.state
+      osm.nextTransition('place')
+
+      expect(osm.state).to.be.eql(state)
+    })
+
+    it('calls the transition', async () => {
+      osm.place = sinon.stub()
+
+      osm.nextTransition('place')
+
+      await delay(10)
+
+      expect(osm.place).to.have.been.calledOnce()
+    })
+
+    it('passes through arguments', async () => {
+      osm.place = sinon.stub()
+
+      osm.nextTransition('place', 'hello', 'world')
+
+      await delay(10)
+
+      expect(osm.place).to.have.been.calledOnce()
+      expect(osm.place).to.have.been.calledWith('hello', 'world')
+    })
+
+    it('rejects on error', async () => {
+      const fakeError = new Error('my error')
+
+      osm.place = sinon.stub().rejects(fakeError)
+      osm.reject = sinon.stub()
+
+      osm.nextTransition('place')
+
+      await delay(10)
+
+      expect(osm.reject).to.have.been.calledOnce()
+      expect(osm.reject).to.have.been.calledWith(fakeError)
+    })
+
+    it('moves to rejected if using an invalid transition', async () => {
+      osm.reject = sinon.stub()
+
+      osm.nextTransition('blergh')
+
+      await delay(10)
+
+      expect(osm.reject).to.have.been.calledOnce()
     })
   })
 
@@ -177,6 +239,28 @@ describe('OrderStateMachine', () => {
         return expect(store.put).to.not.have.been.called
       }
     })
+
+    it('automatically attempts to place an order after creation', async () => {
+      osm.nextTransition = sinon.stub()
+      await osm.create(params)
+
+      await delay(10)
+      expect(osm.nextTransition).to.have.been.calledOnce()
+      expect(osm.nextTransition).to.have.been.calledWith('place')
+    })
+  })
+
+  describe('#place', () => {
+    let osm
+
+    beforeEach(async () => {
+      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      await osm.goto('created')
+    })
+
+    it('throws while unimplemented', () => {
+      return expect(osm.place()).to.eventually.be.rejectedWith(Error)
+    })
   })
 
   describe('#goto', () => {
@@ -196,6 +280,39 @@ describe('OrderStateMachine', () => {
       await osm.goto('created')
 
       return expect(store.put).to.not.have.been.called
+    })
+  })
+
+  describe('#reject', () => {
+    let osm
+
+    beforeEach(async () => {
+      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      await osm.goto('created')
+      osm.order = {
+        key: 'fakeKey',
+        valueObject: { my: 'object' }
+      }
+    })
+
+    it('moves to the rejected state', async () => {
+      await osm.reject()
+
+      expect(osm.state).to.be.equal('rejected')
+    })
+
+    it('assigns an error for the rejected state', async () => {
+      const fakeError = new Error('my error')
+      await osm.reject(fakeError)
+
+      expect(osm.error).to.be.equal(fakeError)
+    })
+
+    it('saves in the rejected state', async () => {
+      await osm.reject()
+
+      expect(store.put).to.have.been.calledOnce()
+      expect(store.put).to.have.been.calledWith(osm.order.key, sinon.match('"__state":"rejected"'))
     })
   })
 
