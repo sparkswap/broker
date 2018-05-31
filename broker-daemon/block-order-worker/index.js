@@ -145,7 +145,7 @@ class BlockOrderWorker extends EventEmitter {
       { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
     )
 
-    this.logger.info('Created single order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.id })
+    this.logger.info('Created single order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
   }
 }
 
