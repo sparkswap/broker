@@ -2,7 +2,7 @@ const { expect, sinon } = require('test/test-helper')
 const bigInt = require('big-integer')
 
 const BlockOrder = require('./block-order')
-const OrderStateMachine = require('../block-order-worker/order-state-machine')
+const { OrderStateMachine } = require('../state-machines')
 
 describe('BlockOrder', () => {
   describe('::fromStorage', () => {
@@ -205,7 +205,10 @@ describe('BlockOrder', () => {
               payTo: 'ln:1231243fasdf',
               feePaymentRequest: 'lnbcasodifjoija',
               depositPaymentRequest: 'lnbcaosdifjaosdfj',
-              __state: 'CREATED'
+              __stateMachine: {
+                state: 'created',
+                history: []
+              }
             })})
         })
 

@@ -2,7 +2,7 @@ const EventEmitter = require('events')
 const { promisify } = require('util')
 const safeid = require('generate-safe-id')
 const { BlockOrder } = require('../models')
-const OrderStateMachine = require('./order-state-machine')
+const { OrderStateMachine } = require('../state-machines')
 const { BlockOrderNotFoundError } = require('./errors')
 
 /**
