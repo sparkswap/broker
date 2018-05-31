@@ -2,17 +2,38 @@ class Order {
   constructor ({ baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo }) {
     this.baseSymbol = baseSymbol
     this.counterSymbol = counterSymbol
-    this.side = side
     this.baseAmount = baseAmount
     this.counterAmount = counterAmount
     this.ownerId = ownerId
     this.payTo = payTo
+
+    if (!Order.SIDES[side]) {
+      throw new Error(`${side} is not a valid order side.`)
+    }
+
+    this.side = side
   }
 
   addCreatedParams ({ orderId, feePaymentRequest, depositPaymentRequest }) {
     this.orderId = orderId
     this.feePaymentRequest = feePaymentRequest
     this.depositPaymentRequest = depositPaymentRequest
+  }
+
+  get inboundSymbol () {
+    return this.side === Order.SIDES.BID ? this.baseSymbol : this.counterSymbol
+  }
+
+  get outboundSymbol () {
+    return this.side === Order.SIDES.BID ? this.counterSymbol : this.baseSymbol
+  }
+
+  get inboundAmount () {
+    return this.side === Order.SIDES.BID ? this.baseAmount : this.counterAmount
+  }
+
+  get outboundAmount () {
+    return this.side === Order.SIDES.BID ? this.counterAmount : this.baseAmount
   }
 
   get createParams () {
