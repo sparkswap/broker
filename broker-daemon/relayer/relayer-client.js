@@ -40,7 +40,7 @@ class RelayerClient {
   }
 
   /**
-   * Creates an order w/ the exchange
+   * Creates an order on the relayer
    *
    * @param {Object} params
    * @returns {Promise}
@@ -57,15 +57,17 @@ class RelayerClient {
   }
 
   /**
-   * Places an order on the relayer
-   * @param  {Object} params
+   * Place an order on the Relayer
+   * @param  {String} options.orderId                     Relayer-assigned unique identifier
+   * @param  {String} options.feeRefundPaymentRequest     Lightning Network payment request to refund the paid fee in case of order cancellation
+   * @param  {String} options.depositRefundPaymentRequest Lightning Network payment request to refund the deposit in case or cancellation or completion
    * @return {Promise<void>}
    */
-  async placeOrder (params) {
+  async placeOrder ({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest }) {
     const deadline = grpcDeadline()
 
     return new Promise((resolve, reject) => {
-      this.maker.placeOrder(params, { deadline }, (err, res) => {
+      this.maker.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest }, { deadline }, (err, res) => {
         if (err) return reject(err)
         return resolve()
       })
