@@ -57,6 +57,22 @@ class RelayerClient {
   }
 
   /**
+   * Places an order on the relayer
+   * @param  {Object} params
+   * @return {Promise<void>}
+   */
+  async placeOrder (params) {
+    const deadline = grpcDeadline()
+
+    return new Promise((resolve, reject) => {
+      this.maker.placeOrder(params, { deadline }, (err, res) => {
+        if (err) return reject(err)
+        return resolve()
+      })
+    })
+  }
+
+  /**
    * Opens a stream with the exchange to watch for market events
    *
    * @param {EventEmitter} eventHandler

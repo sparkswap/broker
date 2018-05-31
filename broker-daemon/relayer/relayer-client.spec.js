@@ -120,6 +120,10 @@ describe('RelayerClient', () => {
 
   })
 
+  describe.skip('placeOrder', () => {
+    
+  })
+
   describe('watchMarket', () => {
     let relayer
     let store
