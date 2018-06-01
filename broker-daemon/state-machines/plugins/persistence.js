@@ -19,7 +19,7 @@ class StateMachinePersistence extends StateMachinePlugin {
    * Callback when Store#put is complete
    * @callback StateMachinePersistence~Store~putCallback
    * @param {Error} err Error encountered if any
-   * 
+   *
    * @method StateMachinePersistence~Store#get
    * @param   {String}                                    key      Unique key under which the data is stored
    * @param   {StateMachinePersistence~Store~getCallback} callback
@@ -34,20 +34,18 @@ class StateMachinePersistence extends StateMachinePlugin {
    * @param   {Object}         options options for the read stream
    * @returns {ReadableStream}         Readable stream of entries in the store
    */
-  
+
   /**
    * Set up the persistence plugin with user-defined attributes to save additional fielsd and avoid naming conflicts
-   * @param  {String}                          options.hostName         Name of the property on the state machine instance bearing the host data
-   * @param  {Array}                           options.additionalFields List of additional properties on the instance to be persisted
-   * @param  {String}                          options.storeName        Name of the property on the state machine where the StateMachinePersistence~Store is located
-   * @param  {String}                          options.metadataName     Name of the property on the saved object where metadata should be stored
-   * @return {StateMachinePersistence}                                  Plugin-compatible class
+   * @param  {String|Function}          options.key              Name of the property on the state machine instance with the unique key, or a function that derives the key from the instance
+   * @param  {Array}                    options.additionalFields List of additional properties on the instance to be persisted
+   * @param  {String}                   options.storeName        Name of the property on the state machine where the StateMachinePersistence~Store is located
+   * @return {StateMachinePersistence}                           Plugin-compatible class
    */
-  constructor({ hostName = 'payload', additionalFields = {}, storeName = 'store', metadataName = '__stateMachine' } = {}) {
+  constructor ({ key = 'id', additionalFields = {}, storeName = 'store' } = {}) {
     super()
-    this.hostName = hostName
+    this.key = key
     this.additionalFields = additionalFields
-    this.metadataName = metadataName
     this.storeName = storeName
   }
 
@@ -56,7 +54,7 @@ class StateMachinePersistence extends StateMachinePlugin {
    * @param  {StateMachine~Config} config State machine configuration object
    * @return {void}
    */
-  configure(config) {
+  configure (config) {
     super.configure(config)
     config.mapTransition(
       { name: 'goto', from: '*', to: (s) => s }
@@ -69,23 +67,25 @@ class StateMachinePersistence extends StateMachinePlugin {
    * @param  {StateMachinePersistence~Store} instance.store Compatible store
    * @return {void}
    */
-  init(instance) {
+  init (instance) {
     super.init(instance)
 
-    if(!instance[this.storeName] || typeof instance[this.storeName].put !== 'function') {
+    if (!instance[this.storeName] || typeof instance[this.storeName].put !== 'function') {
       throw new Error(`A store must be present on the state machine at ${this.storeName} in order to use the persistence plugin`)
     }
   }
 
   /**
-   * Properties of the state machine that are persisted as metadata
-   * @return {Object} Object of property names to persist with serialization and deserialization methods
+   * Properties of the state machine that are persisted
+   * @return {Object} Object of property names to persist with a setter and getter
    */
   get persistedFields () {
     const fields = {
-      state: {
-        deserialize: function (state) {
+      state: function (state) {
+        if (state) {
           this.goto(state)
+        } else {
+          return this.state
         }
       }
     }
@@ -109,7 +109,15 @@ class StateMachinePersistence extends StateMachinePlugin {
      */
       onEnterState: async function (lifecycle) {
         if (lifecycle.transition !== 'goto' && lifecycle.to !== 'none') {
-          return this.persist(this[plugin.hostName])
+          let key
+
+          if (typeof plugin.key === 'function') {
+            key = plugin.key.call(this)
+          } else {
+            key = this[plugin.key]
+          }
+
+          return this.persist(key)
         }
       }
     }
@@ -124,41 +132,27 @@ class StateMachinePersistence extends StateMachinePlugin {
 
     return {
       /**
-       * Save the current state of the state machine to the store using the `host` as a carrier
-       * @param  {Object}        host        Host object to store in the data store with state machine metadata attached
-       * @param  {String}        host.key    Unique key that the host can be saved using
-       * @param  {Object}        value       Optional host object to include with the persisted state machine
-       * @return {Promise<void>}             Promise that resolves when the state is persisted
+       * Save the current state of the state machine to the store
+       * @param  {String}        key    Unique key that the host can be saved using
+       * @return {Promise<void>}        Promise that resolves when the state is persisted
        */
-      persist: async function ({ key, value = {} }) {
+      persist: async function (key) {
         if (!key) {
-          throw new Error(`An host key is required to save state`)
+          throw new Error(`An key is required to save state`)
         }
 
-        if(!plugin.persistedFields || !Array.isArray(plugin.persistedFields)) {
-          throw new Error(`Persisted fields must be an array to persist the state machine`)
-        }
+        const fields = plugin.persistedFields || {}
 
-        const metadata = {}
+        const data = {}
 
-        Object.entries(plugin.persistedFields).forEach( ([ name, { serialize } = {} ]) => {
-          if(typeof serialize === 'function') {
-            metadata[name] = serialize.call(this, this[name])
-          } else {
-            metadata[name] = this[name]
-          }
+        Object.entries(fields).forEach(([ name, getter ]) => {
+          data[name] = getter.call(this)
         })
 
-        const metadataNamespaced = {}
-
-        metadataNamespaced[plugin.metadataName] = metadata
-
-        const valueWithMeta = Object.assign({}, value, metadataNamespaced))
-
-        plugin.hook(this, 'persist', [key, valueWithMeta])
+        plugin.hook(this, 'persist', [key, data])
 
         // somehow spit an error if this fails?
-        await promisify(this[plugin.storeName].put)(key, JSON.stringify(valueWithMeta))
+        await promisify(this[plugin.storeName].put)(key, JSON.stringify(data))
       }
     }
   }
@@ -179,59 +173,60 @@ class StateMachinePersistence extends StateMachinePlugin {
        * @return {OrderStateMachine}
        */
       fromStore: function (initParams, { key, value }) {
+        const fields = plugin.persistedFields || {}
         const parsedValue = JSON.parse(value)
-        const metadata = parsedValue[plugin.metadataName]
-
-        if (!metadata) {
-          throw new Error(`Values must have a \`${plugin.metadataName}\` property to be created as persisted state machines`)
-        }
 
         const instance = new this(initParams)
 
-        Object.entries(plugin.persistedFields).forEach( ([ name, { deserialize } = {} ]) => {
-          if(typeof deserialize === 'function') {
-            deserialize.call(instance, metadata[name])
-          } else {
-            instance[name] = metadata[name]
-          }
+        // set the key
+        if (typeof plugin.key === 'function') {
+          plugin.key.call(instance, key, parsedValue)
+        } else {
+          instance[plugin.key] = key
+        }
+
+        // set the other fields
+        Object.entries(fields).forEach(([ name, setter ]) => {
+          setter.call(instance, parsedValue[name], key, parsedValue)
         })
 
-        plugin.hook(instance, 'inflate', [key, parsedValue, metadata])
+        plugin.hook(instance, 'inflate', [key, parsedValue])
 
         return instance
-      }
+      },
 
       /**
        * Retrieve a single state machine from a given store
        * @param  {String}                        key                Unique key for the state machine in the store
-       * @param  {StateMachinePersistence~Store} options[storeName]      Store in which the state machine is located
-       * @param  {...Object}                     initParams Other parameters to initialize the state machines with
-       * @return {StateMachine}                                     Re-inflated state machine
+       * @param  {StateMachinePersistence~Store} options[storeName] Store in which the state machine is located
+       * @param  {...Object}                     initParams         Other parameters to initialize the state machines with
+       * @return {Promise<StateMachine>}                            Re-inflated state machine
        */
       get: async function (key, initParams) {
         const store = initParams[plugin.storeName]
 
-        if(!store || typeof store.get !== 'function') {
+        if (!store || typeof store.get !== 'function') {
           throw new Error(`A store must be present at ${plugin.storeName} in order to use the persistence plugin`)
         }
 
         const value = await promisify(store.get)(key)
 
         return this.fromStore(initParams, { key, value })
-      }
+      },
 
       /**
        * Retrieve and instantiate all state machines from a given store
-       * @param  {StateMachinePersistence~Store} options[storeName]      Store that contains the saved state machines
-       * @param  {...Object}                     initParams Other parameters to initialize the state machines with
-       * @return {Array<StateMachine>}
+       * @param  {StateMachinePersistence~Store} options[storeName] Store that contains the saved state machines
+       * @param  {...Object}                     initParams         Other parameters to initialize the state machines with
+       * @return {Promise<Array<StateMachine>>}
        */
       getAll: async function (initParams) {
         const store = initParams[plugin.storeName]
 
-        if(!store || typeof store.createReadStream !== 'function') {
+        if (!store || typeof store.createReadStream !== 'function') {
           throw new Error(`A store must be present at ${plugin.storeName} in order to use the persistence plugin`)
         }
+
         return getRecords(store, (key, value) => this.fromStore(initParams, { key, value }))
       }
 

@@ -33,6 +33,8 @@ StateMachine.factory = function () {
   config.plugins.forEach((plugin) => {
     Object.assign(cstor, plugin.staticMethods || {})
   })
+
+  return cstor
 }
 
 module.exports = StateMachine
