@@ -34,7 +34,7 @@ class StateMachinePersistence extends StateMachinePlugin {
    * @param   {Object}         options options for the read stream
    * @returns {ReadableStream}         Readable stream of entries in the store
    */
-  
+
   /**
    * Field accessor for saving and inflating state machines
    * @typedef {Function} StateMachinePersistence~FieldAccessor
@@ -42,7 +42,7 @@ class StateMachinePersistence extends StateMachinePlugin {
    * @param {String} key   Key being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
    * @param {Object} value Object being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
    */
-  
+
   /**
    * Unique key accessor for saving and inflating state machines
    * @typedef {(Function|String)} StateMachinePersistence~KeyAccessor
