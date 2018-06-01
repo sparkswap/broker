@@ -26,9 +26,9 @@ const OrderStateMachine = StateMachine.factory({
         order: function (orderObject, key) {
           if (orderObject) {
             this.order = Order.fromObject(key, orderObject)
-          } else {
-            return this.order.valueObject
           }
+          
+          return this.order.valueObject
         },
         /**
          * @type {StateMachinePersistence~FieldAccessor}
@@ -37,9 +37,9 @@ const OrderStateMachine = StateMachine.factory({
           if (history) {
             this.clearHistory()
             this.history = history
-          } else {
-            return this.history
           }
+
+          return this.history
         },
         /**
          * @type {StateMachinePersistence~FieldAccessor}
@@ -47,12 +47,12 @@ const OrderStateMachine = StateMachine.factory({
         error: function (errorMessage) {
           if (errorMessage) {
             this.error = new Error(errorMessage)
+          }
+
+          if (this.error) {
+            return this.error.message
           } else {
-            if (this.error) {
-              return this.error.message
-            } else {
-              this.logger.error('Tried to serialize error, but it had no message property')
-            }
+            this.logger.error('Tried to serialize error, but it had no message property')
           }
         }
       }
