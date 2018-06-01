@@ -15,34 +15,31 @@ StateMachine.factory = function () {
   })
 }
 
-const historyPlugin = new StateMachineHistory()
-const persistencePlugin = new StateMachineHistory({
-  hostName: 'order',
-  additionalFields: {
-    history: {
-      deserialize: function (history) {
-        this.clearHistory()
-        this.history = history
-      }
-    },
-    error: {
-      deserialize: function (error) {
-        this.error = new Error(error)
-      },
-      serialize: function (error) {
-        return error.message
-      }
-    }
-  }
-})
-
 /**
  * @class Finite State Machine for managing order lifecycle
  */
 const OrderStateMachine = StateMachine.factory({
   plugins: [
-    historyPlugin,
-    persistencePlugin
+    new StateMachineHistory(),
+    new StateMachinePersistence({
+      hostName: 'order',
+      additionalFields: {
+        history: {
+          deserialize: function (history) {
+            this.clearHistory()
+            this.history = history
+          }
+        },
+        error: {
+          deserialize: function (error) {
+            this.error = new Error(error)
+          },
+          serialize: function (error) {
+            return error.message
+          }
+        }
+      }
+    })
   ],
   /**
    * Definition of the transitions and states for the OrderStateMachine
