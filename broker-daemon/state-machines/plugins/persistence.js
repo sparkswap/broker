@@ -34,13 +34,30 @@ class StateMachinePersistence extends StateMachinePlugin {
    * @param   {Object}         options options for the read stream
    * @returns {ReadableStream}         Readable stream of entries in the store
    */
+  
+  /**
+   * Field accessor for saving and inflating state machines
+   * @typedef {Function} StateMachinePersistence~FieldAccessor
+   * @param {*}      val   Value to be set. Will be undefined if the accessor is being used as a getter.
+   * @param {String} key   Key being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
+   * @param {Object} value Object being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
+   */
+  
+  /**
+   * Unique key accessor for saving and inflating state machines
+   * @typedef {(Function|String)} StateMachinePersistence~KeyAccessor
+   * If a string is passed, the accessor will act as an accessor on property specified by the string.
+   * @this {StateMachine}       State machine instance being inflated
+   * @param {String}      key   Key being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
+   * @param {Object}      value Object being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
+   */
 
   /**
-   * Set up the persistence plugin with user-defined attributes to save additional fielsd and avoid naming conflicts
-   * @param  {String|Function}          options.key              Name of the property on the state machine instance with the unique key, or a function that derives the key from the instance
-   * @param  {Array}                    options.additionalFields List of additional properties on the instance to be persisted
-   * @param  {String}                   options.storeName        Name of the property on the state machine where the StateMachinePersistence~Store is located
-   * @return {StateMachinePersistence}                           Plugin-compatible class
+   * Set up the persistence plugin with user-defined attributes to save additional fields and avoid naming conflicts
+   * @param  {StateMachinePersistence~KeyAccessor}                    options.key              Name of the property on the state machine instance with the unique key, or a function that derives the key from the instance
+   * @param  {Object.<String, StateMachinePersistence~FieldAccessor>} options.additionalFields List of additional properties on the instance to be persisted
+   * @param  {String}                                                 options.storeName        Name of the property on the state machine where the StateMachinePersistence~Store is located
+   * @return {StateMachinePersistence}                                                         Plugin-compatible class
    */
   constructor ({ key = 'id', additionalFields = {}, storeName = 'store' } = {}) {
     super()

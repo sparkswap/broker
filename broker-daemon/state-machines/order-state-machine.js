@@ -10,6 +10,9 @@ const OrderStateMachine = StateMachine.factory({
   plugins: [
     new StateMachineHistory(),
     new StateMachinePersistence({
+      /**
+       * @type {StateMachinePersistence~KeyAccessor}
+       */
       key: function (key) {
         // this only defines a getter - it will be set by the `order` setter
         if (!key) {
@@ -17,6 +20,9 @@ const OrderStateMachine = StateMachine.factory({
         }
       },
       additionalFields: {
+        /**
+         * @type {StateMachinePersistence~FieldAccessor}
+         */
         order: function (orderObject, key) {
           if (orderObject) {
             this.order = Order.fromObject(key, orderObject)
@@ -24,6 +30,9 @@ const OrderStateMachine = StateMachine.factory({
             return this.order.valueObject
           }
         },
+        /**
+         * @type {StateMachinePersistence~FieldAccessor}
+         */
         history: function (history) {
           if (history) {
             this.clearHistory()
@@ -32,6 +41,9 @@ const OrderStateMachine = StateMachine.factory({
             return this.history
           }
         },
+        /**
+         * @type {StateMachinePersistence~FieldAccessor}
+         */
         error: function (errorMessage) {
           if (errorMessage) {
             this.error = new Error(error)
