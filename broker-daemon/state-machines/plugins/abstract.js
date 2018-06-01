@@ -39,7 +39,7 @@ class StateMachineAbstractPlugin {
 
   /**
    * State machine provides a hook when a new state machine is init'ed
-   * By default, we use it to apply our custom lifecycle observers (the lifecycle hook does not support promises)
+   * By default, we use it to apply our custom lifecycle observers (the `lifecycle` hook provided by JSM does not support promises)
    * @see {@link https://github.com/jakesgordon/javascript-state-machine/blob/master/src/jsm.js#L22}
    * @param  {Object} instance State machine instance being initialized
    * @return {void}
@@ -68,6 +68,17 @@ class StateMachineAbstractPlugin {
    * @return {Object} Object of all methods to be mixed in
    */
   get methods () {
+    const plugin = this // eslint-disable-line
+
+    return {}
+  }
+
+  /**
+   * State machine plugins define `properties` to be mixed into the state machine instance
+   * @return {Object} Property definitions that can be used with `Object.defineProperties`
+   * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperties|Object.defineProperties}
+   */
+  get properties () {
     const plugin = this // eslint-disable-line
 
     return {}
