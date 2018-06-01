@@ -5,6 +5,16 @@ const StateMachineHistory = require('javascript-state-machine/lib/history')
 const StateMachinePersistence = require('./plugins/persistence')
 const { Order } = require('../models')
 
+const _factory = StateMachine.factory
+StateMachine.factory = function () {
+  const cstor = _factory.apply(this, [].slice.apply(arguments))
+  const config = cstor.prototype._fsm.config
+
+  config.plugins.forEach((plugin) => {
+    Object.assign(cstor, plugin.staticMethods || {})
+  })
+}
+
 const historyPlugin = new StateMachineHistory()
 const persistencePlugin = new StateMachineHistory({
   hostName: 'order',
@@ -179,8 +189,6 @@ const OrderStateMachine = StateMachine.factory({
     }
   }
 })
-
-Object.assign(OrderStateMachine, persistencePlugin.staticMethods)
 
 /**
  * Instantiate and create an order
