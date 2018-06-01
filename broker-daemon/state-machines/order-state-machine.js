@@ -46,7 +46,7 @@ const OrderStateMachine = StateMachine.factory({
          */
         error: function (errorMessage) {
           if (errorMessage) {
-            this.error = new Error(error)
+            this.error = new Error(errorMessage)
           } else {
             if (this.error) {
               return this.error.message

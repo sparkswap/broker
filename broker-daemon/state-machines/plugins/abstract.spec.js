@@ -1,9 +1,9 @@
-const { expect, sinon} = require('test/test-helper')
+const { expect, sinon } = require('test/test-helper')
 
 const StateMachineAbstractPlugin = require('./abstract')
 const StateMachine = require('../state-machine')
 
-describe.only('StateMachineAbstractPlugin', () => {
+describe('StateMachineAbstractPlugin', () => {
   describe('#hook', () => {
     let Plugin
     let plugin
