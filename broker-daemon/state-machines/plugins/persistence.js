@@ -95,6 +95,10 @@ class StateMachinePersistence {
     return Object.assign(fields, this.additionalFields)
   }
 
+  /**
+   * Our custom lifecycle observers to be added to every instance
+   * @return {Object} Key value of lifecycle events and functions to be called during them
+   */
   get observers () {
     const plugin = this
 

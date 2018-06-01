@@ -1,19 +1,7 @@
-const { promisify } = require('util')
-const { getRecords } = require('../utils')
-const StateMachine = require('javascript-state-machine')
+const StateMachine = require('./state-machine')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 const StateMachinePersistence = require('./plugins/persistence')
 const { Order } = require('../models')
-
-const _factory = StateMachine.factory
-StateMachine.factory = function () {
-  const cstor = _factory.apply(this, [].slice.apply(arguments))
-  const config = cstor.prototype._fsm.config
-
-  config.plugins.forEach((plugin) => {
-    Object.assign(cstor, plugin.staticMethods || {})
-  })
-}
 
 /**
  * @class Finite State Machine for managing order lifecycle
