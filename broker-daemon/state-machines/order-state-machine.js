@@ -10,20 +10,37 @@ const OrderStateMachine = StateMachine.factory({
   plugins: [
     new StateMachineHistory(),
     new StateMachinePersistence({
-      hostName: 'order',
+      key: function (key) {
+        // this only defines a getter - it will be set by the `order` setter
+        if (!key) {
+          return this.order.key
+        }
+      },
       additionalFields: {
-        history: {
-          deserialize: function (history) {
-            this.clearHistory()
-            this.history = history
+        order: function (order, key) {
+          if (order) {
+            this.order = Order.fromObject(key, order)
+          } else {
+            return this.order.valueObject
           }
         },
-        error: {
-          deserialize: function (error) {
+        history: function (history) {
+          if (history) {
+            this.clearHistory()
+            this.history = history
+          } else {
+            return this.history
+          }
+        },
+        error: function (error) {
+          if (error) {
             this.error = new Error(error)
-          },
-          serialize: function (error) {
-            return error.message
+          } else {
+            if (this.error) {
+              return this.error.message
+            } else {
+              this.logger.error('Tried to serialize error, but it had no message property')
+            }
           }
         }
       }

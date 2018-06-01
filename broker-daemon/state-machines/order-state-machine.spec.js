@@ -127,71 +127,62 @@ describe('OrderStateMachine', () => {
 
   describe('#persist', () => {
     let osm
-    let host
+    let key
 
     beforeEach(() => {
       osm = new OrderStateMachine({ store, logger, relayer, engine })
-      host = {
-        key: 'fakeKey',
-        valueObject: {
-          fake: 'object'
-        }
+      osm.order = {
+        valueObject: { my: 'order' }
       }
+      key = 'fakeKey'
     })
 
-    it('throws if no host key is available', () => {
-      host.key = undefined
-      return expect(osm.persist(host)).to.eventually.be.rejectedWith(Error)
-    })
-
-    it('throws if no host object is available', () => {
-      host.valueObject = undefined
-
-      return expect(osm.persist(host)).to.eventually.be.rejectedWith(Error)
+    it('throws if no key is available', () => {
+      return expect(osm.persist()).to.eventually.be.rejectedWith(Error)
     })
 
     it('stringifies values', async () => {
-      await osm.persist(host)
+      await osm.persist(key)
 
       expect(store.put).to.have.been.calledOnce()
       expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match.string)
     })
 
-    it('uses the host key to save values', async () => {
-      await osm.persist(host)
+    it('uses the key to save values', async () => {
+      await osm.persist(key)
 
       expect(store.put).to.have.been.calledOnce()
-      expect(store.put).to.have.been.calledWith(host.key)
-    })
-
-    it('saves the host to the database', async () => {
-      await osm.persist(host)
-
-      expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('"fake":"object"'))
+      expect(store.put).to.have.been.calledWith(key)
     })
 
     it('saves state machine data in the database', async () => {
-      await osm.persist(host)
+      await osm.persist(key)
 
-      expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('"__stateMachine":{"state":"none","history":[]}'))
+      expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('{"state":"none","order":{"my":"order"},"history":[]}'))
+    })
+
+    it('saves the order to the database', async () => {
+      await osm.persist(key)
+
+      expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('"my":"order"'))
     })
 
     it('saves the state in the database', async () => {
-      await osm.persist(host)
+      await osm.persist(key)
 
       expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('"state":"none"'))
     })
 
     it('saves history in the database', async () => {
       await osm.goto('created')
-      await osm.persist(host)
+      await osm.persist(key)
 
       expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('"history":["created"]'))
     })
 
     it('saves error in the database', async () => {
       osm.error = new Error('fakeError')
-      await osm.persist(host)
+      await osm.persist(key)
 
       expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('"error":"fakeError"'))
     })
@@ -429,7 +420,6 @@ describe('OrderStateMachine', () => {
   })
 
   describe('::getAll', () => {
-    let getRecords
     let fakeRecords
     let fakeOrder
     let state
@@ -440,21 +430,28 @@ describe('OrderStateMachine', () => {
       state = 'created'
 
       fakeRecords = [ ['fakeKey', JSON.stringify({
-        my: 'object',
-        __stateMachine: {
-          state
-        }
+        order: { my: 'object' },
+        state
       })] ]
-      getRecords = sinon.stub().callsFake((store, eachRecord) => {
-        return new Promise((resolve, reject) => {
-          resolve(fakeRecords.map(([ key, val ]) => eachRecord(key, val)))
-        })
-      })
-
-      OrderStateMachine.__set__('getRecords', getRecords)
 
       store = {
-        put: sinon.stub()
+        put: sinon.stub(),
+        get: sinon.stub(),
+        createReadStream: sinon.stub().callsFake(() => {
+          return {
+            on: async function (event, fn) {
+              if (event === 'data') {
+                for (var i = 0; i < fakeRecords.length; i++) {
+                  await delay(5)
+                  fn({ key: fakeRecords[i][0], value: fakeRecords[i][1] })
+                }
+              } else if (event === 'end') {
+                await delay(fakeRecords.length * 5 + 5)
+                fn()
+              }
+            }
+          }
+        })
       }
 
       logger = {
@@ -470,8 +467,7 @@ describe('OrderStateMachine', () => {
     it('gets all records from the store', async () => {
       await OrderStateMachine.getAll({ store, logger })
 
-      expect(getRecords).to.have.been.calledOnce()
-      expect(getRecords).to.have.been.calledWith(store)
+      expect(store.createReadStream).to.have.been.calledOnce()
     })
 
     it('instantiates an OrderStateMachine for each record', async () => {
@@ -510,12 +506,10 @@ describe('OrderStateMachine', () => {
       history = []
       error = undefined
       valueObject = {
-        my: 'object',
-        __stateMachine: {
-          state,
-          history,
-          error
-        }
+        order: { my: 'object' },
+        state,
+        history,
+        error
       }
       value = JSON.stringify(valueObject)
     })
@@ -551,7 +545,7 @@ describe('OrderStateMachine', () => {
     })
 
     it('includes saved errors', async () => {
-      valueObject.__stateMachine.error = 'fakeError'
+      valueObject.error = 'fakeError'
       value = JSON.stringify(valueObject)
 
       const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engine }, { key, value })
