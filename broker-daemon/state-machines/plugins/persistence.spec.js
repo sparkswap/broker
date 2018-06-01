@@ -397,10 +397,142 @@ describe('StateMachinePersistence', () => {
   })
 
   describe('configuration', () => {
-    xit('uses a custom store name')
+    describe('storeName', () => {
+      let Machine
+      let db
 
-    xit('uses a custom key name')
+      beforeEach(() => {
+        Machine = StateMachine.factory({
+          plugins: [
+            new StateMachinePersistence({
+              storeName: 'db'
+            })
+          ],
+          data: function ({ db }) {
+            return { db }
+          }
+        })
 
-    xit('uses a custom key accessor')
+        db = {
+          put: sinon.stub().callsArgAsync(2),
+          get: sinon.stub().callsArgWithAsync(1, null, JSON.stringify({state: 'none'})),
+          createReadStream: sinon.stub().returns({ on: sinon.stub() })
+        }
+      })
+
+      it('persists using the custom store name', async () => {
+        const machine = new Machine({ db })
+
+        await machine.persist('fake')
+
+        expect(db.put).to.have.been.calledOnce()
+      })
+
+      it('gets using the custom store name', async () => {
+        await Machine.get('fakeKey', { db })
+
+        expect(db.get).to.have.been.calledOnce()
+      })
+
+      it('getsAll using the custom store name', async () => {
+        Machine.getAll({ db })
+
+        expect(db.createReadStream).to.have.been.calledOnce()
+      })
+    })
+
+    describe('key', () => {
+      let store
+      let data
+      let transitions
+      let persist
+
+      beforeEach(() => {
+        store = {
+          put: sinon.stub().callsArgAsync(2),
+          get: sinon.stub().callsArgWithAsync(1, null, JSON.stringify({state: 'none'})),
+          createReadStream: sinon.stub().returns({ on: sinon.stub() })
+        }
+        data = function ({ store }) {
+          return { store }
+        }
+        transitions = [
+          { name: 'step', from: 'none', to: 'first' }
+        ]
+        persist = sinon.stub().resolves()
+      })
+
+      describe('string key', () => {
+        let Machine
+        let machine
+
+        beforeEach(() => {
+          Machine = StateMachine.factory({
+            plugins: [
+              new StateMachinePersistence({
+                key: 'blergh'
+              })
+            ],
+            data,
+            transitions
+          })
+
+          machine = new Machine({ store })
+          machine.blergh = 'fake'
+          machine.persist = persist
+        })
+
+        it('persists using a custom key name', async () => {
+          await machine.step()
+
+          expect(persist).to.have.been.calledWith('fake')
+        })
+
+        it('inflates using a custom key name', async () => {
+          const machine = await Machine.fromStore({ store }, { key: 'fake', value: JSON.stringify({ state: 'first' }) })
+
+          expect(machine).to.have.property('blergh', 'fake')
+        })
+      })
+
+      describe('function key', () => {
+        let Machine
+        let machine
+        let keyStub
+
+        beforeEach(() => {
+          keyStub = sinon.stub().callsFake(function (val) {
+            if (val) this.blergh = val
+            return this.blergh
+          })
+
+          Machine = StateMachine.factory({
+            plugins: [
+              new StateMachinePersistence({
+                key: keyStub
+              })
+            ],
+            data,
+            transitions
+          })
+
+          machine = new Machine({ store })
+          machine.blergh = 'fake'
+          machine.persist = persist
+        })
+
+        it('persists using a custom key accessor', async () => {
+          await machine.step()
+
+          expect(persist).to.have.been.calledWith('fake')
+        })
+
+        it('inflates using a custom key accessor', async () => {
+          const machine = await Machine.fromStore({ store }, { key: 'fake', value: JSON.stringify({ state: 'first' }) })
+
+          expect(machine).to.have.property('blergh', 'fake')
+        })
+      })
+    })
   })
 })
