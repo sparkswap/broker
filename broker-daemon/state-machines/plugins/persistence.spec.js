@@ -74,6 +74,100 @@ describe('StateMachinePersistence', () => {
     })
   })
 
+  describe('::get', () => {
+    let Machine
+    let state
+    let store
+    let blergh
+    let blerghValue
+    let key
+    let badKey
+    let value
+
+    beforeEach(() => {
+      blergh = sinon.stub().callsFake(function (blergh) {
+        if (blergh) {
+          this.blergh = blergh
+        }
+
+        return this.blergh
+      })
+
+      Machine = StateMachine.factory({
+        plugins: [
+          new StateMachinePersistence({
+            additionalFields: {
+              blergh
+            }
+          })
+        ],
+        data: function ({ store }) {
+          return { store }
+        },
+        transitions: [
+          { name: 'step', from: 'none', to: 'first' }
+        ]
+      })
+
+      blerghValue = 'hello'
+      state = 'first'
+
+      key = 'fakeKey'
+      badKey = 'hello'
+      value = JSON.stringify({
+        blergh: blerghValue,
+        state
+      })
+
+      const storeGet = sinon.stub()
+      storeGet.withArgs(key).callsArgWithAsync(1, null, value)
+      storeGet.withArgs(badKey).callsArgWithAsync(1, new Error('fake error'))
+
+      store = {
+        put: sinon.stub(),
+        get: storeGet,
+        createReadStream: sinon.stub()
+      }
+    })
+
+    it('get the record from the store', async () => {
+      await Machine.get(key, { store })
+
+      expect(store.get).to.have.been.calledOnce()
+      expect(store.get).to.have.been.calledWith(key)
+    })
+
+    it('errors if no record is found', async () => {
+      return expect(Machine.get(badKey, { store })).to.eventually.be.rejectedWith(Error)
+    })
+
+    it('instantiates a Machine for the record', async () => {
+      const machine = await Machine.get(key, { store })
+
+      expect(machine).to.be.instanceOf(Machine)
+    })
+
+    it('moves the Machine to the correct state', async () => {
+      const machine = await Machine.get(key, { store })
+
+      expect(machine).to.have.property('state', state)
+    })
+
+    it('assigns arbitrary data to the state machine', async () => {
+      const machine = await Machine.get(key, { store })
+
+      expect(machine).to.have.property('blergh', blerghValue)
+    })
+
+    it('calls user defined setters', async () => {
+      const machine = await Machine.get(key, { store })
+
+      expect(blergh).to.have.been.calledOnce()
+      expect(blergh).to.have.been.calledOn(machine)
+      expect(blergh).to.have.been.calledWith('hello')
+    })
+  })
+
   describe('::getAll', () => {
     let fakeRecords
     let Machine
