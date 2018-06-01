@@ -71,4 +71,72 @@ describe('StateMachineAbstractPlugin', () => {
       expect(fakeHook).to.have.been.calledWith(sinon.match.any, 'fakeArgs')
     })
   })
+
+  describe('.observers', () => {
+    let Plugin
+    let plugin
+    let Machine
+    let onEnterState
+
+    beforeEach(() => {
+      onEnterState = sinon.stub()
+
+      Plugin = class Plugin extends StateMachineAbstractPlugin {
+        get observers () {
+          return {
+            onEnterState
+          }
+        }
+      }
+      plugin = new Plugin()
+
+      Machine = StateMachine.factory({
+        plugins: [
+          plugin
+        ],
+        transitions: [
+          { name: 'step', from: 'none', to: 'first' }
+        ]
+      })
+    })
+
+    it('calls the plugged in lifecycle', () => {
+      const machine = new Machine()
+
+      machine.step()
+
+      expect(onEnterState).to.have.been.calledOnce()
+    })
+
+    it('calls the lifecycle in context of the instance', () => {
+      const machine = new Machine()
+
+      machine.step()
+
+      expect(onEnterState).to.have.been.calledOn(machine)
+    })
+
+    it('calls the lifecycle with the lifecycle object', () => {
+      const machine = new Machine()
+
+      machine.step()
+
+      expect(onEnterState).to.have.been.calledWith(sinon.match({
+        from: 'none',
+        to: 'first',
+        transition: 'step'
+      }))
+    })
+
+    it('calls the lifecycle even if the instance defines its own', () => {
+      Machine.prototype.onEnterState = sinon.stub()
+      const machine = new Machine()
+
+      machine.step()
+
+      expect(onEnterState).to.have.been.calledOnce()
+      expect(Machine.prototype.onEnterState).to.have.been.calledOnce()
+      expect(onEnterState).to.not.be.equal(Machine.prototype.onEnterState)
+    })
+  })
 })
