@@ -1,8 +1,11 @@
 const { promisify } = require('util')
 const { getRecords } = require('../../utils')
-const pluginUtil = require('javascript-state-machine/lib/plugin')
+const StateMachinePlugin = require('./abstract')
 
-class StateMachinePersistence {
+/**
+ * @class Store state machine data and state using a LevelUp compatible store
+ */
+class StateMachinePersistence extends StateMachinePlugin {
   /**
    * @class A store compatible with the StateMachinePersistence plugin
    * @name StateMachinePersistence~Store
@@ -33,8 +36,7 @@ class StateMachinePersistence {
    */
   
   /**
-   * State machine plugins are constructed before they are added to the state machine
-   * Used for plugin-wide configuration.
+   * Set up the persistence plugin with user-defined attributes to save additional fielsd and avoid naming conflicts
    * @param  {String}                          options.hostName         Name of the property on the state machine instance bearing the host data
    * @param  {Array}                           options.additionalFields List of additional properties on the instance to be persisted
    * @param  {String}                          options.storeName        Name of the property on the state machine where the StateMachinePersistence~Store is located
@@ -42,6 +44,7 @@ class StateMachinePersistence {
    * @return {StateMachinePersistence}                                  Plugin-compatible class
    */
   constructor({ hostName = 'payload', additionalFields = {}, storeName = 'store', metadataName = '__stateMachine' } = {}) {
+    super()
     this.hostName = hostName
     this.additionalFields = additionalFields
     this.metadataName = metadataName
@@ -49,34 +52,29 @@ class StateMachinePersistence {
   }
 
   /**
-   * State machine plugins expose a `configure` method that gets called against the config object when building the factory
-   * In this case its used to add a transition used by our own methods
-   * @param  {Object} config State machine configu object
+   * Add the `goto` transition used during re-inflation of state machines
+   * @param  {StateMachine~Config} config State machine configuration object
    * @return {void}
    */
   configure(config) {
+    super.configure(config)
     config.mapTransition(
       { name: 'goto', from: '*', to: (s) => s }
     )
   }
 
   /**
-   * State machine provides a hook when a new state machine is init'ed
-   * It does two things for us:
-   *   - check that the instance has a valid StateMachinePersistence~Store
-   *   - apply our custom lifecycle observers (the lifecycle hook is $h!t)
+   * Check that the instance has a valid StateMachinePersistence~Store
    * @param  {Object} instance State machine instance being initialized
    * @param  {StateMachinePersistence~Store} instance.store Compatible store
    * @return {void}
    */
   init(instance) {
+    super.init(instance)
+
     if(!instance[this.storeName] || typeof instance[this.storeName].put !== 'function') {
       throw new Error(`A store must be present on the state machine at ${this.storeName} in order to use the persistence plugin`)
     }
-
-    Object.entries(this.observers).forEach(([ name, func]) => {
-      instance.observe(name, func)
-    })
   }
 
   /**
@@ -157,7 +155,7 @@ class StateMachinePersistence {
 
         const valueWithMeta = Object.assign({}, value, metadataNamespaced))
 
-        pluginUtil.hook(this, 'persist', [key, valueWithMeta])
+        plugin.hook(this, 'persist', [key, valueWithMeta])
 
         // somehow spit an error if this fails?
         await promisify(this[plugin.storeName].put)(key, JSON.stringify(valueWithMeta))
@@ -198,7 +196,7 @@ class StateMachinePersistence {
           }
         })
 
-        pluginUtil.hook(instance, 'inflate', [key, parsedValue, metadata])
+        plugin.hook(instance, 'inflate', [key, parsedValue, metadata])
 
         return instance
       }
