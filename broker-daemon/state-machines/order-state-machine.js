@@ -12,6 +12,8 @@ const OrderStateMachine = StateMachine.factory({
     new StateMachinePersistence({
       /**
        * @type {StateMachinePersistence~KeyAccessor}
+       * @param {String}   key Unique key for the stored state machine
+       * @returns {String}     Unique key for the state machine
        */
       key: function (key) {
         // this only defines a getter - it will be set by the `order` setter
@@ -22,6 +24,9 @@ const OrderStateMachine = StateMachine.factory({
       additionalFields: {
         /**
          * @type {StateMachinePersistence~FieldAccessor}
+         * @param {Object}   orderObject Stored plain object description of the Order associated with the State machine
+         * @param {String}   key         Unique key for the order/state machine
+         * @returns {Object}             Plain object description of the Order associated with the State machine
          */
         order: function (orderObject, key) {
           if (orderObject) {
@@ -31,7 +36,9 @@ const OrderStateMachine = StateMachine.factory({
           return this.order.valueObject
         },
         /**
-         * @type {StateMachinePersistence~FieldAccessor}
+         * @type  {StateMachinePersistence~FieldAccessor}
+         * @param {Array<String>}   history Stored history of states for this state machine
+         * @returns {Array<String>}         History of states for this state machine
          */
         history: function (history) {
           if (history) {
@@ -43,6 +50,8 @@ const OrderStateMachine = StateMachine.factory({
         },
         /**
          * @type {StateMachinePersistence~FieldAccessor}
+         * @param {String}   errorMessage Stored error message for a state machine in an errored state
+         * @returns {String}              Error message for a state machine in an errored state
          */
         error: function (errorMessage) {
           if (errorMessage) {
