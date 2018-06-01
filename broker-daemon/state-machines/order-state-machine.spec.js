@@ -500,7 +500,9 @@ describe('OrderStateMachine', () => {
     let value
 
     beforeEach(() => {
-      Order.fromObject = sinon.stub()
+      Order.fromObject = sinon.stub().returns({
+        valueObject: {}
+      })
       key = 'fakeKey'
       state = 'created'
       history = []
