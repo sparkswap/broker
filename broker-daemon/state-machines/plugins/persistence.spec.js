@@ -343,4 +343,64 @@ describe('StateMachinePersistence', () => {
       expect(blergh).to.have.been.calledWith('hello')
     })
   })
+
+  describe('lifecycle', () => {
+    let Machine
+    let machine
+    let store
+    let id
+    let persist
+
+    beforeEach(() => {
+      Machine = StateMachine.factory({
+        plugins: [
+          new StateMachinePersistence()
+        ],
+        transitions: [
+          { name: 'step', from: 'none', to: 'first' }
+        ],
+        data: function ({ id, store }) {
+          return { id, store }
+        }
+      })
+
+      store = {
+        put: sinon.stub()
+      }
+      id = 'fakeId'
+      persist = sinon.stub().resolves()
+      machine = new Machine({ id, store })
+      machine.persist = persist
+    })
+
+    it('does not save on initialization', () => {
+      return expect(persist).to.not.have.been.called
+    })
+
+    it('saves when entering a state', () => {
+      machine.step()
+
+      expect(persist).to.have.been.calledOnce()
+    })
+
+    it('uses the key name to persist the state', () => {
+      machine.step()
+
+      expect(persist).to.have.been.calledWith(id)
+    })
+
+    it('does not save when using the goto transition', () => {
+      machine.goto('first')
+
+      return expect(persist).to.not.have.been.called
+    })
+  })
+
+  describe('configuration', () => {
+    xit('uses a custom store name')
+
+    xit('uses a custom key name')
+
+    xit('uses a custom key accessor')
+  })
 })
