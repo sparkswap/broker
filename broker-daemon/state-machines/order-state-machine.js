@@ -17,9 +17,9 @@ const OrderStateMachine = StateMachine.factory({
         }
       },
       additionalFields: {
-        order: function (order, key) {
-          if (order) {
-            this.order = Order.fromObject(key, order)
+        order: function (orderObject, key) {
+          if (orderObject) {
+            this.order = Order.fromObject(key, orderObject)
           } else {
             return this.order.valueObject
           }
@@ -32,8 +32,8 @@ const OrderStateMachine = StateMachine.factory({
             return this.history
           }
         },
-        error: function (error) {
-          if (error) {
+        error: function (errorMessage) {
+          if (errorMessage) {
             this.error = new Error(error)
           } else {
             if (this.error) {
