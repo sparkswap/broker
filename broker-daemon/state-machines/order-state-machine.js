@@ -32,7 +32,7 @@ const OrderStateMachine = StateMachine.factory({
           if (orderObject) {
             this.order = Order.fromObject(key, orderObject)
           }
-          
+
           return this.order.valueObject
         },
         /**
