@@ -101,12 +101,12 @@ class StateMachinePersistence extends StateMachinePlugin {
     const plugin = this
 
     return {
-    /**
-     * Trigger our custom persist method any time we enter a state (unless re-inflating or merely instantiating)
-     * @param  {Object}        instance  State machine instance undergoing the event
-     * @param  {Object}        lifecycle State machine lifecycle object
-     * @return {Promise<void>}           Promise that resolves when persist resolves, allowing the transition to continue
-     */
+      /**
+       * Trigger our custom persist method any time we enter a state (unless re-inflating or merely instantiating)
+       * @param  {Object}        instance  State machine instance undergoing the event
+       * @param  {Object}        lifecycle State machine lifecycle object
+       * @return {Promise<void>}           Promise that resolves when persist resolves, allowing the transition to continue
+       */
       onEnterState: async function (lifecycle) {
         if (lifecycle.transition !== 'goto' && lifecycle.to !== 'none') {
           let key
