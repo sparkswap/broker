@@ -125,7 +125,7 @@ class StateMachinePersistence extends StateMachinePlugin {
        * @return {Promise<void>}           Promise that resolves when persist resolves, allowing the transition to continue
        */
       onEnterState: async function (lifecycle) {
-        if (lifecycle.transition !== 'goto' && lifecycle.to !== 'none') {
+        if (lifecycle.transition !== 'goto') {
           let key
 
           if (typeof plugin.key === 'function') {
