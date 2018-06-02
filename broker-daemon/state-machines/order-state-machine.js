@@ -1,6 +1,8 @@
 const StateMachine = require('./state-machine')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 const StateMachinePersistence = require('./plugins/persistence')
+const StateMachineRejection = require('./plugins/rejection')
+const StateMachineQueue = require('./plugins/queue')
 const { Order } = require('../models')
 
 /**
@@ -9,6 +11,8 @@ const { Order } = require('../models')
 const OrderStateMachine = StateMachine.factory({
   plugins: [
     new StateMachineHistory(),
+    new StateMachineQueue(),
+    new StateMachineRejection(),
     new StateMachinePersistence({
       /**
        * @type {StateMachinePersistence~KeyAccessor}
@@ -82,11 +86,6 @@ const OrderStateMachine = StateMachine.factory({
      * @type {Object}
      */
     { name: 'place', from: 'created', to: 'placed' },
-    /**
-     * reject transition: a created order was rejected during placement
-     * @type {Object}
-     */
-    { name: 'reject', from: 'created', to: 'rejected' }
   ],
   /**
    * Instantiate the data on the state machine
@@ -103,31 +102,6 @@ const OrderStateMachine = StateMachine.factory({
     return { store, logger, relayer, engine, order: {} }
   },
   methods: {
-    /**
-     * Wrapper for running the next transition with error handling
-     * @param  {string}   transitionName Name of the transition to run
-     * @param  {...Array} arguments      Arguments to the apply to the transition
-     * @return {void}
-     */
-    nextTransition: function (transitionName, ...args) {
-      this.logger.debug(`Queuing transition: ${transitionName}`)
-      process.nextTick(async () => {
-        this.logger.debug(`Running transition: ${transitionName}`)
-        try {
-          if (!this.transitions().includes(transitionName)) {
-            throw new Error(`${transitionName} is invalid transition from ${this.state}`)
-          }
-
-          await this[transitionName](...args)
-        } catch (e) {
-          // TODO: bubble/handle error
-          // TODO: rejected state to clean up paid invoices, etc
-          this.logger.error(`Error encountered while running ${transitionName} transition`, e)
-          this.reject(e)
-        }
-      })
-    },
-
     onBeforeTransition: function (lifecycle) {
       this.logger.info(`BEFORE: ${lifecycle.transition}`)
     },
@@ -185,7 +159,7 @@ const OrderStateMachine = StateMachine.factory({
     onAfterCreate: function (lifecycle) {
       this.logger.info(`Create transition completed, triggering place`)
 
-      this.nextTransition('place')
+      this.queueTransition('tryTransition', 'place')
     },
 
     /**
@@ -199,16 +173,6 @@ const OrderStateMachine = StateMachine.factory({
      */
     onBeforePlace: async function (lifecycle) {
       throw new Error('Placing orders is currently un-implemented')
-    },
-
-    /**
-     * Handle rejection by assigning the error to the state machine
-     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
-     * @param  {Object} error     Error that triggered rejection
-     * @return {void}
-     */
-    onBeforeReject: function (lifecycle, error) {
-      this.error = error
     }
   }
 })
