@@ -30,11 +30,15 @@ class StateMachineAbstractPlugin {
 
   /**
    * State machine plugins expose a `configure` method that gets called against the config object when building the factory
+   * By default, we use it to apply our custom transitions
    * @see {@link https://github.com/jakesgordon/javascript-state-machine/blob/master/src/config.js#L119}
    * @param  {StateMachine~Config} config State machine configuration object
    * @return {void}
    */
   configure (config) {
+    this.transitions.forEach((transition) => {
+      config.mapTransition(transition)
+    })
   }
 
   /**
@@ -51,6 +55,16 @@ class StateMachineAbstractPlugin {
       // on the instance itself
       instance.observe(name, func.bind(instance))
     })
+  }
+
+  /**
+   * Our custom transitions to be added to the factory
+   * @return {Array} Array of JSM-compatible transitions
+   */
+  get transitions () {
+    const plugin = this // eslint-disable-line
+
+    return []
   }
 
   /**

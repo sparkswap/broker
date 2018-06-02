@@ -67,18 +67,6 @@ class StateMachinePersistence extends StateMachinePlugin {
   }
 
   /**
-   * Add the `goto` transition used during re-inflation of state machines
-   * @param  {StateMachine~Config} config State machine configuration object
-   * @return {void}
-   */
-  configure (config) {
-    super.configure(config)
-    config.mapTransition(
-      { name: 'goto', from: '*', to: (s) => s }
-    )
-  }
-
-  /**
    * Check that the instance has a valid StateMachinePersistence~Store
    * @param  {Object} instance State machine instance being initialized
    * @param  {StateMachinePersistence~Store} instance.store Compatible store
@@ -108,6 +96,17 @@ class StateMachinePersistence extends StateMachinePlugin {
     }
 
     return Object.assign(fields, this.additionalFields)
+  }
+
+  /**
+   * Custom transitions that get applied during configuration
+   * @return {Array} List of JSM compatible transitions
+   */
+  get transitions () {
+    return [
+      // `goto` transition used during re-inflation of state machines
+      { name: 'goto', from: '*', to: (s) => s }
+    ]
   }
 
   /**

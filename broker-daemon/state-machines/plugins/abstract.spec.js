@@ -139,4 +139,44 @@ describe('StateMachineAbstractPlugin', () => {
       expect(onEnterState).to.not.be.equal(Machine.prototype.onEnterState)
     })
   })
+
+  describe('.transitions', () => {
+    let Plugin
+    let plugin
+    let Machine
+    let machine
+    let stepTransition
+
+    beforeEach(() => {
+      stepTransition = { name: 'step', from: 'none', to: 'first' }
+
+      Plugin = class Plugin extends StateMachineAbstractPlugin {
+        get transitions () {
+          return [
+            stepTransition
+          ]
+        }
+      }
+      plugin = new Plugin()
+
+      Machine = StateMachine.factory({
+        plugins: [
+          plugin
+        ]
+      })
+
+      machine = new Machine()
+    })
+
+    it('adds the transition to the instance', () => {
+      expect(machine).to.have.property('step')
+      expect(machine.step).to.be.a('function')
+    })
+
+    it('transitions as expected', () => {
+      machine.step()
+
+      expect(machine.state).to.be.equal(stepTransition.to)
+    })
+  })
 })
