@@ -64,6 +64,28 @@ class StateMachinePersistence extends StateMachinePlugin {
     this.key = key
     this.additionalFields = additionalFields
     this.storeName = storeName
+    this.persistedFields = {
+      /**
+       * @type  {StateMachinePersistence~FieldAccessor}
+       * @param {String}   state Stored state of the machine
+       * @returns {String}         Current state of the machine
+       */
+      state: function (state) {
+        if (state) {
+          this.goto(state)
+        } else {
+          return this.state
+        }
+      }
+    }
+
+    Object.assign(this.persistedFields, this.additionalFields)
+  }
+
+  configure (config) {
+    super.configure(config)
+
+    config.persistedFields = this.persistedFields
   }
 
   /**
@@ -80,22 +102,15 @@ class StateMachinePersistence extends StateMachinePlugin {
     }
   }
 
-  /**
-   * Properties of the state machine that are persisted
-   * @return {Object} Object of property names to persist with a setter and getter
-   */
-  get persistedFields () {
-    const fields = {
-      state: function (state) {
-        if (state) {
-          this.goto(state)
-        } else {
-          return this.state
-        }
+  get properties () {
+    const plugin = this
+
+    return {
+      persistedFields: {
+        enumerable: true,
+        value: plugin.persistedFields
       }
     }
-
-    return Object.assign(fields, this.additionalFields)
   }
 
   /**
@@ -157,7 +172,7 @@ class StateMachinePersistence extends StateMachinePlugin {
           throw new Error(`An key is required to save state`)
         }
 
-        const fields = plugin.persistedFields || {}
+        const fields = this.persistedFields
 
         const data = {}
 
@@ -189,7 +204,7 @@ class StateMachinePersistence extends StateMachinePlugin {
        * @return {OrderStateMachine}
        */
       fromStore: function (initParams, { key, value }) {
-        const fields = plugin.persistedFields || {}
+        const fields = plugin.persistedFields
         const parsedValue = JSON.parse(value)
 
         const instance = new this(initParams)

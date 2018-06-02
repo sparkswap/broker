@@ -5,6 +5,34 @@ const StateMachinePlugin = require('./abstract')
  */
 class StateMachineRejection extends StateMachinePlugin {
 
+  constructor({ errorName = 'error' }) {
+    this.errorName = errorName
+  }
+
+  configure (config) {
+    super.configure(config)
+
+    const plugin = this
+
+    // plugin into StateMachinePersistence
+    if(config.persistedFields) {
+      /**
+       * @type {StateMachinePersistence~FieldAccessor}
+       * @param {String}   errorMessage Stored error message for a state machine in an errored state
+       * @returns {String}              Error message for a state machine in an errored state
+       */
+      config.persistedFields.error = function (errorMessage) {
+        if (errorMessage) {
+          this[plugin.errorName] = new Error(errorMessage)
+        }
+
+        if (this[plugin.errorName]) {
+          return this[plugin.errorName].message
+        }
+      }
+    }
+  }
+
   get transitions () {
     const plugin = this
 
@@ -18,7 +46,7 @@ class StateMachineRejection extends StateMachinePlugin {
 
     return {
       onBeforeReject: function (lifecycle, err) {
-        this.error = err
+        this[plugin.errorName] = err
       }
     }
   }
