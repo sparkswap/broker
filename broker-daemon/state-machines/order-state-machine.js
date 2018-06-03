@@ -51,6 +51,22 @@ const OrderStateMachine = StateMachine.factory({
           }
 
           return this.history
+        },
+        /**
+         * @type {StateMachinePersistence~FieldAccessor}
+         * @param {String}   errorMessage Stored error message for a state machine in an errored state
+         * @returns {String}              Error message for a state machine in an errored state
+         */
+        error: function (errorMessage) {
+          if (errorMessage) {
+            this.error = new Error(errorMessage)
+          }
+
+          if (this.error) {
+            return this.error.message
+          } else {
+            this.logger.error('Tried to serialize error, but it had no message property')
+          }
         }
       }
     })
