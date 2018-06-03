@@ -4,12 +4,17 @@ const StateMachinePlugin = require('./abstract')
  * @class Try transitions and reject those that fail
  */
 class StateMachineRejection extends StateMachinePlugin {
+  constructor({ errorName = 'error', rejectName = 'reject', rejectedName = 'rejected' }) {
+    this.errorName = errorName
+    this.rejectName = rejectName
+    this.rejectedName = rejectedName
+  }
 
   get transitions () {
     const plugin = this
 
     return [
-      { name: 'reject', from: '*', to: 'rejected' }
+      { name: plugin.rejectName, from: '*', to: plugin.rejectedName }
     ]
   }
 
@@ -17,8 +22,8 @@ class StateMachineRejection extends StateMachinePlugin {
     const plugin = this
 
     return {
-      onBeforeReject: function (lifecycle, err) {
-        this.error = err
+      [`onBefore${plugin.rejectName}`]: function (lifecycle, err) {
+        this[plugin.errorName] = err
       }
     }
   }
@@ -41,7 +46,7 @@ class StateMachineRejection extends StateMachinePlugin {
 
           await this[transitionName](...args)
         } catch (e) {
-          this.reject(e)
+          this[plugin.rejectName](e)
         }
       }
     }
