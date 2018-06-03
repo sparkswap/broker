@@ -321,7 +321,7 @@ describe('OrderStateMachine', () => {
       await osm.goto('created')
     })
 
-    it.only('throws while unimplemented', () => {
+    it('throws while unimplemented', () => {
       return expect(osm.place()).to.eventually.be.rejectedWith(Error)
     })
   })

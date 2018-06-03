@@ -172,7 +172,6 @@ const OrderStateMachine = StateMachine.factory({
      * @return {Promise}                                    Promise that rejects if placement on the relayer fails
      */
     onBeforePlace: async function (lifecycle) {
-      console.log("in on before place")
       throw new Error('Placing orders is currently un-implemented')
     }
   }
