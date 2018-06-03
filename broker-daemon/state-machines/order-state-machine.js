@@ -191,7 +191,7 @@ const OrderStateMachine = StateMachine.factory({
  */
 OrderStateMachine.create = async function (initParams, createParams) {
   const osm = new OrderStateMachine(initParams)
-  await osm.create(createParams)
+  await osm.tryTransition('create', createParams)
 
   return osm
 }
