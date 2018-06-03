@@ -2,7 +2,6 @@ const StateMachine = require('./state-machine')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 const StateMachinePersistence = require('./plugins/persistence')
 const StateMachineRejection = require('./plugins/rejection')
-const StateMachineQueue = require('./plugins/queue')
 const { Order } = require('../models')
 
 /**
@@ -11,7 +10,6 @@ const { Order } = require('../models')
 const OrderStateMachine = StateMachine.factory({
   plugins: [
     new StateMachineHistory(),
-    new StateMachineQueue(),
     new StateMachineRejection(),
     new StateMachinePersistence({
       /**
@@ -157,9 +155,15 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onAfterCreate: function (lifecycle) {
+      console.log('onAfterCreate')
       this.logger.info(`Create transition completed, triggering place`)
 
-      this.queue('tryTransition', 'place')
+      // you can't start a transition while in another one,
+      // so we `nextTick` our way out of the current transition
+      // @see {@link https://github.com/jakesgordon/javascript-state-machine/issues/143}
+      process.nextTick(() => {
+        this.tryTransition('place')
+      })
     },
 
     /**
@@ -172,6 +176,7 @@ const OrderStateMachine = StateMachine.factory({
      * @return {Promise}                                    Promise that rejects if placement on the relayer fails
      */
     onBeforePlace: async function (lifecycle) {
+      console.log('onBeforePlace')
       throw new Error('Placing orders is currently un-implemented')
     }
   }
