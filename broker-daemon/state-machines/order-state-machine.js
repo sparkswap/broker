@@ -162,6 +162,7 @@ const OrderStateMachine = StateMachine.factory({
       // so we `nextTick` our way out of the current transition
       // @see {@link https://github.com/jakesgordon/javascript-state-machine/issues/143}
       process.nextTick(() => {
+        // we use `tryTransition` to move to a rejected state if `place` fails
         this.tryTransition('place')
       })
     },
