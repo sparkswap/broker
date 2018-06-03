@@ -37,7 +37,11 @@ class StateMachineQueue extends StateMachinePlugin {
           throw new Error(`Cannot queue ${transitionName}, ${this[plugin.queueName][0].name} is already queued.`)
         }
 
-        this[plugin.queueName].push({ name: transitionName, args: args })
+        if (this._fsm.isPending()) {
+          this[plugin.queueName].push({ name: transitionName, args: args })
+        } else {
+          this[transitionName].apply(this, args)
+        }
       }
     }
   }
