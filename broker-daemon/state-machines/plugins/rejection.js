@@ -49,7 +49,7 @@ class StateMachineRejection extends StateMachinePlugin {
   }
 
   /**
-   * Add a `tryTransition` method to the state machine to use the plugin
+   * Add a `tryTo` method to the state machine to use the plugin
    * @return {Object} key value of method names and functions
    */
   get methods () {
@@ -62,7 +62,7 @@ class StateMachineRejection extends StateMachinePlugin {
        * @param  {...Array} arguments      Arguments to the apply to the transition
        * @return {void}
        */
-      tryTransition: async function (transitionName, ...args) {
+      tryTo: async function (transitionName, ...args) {
         try {
           if (!this.transitions().includes(transitionName)) {
             throw new Error(`${transitionName} is invalid transition from ${this.state}`)

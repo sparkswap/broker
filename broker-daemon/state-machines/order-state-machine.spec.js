@@ -63,7 +63,7 @@ describe('OrderStateMachine', () => {
     })
   })
 
-  describe('#tryTransition', () => {
+  describe('#tryTo', () => {
     let osm
 
     beforeEach(() => {
@@ -74,7 +74,7 @@ describe('OrderStateMachine', () => {
     it('transitions on next tick', () => {
       osm.place = sinon.stub()
       const state = osm.state
-      osm.tryTransition('place')
+      osm.tryTo('place')
 
       expect(osm.state).to.be.eql(state)
     })
@@ -82,7 +82,7 @@ describe('OrderStateMachine', () => {
     it('calls the transition', async () => {
       osm.place = sinon.stub()
 
-      osm.tryTransition('place')
+      osm.tryTo('place')
 
       await delay(10)
 
@@ -92,7 +92,7 @@ describe('OrderStateMachine', () => {
     it('passes through arguments', async () => {
       osm.place = sinon.stub()
 
-      osm.tryTransition('place', 'hello', 'world')
+      osm.tryTo('place', 'hello', 'world')
 
       await delay(10)
 
@@ -106,7 +106,7 @@ describe('OrderStateMachine', () => {
       osm.place = sinon.stub().rejects(fakeError)
       osm.reject = sinon.stub()
 
-      osm.tryTransition('place')
+      osm.tryTo('place')
 
       await delay(10)
 
@@ -117,7 +117,7 @@ describe('OrderStateMachine', () => {
     it('moves to rejected if using an invalid transition', async () => {
       osm.reject = sinon.stub()
 
-      osm.tryTransition('blergh')
+      osm.tryTo('blergh')
 
       await delay(10)
 
@@ -304,12 +304,12 @@ describe('OrderStateMachine', () => {
     })
 
     it('automatically attempts to place an order after creation', async () => {
-      osm.tryTransition = sinon.stub()
+      osm.tryTo = sinon.stub()
       await osm.create(params)
 
       await delay(10)
-      expect(osm.tryTransition).to.have.been.calledOnce()
-      expect(osm.tryTransition).to.have.been.calledWith('place')
+      expect(osm.tryTo).to.have.been.calledOnce()
+      expect(osm.tryTo).to.have.been.calledWith('place')
     })
   })
 

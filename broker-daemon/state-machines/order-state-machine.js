@@ -162,8 +162,8 @@ const OrderStateMachine = StateMachine.factory({
       // so we `nextTick` our way out of the current transition
       // @see {@link https://github.com/jakesgordon/javascript-state-machine/issues/143}
       process.nextTick(() => {
-        // we use `tryTransition` to move to a rejected state if `place` fails
-        this.tryTransition('place')
+        // we use `tryTo` to move to a rejected state if `place` fails
+        this.tryTo('place')
       })
     },
 
@@ -191,7 +191,7 @@ const OrderStateMachine = StateMachine.factory({
  */
 OrderStateMachine.create = async function (initParams, createParams) {
   const osm = new OrderStateMachine(initParams)
-  await osm.tryTransition('create', createParams)
+  await osm.tryTo('create', createParams)
 
   return osm
 }
