@@ -85,7 +85,7 @@ const OrderStateMachine = StateMachine.factory({
      * place transition: second transition in the order lifecycle
      * @type {Object}
      */
-    { name: 'place', from: 'created', to: 'placed' },
+    { name: 'place', from: 'created', to: 'placed' }
   ],
   /**
    * Instantiate the data on the state machine
@@ -159,7 +159,7 @@ const OrderStateMachine = StateMachine.factory({
     onAfterCreate: function (lifecycle) {
       this.logger.info(`Create transition completed, triggering place`)
 
-      this.queueTransition('tryTransition', 'place')
+      this.queue('tryTransition', 'place')
     },
 
     /**

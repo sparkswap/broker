@@ -4,7 +4,8 @@ const StateMachinePlugin = require('./abstract')
  * @class Try transitions and reject those that fail
  */
 class StateMachineRejection extends StateMachinePlugin {
-  constructor({ errorName = 'error', rejectName = 'reject', rejectedName = 'rejected' }) {
+  constructor ({ errorName = 'error', rejectName = 'reject', rejectedName = 'rejected' } = {}) {
+    super()
     this.errorName = errorName
     this.rejectName = rejectName
     this.rejectedName = rejectedName
@@ -21,8 +22,10 @@ class StateMachineRejection extends StateMachinePlugin {
   get observers () {
     const plugin = this
 
+    const capitalizedRejectName = `${plugin.rejectName.charAt(0).toUpperCase()}${plugin.rejectName.slice(1)}`
+
     return {
-      [`onBefore${plugin.rejectName}`]: function (lifecycle, err) {
+      [`onBefore${capitalizedRejectName}`]: function (lifecycle, err) {
         this[plugin.errorName] = err
       }
     }
@@ -38,7 +41,7 @@ class StateMachineRejection extends StateMachinePlugin {
        * @param  {...Array} arguments      Arguments to the apply to the transition
        * @return {void}
        */
-      tryTransition: function (transitionName, ...args) {
+      tryTransition: async function (transitionName, ...args) {
         try {
           if (!this.transitions().includes(transitionName)) {
             throw new Error(`${transitionName} is invalid transition from ${this.state}`)

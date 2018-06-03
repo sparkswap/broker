@@ -4,8 +4,8 @@ const StateMachinePlugin = require('./abstract')
  * @class Try transitions and reject those that fail
  */
 class StateMachineQueue extends StateMachinePlugin {
-
-  constructor({ queueName = 'queue' }) {
+  constructor ({ queueName = 'queued' } = {}) {
+    super()
     this.queueName = queueName
   }
 
@@ -14,7 +14,7 @@ class StateMachineQueue extends StateMachinePlugin {
 
     return {
       onAfterTransition: function (lifecycle) {
-        if(this[plugin.queueName].length) {
+        if (this[plugin.queueName].length) {
           const next = this[plugin.queueName].pop()
 
           // you can't start a transition while in another one,
@@ -32,8 +32,8 @@ class StateMachineQueue extends StateMachinePlugin {
     const plugin = this
 
     return {
-      queueTransition: function (transitionName, ...args) {
-        if(this[plugin.queueName].length) {
+      queue: function (transitionName, ...args) {
+        if (this[plugin.queueName].length) {
           throw new Error(`Cannot queue ${transitionName}, ${this[plugin.queueName][0].name} is already queued.`)
         }
 
