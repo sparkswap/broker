@@ -5,27 +5,72 @@ const BrokerDaemonClient = rewire(path.resolve(__dirname))
 
 describe('BrokerDaemonClient', () => {
   let broker
-  let rpcAddress
-  let loadStub
-  let createInsecureCredsStub
+  let protoStub
+  let adminStub
+  let orderStub
+  let orderbookStub
+  let walletStub
+  let callerStub
 
   beforeEach(() => {
-    rpcAddress = null
-    createInsecureCredsStub = sinon.stub()
-    loadStub = sinon.stub().returns({
-      AdminService: sinon.stub(),
-      OrderService: sinon.stub(),
-      OrderBookService: sinon.stub(),
-      WalletService: sinon.stub()
+    callerStub = sinon.stub()
+    adminStub = sinon.stub()
+    orderStub = sinon.stub()
+    orderbookStub = sinon.stub()
+    walletStub = sinon.stub()
+    protoStub = sinon.stub().returns({
+      AdminService: adminStub,
+      OrderService: orderStub,
+      OrderBookService: orderbookStub,
+      WalletService: walletStub
     })
 
-    BrokerDaemonClient.__set__('grpc', {
-      load: loadStub,
-      credentials: {
-        createInsecure: createInsecureCredsStub
-      }
+    BrokerDaemonClient.__set__('loadProto', protoStub)
+    BrokerDaemonClient.__set__('caller', callerStub)
+  })
+
+  it('loads a proto file', () => {
+    const protoPath = BrokerDaemonClient.__get__('PROTO_PATH')
+    broker = new BrokerDaemonClient()
+    expect(protoStub).to.have.been.calledWith(protoPath)
+  })
+
+  describe('services', () => {
+    beforeEach(() => {
+      broker = new BrokerDaemonClient()
     })
 
-    broker = new BrokerDaemonClient(rpcAddress)
+    it('creates an adminService', () => expect(callerStub).to.have.been.calledWith(broker.address, adminStub))
+    it('creates an orderService', () => expect(callerStub).to.have.been.calledWith(broker.address, orderStub))
+    it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(broker.address, orderbookStub))
+    it('creates an walletService', () => expect(callerStub).to.have.been.calledWith(broker.address, walletStub))
+  })
+
+  describe('address', () => {
+    let address
+
+    beforeEach(() => {
+      address = '172.0.0.1'
+    })
+
+    it('defaults to localhost', () => {
+      address = null
+      BrokerDaemonClient.__set__('BROKER_DAEMON_HOST', address)
+      broker = new BrokerDaemonClient()
+      const defaultHost = BrokerDaemonClient.__get__('DEFAULT_BROKER_DAEMON_HOST')
+      expect(broker.address).to.eql(defaultHost)
+    })
+
+    it('defaults to BROKER_DAEMON_HOST is address is not passed in', () => {
+      BrokerDaemonClient.__set__('BROKER_DAEMON_HOST', address)
+      broker = new BrokerDaemonClient()
+      expect(broker.address).to.eql(address)
+    })
+
+    it('uses a provided address', () => {
+      const providedHost = '127.0.0.2:10009'
+      broker = new BrokerDaemonClient(providedHost)
+      expect(broker.address).to.eql(providedHost)
+    })
   })
 })

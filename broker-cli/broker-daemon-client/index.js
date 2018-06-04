@@ -17,12 +17,19 @@ const PROTO_PATH = path.resolve('./broker-daemon/proto/broker.proto')
  */
 const BROKER_DAEMON_HOST = process.env.BROKER_DAEMON_HOST
 
+/**
+ * @constant
+ * @type {String}
+ * @default
+ */
+const DEFAULT_BROKER_DAEMON_HOST = 'localhost:27492'
+
 class BrokerDaemonClient {
   /**
    * @param {String} address grpc host address
    */
   constructor (address) {
-    this.address = address || BROKER_DAEMON_HOST || 'localhost:27492'
+    this.address = address || BROKER_DAEMON_HOST || DEFAULT_BROKER_DAEMON_HOST
     this.proto = loadProto(PROTO_PATH)
 
     // TODO: Change this to use npm instead of a relative path to the daemon
