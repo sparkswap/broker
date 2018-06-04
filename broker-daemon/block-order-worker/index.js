@@ -1,7 +1,9 @@
 const EventEmitter = require('events')
+const { promisify } = require('util')
 const safeid = require('generate-safe-id')
 const { BlockOrder } = require('../models')
 const OrderStateMachine = require('./order-state-machine')
+const { BlockOrderNotFoundError } = require('./errors')
 
 /**
  * @class Create and work Block Orders
@@ -60,15 +62,47 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`${marketName} is not being tracked as a market. Configure kbd to track ${marketName} using the MARKETS environment variable.`)
     }
 
-    const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
+    const status = BlockOrder.STATUSES.ACTIVE
 
-    await this.store.put(blockOrder.key, blockOrder.value)
+    const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce, status })
+
+    await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
     this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
 
     this.emit('BlockOrder:create', blockOrder)
 
     return id
+  }
+
+  /**
+   * Get an existing block order
+   * @param  {String} blockOrderId ID of the block order
+   * @return {BlockOrder}
+   */
+  async getBlockOrder (blockOrderId) {
+    this.logger.info('Getting block order', { id: blockOrderId })
+
+    let value
+
+    try {
+      value = await promisify(this.store.get)(blockOrderId)
+    } catch (e) {
+      if (e.notFound) {
+        throw new BlockOrderNotFoundError(blockOrderId, e)
+      } else {
+        throw e
+      }
+    }
+
+    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+
+    const { relayer, engine, logger } = this
+    const openOrders = await OrderStateMachine.getAll({ store: this.store.sublevel(blockOrder.id).sublevel('orders'), relayer, engine, logger })
+
+    blockOrder.openOrders = openOrders
+
+    return blockOrder
   }
 
   /**

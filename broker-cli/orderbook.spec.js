@@ -23,6 +23,9 @@ describe('orderbook', () => {
   let rpcAddress
   let createUIStub
   let stream
+  let revertCreateUI
+  let resizeHandleStub
+  let revertProcessStub
 
   const orderbook = program.__get__('orderbook')
 
@@ -48,16 +51,21 @@ describe('orderbook', () => {
     }
 
     revert = program.__set__('BrokerDaemonClient', brokerStub)
-    revert = program.__set__('createUI', createUIStub)
+    revertCreateUI = program.__set__('createUI', createUIStub)
 
     logger = {
       info: infoSpy,
       error: errorSpy
     }
+
+    resizeHandleStub = sinon.stub()
+    revertProcessStub = program.__set__('process', {stdout: {on: resizeHandleStub}})
   })
 
   afterEach(() => {
     revert()
+    revertCreateUI()
+    revertProcessStub()
   })
 
   it('makes a request to the broker', async () => {
@@ -175,5 +183,22 @@ describe('orderbook', () => {
     expect(createUIStub).to.have.been.calledWith(market, [{ depth: bigInt(10), price: bigInt(100) }], [])
     expect(createUIStub).to.have.been.calledWith(market, [{ depth: bigInt(10), price: bigInt(100) }, { depth: bigInt(10), price: bigInt(1000) }], [])
     expect(createUIStub).to.have.been.calledWith(market, [{ depth: bigInt(10), price: bigInt(1000) }], [])
+  })
+
+  it('sets a resize event handler that results in recreating the UI', async () => {
+    await orderbook(args, opts, logger)
+
+    expect(resizeHandleStub).to.have.been.calledWith('resize', sinon.match.func)
+  })
+})
+
+describe('calculateTableWidths', () => {
+  const calculateTableWidths = program.__get__('calculateTableWidths')
+
+  it('takes in window width and outputs widths for outer and inner tables', () => {
+    let windowWidth = 60
+    let innerTableWidth = 12
+    let mainTableWidth = 28
+    expect(calculateTableWidths(windowWidth)).to.to.eql({innerTableWidth, mainTableWidth})
   })
 })

@@ -114,10 +114,26 @@ function isFormattedPath (str) {
   throw new Error('Path format is incorrect')
 }
 
+/**
+ * Checks if a specified string is a valid block order id.
+ *
+ * @param  {String}  str - block order id
+ * @return {String}     block order id
+ * @throws {Error} If string contains more than the allowed characters
+ */
+function isBlockOrderId (str) {
+  if (matches(str, /^[a-zA-Z0-9_-]+$/)) {
+    return str
+  }
+
+  throw new Error('Block order IDs only contain upper and lower case letters, numbers, dashes (-) and underscores (_).')
+}
+
 module.exports = {
   isPrice,
   isMarketName,
   isHost,
   isFormattedPath,
-  areValidMarketNames
+  areValidMarketNames,
+  isBlockOrderId
 }

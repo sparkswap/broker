@@ -12,15 +12,24 @@ class BlockOrder {
    * @param  {String} options.amount      Size of the order in base currency (e.g. '10000')
    * @param  {String} options.price       Limit price for the order (e.g. '100.1')
    * @param  {String} options.timeInForce Time restriction on the order (e.g. GTC, FOK)
+   * @param  {String} options.status      Block Order status
    * @return {BlockOrder}
    */
-  constructor ({ id, marketName, side, amount, price, timeInForce }) {
+  constructor ({ id, marketName, side, amount, price, timeInForce, status }) {
     this.id = id
     this.marketName = marketName
     this.side = side
     this.amount = bigInt(amount)
     this.price = price ? bigInt(price) : null
     this.timeInForce = timeInForce
+
+    if (!BlockOrder.STATUSES[status]) {
+      throw new Error(`Block Order status of ${status} is invalid`)
+    }
+
+    this.status = status
+
+    this.openOrders = []
   }
 
   /**
@@ -52,15 +61,41 @@ class BlockOrder {
    * @return {String} Stringified JSON object
    */
   get value () {
-    const { marketName, side, amount, price, timeInForce } = this
+    const { marketName, side, amount, price, timeInForce, status } = this
 
     return JSON.stringify({
       marketName,
       side,
       amount: amount.toString(),
       price: price ? price.toString() : null,
-      timeInForce
+      timeInForce,
+      status
     })
+  }
+
+  /**
+   * serialize a block order for transmission via grpc
+   * @return {Object} Object to be serialized into a GRPC message
+   */
+  serialize () {
+    const openOrders = this.openOrders.map(({ order, state }) => {
+      return {
+        orderId: order.orderId,
+        amount: order.baseAmount,
+        price: bigInt(order.counterAmount).divide(order.baseAmount).toString(),
+        orderStatus: state.toUpperCase()
+      }
+    })
+
+    return {
+      market: this.marketName,
+      side: this.side,
+      amount: this.amount.toString(),
+      price: this.price ? this.price.toString() : null,
+      timeInForce: this.timeInForce,
+      status: this.status,
+      openOrders: openOrders
+    }
   }
 
   /**
@@ -70,11 +105,17 @@ class BlockOrder {
    * @return {BlockOrder}   BlockOrder instance
    */
   static fromStorage (key, value) {
-    const { marketName, side, amount, price, timeInForce } = JSON.parse(value)
+    const { marketName, side, amount, price, timeInForce, status } = JSON.parse(value)
     const id = key
 
-    return new this({ id, marketName, side, amount, price, timeInForce })
+    return new this({ id, marketName, side, amount, price, timeInForce, status })
   }
 }
+
+BlockOrder.STATUSES = Object.freeze({
+  ACTIVE: 'ACTIVE',
+  CANCELLED: 'CANCELLED',
+  COMPLETED: 'COMPLETED'
+})
 
 module.exports = BlockOrder

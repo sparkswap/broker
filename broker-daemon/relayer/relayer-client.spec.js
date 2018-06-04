@@ -120,6 +120,56 @@ describe('RelayerClient', () => {
 
   })
 
+  describe('placeOrder', () => {
+    let relayer
+    let params
+
+    beforeEach(() => {
+      relayer = new RelayerClient()
+      params = {
+        orderId: 'fakeId',
+        feeRefundPaymentRequest: 'lnbcasod9fj2390',
+        depositRefundPaymentRequest: 'lnbc9080923ralfjskd'
+      }
+
+      MakerService.prototype.placeOrder = sinon.stub().callsArgWithAsync(2, null, {})
+    })
+
+    it('returns a promise', () => {
+      expect(relayer.placeOrder(params)).to.be.a('promise')
+    })
+
+    it('fails the promise if the request fails', () => {
+      MakerService.prototype.placeOrder.callsArgWithAsync(2, new Error('fake error'))
+      return expect(relayer.placeOrder(params)).to.eventually.be.rejectedWith(Error)
+    })
+
+    it('has no response on resolution', async () => {
+      const response = await relayer.placeOrder(params)
+      return expect(response).to.be.undefined
+    })
+
+    it('calls the placeOrder rpc on the maker service', async () => {
+      await relayer.placeOrder(params)
+      expect(MakerService.prototype.placeOrder).to.have.been.calledOnce()
+    })
+
+    it('passes the orderId to the placeOrder rpc', async () => {
+      await relayer.placeOrder(params)
+      expect(MakerService.prototype.placeOrder).to.have.been.calledWith(sinon.match({ orderId: params.orderId }))
+    })
+
+    it('passes the fee refund payment request to the placeOrder rpc', async () => {
+      await relayer.placeOrder(params)
+      expect(MakerService.prototype.placeOrder).to.have.been.calledWith(sinon.match({ feeRefundPaymentRequest: params.feeRefundPaymentRequest }))
+    })
+
+    it('passes the deposit refund payment request to the placeOrder rpc', async () => {
+      await relayer.placeOrder(params)
+      expect(MakerService.prototype.placeOrder).to.have.been.calledWith(sinon.match({ depositRefundPaymentRequest: params.depositRefundPaymentRequest }))
+    })
+  })
+
   describe('watchMarket', () => {
     let relayer
     let store
