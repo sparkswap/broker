@@ -7,6 +7,15 @@ message HealthCheckResponse {
   string relayer_status = 1;
 }
 
+message SetupRequest {
+  optional int64 amount = 0;
+}
+
+message SetupResponse {
+  string status = 0;
+}
+
 service AdminService {
   rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
+  rpc Setup (SetupRequest) returns (SetupResponse);
 }

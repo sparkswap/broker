@@ -5,7 +5,7 @@
  * @param {Object} params
  * @returns {Promise}
  */
-async function createBlockOrder (params) {
+function createBlockOrder (params) {
   // TODO: Add a duration for gRPC
   // TODO: Be more specific about params passed into function
   // TODO: logging

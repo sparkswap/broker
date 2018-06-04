@@ -4,7 +4,7 @@
  * @function
  * @return {Promise}
  */
-async function healthCheck () {
+function healthCheck () {
   return new Promise((resolve, reject) => {
     // TODO: logging
     this.adminService.healthCheck({}, (err, res) => {
@@ -14,6 +14,23 @@ async function healthCheck () {
   })
 }
 
+/**
+ * Calls setup on the daemon
+ *
+ * @function
+ * @param {String} address - host address of relayer
+ * @return {Promise}
+ */
+function setup (amount) {
+  return new Promise((resolve, reject) => {
+    this.adminService.setup({}, (err, res) => {
+      if (err) return reject(err)
+      return resolve(res)
+    })
+  })
+}
+
 module.exports = {
-  healthCheck
+  healthCheck,
+  setup
 }

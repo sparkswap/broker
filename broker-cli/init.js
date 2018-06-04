@@ -20,22 +20,22 @@ const { validations } = require('./utils')
  */
 async function init (args, opts, logger) {
   const {
-    relayerAddress = null,
+    commitmentAmount = null,
     rpcAddress = null
   } = opts
 
   try {
-    const res = await new BrokerDaemonClient(rpcAddress).setup(relayerAddress)
+    const res = await new BrokerDaemonClient(rpcAddress).setup(commitmentAmount)
     logger.info('Successfully added broker daemon to the kinesis exchange!', res)
   } catch (e) {
-    logger.error(e)
+    logger.error(e.toString())
   }
 }
 
 module.exports = (program) => {
   program
     .command('init', 'Starts the setup process of a Kinesis Broker Daemon')
-    .option('--relayer-address', 'Relayers host address', validations.isHost)
+    .option('--commitment-amount', 'The amount to commit to relayer', validations.isHost)
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
     .action(init)
 }

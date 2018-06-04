@@ -18,7 +18,7 @@ class BrokerDaemonClient {
    * @param {String} address - host address to broker daemon
    */
   constructor (address) {
-    this.address = address || BROKER_DAEMON_HOST
+    this.address = address || BROKER_DAEMON_HOST || 'localhost:27492'
 
     if (!this.address) throw new Error('Address has not been set for BrokerDaemonClient')
 

@@ -6,7 +6,7 @@
  * @param {Object} params
  * @returns {grpc.ServerStream}
  */
-async function watchMarket (params) {
+function watchMarket (params) {
   // TODO: loggin
   // TODO: document what params need to be passed in
   return this.orderBookService.watchMarket(params)
