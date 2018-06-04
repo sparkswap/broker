@@ -5,6 +5,10 @@ const Table = require('cli-table')
 const size = require('window-size')
 require('colors')
 
+const EVENT_TYPES = Object.freeze({
+  ADD: 'ADD', DELETE: 'DELETE'
+})
+
 /**
  * Prints log statements for a psuedo UI for the orderbook
  *
@@ -96,7 +100,7 @@ async function orderbook (args, opts, logger) {
 
   try {
     const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)
-    const watchOrder = await brokerDaemonClient.watchMarket(request)
+    const watchOrder = await brokerDaemonClient.orderBookService.watchMarket(request)
     // TODO: We should save orders to an internal DB or figure out a way to store
     // this info instead of in memory?
     // (this probably needs to be done in the daemon itself)
@@ -112,7 +116,7 @@ async function orderbook (args, opts, logger) {
     watchOrder.on('data', (order) => {
       const { orderId, baseAmount, counterAmount, side } = order.marketEvent
       const { type } = order
-      if (type === brokerDaemonClient.proto.WatchMarketResponse.EventType.DELETE) {
+      if (type === EVENT_TYPES.DELETE) {
         asks.delete(orderId)
         bids.delete(orderId)
       } else {

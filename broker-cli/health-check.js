@@ -19,7 +19,13 @@ async function healthCheck (args, opts, logger) {
   const { rpcAddress = null } = opts
 
   try {
-    const { engineStatus, relayerStatus } = await new BrokerDaemonClient(rpcAddress).healthCheck()
+    const client = await new BrokerDaemonClient(rpcAddress)
+
+    const {
+      engine_status: engineStatus,
+      relayer_status: relayerStatus
+    } = await client.adminService.healthCheck({})
+
     const res = {
       engineStatus,
       relayerStatus,
@@ -27,6 +33,7 @@ async function healthCheck (args, opts, logger) {
     }
     logger.info(`HealthCheck: ${JSON.stringify(res)}`)
   } catch (e) {
+    console.log(e)
     logger.error(e.toString())
   }
 };

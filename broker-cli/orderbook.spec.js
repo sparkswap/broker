@@ -43,12 +43,7 @@ describe('orderbook', () => {
     createUIStub = sinon.stub()
 
     brokerStub = sinon.stub()
-    brokerStub.prototype.watchMarket = watchMarketStub
-    brokerStub.prototype.proto = {
-      WatchMarketResponse: {
-        EventType: { ADD: 'ADD', DELETE: 'DELETE' }
-      }
-    }
+    brokerStub.prototype.orderBookService = { watchMarket: watchMarketStub }
 
     revert = program.__set__('BrokerDaemonClient', brokerStub)
     revertCreateUI = program.__set__('createUI', createUIStub)
