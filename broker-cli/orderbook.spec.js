@@ -39,7 +39,7 @@ describe('orderbook', () => {
     stream = {
       on: sinon.stub()
     }
-    watchMarketStub = sinon.stub().returns(stream)
+    watchMarketStub = sinon.stub().returns({ call: stream })
     createUIStub = sinon.stub()
 
     brokerStub = sinon.stub()

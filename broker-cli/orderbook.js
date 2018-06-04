@@ -100,7 +100,7 @@ async function orderbook (args, opts, logger) {
 
   try {
     const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)
-    const watchOrder = await brokerDaemonClient.orderBookService.watchMarket(request)
+    const { call: watchOrder } = await brokerDaemonClient.orderBookService.watchMarket(request)
     // TODO: We should save orders to an internal DB or figure out a way to store
     // this info instead of in memory?
     // (this probably needs to be done in the daemon itself)
