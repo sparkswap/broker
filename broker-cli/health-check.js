@@ -27,7 +27,7 @@ async function healthCheck (args, opts, logger) {
     }
     logger.info(`HealthCheck: ${JSON.stringify(res)}`)
   } catch (e) {
-    logger.error(e.toString())
+    logger.error(e)
   }
 };
 
