@@ -60,8 +60,6 @@ const OrderStateMachine = StateMachine.factory({
 
           if (this.error) {
             return this.error.message
-          } else {
-            this.logger.error('Tried to serialize error, but it had no message property')
           }
         }
       }
