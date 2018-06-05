@@ -96,8 +96,8 @@ const OrderStateMachine = StateMachine.factory({
    * @param  {Engine} options.engine
    * @return {Object}                         Data to attach to the state machine
    */
-  data: function ({ store, logger, relayer, engine }) {
-    return { store, logger, relayer, engine, order: {} }
+  data: function ({ store, logger, relayer, engine, onRejected = function () {} }) {
+    return { store, logger, relayer, engine, onRejected, order: {} }
   },
   methods: {
     onBeforeTransition: function (lifecycle) {
@@ -179,6 +179,10 @@ const OrderStateMachine = StateMachine.factory({
     onBeforePlace: async function (lifecycle) {
       console.log('onBeforePlace')
       throw new Error('Placing orders is currently un-implemented')
+    }
+
+    onAfterReject: async function (lifecycle) {
+      this.onRejected(this.error)
     }
   }
 })

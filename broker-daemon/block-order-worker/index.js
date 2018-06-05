@@ -106,6 +106,39 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
+   * Move a block order to a failed state
+   * @param  {String} blockOrderId ID of the block order to be failed
+   * @param  {Error}  err          Error that caused the failure
+   * @return {void}
+   */
+  async failBlockOrder (blockOrderId, err) {
+    this.logger.info('Moving block order to failed state', { id: blockOrderId })
+
+    // TODO: move status to its own sublevel so it can be updated atomically
+    let value
+
+    try {
+      value = await promisify(this.store.get)(blockOrderId)
+    } catch (e) {
+      if (e.notFound) {
+        throw new BlockOrderNotFoundError(blockOrderId, e)
+      } else {
+        throw e
+      }
+    }
+
+    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+
+    blockOrder.status = BlockOrder.STATUSES.FAILED
+
+    await promisify(this.store.put)(blockOrder.key, blockOrder.value)
+
+    this.logger.info('Moved block order to failed state', { id: blockOrderId })
+
+    this.emit('BlockOrder:fail', blockOrder)
+  }
+
+  /**
    * work a block order that gets created
    * @param  {BlockOrder} blockOrder Block Order to work
    * @return {void}
@@ -141,7 +174,11 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info('Creating single order for BlockOrder', { blockOrderId: blockOrder.id })
 
     const order = await OrderStateMachine.create(
-      { relayer, engine, logger, store },
+      {
+        relayer, engine, logger, store, onRejected: (err) => {
+          this.failBlockOrder(blockOrder.id, err)
+        }
+      },
       { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
     )
 

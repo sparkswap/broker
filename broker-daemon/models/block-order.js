@@ -115,7 +115,8 @@ class BlockOrder {
 BlockOrder.STATUSES = Object.freeze({
   ACTIVE: 'ACTIVE',
   CANCELLED: 'CANCELLED',
-  COMPLETED: 'COMPLETED'
+  COMPLETED: 'COMPLETED',
+  FAILED: 'FAILED'
 })
 
 module.exports = BlockOrder
