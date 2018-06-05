@@ -36,7 +36,7 @@ async function buy (args, opts, logger) {
     const blockOrderResult = await client.orderService.createBlockOrder(request)
     logger.info(blockOrderResult)
   } catch (e) {
-    logger.error(e.toString())
+    logger.error(e)
   }
 };
 
