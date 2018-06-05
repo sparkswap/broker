@@ -15,7 +15,7 @@ describe('healthCheck', () => {
   let revert
   let infoSpy
   let errorSpy
-  let healthCheckSpy
+  let healthCheckStub
   let brokerStub
   let rpcAddress
 
@@ -27,10 +27,10 @@ describe('healthCheck', () => {
     opts = { rpcAddress }
     infoSpy = sinon.spy()
     errorSpy = sinon.spy()
-    healthCheckSpy = sinon.spy()
+    healthCheckStub = sinon.stub().returns({ engineStatus: 'OK', relayerStatus: 'OK' })
 
     brokerStub = sinon.stub()
-    brokerStub.prototype.healthCheck = healthCheckSpy
+    brokerStub.prototype.adminService = { healthCheck: healthCheckStub }
 
     revert = program.__set__('BrokerDaemonClient', brokerStub)
 
@@ -44,8 +44,8 @@ describe('healthCheck', () => {
     revert()
   })
 
-  it('makes a request to the broker', () => {
-    healthCheck(args, opts, logger)
-    expect(healthCheckSpy).to.have.been.called()
+  it('makes a request to the broker', async () => {
+    await healthCheck(args, opts, logger)
+    expect(healthCheckStub).to.have.been.called()
   })
 })

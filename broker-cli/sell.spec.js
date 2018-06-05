@@ -31,7 +31,7 @@ describe('sell', () => {
     createBlockOrderSpy = sinon.spy()
 
     brokerStub = sinon.stub()
-    brokerStub.prototype.createBlockOrder = createBlockOrderSpy
+    brokerStub.prototype.orderService = { createBlockOrder: createBlockOrderSpy }
 
     revert = program.__set__('BrokerDaemonClient', brokerStub)
 
