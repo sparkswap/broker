@@ -88,14 +88,15 @@ const OrderStateMachine = StateMachine.factory({
    * This function is effectively a constructor for the state machine
    * So we pass it all the objects we'll need later.
    *
-   * @param  {sublevel} options.store         Sublevel partition for storing this order in
-   * @param  {Object} options.logger
+   * @param  {sublevel}      options.store       Sublevel partition for storing this order in
+   * @param  {Object}        options.logger
    * @param  {RelayerClient} options.relayer
-   * @param  {Engine} options.engine
-   * @return {Object}                         Data to attach to the state machine
+   * @param  {Engine}        options.engine
+   * @param  {Function}      options.onRejection A function to handle rejections of the order
+   * @return {Object}                            Data to attach to the state machine
    */
-  data: function ({ store, logger, relayer, engine }) {
-    return { store, logger, relayer, engine, order: {} }
+  data: function ({ store, logger, relayer, engine, onRejection = function () {} }) {
+    return { store, logger, relayer, engine, onRejection, order: {} }
   },
   methods: {
     onBeforeTransition: function (lifecycle) {
@@ -170,11 +171,20 @@ const OrderStateMachine = StateMachine.factory({
      * Actual placement on the relayer is done in `onBeforePlace` so that the transition can be cancelled
      * if placement on the Relayer fails.
      *
-     * @param  {Object} lifecycle                           Lifecycle object passed by javascript-state-machine
-     * @return {Promise}                                    Promise that rejects if placement on the relayer fails
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {Promise}          romise that rejects if placement on the relayer fails
      */
     onBeforePlace: async function (lifecycle) {
       throw new Error('Placing orders is currently un-implemented')
+    },
+
+    /**
+     * Handle rejected state by calling a passed in handler
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {void}
+     */
+    onAfterReject: async function (lifecycle) {
+      this.onRejection(this.error)
     }
   }
 })

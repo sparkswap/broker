@@ -26,20 +26,11 @@ class BlockOrderWorker extends EventEmitter {
     this.relayer = relayer
     this.engine = engine
 
-    // TODO: Make this way better
-    // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
-    this.on('error', (err) => {
-      this.logger.error('BlockOrderWorker: error encountered', { message: err.message, stack: err.stack })
-      if (!err) {
-        this.logger.error('BlockOrderWorker: error event triggered with no error')
-      }
-    })
-
     this.on('BlockOrder:create', async (blockOrder) => {
       try {
         await this.workBlockOrder(blockOrder)
       } catch (err) {
-        this.emit('error', err)
+        this.failBlockOrder(blockOrder.id, err)
       }
     })
   }
@@ -62,9 +53,7 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`${marketName} is not being tracked as a market. Configure kbd to track ${marketName} using the MARKETS environment variable.`)
     }
 
-    const status = BlockOrder.STATUSES.ACTIVE
-
-    const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce, status })
+    const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
@@ -106,6 +95,41 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
+   * Move a block order to a failed state
+   * @param  {String} blockOrderId ID of the block order to be failed
+   * @param  {Error}  err          Error that caused the failure
+   * @return {void}
+   */
+  async failBlockOrder (blockOrderId, err) {
+    this.logger.error('Error encountered while working block', { id: blockOrderId, error: err.message })
+    this.logger.info('Moving block order to failed state', { id: blockOrderId })
+
+    // TODO: move status to its own sublevel so it can be updated atomically
+
+    try {
+      var value = await promisify(this.store.get)(blockOrderId)
+    } catch (e) {
+      // TODO: throw here? what's the protocol?
+      if (e.notFound) {
+        this.logger.error('Attempted to move a block order to a failed state that does not exist', { id: blockOrderId })
+      } else {
+        this.logger.error('Error while retrieving block order to move it to a failed state', { id: blockOrderId, error: e.message })
+        throw e
+      }
+    }
+
+    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+
+    blockOrder.fail()
+
+    await promisify(this.store.put)(blockOrder.key, blockOrder.value)
+
+    this.logger.info('Moved block order to failed state', { id: blockOrderId })
+
+    this.emit('BlockOrder:fail', blockOrder)
+  }
+
+  /**
    * work a block order that gets created
    * @param  {BlockOrder} blockOrder Block Order to work
    * @return {void}
@@ -141,7 +165,15 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info('Creating single order for BlockOrder', { blockOrderId: blockOrder.id })
 
     const order = await OrderStateMachine.create(
-      { relayer, engine, logger, store },
+      {
+        relayer,
+        engine,
+        logger,
+        store,
+        onRejection: (err) => {
+          this.failBlockOrder(blockOrder.id, err)
+        }
+      },
       { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
     )
 

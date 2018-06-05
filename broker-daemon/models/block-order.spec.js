@@ -33,6 +33,22 @@ describe('BlockOrder', () => {
       expect(blockOrder).to.have.property('timeInForce', params.timeInForce)
       expect(blockOrder).to.have.property('status', params.status)
     })
+
+    it('throws if it has an invalid status', () => {
+      const id = 'myid'
+      const params = {
+        marketName: 'BTC/LTC',
+        side: 'BID',
+        amount: '10000',
+        price: '100',
+        timeInForce: 'GTC',
+        status: 'OOPS'
+      }
+
+      expect(() => {
+        BlockOrder.fromStorage(id, JSON.stringify(params))
+      }).to.throw()
+    })
   })
 
   describe('new', () => {
@@ -45,8 +61,7 @@ describe('BlockOrder', () => {
         side: 'BID',
         amount: '10000',
         price: '100',
-        timeInForce: 'GTC',
-        status: 'ACTIVE'
+        timeInForce: 'GTC'
       }
     })
 
@@ -99,17 +114,16 @@ describe('BlockOrder', () => {
     })
 
     it('assigns a status', () => {
+      params.status = 'CANCELLED'
       const blockOrder = new BlockOrder(params)
 
       expect(blockOrder).to.have.property('status', params.status)
     })
 
-    it('throws if it has an invalid status', () => {
-      params.status = 'OOPS'
+    it('defaults to active status', () => {
+      const blockOrder = new BlockOrder(params)
 
-      expect(() => {
-        new BlockOrder(params) // eslint-disable-line
-      }).to.throw()
+      expect(blockOrder).to.have.property('status', 'ACTIVE')
     })
   })
 
