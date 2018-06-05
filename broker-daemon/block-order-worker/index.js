@@ -2,7 +2,7 @@ const EventEmitter = require('events')
 const { promisify } = require('util')
 const safeid = require('generate-safe-id')
 const { BlockOrder } = require('../models')
-const OrderStateMachine = require('./order-state-machine')
+const { OrderStateMachine } = require('../state-machines')
 const { BlockOrderNotFoundError } = require('./errors')
 
 /**
@@ -145,7 +145,7 @@ class BlockOrderWorker extends EventEmitter {
       { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
     )
 
-    this.logger.info('Created single order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.id })
+    this.logger.info('Created single order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
   }
 }
 

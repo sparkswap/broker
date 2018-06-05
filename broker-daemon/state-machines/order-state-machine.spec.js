@@ -1,5 +1,5 @@
 const path = require('path')
-const { expect, rewire, sinon } = require('test/test-helper')
+const { expect, rewire, sinon, delay } = require('test/test-helper')
 
 const OrderStateMachine = rewire(path.resolve(__dirname, 'order-state-machine'))
 
@@ -60,6 +60,140 @@ describe('OrderStateMachine', () => {
     it('does not save a copy in the store', () => {
       new OrderStateMachine({ store, logger, relayer, engine }) // eslint-disable-line
       return expect(store.put).to.not.have.been.called
+    })
+  })
+
+  describe('#nextTransition', () => {
+    let osm
+
+    beforeEach(() => {
+      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      osm.goto('created')
+    })
+
+    it('transitions on next tick', () => {
+      osm.place = sinon.stub()
+      const state = osm.state
+      osm.nextTransition('place')
+
+      expect(osm.state).to.be.eql(state)
+    })
+
+    it('calls the transition', async () => {
+      osm.place = sinon.stub()
+
+      osm.nextTransition('place')
+
+      await delay(10)
+
+      expect(osm.place).to.have.been.calledOnce()
+    })
+
+    it('passes through arguments', async () => {
+      osm.place = sinon.stub()
+
+      osm.nextTransition('place', 'hello', 'world')
+
+      await delay(10)
+
+      expect(osm.place).to.have.been.calledOnce()
+      expect(osm.place).to.have.been.calledWith('hello', 'world')
+    })
+
+    it('rejects on error', async () => {
+      const fakeError = new Error('my error')
+
+      osm.place = sinon.stub().rejects(fakeError)
+      osm.reject = sinon.stub()
+
+      osm.nextTransition('place')
+
+      await delay(10)
+
+      expect(osm.reject).to.have.been.calledOnce()
+      expect(osm.reject).to.have.been.calledWith(fakeError)
+    })
+
+    it('moves to rejected if using an invalid transition', async () => {
+      osm.reject = sinon.stub()
+
+      osm.nextTransition('blergh')
+
+      await delay(10)
+
+      expect(osm.reject).to.have.been.calledOnce()
+    })
+  })
+
+  describe('#persist', () => {
+    let osm
+    let host
+
+    beforeEach(() => {
+      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      host = {
+        key: 'fakeKey',
+        valueObject: {
+          fake: 'object'
+        }
+      }
+    })
+
+    it('throws if no host key is available', () => {
+      host.key = undefined
+      return expect(osm.persist(host)).to.eventually.be.rejectedWith(Error)
+    })
+
+    it('throws if no host object is available', () => {
+      host.valueObject = undefined
+
+      return expect(osm.persist(host)).to.eventually.be.rejectedWith(Error)
+    })
+
+    it('stringifies values', async () => {
+      await osm.persist(host)
+
+      expect(store.put).to.have.been.calledOnce()
+      expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match.string)
+    })
+
+    it('uses the host key to save values', async () => {
+      await osm.persist(host)
+
+      expect(store.put).to.have.been.calledOnce()
+      expect(store.put).to.have.been.calledWith(host.key)
+    })
+
+    it('saves the host to the database', async () => {
+      await osm.persist(host)
+
+      expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('"fake":"object"'))
+    })
+
+    it('saves state machine data in the database', async () => {
+      await osm.persist(host)
+
+      expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('"__stateMachine":{"state":"none","history":[]}'))
+    })
+
+    it('saves the state in the database', async () => {
+      await osm.persist(host)
+
+      expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('"state":"none"'))
+    })
+
+    it('saves history in the database', async () => {
+      await osm.goto('created')
+      await osm.persist(host)
+
+      expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('"history":["created"]'))
+    })
+
+    it('saves error in the database', async () => {
+      osm.error = new Error('fakeError')
+      await osm.persist(host)
+
+      expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('"error":"fakeError"'))
     })
   })
 
@@ -149,7 +283,7 @@ describe('OrderStateMachine', () => {
       await osm.create(params)
 
       expect(store.put).to.have.been.calledOnce()
-      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match('"__state":"created"'))
+      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match('"state":"created"'))
     })
 
     it('throws an error in creation on the relayer fails', () => {
@@ -177,6 +311,28 @@ describe('OrderStateMachine', () => {
         return expect(store.put).to.not.have.been.called
       }
     })
+
+    it('automatically attempts to place an order after creation', async () => {
+      osm.nextTransition = sinon.stub()
+      await osm.create(params)
+
+      await delay(10)
+      expect(osm.nextTransition).to.have.been.calledOnce()
+      expect(osm.nextTransition).to.have.been.calledWith('place')
+    })
+  })
+
+  describe('#place', () => {
+    let osm
+
+    beforeEach(async () => {
+      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      await osm.goto('created')
+    })
+
+    it('throws while unimplemented', () => {
+      return expect(osm.place()).to.eventually.be.rejectedWith(Error)
+    })
   })
 
   describe('#goto', () => {
@@ -196,6 +352,39 @@ describe('OrderStateMachine', () => {
       await osm.goto('created')
 
       return expect(store.put).to.not.have.been.called
+    })
+  })
+
+  describe('#reject', () => {
+    let osm
+
+    beforeEach(async () => {
+      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      await osm.goto('created')
+      osm.order = {
+        key: 'fakeKey',
+        valueObject: { my: 'object' }
+      }
+    })
+
+    it('moves to the rejected state', async () => {
+      await osm.reject()
+
+      expect(osm.state).to.be.equal('rejected')
+    })
+
+    it('assigns an error for the rejected state', async () => {
+      const fakeError = new Error('my error')
+      await osm.reject(fakeError)
+
+      expect(osm.error).to.be.equal(fakeError)
+    })
+
+    it('saves in the rejected state', async () => {
+      await osm.reject()
+
+      expect(store.put).to.have.been.calledOnce()
+      expect(store.put).to.have.been.calledWith(osm.order.key, sinon.match('"state":"rejected"'))
     })
   })
 
@@ -235,7 +424,7 @@ describe('OrderStateMachine', () => {
 
       expect(osm.state).to.be.equal('created')
       expect(store.put).to.have.been.calledOnce()
-      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match('"__state":"created"'))
+      expect(store.put).to.have.been.calledWith(fakeKey, sinon.match('"state":"created"'))
     })
   })
 
@@ -252,7 +441,9 @@ describe('OrderStateMachine', () => {
 
       fakeRecords = [ ['fakeKey', JSON.stringify({
         my: 'object',
-        __state: state
+        __stateMachine: {
+          state
+        }
       })] ]
       getRecords = sinon.stub().callsFake((store, eachRecord) => {
         return new Promise((resolve, reject) => {
@@ -307,16 +498,26 @@ describe('OrderStateMachine', () => {
   describe('::fromStore', () => {
     let key
     let state
+    let history
+    let error
+    let valueObject
     let value
 
     beforeEach(() => {
       Order.fromObject = sinon.stub()
       key = 'fakeKey'
       state = 'created'
-      value = JSON.stringify({
+      history = []
+      error = undefined
+      valueObject = {
         my: 'object',
-        __state: state
-      })
+        __stateMachine: {
+          state,
+          history,
+          error
+        }
+      }
+      value = JSON.stringify(valueObject)
     })
 
     it('initializes a state machine', async () => {
@@ -330,6 +531,33 @@ describe('OrderStateMachine', () => {
       const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engine }, { key, value })
 
       expect(osm.state).to.be.equal(state)
+    })
+
+    it('contains the old history', async () => {
+      history.push('created')
+      value = JSON.stringify(valueObject)
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engine }, { key, value })
+
+      expect(osm.history).to.be.an('array')
+      expect(osm.history).to.have.lengthOf(1)
+      expect(osm.history[0]).to.be.eql('created')
+    })
+
+    it('does not include the re-inflating in history', async () => {
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engine }, { key, value })
+
+      expect(osm.history).to.be.an('array')
+      expect(osm.history).to.have.lengthOf(0)
+    })
+
+    it('includes saved errors', async () => {
+      valueObject.__stateMachine.error = 'fakeError'
+      value = JSON.stringify(valueObject)
+
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engine }, { key, value })
+
+      expect(osm.error).to.be.an('error')
+      expect(osm.error.message).to.be.eql('fakeError')
     })
 
     it('applies all the saved data', async () => {
