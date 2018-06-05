@@ -2,7 +2,7 @@ const { expect, sinon } = require('test/test-helper')
 const bigInt = require('big-integer')
 
 const BlockOrder = require('./block-order')
-const OrderStateMachine = require('../block-order-worker/order-state-machine')
+const { OrderStateMachine } = require('../state-machines')
 
 describe('BlockOrder', () => {
   describe('::fromStorage', () => {
@@ -193,19 +193,27 @@ describe('BlockOrder', () => {
               info: sinon.stub(),
               debug: sinon.stub(),
               error: sinon.stub()
+            },
+            store: {
+              get: sinon.stub(),
+              put: sinon.stub(),
+              createReadStream: sinon.stub()
             }
           }, { key: 'mykey',
             value: JSON.stringify({
-              baseSymbol: 'BTC',
-              counterSymbol: 'XYZ',
-              side: 'BID',
-              baseAmount: '1000',
-              counterAmount: '10000',
-              ownerId: 'fakeID',
-              payTo: 'ln:1231243fasdf',
-              feePaymentRequest: 'lnbcasodifjoija',
-              depositPaymentRequest: 'lnbcaosdifjaosdfj',
-              __state: 'CREATED'
+              order: {
+                baseSymbol: 'BTC',
+                counterSymbol: 'XYZ',
+                side: 'BID',
+                baseAmount: '1000',
+                counterAmount: '10000',
+                ownerId: 'fakeID',
+                payTo: 'ln:1231243fasdf',
+                feePaymentRequest: 'lnbcasodifjoija',
+                depositPaymentRequest: 'lnbcaosdifjaosdfj'
+              },
+              state: 'created',
+              history: []
             })})
         })
 
