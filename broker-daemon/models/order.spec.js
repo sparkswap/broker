@@ -148,6 +148,38 @@ describe('Order', () => {
       expect(order).to.have.property('ownerId', params.ownerId)
       expect(order).to.have.property('payTo', params.payTo)
     })
+
+    it('creates an ask', () => {
+      const params = {
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'ASK',
+        baseAmount: '10000',
+        counterAmount: '100000',
+        ownerId: 'fakeID',
+        payTo: 'ln:123019230jasofdij'
+      }
+
+      const order = new Order(params)
+
+      expect(order).to.have.property('side', 'ASK')
+    })
+
+    it('throws if using an invalid side', () => {
+      const params = {
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BLERGH',
+        baseAmount: '10000',
+        counterAmount: '100000',
+        ownerId: 'fakeID',
+        payTo: 'ln:123019230jasofdij'
+      }
+
+      expect(() => {
+        new Order(params) // eslint-disable-line
+      }).to.throw()
+    })
   })
 
   describe('instance', () => {
@@ -166,6 +198,24 @@ describe('Order', () => {
       }
 
       order = new Order(params)
+    })
+
+    describe('inbound/outbound getters', () => {
+      it('defines an inbound symbol getter', () => {
+        expect(order).to.have.property('inboundSymbol', params.baseSymbol)
+      })
+
+      it('defines an outbound symbol getter', () => {
+        expect(order).to.have.property('outboundSymbol', params.counterSymbol)
+      })
+
+      it('defines an inbound amount getter', () => {
+        expect(order).to.have.property('inboundAmount', params.baseAmount)
+      })
+
+      it('defines an outbound amount getter', () => {
+        expect(order).to.have.property('outboundAmount', params.counterAmount)
+      })
     })
 
     describe('get key', () => {

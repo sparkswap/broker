@@ -62,8 +62,6 @@ const OrderStateMachine = StateMachine.factory({
 
           if (this.error) {
             return this.error.message
-          } else {
-            this.logger.error('Tried to serialize error, but it had no message property')
           }
         }
       }
@@ -155,7 +153,6 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onAfterCreate: function (lifecycle) {
-      console.log('onAfterCreate')
       this.logger.info(`Create transition completed, triggering place`)
 
       // you can't start a transition while in another one,
@@ -177,7 +174,6 @@ const OrderStateMachine = StateMachine.factory({
      * @return {Promise}                                    Promise that rejects if placement on the relayer fails
      */
     onBeforePlace: async function (lifecycle) {
-      console.log('onBeforePlace')
       throw new Error('Placing orders is currently un-implemented')
     }
   }
