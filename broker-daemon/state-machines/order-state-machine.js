@@ -173,14 +173,19 @@ const OrderStateMachine = StateMachine.factory({
      * Actual placement on the relayer is done in `onBeforePlace` so that the transition can be cancelled
      * if placement on the Relayer fails.
      *
-     * @param  {Object} lifecycle                           Lifecycle object passed by javascript-state-machine
-     * @return {Promise}                                    Promise that rejects if placement on the relayer fails
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {Promise}          romise that rejects if placement on the relayer fails
      */
     onBeforePlace: async function (lifecycle) {
       console.log('onBeforePlace')
       throw new Error('Placing orders is currently un-implemented')
-    }
+    },
 
+    /**
+     * Handle rejected state
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {void}
+     */
     onAfterReject: async function (lifecycle) {
       this.onRejected(this.error)
     }
