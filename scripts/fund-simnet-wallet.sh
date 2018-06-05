@@ -39,7 +39,7 @@ sleep 5
 # Check segwit to make sure we are A-OK
 SEGWIT_CMD='btcctl --simnet --rpcuser="$RPC_USER" --rpcpass="$RPC_PASS" --rpccert="$RPC_CERT" getblockchaininfo'
 RAW_SEGWIT_RESPONSE=$(docker-compose exec -T btcd /bin/sh -c "$SEGWIT_CMD")
-SEGWIT_RESPONSE=$(node ./setup/parse-lnd-response.js segwit $RAW_SEGWIT_RESPONSE)
+SEGWIT_RESPONSE=$(node ./scripts/parse-lnd-response.js segwit $RAW_SEGWIT_RESPONSE)
 
 echo "Segwit Response: $SEGWIT_RESPONSE"
 
