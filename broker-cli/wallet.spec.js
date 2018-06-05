@@ -27,7 +27,7 @@ describe('cli wallet', () => {
 
       addressStub = sinon.stub()
       daemonStub = sinon.stub()
-      daemonStub.prototype.newDepositAddress = addressStub
+      daemonStub.prototype.walletService = { newDepositAddress: addressStub }
 
       program.__set__('BrokerDaemonClient', daemonStub)
 
@@ -58,7 +58,7 @@ describe('cli wallet', () => {
 
       walletBalanceStub = sinon.stub()
       daemonStub = sinon.stub()
-      daemonStub.prototype.walletBalance = walletBalanceStub
+      daemonStub.prototype.walletService = { walletBalance: walletBalanceStub }
 
       program.__set__('BrokerDaemonClient', daemonStub)
 

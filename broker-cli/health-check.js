@@ -16,15 +16,23 @@ const { STATUS_CODES } = ENUMS
  */
 
 async function healthCheck (args, opts, logger) {
+  const { brokerDaemon } = args
   const { rpcAddress = null } = opts
 
+  console.log(brokerDaemon)
   try {
-    const { engineStatus, relayerStatus } = await new BrokerDaemonClient(rpcAddress).healthCheck()
+    const client = await new BrokerDaemonClient(rpcAddress)
+
+    const { engineStatus, relayerStatus } = await client.adminService.healthCheck({})
+
+    // TODO: If `engineStatus` or `relayerStatus` is undefined, then we will not see
+    // a status
     const res = {
       engineStatus,
       relayerStatus,
       daemonStatus: STATUS_CODES.OK
     }
+
     logger.info(`HealthCheck: ${JSON.stringify(res)}`)
   } catch (e) {
     logger.error(e)
