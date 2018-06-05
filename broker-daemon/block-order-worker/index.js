@@ -26,20 +26,11 @@ class BlockOrderWorker extends EventEmitter {
     this.relayer = relayer
     this.engine = engine
 
-    // TODO: Make this way better
-    // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
-    this.on('error', (err) => {
-      this.logger.error('BlockOrderWorker: error encountered', { message: err.message, stack: err.stack })
-      if (!err) {
-        this.logger.error('BlockOrderWorker: error event triggered with no error')
-      }
-    })
-
     this.on('BlockOrder:create', async (blockOrder) => {
       try {
         await this.workBlockOrder(blockOrder)
       } catch (err) {
-        this.emit('error', err)
+        this.failBlockOrder(blockOrder.id, err)
       }
     })
   }
@@ -112,6 +103,7 @@ class BlockOrderWorker extends EventEmitter {
    * @return {void}
    */
   async failBlockOrder (blockOrderId, err) {
+    this.logger.error('Error encountered while working block', { id: blockOrderId, error: err.message })
     this.logger.info('Moving block order to failed state', { id: blockOrderId })
 
     // TODO: move status to its own sublevel so it can be updated atomically
