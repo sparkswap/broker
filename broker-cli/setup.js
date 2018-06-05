@@ -37,6 +37,8 @@ async function setup (args, opts, logger) {
   const client = new BrokerDaemonClient(rpcAddress)
   const { balance } = await client.walletBalance()
 
+  if (parseInt(balance) === 0) return logger.info('Your current balance is 0, please add funds to your daemon (or check the status of your daemon)')
+
   const answer = await askQuestion(`Are you OK committing ${balance} in ${symbol} to the relayer? (Y/N) `)
 
   if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return logger.info('Received \'no\' response. Quitting setup')
