@@ -90,11 +90,12 @@ const OrderStateMachine = StateMachine.factory({
    * This function is effectively a constructor for the state machine
    * So we pass it all the objects we'll need later.
    *
-   * @param  {sublevel} options.store         Sublevel partition for storing this order in
-   * @param  {Object} options.logger
+   * @param  {sublevel}      options.store       Sublevel partition for storing this order in
+   * @param  {Object}        options.logger
    * @param  {RelayerClient} options.relayer
-   * @param  {Engine} options.engine
-   * @return {Object}                         Data to attach to the state machine
+   * @param  {Engine}        options.engine
+   * @param  {Function}      options.onRejection A function to handle rejections of the order
+   * @return {Object}                            Data to attach to the state machine
    */
   data: function ({ store, logger, relayer, engine, onRejection = function () {} }) {
     return { store, logger, relayer, engine, onRejection, order: {} }
@@ -181,7 +182,7 @@ const OrderStateMachine = StateMachine.factory({
     },
 
     /**
-     * Handle rejected state
+     * Handle rejected state by calling a passed in handler
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @return {void}
      */
