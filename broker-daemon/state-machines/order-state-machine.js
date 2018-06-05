@@ -96,8 +96,8 @@ const OrderStateMachine = StateMachine.factory({
    * @param  {Engine} options.engine
    * @return {Object}                         Data to attach to the state machine
    */
-  data: function ({ store, logger, relayer, engine, onRejected = function () {} }) {
-    return { store, logger, relayer, engine, onRejected, order: {} }
+  data: function ({ store, logger, relayer, engine, onRejection = function () {} }) {
+    return { store, logger, relayer, engine, onRejection, order: {} }
   },
   methods: {
     onBeforeTransition: function (lifecycle) {
@@ -186,7 +186,7 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onAfterReject: async function (lifecycle) {
-      this.onRejected(this.error)
+      this.onRejection(this.error)
     }
   }
 })

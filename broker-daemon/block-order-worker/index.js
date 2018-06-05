@@ -112,9 +112,11 @@ class BlockOrderWorker extends EventEmitter {
     try {
       value = await promisify(this.store.get)(blockOrderId)
     } catch (e) {
+      // TODO: throw here? what's the protocol?
       if (e.notFound) {
-        throw new BlockOrderNotFoundError(blockOrderId, e)
+        this.logger.error('Attempted to move a block order to a failed state that does not exist', { id: blockOrderId })
       } else {
+        this.logger.error('Error while retrieving block order to move it to a failed state', { id: blockOrderId, error: e.message })
         throw e
       }
     }
@@ -167,7 +169,11 @@ class BlockOrderWorker extends EventEmitter {
 
     const order = await OrderStateMachine.create(
       {
-        relayer, engine, logger, store, onRejected: (err) => {
+        relayer,
+        engine,
+        logger,
+        store,
+        onRejection: (err) => {
           this.failBlockOrder(blockOrder.id, err)
         }
       },
