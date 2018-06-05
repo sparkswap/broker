@@ -225,7 +225,6 @@ describe('BlockOrderWorker', () => {
     ]
     let fakeErr
     let fakeId
-    let statusSpy
 
     beforeEach(() => {
       store.get.callsArgWithAsync(1, null, blockOrder)
