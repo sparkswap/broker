@@ -1,7 +1,6 @@
-const { promisify } = require('util')
-const { getRecords } = require('../utils')
-const StateMachine = require('javascript-state-machine')
+const StateMachine = require('./state-machine')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
+const StateMachinePersistence = require('./plugins/persistence')
 const { Order } = require('../models')
 
 /**
@@ -9,7 +8,62 @@ const { Order } = require('../models')
  */
 const OrderStateMachine = StateMachine.factory({
   plugins: [
-    new StateMachineHistory()
+    new StateMachineHistory(),
+    new StateMachinePersistence({
+      /**
+       * @type {StateMachinePersistence~KeyAccessor}
+       * @param {String}   key Unique key for the stored state machine
+       * @returns {String}     Unique key for the state machine
+       */
+      key: function (key) {
+        // this only defines a getter - it will be set by the `order` setter
+        if (!key) {
+          return this.order.key
+        }
+      },
+      additionalFields: {
+        /**
+         * @type {StateMachinePersistence~FieldAccessor}
+         * @param {Object}   orderObject Stored plain object description of the Order associated with the State machine
+         * @param {String}   key         Unique key for the order/state machine
+         * @returns {Object}             Plain object description of the Order associated with the State machine
+         */
+        order: function (orderObject, key) {
+          if (orderObject) {
+            this.order = Order.fromObject(key, orderObject)
+          }
+
+          return this.order.valueObject
+        },
+        /**
+         * @type  {StateMachinePersistence~FieldAccessor}
+         * @param {Array<String>}   history Stored history of states for this state machine
+         * @returns {Array<String>}         History of states for this state machine
+         */
+        history: function (history) {
+          if (history) {
+            this.clearHistory()
+            this.history = history
+          }
+
+          return this.history
+        },
+        /**
+         * @type {StateMachinePersistence~FieldAccessor}
+         * @param {String}   errorMessage Stored error message for a state machine in an errored state
+         * @returns {String}              Error message for a state machine in an errored state
+         */
+        error: function (errorMessage) {
+          if (errorMessage) {
+            this.error = new Error(errorMessage)
+          }
+
+          if (this.error) {
+            return this.error.message
+          }
+        }
+      }
+    })
   ],
   /**
    * Definition of the transitions and states for the OrderStateMachine
@@ -26,11 +80,6 @@ const OrderStateMachine = StateMachine.factory({
      * @type {Object}
      */
     { name: 'place', from: 'created', to: 'placed' },
-    /**
-     * goto transition: go to the named state from any state, used for re-hydrating from disk
-     * @type {Object}
-     */
-    { name: 'goto', from: '*', to: (s) => s },
     /**
      * reject transition: a created order was rejected during placement
      * @type {Object}
@@ -77,42 +126,6 @@ const OrderStateMachine = StateMachine.factory({
       })
     },
 
-    /**
-     * Save the current state of the state machine to the store using the `host` as a carrier
-     * @param  {Object}        host Host object to store in the data store with state machine metadata attached
-     * @return {Promise<void>}      Promise that resolves when the state is persisted
-     */
-    persist: async function ({ key, valueObject }) {
-      if (!key) {
-        throw new Error(`An order key is required to save state`)
-      }
-
-      if (!valueObject) {
-        // console.log('this.order', this.order)
-        throw new Error(`An Order object is required to save state`)
-      }
-
-      const { state, history } = this
-      let error
-
-      if (this.error) {
-        error = this.error.message
-
-        if (!error) {
-          this.logger.error('Saving state machine error state with no error message', { key })
-        }
-      }
-
-      const stateMachine = { state, history, error }
-
-      const value = JSON.stringify(Object.assign(valueObject, { __stateMachine: stateMachine }))
-
-      // somehow spit an error if this fails?
-      await promisify(this.store.put)(key, value)
-
-      this.logger.debug('Saved state machine in store', { orderId: this.order.orderId })
-    },
-
     onBeforeTransition: function (lifecycle) {
       this.logger.info(`BEFORE: ${lifecycle.transition}`)
     },
@@ -127,14 +140,6 @@ const OrderStateMachine = StateMachine.factory({
      */
     onEnterState: async function (lifecycle) {
       this.logger.info(`ENTER: ${lifecycle.to}`)
-
-      if (lifecycle.transition === 'goto') {
-        this.logger.debug('Skipping database save since we are using a goto')
-      } else if (lifecycle.to === 'none') {
-        this.logger.debug('Skipping database save for the \'none\' state')
-      } else {
-        this.persist(this.order)
-      }
     },
     onAfterTransition: function (lifecycle) {
       this.logger.info(`AFTER: ${lifecycle.transition}`)
@@ -217,50 +222,6 @@ OrderStateMachine.create = async function (initParams, createParams) {
   await osm.create(createParams)
 
   return osm
-}
-
-/**
- * Retrieve and instantiate all order state machines from a given store
- * @param  {sublevel}    options.store      Sublevel that contains the saved order state machines
- * @param  {...Object}   options.initParams Other parameters to initialize the state machines with
- * @return {Array<OrderStateMachine>}
- */
-OrderStateMachine.getAll = async function ({ store, ...initParams }) {
-  return getRecords(store, (key, value) => this.fromStore({ store, ...initParams }, { key, value }))
-}
-
-/**
- * Re-hydrate an OrderStateMachine from storage
- * @param  {Object} initParams    Params to pass to the OrderStateMachine constructor (also to the `data` function)
- * @param  {String} options.key   Stored key (i.e. the Order ID)
- * @param  {String} options.value Stringified JSON of the Order State Machine object
- * @return {OrderStateMachine}
- */
-OrderStateMachine.fromStore = function (initParams, { key, value }) {
-  const parsedValue = JSON.parse(value)
-  const stateMachine = parsedValue.__stateMachine
-
-  if (!stateMachine) {
-    throw new Error('Values must have a `__stateMachine` property to be created as state machines')
-  }
-
-  const orderStateMachine = new OrderStateMachine(initParams)
-
-  orderStateMachine.order = Order.fromObject(key, parsedValue)
-
-  // re-inflate state machine properties
-
-  // state machine current state
-  orderStateMachine.goto(stateMachine.state)
-
-  // state machine history
-  orderStateMachine.clearHistory()
-  orderStateMachine.history = stateMachine.history
-
-  // state machine errors
-  orderStateMachine.error = new Error(stateMachine.error)
-
-  return orderStateMachine
 }
 
 module.exports = OrderStateMachine

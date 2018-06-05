@@ -193,22 +193,27 @@ describe('BlockOrder', () => {
               info: sinon.stub(),
               debug: sinon.stub(),
               error: sinon.stub()
+            },
+            store: {
+              get: sinon.stub(),
+              put: sinon.stub(),
+              createReadStream: sinon.stub()
             }
           }, { key: 'mykey',
             value: JSON.stringify({
-              baseSymbol: 'BTC',
-              counterSymbol: 'XYZ',
-              side: 'BID',
-              baseAmount: '1000',
-              counterAmount: '10000',
-              ownerId: 'fakeID',
-              payTo: 'ln:1231243fasdf',
-              feePaymentRequest: 'lnbcasodifjoija',
-              depositPaymentRequest: 'lnbcaosdifjaosdfj',
-              __stateMachine: {
-                state: 'created',
-                history: []
-              }
+              order: {
+                baseSymbol: 'BTC',
+                counterSymbol: 'XYZ',
+                side: 'BID',
+                baseAmount: '1000',
+                counterAmount: '10000',
+                ownerId: 'fakeID',
+                payTo: 'ln:1231243fasdf',
+                feePaymentRequest: 'lnbcasodifjoija',
+                depositPaymentRequest: 'lnbcaosdifjaosdfj'
+              },
+              state: 'created',
+              history: []
             })})
         })
 
