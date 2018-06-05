@@ -33,7 +33,9 @@ async function balance (args, opts, logger) {
   const { rpcAddress = null } = opts
 
   try {
-    const { balance } = await new BrokerDaemonClient(rpcAddress).walletBalance()
+    const client = new BrokerDaemonClient(rpcAddress)
+    const { balance } = await client.walletService.walletBalance({})
+
     logger.info(`Total Balance: ${balance}`)
   } catch (e) {
     logger.error(e)
@@ -56,7 +58,9 @@ async function newDepositAddress (args, opts, logger) {
   const { rpcAddress = null } = opts
 
   try {
-    const { address } = await new BrokerDaemonClient(rpcAddress).newDepositAddress()
+    const client = new BrokerDaemonClient(rpcAddress)
+    const { address } = await client.walletService.newDepositAddress({})
+
     logger.info(address)
   } catch (e) {
     logger.error(e)

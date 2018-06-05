@@ -1,5 +1,11 @@
+const stripAnsi = require('strip-ansi')
 const [ command, ...data ] = process.argv.slice(2)
-const payload = JSON.parse(data.join(''))
+
+try {
+  var payload = JSON.parse(data.join(''))
+} catch (e) {
+  console.error('failed to parse payload')
+}
 
 /**
  * This file contains logic to fund a wallet w/ the default LND setup for a broker.
@@ -28,5 +34,8 @@ const payload = JSON.parse(data.join(''))
 switch (command.toLowerCase()) {
   case 'segwit':
     console.log(payload.bip9_softforks.segwit.status)
+    break
+  case 'newaddress':
+    console.log(stripAnsi(data.join('').split(']:')[1]))
     break
 }

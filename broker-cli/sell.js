@@ -31,13 +31,14 @@ async function sell (args, opts, logger) {
   try {
     // TODO: Figure out where this actually goes. Do we want to create an order
     // or do we use the fill functionality?
-    const blockOrderResult = await new BrokerDaemonClient(rpcAddress).createBlockOrder(request)
+    const client = new BrokerDaemonClient(rpcAddress)
+    const blockOrderResult = await client.orderService.createBlockOrder(request)
 
     // TODO: send a friendly message the logger. The current functionality will simple
     // return the object from the broker.proto file
     logger.info(blockOrderResult)
   } catch (e) {
-    logger.error(e.toString())
+    logger.error(e)
   }
 };
 
