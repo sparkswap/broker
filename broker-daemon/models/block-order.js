@@ -15,18 +15,13 @@ class BlockOrder {
    * @param  {String} options.status      Block Order status
    * @return {BlockOrder}
    */
-  constructor ({ id, marketName, side, amount, price, timeInForce, status }) {
+  constructor ({ id, marketName, side, amount, price, timeInForce, status = BlockOrder.STATUSES.ACTIVE }) {
     this.id = id
     this.marketName = marketName
     this.side = side
     this.amount = bigInt(amount)
     this.price = price ? bigInt(price) : null
     this.timeInForce = timeInForce
-
-    if (!BlockOrder.STATUSES[status]) {
-      throw new Error(`Block Order status of ${status} is invalid`)
-    }
-
     this.status = status
 
     this.openOrders = []
@@ -74,6 +69,16 @@ class BlockOrder {
   }
 
   /**
+   * Move the block order to a failed status
+   * @return {BlockOrder} Modified block order instance
+   */
+  fail () {
+    this.status = BlockOrder.STATUSES.FAILED
+
+    return this
+  }
+
+  /**
    * serialize a block order for transmission via grpc
    * @return {Object} Object to be serialized into a GRPC message
    */
@@ -107,6 +112,10 @@ class BlockOrder {
   static fromStorage (key, value) {
     const { marketName, side, amount, price, timeInForce, status } = JSON.parse(value)
     const id = key
+
+    if (!BlockOrder.STATUSES[status]) {
+      throw new Error(`Block Order status of ${status} is invalid`)
+    }
 
     return new this({ id, marketName, side, amount, price, timeInForce, status })
   }

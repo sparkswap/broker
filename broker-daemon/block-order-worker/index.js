@@ -53,9 +53,7 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`${marketName} is not being tracked as a market. Configure kbd to track ${marketName} using the MARKETS environment variable.`)
     }
 
-    const status = BlockOrder.STATUSES.ACTIVE
-
-    const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce, status })
+    const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
@@ -123,7 +121,7 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
 
-    blockOrder.status = BlockOrder.STATUSES.FAILED
+    blockOrder.fail()
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 

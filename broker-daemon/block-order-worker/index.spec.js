@@ -171,7 +171,7 @@ describe('BlockOrderWorker', () => {
 
       expect(BlockOrder).to.have.been.calledOnce()
       expect(BlockOrder).to.have.been.calledWithNew()
-      expect(BlockOrder).to.have.been.calledWith({ id: fakeId, status: BlockOrder.STATUSES.ACTIVE, ...params })
+      expect(BlockOrder).to.have.been.calledWith({ id: fakeId, ...params })
     })
 
     it('saves a block order in the store', async () => {
@@ -232,16 +232,12 @@ describe('BlockOrderWorker', () => {
       store.put.callsArgAsync(2)
       OrderStateMachine.getAll.resolves(orders)
 
-      // see https://github.com/sinonjs/sinon/issues/1545#issuecomment-385262212
       fakeBlockOrder = {
         id: blockOrderId,
         key: 'fakeVal',
         value: 'fakeVal',
-        set status (val) { },
-        get status () { }
+        fail: sinon.stub()
       }
-      statusSpy = sinon.spy()
-      sinon.stub(fakeBlockOrder, 'status').set(statusSpy)
 
       BlockOrder.fromStorage.returns(fakeBlockOrder)
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
@@ -266,8 +262,7 @@ describe('BlockOrderWorker', () => {
     it('updates the block order to failed status', async () => {
       await worker.failBlockOrder(fakeId, fakeErr)
 
-      expect(statusSpy).to.have.been.calledOnce()
-      expect(statusSpy).to.have.been.calledWith(BlockOrder.STATUSES.FAILED)
+      expect(fakeBlockOrder.fail).to.have.been.calledOnce()
     })
 
     it('saves the updated block order', async () => {
