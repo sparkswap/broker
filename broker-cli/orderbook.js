@@ -1,6 +1,8 @@
 const BrokerDaemonClient = require('./broker-daemon-client')
 const { validations } = require('./utils')
 const bigInt = require('big-integer')
+const Table = require('cli-table')
+const size = require('window-size')
 require('colors')
 
 /**
@@ -15,53 +17,65 @@ require('colors')
  */
 function createUI (market, asks, bids) {
   console.clear()
+  const { mainTableWidth, innerTableWidth } = calculateTableWidths(size.get().width)
+  const table = new Table({
+    head: ['ASKS', 'BIDS'],
+    style: { head: ['gray'] },
+    colWidths: [mainTableWidth, mainTableWidth]
+  })
+
+  // The extensive options are required because the default for cli-table is to have
+  // borders between every row and column.
+  const innerTableOptions = {
+    head: ['Price', 'Depth'],
+    style: { head: ['gray'] },
+    colWidths: [innerTableWidth, innerTableWidth],
+    chars: {
+      'top': '',
+      'top-mid': '',
+      'top-left': '',
+      'top-right': '',
+      'bottom': '',
+      'bottom-mid': '',
+      'bottom-left': '',
+      'bottom-right': '',
+      'left': '',
+      'left-mid': '',
+      'mid': '',
+      'mid-mid': '',
+      'right': '',
+      'right-mid': '',
+      'middle': ''
+    }
+  }
+  const askTable = new Table(innerTableOptions)
+  const bidTable = new Table(innerTableOptions)
 
   const ui = []
 
   ui.push('')
   ui.push(String(`Market: ${market.toUpperCase()}`).bold.white)
   ui.push('')
-  ui.push(['                ', String('ASK').underline.gray, String('                |                ').gray, String('BID').underline.gray, '                '].join(''))
-  ui.push(String('      price      |      depth      |      price      |      depth      ').gray)
-  ui.push(String('-----------------------------------------------------------------------').gray)
 
-  let rows = Math.max(asks.length, bids.length)
+  table.push([askTable, bidTable])
 
-  if (rows === 0) {
-    ui.push(String('                             NO OPEN ORDERS                            ').white)
-  }
+  // TODO: collapse orders at the same price point into a single line
 
-  let asksAndBids = [asks, bids]
-  let orderColors = ['red', 'green']
+  asks.forEach((ask) => {
+    // TODO: make display of amounts consistent with inputs (buys, prices, etc)
+    let price = String(` ${ask.price} `)
+    let depth = String(` ${ask.depth} `)
+    askTable.push([price.red, depth.white])
+  })
 
-  for (var i = 0; i < rows; i++) {
-    let row = ['', '']
-    // TODO: collapse orders at the same price point into a single line
-    asksAndBids.forEach((orders, index) => {
-      if (orders[i]) {
-        // TODO: pull the 8 out of here and make it per-currency configuration
-        // TODO: make display of amounts consistent with inputs (buys, prices, etc)
-        let price = String(` ${orders[i].price} `)
-        let depth = String(` ${orders[i].depth} `)
+  bids.forEach((bid) => {
+    // TODO: make display of amounts consistent with inputs (buys, prices, etc)
+    let price = String(` ${bid.price} `)
+    let depth = String(` ${bid.depth} `)
+    bidTable.push([price.green, depth.white])
+  })
 
-        row[index] = [price, depth].map((field, j) => {
-          while (field.length < 17) {
-            field = ` ${field}`
-          }
-
-          return j ? field.white : field[orderColors[index]]
-        }).join(String('|').gray)
-      } else {
-        row[index] = [Array(17).fill(' ').join(''), Array(17).fill(' ').join('')].join(String('|').gray)
-      }
-
-      while (row[index].length < 17) {
-        row[index] = ` ${row[index]}`
-      }
-    })
-    ui.push(row.join(String('|').gray))
-  }
-
+  ui.push(table.toString())
   console.log(ui.join('\n') + '\n')
 }
 
@@ -88,6 +102,8 @@ async function orderbook (args, opts, logger) {
     // (this probably needs to be done in the daemon itself)
     const bids = new Map()
     const asks = new Map()
+    let sortedAsks = []
+    let sortedBids = []
 
     // Lets initialize the view AND just to be sure, we will clear the view
     console.clear()
@@ -109,9 +125,13 @@ async function orderbook (args, opts, logger) {
 
       let transformedAsks = Array.from(asks.values()).map(ask => { return calculatePriceandDepth(ask) })
       let transformedBids = Array.from(bids.values()).map(bid => { return calculatePriceandDepth(bid) })
-      let sortedAsks = transformedAsks.sort(function (a, b) { return (a.price.compare(b.price)) })
-      let sortedBids = transformedBids.sort(function (a, b) { return (b.price.compare(a.price)) })
+      sortedAsks = transformedAsks.sort(function (a, b) { return (a.price.compare(b.price)) })
+      sortedBids = transformedBids.sort(function (a, b) { return (b.price.compare(a.price)) })
       console.clear()
+      createUI(market, sortedAsks, sortedBids)
+    })
+
+    process.stdout.on('resize', function () {
       createUI(market, sortedAsks, sortedBids)
     })
 
@@ -133,6 +153,22 @@ async function orderbook (args, opts, logger) {
 function calculatePriceandDepth (order) {
   let price = (order.counterAmount.divide(order.baseAmount))
   return {price, depth: order.baseAmount}
+}
+
+/**
+ * Takes in an window width and returns object with appropriate table widths
+ * for the orderbook
+ * @param {Integer} window width
+ * @returns {Object} with mainTableWidth and innerTableWidth
+ */
+
+function calculateTableWidths (windowWidth) {
+  const borderOffset = 4
+  const numTables = 2
+  const mainTableWidth = Math.round((windowWidth - borderOffset) / numTables)
+  const innerTableWidth = Math.round((mainTableWidth - borderOffset) / numTables)
+
+  return {mainTableWidth, innerTableWidth}
 }
 
 module.exports = (program) => {

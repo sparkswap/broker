@@ -62,8 +62,6 @@ const OrderStateMachine = StateMachine.factory({
 
           if (this.error) {
             return this.error.message
-          } else {
-            this.logger.error('Tried to serialize error, but it had no message property')
           }
         }
       }
@@ -156,7 +154,6 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onAfterCreate: function (lifecycle) {
-      console.log('onAfterCreate')
       this.logger.info(`Create transition completed, triggering place`)
 
       // you can't start a transition while in another one,
