@@ -105,10 +105,9 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info('Moving block order to failed state', { id: blockOrderId })
 
     // TODO: move status to its own sublevel so it can be updated atomically
-    let value
 
     try {
-      value = await promisify(this.store.get)(blockOrderId)
+      var value = await promisify(this.store.get)(blockOrderId)
     } catch (e) {
       // TODO: throw here? what's the protocol?
       if (e.notFound) {
