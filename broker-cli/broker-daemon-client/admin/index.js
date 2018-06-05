@@ -21,9 +21,9 @@ function healthCheck () {
  * @param {String} address - host address of relayer
  * @return {Promise}
  */
-function setup (amount) {
+function setup (amount, symbol) {
   return new Promise((resolve, reject) => {
-    this.adminService.setup({}, (err, res) => {
+    this.adminService.setup({ amount, symbol }, (err, res) => {
       if (err) return reject(err)
       return resolve(res)
     })

@@ -12,6 +12,7 @@ describe('RelayerClient', () => {
   let MakerService
   let OrderBookService
   let HealthService
+  let PaymentNetworkService
   let ResponseType = {
     EXISTING_EVENT: 'EXISTING_EVENT',
     EXISTING_EVENTS_DONE: 'EXISTING_EVENTS_DONE',
@@ -28,6 +29,7 @@ describe('RelayerClient', () => {
     MakerService = sinon.stub()
     OrderBookService = sinon.stub()
     HealthService = sinon.stub()
+    PaymentNetworkService = sinon.stub()
 
     pathResolve = sinon.stub()
     RelayerClient.__set__('path', { resolve: pathResolve })
@@ -36,6 +38,7 @@ describe('RelayerClient', () => {
       MakerService,
       OrderBookService,
       HealthService,
+      PaymentNetworkService,
       WatchMarketResponse: {
         ResponseType
       }

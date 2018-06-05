@@ -13,6 +13,8 @@ const { EXCHANGE_LND_HOST } = process.env
  */
 async function setup ({ params, relayer, logger, engine }, { SetupResponse }) {
   const { publicKey: relayerPubKey } = await relayer.getPublicKey()
+  const { amount, market } = params
+  logger.info(`Attempting to create channel with ${EXCHANGE_LND_HOST} on ${market} with ${amount}`)
   await engine.createChannel(EXCHANGE_LND_HOST, relayerPubKey, '20000')
   return new SetupResponse({ status: 'channel opened successfully' })
 }

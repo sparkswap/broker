@@ -11,11 +11,11 @@ const orderbookCommand = require('./orderbook')
 const configCommand = require('./config')
 const healthCheckCommand = require('./health-check')
 const walletCommand = require('./wallet')
-const initCommand = require('./init')
+const setupCommand = require('./setup')
 const orderStatusCommand = require('./order-status')
 
 module.exports = {
-  initCommand,
+  setupCommand,
   buyCommand,
   sellCommand,
   configCommand,
