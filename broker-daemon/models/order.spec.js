@@ -244,10 +244,10 @@ describe('Order', () => {
       })
     })
 
-    describe('get createParams', () => {
+    describe('get paramsForCreate', () => {
       it('defines a getter for params required to create an order on the relayer', () => {
-        expect(order).to.have.property('createParams')
-        expect(order.createParams).to.be.eql({
+        expect(order).to.have.property('paramsForCreate')
+        expect(order.paramsForCreate).to.be.eql({
           baseSymbol: params.baseSymbol,
           counterSymbol: params.counterSymbol,
           side: params.side,

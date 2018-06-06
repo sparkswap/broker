@@ -269,12 +269,12 @@ describe('Fill', () => {
       })
     })
 
-    describe('get createParams', () => {
+    describe('get paramsForCreate', () => {
       it('defines a getter for params required to create a fill on the relayer', () => {
         const fakeSwapHash = 'hello'
         fill.setSwapHash(fakeSwapHash)
-        expect(fill).to.have.property('createParams')
-        expect(fill.createParams).to.be.eql({
+        expect(fill).to.have.property('paramsForCreate')
+        expect(fill.paramsForCreate).to.be.eql({
           orderId: order.orderId,
           swapHash: fakeSwapHash,
           fillAmount: params.fillAmount

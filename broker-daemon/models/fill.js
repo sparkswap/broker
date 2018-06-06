@@ -58,7 +58,7 @@ class Fill {
    * Params required to create an order on the relayer
    * @return {Object} Object of parameters the relayer expects
    */
-  get createParams () {
+  get paramsForCreate () {
     const { fillAmount, swapHash, order } = this
     const { orderId } = order
 

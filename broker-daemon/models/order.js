@@ -78,7 +78,7 @@ class Order {
    * Params required to create an order on the relayer
    * @return {Object} Object of parameters the relayer expects
    */
-  get createParams () {
+  get paramsForCreate () {
     const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo } = this
 
     return { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo }
