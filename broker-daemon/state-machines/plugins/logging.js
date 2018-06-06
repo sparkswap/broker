@@ -16,7 +16,7 @@ class StateMachineLogging extends StateMachinePlugin {
 
   /**
    * Observers object to add additional lifecycle observers
-   * Used to add our `onBeforeReject` observer to add the error to the state machine property
+   * Adds our lifecycle observers to call the logging function
    * @return {Object} Key value of observers
    */
   get observers () {
