@@ -1,8 +1,8 @@
 const { expect, sinon } = require('test/test-helper')
-const bigInt = require('big-integer')
+const { Big } = require('../utils')
 
 const BlockOrder = require('./block-order')
-const OrderStateMachine = require('../block-order-worker/order-state-machine')
+const { OrderStateMachine } = require('../state-machines')
 
 describe('BlockOrder', () => {
   describe('::fromStorage', () => {
@@ -33,6 +33,22 @@ describe('BlockOrder', () => {
       expect(blockOrder).to.have.property('timeInForce', params.timeInForce)
       expect(blockOrder).to.have.property('status', params.status)
     })
+
+    it('throws if it has an invalid status', () => {
+      const id = 'myid'
+      const params = {
+        marketName: 'BTC/LTC',
+        side: 'BID',
+        amount: '10000',
+        price: '100',
+        timeInForce: 'GTC',
+        status: 'OOPS'
+      }
+
+      expect(() => {
+        BlockOrder.fromStorage(id, JSON.stringify(params))
+      }).to.throw()
+    })
   })
 
   describe('new', () => {
@@ -45,8 +61,7 @@ describe('BlockOrder', () => {
         side: 'BID',
         amount: '10000',
         price: '100',
-        timeInForce: 'GTC',
-        status: 'ACTIVE'
+        timeInForce: 'GTC'
       }
     })
 
@@ -68,19 +83,19 @@ describe('BlockOrder', () => {
       expect(blockOrder).to.have.property('side', params.side)
     })
 
-    it('converts amount to a big int', () => {
+    it('converts amount to a Big.js', () => {
       const blockOrder = new BlockOrder(params)
 
       expect(blockOrder).to.have.property('amount')
-      expect(bigInt.isInstance(blockOrder.amount)).to.be.equal(true)
+      expect(blockOrder.amount).to.be.instanceOf(Big)
       expect(blockOrder.amount.toString()).to.be.equal(params.amount)
     })
 
-    it('converts a price to a big int', () => {
+    it('converts a price to a Big.js', () => {
       const blockOrder = new BlockOrder(params)
 
       expect(blockOrder).to.have.property('price')
-      expect(bigInt.isInstance(blockOrder.price)).to.be.equal(true)
+      expect(blockOrder.price).to.be.instanceOf(Big)
       expect(blockOrder.price.toString()).to.be.equal(params.price)
     })
 
@@ -99,17 +114,16 @@ describe('BlockOrder', () => {
     })
 
     it('assigns a status', () => {
+      params.status = 'CANCELLED'
       const blockOrder = new BlockOrder(params)
 
       expect(blockOrder).to.have.property('status', params.status)
     })
 
-    it('throws if it has an invalid status', () => {
-      params.status = 'OOPS'
+    it('defaults to active status', () => {
+      const blockOrder = new BlockOrder(params)
 
-      expect(() => {
-        new BlockOrder(params) // eslint-disable-line
-      }).to.throw()
+      expect(blockOrder).to.have.property('status', 'ACTIVE')
     })
   })
 
@@ -193,19 +207,27 @@ describe('BlockOrder', () => {
               info: sinon.stub(),
               debug: sinon.stub(),
               error: sinon.stub()
+            },
+            store: {
+              get: sinon.stub(),
+              put: sinon.stub(),
+              createReadStream: sinon.stub()
             }
           }, { key: 'mykey',
             value: JSON.stringify({
-              baseSymbol: 'BTC',
-              counterSymbol: 'XYZ',
-              side: 'BID',
-              baseAmount: '1000',
-              counterAmount: '10000',
-              ownerId: 'fakeID',
-              payTo: 'ln:1231243fasdf',
-              feePaymentRequest: 'lnbcasodifjoija',
-              depositPaymentRequest: 'lnbcaosdifjaosdfj',
-              __state: 'CREATED'
+              order: {
+                baseSymbol: 'BTC',
+                counterSymbol: 'XYZ',
+                side: 'BID',
+                baseAmount: '1000',
+                counterAmount: '10000',
+                ownerId: 'fakeID',
+                payTo: 'ln:1231243fasdf',
+                feePaymentRequest: 'lnbcasodifjoija',
+                depositPaymentRequest: 'lnbcaosdifjaosdfj'
+              },
+              state: 'created',
+              history: []
             })})
         })
 
@@ -245,7 +267,7 @@ describe('BlockOrder', () => {
 
           const serialized = blockOrder.serialize()
 
-          expect(serialized.openOrders[0]).to.have.property('price', '10')
+          expect(serialized.openOrders[0]).to.have.property('price', '10.0000000000000000')
         })
 
         it('serializes the state of the order', () => {

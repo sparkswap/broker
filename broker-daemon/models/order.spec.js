@@ -244,10 +244,10 @@ describe('Order', () => {
       })
     })
 
-    describe('get createParams', () => {
+    describe('get paramsForCreate', () => {
       it('defines a getter for params required to create an order on the relayer', () => {
-        expect(order).to.have.property('createParams')
-        expect(order.createParams).to.be.eql({
+        expect(order).to.have.property('paramsForCreate')
+        expect(order.paramsForCreate).to.be.eql({
           baseSymbol: params.baseSymbol,
           counterSymbol: params.counterSymbol,
           side: params.side,
@@ -259,7 +259,7 @@ describe('Order', () => {
       })
     })
 
-    describe('#addCreatedParams', () => {
+    describe('#setCreatedParams', () => {
       let createdParams = {
         orderId: 'myid',
         feePaymentRequest: 'myrequest',
@@ -267,7 +267,7 @@ describe('Order', () => {
       }
 
       it('updates the object with the params from creating on the relayer', () => {
-        order.addCreatedParams(createdParams)
+        order.setCreatedParams(createdParams)
 
         expect(order).to.have.property('orderId', createdParams.orderId)
         expect(order).to.have.property('feePaymentRequest', createdParams.feePaymentRequest)
@@ -275,7 +275,7 @@ describe('Order', () => {
       })
 
       it('includes the updated params with the saved value', () => {
-        order.addCreatedParams(createdParams)
+        order.setCreatedParams(createdParams)
 
         expect(order.value).to.include(`"feePaymentRequest":"${createdParams.feePaymentRequest}"`)
         expect(order.value).to.include(`"depositPaymentRequest":"${createdParams.depositPaymentRequest}"`)

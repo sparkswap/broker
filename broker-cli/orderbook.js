@@ -1,9 +1,12 @@
 const BrokerDaemonClient = require('./broker-daemon-client')
-const { validations } = require('./utils')
-const bigInt = require('big-integer')
+const { validations, Big } = require('./utils')
 const Table = require('cli-table')
 const size = require('window-size')
 require('colors')
+
+const EVENT_TYPES = Object.freeze({
+  ADD: 'ADD', DELETE: 'DELETE'
+})
 
 /**
  * Prints log statements for a psuedo UI for the orderbook
@@ -63,14 +66,14 @@ function createUI (market, asks, bids) {
 
   asks.forEach((ask) => {
     // TODO: make display of amounts consistent with inputs (buys, prices, etc)
-    let price = String(` ${ask.price} `)
+    let price = String(` ${ask.price.toFixed(16)} `)
     let depth = String(` ${ask.depth} `)
     askTable.push([price.red, depth.white])
   })
 
   bids.forEach((bid) => {
     // TODO: make display of amounts consistent with inputs (buys, prices, etc)
-    let price = String(` ${bid.price} `)
+    let price = String(` ${bid.price.toFixed(16)} `)
     let depth = String(` ${bid.depth} `)
     bidTable.push([price.green, depth.white])
   })
@@ -96,7 +99,7 @@ async function orderbook (args, opts, logger) {
 
   try {
     const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)
-    const watchOrder = await brokerDaemonClient.watchMarket(request)
+    const call = brokerDaemonClient.orderBookService.watchMarket(request)
     // TODO: We should save orders to an internal DB or figure out a way to store
     // this info instead of in memory?
     // (this probably needs to be done in the daemon itself)
@@ -109,24 +112,24 @@ async function orderbook (args, opts, logger) {
     console.clear()
     createUI(market, [], [])
 
-    watchOrder.on('data', (order) => {
+    call.on('data', (order) => {
       const { orderId, baseAmount, counterAmount, side } = order.marketEvent
       const { type } = order
-      if (type === brokerDaemonClient.proto.WatchMarketResponse.EventType.DELETE) {
+      if (type === EVENT_TYPES.DELETE) {
         asks.delete(orderId)
         bids.delete(orderId)
       } else {
         if (side === 'ASK') {
-          asks.set(orderId, { counterAmount: bigInt(counterAmount), baseAmount: bigInt(baseAmount) })
+          asks.set(orderId, { counterAmount: Big(counterAmount), baseAmount: Big(baseAmount) })
         } else {
-          bids.set(orderId, { counterAmount: bigInt(counterAmount), baseAmount: bigInt(baseAmount) })
+          bids.set(orderId, { counterAmount: Big(counterAmount), baseAmount: Big(baseAmount) })
         }
       }
 
       let transformedAsks = Array.from(asks.values()).map(ask => { return calculatePriceandDepth(ask) })
       let transformedBids = Array.from(bids.values()).map(bid => { return calculatePriceandDepth(bid) })
-      sortedAsks = transformedAsks.sort(function (a, b) { return (a.price.compare(b.price)) })
-      sortedBids = transformedBids.sort(function (a, b) { return (b.price.compare(a.price)) })
+      sortedAsks = transformedAsks.sort(function (a, b) { return (a.price.cmp(b.price)) })
+      sortedBids = transformedBids.sort(function (a, b) { return (b.price.cmp(a.price)) })
       console.clear()
       createUI(market, sortedAsks, sortedBids)
     })
@@ -135,8 +138,8 @@ async function orderbook (args, opts, logger) {
       createUI(market, sortedAsks, sortedBids)
     })
 
-    watchOrder.on('cancelled', () => logger.info('Stream was cancelled by the server'))
-    watchOrder.on('end', () => logger.info('End of stream'))
+    call.on('cancelled', () => logger.info('Stream was cancelled by the server'))
+    call.on('end', () => logger.info('End of stream'))
   } catch (e) {
     logger.error(e.toString())
   }
@@ -151,7 +154,7 @@ async function orderbook (args, opts, logger) {
  */
 
 function calculatePriceandDepth (order) {
-  let price = (order.counterAmount.divide(order.baseAmount))
+  let price = (order.counterAmount.div(order.baseAmount))
   return {price, depth: order.baseAmount}
 }
 

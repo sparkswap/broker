@@ -1,4 +1,5 @@
 const MarketEvent = require('./market-event')
+const Big = require('../utils/big')
 
 class MarketEventOrder {
   constructor ({ orderId, createdAt, baseAmount, counterAmount, side }) {
@@ -18,9 +19,16 @@ class MarketEventOrder {
     return JSON.stringify({ createdAt, baseAmount, counterAmount, side })
   }
 
-  // TODO: Better math library to handle this?
+  /**
+   * Price of the order
+   * @return {String} Number, rounded to 16 decimal places, represented as a string
+   */
   get price () {
-    return this.counterAmount / this.baseAmount
+    const counterAmount = Big(this.counterAmount)
+    const baseAmount = Big(this.baseAmount)
+
+    // TODO: make the number of decimal places configurable
+    return counterAmount.div(baseAmount).toFixed(16)
   }
 
   static fromEvent (event) {
@@ -31,8 +39,8 @@ class MarketEventOrder {
     if (event.eventType === MarketEvent.TYPES.PLACED) {
       Object.assign(params, {
         createdAt: event.timestamp,
-        baseAmount: event.payload.baseAmount,
-        counterAmount: event.payload.counterAmount,
+        baseAmount: event.payload.baseAmount.toString(),
+        counterAmount: event.payload.counterAmount.toString(),
         side: event.payload.side
       })
     }

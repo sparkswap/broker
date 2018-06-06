@@ -27,6 +27,7 @@ enum BlockOrderStatus {
   ACTIVE = 0;
   CANCELLED = 1;
   COMPLETED = 2;
+  FAILED = 3;
 }
 
 enum OrderStatus {
@@ -35,6 +36,7 @@ enum OrderStatus {
   FILLED = 2;
   EXECUTED = 3;
   COMPLETED = 4;
+  REJECTED = 5;
 }
 
 message Order {

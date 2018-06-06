@@ -5,7 +5,7 @@ const {
   expect,
   delay
 } = require('test/test-helper')
-const bigInt = require('big-integer')
+const { Big } = require('./utils')
 
 const programPath = path.resolve('broker-cli', 'orderbook')
 const program = rewire(programPath)
@@ -43,12 +43,7 @@ describe('orderbook', () => {
     createUIStub = sinon.stub()
 
     brokerStub = sinon.stub()
-    brokerStub.prototype.watchMarket = watchMarketStub
-    brokerStub.prototype.proto = {
-      WatchMarketResponse: {
-        EventType: { ADD: 'ADD', DELETE: 'DELETE' }
-      }
-    }
+    brokerStub.prototype.orderBookService = { watchMarket: watchMarketStub }
 
     revert = program.__set__('BrokerDaemonClient', brokerStub)
     revertCreateUI = program.__set__('createUI', createUIStub)
@@ -105,18 +100,18 @@ describe('orderbook', () => {
     await delay(10)
 
     expect(createUIStub).to.have.been.calledTwice()
-    expect(createUIStub).to.have.been.calledWith(market, [], [{ depth: bigInt(10), price: bigInt(100) }])
+    expect(createUIStub).to.have.been.calledWith(market, [], [{ depth: Big(10), price: Big(100) }])
   })
 
   it('adds a bid with a large counter amount', async () => {
     const addEvent = { type: 'ADD', marketEvent: { orderId: 'orderId', counterAmount: '922337203685477580733', baseAmount: '10', side: 'BID' } }
-    const expectedValue = bigInt(addEvent.marketEvent.counterAmount).divide(bigInt(addEvent.marketEvent.baseAmount))
+    const expectedValue = Big(addEvent.marketEvent.counterAmount).div(Big(addEvent.marketEvent.baseAmount))
     stream.on.withArgs('data').callsArgWithAsync(1, addEvent)
     orderbook(args, opts, logger)
 
     await delay(10)
 
-    expect(createUIStub).to.have.been.calledWith(market, [], [{ depth: bigInt(10), price: expectedValue }])
+    expect(createUIStub).to.have.been.calledWith(market, [], [{ depth: Big(10), price: expectedValue }])
   })
 
   it('adds an ask to the UI', async () => {
@@ -127,7 +122,7 @@ describe('orderbook', () => {
     await delay(10)
 
     expect(createUIStub).to.have.been.calledTwice()
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: bigInt(10), price: bigInt(100) }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ depth: Big(10), price: Big(100) }], [])
   })
 
   it('sorts bids and asks by price', async () => {
@@ -153,11 +148,11 @@ describe('orderbook', () => {
 
     expect(createUIStub).to.have.been.calledWith(
       market, [
-        { depth: bigInt(10), price: bigInt(100) },
-        { depth: bigInt(10), price: bigInt(1000) }
+        { depth: Big(10), price: Big(100) },
+        { depth: Big(10), price: Big(1000) }
       ], [
-        { depth: bigInt(10), price: bigInt(1000) },
-        { depth: bigInt(10), price: bigInt(100) }
+        { depth: Big(10), price: Big(1000) },
+        { depth: Big(10), price: Big(100) }
       ])
   })
 
@@ -180,9 +175,9 @@ describe('orderbook', () => {
     await delay(100)
 
     expect(createUIStub).to.have.been.calledWith(market, [], [])
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: bigInt(10), price: bigInt(100) }], [])
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: bigInt(10), price: bigInt(100) }, { depth: bigInt(10), price: bigInt(1000) }], [])
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: bigInt(10), price: bigInt(1000) }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ depth: Big(10), price: Big(100) }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ depth: Big(10), price: Big(100) }, { depth: Big(10), price: Big(1000) }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ depth: Big(10), price: Big(1000) }], [])
   })
 
   it('sets a resize event handler that results in recreating the UI', async () => {
