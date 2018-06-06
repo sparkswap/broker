@@ -38,7 +38,7 @@ class Fill {
    * Add a swap hash to the fill
    * @param {String} swapHash Hash for the swap asssociated with this fill
    */
-  addSwapHash (swapHash) {
+  setSwapHash (swapHash) {
     this.swapHash = swapHash
   }
 
@@ -48,7 +48,7 @@ class Fill {
    * @param {String} options.feePaymentRequest     Payment channel network payment request for the fill fee
    * @param {String} options.depositPaymentRequest Payment channel network payment request for the fill deposit
    */
-  addCreatedParams ({ fillId, feePaymentRequest, depositPaymentRequest }) {
+  setCreatedParams ({ fillId, feePaymentRequest, depositPaymentRequest }) {
     this.fillId = fillId
     this.feePaymentRequest = feePaymentRequest
     this.depositPaymentRequest = depositPaymentRequest

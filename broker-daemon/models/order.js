@@ -36,7 +36,7 @@ class Order {
    * @param {String} options.feePaymentRequest     Payment channel network payment request for the order fee
    * @param {String} options.depositPaymentRequest Payment channel network payment request for the order deposit
    */
-  addCreatedParams ({ orderId, feePaymentRequest, depositPaymentRequest }) {
+  setCreatedParams ({ orderId, feePaymentRequest, depositPaymentRequest }) {
     this.orderId = orderId
     this.feePaymentRequest = feePaymentRequest
     this.depositPaymentRequest = depositPaymentRequest

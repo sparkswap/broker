@@ -255,16 +255,16 @@ describe('Fill', () => {
       })
     })
 
-    describe('#addSwapHash', () => {
+    describe('#setSwapHash', () => {
       let swapHash = 'fakeSwapHash'
 
       it('updates the object with the swap hash', () => {
-        fill.addSwapHash(swapHash)
+        fill.setSwapHash(swapHash)
         expect(fill).to.have.property('swapHash', swapHash)
       })
 
       it('includes the updated params in the saved value', () => {
-        fill.addSwapHash(swapHash)
+        fill.setSwapHash(swapHash)
         expect(fill.value).to.include(`"swapHash":"${swapHash}"`)
       })
     })
@@ -272,7 +272,7 @@ describe('Fill', () => {
     describe('get createParams', () => {
       it('defines a getter for params required to create a fill on the relayer', () => {
         const fakeSwapHash = 'hello'
-        fill.addSwapHash(fakeSwapHash)
+        fill.setSwapHash(fakeSwapHash)
         expect(fill).to.have.property('createParams')
         expect(fill.createParams).to.be.eql({
           orderId: order.orderId,
@@ -282,7 +282,7 @@ describe('Fill', () => {
       })
     })
 
-    describe('#addCreatedParams', () => {
+    describe('#setCreatedParams', () => {
       let createdParams = {
         fillId: 'myid',
         feePaymentRequest: 'myrequest',
@@ -290,7 +290,7 @@ describe('Fill', () => {
       }
 
       it('updates the object with the params from creating on the relayer', () => {
-        fill.addCreatedParams(createdParams)
+        fill.setCreatedParams(createdParams)
 
         expect(fill).to.have.property('fillId', createdParams.fillId)
         expect(fill).to.have.property('feePaymentRequest', createdParams.feePaymentRequest)
@@ -298,7 +298,7 @@ describe('Fill', () => {
       })
 
       it('includes the updated params with the saved value', () => {
-        fill.addCreatedParams(createdParams)
+        fill.setCreatedParams(createdParams)
 
         expect(fill.value).to.include(`"feePaymentRequest":"${createdParams.feePaymentRequest}"`)
         expect(fill.value).to.include(`"depositPaymentRequest":"${createdParams.depositPaymentRequest}"`)

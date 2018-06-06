@@ -259,7 +259,7 @@ describe('Order', () => {
       })
     })
 
-    describe('#addCreatedParams', () => {
+    describe('#setCreatedParams', () => {
       let createdParams = {
         orderId: 'myid',
         feePaymentRequest: 'myrequest',
@@ -267,7 +267,7 @@ describe('Order', () => {
       }
 
       it('updates the object with the params from creating on the relayer', () => {
-        order.addCreatedParams(createdParams)
+        order.setCreatedParams(createdParams)
 
         expect(order).to.have.property('orderId', createdParams.orderId)
         expect(order).to.have.property('feePaymentRequest', createdParams.feePaymentRequest)
@@ -275,7 +275,7 @@ describe('Order', () => {
       })
 
       it('includes the updated params with the saved value', () => {
-        order.addCreatedParams(createdParams)
+        order.setCreatedParams(createdParams)
 
         expect(order.value).to.include(`"feePaymentRequest":"${createdParams.feePaymentRequest}"`)
         expect(order.value).to.include(`"depositPaymentRequest":"${createdParams.depositPaymentRequest}"`)
