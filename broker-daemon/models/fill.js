@@ -35,6 +35,14 @@ class Fill {
   }
 
   /**
+   * Add a swap hash to the fill
+   * @param {String} swapHash Hash for the swap asssociated with this fill
+   */
+  addSwapHash (swapHash) {
+    this.swapHash = swapHash
+  }
+
+  /**
    * Add parameters to the fill from its creation on the Relayer
    * @param {String} options.fillId                Unique identifier for the fill as assigned by the Relayer
    * @param {String} options.feePaymentRequest     Payment channel network payment request for the fill fee
@@ -51,9 +59,10 @@ class Fill {
    * @return {Object} Object of parameters the relayer expects
    */
   get createParams () {
-    const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo } = this
+    const { fillAmount, swapHash, order } = this
+    const { orderId } = order
 
-    return { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo }
+    return { fillAmount, orderId, swapHash }
   }
 
   /**
@@ -82,7 +91,7 @@ class Fill {
    * @return {String} Currency symbol
    */
   get inboundSymbol () {
-    return this.order.side === Order.SIDES.BID ? this.counterSymbol : this.baseSymbol
+    return this.order.side === Order.SIDES.BID ? this.order.counterSymbol : this.order.baseSymbol
   }
 
   /**
@@ -90,7 +99,7 @@ class Fill {
    * @return {String} Currency symbol
    */
   get outboundSymbol () {
-    return this.order.side === Order.SIDES.BID ? this.baseSymbol : this.counterSymbol
+    return this.order.side === Order.SIDES.BID ? this.order.baseSymbol : this.order.counterSymbol
   }
 
   /**
