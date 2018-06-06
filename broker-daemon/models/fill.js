@@ -59,8 +59,7 @@ class Fill {
    * @return {Object} Object of parameters the relayer expects
    */
   get paramsForCreate () {
-    const { fillAmount, swapHash, order } = this
-    const { orderId } = order
+    const { fillAmount, swapHash, order: { orderId } } = this
 
     return { fillAmount, orderId, swapHash }
   }
@@ -140,21 +139,19 @@ class Fill {
    */
   get valueObject () {
     const {
-      order,
+      order: {
+        orderId,
+        baseSymbol,
+        counterSymbol,
+        side,
+        baseAmount,
+        counterAmount
+      },
       fillAmount,
       swapHash,
       feePaymentRequest,
       depositPaymentRequest
     } = this
-
-    const {
-      orderId,
-      baseSymbol,
-      counterSymbol,
-      side,
-      baseAmount,
-      counterAmount
-    } = order
 
     return {
       order: {
@@ -191,8 +188,7 @@ class Fill {
   static fromObject (key, valueObject) {
     const fillId = key
 
-    const { order, fillAmount, ...otherParams } = valueObject
-    const { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount } = order
+    const { order: { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, fillAmount, ...otherParams } = valueObject
 
     // instantiate with the correct set of params
     const fill = new this({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount })

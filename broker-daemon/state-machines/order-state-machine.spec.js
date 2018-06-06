@@ -191,7 +191,7 @@ describe('OrderStateMachine', () => {
   describe('#create', () => {
     let osm
     let params
-    let addCreatedParams
+    let setCreatedParams
     let fakeKey
     let fakeValueObject
     beforeEach(() => {
@@ -201,8 +201,8 @@ describe('OrderStateMachine', () => {
       }
       Order.prototype.key = fakeKey
       Order.prototype.valueObject = fakeValueObject
-      addCreatedParams = sinon.stub()
-      Order.prototype.addCreatedParams = addCreatedParams
+      setCreatedParams = sinon.stub()
+      Order.prototype.setCreatedParams = setCreatedParams
       relayer.createOrder.resolves()
       osm = new OrderStateMachine({ store, logger, relayer, engine })
       params = {
@@ -245,7 +245,7 @@ describe('OrderStateMachine', () => {
       const fakeParams = {
         my: 'fake'
       }
-      Order.prototype.createParams = fakeParams
+      Order.prototype.paramsForCreate = fakeParams
 
       await osm.create(params)
 
@@ -259,8 +259,8 @@ describe('OrderStateMachine', () => {
 
       await osm.create(params)
 
-      expect(addCreatedParams).to.have.been.calledOnce()
-      expect(addCreatedParams).to.have.been.calledWith(fakeResponse)
+      expect(setCreatedParams).to.have.been.calledOnce()
+      expect(setCreatedParams).to.have.been.calledWith(fakeResponse)
     })
 
     it('saves a copy in the store', async () => {
@@ -393,7 +393,7 @@ describe('OrderStateMachine', () => {
     let params
     let fakeKey
     let fakeValueObject
-    let addCreatedParams
+    let setCreatedParams
 
     beforeEach(() => {
       params = {
@@ -409,8 +409,8 @@ describe('OrderStateMachine', () => {
       }
       Order.prototype.key = fakeKey
       Order.prototype.valueObject = fakeValueObject
-      addCreatedParams = sinon.stub()
-      Order.prototype.addCreatedParams = addCreatedParams
+      setCreatedParams = sinon.stub()
+      Order.prototype.setCreatedParams = setCreatedParams
     })
 
     it('initializes a state machine', async () => {
