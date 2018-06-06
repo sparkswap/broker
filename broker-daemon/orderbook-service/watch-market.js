@@ -1,5 +1,5 @@
 const createLiveStream = require('level-live-stream')
-const bigInt = require('big-integer')
+const { Big } = require('../utils')
 const neverResolve = new Promise(() => {})
 /**
  * Creates a stream with the exchange that watches for market events
@@ -33,7 +33,7 @@ async function watchMarket ({ params, send, logger, orderbooks }, { WatchMarketR
         // also do nothing right now ({sync: true} is part of level stream, it is added to the stream after all
         // old events have been added to the stream before any new events are added to the stream.)
       } else {
-        logger.info(`New event being added to stream, event info: ${opts}`)
+        logger.info('New event being added to stream, event info', opts)
         if (opts.type === DB_ACTIONS.DELETE) {
           params = {
             type: WatchMarketResponse.EventType.DELETE,
@@ -45,8 +45,8 @@ async function watchMarket ({ params, send, logger, orderbooks }, { WatchMarketR
             type: WatchMarketResponse.EventType.ADD,
             marketEvent: {
               orderId: opts.key,
-              baseAmount: bigInt(parsedValue.baseAmount).toString(),
-              counterAmount: bigInt(parsedValue.counterAmount).toString(),
+              baseAmount: Big(parsedValue.baseAmount).toString(),
+              counterAmount: Big(parsedValue.counterAmount).toString(),
               side: parsedValue.side
             }
           }

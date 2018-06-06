@@ -1,5 +1,5 @@
 const path = require('path')
-const bigInt = require('big-integer')
+const { Big } = require('../utils')
 const { expect, rewire, sinon, delay } = require('test/test-helper')
 
 const BlockOrderWorker = rewire(path.resolve(__dirname))
@@ -358,8 +358,8 @@ describe('BlockOrderWorker', () => {
         baseSymbol: 'BTC',
         counterSymbol: 'LTC',
         side: 'BID',
-        amount: bigInt('100'),
-        price: bigInt('1000')
+        amount: Big('100'),
+        price: Big('1000')
       }
       order = {
         id: 'anotherId'

@@ -1,3 +1,5 @@
+const { Big } = require('../utils')
+
 /**
  * @class Order that we create on the Relayer
  */
@@ -34,7 +36,7 @@ class Order {
    * @param {String} options.feePaymentRequest     Payment channel network payment request for the order fee
    * @param {String} options.depositPaymentRequest Payment channel network payment request for the order deposit
    */
-  addCreatedParams ({ orderId, feePaymentRequest, depositPaymentRequest }) {
+  setCreatedParams ({ orderId, feePaymentRequest, depositPaymentRequest }) {
     this.orderId = orderId
     this.feePaymentRequest = feePaymentRequest
     this.depositPaymentRequest = depositPaymentRequest
@@ -76,10 +78,22 @@ class Order {
    * Params required to create an order on the relayer
    * @return {Object} Object of parameters the relayer expects
    */
-  get createParams () {
+  get paramsForCreate () {
     const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo } = this
 
     return { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo }
+  }
+
+  /**
+   * Price of the order
+   * @return {String} Number, rounded to 16 decimal places, represented as a string
+   */
+  get price () {
+    const counterAmount = Big(this.counterAmount)
+    const baseAmount = Big(this.baseAmount)
+
+    // TODO: make the number of decimal places configurable
+    return counterAmount.div(baseAmount).toFixed(16)
   }
 
   /**

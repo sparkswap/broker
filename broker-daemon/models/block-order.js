@@ -1,4 +1,4 @@
-const bigInt = require('big-integer')
+const Big = require('big.js')
 
 /**
  * @class Model representing Block Orders
@@ -19,8 +19,8 @@ class BlockOrder {
     this.id = id
     this.marketName = marketName
     this.side = side
-    this.amount = bigInt(amount)
-    this.price = price ? bigInt(price) : null
+    this.amount = Big(amount)
+    this.price = price ? Big(price) : null
     this.timeInForce = timeInForce
     this.status = status
 
@@ -87,7 +87,7 @@ class BlockOrder {
       return {
         orderId: order.orderId,
         amount: order.baseAmount,
-        price: bigInt(order.counterAmount).divide(order.baseAmount).toString(),
+        price: order.price,
         orderStatus: state.toUpperCase()
       }
     })

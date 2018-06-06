@@ -2,7 +2,8 @@ const { expect } = require('test/test-helper')
 
 const {
   ENUMS,
-  validations
+  validations,
+  Big
 } = require('./index')
 
 describe('utils index', () => {
@@ -14,5 +15,10 @@ describe('utils index', () => {
   it('defines validations', () => {
     expect(validations).to.not.be.null()
     expect(validations).to.not.be.undefined()
+  })
+
+  it('defines Big', () => {
+    expect(Big).to.not.be.null()
+    expect(Big).to.not.be.undefined()
   })
 })

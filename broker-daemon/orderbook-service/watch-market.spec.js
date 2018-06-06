@@ -6,7 +6,6 @@ const {
 } = require('test/test-helper')
 
 const path = require('path')
-const bigInt = require('big-integer')
 
 const watchMarketPath = path.resolve(__dirname, 'watch-market')
 const watchMarket = rewire(watchMarketPath)
@@ -59,8 +58,8 @@ describe('watchMarket', () => {
     const fakeOrder = { key: 'key', value: JSON.stringify({ baseAmount: '100', counterAmount: '1000', side: 'BID' }) }
     const marketEvent = {
       orderId: fakeOrder.key,
-      baseAmount: bigInt('100').toString(),
-      counterAmount: bigInt('1000').toString(),
+      baseAmount: '100',
+      counterAmount: '1000',
       side: 'BID'
     }
 
