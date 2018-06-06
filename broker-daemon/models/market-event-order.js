@@ -1,4 +1,5 @@
 const MarketEvent = require('./market-event')
+const Big = require('../utils/big')
 
 class MarketEventOrder {
   constructor ({ orderId, createdAt, baseAmount, counterAmount, side }) {
@@ -18,9 +19,12 @@ class MarketEventOrder {
     return JSON.stringify({ createdAt, baseAmount, counterAmount, side })
   }
 
-  // TODO: Better math library to handle this?
   get price () {
-    return this.counterAmount / this.baseAmount
+    const counterAmount = Big(this.counterAmount)
+    const baseAmount = Big(this.baseAmount)
+
+    // TODO: make the number of decimal places configurable
+    return counterAmount.div(baseAmount).toFixed(16)
   }
 
   static fromEvent (event) {

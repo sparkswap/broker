@@ -1,5 +1,5 @@
-const bigInt = require('big-integer')
 const Order = require('./order')
+const { Big } = require('../utils')
 
 /**
  * @class Fill that we create on the Relayer
@@ -69,11 +69,12 @@ class Fill {
    * @return {String} Amount, represented as an integer in the counter currency's smallest unit, that the order willb e fille with
    */
   get counterFillAmount () {
-    const baseAmount = bigInt(this.order.baseAmount)
-    const counterAmount = bigInt(this.order.counterAmount)
-    const fillAmount = bigInt(this.fillAmount)
+    const baseAmount = Big(this.order.baseAmount)
+    const counterAmount = Big(this.order.counterAmount)
+    const fillAmount = Big(this.fillAmount)
 
-    // TODO
+    // since we are dealing in the smallest units, we want an integer
+    return counterAmount.times(fillAmount).div(baseAmount).round(0).toString()
   }
 
   /**
