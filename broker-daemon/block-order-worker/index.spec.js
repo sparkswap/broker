@@ -92,7 +92,6 @@ describe('BlockOrderWorker', () => {
       const fakeBlockOrder = 'my fake'
       eventsOn.withArgs('BlockOrder:create').callsFake(async (evt, fn) => {
         await delay(10)
-        console.log('calling fn')
         fn(fakeBlockOrder)
       })
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
