@@ -2,6 +2,7 @@ const StateMachine = require('./state-machine')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 const StateMachinePersistence = require('./plugins/persistence')
 const StateMachineRejection = require('./plugins/rejection')
+const StateMachineLogging = require('./plugins/logging')
 const { Fill } = require('../models')
 
 /**
@@ -11,6 +12,7 @@ const FillStateMachine = StateMachine.factory({
   plugins: [
     new StateMachineHistory(),
     new StateMachineRejection(),
+    new StateMachineLogging(),
     new StateMachinePersistence({
       /**
        * @type {StateMachinePersistence~KeyAccessor}
@@ -88,28 +90,6 @@ const FillStateMachine = StateMachine.factory({
     return { store, logger, relayer, engine, onRejection, order: {} }
   },
   methods: {
-    onBeforeTransition: function (lifecycle) {
-      this.logger.info(`BEFORE: ${lifecycle.transition}`)
-    },
-    onLeaveState: function (lifecycle) {
-      this.logger.info(`LEAVE: ${lifecycle.from}`)
-    },
-
-    /**
-     * Persist the state machine to disk on entering a new state
-     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
-     * @return {void}
-     */
-    onEnterState: async function (lifecycle) {
-      this.logger.info(`ENTER: ${lifecycle.to}`)
-    },
-    onAfterTransition: function (lifecycle) {
-      this.logger.info(`AFTER: ${lifecycle.transition}`)
-    },
-    onTransition: function (lifecycle) {
-      this.logger.info(`DURING: ${lifecycle.transition} (from ${lifecycle.from} to ${lifecycle.to})`)
-    },
-
     /**
      * Handle rejected state by calling a passed in handler
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
