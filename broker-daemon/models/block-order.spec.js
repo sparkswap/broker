@@ -1,5 +1,5 @@
 const { expect, sinon } = require('test/test-helper')
-const bigInt = require('big-integer')
+const { Big } = require('../utils')
 
 const BlockOrder = require('./block-order')
 const { OrderStateMachine } = require('../state-machines')
@@ -83,19 +83,19 @@ describe('BlockOrder', () => {
       expect(blockOrder).to.have.property('side', params.side)
     })
 
-    it('converts amount to a big int', () => {
+    it('converts amount to a Big.js', () => {
       const blockOrder = new BlockOrder(params)
 
       expect(blockOrder).to.have.property('amount')
-      expect(bigInt.isInstance(blockOrder.amount)).to.be.equal(true)
+      expect(blockOrder.amount).to.be.instanceOf(Big)
       expect(blockOrder.amount.toString()).to.be.equal(params.amount)
     })
 
-    it('converts a price to a big int', () => {
+    it('converts a price to a Big.js', () => {
       const blockOrder = new BlockOrder(params)
 
       expect(blockOrder).to.have.property('price')
-      expect(bigInt.isInstance(blockOrder.price)).to.be.equal(true)
+      expect(blockOrder.price).to.be.instanceOf(Big)
       expect(blockOrder.price.toString()).to.be.equal(params.price)
     })
 
@@ -267,7 +267,7 @@ describe('BlockOrder', () => {
 
           const serialized = blockOrder.serialize()
 
-          expect(serialized.openOrders[0]).to.have.property('price', '10')
+          expect(serialized.openOrders[0]).to.have.property('price', '10.0000000000000000')
         })
 
         it('serializes the state of the order', () => {

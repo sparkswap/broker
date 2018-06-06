@@ -1,3 +1,5 @@
+const { Big } = require('../utils')
+
 /**
  * @class Order that we create on the Relayer
  */
@@ -80,6 +82,18 @@ class Order {
     const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo } = this
 
     return { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo }
+  }
+
+  /**
+   * Price of the order
+   * @return {String} Number, rounded to 16 decimal places, represented as a string
+   */
+  get price () {
+    const counterAmount = Big(this.counterAmount)
+    const baseAmount = Big(this.baseAmount)
+
+    // TODO: make the number of decimal places configurable
+    return counterAmount.div(baseAmount).toFixed(16)
   }
 
   /**

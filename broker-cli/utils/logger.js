@@ -15,7 +15,7 @@ const logger = winston.createLogger({
   transports: [
     new winston.transports.Console({
       format: winston.format.printf((info) => {
-        if(typeof info.message === 'object') {
+        if (typeof info.message === 'object') {
           return prettyjson.render(info.message)
         } else {
           return `${info.message}`

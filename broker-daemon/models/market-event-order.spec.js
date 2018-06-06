@@ -82,8 +82,8 @@ describe('MarketEventOrder', () => {
     it('creates orders from a PLACED event', () => {
       const orderId = 'myorder'
       const createdAt = '12234324235'
-      const baseAmount = 123214234
-      const counterAmount = 123214324
+      const baseAmount = '123214234'
+      const counterAmount = '123214324'
       const side = MarketEventOrder.SIDES.BID
 
       const event = {
@@ -214,7 +214,7 @@ describe('MarketEventOrder', () => {
       const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side })
 
       expect(order).to.have.property('price')
-      expect(order.price).to.be.eql('1.000000730435089')
+      expect(order.price).to.be.eql('1.0000007304350892')
     })
   })
 })
