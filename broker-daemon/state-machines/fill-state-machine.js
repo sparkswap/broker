@@ -115,6 +115,7 @@ const FillStateMachine = StateMachine.factory({
 
       const { inboundSymbol, inboundAmount } = this.fill
 
+      // TODO: when we support more than one chain, we will need to use `inboundSymbol` to choose the right engine
       this.fill.setSwapHash(await this.engine.createSwapHash(this.fill.orderId, inboundAmount))
 
       this.fill.setCreatedParams(await this.relayer.createFill(this.fill.paramsForCreate))
