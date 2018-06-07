@@ -94,6 +94,24 @@ class RelayerClient {
   }
 
   /**
+   * Fill an order on the Relayer
+   * @param  {String} options.fillId                      Relayer-assigned unique identifier
+   * @param  {String} options.feeRefundPaymentRequest     Lightning Network payment request to refund the paid fee in case of rejection
+   * @param  {String} options.depositRefundPaymentRequest Lightning Network payment request to refund the deposit in case or rejection or completion
+   * @return {Promise<void>}
+   */
+  async fillOrder ({ fillId, feeRefundPaymentRequest, depositRefundPaymentRequest }) {
+    const deadline = grpcDeadline()
+
+    return new Promise((resolve, reject) => {
+      this.taker.fillOrder({ fillId, feeRefundPaymentRequest, depositRefundPaymentRequest }, { deadline }, (err, res) => {
+        if (err) return reject(err)
+        return resolve()
+      })
+    })
+  }
+
+  /**
    * Opens a stream with the exchange to watch for market events
    *
    * @param {EventEmitter} eventHandler
