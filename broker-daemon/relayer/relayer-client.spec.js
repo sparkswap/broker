@@ -10,6 +10,7 @@ describe('RelayerClient', () => {
   let loadProto
   let proto
   let MakerService
+  let TakerService
   let OrderBookService
   let HealthService
   let ResponseType = {
@@ -26,6 +27,7 @@ describe('RelayerClient', () => {
     RelayerClient.__set__('MarketEvent', MarketEvent)
 
     MakerService = sinon.stub()
+    TakerService = sinon.stub()
     OrderBookService = sinon.stub()
     HealthService = sinon.stub()
 
@@ -34,6 +36,7 @@ describe('RelayerClient', () => {
 
     proto = {
       MakerService,
+      TakerService,
       OrderBookService,
       HealthService,
       WatchMarketResponse: {
@@ -102,6 +105,19 @@ describe('RelayerClient', () => {
       expect(relayer.maker).to.be.instanceOf(MakerService)
     })
 
+    it('creates the Maker service', () => {
+      const fakeCreds = 'mypass'
+      grpcCredentialsInsecure.returns(fakeCreds)
+
+      const relayer = new RelayerClient()
+
+      expect(MakerService).to.have.been.calledOnce()
+      expect(MakerService).to.have.been.calledWithNew()
+      expect(MakerService).to.have.been.calledWith(exchangeRpcHost, fakeCreds)
+      expect(relayer).to.have.property('taker')
+      expect(relayer.taker).to.be.instanceOf(TakerService)
+    })
+
     it('creates the OrderBook service', () => {
       const fakeCreds = 'mypass'
       grpcCredentialsInsecure.returns(fakeCreds)
@@ -167,6 +183,67 @@ describe('RelayerClient', () => {
     it('passes the deposit refund payment request to the placeOrder rpc', async () => {
       await relayer.placeOrder(params)
       expect(MakerService.prototype.placeOrder).to.have.been.calledWith(sinon.match({ depositRefundPaymentRequest: params.depositRefundPaymentRequest }))
+    })
+  })
+
+  describe('createFill', () => {
+    let relayer
+    let params
+    let fillId
+    let feePaymentRequest
+    let depositPaymentRequest
+
+    beforeEach(() => {
+      relayer = new RelayerClient()
+      params = {
+        orderId: 'fakeId',
+        fillAmount: '10000',
+        swapHash: Buffer.from('test')
+      }
+
+      fillId = 'fakeFill'
+      depositPaymentRequest = 'lnbcasdofj'
+      feePaymentRequest = 'lnbcoaisfowuefojafasd9234u'
+
+      TakerService.prototype.createFill = sinon.stub().callsArgWithAsync(2, null, {
+        fillId,
+        depositPaymentRequest,
+        feePaymentRequest
+      })
+    })
+
+    it('returns a promise', () => {
+      expect(relayer.createFill(params)).to.be.a('promise')
+    })
+
+    it('fails the promise if the request fails', () => {
+      TakerService.prototype.createFill.callsArgWithAsync(2, new Error('fake error'))
+      return expect(relayer.createFill(params)).to.eventually.be.rejectedWith(Error)
+    })
+
+    it('returns the parameters on resolution', async () => {
+      const response = await relayer.createFill(params)
+      expect(response).to.be.eql({ fillId, depositPaymentRequest, feePaymentRequest })
+    })
+
+    it('calls the createFill rpc on the maker service', async () => {
+      await relayer.createFill(params)
+      expect(TakerService.prototype.createFill).to.have.been.calledOnce()
+    })
+
+    it('passes the orderId to the createFill rpc', async () => {
+      await relayer.createFill(params)
+      expect(TakerService.prototype.createFill).to.have.been.calledWith(sinon.match({ orderId: params.orderId }))
+    })
+
+    it('passes the fill amount to the createFill rpc', async () => {
+      await relayer.createFill(params)
+      expect(TakerService.prototype.createFill).to.have.been.calledWith(sinon.match({ fillAmount: params.fillAmount }))
+    })
+
+    it('passes the swap hash to the createFill rpc', async () => {
+      await relayer.createFill(params)
+      expect(TakerService.prototype.createFill).to.have.been.calledWith(sinon.match({ swapHash: params.swapHash }))
     })
   })
 
