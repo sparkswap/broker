@@ -121,18 +121,28 @@ module.exports = (program) => {
     .command('wallet', 'Commands to handle a wallet instance')
     .help('Available Commands: balance, new-deposit-address, commit-balance')
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
+    .argument('[sub-arguments...]')
+    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
     .action(async (args, opts, logger) => {
-      const { command } = args
+      const { command, subArguments } = args
 
       if (command === SUPPORTED_COMMANDS.BALANCE) return balance(args, opts, logger)
       if (command === SUPPORTED_COMMANDS.NEW_DEPOSIT_ADDRESS) return newDepositAddress(args, opts, logger)
-      if (command === SUPPORTED_COMMANDS.COMMIT_BALANCE) return commitBalance(args, opts, logger)
+
+      if (command === SUPPORTED_COMMANDS.COMMIT_BALANCE) {
+        const [symbol] = subArguments
+
+        if (!SUPPORTED_SYMBOLS.includes(symbol)) {
+          throw new Error(`Provided symbol is not a valid currency for the exchange: ${symbol}`)
+        }
+
+        args.symbol = symbol
+
+        return commitBalance(args, opts, logger)
+      }
     })
     .command('wallet balance', 'Current daemon wallet balance')
-    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
     .command('wallet new-deposit-address', 'Generates a new wallet address for a daemon instance')
-    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
     .command('wallet commit-balance')
-    .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`, SUPPORTED_SYMBOLS, null)
-    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`)
 }
