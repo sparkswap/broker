@@ -1,5 +1,5 @@
-const grpc = require('grpc')
 const path = require('path')
+const caller = require('grpc-caller')
 
 const { MarketEvent } = require('../models')
 const { loadProto, grpcDeadline } = require('../utils')
@@ -34,10 +34,10 @@ class RelayerClient {
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
 
     // TODO: we will need to add auth for daemon for a non-local address
-    this.maker = new this.proto.MakerService(this.address, grpc.credentials.createInsecure())
-    this.orderbook = new this.proto.OrderBookService(this.address, grpc.credentials.createInsecure())
-    this.health = new this.proto.HealthService(this.address, grpc.credentials.createInsecure())
-    this.paymentNetwork = new this.proto.PaymentNetworkService(this.address, grpc.credentials.createInsecure())
+    this.makerService = caller(this.address, this.proto.MakerService)
+    this.takerService = caller(this.address, this.proto.TakerService)
+    this.healthService = caller(this.address, this.proto.HealthService)
+    this.orderbookService = caller(this.address, this.proto.OrderBookService)
   }
 
   /**
@@ -47,10 +47,8 @@ class RelayerClient {
    * @returns {Promise}
    */
   createOrder (params) {
-    const deadline = grpcDeadline()
-
     return new Promise((resolve, reject) => {
-      this.maker.createOrder(params, { deadline }, (err, res) => {
+      this.maker.createOrder(params, { deadline: grpcDeadline() }, (err, res) => {
         if (err) return reject(err)
         return resolve(res)
       })
@@ -65,10 +63,8 @@ class RelayerClient {
    * @return {Promise<void>}
    */
   async placeOrder ({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest }) {
-    const deadline = grpcDeadline()
-
     return new Promise((resolve, reject) => {
-      this.maker.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest }, { deadline }, (err, res) => {
+      this.maker.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest }, { deadline: grpcDeadline() }, (err, res) => {
         if (err) return reject(err)
         return resolve()
       })
@@ -97,7 +93,7 @@ class RelayerClient {
       this.logger.info('Setting up market watcher', params)
 
       try {
-        const watcher = this.orderbook.watchMarket(params)
+        const watcher = this.orderbookService.watchMarket(params)
 
         watcher.on('end', () => {
           this.logger.info('Remote ended stream', params)
@@ -138,10 +134,8 @@ class RelayerClient {
    * @returns {Promise}
    */
   healthCheck () {
-    const deadline = grpcDeadline()
-
     return new Promise((resolve, reject) => {
-      this.health.check({}, { deadline }, (err, res) => {
+      this.health.check({}, { deadline: grpcDeadline() }, (err, res) => {
         if (err) return reject(err)
         return resolve(res)
       })
