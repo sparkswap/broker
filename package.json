@@ -40,6 +40,7 @@
   "homepage": "https://github.com/kinesis-exchange/broker#readme",
   "dependencies": {
     "big-integer": "1.6.28",
+    "big.js": "5.1.2",
     "caporal": "0.10.0",
     "cli-table": "0.3.1",
     "colors": "1.2.4",
@@ -52,6 +53,7 @@
     "level-live-stream": "1.4.12",
     "level-sublevel": "6.6.1",
     "pm2": "2.10.3",
+    "prettyjson": "1.2.1",
     "validator": "10.2.0",
     "window-size": "1.1.0",
     "winston": "3.0.0-rc5"

@@ -5,6 +5,7 @@
  */
 
 const winston = require('winston')
+const prettyjson = require('prettyjson')
 
 const logger = winston.createLogger({
   level: 'debug',
@@ -13,7 +14,13 @@ const logger = winston.createLogger({
   handleExceptions: true,
   transports: [
     new winston.transports.Console({
-      format: winston.format.printf((info) => `${info.message}`)
+      format: winston.format.printf((info) => {
+        if (typeof info.message === 'object') {
+          return prettyjson.render(info.message)
+        } else {
+          return `${info.message}`
+        }
+      })
     }),
     new winston.transports.File({
       filename: 'kcli-history.log',

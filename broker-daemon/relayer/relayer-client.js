@@ -115,7 +115,7 @@ class RelayerClient {
             return this.logger.info(`Returning because response type is: ${response.type}`)
           }
 
-          this.logger.info(`Creating a market event: ${response.marketEvent}`)
+          this.logger.info('Creating a market event', response.marketEvent)
           const { key, value } = new MarketEvent(response.marketEvent)
           store.put(key, value)
         })
