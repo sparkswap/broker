@@ -102,12 +102,14 @@ const FillStateMachine = StateMachine.factory({
      * Actual creation is done in `onBeforeCreate` so that the transition can be cancelled if creation
      * on the Relayer fails.
      *
-     * @param  {Object} lifecycle             Lifecycle object passed by javascript-state-machine
-     * @param  {String} options.side          Side of the market being taken (i.e. BID or ASK)
-     * @param  {String} options.baseSymbol    Base symbol (e.g. BTC)
-     * @param  {String} options.counterSymbol Counter symbol (e.g. LTC)
-     * @param  {String} options.baseAmount    Amount of base currency (in base units) to be traded
-     * @param  {String} options.counterAmount Amount of counter currency (in base units) to be traded
+     * @param  {Object} lifecycle           Lifecycle object passed by javascript-state-machine
+     * @param  {String} order.orderId       Relayer-assigned unique ID for the order being filled
+     * @param  {String} order.side          Side of the market the order is on (i.e. BID or ASK)
+     * @param  {String} order.baseSymbol    Base symbol (e.g. BTC)
+     * @param  {String} order.counterSymbol Counter symbol (e.g. LTC)
+     * @param  {String} order.baseAmount    Amount of base currency (in base units) on the order
+     * @param  {String} order.counterAmount Amount of counter currency (in base units) on the order
+     * @param  {String} fill.fillAmount     Amount of base currency (in base units) of the order to fill
      * @return {void}
      */
     onBeforeCreate: async function (lifecycle, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
