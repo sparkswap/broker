@@ -8,15 +8,19 @@ const { EXCHANGE_LND_HOST } = process.env
  * @param {Logger} request.logger
  * @param {Engine} request.engine
  * @param {Object} responses
- * @param {function} responses.SetupResponse - constructor for HealthCheckResponse messages
- * @return {responses.SetupResponse}
+ * @param {function} responses.CommitBalanceResponse - constructor for HealthCheckResponse messages
+ * @return {responses.CommitBalanceResponse}
  */
-async function setup ({ params, relayer, logger, engine }, { SetupResponse }) {
+async function commitBalance ({ params, relayer, logger, engine }, { CommitBalanceResponse }) {
   const { publicKey: relayerPubKey } = await relayer.getPublicKey()
   const { amount, market } = params
+
   logger.info(`Attempting to create channel with ${EXCHANGE_LND_HOST} on ${market} with ${amount}`)
-  await engine.createChannel(EXCHANGE_LND_HOST, relayerPubKey, '20000')
-  return new SetupResponse({ status: 'channel opened successfully' })
+
+  // TODO: Validate amount
+  await engine.createChannel(EXCHANGE_LND_HOST, relayerPubKey, amount)
+
+  return new CommitBalanceResponse({ status: 'channel opened successfully' })
 }
 
-module.exports = setup
+module.exports = commitBalance
