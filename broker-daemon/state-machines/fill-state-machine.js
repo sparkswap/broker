@@ -124,6 +124,7 @@ const FillStateMachine = StateMachine.factory({
     },
 
     /**
+
      * Handle rejected state by calling a passed in handler
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @return {void}
