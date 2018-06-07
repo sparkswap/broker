@@ -7,12 +7,12 @@ describe('get-balance', () => {
   let balanceResponseStub
   let logger
   let walletBalanceStub
-  let expectedResponse
+  let expectedBalance
 
   before(() => {
     logger = sinon.stub()
-    expectedResponse = { totalBalance: 1000 }
-    walletBalanceStub = sinon.stub().returns(expectedResponse)
+    expectedBalance = 1000
+    walletBalanceStub = sinon.stub().returns(expectedBalance)
     balanceResponseStub = sinon.stub()
 
     const engine = {
@@ -30,7 +30,7 @@ describe('get-balance', () => {
 
   it('constructs a BalanceResponse', () => {
     expect(balanceResponseStub).to.have.been.calledWith(
-      sinon.match({ balance: expectedResponse.totalBalance })
+      sinon.match({ balance: expectedBalance })
     )
   })
 })
