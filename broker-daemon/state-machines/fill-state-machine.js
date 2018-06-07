@@ -22,7 +22,7 @@ const FillStateMachine = StateMachine.factory({
       key: function (key) {
         // this only defines a getter - it will be set by the `order` setter
         if (!key) {
-          return this.order.key
+          return this.fill.key
         }
       },
       additionalFields: {
