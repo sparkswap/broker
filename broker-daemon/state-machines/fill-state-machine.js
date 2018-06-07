@@ -121,7 +121,7 @@ const FillStateMachine = StateMachine.factory({
       const swapHash = await this.engine.createSwapHash(this.fill.order.orderId, inboundAmount)
       this.fill.setSwapHash(swapHash)
 
-      const { fillId, feePaymentRequest, depositPaymentRequest } = await this.relayer.createFill(this.fill.paramsForCreate)
+      const { fillId, feePaymentRequest, depositPaymentRequest } = await this.relayer.takerService.createFill(this.fill.paramsForCreate)
       this.fill.setCreatedParams({ fillId, feePaymentRequest, depositPaymentRequest })
 
       this.logger.info(`Created fill ${this.fill.fillId} on the relayer`)

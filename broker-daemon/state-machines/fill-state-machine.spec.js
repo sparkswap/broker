@@ -25,7 +25,9 @@ describe('FillStateMachine', () => {
       debug: sinon.stub()
     }
     relayer = {
-      createFill: sinon.stub().resolves()
+      takerService: {
+        createFill: sinon.stub().resolves()
+      }
     }
     engine = {
       createSwapHash: sinon.stub().resolves()
@@ -188,7 +190,7 @@ describe('FillStateMachine', () => {
       setCreatedParams = sinon.stub()
       Fill.prototype.setCreatedParams = setCreatedParams
       Fill.prototype.setSwapHash = sinon.stub()
-      relayer.createFill.resolves(createFillResponse)
+      relayer.takerService.createFill.resolves(createFillResponse)
       fsm = new FillStateMachine({ store, logger, relayer, engine })
       orderParams = {
         orderId: 'faklsadfjo',
@@ -241,8 +243,8 @@ describe('FillStateMachine', () => {
 
       await fsm.create(orderParams, fillParams)
 
-      expect(relayer.createFill).to.have.been.calledOnce()
-      expect(relayer.createFill).to.have.been.calledWith(fakeParams)
+      expect(relayer.takerService.createFill).to.have.been.calledOnce()
+      expect(relayer.takerService.createFill).to.have.been.calledWith(fakeParams)
     })
 
     it('updates the fill with returned params', async () => {
@@ -267,13 +269,13 @@ describe('FillStateMachine', () => {
     })
 
     it('throws an error in creation on the relayer fails', () => {
-      relayer.createFill.rejects(new Error('fake error'))
+      relayer.takerService.createFill.rejects(new Error('fake error'))
 
       return expect(fsm.create(orderParams, fillParams)).to.be.rejectedWith(Error)
     })
 
     it('cancels the transition if the creation on the relayer fails', async () => {
-      relayer.createFill.rejects()
+      relayer.takerService.createFill.rejects()
 
       try {
         await fsm.create(orderParams, fillParams)
@@ -283,7 +285,7 @@ describe('FillStateMachine', () => {
     })
 
     it('does not save a copy if creation on the relayer fails', async () => {
-      relayer.createFill.rejects()
+      relayer.takerService.createFill.rejects()
 
       try {
         await fsm.create(orderParams, fillParams)
@@ -350,7 +352,7 @@ describe('FillStateMachine', () => {
         feePaymentRequest: 'lnbcas9df0as9fu',
         depositPaymentRequest: 'lnbcasd9fuas90f'
       }
-      relayer.createFill.resolves(createFillResponse)
+      relayer.takerService.createFill.resolves(createFillResponse)
       orderParams = {
         side: 'BID',
         baseSymbol: 'ABC',
