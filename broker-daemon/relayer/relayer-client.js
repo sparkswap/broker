@@ -142,6 +142,11 @@ class RelayerClient {
     })
   }
 
+  /**
+   * Returns a public key from the relayer
+   *
+   * @returns {Promise<Object>} response
+   */
   getPublicKey () {
     return new Promise((resolve, reject) => {
       this.paymentNetwork.getPublicKey({}, { deadline: grpcDeadline() }, (err, res) => {
