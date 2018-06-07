@@ -44,6 +44,25 @@ class BlockOrder {
   }
 
   /**
+   * Convenience getter for baseAmount
+   * @return {String} String representation of the amount of currency to be transacted in base currency's smallest unit
+   */
+  get baseAmount () {
+    return this.amount.toString()
+  }
+
+  /**
+   * Convenience getter for counterAmount calculated using the block order price
+   * @return {String} String representation of the amount of currency to be transacted in counter currency's smallest unit
+   */
+  get counterAmount () {
+    if (!this.price) {
+      throw new Error('Cannot calculate counterAmount without a defined price.')
+    }
+    return this.amount.times(this.price).round(0).toString()
+  }
+
+  /**
    * get key for storage in leveldb
    * @return {String} Block order id
    */

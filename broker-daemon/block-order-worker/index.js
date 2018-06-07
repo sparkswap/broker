@@ -140,44 +140,39 @@ class BlockOrderWorker extends EventEmitter {
     const orderbook = this.orderbooks.get(blockOrder.marketName)
 
     if (!orderbook) {
-      // TODO: set an error state on the order
-      // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
       throw new Error(`No orderbook is initialized for created order in the ${blockOrder.marketName} market.`)
     }
 
     if (!blockOrder.price) {
-      // TODO: set an error state on the order
-      // https://trello.com/c/sYjdpS7B/209-error-states-on-orders-that-are-being-worked-in-the-background
-      throw new Error('Market orders are not supported: please provide a limit price.')
+      // block orders without prices are Market orders and take the best available price
+      throw new Error(`Block orders are not supported`)
+    } else {
+      // TODO: actual sophisticated order handling instead of just pass through as a single limit order
+
+      // order params
+      const { baseSymbol, counterSymbol, baseAmount, counterAmount, side } = blockOrder
+
+      // state machine params
+      const { relayer, engine, logger } = this
+      const store = this.store.sublevel(blockOrder.id).sublevel('orders')
+
+      this.logger.info('Creating single order for BlockOrder', { blockOrderId: blockOrder.id })
+
+      const order = await OrderStateMachine.create(
+        {
+          relayer,
+          engine,
+          logger,
+          store,
+          onRejection: (err) => {
+            this.failBlockOrder(blockOrder.id, err)
+          }
+        },
+        { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
+      )
+
+      this.logger.info('Created single order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
     }
-
-    // TODO: actual sophisticated order handling instead of just pass through
-
-    // order params
-    const { baseSymbol, counterSymbol, side } = blockOrder
-    const baseAmount = blockOrder.amount.toString()
-    const counterAmount = blockOrder.amount.times(blockOrder.price).round(0).toString()
-
-    // state machine params
-    const { relayer, engine, logger } = this
-    const store = this.store.sublevel(blockOrder.id).sublevel('orders')
-
-    this.logger.info('Creating single order for BlockOrder', { blockOrderId: blockOrder.id })
-
-    const order = await OrderStateMachine.create(
-      {
-        relayer,
-        engine,
-        logger,
-        store,
-        onRejection: (err) => {
-          this.failBlockOrder(blockOrder.id, err)
-        }
-      },
-      { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
-    )
-
-    this.logger.info('Created single order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
   }
 }
 
