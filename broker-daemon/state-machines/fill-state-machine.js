@@ -73,7 +73,13 @@ const FillStateMachine = StateMachine.factory({
    * Definition of the transitions and states for the FillStateMachine
    * @type {Array}
    */
-  transitions: [],
+  transitions: [
+    /**
+     * create transition: the first transtion, from 'none' (the default state) to 'created'
+     * @type {Object}
+     */
+    { name: 'create', from: 'none', to: 'created' }
+  ],
   /**
    * Instantiate the data on the state machine
    * This function is effectively a constructor for the state machine
@@ -91,6 +97,38 @@ const FillStateMachine = StateMachine.factory({
   },
   methods: {
     /**
+     * Create the fill on the relayer during transition.
+     * This function gets called before the `create` transition (triggered by a call to `create`)
+     * Actual creation is done in `onBeforeCreate` so that the transition can be cancelled if creation
+     * on the Relayer fails.
+     *
+     * @param  {Object} lifecycle           Lifecycle object passed by javascript-state-machine
+     * @param  {String} order.orderId       Relayer-assigned unique ID for the order being filled
+     * @param  {String} order.side          Side of the market the order is on (i.e. BID or ASK)
+     * @param  {String} order.baseSymbol    Base symbol (e.g. BTC)
+     * @param  {String} order.counterSymbol Counter symbol (e.g. LTC)
+     * @param  {String} order.baseAmount    Amount of base currency (in base units) on the order
+     * @param  {String} order.counterAmount Amount of counter currency (in base units) on the order
+     * @param  {String} fill.fillAmount     Amount of base currency (in base units) of the order to fill
+     * @return {void}
+     */
+    onBeforeCreate: async function (lifecycle, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
+      this.fill = new Fill({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount })
+
+      const { inboundAmount } = this.fill
+
+      // TODO: when we support more than one chain, we will need to use `inboundSymbol` to choose the right engine
+      const swapHash = await this.engine.createSwapHash(this.fill.order.orderId, inboundAmount)
+      this.fill.setSwapHash(swapHash)
+
+      const { fillId, feePaymentRequest, depositPaymentRequest } = await this.relayer.createFill(this.fill.paramsForCreate)
+      this.fill.setCreatedParams({ fillId, feePaymentRequest, depositPaymentRequest })
+
+      this.logger.info(`Created fill ${this.fill.fillId} on the relayer`)
+    },
+
+    /**
+
      * Handle rejected state by calling a passed in handler
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @return {void}
@@ -100,5 +138,19 @@ const FillStateMachine = StateMachine.factory({
     }
   }
 })
+
+/**
+ * Instantiate and create a fill
+ * @param  {Object} initParams   Params to pass to the FillStateMachine constructor (also to the `data` function)
+ * @param  {Object} orderParams  Params for the order to pass to the create method (also to the `onBeforeCreate` method)
+ * @param  {Object} fillParams   Params for the fill to pass to the create method (also to the `onBeforeCreate` method)
+ * @return {Promise<FillStateMachine>}
+ */
+FillStateMachine.create = async function (initParams, orderParams, fillParams) {
+  const fsm = new FillStateMachine(initParams)
+  await fsm.tryTo('create', orderParams, fillParams)
+
+  return fsm
+}
 
 module.exports = FillStateMachine

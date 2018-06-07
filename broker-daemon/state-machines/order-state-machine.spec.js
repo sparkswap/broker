@@ -194,6 +194,8 @@ describe('OrderStateMachine', () => {
     let setCreatedParams
     let fakeKey
     let fakeValueObject
+    let createOrderResponse
+
     beforeEach(() => {
       fakeKey = 'mykey'
       fakeValueObject = {
@@ -203,7 +205,12 @@ describe('OrderStateMachine', () => {
       Order.prototype.valueObject = fakeValueObject
       setCreatedParams = sinon.stub()
       Order.prototype.setCreatedParams = setCreatedParams
-      relayer.createOrder.resolves()
+      createOrderResponse = {
+        orderId: 'fakeID',
+        feePaymentRequest: 'lnbcq0w98f0as98df',
+        depositPaymentRequest: 'lnbcas09fas09df8'
+      }
+      relayer.createOrder.resolves(createOrderResponse)
       osm = new OrderStateMachine({ store, logger, relayer, engine })
       params = {
         side: 'BID',
@@ -254,13 +261,10 @@ describe('OrderStateMachine', () => {
     })
 
     it('updates the order with returned params', async () => {
-      const fakeResponse = 'myresponse'
-      relayer.createOrder.resolves(fakeResponse)
-
       await osm.create(params)
 
       expect(setCreatedParams).to.have.been.calledOnce()
-      expect(setCreatedParams).to.have.been.calledWith(fakeResponse)
+      expect(setCreatedParams).to.have.been.calledWith(sinon.match(createOrderResponse))
     })
 
     it('saves a copy in the store', async () => {
@@ -394,6 +398,7 @@ describe('OrderStateMachine', () => {
     let fakeKey
     let fakeValueObject
     let setCreatedParams
+    let createOrderResponse
 
     beforeEach(() => {
       params = {
@@ -411,6 +416,12 @@ describe('OrderStateMachine', () => {
       Order.prototype.valueObject = fakeValueObject
       setCreatedParams = sinon.stub()
       Order.prototype.setCreatedParams = setCreatedParams
+      createOrderResponse = {
+        orderId: 'fakeID',
+        feePaymentRequest: 'lnbcq0w98f0as98df',
+        depositPaymentRequest: 'lnbcas09fas09df8'
+      }
+      relayer.createOrder.resolves(createOrderResponse)
     })
 
     it('initializes a state machine', async () => {
