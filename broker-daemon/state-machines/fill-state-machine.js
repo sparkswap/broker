@@ -113,11 +113,9 @@ const FillStateMachine = StateMachine.factory({
     onBeforeCreate: async function (lifecycle, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
       this.fill = new Fill({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount })
 
-      const { inboundSymbol, outboundSymbol, inboundAmount, outboundAmount } = this.fill
-      const inbound = { symbol: inboundSymbol, amount: inboundAmount }
-      const outbound = { symbol: outboundSymbol, amount: outboundAmount }
+      const { inboundSymbol, inboundAmount } = this.fill
 
-      this.fill.setSwapHash(await this.engine.createSwapHash({ inbound, outbound }))
+      this.fill.setSwapHash(await this.engine.createSwapHash(this.fill.orderId, inboundAmount))
 
       this.fill.setCreatedParams(await this.relayer.createFill(this.fill.paramsForCreate))
 
