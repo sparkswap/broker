@@ -126,19 +126,21 @@ module.exports = (program) => {
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
 
-      if (command === SUPPORTED_COMMANDS.BALANCE) return balance(args, opts, logger)
-      if (command === SUPPORTED_COMMANDS.NEW_DEPOSIT_ADDRESS) return newDepositAddress(args, opts, logger)
+      switch (command) {
+        case SUPPORTED_COMMANDS.BALANCE:
+          return balance(args, opts, logger)
+        case SUPPORTED_COMMANDS.NEW_DEPOSIT_ADDRESS:
+          return newDepositAddress(args, opts, logger)
+        case SUPPORTED_COMMANDS.COMMIT_BALANCE:
+          const [symbol] = subArguments
 
-      if (command === SUPPORTED_COMMANDS.COMMIT_BALANCE) {
-        const [symbol] = subArguments
+          if (!SUPPORTED_SYMBOLS.includes(symbol)) {
+            throw new Error(`Provided symbol is not a valid currency for the exchange: ${symbol}`)
+          }
 
-        if (!SUPPORTED_SYMBOLS.includes(symbol)) {
-          throw new Error(`Provided symbol is not a valid currency for the exchange: ${symbol}`)
-        }
+          args.symbol = symbol
 
-        args.symbol = symbol
-
-        return commitBalance(args, opts, logger)
+          return commitBalance(args, opts, logger)
       }
     })
     .command('wallet balance', 'Current daemon wallet balance')
