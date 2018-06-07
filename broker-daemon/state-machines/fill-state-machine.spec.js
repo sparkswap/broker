@@ -293,6 +293,28 @@ describe('FillStateMachine', () => {
         return expect(store.put).to.not.have.been.called
       }
     })
+
+    it('automatically attempts to fill the order after fill creation', async () => {
+      fsm.tryTo = sinon.stub()
+      await fsm.create(orderParams, fillParams)
+
+      await delay(10)
+      expect(fsm.tryTo).to.have.been.calledOnce()
+      expect(fsm.tryTo).to.have.been.calledWith('fillOrder')
+    })
+  })
+
+  describe('#fillOrder', () => {
+    let fsm
+
+    beforeEach(async () => {
+      fsm = new FillStateMachine({ store, logger, relayer, engine })
+      await fsm.goto('created')
+    })
+
+    it('throws while unimplemented', () => {
+      return expect(fsm.fillOrder()).to.eventually.be.rejectedWith(Error)
+    })
   })
 
   describe('#reject', () => {

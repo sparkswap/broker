@@ -78,7 +78,12 @@ const FillStateMachine = StateMachine.factory({
      * create transition: the first transtion, from 'none' (the default state) to 'created'
      * @type {Object}
      */
-    { name: 'create', from: 'none', to: 'created' }
+    { name: 'create', from: 'none', to: 'created' },
+    /**
+     * fillOrder transition: second transition in the order lifecycle
+     * @type {Object}
+     */
+    { name: 'fillOrder', from: 'created', to: 'filled' }
   ],
   /**
    * Instantiate the data on the state machine
@@ -125,6 +130,36 @@ const FillStateMachine = StateMachine.factory({
       this.fill.setCreatedParams({ fillId, feePaymentRequest, depositPaymentRequest })
 
       this.logger.info(`Created fill ${this.fill.fillId} on the relayer`)
+    },
+
+    /**
+     * Attempt to fill the order as soon as the fill is created
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {void}
+     */
+    onAfterCreate: function (lifecycle) {
+      this.logger.info(`Create transition completed, triggering fill`)
+
+      // you can't start a transition while in another one,
+      // so we `nextTick` our way out of the current transition
+      // @see {@link https://github.com/jakesgordon/javascript-state-machine/issues/143}
+      process.nextTick(() => {
+        // we use `tryTo` to move to a rejected state if `fill` fails
+        this.tryTo('fillOrder')
+      })
+    },
+
+    /**
+     * Fill the order on the relayer during transition.
+     * This function gets called before the `fill` transition (triggered by a call to `fill`)
+     * Actual filling on the relayer is done in `onBeforeFill` so that the transition can be cancelled
+     * if filling on the Relayer fails.
+     *
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {Promise}          romise that rejects if filling on the relayer fails
+     */
+    onBeforeFillOrder: async function (lifecycle) {
+      throw new Error('Filling orders is currently un-implemented')
     },
 
     /**
