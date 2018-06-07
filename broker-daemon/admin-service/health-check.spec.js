@@ -98,7 +98,9 @@ describe('health-check', () => {
     beforeEach(() => {
       healthCheckStub = sinon.stub()
       relayerStub = {
-        healthCheck: healthCheckStub
+        healthService: {
+          check: healthCheckStub
+        }
       }
       statusOK = healthCheck.__get__('STATUS_CODES').OK
       getRelayerStatus = healthCheck.__get__('getRelayerStatus')

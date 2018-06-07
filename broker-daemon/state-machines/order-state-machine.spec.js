@@ -25,7 +25,9 @@ describe('OrderStateMachine', () => {
       debug: sinon.stub()
     }
     relayer = {
-      createOrder: sinon.stub()
+      makerService: {
+        createOrder: sinon.stub()
+      }
     }
     engine = {
       getPublicKey: sinon.stub()
@@ -210,7 +212,7 @@ describe('OrderStateMachine', () => {
         feePaymentRequest: 'lnbcq0w98f0as98df',
         depositPaymentRequest: 'lnbcas09fas09df8'
       }
-      relayer.createOrder.resolves(createOrderResponse)
+      relayer.makerService.createOrder.resolves(createOrderResponse)
       osm = new OrderStateMachine({ store, logger, relayer, engine })
       params = {
         side: 'BID',
@@ -256,8 +258,8 @@ describe('OrderStateMachine', () => {
 
       await osm.create(params)
 
-      expect(relayer.createOrder).to.have.been.calledOnce()
-      expect(relayer.createOrder).to.have.been.calledWith(fakeParams)
+      expect(relayer.makerService.createOrder).to.have.been.calledOnce()
+      expect(relayer.makerService.createOrder).to.have.been.calledWith(fakeParams)
     })
 
     it('updates the order with returned params', async () => {
@@ -282,13 +284,13 @@ describe('OrderStateMachine', () => {
     })
 
     it('throws an error in creation on the relayer fails', () => {
-      relayer.createOrder.rejects(new Error('fake error'))
+      relayer.makerService.createOrder.rejects(new Error('fake error'))
 
       return expect(osm.create(params)).to.be.rejectedWith(Error)
     })
 
     it('cancels the transition if the creation on the relayer fails', async () => {
-      relayer.createOrder.rejects()
+      relayer.makerService.createOrder.rejects()
 
       try {
         await osm.create(params)
@@ -298,7 +300,7 @@ describe('OrderStateMachine', () => {
     })
 
     it('does not save a copy if creation on the relayer fails', async () => {
-      relayer.createOrder.rejects()
+      relayer.makerService.createOrder.rejects()
 
       try {
         await osm.create(params)
@@ -421,7 +423,7 @@ describe('OrderStateMachine', () => {
         feePaymentRequest: 'lnbcq0w98f0as98df',
         depositPaymentRequest: 'lnbcas09fas09df8'
       }
-      relayer.createOrder.resolves(createOrderResponse)
+      relayer.makerService.createOrder.resolves(createOrderResponse)
     })
 
     it('initializes a state machine', async () => {
