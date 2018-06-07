@@ -36,7 +36,7 @@ class Fill {
 
   /**
    * Add a swap hash to the fill
-   * @param {String} swapHash Hash for the swap asssociated with this fill
+   * @param {String} swapHash Base64 string of the hash for the swap asssociated with this fill
    */
   setSwapHash (swapHash) {
     this.swapHash = swapHash
