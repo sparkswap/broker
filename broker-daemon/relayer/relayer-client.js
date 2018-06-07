@@ -79,7 +79,7 @@ class RelayerClient {
    * Create a fill on the Relayer
    * @param  {String} options.orderId    Relayer-assigned unique identifier for the order to fill
    * @param  {String} options.fillAmount Amount, in base currency's smallest units, of the order to fill
-   * @param  {Buffer} options.swapHash   Hash that will be associated with the swap
+   * @param  {String} options.swapHash   Base64 string of the hash that will be associated with the swap
    * @return {Promise<Object>}           Object containing the fill ID, and the payment requests to be able to fill the order
    */
   async createFill ({ orderId, fillAmount, swapHash }) {
@@ -89,6 +89,24 @@ class RelayerClient {
       this.taker.createFill({ orderId, fillAmount, swapHash }, { deadline }, (err, res) => {
         if (err) return reject(err)
         return resolve(res)
+      })
+    })
+  }
+
+  /**
+   * Fill an order on the Relayer
+   * @param  {String} options.fillId                      Relayer-assigned unique identifier for the fill
+   * @param  {String} options.feeRefundPaymentRequest     Lightning Network payment request to refund the paid fee in case of rejection
+   * @param  {String} options.depositRefundPaymentRequest Lightning Network payment request to refund the deposit in case or rejection or completion
+   * @return {Promise<void>}
+   */
+  async fillOrder ({ fillId, feeRefundPaymentRequest, depositRefundPaymentRequest }) {
+    const deadline = grpcDeadline()
+
+    return new Promise((resolve, reject) => {
+      this.taker.fillOrder({ fillId, feeRefundPaymentRequest, depositRefundPaymentRequest }, { deadline }, (err, res) => {
+        if (err) return reject(err)
+        return resolve()
       })
     })
   }

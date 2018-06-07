@@ -247,6 +247,56 @@ describe('RelayerClient', () => {
     })
   })
 
+  describe('fillOrder', () => {
+    let relayer
+    let params
+
+    beforeEach(() => {
+      relayer = new RelayerClient()
+      params = {
+        fillId: 'fakeId',
+        feeRefundPaymentRequest: 'lnbcasod9fj2390',
+        depositRefundPaymentRequest: 'lnbc9080923ralfjskd'
+      }
+
+      TakerService.prototype.fillOrder = sinon.stub().callsArgWithAsync(2, null, {})
+    })
+
+    it('returns a promise', () => {
+      expect(relayer.fillOrder(params)).to.be.a('promise')
+    })
+
+    it('fails the promise if the request fails', () => {
+      TakerService.prototype.fillOrder.callsArgWithAsync(2, new Error('fake error'))
+      return expect(relayer.fillOrder(params)).to.eventually.be.rejectedWith(Error)
+    })
+
+    it('has no response on resolution', async () => {
+      const response = await relayer.fillOrder(params)
+      return expect(response).to.be.undefined
+    })
+
+    it('calls the fillOrder rpc on the maker service', async () => {
+      await relayer.fillOrder(params)
+      expect(TakerService.prototype.fillOrder).to.have.been.calledOnce()
+    })
+
+    it('passes the fillId to the fillOrder rpc', async () => {
+      await relayer.fillOrder(params)
+      expect(TakerService.prototype.fillOrder).to.have.been.calledWith(sinon.match({ fillId: params.fillId }))
+    })
+
+    it('passes the fee refund payment request to the fillOrder rpc', async () => {
+      await relayer.fillOrder(params)
+      expect(TakerService.prototype.fillOrder).to.have.been.calledWith(sinon.match({ feeRefundPaymentRequest: params.feeRefundPaymentRequest }))
+    })
+
+    it('passes the deposit refund payment request to the fillOrder rpc', async () => {
+      await relayer.fillOrder(params)
+      expect(TakerService.prototype.fillOrder).to.have.been.calledWith(sinon.match({ depositRefundPaymentRequest: params.depositRefundPaymentRequest }))
+    })
+  })
+
   describe('watchMarket', () => {
     let relayer
     let store
