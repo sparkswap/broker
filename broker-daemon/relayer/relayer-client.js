@@ -35,6 +35,7 @@ class RelayerClient {
 
     // TODO: we will need to add auth for daemon for a non-local address
     this.maker = new this.proto.MakerService(this.address, grpc.credentials.createInsecure())
+    this.taker = new this.proto.TakerService(this.address, grpc.credentials.createInsecure())
     this.orderbook = new this.proto.OrderBookService(this.address, grpc.credentials.createInsecure())
     this.health = new this.proto.HealthService(this.address, grpc.credentials.createInsecure())
   }
@@ -70,6 +71,24 @@ class RelayerClient {
       this.maker.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest }, { deadline }, (err, res) => {
         if (err) return reject(err)
         return resolve()
+      })
+    })
+  }
+
+  /**
+   * Create a fill on the Relayer
+   * @param  {String} options.orderId    Relayer-assigned unique identifier for the order to fill
+   * @param  {String} options.fillAmount Amount, in base currency's smallest units, of the order to fill
+   * @param  {Buffer} options.swapHash   Hash that will be associated with the swap
+   * @return {Promise<Object>}           Object containing the fill ID, and the payment requests to be able to fill the order
+   */
+  async createFill ({ orderId, fillAmount, swapHash }) {
+    const deadline = grpcDeadline()
+
+    return new Promise((resolve, reject) => {
+      this.taker.createFill({ orderId, fillAmount, swapHash }, { deadline }, (err, res) => {
+        if (err) return reject(err)
+        return resolve(res)
       })
     })
   }
