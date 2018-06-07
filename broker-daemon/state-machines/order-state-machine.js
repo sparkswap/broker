@@ -123,7 +123,8 @@ const OrderStateMachine = StateMachine.factory({
 
       this.order = new Order({ baseSymbol, counterSymbol, side, baseAmount, counterAmount, payTo, ownerId })
 
-      this.order.setCreatedParams(await this.relayer.createOrder(this.order.paramsForCreate))
+      const { orderId, feePaymentRequest, depositPaymentRequest } = await this.relayer.createOrder(this.order.paramsForCreate)
+      this.order.setCreatedParams({ orderId, feePaymentRequest, depositPaymentRequest })
 
       this.logger.info(`Created order ${this.order.orderId} on the relayer`)
     },
