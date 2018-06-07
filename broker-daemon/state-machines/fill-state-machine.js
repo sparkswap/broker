@@ -20,7 +20,7 @@ const FillStateMachine = StateMachine.factory({
        * @returns {String}     Unique key for the state machine
        */
       key: function (key) {
-        // this only defines a getter - it will be set by the `order` setter
+        // this only defines a getter - it will be set by the `fill` setter
         if (!key) {
           return this.fill.key
         }
@@ -100,18 +100,5 @@ const FillStateMachine = StateMachine.factory({
     }
   }
 })
-
-/**
- * Instantiate and create a fill
- * @param  {Object} initParams   Params to pass to the FillStateMachine constructor (also to the `data` function)
- * @param  {Object} createParams Params to pass to the create method (also to the `onBeforeCreate` method)
- * @return {Promise<FillStateMachine>}
- */
-FillStateMachine.create = async function (initParams, createParams) {
-  const fsm = new FillStateMachine(initParams)
-  await fsm.tryTo('create', createParams)
-
-  return fsm
-}
 
 module.exports = FillStateMachine
