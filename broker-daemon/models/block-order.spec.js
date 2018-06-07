@@ -305,5 +305,24 @@ describe('BlockOrder', () => {
         expect(blockOrder).to.have.property('counterSymbol', 'LTC')
       })
     })
+
+    describe('get baseAmount', () => {
+      it('defines a baseAmount that aliases the amount', () => {
+        expect(blockOrder).to.have.property('baseAmount', params.amount)
+      })
+    })
+
+    describe('get counterAmount', () => {
+      it('calculates the counterAmount', () => {
+        expect(blockOrder).to.have.property('counterAmount', '1000000')
+      })
+
+      it('returns undefined if no price is defined', () => {
+        params.price = undefined
+        blockOrder = new BlockOrder(params)
+
+        expect(blockOrder).to.have.property('counterAmount', undefined)
+      })
+    })
   })
 })

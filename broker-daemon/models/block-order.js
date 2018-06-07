@@ -57,7 +57,8 @@ class BlockOrder {
    */
   get counterAmount () {
     if (!this.price) {
-      throw new Error('Cannot calculate counterAmount without a defined price.')
+      // if we can't calculate the amount, we treat the property as unset, i.e. undefined
+      return
     }
     return this.amount.times(this.price).round(0).toString()
   }
