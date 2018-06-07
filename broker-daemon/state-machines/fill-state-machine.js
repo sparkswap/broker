@@ -113,10 +113,10 @@ const FillStateMachine = StateMachine.factory({
     onBeforeCreate: async function (lifecycle, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
       this.fill = new Fill({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount })
 
-      const { inboundSymbol, inboundAmount } = this.fill
+      const { inboundAmount } = this.fill
 
       // TODO: when we support more than one chain, we will need to use `inboundSymbol` to choose the right engine
-      this.fill.setSwapHash(await this.engine.createSwapHash(this.fill.orderId, inboundAmount))
+      this.fill.setSwapHash(await this.engine.createSwapHash(this.fill.order.orderId, inboundAmount))
 
       this.fill.setCreatedParams(await this.relayer.createFill(this.fill.paramsForCreate))
 
@@ -137,12 +137,13 @@ const FillStateMachine = StateMachine.factory({
 /**
  * Instantiate and create a fill
  * @param  {Object} initParams   Params to pass to the FillStateMachine constructor (also to the `data` function)
- * @param  {Object} createParams Params to pass to the create method (also to the `onBeforeCreate` method)
+ * @param  {Object} orderParams  Params for the order to pass to the create method (also to the `onBeforeCreate` method)
+ * @param  {Object} fillParams   Params for the fill to pass to the create method (also to the `onBeforeCreate` method)
  * @return {Promise<FillStateMachine>}
  */
-FillStateMachine.create = async function (initParams, createParams) {
-  const fsm = new OrderStateMachine(initParams)
-  await fsm.tryTo('create', createParams)
+FillStateMachine.create = async function (initParams, orderParams, fillParams) {
+  const fsm = new FillStateMachine(initParams)
+  await fsm.tryTo('create', orderParams, fillParams)
 
   return fsm
 }
