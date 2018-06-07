@@ -6,7 +6,7 @@ const StateMachineLogging = require('./plugins/logging')
 const { Fill } = require('../models')
 
 /**
- * @class Finite State Machine for managing order lifecycle
+ * @class Finite State Machine for managing fill lifecycle
  */
 const FillStateMachine = StateMachine.factory({
   plugins: [
@@ -29,7 +29,7 @@ const FillStateMachine = StateMachine.factory({
         /**
          * @type {StateMachinePersistence~FieldAccessor}
          * @param {Object}   fillObject Stored plain object description of the Fill associated with the State machine
-         * @param {String}   key         Unique key for the order/state machine
+         * @param {String}   key         Unique key for the fill/state machine
          * @returns {Object}             Plain object description of the Fill associated with the State machine
          */
         fill: function (fillObject, key) {
@@ -79,15 +79,15 @@ const FillStateMachine = StateMachine.factory({
    * This function is effectively a constructor for the state machine
    * So we pass it all the objects we'll need later.
    *
-   * @param  {sublevel}      options.store       Sublevel partition for storing this order in
+   * @param  {sublevel}      options.store       Sublevel partition for storing this fill in
    * @param  {Object}        options.logger
    * @param  {RelayerClient} options.relayer
    * @param  {Engine}        options.engine
-   * @param  {Function}      options.onRejection A function to handle rejections of the order
+   * @param  {Function}      options.onRejection A function to handle rejections of the fill
    * @return {Object}                            Data to attach to the state machine
    */
   data: function ({ store, logger, relayer, engine, onRejection = function () {} }) {
-    return { store, logger, relayer, engine, onRejection, order: {} }
+    return { store, logger, relayer, engine, onRejection, fill: {} }
   },
   methods: {
     /**
