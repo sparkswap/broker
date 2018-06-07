@@ -172,17 +172,23 @@ describe('FillStateMachine', () => {
     let setCreatedParams
     let fakeKey
     let fakeValueObject
+    let createFillResponse
     beforeEach(() => {
       fakeKey = 'mykey'
       fakeValueObject = {
         my: 'object'
+      }
+      createFillResponse = {
+        fillId: 'fakeFillId',
+        feePaymentRequest: 'lnbcas9df0as9fu',
+        depositPaymentRequest: 'lnbcasd9fuas90f'
       }
       Fill.prototype.key = fakeKey
       Fill.prototype.valueObject = fakeValueObject
       setCreatedParams = sinon.stub()
       Fill.prototype.setCreatedParams = setCreatedParams
       Fill.prototype.setSwapHash = sinon.stub()
-      relayer.createFill.resolves()
+      relayer.createFill.resolves(createFillResponse)
       fsm = new FillStateMachine({ store, logger, relayer, engine })
       orderParams = {
         orderId: 'faklsadfjo',
@@ -240,13 +246,10 @@ describe('FillStateMachine', () => {
     })
 
     it('updates the fill with returned params', async () => {
-      const fakeResponse = 'myresponse'
-      relayer.createFill.resolves(fakeResponse)
-
       await fsm.create(orderParams, fillParams)
 
       expect(setCreatedParams).to.have.been.calledOnce()
-      expect(setCreatedParams).to.have.been.calledWith(fakeResponse)
+      expect(setCreatedParams).to.have.been.calledWith(sinon.match(createFillResponse))
     })
 
     it('saves a copy in the store', async () => {
@@ -339,8 +342,15 @@ describe('FillStateMachine', () => {
     let fakeKey
     let fakeValueObject
     let setCreatedParams
+    let createFillResponse
 
     beforeEach(() => {
+      createFillResponse = {
+        fillId: 'fakeFillId',
+        feePaymentRequest: 'lnbcas9df0as9fu',
+        depositPaymentRequest: 'lnbcasd9fuas90f'
+      }
+      relayer.createFill.resolves(createFillResponse)
       orderParams = {
         side: 'BID',
         baseSymbol: 'ABC',
