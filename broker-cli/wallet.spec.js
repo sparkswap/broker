@@ -58,7 +58,7 @@ describe('cli wallet', () => {
 
       walletBalanceStub = sinon.stub()
       daemonStub = sinon.stub()
-      daemonStub.prototype.walletService = { walletBalance: walletBalanceStub }
+      daemonStub.prototype.walletService = { getBalance: walletBalanceStub }
 
       program.__set__('BrokerDaemonClient', daemonStub)
 

@@ -4,7 +4,21 @@
  */
 
 const BrokerDaemonClient = require('./broker-daemon-client')
-const { validations } = require('./utils')
+const { validations, askQuestion } = require('./utils')
+
+/**
+ * @constant
+ * @type {Array<string>}
+ * @default
+ */
+const ACCEPTED_ANSWERS = Object.freeze(['y', 'yes'])
+
+/**
+ * @constant
+ * @type {Array<string>}
+ * @default
+ */
+const SUPPORTED_SYMBOLS = Object.freeze(['BTC', 'LTC'])
 
 /**
  * Supported commands for `kcli wallet`
@@ -15,7 +29,8 @@ const { validations } = require('./utils')
  */
 const SUPPORTED_COMMANDS = Object.freeze({
   BALANCE: 'balance',
-  NEW_DEPOSIT_ADDRESS: 'new-deposit-address'
+  NEW_DEPOSIT_ADDRESS: 'new-deposit-address',
+  COMMIT_BALANCE: 'commit-balance'
 })
 
 /**
@@ -34,7 +49,7 @@ async function balance (args, opts, logger) {
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { balance } = await client.walletService.walletBalance({})
+    const { balance } = await client.walletService.getBalance({})
 
     logger.info(`Total Balance: ${balance}`)
   } catch (e) {
@@ -67,19 +82,57 @@ async function newDepositAddress (args, opts, logger) {
   }
 }
 
+/**
+ * commit-balance
+ *
+ * ex: `kcli wallet commit-balance`
+ *
+ * @function
+ * @param {Object} args
+ * @param {Object} args.symbol
+ * @param {Object} opts
+ * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {Logger} logger
+ * @return {Void}
+ */
+async function commitBalance (args, opts, logger) {
+  const { symbol } = args
+  const { rpcAddress = null } = opts
+
+  const client = new BrokerDaemonClient(rpcAddress)
+  const { balance } = await client.walletService.getBalance({})
+
+  if (parseInt(balance) === 0) return logger.info('Your current balance is 0, please add funds to your daemon (or check the status of your daemon)')
+
+  const answer = await askQuestion(`Are you OK committing ${balance} in ${symbol} to the relayer? (Y/N) `)
+
+  if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return logger.info('Received \'no\' response. Quitting setup')
+
+  try {
+    const res = client.adminService.setup(balance, symbol)
+    logger.info('Successfully added broker daemon to the kinesis exchange!', res)
+  } catch (e) {
+    logger.error(e.toString())
+  }
+}
+
 module.exports = (program) => {
   program
     .command('wallet', 'Commands to handle a wallet instance')
-    .help('Available Commands: balance, new-deposit-address')
+    .help('Available Commands: balance, new-deposit-address, commit-balance')
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .action(async (args, opts, logger) => {
       const { command } = args
 
       if (command === SUPPORTED_COMMANDS.BALANCE) return balance(args, opts, logger)
       if (command === SUPPORTED_COMMANDS.NEW_DEPOSIT_ADDRESS) return newDepositAddress(args, opts, logger)
+      if (command === SUPPORTED_COMMANDS.COMMIT_BALANCE) return commitBalance(args, opts, logger)
     })
     .command('wallet balance', 'Current daemon wallet balance')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
     .command('wallet new-deposit-address', 'Generates a new wallet address for a daemon instance')
+    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .command('wallet commit-balance')
+    .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`, SUPPORTED_SYMBOLS, null)
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
 }
