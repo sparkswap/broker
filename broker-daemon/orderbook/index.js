@@ -1,5 +1,7 @@
 const { MarketEvent, MarketEventOrder } = require('../models')
-const { getRecords } = require('../utils')
+const { getRecords, Big, SublevelIndex } = require('../utils')
+const MAX_VALUE = '9223372036854775807'
+const PAD_SIZE = 32
 
 class Orderbook {
   constructor (marketName, relayer, store, logger = console) {
@@ -27,13 +29,16 @@ class Orderbook {
 
     await this.relayer.watchMarket(this.eventStore, params)
 
+    this.askIndex = await Orderbook.createPriceIndex(this.store, MarketEventOrder.SIDES.ASK)
+    this.bidIndex = await Orderbook.createPriceIndex(this.store, MarketEventOrder.SIDES.BID)
+
     return this.logger.info(`Market ${this.marketName} initialized.`)
   }
 
   /**
    * Returns all records in the current orderbook
    *
-   * @returns {Promise<Array>} A promise that resolves an array of MarketEventOrder records
+   * @returns {Promise<Array<MarketEventOrder>>} A promise that resolves an array of MarketEventOrder records
    */
   async all () {
     this.logger.info(`Retrieving all records for ${this.marketName}`)
@@ -87,6 +92,37 @@ class Orderbook {
     })
 
     return store
+  }
+
+  /**
+   * Creates a sublevel store that tracks an orderbook store to index it by price
+   * @param  {sublevel} orderbookStore Sublevel containing the orderbook
+   * @return {Index}
+   */
+  static createPriceIndex (orderbookStore, side) {
+    const getValue = (key, value) => {
+      const order = MarketEventOrder.fromStorage(key, value)
+      const price = order.price
+
+      // highest priced bids first, lowest priced asks first
+      if(side === MarketEventOrder.SIDES.BID) {
+        // TODO: make decimal places configurable
+        return Big(MAX_VALUE).minus(Big(price)).toFixed(16).padStart(PAD_SIZE, '0')
+      } else {
+        return price.padStart(PAD_SIZE, '0')
+      }
+    }
+
+    const filter = (key, value) => {
+      const order = MarketEventOrder.fromStorage(key, value)
+      return order.side === side
+    }
+
+    this.logger.info(`Creating ${side} index`)
+    const index = new SublevelIndex(orderbookStore, side, getValue, filter)
+    await index.ensureIndex()
+
+    return index
   }
 }
 
