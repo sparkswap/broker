@@ -69,7 +69,7 @@ STEPS FOR CHANNELS
 2. On the broker, start all containers
 3. On the broker, run `nom run fund-setup`
 4. One the broker, run `nom run fund`
-5. On the broker, run `./bin/kcli wallet commit-balance`
+5. On the broker, run `./bin/kcli wallet commit-balance BTC`
 6. Wait for a little (6 confirmation blocks)
 7. Channel is now open
     1. You can check this by going to the relayer and running `docker-compose exec relayer bash -c ‘node ./test-client-scripts/test-lnd.js`
