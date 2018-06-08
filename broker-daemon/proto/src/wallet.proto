@@ -2,6 +2,11 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
+enum Symbol {
+  BTC = 0;
+  LTC = 1;
+}
+
 message NewDepositAddressResponse {
   string address = 0;
 }
@@ -12,7 +17,7 @@ message GetBalanceResponse {
 
 message CommitBalanceRequest {
   int64 balance = 0;
-  SupportedSymbols symbol = 1;
+  Symbol symbol = 1;
 }
 
 message CommitBalanceResponse {

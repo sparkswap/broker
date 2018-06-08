@@ -15,15 +15,16 @@ const MINIMUM_FUNDING_AMOUNT = 400000
 /**
  * Grabs public lightning network information from relayer and opens a channel
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
+ * @param {Object} request - request object
+ * @param {Object} request.params
+ * @param {RelayerClient} request.relayer
  * @param {Logger} request.logger
  * @param {Engine} request.engine
  * @param {Object} responses
- * @param {function} responses.SetupResponse - constructor for HealthCheckResponse messages
- * @return {responses.SetupResponse}
+ * @param {function} responses.CommitBalanceResponse - constructor for HealthCheckResponse messages
+ * @return {responses.CommitBalanceResponse}
  */
-async function setup ({ params, relayer, logger, engine }, { CommitBalanceResponse }) {
+async function commitBalance ({ params, relayer, logger, engine }, { CommitBalanceResponse }) {
   const { publicKey: relayerPubKey } = await relayer.paymentNetworkService.getPublicKey({})
   const { balance, market } = params
 
@@ -40,4 +41,4 @@ async function setup ({ params, relayer, logger, engine }, { CommitBalanceRespon
   return new CommitBalanceResponse({ status: 'channel opened successfully' })
 }
 
-module.exports = setup
+module.exports = commitBalance
