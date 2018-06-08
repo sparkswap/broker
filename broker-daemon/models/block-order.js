@@ -23,7 +23,7 @@ class BlockOrder {
     this.timeInForce = timeInForce
     this.status = status
 
-    if(!amount) {
+    if (!amount) {
       throw new Error(`A transaction amount is required to create a block order`)
     }
     this.amount = Big(amount)
