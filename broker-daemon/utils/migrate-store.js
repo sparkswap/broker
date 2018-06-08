@@ -9,16 +9,20 @@
 async function migrateStore (sourceStore, targetStore, createDbOperation, batchSize = 20) {
   return new Promise((resolve, reject) => {
     const stream = sourceStore.createReadStream()
-    const batch = []
+    let batch = []
 
     function flush (done = function () {}) {
+      if (!batch.length) {
+        return process.nextTick(done)
+      }
+
       targetStore.batch(batch, (err) => {
-        if (err) reject(err)
+        if (err) return reject(err)
         done()
       })
 
       // clear the batch
-      batch.splice(0, batch.length)
+      batch = []
     }
 
     stream.on('error', reject)
