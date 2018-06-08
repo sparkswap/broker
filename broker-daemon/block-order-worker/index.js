@@ -145,7 +145,7 @@ class BlockOrderWorker extends EventEmitter {
 
     if (!blockOrder.price) {
       // block orders without prices are Market orders and take the best available price
-      throw new Error(`Block orders are not supported`)
+      throw new Error(`Market orders are not supported`)
     } else {
       // TODO: actual sophisticated order handling instead of just pass through as a single limit order
 
