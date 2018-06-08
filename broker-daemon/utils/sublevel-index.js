@@ -1,5 +1,5 @@
 const { promisify } = require('util')
-const streamFilter = require('stream-filter')
+const through = require('through2')
 const storePipe = require('./store-pipe')
 const logger = require('./logger')
 const getRecords = require('./get-records')
@@ -48,14 +48,25 @@ class Index {
   }
 
   /**
-   * Create a read stream of the index, filtering out those keys marked for deletion
+   * Create a read stream of the index, filtering out those keys marked for deletion and transforming index keys into base keys
    * @param  {Object} opts Sublevel readStream options
    * @return {Readable}    Readable stream
    */
   createReadStream (opts) {
     const stream = this._index.createReadStream(opts)
 
-    return stream.pipe(streamFilter.obj(({ key }) => !this._isMarkedForDeletion(key)))
+    // TODO: fix the keys to be the right keys
+    return stream.pipe(through.obj(({ key, value }, encoding, callback) => {
+      // skip objects that are marked for deletion
+      if(this._isMarkedForDeletion(key)) {
+        return
+      }
+      
+      // give back the base key to the caller
+      this.push({ key: this._extractBaseKey(key), value })
+
+      callback()
+    }))
   }
 
   /**
