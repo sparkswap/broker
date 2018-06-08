@@ -6,7 +6,7 @@
  * @param  {Number}   batchSize         Number of operations to batch before executing on the target database
  * @return {Promise<void>}
  */
-async function storePipe (sourceStore, targetStore, createDbOperation, batchSize = 20) {
+async function migrateStore (sourceStore, targetStore, createDbOperation, batchSize = 20) {
   return new Promise((resolve, reject) => {
     const stream = sourceStore.createReadStream()
     const batch = []
@@ -41,4 +41,4 @@ async function storePipe (sourceStore, targetStore, createDbOperation, batchSize
   })
 }
 
-module.exports = storePipe
+module.exports = migrateStore

@@ -3,7 +3,7 @@ const logger = require('./logger')
 const loadProto = require('./load-proto')
 const grpcDeadline = require('./grpc-deadline')
 const Big = require('./big')
-const storePipe = require('./store-pipe')
+const migrateStore = require('./migrate-store')
 const SublevelIndex = require('./sublevel-index')
 
 module.exports = {
@@ -12,6 +12,6 @@ module.exports = {
   loadProto,
   grpcDeadline,
   Big,
-  storePipe,
+  migrateStore,
   SublevelIndex
 }

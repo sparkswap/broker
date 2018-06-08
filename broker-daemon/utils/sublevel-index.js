@@ -1,6 +1,6 @@
 const { promisify } = require('util')
 const through = require('through2')
-const storePipe = require('./store-pipe')
+const migrateStore = require('./migrate-store')
 const logger = require('./logger')
 const returnTrue = function () { return true }
 
@@ -169,7 +169,7 @@ class Index {
    * @return {Promise<void>} Resolves when the database is cleared
    */
   _clearIndex () {
-    return storePipe(this._index, this._index, (key) => ({ type: 'del', key, prefix: this._index }))
+    return migrateStore(this._index, this._index, (key) => ({ type: 'del', key, prefix: this._index }))
   }
 
   /**
@@ -177,7 +177,7 @@ class Index {
    * @return {Promise<void>} Resolves when the rebuild is complete
    */
   _rebuildIndex () {
-    return storePipe(this.store, this._index, (key, value) => {
+    return migrateStore(this.store, this._index, (key, value) => {
       if (this.filter(key, value)) {
         return this._addToIndexOperation(key, value)
       }
