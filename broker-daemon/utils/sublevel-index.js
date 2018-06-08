@@ -1,8 +1,8 @@
 const { promisify } = require('util')
 const streamFilter = require('stream-filter')
-const { Readable } = require('stream')
 const storePipe = require('./store-pipe')
 const logger = require('./logger')
+const getRecords = require('./get-records')
 const returnTrue = function () { return true }
 
 /**
@@ -20,7 +20,7 @@ class Index {
     this.store = store
     this.name = name
     this.getValue = getValue
-    this.filter = filter   
+    this.filter = filter
     this.delimiter = ':'
     this._deleted = {}
     this._index = this.store.sublevel(this.name)
@@ -30,16 +30,16 @@ class Index {
    * Create an index
    * @return {Promise<Index>} Resolves when the index is created
    */
-  async ensureIndex() {
+  async ensureIndex () {
     await this._clearIndex()
     await this._rebuildIndex()
 
     this.store.pre((dbOperation, add) => {
       const { key, value, type } = dbOperation
 
-      if(type === 'put' && this.filter(key, value)) {
+      if (type === 'put' && this.filter(key, value)) {
         add(this._addToIndexOperation(key, value))
-      } else if(type === 'del') {
+      } else if (type === 'del') {
         this._removeFromIndex(key)
       }
     })
@@ -52,15 +52,10 @@ class Index {
    * @param  {Object} opts Sublevel readStream options
    * @return {Readable}    Readable stream
    */
-  async createReadStream(opts) {
-    const outstream = new Readable()
-    const instream = this._index.createReadStream(opts)
+  createReadStream (opts) {
+    const stream = this._index.createReadStream(opts)
 
-    outstream.pipe(streamFilter.obj(({ key, value }) => {
-      return !!this._isMarkedForDeletion(key)
-    })).pipe(outstream)
-
-    return outstream
+    return stream.pipe(streamFilter.obj(({ key }) => !this._isMarkedForDeletion(key)))
   }
 
   /**
@@ -77,10 +72,10 @@ class Index {
    * Create an index key
    * @param  {String}   baseKey   Key of the object in the base store
    * @param  {String}   baseValue Value of the object in the base store
-   * @param  {Function} getValue  
+   * @param  {Function} getValue
    * @return {String}
    */
-  _createIndexKey(baseKey, baseValue) {
+  _createIndexKey (baseKey, baseValue) {
     const indexValue = this.getValue(baseKey, baseValue)
 
     return `${indexValue}${this.delimiter}${baseKey}`
@@ -123,7 +118,7 @@ class Index {
     this._markForDeletion(baseKey)
 
     this.store.get(baseKey, async (err, value) => {
-      if(err) {
+      if (err) {
         // TODO: error handling on index removal
         return logger.error(`Error while removing ${baseKey} from ${this.name} index`, err)
       }
@@ -131,7 +126,7 @@ class Index {
       try {
         await promisify(this._index.del)(this._createIndexKey(baseKey, value))
         this._markAsDeleted(baseKey)
-      } catch(e) {
+      } catch (e) {
         // TODO: error handling on index removal
         return logger.error(`Error while removing ${baseKey} from ${this.name} index`, e)
       }
@@ -144,27 +139,27 @@ class Index {
    * @param {String}   baseValue  Value of the object in the base store
    * @return {Object} Sublevel compatible database batch operation
    */
-  async _addToIndexOperation (baseKey, baseValue) {
+  _addToIndexOperation (baseKey, baseValue) {
     const indexKey = this._createIndexKey(baseKey, baseValue)
-    return { key: indexKey, value: baseValue, type: 'put', prefix: this._index })
+    return { key: indexKey, value: baseValue, type: 'put', prefix: this._index }
   }
 
   /**
    * Remove all objects in the index database
    * @return {Promise<void>} Resolves when the database is cleared
    */
-  _clearIndex() {
-    return storePipe(this._index, this._index, (key) => { type: 'del', key, prefix: this._index })
+  _clearIndex () {
+    return storePipe(this._index, this._index, (key) => ({ type: 'del', key, prefix: this._index }))
   }
 
   /**
    * Rebuild the index from the base
    * @return {Promise<void>} Resolves when the rebuild is complete
    */
-  _rebuildIndex() {
+  _rebuildIndex () {
     return storePipe(this.store, this._index, (key, value) => {
-      if(this.filter(key, value)) {
-        return this._addToIndexOperation.bind(this))
+      if (this.filter(key, value)) {
+        return this._addToIndexOperation(key, value)
       }
     })
   }

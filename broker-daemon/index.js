@@ -55,6 +55,7 @@ class BrokerDaemon {
       this.server.listen(this.rpcAddress)
       logger.info(`gRPC server started: Server listening on ${this.rpcAddress}`)
     } catch (e) {
+      console.log(e)
       logger.error('BrokerDaemon failed to initialize', e)
     }
   }

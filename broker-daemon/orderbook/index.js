@@ -2,6 +2,7 @@ const { MarketEvent, MarketEventOrder } = require('../models')
 const { getRecords, Big, SublevelIndex } = require('../utils')
 const MAX_VALUE = '9223372036854775807'
 const PAD_SIZE = 32
+const DECIMAL_PLACES = 16
 
 class Orderbook {
   constructor (marketName, relayer, store, logger = console) {
@@ -29,8 +30,8 @@ class Orderbook {
 
     await this.relayer.watchMarket(this.eventStore, params)
 
-    this.askIndex = await Orderbook.createPriceIndex(this.store, MarketEventOrder.SIDES.ASK)
-    this.bidIndex = await Orderbook.createPriceIndex(this.store, MarketEventOrder.SIDES.BID)
+    this.askIndex = await this.createPriceIndex(MarketEventOrder.SIDES.ASK)
+    this.bidIndex = await this.createPriceIndex(MarketEventOrder.SIDES.BID)
 
     return this.logger.info(`Market ${this.marketName} initialized.`)
   }
@@ -68,6 +69,45 @@ class Orderbook {
     return timestamp
   }
 
+  /**
+   * Creates a sublevel store that tracks the orderbook store to index it by price
+   * @param  {String} side Side of the market to track (i.e. `BID` or `ASK`)
+   * @return {Index}
+   */
+  async createPriceIndex (side) {
+    let getValue
+
+    if (side === MarketEventOrder.SIDES.BID) {
+      getValue = (key, value) => {
+        const order = MarketEventOrder.fromStorage(key, value)
+        const price = order.price
+
+        // Bids are sorted with highest prices first
+        // TODO: make decimal places configurable
+        return Big(MAX_VALUE).minus(Big(price)).toFixed(DECIMAL_PLACES).padStart(PAD_SIZE, '0')
+      }
+    } else {
+      getValue = (key, value) => {
+        const order = MarketEventOrder.fromStorage(key, value)
+        const price = order.price
+
+        // Asks are sorted so that the lowest price comes first
+        return price.padStart(PAD_SIZE, '0')
+      }
+    }
+
+    const filter = (key, value) => {
+      const order = MarketEventOrder.fromStorage(key, value)
+      return order.side === side
+    }
+
+    this.logger.info(`Creating index for ${side} in market ${this.marketName}`)
+    const index = new SublevelIndex(this.store, side, getValue, filter)
+    await index.ensureIndex()
+
+    return index
+  }
+
   // should this be a static?
   /**
    * Creates a sublevel store that tracks an eventStore to create an orderbook
@@ -92,37 +132,6 @@ class Orderbook {
     })
 
     return store
-  }
-
-  /**
-   * Creates a sublevel store that tracks an orderbook store to index it by price
-   * @param  {sublevel} orderbookStore Sublevel containing the orderbook
-   * @return {Index}
-   */
-  static createPriceIndex (orderbookStore, side) {
-    const getValue = (key, value) => {
-      const order = MarketEventOrder.fromStorage(key, value)
-      const price = order.price
-
-      // highest priced bids first, lowest priced asks first
-      if(side === MarketEventOrder.SIDES.BID) {
-        // TODO: make decimal places configurable
-        return Big(MAX_VALUE).minus(Big(price)).toFixed(16).padStart(PAD_SIZE, '0')
-      } else {
-        return price.padStart(PAD_SIZE, '0')
-      }
-    }
-
-    const filter = (key, value) => {
-      const order = MarketEventOrder.fromStorage(key, value)
-      return order.side === side
-    }
-
-    this.logger.info(`Creating ${side} index`)
-    const index = new SublevelIndex(orderbookStore, side, getValue, filter)
-    await index.ensureIndex()
-
-    return index
   }
 }
 

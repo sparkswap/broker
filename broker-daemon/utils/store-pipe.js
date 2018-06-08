@@ -6,14 +6,14 @@
  * @param  {Number}   batchSize         Number of operations to batch before executing on the target database
  * @return {Promise<void>}
  */
-async function storePipe(sourceStore, targetStore, createDbOperation, batchSize = 20) {
+async function storePipe (sourceStore, targetStore, createDbOperation, batchSize = 20) {
   return new Promise((resolve, reject) => {
     const stream = sourceStore.createReadStream()
     const batch = []
 
-    function flush(done = function () {}) {
+    function flush (done = function () {}) {
       targetStore.batch(batch, (err) => {
-        if(err) reject(err)
+        if (err) reject(err)
         done()
       })
 
@@ -30,11 +30,11 @@ async function storePipe(sourceStore, targetStore, createDbOperation, batchSize 
     stream.on('data', ({ key, value }) => {
       const op = createDbOperation(key, value)
 
-      if(op) {
+      if (op) {
         batch.push(op)
       }
 
-      if(batch.length > batchSize) {
+      if (batch.length > batchSize) {
         flush()
       }
     })
