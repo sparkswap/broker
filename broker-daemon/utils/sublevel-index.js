@@ -16,12 +16,12 @@ class Index {
    * @param  {Function} getValue User-passed function that returns the indexed value
    * @return {Index}
    */
-  constructor (store, name, getValue, filter = returnTrue) {
+  constructor (store, name, getValue, filter = returnTrue, delimiter = ':') {
     this.store = store
     this.name = name
     this.getValue = getValue
     this.filter = filter
-    this.delimiter = ':'
+    this.delimiter = delimiter
     this._deleted = {}
     this._index = this.store.sublevel(this.name)
   }
@@ -93,20 +93,20 @@ class Index {
   }
 
   /**
-   * Mark a base key as being deleted in this index
+   * Mark a base key as being deleted in this index to avoid it being returned while its being deleted
    * @param  {String} baseKey Key of the object in the base store
    * @return {void}
    */
-  _markForDeletion (baseKey) {
+  _startDeletion (baseKey) {
     this._deleted[baseKey] = true
   }
 
   /**
-   * Mark a base key as deleted from the index
+   * Base key is removed from the index store, so we can remove from our local cache
    * @param  {String} baseKey Key of the object in the base store
    * @return {void}
    */
-  _markAsDeleted (baseKey) {
+  _finishDeletion (baseKey) {
     delete this._deleted[baseKey]
   }
 
@@ -126,7 +126,7 @@ class Index {
    * @return {void}
    */
   async _removeFromIndex (baseKey) {
-    this._markForDeletion(baseKey)
+    this._startDeletion(baseKey)
 
     this.store.get(baseKey, async (err, value) => {
       if (err) {
@@ -136,7 +136,7 @@ class Index {
 
       try {
         await promisify(this._index.del)(this._createIndexKey(baseKey, value))
-        this._markAsDeleted(baseKey)
+        this._finishDeletion(baseKey)
       } catch (e) {
         // TODO: error handling on index removal
         return logger.error(`Error while removing ${baseKey} from ${this.name} index`, e)
