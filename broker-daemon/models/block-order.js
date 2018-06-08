@@ -19,10 +19,14 @@ class BlockOrder {
     this.id = id
     this.marketName = marketName
     this.side = side
-    this.amount = Big(amount)
     this.price = price ? Big(price) : null
     this.timeInForce = timeInForce
     this.status = status
+
+    if(!amount) {
+      throw new Error(`A transaction amount is required to create a block order`)
+    }
+    this.amount = Big(amount)
 
     this.openOrders = []
   }
