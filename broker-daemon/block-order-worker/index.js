@@ -160,7 +160,7 @@ class BlockOrderWorker extends EventEmitter {
   async workMarketBlockOrder (blockOrder) {
     const orderbook = this.orderbooks.get(blockOrder.marketName)
     const targetDepth = Big(blockOrder.amount)
-    const currentDepth = Big('0')
+    let currentDepth = Big('0')
 
     const orders = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString() })
 
