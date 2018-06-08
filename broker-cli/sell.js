@@ -17,7 +17,7 @@ const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
  * @param {Logger} logger
  */
 async function sell (args, opts, logger) {
-  const { amount } = args
+  const { amount, price } = args
   const { timeinforce, market, rpcAddress = null } = opts
   const side = ORDER_TYPES.SELL
 
@@ -27,6 +27,13 @@ async function sell (args, opts, logger) {
     market,
     side
   }
+
+  if(price) {
+    request.limitPrice = price
+  } else {
+    request.isMarketOrder = true
+  }
+
 
   try {
     // TODO: Figure out where this actually goes. Do we want to create an order
@@ -46,6 +53,7 @@ module.exports = (program) => {
   program
     .command('sell', 'Submit an order to sell.')
     .argument('<amount>', 'Amount of counter currency to sell.', validations.isPrice)
+    .argument('[price]', 'Worst price that this order should be executed at. (If omitted, the market price will be used)', validations.isPrice)
     .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
     .option('-t, --timeinforce', 'Time in force policy for this order.', Object.keys(TIME_IN_FORCE), 'GTC')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)

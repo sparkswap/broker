@@ -14,7 +14,7 @@ const { PublicError } = require('grpc-methods')
 async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce }) {
   const {
     amount,
-    price,
+    limitPrice,
     isMarketOrder,
     market,
     side,
@@ -29,7 +29,7 @@ async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrde
     marketName: market,
     side: side,
     amount,
-    price: isMarketOrder ? null : price,
+    price: isMarketOrder ? null : limitPrice,
     timeInForce: 'GTC'
   })
 
