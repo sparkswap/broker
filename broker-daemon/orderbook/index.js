@@ -1,9 +1,6 @@
 const { MarketEvent, MarketEventOrder } = require('../models')
 const { AskIndex, BidIndex } = require('./price-indexes')
 const { getRecords } = require('../utils')
-const MAX_VALUE = '9223372036854775807'
-const PAD_SIZE = 32
-const DECIMAL_PLACES = 16
 
 class Orderbook {
   constructor (marketName, relayer, store, logger = console) {

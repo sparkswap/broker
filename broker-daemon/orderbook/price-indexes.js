@@ -34,7 +34,7 @@ class PriceIndex extends SublevelIndex {
    * @param  {Function} getValue Function that returns the index value for a given key/value pair
    * @return {PriceIndex}
    */
-  constructor(store, side, getValue) {
+  constructor (store, side, getValue) {
     super(store, side, getValue, (key, value) => {
       const order = MarketEventOrder.fromStorage(key, value)
       return order.side === side
@@ -51,7 +51,7 @@ class AskIndex extends PriceIndex {
    * @param  {sublevel} store Underlying store with the orders
    * @return {AskIndex}
    */
-  constructor(store) {
+  constructor (store) {
     super(store, MarketEventOrder.SIDES.ASK, (key, value) => {
       const order = MarketEventOrder.fromStorage(key, value)
       const price = order.price
@@ -71,7 +71,7 @@ class BidIndex extends PriceIndex {
    * @param  {sublevel} store Underlying store with the orders
    * @return {BidIndex}
    */
-  constructor(store) {
+  constructor (store) {
     super(store, MarketEventOrder.SIDES.BID, (key, value) => {
       const order = MarketEventOrder.fromStorage(key, value)
       const price = order.price

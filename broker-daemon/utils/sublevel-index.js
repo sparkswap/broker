@@ -2,7 +2,6 @@ const { promisify } = require('util')
 const through = require('through2')
 const storePipe = require('./store-pipe')
 const logger = require('./logger')
-const getRecords = require('./get-records')
 const returnTrue = function () { return true }
 
 /**
