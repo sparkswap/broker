@@ -10,7 +10,17 @@ message GetBalanceResponse {
   int64 balance = 0;
 }
 
+message CommitBalanceRequest {
+  int64 balance = 0;
+  SupportedSymbols symbol = 1;
+}
+
+message CommitBalanceResponse {
+  string status = 0;
+}
+
 service WalletService {
   rpc NewDepositAddress (google.protobuf.Empty) returns (NewDepositAddressResponse);
   rpc GetBalance (google.protobuf.Empty) returns (GetBalanceResponse);
+  rpc CommitBalance (CommitBalanceRequest) returns (CommitBalanceResponse);
 }

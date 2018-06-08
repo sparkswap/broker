@@ -99,17 +99,21 @@ async function commitBalance (args, opts, logger) {
   const { symbol } = args
   const { rpcAddress = null } = opts
 
-  const client = new BrokerDaemonClient(rpcAddress)
-  const { balance } = await client.walletService.getBalance({})
-
-  if (parseInt(balance) === 0) return logger.info('Your current balance is 0, please add funds to your daemon (or check the status of your daemon)')
-
-  const answer = await askQuestion(`Are you OK committing ${balance} in ${symbol} to the relayer? (Y/N) `)
-
-  if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return logger.info('Received \'no\' response. Quitting setup')
-
   try {
-    const res = client.adminService.setup(balance, symbol)
+    const client = new BrokerDaemonClient(rpcAddress)
+    const { balance } = await client.walletService.getBalance({})
+
+    if (parseInt(balance) === 0) {
+      return logger.info('Your current balance is 0, please add funds to your daemon (or check the status of your daemon)')
+    }
+
+    const answer = await askQuestion(`Are you OK committing ${balance} in ${symbol} including applicable fees? (Y/N)`)
+
+    if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) {
+      return logger.info('Received \'no\' response. Quitting setup')
+    }
+
+    const res = client.walletService.commitBalance({ balance, symbol })
     logger.info('Successfully added broker daemon to the kinesis exchange!', res)
   } catch (e) {
     logger.error(e.toString())

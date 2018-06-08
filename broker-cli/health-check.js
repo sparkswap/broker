@@ -16,10 +16,8 @@ const { STATUS_CODES } = ENUMS
  */
 
 async function healthCheck (args, opts, logger) {
-  const { brokerDaemon } = args
   const { rpcAddress = null } = opts
 
-  console.log(brokerDaemon)
   try {
     const client = await new BrokerDaemonClient(rpcAddress)
 
