@@ -29,22 +29,13 @@ class Index {
   }
 
   /**
-   * Create an index
+   * Create an index by clearing the sublevel, rebuilding for old objects, and listening for new entries
    * @return {Promise<Index>} Resolves when the index is created
    */
   async ensureIndex () {
     await this._clearIndex()
     await this._rebuildIndex()
-
-    this.store.pre((dbOperation, add) => {
-      const { key, value, type } = dbOperation
-
-      if (type === 'put' && this.filter(key, value)) {
-        add(this._addToIndexOperation(key, value))
-      } else if (type === 'del') {
-        this._removeFromIndex(key)
-      }
-    })
+    this._addIndexHook()
 
     return this
   }
@@ -155,6 +146,23 @@ class Index {
   _addToIndexOperation (baseKey, baseValue) {
     const indexKey = this._createIndexKey(baseKey, baseValue)
     return { key: indexKey, value: baseValue, type: 'put', prefix: this._index }
+  }
+
+  /**
+   * Add a hook to the store to add any new items in the base store to the index and
+   * remove any objects removed from the base removed from the index
+   * @return {void}
+   */
+  _addIndexHook () {
+    this.store.pre((dbOperation, add) => {
+      const { key, value, type } = dbOperation
+
+      if (type === 'put' && this.filter(key, value)) {
+        add(this._addToIndexOperation(key, value))
+      } else if (type === 'del') {
+        this._removeFromIndex(key)
+      }
+    })
   }
 
   /**
