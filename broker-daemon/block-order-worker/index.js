@@ -146,9 +146,9 @@ class BlockOrderWorker extends EventEmitter {
 
     if (!blockOrder.price) {
       // block orders without prices are Market orders and take the best available price
-      this.workMarketBlockOrder(blockOrder)
+      await this.workMarketBlockOrder(blockOrder)
     } else {
-      this.workLimitBlockOrder(blockOrder)
+      await this.workLimitBlockOrder(blockOrder)
     }
   }
 
@@ -171,7 +171,7 @@ class BlockOrderWorker extends EventEmitter {
     const { relayer, engine, logger } = this
     const store = this.store.sublevel(blockOrder.id).sublevel('fills')
 
-    orders.forEach((order, index) => {
+    return Promise.all(orders.map((order, index) => {
       let fillAmount
 
       // Only the last order is a partial fill
@@ -183,7 +183,7 @@ class BlockOrderWorker extends EventEmitter {
 
       currentDepth = currentDepth.plus(fillAmount)
 
-      FillStateMachine.create(
+      return FillStateMachine.create(
         {
           relayer,
           engine,
@@ -197,7 +197,7 @@ class BlockOrderWorker extends EventEmitter {
         order,
         { fillAmount }
       )
-    })
+    }))
   }
 
   /**

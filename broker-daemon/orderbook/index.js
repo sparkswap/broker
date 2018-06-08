@@ -71,16 +71,19 @@ class Orderbook {
       stream.on('error', reject)
 
       stream.on('end', () => {
+        console.log("got end")
         reject(new Error(`Insufficient depth in market to retrieve prices up to ${targetDepth}`))
       })
 
       stream.on('data', ({ key, value }) => {
+        console.log("data")
         const order = MarketEventOrder.fromStorage(key, value)
         orders.push(order)
 
         currentDepth = currentDepth.plus(order.baseAmount)
 
         if(currentDepth.gte(targetDepth)) {
+          console.log("got depth")
           // AFAIK, this is the best way to stop a stream in progress
           stream.pause()
           stream.unpipe()
