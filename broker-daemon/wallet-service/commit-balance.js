@@ -10,13 +10,6 @@ const EXCHANGE_LND_HOST = process.env.EXCHANGE_LND_HOST
  * @type {Long}
  * @default
  */
-const FEE_AMOUNT = 900
-
-/**
- * @constant
- * @type {Long}
- * @default
- */
 const MINIMUM_FUNDING_AMOUNT = 400000
 
 /**
@@ -40,6 +33,7 @@ async function setup ({ params, relayer, logger, engine }, { CommitBalanceRespon
   // TODO: Choose the correct engine depending on the market
   // TODO: Get correct fee amount from engine
 
+  // const FEE_AMOUNT = 900
   // const feeExcludedBalance = (Number.parseInt(balance) - FEE_AMOUNT)
   await engine.createChannel(EXCHANGE_LND_HOST, relayerPubKey, MINIMUM_FUNDING_AMOUNT)
 

@@ -113,7 +113,7 @@ async function commitBalance (args, opts, logger) {
       return logger.info('Received \'no\' response. Quitting setup')
     }
 
-    const res = client.walletService.commitBalance({ balance, symbol })
+    const res = await client.walletService.commitBalance({ balance, symbol })
     logger.info('Successfully added broker daemon to the kinesis exchange!', res)
   } catch (e) {
     logger.error(e.toString())
