@@ -46,16 +46,17 @@ class Index {
    */
   createReadStream (opts) {
     const stream = this._index.createReadStream(opts)
+    const index = this
 
     // TODO: fix the keys to be the right keys
-    return stream.pipe(through.obj(({ key, value }, encoding, callback) => {
+    return stream.pipe(through.obj(function ({ key, value }, encoding, callback) {
       // skip objects that are marked for deletion
-      if (this._isMarkedForDeletion(key)) {
-        return
+      if (index._isMarkedForDeletion(key)) {
+        return callback()
       }
 
       // give back the base key to the caller
-      this.push({ key: this._extractBaseKey(key), value })
+      this.push({ key: index._extractBaseKey(key), value })
 
       callback()
     }))
@@ -117,7 +118,7 @@ class Index {
    * @param  {String} baseKey Key of the object in the base store
    * @return {void}
    */
-  async _removeFromIndex (baseKey) {
+  _removeFromIndex (baseKey) {
     this._startDeletion(baseKey)
 
     this.store.get(baseKey, async (err, value) => {
@@ -127,6 +128,10 @@ class Index {
       }
 
       try {
+        if (!this.filter(baseKey, value)) {
+          return
+        }
+
         await promisify(this._index.del)(this._createIndexKey(baseKey, value))
         this._finishDeletion(baseKey)
       } catch (e) {
