@@ -15,14 +15,13 @@ async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrde
   const {
     amount,
     price,
+    isMarketOrder,
     market,
     side,
     timeInForce
   } = params
 
-  // default time in force is GTC
-  // Market orders (those without a price specified) do not have a time in force
-  if (!price && timeInForce && TimeInForce[timeInForce] !== TimeInForce.GTC) {
+  if (TimeInForce[timeInForce] !== TimeInForce.GTC) {
     throw new PublicError('Only Good-til-cancelled orders are currently supported')
   }
 
@@ -30,7 +29,7 @@ async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrde
     marketName: market,
     side: side,
     amount,
-    price,
+    price: isMarketOrder ? null : price,
     timeInForce: 'GTC'
   })
 

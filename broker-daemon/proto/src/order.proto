@@ -15,8 +15,12 @@ message CreateBlockOrderRequest {
   string market = 0;
   Side side = 1;
   int64 amount = 2;
-  optional int64 price = 3;
-  optional TimeInForce time_in_force = 4;
+  oneof price_restriction {
+    bool is_market_order = 3;
+    int64 limit_price = 4;
+  }
+
+  TimeInForce time_in_force = 5 [default = GTC];
 }
 
 message CreateBlockOrderResponse {
