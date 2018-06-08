@@ -35,6 +35,10 @@ describe('Orderbook', () => {
     MarketEventOrderFromStorage.bind = MarketEventOrderFromStorageBind
     MarketEventOrderFromEvent = sinon.stub()
     Orderbook.__set__('MarketEventOrder', {
+      SIDES: {
+        BID: 'BID',
+        ASK: 'ASK'
+      },
       fromStorage: MarketEventOrderFromStorage,
       fromEvent: MarketEventOrderFromEvent
     })
@@ -42,7 +46,19 @@ describe('Orderbook', () => {
     getRecords = sinon.stub()
     Orderbook.__set__('getRecords', getRecords)
 
-    orderbookStore = sinon.stub()
+    orderbookStore = {
+      sublevel: sinon.stub().returns({
+        pre: sinon.stub(),
+        batch: sinon.stub(),
+        createReadStream: sinon.stub().returns({
+          on: sinon.stub()
+        })
+      }),
+      createReadStream: sinon.stub().returns({
+        on: sinon.stub()
+      }),
+      pre: sinon.stub()
+    }
     eventStore = {
       pre: sinon.stub()
     }

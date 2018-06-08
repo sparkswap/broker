@@ -41,6 +41,7 @@ services:
       # This is a temporary workaround for preventing the use of external networks
       # for the relayer. In a testnet/mainnet setting, this will be a public IP.
       - EXCHANGE_RPC_HOST=docker.for.mac.host.internal:28492
+      - EXCHANGE_LND_HOST=docker.for.mac.host.internal:10111
       - MARKETS=BTC/LTC
     ports:
       - '27492:27492'

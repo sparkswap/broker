@@ -18,8 +18,7 @@ set -e -u
 # Hit the kcli endpoint to generate a new wallet address
 echo "Generating new deposit address through KCLI"
 
-RAW_WALLET_ADDR=$(./bin/kcli wallet new-deposit-address)
-WALLET_ADDR=$(node ./setup/parse-lnd-response.js newaddress $RAW_WALLET_ADDR)
+WALLET_ADDR=$(./bin/kcli wallet new-deposit-address)
 echo $WALLET_ADDR
 
 # Restart the btcd container w/ the mining-address for our account
@@ -41,7 +40,7 @@ sleep 5
 # Check segwit to make sure we are A-OK
 SEGWIT_CMD='btcctl --simnet --rpcuser="$RPC_USER" --rpcpass="$RPC_PASS" --rpccert="$RPC_CERT" getblockchaininfo'
 RAW_SEGWIT_RESPONSE=$(docker-compose exec -T btcd /bin/sh -c "$SEGWIT_CMD")
-SEGWIT_RESPONSE=$(node ./setup/parse-lnd-response.js segwit $RAW_SEGWIT_RESPONSE)
+SEGWIT_RESPONSE=$(node ./scripts/parse-lnd-response.js segwit $RAW_SEGWIT_RESPONSE)
 
 echo "Segwit Response: $SEGWIT_RESPONSE"
 

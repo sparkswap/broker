@@ -2,11 +2,26 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
+enum SupportedSymbols {
+  BTC = 0;
+  LTC = 1;
+}
+
 message HealthCheckResponse {
   string engine_status = 0;
   string relayer_status = 1;
 }
 
+message SetupRequest {
+  int64 amount = 0;
+  SupportedSymbols symbol = 1;
+}
+
+message SetupResponse {
+  string status = 0;
+}
+
 service AdminService {
   rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
+  rpc Setup (SetupRequest) returns (SetupResponse);
 }
