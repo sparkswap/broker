@@ -141,7 +141,7 @@ async function orderbook (args, opts, logger) {
     call.on('cancelled', () => logger.info('Stream was cancelled by the server'))
     call.on('end', () => logger.info('End of stream'))
   } catch (e) {
-    logger.error(e.toString())
+    logger.error(e)
   }
 };
 
