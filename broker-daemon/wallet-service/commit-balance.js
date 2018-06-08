@@ -1,3 +1,5 @@
+const { PublicError } = require('grpc-methods')
+
 /**
  * @constant
  * @type {String}
@@ -36,7 +38,11 @@ async function commitBalance ({ params, relayer, logger, engine }, { CommitBalan
 
   // const FEE_AMOUNT = 900
   // const feeExcludedBalance = (Number.parseInt(balance) - FEE_AMOUNT)
-  await engine.createChannel(EXCHANGE_LND_HOST, relayerPubKey, MINIMUM_FUNDING_AMOUNT)
+  if (balance < MINIMUM_FUNDING_AMOUNT) {
+    throw new PublicError(`Minimum balance of ${MINIMUM_FUNDING_AMOUNT} needed to commit to the relayer`)
+  }
+
+  await engine.createChannel(EXCHANGE_LND_HOST, relayerPubKey, balance)
 
   return new CommitBalanceResponse({ status: 'channel opened successfully' })
 }
