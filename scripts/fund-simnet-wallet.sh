@@ -19,11 +19,11 @@ set -e -u
 echo "Generating new deposit address through KCLI"
 
 WALLET_ADDR=$(./bin/kcli wallet new-deposit-address)
-echo $WALLET_ADDR
 
 # Restart the btcd container w/ the mining-address for our account
-echo "Restarting BTCD with the generated wallet address"
+echo "Running funding script on the relayer w/ wallet addr"
 
+(cd ../relayer && MINING_ADDR="$WALLET_ADDR" bash ./scripts/fund-simnet-)
 docker-compose rm btcd
 MINING_ADDRESS=$WALLET_ADDR docker-compose up -d btcd
 
