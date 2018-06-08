@@ -18,13 +18,30 @@ class BlockOrder {
   constructor ({ id, marketName, side, amount, price, timeInForce, status = BlockOrder.STATUSES.ACTIVE }) {
     this.id = id
     this.marketName = marketName
-    this.side = side
     this.amount = Big(amount)
     this.price = price ? Big(price) : null
     this.timeInForce = timeInForce
     this.status = status
 
+    if(!BlockOrder.SIDES[side]) {
+      throw new Error(`${side} is not a valid side for a BlockOrder`)
+    }
+
+    this.side = side
+
     this.openOrders = []
+  }
+
+  /**
+   * Convenience getter for the inverse side of the market
+   * @return {String} `BID` or `ASK`
+   */
+  get inverseSide () {
+    if(this.side === BlockOrder.SIDES.BID) {
+      return BlockOrder.SIDES.ASK
+    }
+
+    return BlockOrder.SIDES.BID
   }
 
   /**
@@ -140,6 +157,11 @@ class BlockOrder {
     return new this({ id, marketName, side, amount, price, timeInForce, status })
   }
 }
+
+BlockOrder.SIDES = Object.freeze({
+  BID: 'BID',
+  ASK: 'ASK'
+})
 
 BlockOrder.STATUSES = Object.freeze({
   ACTIVE: 'ACTIVE',
