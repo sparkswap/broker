@@ -11,9 +11,11 @@ const returnTrue = function () { return true }
 class Index {
   /**
    * Create a new index for sublevel store
-   * @param  {sublevel} store    Sublevel of the base store
-   * @param  {String}   name     Name of the index
-   * @param  {Function} getValue User-passed function that returns the indexed value
+   * @param  {sublevel} store     Sublevel of the base store
+   * @param  {String}   name      Name of the index
+   * @param  {Function} getValue  User-passed function that returns the indexed value
+   * @param  {Function} filter    Filter for items to not index
+   * @param  {String}   delimiter Delimiter between the index value and the base key. It should never appear in the base key.
    * @return {Index}
    */
   constructor (store, name, getValue, filter = returnTrue, delimiter = ':') {
@@ -58,10 +60,10 @@ class Index {
     // TODO: fix the keys to be the right keys
     return stream.pipe(through.obj(({ key, value }, encoding, callback) => {
       // skip objects that are marked for deletion
-      if(this._isMarkedForDeletion(key)) {
+      if (this._isMarkedForDeletion(key)) {
         return
       }
-      
+
       // give back the base key to the caller
       this.push({ key: this._extractBaseKey(key), value })
 
