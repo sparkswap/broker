@@ -168,7 +168,9 @@ const FillStateMachine = StateMachine.factory({
      * @return {void}
      */
     onAfterReject: async function (lifecycle) {
-      this.logger.error(`Encountered error during transition, rejecting`, { message: this.error.message, stack: this.error.stack })
+      if(this.error) {
+        this.logger.error(`Encountered error during transition, rejecting`, { message: this.error.message, stack: this.error.stack })
+      }
       this.onRejection(this.error)
     }
   }
