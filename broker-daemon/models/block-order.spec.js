@@ -83,6 +83,14 @@ describe('BlockOrder', () => {
       expect(blockOrder).to.have.property('side', params.side)
     })
 
+    it('throws if it does not have an amouont', () => {
+      params.amount = undefined
+
+      expect(() => {
+        new BlockOrder(params) // eslint-disable-line
+      }).to.throw()
+    })
+
     it('converts amount to a Big.js', () => {
       const blockOrder = new BlockOrder(params)
 

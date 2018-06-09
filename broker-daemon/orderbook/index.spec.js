@@ -15,6 +15,8 @@ describe('Orderbook', () => {
   let MarketEventOrderFromStorageBind
   let MarketEventOrderFromEvent
   let getRecords
+  let AskIndex
+  let BidIndex
   let baseStore
   let orderbookStore
   let eventStore
@@ -42,6 +44,14 @@ describe('Orderbook', () => {
       fromStorage: MarketEventOrderFromStorage,
       fromEvent: MarketEventOrderFromEvent
     })
+
+    AskIndex = sinon.stub()
+    AskIndex.prototype.ensureIndex = sinon.stub().resolves()
+    Orderbook.__set__('AskIndex', AskIndex)
+
+    BidIndex = sinon.stub()
+    BidIndex.prototype.ensureIndex = sinon.stub().resolves()
+    Orderbook.__set__('BidIndex', BidIndex)
 
     getRecords = sinon.stub()
     Orderbook.__set__('getRecords', getRecords)
@@ -285,23 +295,47 @@ describe('Orderbook', () => {
   })
 
   describe('#initialize', () => {
-    it('watches the market on initialization', async () => {
-      const baseSymbol = 'XYZ'
-      const counterSymbol = 'ABAC'
-      const marketName = `${baseSymbol}/${counterSymbol}`
-      const orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+    let baseSymbol
+    let counterSymbol
+    let marketName
+    let orderbook
+    let lastUpdated
+    let lastEvent
 
-      const lastUpdated = '1232142343'
-      const lastEvent = {
+    beforeEach(async () => {
+      baseSymbol = 'XYZ'
+      counterSymbol = 'ABAC'
+      marketName = `${baseSymbol}/${counterSymbol}`
+      orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+
+      lastUpdated = '1232142343'
+      lastEvent = {
         timestamp: lastUpdated
       }
+
       getRecords.resolves([ lastEvent ])
       relayer.watchMarket.resolves()
 
       await orderbook.initialize()
+    })
 
+    it('watches the market on initialization', async () => {
       expect(relayer.watchMarket).to.have.been.calledOnce()
       expect(relayer.watchMarket).to.have.been.calledWith(eventStore, sinon.match({ baseSymbol, counterSymbol, lastUpdated }))
+    })
+
+    it('sets up an ask index', () => {
+      expect(AskIndex).to.have.been.calledOnce()
+      expect(AskIndex).to.have.been.calledWithNew()
+      expect(AskIndex).to.have.been.calledWith(orderbookStore)
+      expect(AskIndex.prototype.ensureIndex).to.have.been.calledOnce()
+    })
+
+    it('sets up a bid index', () => {
+      expect(BidIndex).to.have.been.calledOnce()
+      expect(BidIndex).to.have.been.calledWithNew()
+      expect(BidIndex).to.have.been.calledWith(orderbookStore)
+      expect(BidIndex.prototype.ensureIndex).to.have.been.calledOnce()
     })
   })
 

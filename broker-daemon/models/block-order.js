@@ -18,7 +18,6 @@ class BlockOrder {
   constructor ({ id, marketName, side, amount, price, timeInForce, status = BlockOrder.STATUSES.ACTIVE }) {
     this.id = id
     this.marketName = marketName
-    this.amount = Big(amount)
     this.price = price ? Big(price) : null
     this.timeInForce = timeInForce
     this.status = status
@@ -26,8 +25,12 @@ class BlockOrder {
     if(!BlockOrder.SIDES[side]) {
       throw new Error(`${side} is not a valid side for a BlockOrder`)
     }
-
     this.side = side
+
+    if (!amount) {
+      throw new Error(`A transaction amount is required to create a block order`)
+    }
+    this.amount = Big(amount)
 
     this.openOrders = []
   }

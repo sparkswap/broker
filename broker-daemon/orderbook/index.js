@@ -1,8 +1,6 @@
 const { MarketEvent, MarketEventOrder } = require('../models')
-const { getRecords, Big, SublevelIndex } = require('../utils')
-const MAX_VALUE = '9223372036854775807'
-const PAD_SIZE = 32
-const DECIMAL_PLACES = 16
+const { AskIndex, BidIndex } = require('./price-indexes')
+const { getRecords } = require('../utils')
 
 class Orderbook {
   constructor (marketName, relayer, store, logger = console) {
@@ -30,8 +28,8 @@ class Orderbook {
 
     await this.relayer.watchMarket(this.eventStore, params)
 
-    this.askIndex = await this.createPriceIndex(MarketEventOrder.SIDES.ASK)
-    this.bidIndex = await this.createPriceIndex(MarketEventOrder.SIDES.BID)
+    this.askIndex = await (new AskIndex(this.store)).ensureIndex()
+    this.bidIndex = await (new BidIndex(this.store)).ensureIndex()
 
     return this.logger.info(`Market ${this.marketName} initialized.`)
   }
@@ -112,45 +110,6 @@ class Orderbook {
     this.logger.info(`Found last update of ${timestamp}`)
 
     return timestamp
-  }
-
-  /**
-   * Creates a sublevel store that tracks the orderbook store to index it by price
-   * @param  {String} side Side of the market to track (i.e. `BID` or `ASK`)
-   * @return {Index}
-   */
-  async createPriceIndex (side) {
-    let getValue
-
-    if (side === MarketEventOrder.SIDES.BID) {
-      getValue = (key, value) => {
-        const order = MarketEventOrder.fromStorage(key, value)
-        const price = order.price
-
-        // Bids are sorted with highest prices first
-        // TODO: make decimal places configurable
-        return Big(MAX_VALUE).minus(Big(price)).toFixed(DECIMAL_PLACES).padStart(PAD_SIZE, '0')
-      }
-    } else {
-      getValue = (key, value) => {
-        const order = MarketEventOrder.fromStorage(key, value)
-        const price = order.price
-
-        // Asks are sorted so that the lowest price comes first
-        return price.padStart(PAD_SIZE, '0')
-      }
-    }
-
-    const filter = (key, value) => {
-      const order = MarketEventOrder.fromStorage(key, value)
-      return order.side === side
-    }
-
-    this.logger.info(`Creating index for ${side} in market ${this.marketName}`)
-    const index = new SublevelIndex(this.store, side, getValue, filter)
-    await index.ensureIndex()
-
-    return index
   }
 
   // should this be a static?

@@ -112,7 +112,7 @@ async function commitBalance (args, opts, logger) {
     const res = client.adminService.setup(balance, symbol)
     logger.info('Successfully added broker daemon to the kinesis exchange!', res)
   } catch (e) {
-    logger.error(e.toString())
+    logger.error('Error in commitBalance', e)
   }
 }
 
