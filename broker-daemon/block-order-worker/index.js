@@ -89,8 +89,10 @@ class BlockOrderWorker extends EventEmitter {
 
     const { relayer, engine, logger } = this
     const openOrders = await OrderStateMachine.getAll({ store: this.store.sublevel(blockOrder.id).sublevel('orders'), relayer, engine, logger })
+    const fills = await FillStateMachine.getAll({ store: this.store.sublevel(blockOrder.id).sublevel('fills'), relayer, engine, logger })
 
     blockOrder.openOrders = openOrders
+    blockOrder.fills = fills
 
     return blockOrder
   }

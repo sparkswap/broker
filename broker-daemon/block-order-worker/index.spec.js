@@ -306,10 +306,16 @@ describe('BlockOrderWorker', () => {
         id: 'someId'
       }
     ]
+    let fills = [
+      {
+        id: 'anotherid'
+      }
+    ]
 
     beforeEach(() => {
       store.get.callsArgWithAsync(1, null, blockOrder)
       OrderStateMachine.getAll.resolves(orders)
+      FillStateMachine.getAll.resolves(fills)
       BlockOrder.fromStorage.returns({ id: blockOrderId })
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
     })
@@ -339,13 +345,29 @@ describe('BlockOrderWorker', () => {
 
       const bO = await worker.getBlockOrder(fakeId)
 
-      expect(store.sublevel).to.have.been.calledOnce()
+      expect(store.sublevel).to.have.been.calledTwice()
       expect(store.sublevel).to.have.been.calledWith(blockOrderId)
-      expect(secondLevel.sublevel).to.have.been.calledOnce()
+      expect(secondLevel.sublevel).to.have.been.calledTwice()
       expect(secondLevel.sublevel).to.have.been.calledWith('orders')
       expect(OrderStateMachine.getAll).to.have.been.calledOnce()
       expect(OrderStateMachine.getAll).to.have.been.calledWith(sinon.match({ store: fakeStore }))
       expect(bO).to.have.property('openOrders', orders)
+    })
+
+    it('retrieves all fills associated with a block order', async () => {
+      const fakeId = 'myid'
+      const fakeStore = 'mystore'
+      secondLevel.sublevel.returns(fakeStore)
+
+      const bO = await worker.getBlockOrder(fakeId)
+
+      expect(store.sublevel).to.have.been.calledTwice()
+      expect(store.sublevel).to.have.been.calledWith(blockOrderId)
+      expect(secondLevel.sublevel).to.have.been.calledTwice()
+      expect(secondLevel.sublevel).to.have.been.calledWith('fills')
+      expect(FillStateMachine.getAll).to.have.been.calledOnce()
+      expect(FillStateMachine.getAll).to.have.been.calledWith(sinon.match({ store: fakeStore }))
+      expect(bO).to.have.property('fills', fills)
     })
 
     it('throws a not found error if no order exists', async () => {

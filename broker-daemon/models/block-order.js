@@ -33,6 +33,7 @@ class BlockOrder {
     this.amount = Big(amount)
 
     this.openOrders = []
+    this.fills = []
   }
 
   /**
@@ -132,13 +133,24 @@ class BlockOrder {
       }
     })
 
+    const fills = this.fills.map(({ fill, state }) => {
+      return {
+        orderId: fill.order.orderId,
+        fillId: fill.fillId,
+        amount: fill.fillAmount,
+        price: fill.price,
+        fillStatus: state.toUpperCase()
+      }
+    })
+
     const serialized = {
       market: this.marketName,
       side: this.side,
       amount: this.amount.toString(),
       timeInForce: this.timeInForce,
       status: this.status,
-      openOrders: openOrders
+      openOrders: openOrders,
+      fills: fills
     }
 
     if (this.price) {

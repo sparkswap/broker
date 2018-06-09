@@ -50,6 +50,22 @@ message Order {
   int64 price = 3;
 }
 
+enum FillStatus {
+  CREATED = 0;
+  FILLED = 1;
+  EXECUTED = 2;
+  COMPLETED = 3;
+  REJECTED = 4;
+}
+
+message Fill {
+  string order_id = 0;
+  string fill_id = 1;
+  FillStatus fill_status = 2;
+  int64 amount = 3;
+  int64 price = 4;
+}
+
 message GetBlockOrderRequest {
   string block_order_id = 0;
 }
@@ -68,6 +84,7 @@ message GetBlockOrderResponse {
 
   int64 fill_amount = 20;
   repeated Order open_orders = 21;
+  repeated Fill fills = 22;
 }
 
 service OrderService {

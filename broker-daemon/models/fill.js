@@ -118,6 +118,18 @@ class Fill {
   }
 
   /**
+   * Price of the order
+   * @return {String} Number, rounded to 16 decimal places, represented as a string
+   */
+  get price () {
+    const counterAmount = Big(this.order.counterAmount)
+    const baseAmount = Big(this.order.baseAmount)
+
+    // TODO: make the number of decimal places configurable
+    return counterAmount.div(baseAmount).toFixed(16)
+  }
+
+  /**
    * Get the unique key that this object can be stored with
    * @return {String} Unique key for storage. In the case of an order, its Relayer-assigned orderId
    */
