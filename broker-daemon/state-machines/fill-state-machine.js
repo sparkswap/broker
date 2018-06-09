@@ -163,12 +163,12 @@ const FillStateMachine = StateMachine.factory({
     },
 
     /**
-
      * Handle rejected state by calling a passed in handler
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @return {void}
      */
     onAfterReject: async function (lifecycle) {
+      this.logger.error(`Encountered error during transition, rejecting`, { message: this.error.message, stack: this.error.stack })
       this.onRejection(this.error)
     }
   }
