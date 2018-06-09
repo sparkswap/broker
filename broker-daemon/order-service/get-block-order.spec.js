@@ -60,20 +60,9 @@ describe('getBlockOrder', () => {
     }
     const serialized = { my: 'object' }
     blockOrder.serialize.returns(serialized)
-    await getBlockOrder({ params, blockOrderWorker }, { GetBlockOrderResponse })
+    const res = await getBlockOrder({ params, blockOrderWorker }, { GetBlockOrderResponse })
 
     expect(blockOrder.serialize).to.have.been.calledOnce()
-    expect(GetBlockOrderResponse).to.have.been.calledWith(serialized)
-  })
-
-  it('returns a block order response', async () => {
-    const params = {
-      blockOrderId: 'fakeID'
-    }
-    const response = await getBlockOrder({ params, blockOrderWorker }, { GetBlockOrderResponse })
-
-    expect(GetBlockOrderResponse).to.have.been.calledOnce()
-    expect(GetBlockOrderResponse).to.have.been.calledWithNew()
-    expect(response).to.be.instanceOf(GetBlockOrderResponse)
+    expect(res).to.be.eql(serialized)
   })
 })
