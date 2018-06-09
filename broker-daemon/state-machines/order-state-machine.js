@@ -160,14 +160,25 @@ const OrderStateMachine = StateMachine.factory({
     },
 
     /**
+     * Log errors from rejection
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @param  {Error}  error     Error that caused the rejection
+     * @return {void}
+     */
+    onBeforeReject: function (lifecycle, error) {
+      if(!error) {
+        return this.logger.error(`Rejecting transition without error`)
+      }
+
+      this.logger.error(`Encountered error during transition, rejecting`, { message: error.message, stack: error.stack })
+    },
+
+    /**
      * Handle rejected state by calling a passed in handler
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @return {void}
      */
     onAfterReject: async function (lifecycle) {
-      if(this.error) {
-        this.logger.error(`Encountered error during transition, rejecting`, { message: this.error.message, stack: this.error.stack })
-      }
       this.onRejection(this.error)
     }
   }
