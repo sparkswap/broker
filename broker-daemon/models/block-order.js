@@ -132,15 +132,22 @@ class BlockOrder {
       }
     })
 
-    return {
+    const serialized = {
       market: this.marketName,
       side: this.side,
       amount: this.amount.toString(),
-      price: this.price ? this.price.toString() : null,
       timeInForce: this.timeInForce,
       status: this.status,
       openOrders: openOrders
     }
+
+    if(this.price) {
+      serialized.limitPrice = this.price.toString()
+    } else {
+      serialized.isMarketOrder = true
+    }
+
+    return serialized
   }
 
   /**

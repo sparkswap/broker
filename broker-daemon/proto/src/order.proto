@@ -60,8 +60,11 @@ message GetBlockOrderResponse {
   string market = 10;
   Side side = 11;
   int64 amount = 12;
-  optional int64 price = 13;
-  optional TimeInForce time_in_force = 14;
+  oneof price_restriction {
+    bool is_market_order = 13;
+    int64 limit_price = 14;
+  }
+  TimeInForce time_in_force = 15;
 
   int64 fill_amount = 20;
   repeated Order open_orders = 21;
