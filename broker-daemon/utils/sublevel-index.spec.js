@@ -329,7 +329,7 @@ describe('Index', () => {
         const baseValue = '{"there":"world"}'
         const fakeIndexOp = { type: 'put', prefix: index }
         index._addToIndexOperation = sinon.stub().returns(fakeIndexOp)
-        preHook({ type: 'put', key: baseKey, value: baseValue}, add)
+        preHook({ type: 'put', key: baseKey, value: baseValue }, add)
 
         expect(index._addToIndexOperation).to.have.been.calledOnce()
         expect(index._addToIndexOperation).to.have.been.calledWith(baseKey, baseValue)
@@ -343,7 +343,7 @@ describe('Index', () => {
         const baseKey = 'hello'
         const baseValue = '{"there":"world"}'
 
-        preHook({ type: 'put', key: baseKey, value: baseValue}, add)
+        preHook({ type: 'put', key: baseKey, value: baseValue }, add)
 
         expect(filter).to.have.been.calledOnce(baseKey, baseValue)
         return expect(add).to.not.have.been.called
