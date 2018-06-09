@@ -19,10 +19,14 @@ class BlockOrder {
     this.id = id
     this.marketName = marketName
     this.side = side
-    this.amount = Big(amount)
     this.price = price ? Big(price) : null
     this.timeInForce = timeInForce
     this.status = status
+
+    if (!amount) {
+      throw new Error(`A transaction amount is required to create a block order`)
+    }
+    this.amount = Big(amount)
 
     this.openOrders = []
   }
@@ -41,6 +45,26 @@ class BlockOrder {
    */
   get counterSymbol () {
     return this.marketName.split('/')[1]
+  }
+
+  /**
+   * Convenience getter for baseAmount
+   * @return {String} String representation of the amount of currency to be transacted in base currency's smallest unit
+   */
+  get baseAmount () {
+    return this.amount.toString()
+  }
+
+  /**
+   * Convenience getter for counterAmount calculated using the block order price
+   * @return {String} String representation of the amount of currency to be transacted in counter currency's smallest unit
+   */
+  get counterAmount () {
+    if (!this.price) {
+      // if we can't calculate the amount, we treat the property as unset, i.e. undefined
+      return
+    }
+    return this.amount.times(this.price).round(0).toString()
   }
 
   /**
