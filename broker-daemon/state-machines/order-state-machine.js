@@ -165,6 +165,9 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onAfterReject: async function (lifecycle) {
+      if(this.error) {
+        this.logger.error(`Encountered error during transition, rejecting`, { message: this.error.message, stack: this.error.stack })
+      }
       this.onRejection(this.error)
     }
   }
