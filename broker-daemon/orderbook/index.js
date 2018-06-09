@@ -58,6 +58,7 @@ class Orderbook {
         return reject(new Error(`${side} is not a valid market side`))
       }
 
+      let resolved = false
       const orders = []
 
       const targetDepth = Big(depth)
@@ -73,6 +74,8 @@ class Orderbook {
       })
 
       stream.on('data', ({ key, value }) => {
+        if (resolved) return
+
         const order = MarketEventOrder.fromStorage(key, value)
         orders.push(order)
 
@@ -80,6 +83,7 @@ class Orderbook {
 
         if (currentDepth.gte(targetDepth)) {
           // AFAIK, this is the best way to stop a stream in progress
+          resolved = true
           stream.pause()
           stream.unpipe()
 
