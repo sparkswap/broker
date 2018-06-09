@@ -30,7 +30,7 @@ async function buy (args, opts, logger) {
     side
   }
 
-  if(price) {
+  if (price) {
     request.limitPrice = price
   } else {
     request.isMarketOrder = true

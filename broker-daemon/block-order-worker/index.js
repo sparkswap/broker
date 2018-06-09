@@ -164,9 +164,6 @@ class BlockOrderWorker extends EventEmitter {
 
     const orders = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString() })
 
-    // order params
-    const { baseSymbol, counterSymbol, baseAmount, counterAmount, side } = blockOrder
-
     // state machine params
     const { relayer, engine, logger } = this
     const store = this.store.sublevel(blockOrder.id).sublevel('fills')
@@ -175,7 +172,7 @@ class BlockOrderWorker extends EventEmitter {
       let fillAmount
 
       // Only the last order is a partial fill
-      if(index < orders.length - 1) {
+      if (index < orders.length - 1) {
         fillAmount = order.baseAmount
       } else {
         fillAmount = targetDepth.minus(currentDepth).toString()

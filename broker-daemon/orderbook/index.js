@@ -1,6 +1,6 @@
 const { MarketEvent, MarketEventOrder } = require('../models')
 const { AskIndex, BidIndex } = require('./price-indexes')
-const { getRecords } = require('../utils')
+const { getRecords, Big } = require('../utils')
 
 class Orderbook {
   constructor (marketName, relayer, store, logger = console) {
@@ -54,7 +54,7 @@ class Orderbook {
     this.logger.info(`Retrieving best priced from ${side} up to ${depth}`)
 
     return new Promise((resolve, reject) => {
-      if(!MarketEventOrder.SIDES[side]) {
+      if (!MarketEventOrder.SIDES[side]) {
         return reject(new Error(`${side} is not a valid market side`))
       }
 
@@ -78,7 +78,7 @@ class Orderbook {
 
         currentDepth = currentDepth.plus(order.baseAmount)
 
-        if(currentDepth.gte(targetDepth)) {
+        if (currentDepth.gte(targetDepth)) {
           // AFAIK, this is the best way to stop a stream in progress
           stream.pause()
           stream.unpipe()

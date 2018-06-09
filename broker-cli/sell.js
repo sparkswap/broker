@@ -28,12 +28,11 @@ async function sell (args, opts, logger) {
     side
   }
 
-  if(price) {
+  if (price) {
     request.limitPrice = price
   } else {
     request.isMarketOrder = true
   }
-
 
   try {
     // TODO: Figure out where this actually goes. Do we want to create an order

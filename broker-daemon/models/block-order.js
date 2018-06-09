@@ -22,7 +22,7 @@ class BlockOrder {
     this.timeInForce = timeInForce
     this.status = status
 
-    if(!BlockOrder.SIDES[side]) {
+    if (!BlockOrder.SIDES[side]) {
       throw new Error(`${side} is not a valid side for a BlockOrder`)
     }
     this.side = side
@@ -40,7 +40,7 @@ class BlockOrder {
    * @return {String} `BID` or `ASK`
    */
   get inverseSide () {
-    if(this.side === BlockOrder.SIDES.BID) {
+    if (this.side === BlockOrder.SIDES.BID) {
       return BlockOrder.SIDES.ASK
     }
 
