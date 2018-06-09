@@ -32,7 +32,7 @@ describe('createBlockOrder', () => {
   it('creates a block order on the BlockOrderWorker', async () => {
     const params = {
       amount: '100',
-      price: '1000',
+      limitPrice: '1000',
       market: 'XYZ/ABC',
       side: 'BID',
       timeInForce: 'GTC'
@@ -47,13 +47,14 @@ describe('createBlockOrder', () => {
     const params = {
       amount: '100',
       market: 'XYZ/ABC',
+      isMarketOrder: true,
       side: 'BID',
       timeInForce: 'GTC'
     }
     await createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })
 
     expect(blockOrderWorker.createBlockOrder).to.have.been.calledOnce()
-    expect(blockOrderWorker.createBlockOrder).to.have.been.calledWith({ marketName: 'XYZ/ABC', side: 'BID', amount: '100', price: undefined, timeInForce: 'GTC' })
+    expect(blockOrderWorker.createBlockOrder).to.have.been.calledWith({ marketName: 'XYZ/ABC', price: null, side: 'BID', amount: '100', timeInForce: 'GTC' })
   })
 
   it('returns a block order response', async () => {
