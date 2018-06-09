@@ -10,6 +10,7 @@ describe('BlockOrderWorker', () => {
   let safeid
   let BlockOrder
   let OrderStateMachine
+  let FillStateMachine
 
   let orderbooks
   let store
@@ -18,6 +19,7 @@ describe('BlockOrderWorker', () => {
   let engine
 
   let secondLevel
+  let thirdLevel
 
   beforeEach(() => {
     eventsOn = sinon.stub()
@@ -41,12 +43,23 @@ describe('BlockOrderWorker', () => {
     OrderStateMachine = sinon.stub()
     OrderStateMachine.create = sinon.stub()
     OrderStateMachine.getAll = sinon.stub()
+
+    FillStateMachine = sinon.stub()
+    FillStateMachine.create = sinon.stub()
+    FillStateMachine.getAll = sinon.stub()
+
     BlockOrderWorker.__set__('OrderStateMachine', OrderStateMachine)
+    BlockOrderWorker.__set__('FillStateMachine', FillStateMachine)
 
-    orderbooks = new Map([['BTC/LTC', sinon.stub()]])
+    orderbooks = new Map([['BTC/LTC', {
+      getBestOrders: sinon.stub()
+    }]])
 
+    thirdLevel = {
+      put: sinon.stub()
+    }
     secondLevel = {
-      sublevel: sinon.stub()
+      sublevel: sinon.stub().returns(thirdLevel)
     }
     store = {
       sublevel: sinon.stub().returns(secondLevel),
@@ -346,7 +359,7 @@ describe('BlockOrderWorker', () => {
     })
   })
 
-  describe('workBlockOrder', () => {
+  describe('#workBlockOrder', () => {
     let worker
     let blockOrder
     let order
@@ -375,23 +388,55 @@ describe('BlockOrderWorker', () => {
       expect(worker.workBlockOrder(blockOrder)).to.be.rejectedWith(Error)
     })
 
-    it('errors if working a market order', () => {
-      blockOrder.price = undefined
+    it('sends market orders to #workMarketBlockOrder', async () => {
+      blockOrder.price = null
+      worker.workMarketBlockOrder = sinon.stub().resolves()
 
-      expect(worker.workBlockOrder(blockOrder)).to.be.rejectedWith(Error)
+      await worker.workBlockOrder(blockOrder)
+
+      expect(worker.workMarketBlockOrder).to.have.been.calledOnce()
+      expect(worker.workMarketBlockOrder).to.have.been.calledWith(blockOrder)
+    })
+
+    it('sends limit orders to #workLimitBlockOrder', async () => {
+      worker.workLimitBlockOrder = sinon.stub().resolves()
+
+      await worker.workBlockOrder(blockOrder)
+
+      expect(worker.workLimitBlockOrder).to.have.been.calledOnce()
+      expect(worker.workLimitBlockOrder).to.have.been.calledWith(blockOrder)
+    })
+  })
+
+  describe('#workLimitBlockOrder', () => {
+    let worker
+    let blockOrder
+    let order
+    beforeEach(() => {
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      blockOrder = {
+        id: 'fakeId',
+        marketName: 'BTC/LTC',
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        amount: Big('100'),
+        price: Big('1000')
+      }
+      order = {
+        id: 'anotherId'
+      }
+      OrderStateMachine.create.resolves(order)
     })
 
     it('creates an OrderStateMachine', async () => {
-      await worker.workBlockOrder(blockOrder)
+      await worker.workLimitBlockOrder(blockOrder)
 
       expect(OrderStateMachine.create).to.have.been.calledOnce()
     })
 
     it('provides a sublevel of the block order for the OrderStateMachine', async () => {
-      const thirdLevel = 'mylevel'
-      secondLevel.sublevel.returns(thirdLevel)
-
-      await worker.workBlockOrder(blockOrder)
+      await worker.workLimitBlockOrder(blockOrder)
 
       expect(store.sublevel).to.have.been.calledWith(blockOrder.id)
       expect(secondLevel.sublevel).to.have.been.calledWith('orders')
@@ -399,26 +444,26 @@ describe('BlockOrderWorker', () => {
     })
 
     it('provides the relayer to the OrderStateMachine', async () => {
-      await worker.workBlockOrder(blockOrder)
+      await worker.workLimitBlockOrder(blockOrder)
 
       expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match({ relayer }))
     })
 
     it('provides the engine to the OrderStateMachine', async () => {
-      await worker.workBlockOrder(blockOrder)
+      await worker.workLimitBlockOrder(blockOrder)
 
       expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match({ engine }))
     })
 
     it('provides a handler for onRejection', async () => {
-      await worker.workBlockOrder(blockOrder)
+      await worker.workLimitBlockOrder(blockOrder)
 
       expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match({ onRejection: sinon.match.func }))
     })
 
     it('fails the block order if the order is rejected', async () => {
       worker.failBlockOrder = sinon.stub()
-      await worker.workBlockOrder(blockOrder)
+      await worker.workLimitBlockOrder(blockOrder)
 
       const { onRejection } = OrderStateMachine.create.args[0][0]
 
@@ -432,5 +477,111 @@ describe('BlockOrderWorker', () => {
     })
 
     // NOTE: other testing is TODO until workBlockOrder supports more sophisticated order handling
+  })
+
+  describe('#workMarketBlockOrder', () => {
+    let worker
+    let blockOrder
+    let fill
+    let orders
+
+    beforeEach(() => {
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      blockOrder = {
+        id: 'fakeId',
+        marketName: 'BTC/LTC',
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        inverseSide: 'ASK',
+        amount: Big('100'),
+        price: null
+      }
+      fill = {
+        id: 'anotherId'
+      }
+      FillStateMachine.create.resolves(fill)
+      orders = [
+        { orderId: '1', baseAmount: '90' },
+        { orderId: '2', baseAmount: '100' }
+      ]
+
+      orderbooks.get('BTC/LTC').getBestOrders.resolves(orders)
+    })
+
+    it('gets the best orders from the orderbook', async () => {
+      await worker.workMarketBlockOrder(blockOrder)
+
+      expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledOnce()
+      expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledWith(sinon.match({ side: 'ASK', depth: '100' }))
+    })
+
+    it('creates FillStateMachines for each fill', async () => {
+      await worker.workMarketBlockOrder(blockOrder)
+
+      expect(FillStateMachine.create).to.have.been.calledTwice()
+      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match.any, orders[0])
+      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match.any, orders[1])
+    })
+
+    it('provides the full fill amount for orders before the last', async () => {
+      await worker.workMarketBlockOrder(blockOrder)
+
+      const call = FillStateMachine.create.args[0]
+
+      expect(call[2]).to.eql({ fillAmount: orders[0].baseAmount })
+    })
+
+    it('provides the remaining fill amount for the last order', async () => {
+      await worker.workMarketBlockOrder(blockOrder)
+
+      const call = FillStateMachine.create.args[1]
+
+      expect(call[2]).to.eql({ fillAmount: '10' })
+    })
+
+    it('provides a sublevel of the block order for the FillStateMachine', async () => {
+      const thirdLevel = 'mylevel'
+      secondLevel.sublevel.returns(thirdLevel)
+
+      await worker.workMarketBlockOrder(blockOrder)
+
+      expect(store.sublevel).to.have.been.calledWith(blockOrder.id)
+      expect(secondLevel.sublevel).to.have.been.calledWith('fills')
+      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match({ store: thirdLevel }))
+    })
+
+    it('provides the relayer to the FillStateMachine', async () => {
+      await worker.workMarketBlockOrder(blockOrder)
+
+      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match({ relayer }))
+    })
+
+    it('provides the engine to the FillStateMachine', async () => {
+      await worker.workMarketBlockOrder(blockOrder)
+
+      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match({ engine }))
+    })
+
+    it('provides a handler for onRejection', async () => {
+      await worker.workMarketBlockOrder(blockOrder)
+
+      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match({ onRejection: sinon.match.func }))
+    })
+
+    it('fails the block order if the order is rejected', async () => {
+      worker.failBlockOrder = sinon.stub()
+      await worker.workMarketBlockOrder(blockOrder)
+
+      const { onRejection } = FillStateMachine.create.args[0][0]
+
+      const err = new Error('fale')
+      onRejection(err)
+
+      await delay(10)
+
+      expect(worker.failBlockOrder).to.have.been.calledOnce()
+      expect(worker.failBlockOrder).to.have.been.calledWith(blockOrder.id, err)
+    })
   })
 })

@@ -141,7 +141,7 @@ class BlockOrder {
       openOrders: openOrders
     }
 
-    if(this.price) {
+    if (this.price) {
       serialized.limitPrice = this.price.toString()
     } else {
       serialized.isMarketOrder = true
