@@ -314,6 +314,12 @@ describe('BlockOrder', () => {
       })
     })
 
+    describe('get inverseSide', () => {
+      it('defines an inverse side getter', () => {
+        expect(blockOrder).to.have.property('inverseSide', 'ASK')
+      })
+    })
+
     describe('get baseAmount', () => {
       it('defines a baseAmount that aliases the amount', () => {
         expect(blockOrder).to.have.property('baseAmount', params.amount)
