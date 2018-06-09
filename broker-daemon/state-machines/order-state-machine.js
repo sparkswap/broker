@@ -1,3 +1,4 @@
+const safeid = require('generate-safe-id')
 const StateMachine = require('./state-machine')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 const StateMachinePersistence = require('./plugins/persistence')
@@ -22,7 +23,7 @@ const OrderStateMachine = StateMachine.factory({
       key: function (key) {
         // this only defines a getter - it will be set by the `order` setter
         if (!key) {
-          return this.order.key
+          return this.order.key || `NO_RELAYER_KEY_${safeid()}`
         }
       },
       additionalFields: {

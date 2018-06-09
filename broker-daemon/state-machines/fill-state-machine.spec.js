@@ -351,6 +351,15 @@ describe('FillStateMachine', () => {
       expect(store.put).to.have.been.calledWith(fsm.fill.key, sinon.match('"state":"rejected"'))
     })
 
+    it('saves with a placeholder key if one is not available', async () => {
+      fsm.fill.key = undefined
+
+      await fsm.reject()
+
+      expect(store.put).to.have.been.calledOnce()
+      expect(store.put).to.have.been.calledWith(sinon.match(/^NO_RELAYER_KEY_\S+$/))
+    })
+
     it('calls an onRejection function', async () => {
       const err = new Error('fake')
       await fsm.reject(err)
