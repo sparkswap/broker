@@ -162,13 +162,76 @@ class BlockOrderWorker extends EventEmitter {
   async workMarketBlockOrder (blockOrder) {
     const orderbook = this.orderbooks.get(blockOrder.marketName)
     const targetDepth = Big(blockOrder.amount)
-    let currentDepth = Big('0')
 
     const { orders, depth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString() })
 
-    if(Big(depth).lt(targetDepth)) {
+    if (Big(depth).lt(targetDepth)) {
       throw new Error(`Insufficient depth in ${blockOrder.inverseSide} to fill ${targetDepth.toString()}`)
     }
+
+    return this._fillOrders(blockOrder, orders, targetDepth)
+  }
+
+  /**
+   * Work limit block order
+   * @todo make limit orders more sophisticated than just sending a single limit order to the relayer
+   * @param  {BlockOrder} blockOrder BlockOrder with a limit price
+   * @return {void}
+   */
+  async workLimitBlockOrder (blockOrder) {
+    if (blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.GTC) {
+      throw new Error('Only Good-til-cancelled limit orders are currently supported.')
+    }
+
+    const orderbook = this.orderbooks.get(blockOrder.marketName)
+    const targetDepth = Big(blockOrder.amount)
+
+    const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString() })
+
+    await this._fillOrders(blockOrder, orders, targetDepth)
+
+    if (targetDepth.gt(availableDepth)) {
+      // order params
+      const { baseSymbol, counterSymbol, side } = blockOrder
+      const baseAmountBig = targetDepth.minus(availableDepth)
+      const baseAmount = baseAmountBig.toString()
+      const counterAmount = baseAmountBig.times(blockOrder.price).round(0).toString()
+
+      // state machine params
+      const { relayer, engine, logger } = this
+      const store = this.store.sublevel(blockOrder.id).sublevel('orders')
+
+      this.logger.info('Creating order for BlockOrder', { blockOrderId: blockOrder.id })
+
+      const order = await OrderStateMachine.create(
+        {
+          relayer,
+          engine,
+          logger,
+          store,
+          onRejection: (err) => {
+            this.failBlockOrder(blockOrder.id, err)
+          }
+        },
+        { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
+      )
+
+      this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
+    }
+  }
+
+  /**
+   * Fill given orders for a given block order up to a target depth
+   * @param  {BlockOrder}              blockOrder  BlockOrder that the orders are being filled on behalf of
+   * @param  {Array<MarketEventOrder>} orders      Orders to be filled
+   * @param  {String}                  targetDepth Int64 string of the maximum depth to fill
+   * @return {Promise<Array<FillStateMachine>>}    Promise that resolves the array of Fill State Machines for these fills
+   */
+  async _fillOrders (blockOrder, orders, targetDepth) {
+    this.logger.info(`Filling ${orders.length} orders for ${blockOrder.id} up to depth of ${targetDepth}`)
+
+    targetDepth = Big(targetDepth)
+    let currentDepth = Big('0')
 
     // state machine params
     const { relayer, engine, logger } = this
@@ -201,42 +264,6 @@ class BlockOrderWorker extends EventEmitter {
         { fillAmount }
       )
     }))
-  }
-
-  /**
-   * Work limit block order
-   * @todo make limit orders more sophisticated than just sending a single limit order to the relayer
-   * @param  {BlockOrder} blockOrder BlockOrder with a limit price
-   * @return {void}
-   */
-  async workLimitBlockOrder (blockOrder) {
-    // order params
-    const { baseSymbol, counterSymbol, baseAmount, counterAmount, side } = blockOrder
-
-    // state machine params
-    const { relayer, engine, logger } = this
-    const store = this.store.sublevel(blockOrder.id).sublevel('orders')
-
-    if(blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.GTC) {
-      throw new Error('Only Good-til-cancelled limit orders are currently supported.')
-    }
-
-    this.logger.info('Creating single order for BlockOrder', { blockOrderId: blockOrder.id })
-
-    const order = await OrderStateMachine.create(
-      {
-        relayer,
-        engine,
-        logger,
-        store,
-        onRejection: (err) => {
-          this.failBlockOrder(blockOrder.id, err)
-        }
-      },
-      { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
-    )
-
-    this.logger.info('Created single order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
   }
 }
 

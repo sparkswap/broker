@@ -65,9 +65,8 @@ class Orderbook {
         return reject(new Error(`${side} is not a valid market side`))
       }
 
-      if(!price) {
-        
-        if(side === MarketEventOrder.SIDES.BID) {
+      if (!price) {
+        if (side === MarketEventOrder.SIDES.BID) {
           // default price for BID is the worst price, i.e. Infinity
           price = Infinity
         } else {

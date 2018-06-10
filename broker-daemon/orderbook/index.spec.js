@@ -474,6 +474,7 @@ describe('Orderbook', () => {
 
       expect(orders).to.be.an('array')
       expect(orders).to.have.lengthOf(0)
+      expect(depth).to.be.equal('0')
     })
 
     it('only collects enough depth to satisfy the request', async () => {
