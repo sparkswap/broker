@@ -4,7 +4,7 @@
  */
 
 const BrokerDaemonClient = require('./broker-daemon-client')
-const { validations, askQuestion } = require('./utils')
+const { ENUMS, validations, askQuestion } = require('./utils')
 
 /**
  * @constant
@@ -107,14 +107,20 @@ async function commitBalance (args, opts, logger) {
       return logger.info('Your current balance is 0, please add funds to your daemon (or check the status of your daemon)')
     }
 
-    const answer = await askQuestion(`Are you OK committing ${balance} in ${symbol} including applicable fees? (Y/N)`)
+    const maxSupportedBalance = parseInt(balance) - ENUMS.MAX_CHANNEL_BALANCE
+
+    logger.info(`For your knowledge, the Maximum supported balance at this time is: ${ENUMS.MAX_CHANNEL_BALANCE}`)
+    logger.info(`Your current wallet balance is: ${balance}`)
+
+    const answer = await askQuestion(`Are you OK committing ${maxSupportedBalance} in ${symbol}? (Y/N)`)
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
     const res = await client.walletService.commitBalance({ balance, symbol })
+
     logger.info('Successfully added broker daemon to the kinesis exchange!', res)
   } catch (e) {
-    logger.error('Error in commitBalance', e)
+    throw e
   }
 }
 
