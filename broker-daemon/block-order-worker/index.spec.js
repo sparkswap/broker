@@ -528,7 +528,10 @@ describe('BlockOrderWorker', () => {
         { orderId: '2', baseAmount: '100' }
       ]
 
-      orderbooks.get('BTC/LTC').getBestOrders.resolves(orders)
+      orderbooks.get('BTC/LTC').getBestOrders.resolves({
+        orders,
+        depth: '190'
+      })
     })
 
     it('gets the best orders from the orderbook', async () => {
@@ -536,6 +539,15 @@ describe('BlockOrderWorker', () => {
 
       expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledOnce()
       expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledWith(sinon.match({ side: 'ASK', depth: '100' }))
+    })
+
+    it('throws if insufficient depth is in the market', () => {
+      orderbooks.get('BTC/LTC').getBestOrders.resolves({
+        orders: [],
+        depth: '0'
+      })
+
+      return expect(worker.workMarketBlockOrder(blockOrder)).to.eventually.rejectWith('Insufficient depth in ASK to fill 100')
     })
 
     it('creates FillStateMachines for each fill', async () => {

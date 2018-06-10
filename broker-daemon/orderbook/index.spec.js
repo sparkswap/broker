@@ -467,20 +467,29 @@ describe('Orderbook', () => {
       return expect(orderbook.getBestOrders({ side: 'ASK', depth: '100' })).to.eventually.be.rejectedWith('fake error')
     })
 
-    it('rejects with Insufficient depth if the stream ends early', () => {
+    it('returns the current orders if the stream ends early', async () => {
       stream.on.withArgs('end').callsArgAsync(1)
 
-      return expect(orderbook.getBestOrders({ side: 'ASK', depth: '100' })).to.eventually.be.rejectedWith('Insufficient depth in market to retrieve prices up to 100')
+      const { orders, depth } = await orderbook.getBestOrders({ side: 'ASK', depth: '100' })
+
+      expect(orders).to.be.an('array')
+      expect(orders).to.have.lengthOf(0)
     })
 
     it('only collects enough depth to satisfy the request', async () => {
-      const bestOrders = await orderbook.getBestOrders({ side: 'ASK', depth: '100' })
+      const { orders } = await orderbook.getBestOrders({ side: 'ASK', depth: '100' })
 
-      expect(bestOrders).to.have.lengthOf(2)
+      expect(orders).to.have.lengthOf(2)
+    })
+
+    it('returns the collected depth', async () => {
+      const { depth } = await orderbook.getBestOrders({ side: 'ASK', depth: '100' })
+
+      expect(depth).to.be.equal('190')
     })
 
     it('returns inflated MarketEventOrders', async () => {
-      const bestOrders = await orderbook.getBestOrders({ side: 'ASK', depth: '100' })
+      const { orders: bestOrders } = await orderbook.getBestOrders({ side: 'ASK', depth: '100' })
 
       expect(MarketEventOrderFromStorage).to.have.been.calledTwice()
       expect(MarketEventOrderFromStorage).to.have.been.calledWith(orders[0].key, orders[0].value)

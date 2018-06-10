@@ -45,17 +45,35 @@ class Orderbook {
   }
 
   /**
+   * @typedef {Object} BestOrders
+   * @property {String} depth Int64 string of the total depth represented by the orders
+   * @property {Array<MarketEventOrder>} orders Array of the best market event orders
+   */
+
+  /**
    * get the best price orders in the orderbook
    * @param  {String} options.side  Side of the orderbook to get the best priced orders for (i.e. `BID` or `ASK`)
    * @param  {String} options.depth int64 String of the amount, in base currency base units to ge the best prices up to
-   * @return {Promise<Array<MarketEventOrder>>} A promise that resolves MarketEventOrders of the best priced orders
+   * @param  {String} options.price Decimal String of the price that all orders should be better than
+   * @return {Promise<BestOrders>} A promise that resolves MarketEventOrders of the best priced orders
    */
-  getBestOrders ({ side, depth }) {
-    this.logger.info(`Retrieving best priced from ${side} up to ${depth}`)
-
+  getBestOrders ({ side, depth, price }) {
     return new Promise((resolve, reject) => {
+      this.logger.info(`Retrieving best priced from ${side} up to ${depth}`)
+
       if (!MarketEventOrder.SIDES[side]) {
         return reject(new Error(`${side} is not a valid market side`))
+      }
+
+      if(!price) {
+        
+        if(side === MarketEventOrder.SIDES.BID) {
+          // default price for BID is the worst price, i.e. Infinity
+          price = Infinity
+        } else {
+          // default price for ASK is the worst price, i.e. 0
+          price = 0
+        }
       }
 
       let resolved = false
@@ -64,13 +82,22 @@ class Orderbook {
       const targetDepth = Big(depth)
       let currentDepth = Big('0')
 
+      function finish () {
+        // AFAIK, this is the best way to stop a stream in progress
+        resolved = true
+        stream.pause()
+        stream.unpipe()
+
+        resolve({ orders, depth: currentDepth.toString() })
+      }
+
       const index = side === MarketEventOrder.SIDES.BID ? this.bidIndex : this.askIndex
       const stream = index.createReadStream()
 
       stream.on('error', reject)
 
       stream.on('end', () => {
-        reject(new Error(`Insufficient depth in market to retrieve prices up to ${targetDepth}`))
+        finish()
       })
 
       stream.on('data', ({ key, value }) => {
@@ -82,12 +109,7 @@ class Orderbook {
         currentDepth = currentDepth.plus(order.baseAmount)
 
         if (currentDepth.gte(targetDepth)) {
-          // AFAIK, this is the best way to stop a stream in progress
-          resolved = true
-          stream.pause()
-          stream.unpipe()
-
-          resolve(orders)
+          finish()
         }
       })
     })

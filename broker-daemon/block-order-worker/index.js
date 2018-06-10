@@ -164,7 +164,11 @@ class BlockOrderWorker extends EventEmitter {
     const targetDepth = Big(blockOrder.amount)
     let currentDepth = Big('0')
 
-    const orders = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString() })
+    const { orders, depth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString() })
+
+    if(Big(depth).lt(targetDepth)) {
+      throw new Error(`Insufficient depth in ${blockOrder.inverseSide} to fill ${targetDepth.toString()}`)
+    }
 
     // state machine params
     const { relayer, engine, logger } = this
@@ -212,6 +216,10 @@ class BlockOrderWorker extends EventEmitter {
     // state machine params
     const { relayer, engine, logger } = this
     const store = this.store.sublevel(blockOrder.id).sublevel('orders')
+
+    if(blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.GTC) {
+      throw new Error('Only Good-til-cancelled limit orders are currently supported.')
+    }
 
     this.logger.info('Creating single order for BlockOrder', { blockOrderId: blockOrder.id })
 
