@@ -18,12 +18,15 @@ const MINIMUM_FUNDING_AMOUNT = 400000
  * This is the max allowed balance for a channel for LND while software is currently
  * in beta
  *
- * @todo make this engine agnostic
+ * Maximum channel balance (no inclusive) is 2^32 or 16777216
+ * More info: https://github.com/lightningnetwork/lnd/releases/tag/v0.3-alpha
+ *
+ * @todo make this engine agnostic (non-LND)
  * @constant
  * @type {Long}
  * @default
  */
-const MAX_CHANNEL_BALANCE = 16777216
+const MAX_CHANNEL_BALANCE = 16777215
 
 /**
  * Grabs public lightning network information from relayer and opens a channel
@@ -42,6 +45,7 @@ async function commitBalance ({ params, relayer, logger, engine }, { CommitBalan
   const { balance, market } = params
 
   logger.info(`Attempting to create channel with ${EXCHANGE_LND_HOST} on ${market} with ${balance}`)
+  logger.info(balance)
 
   // TODO: Validate that the amount is above the minimum channel balance
   // TODO: Choose the correct engine depending on the market

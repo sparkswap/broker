@@ -48,11 +48,12 @@ const STATUS_CODES = Object.freeze({
 
 /**
  * Max channel balance for an lnd node
+ *
  * @constant
  * @type {Number}
  * @default
  */
-const MAX_CHANNEL_BALANCE = 16777216
+const MAX_CHANNEL_BALANCE = 16777215
 
 module.exports = {
   TIME_IN_FORCE,

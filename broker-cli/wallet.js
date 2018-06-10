@@ -107,7 +107,7 @@ async function commitBalance (args, opts, logger) {
       return logger.info('Your current balance is 0, please add funds to your daemon (or check the status of your daemon)')
     }
 
-    const maxSupportedBalance = parseInt(balance) - ENUMS.MAX_CHANNEL_BALANCE
+    const maxSupportedBalance = Math.min(parseInt(balance), ENUMS.MAX_CHANNEL_BALANCE)
 
     logger.info(`For your knowledge, the Maximum supported balance at this time is: ${ENUMS.MAX_CHANNEL_BALANCE}`)
     logger.info(`Your current wallet balance is: ${balance}`)
@@ -116,7 +116,7 @@ async function commitBalance (args, opts, logger) {
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    const res = await client.walletService.commitBalance({ balance, symbol })
+    const res = await client.walletService.commitBalance({ balance: maxSupportedBalance, symbol })
 
     logger.info('Successfully added broker daemon to the kinesis exchange!', res)
   } catch (e) {
