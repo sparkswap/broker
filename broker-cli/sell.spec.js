@@ -24,7 +24,7 @@ describe('sell', () => {
     const market = 'BTC/LTC'
     const amount = '10'
     const rpcAddress = undefined
-    const timeinforce = 'GTC'
+    const timeInForce = 'GTC'
 
     infoSpy = sinon.spy()
     errorSpy = sinon.spy()
@@ -36,7 +36,7 @@ describe('sell', () => {
     revert = program.__set__('BrokerDaemonClient', brokerStub)
 
     args = { amount }
-    opts = { market, timeinforce, rpcAddress }
+    opts = { market, timeInForce, rpcAddress }
     logger = {
       info: infoSpy,
       error: errorSpy
@@ -47,12 +47,27 @@ describe('sell', () => {
     revert()
   })
 
-  it('makes a request to the broker', () => {
+  it('makes a market order request to the broker', () => {
     const expectedRequest = {
       amount: args.amount,
-      timeinforce: opts.timeinforce,
+      isMarketOrder: true,
       market: opts.market,
-      side: 'SELL'
+      side: 'ASK',
+      timeInForce: opts.timeInForce
+    }
+    sell(args, opts, logger)
+    expect(createBlockOrderSpy).to.have.been.called()
+    expect(createBlockOrderSpy).to.have.been.calledWith(expectedRequest)
+  })
+
+  it('makes a limit order request to the broker', () => {
+    args.price = '10000'
+    const expectedRequest = {
+      amount: args.amount,
+      limitPrice: '10000',
+      market: opts.market,
+      side: 'ASK',
+      timeInForce: opts.timeInForce
     }
     sell(args, opts, logger)
     expect(createBlockOrderSpy).to.have.been.called()

@@ -388,6 +388,115 @@ describe('Orderbook', () => {
     })
   })
 
+  describe('#getBestOrders', () => {
+    let orderbook
+    let askIndex
+    let bidIndex
+    let stream
+    let orders
+
+    beforeEach(() => {
+      orderbook = new Orderbook('XYZ/ABC', relayer, baseStore, logger)
+      stream = {
+        on: sinon.stub(),
+        unpipe: sinon.stub(),
+        pause: sinon.stub()
+      }
+      askIndex = {
+        createReadStream: sinon.stub().returns(stream)
+      }
+      bidIndex = {
+        createReadStream: sinon.stub().returns(stream)
+      }
+
+      orderbook.askIndex = askIndex
+      orderbook.bidIndex = bidIndex
+
+      orders = [
+        {
+          key: 'a',
+          value: {
+            baseAmount: '90'
+          }
+        },
+        {
+          key: 'b',
+          value: {
+            baseAmount: '100'
+          }
+        },
+        {
+          key: 'c',
+          value: {
+            baseAmount: '50'
+          }
+        }
+      ]
+
+      MarketEventOrderFromStorage.withArgs(orders[0].key, orders[0].value).returns(orders[0].value)
+      MarketEventOrderFromStorage.withArgs(orders[1].key, orders[1].value).returns(orders[1].value)
+      MarketEventOrderFromStorage.withArgs(orders[2].key, orders[2].value).returns(orders[2].value)
+
+      stream.on.withArgs('data').callsFake((evt, fn) => {
+        const locals = orders.slice()
+        function nextOrder () {
+          fn(locals.shift())
+
+          if (locals.length) {
+            process.nextTick(nextOrder)
+          }
+        }
+
+        process.nextTick(nextOrder)
+      })
+    })
+
+    it('rejects if using an invalid side', () => {
+      return expect(orderbook.getBestOrders({ side: 'UGH', depth: '100' })).to.eventually.be.rejectedWith(Error)
+    })
+
+    it('pulls a read stream from the correct side', () => {
+      orderbook.getBestOrders({ side: 'ASK', depth: '100' })
+
+      expect(askIndex.createReadStream).to.have.been.calledOnce()
+    })
+
+    it('rejects on stream error', () => {
+      stream.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
+
+      return expect(orderbook.getBestOrders({ side: 'ASK', depth: '100' })).to.eventually.be.rejectedWith('fake error')
+    })
+
+    it('rejects with Insufficient depth if the stream ends early', () => {
+      stream.on.withArgs('end').callsArgAsync(1)
+
+      return expect(orderbook.getBestOrders({ side: 'ASK', depth: '100' })).to.eventually.be.rejectedWith('Insufficient depth in market to retrieve prices up to 100')
+    })
+
+    it('only collects enough depth to satisfy the request', async () => {
+      const bestOrders = await orderbook.getBestOrders({ side: 'ASK', depth: '100' })
+
+      expect(bestOrders).to.have.lengthOf(2)
+    })
+
+    it('returns inflated MarketEventOrders', async () => {
+      const bestOrders = await orderbook.getBestOrders({ side: 'ASK', depth: '100' })
+
+      expect(MarketEventOrderFromStorage).to.have.been.calledTwice()
+      expect(MarketEventOrderFromStorage).to.have.been.calledWith(orders[0].key, orders[0].value)
+      expect(MarketEventOrderFromStorage).to.have.been.calledWith(orders[1].key, orders[1].value)
+      expect(bestOrders[0]).to.be.equal(orders[0].value)
+      expect(bestOrders[1]).to.be.equal(orders[1].value)
+    })
+
+    it('unpipes and pauses the stream once it is done', async () => {
+      await orderbook.getBestOrders({ side: 'ASK', depth: '100' })
+
+      expect(stream.unpipe).to.have.been.calledOnce()
+      expect(stream.pause).to.have.been.calledOnce()
+    })
+  })
+
   describe('get baseSymbol', () => {
     it('returns the base symbol', async () => {
       const marketName = 'XYZ/ABC'

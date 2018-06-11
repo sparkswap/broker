@@ -25,10 +25,15 @@ async function buy (args, opts, logger) {
 
   const request = {
     amount,
-    price,
     timeInForce,
     market,
     side
+  }
+
+  if (price) {
+    request.limitPrice = price
+  } else {
+    request.isMarketOrder = true
   }
 
   try {

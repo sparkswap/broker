@@ -50,13 +50,27 @@ describe('buy', () => {
     revert()
   })
 
-  it('makes a request to the broker', () => {
+  it('makes a market order request to the broker', () => {
+    delete args.price
     const expectedRequest = {
       amount: args.amount,
-      price: args.price,
+      isMarketOrder: true,
       timeInForce: opts.timeInForce,
       market: opts.market,
       side: 'BID'
+    }
+    buy(args, opts, logger)
+    expect(createBlockOrderSpy).to.have.been.called()
+    expect(createBlockOrderSpy).to.have.been.calledWith(expectedRequest)
+  })
+
+  it('makes a limit order request to the broker', () => {
+    const expectedRequest = {
+      amount: args.amount,
+      limitPrice: '10',
+      market: opts.market,
+      side: 'BID',
+      timeInForce: opts.timeInForce
     }
     buy(args, opts, logger)
     expect(createBlockOrderSpy).to.have.been.called()

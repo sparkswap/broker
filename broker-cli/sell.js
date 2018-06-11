@@ -12,20 +12,26 @@ const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
  * @param {String} args.amount
  * @param {Object} opts
  * @param {String} opts.market
- * @param {String} [timeinforce] opts.timeinforce
+ * @param {String} [timeInForce] opts.timeInForce
  * @param {String} [rpcaddress] opts.rpcaddress
  * @param {Logger} logger
  */
 async function sell (args, opts, logger) {
-  const { amount } = args
-  const { timeinforce, market, rpcAddress = null } = opts
-  const side = ORDER_TYPES.SELL
+  const { amount, price } = args
+  const { timeInForce, market, rpcAddress = null } = opts
+  const side = ORDER_TYPES.ASK
 
   const request = {
     amount,
-    timeinforce,
+    timeInForce,
     market,
     side
+  }
+
+  if (price) {
+    request.limitPrice = price
+  } else {
+    request.isMarketOrder = true
   }
 
   try {
@@ -38,7 +44,7 @@ async function sell (args, opts, logger) {
     // return the object from the broker.proto file
     logger.info(blockOrderResult)
   } catch (e) {
-    logger.error(e)
+    logger.error(e.toString())
   }
 };
 
@@ -46,8 +52,9 @@ module.exports = (program) => {
   program
     .command('sell', 'Submit an order to sell.')
     .argument('<amount>', 'Amount of counter currency to sell.', validations.isPrice)
+    .argument('[price]', 'Worst price that this order should be executed at. (If omitted, the market price will be used)', validations.isPrice)
     .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
-    .option('-t, --timeinforce', 'Time in force policy for this order.', Object.keys(TIME_IN_FORCE), 'GTC')
+    .option('-t, --time-in-force', 'Time in force policy for this order.', Object.keys(TIME_IN_FORCE), 'GTC')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
     .action(sell)
 }

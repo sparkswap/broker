@@ -1,6 +1,6 @@
 const { MarketEvent, MarketEventOrder } = require('../models')
 const { AskIndex, BidIndex } = require('./price-indexes')
-const { getRecords } = require('../utils')
+const { getRecords, Big } = require('../utils')
 
 class Orderbook {
   constructor (marketName, relayer, store, logger = console) {
@@ -42,6 +42,55 @@ class Orderbook {
   async all () {
     this.logger.info(`Retrieving all records for ${this.marketName}`)
     return getRecords(this.store, MarketEventOrder.fromStorage.bind(MarketEventOrder))
+  }
+
+  /**
+   * get the best price orders in the orderbook
+   * @param  {String} options.side  Side of the orderbook to get the best priced orders for (i.e. `BID` or `ASK`)
+   * @param  {String} options.depth int64 String of the amount, in base currency base units to ge the best prices up to
+   * @return {Promise<Array<MarketEventOrder>>} A promise that resolves MarketEventOrders of the best priced orders
+   */
+  getBestOrders ({ side, depth }) {
+    this.logger.info(`Retrieving best priced from ${side} up to ${depth}`)
+
+    return new Promise((resolve, reject) => {
+      if (!MarketEventOrder.SIDES[side]) {
+        return reject(new Error(`${side} is not a valid market side`))
+      }
+
+      let resolved = false
+      const orders = []
+
+      const targetDepth = Big(depth)
+      let currentDepth = Big('0')
+
+      const index = side === MarketEventOrder.SIDES.BID ? this.bidIndex : this.askIndex
+      const stream = index.createReadStream()
+
+      stream.on('error', reject)
+
+      stream.on('end', () => {
+        reject(new Error(`Insufficient depth in market to retrieve prices up to ${targetDepth}`))
+      })
+
+      stream.on('data', ({ key, value }) => {
+        if (resolved) return
+
+        const order = MarketEventOrder.fromStorage(key, value)
+        orders.push(order)
+
+        currentDepth = currentDepth.plus(order.baseAmount)
+
+        if (currentDepth.gte(targetDepth)) {
+          // AFAIK, this is the best way to stop a stream in progress
+          resolved = true
+          stream.pause()
+          stream.unpipe()
+
+          resolve(orders)
+        }
+      })
+    })
   }
 
   /**

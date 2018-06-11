@@ -19,7 +19,11 @@ async function getBlockOrder ({ params, logger, blockOrderWorker }, { GetBlockOr
 
   try {
     const blockOrder = await blockOrderWorker.getBlockOrder(blockOrderId)
-    return new GetBlockOrderResponse(blockOrder.serialize())
+
+    // the grpc response constructor does not properly serialize oneof fields, and tries to send both
+    // when sending the limitPrice, it sends it as an object to encode the in64, which fails on the wire
+    // so instead, we use a plain object
+    return blockOrder.serialize()
   } catch (err) {
     if (err instanceof BlockOrderNotFoundError) {
       throw new PublicError(err.message, err)
