@@ -154,7 +154,7 @@ class StateMachinePersistence extends StateMachinePlugin {
        */
       persist: async function (key) {
         if (!key) {
-          throw new Error(`An key is required to save state`)
+          throw new Error(`A key is required to save state`)
         }
 
         const fields = plugin.persistedFields || {}

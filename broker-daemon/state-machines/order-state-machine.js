@@ -123,7 +123,7 @@ const OrderStateMachine = StateMachine.factory({
 
       this.order = new Order({ baseSymbol, counterSymbol, side, baseAmount, counterAmount, payTo, ownerId })
 
-      const { orderId, feePaymentRequest, depositPaymentRequest } = await this.relayer.makerService.createOrder(this.order.paramsForCreate)
+      const { orderId, feeRequest: feePaymentRequest, depositRequest: depositPaymentRequest } = await this.relayer.makerService.createOrder(this.order.paramsForCreate)
       this.order.setCreatedParams({ orderId, feePaymentRequest, depositPaymentRequest })
 
       this.logger.info(`Created order ${this.order.orderId} on the relayer`)
@@ -156,7 +156,32 @@ const OrderStateMachine = StateMachine.factory({
      * @return {Promise}          romise that rejects if placement on the relayer fails
      */
     onBeforePlace: async function (lifecycle) {
-      throw new Error('Placing orders is currently un-implemented')
+      const { feePaymentRequest, depositPaymentRequest, orderId } = this.order
+      const { publicKey: relayerPubKey } = await this.relayer.paymentNetworkService.getPublicKey({})
+
+      this.logger.debug('Received public key from relayer', { relayerPubKey })
+
+      if (!feePaymentRequest) throw new Error('Cant pay invoices because fee invoice does not exist')
+      if (!depositPaymentRequest) throw new Error('Cant pay invoices because deposit invoice does not exist')
+
+      this.logger.debug(`Attempting to pay fees for order: ${orderId}`)
+
+      this.engine.client.listChannels({}, (err, response) => {
+        if (err) throw err
+        this.logger.info('ListChannels: ', { response })
+      })
+
+      const [feeRefundPaymentRequest, depositRefundPaymentRequest] = await this.engine.sendFeePayments(feePaymentRequest, depositPaymentRequest, relayerPubKey)
+
+      this.logger.info(`Successfully paid fees for order: ${orderId}`, { feeRefundPaymentRequest, depositRefundPaymentRequest })
+
+      // const res = await this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest })
+
+      this.logger.info(`Placed order ${this.order.orderId} on the relayer`)
+    },
+
+    onAfterPlace: function (lifecycle) {
+      throw new Error('Transition \'onAfterPlace\' Not implemented')
     },
 
     /**
