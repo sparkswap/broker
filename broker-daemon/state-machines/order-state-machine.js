@@ -157,20 +157,27 @@ const OrderStateMachine = StateMachine.factory({
      */
     onBeforePlace: async function (lifecycle) {
       const { feePaymentRequest, depositPaymentRequest, orderId } = this.order
-      const { publicKey: relayerPubKey } = await this.relayer.paymentNetworkService.getPublicKey({})
-
-      this.logger.debug('Received public key from relayer', { relayerPubKey })
 
       if (!feePaymentRequest) throw new Error('Cant pay invoices because fee invoice does not exist')
       if (!depositPaymentRequest) throw new Error('Cant pay invoices because deposit invoice does not exist')
 
       this.logger.debug(`Attempting to pay fees for order: ${orderId}`)
 
-      const [feeRefundPaymentRequest, depositRefundPaymentRequest] = await this.engine.sendFeePayments(feePaymentRequest, depositPaymentRequest, relayerPubKey)
+      const [feeRefundPaymentRequest, depositRefundPaymentRequest] = await Promise.all([
+        this.engine.payInvoice(feePaymentRequest),
+        this.engine.payInvoice(depositPaymentRequest)
+      ])
+
+      this.logger.info('Received response for successful payment')
+
+      this.logger.debug('Response from engine', {
+        feeRefundPaymentRequest,
+        depositRefundPaymentRequest
+      })
 
       this.logger.info(`Successfully paid fees for order: ${orderId}`)
 
-      await this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest })
+      // await this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest })
 
       this.logger.info(`Placed order ${this.order.orderId} on the relayer`)
     },

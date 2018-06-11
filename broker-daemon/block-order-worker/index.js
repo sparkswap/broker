@@ -101,6 +101,7 @@ class BlockOrderWorker extends EventEmitter {
    * @return {void}
    */
   async failBlockOrder (blockOrderId, err) {
+    // TODO: expose the stack trace of err because it is hard to troubleshoot without it
     this.logger.error('Error encountered while working block', { id: blockOrderId, error: err.message })
     this.logger.info('Moving block order to failed state', { id: blockOrderId })
 
