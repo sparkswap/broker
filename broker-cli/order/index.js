@@ -31,7 +31,7 @@ module.exports = (program) => {
         case SUPPORTED_COMMANDS.STATUS:
           const [blockOrderId] = subArguments
 
-          args.blockOrderId = validations.isBlockOrderId(blockOrderId || "")
+          args.blockOrderId = validations.isBlockOrderId(blockOrderId || '')
 
           return status(args, opts, logger)
       }
