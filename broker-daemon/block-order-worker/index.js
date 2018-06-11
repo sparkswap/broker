@@ -155,7 +155,7 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
-   * Work makret block order
+   * Work market block order
    * @param  {BlockOrder} blockOrder BlockOrder without a limit price, i.e. a market order
    * @return {void}
    */
