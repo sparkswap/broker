@@ -186,38 +186,48 @@ class BlockOrderWorker extends EventEmitter {
     const orderbook = this.orderbooks.get(blockOrder.marketName)
     const targetDepth = Big(blockOrder.amount)
 
-    const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString() })
-
+    // fill as many orders at our price or better
+    const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString(), price: blockOrder.price.toString() })
     await this._fillOrders(blockOrder, orders, targetDepth)
 
     if (targetDepth.gt(availableDepth)) {
-      // order params
-      const { baseSymbol, counterSymbol, side } = blockOrder
-      const baseAmountBig = targetDepth.minus(availableDepth)
-      const baseAmount = baseAmountBig.toString()
-      const counterAmount = baseAmountBig.times(blockOrder.price).round(0).toString()
-
-      // state machine params
-      const { relayer, engine, logger } = this
-      const store = this.store.sublevel(blockOrder.id).sublevel('orders')
-
-      this.logger.info('Creating order for BlockOrder', { blockOrderId: blockOrder.id })
-
-      const order = await OrderStateMachine.create(
-        {
-          relayer,
-          engine,
-          logger,
-          store,
-          onRejection: (err) => {
-            this.failBlockOrder(blockOrder.id, err)
-          }
-        },
-        { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
-      )
-
-      this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
+      // place an order for the remaining depth that we could not fill
+      this._placeOrder(blockOrder, targetDepth.minus(availableDepth).toString())
     }
+  }
+
+  /**
+   * Place an order for a block order of a given amount
+   * @param  {BlockOrder} blockOrder Block Order to place an order on behalf of
+   * @param  {String} amount     Int64 amount, in base currency's base units to place the order for
+   * @return {void}
+   */
+  async _placeOrder (blockOrder, amount) {
+    // order params
+    const { baseSymbol, counterSymbol, side } = blockOrder
+    const baseAmount = amount.toString()
+    const counterAmount = Big(amount).times(blockOrder.price).round(0).toString()
+
+    // state machine params
+    const { relayer, engine, logger } = this
+    const store = this.store.sublevel(blockOrder.id).sublevel('orders')
+
+    this.logger.info('Creating order for BlockOrder', { blockOrderId: blockOrder.id })
+
+    const order = await OrderStateMachine.create(
+      {
+        relayer,
+        engine,
+        logger,
+        store,
+        onRejection: (err) => {
+          this.failBlockOrder(blockOrder.id, err)
+        }
+      },
+      { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
+    )
+
+    this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
   }
 
   /**
