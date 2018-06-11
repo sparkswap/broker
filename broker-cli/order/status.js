@@ -1,5 +1,4 @@
 const BrokerDaemonClient = require('../broker-daemon-client')
-const { validations } = require('../utils')
 
 /**
  * kcli order status

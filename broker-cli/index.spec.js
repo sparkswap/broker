@@ -7,7 +7,7 @@ const {
   orderbookCommand,
   healthCheckCommand,
   walletCommand,
-  orderStatusCommand
+  orderCommand
 } = require('./index')
 
 describe('broker index', () => {
