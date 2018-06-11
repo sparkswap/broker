@@ -11,7 +11,7 @@ async function migrateStore (sourceStore, targetStore, createDbOperation, batchS
     const stream = sourceStore.createReadStream()
     let batch = []
 
-    function flush (done = function () {}) {
+    function flush (done = () => {}) {
       if (!batch.length) {
         return process.nextTick(done)
       }
