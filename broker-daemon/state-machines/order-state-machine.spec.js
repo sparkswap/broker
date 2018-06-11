@@ -374,6 +374,20 @@ describe('OrderStateMachine', () => {
         orderId
       }))
     })
+
+    it('errors if a feePaymentRequest isnt available on an order', async () => {
+      const badOsm = new OrderStateMachine({ store, logger, relayer, engine })
+      badOsm.order = {}
+      await badOsm.goto('created')
+      return expect(badOsm.place()).to.eventually.be.rejectedWith('Cant pay invoices because fee')
+    })
+
+    it('errors if a feePaymentRequest isnt available on an order', async () => {
+      const badOsm = new OrderStateMachine({ store, logger, relayer, engine })
+      badOsm.order = { feePaymentRequest }
+      await badOsm.goto('created')
+      return expect(badOsm.place()).to.eventually.be.rejectedWith('Cant pay invoices because deposit')
+    })
   })
 
   describe('#goto', () => {
@@ -428,6 +442,15 @@ describe('OrderStateMachine', () => {
 
       expect(store.put).to.have.been.calledOnce()
       expect(store.put).to.have.been.calledWith(osm.order.key, sinon.match('"state":"rejected"'))
+    })
+
+    it('saves with a placeholder key if one is not available', async () => {
+      osm.order.key = undefined
+
+      await osm.reject()
+
+      expect(store.put).to.have.been.calledOnce()
+      expect(store.put).to.have.been.calledWith(sinon.match(/^NO_ASSIGNED_ID\S+$/))
     })
 
     it('calls an onRejection function', async () => {

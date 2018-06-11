@@ -1,9 +1,19 @@
+const safeid = require('generate-safe-id')
 const StateMachine = require('./state-machine')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 const StateMachinePersistence = require('./plugins/persistence')
 const StateMachineRejection = require('./plugins/rejection')
 const StateMachineLogging = require('./plugins/logging')
 const { Order } = require('../models')
+
+/**
+ * If Orders are saved in the database before they are created on the remote, they lack an ID
+ * This string indicates an order that does not have an assigned remote ID
+ * @type {String}
+ * @constant
+ * @default
+ */
+const UNASSIGNED_PREFIX = 'NO_ASSIGNED_ID_'
 
 /**
  * @class Finite State Machine for managing order lifecycle
@@ -22,7 +32,7 @@ const OrderStateMachine = StateMachine.factory({
       key: function (key) {
         // this only defines a getter - it will be set by the `order` setter
         if (!key) {
-          return this.order.key
+          return this.order.key || `${UNASSIGNED_PREFIX}${safeid()}`
         }
       },
       additionalFields: {
@@ -183,7 +193,17 @@ const OrderStateMachine = StateMachine.factory({
     },
 
     onAfterPlace: function (lifecycle) {
-      throw new Error('Transition \'onAfterPlace\' Not implemented')
+      this.logger.error('Transition for onAfterPlace not implemented')
+    },
+
+    /**
+     * Log errors from rejection
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @param  {Error}  error     Error that caused the rejection
+     * @return {void}
+     */
+    onBeforeReject: function (lifecycle, error) {
+      this.logger.error(`Encountered error during transition, rejecting`, error)
     },
 
     /**
