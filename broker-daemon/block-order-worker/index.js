@@ -237,16 +237,18 @@ class BlockOrderWorker extends EventEmitter {
     const { relayer, engine, logger } = this
     const store = this.store.sublevel(blockOrder.id).sublevel('fills')
 
-    return Promise.all(orders.map((order, index) => {
-      let fillAmount
+    const promisedFills = orders.map((order, index) => {
+      const depthRemaining = targetDepth.minus(currentDepth)
 
-      // Only the last order is a partial fill
-      if (index < orders.length - 1) {
-        fillAmount = order.baseAmount
-      } else {
-        fillAmount = targetDepth.minus(currentDepth).toString()
+      // if we have already reached our target depth, create no further fills
+      if(depthRemaining.lte(0)) {
+        return
       }
 
+      // Take the smaller of the remaining desired depth or the base amount of the order
+      const fillAmount = depthRemaining.gt(order.baseAmount) ? order.baseAmount : depthRemaining.toString()
+
+      // track our current depth so we know what to fill on the next order
       currentDepth = currentDepth.plus(fillAmount)
 
       return FillStateMachine.create(
@@ -263,7 +265,10 @@ class BlockOrderWorker extends EventEmitter {
         order,
         { fillAmount }
       )
-    }))
+    })
+
+    // filter out null values, they are orders we decided not to fill
+    return Promise.all(promisedFills.filter(promise => promise))
   }
 }
 
