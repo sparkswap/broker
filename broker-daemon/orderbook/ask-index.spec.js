@@ -42,8 +42,8 @@ describe('AskIndex', () => {
       const keyForPrice = index.keyForPrice(price)
 
       expect(keyForPrice).to.have.lengthOf(40)
-      expect(keyForPrice.slice(0, 35)).to.be.equal('000000000000000000000000000')
-      expect(keyForPrice.slice(35)).to.be.equal(price)
+      expect(keyForPrice.slice(0, 14)).to.be.equal('00000000000000')
+      expect(keyForPrice.split('.')[0].slice(15)).to.be.equal(price)
     })
 
     it('provides a consistent amount of decimal places', () => {
