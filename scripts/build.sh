@@ -49,8 +49,4 @@ docker-compose build --force-rm
 
 echo "Running tests against the repository"
 
-if npm test ; then
-  exit 0
-else
-  echo "SKIPPING TEST RUN: Docker containers are not running"
-fi
+npm test

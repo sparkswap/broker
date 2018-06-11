@@ -2,7 +2,7 @@
   "name": "kinesis-broker",
   "script": "./scripts/start-kbd.sh",
   "instances": "1",
-  "max_restarts": 4,
+  "max_restarts": 10,
   "exec_interpreter" : "bash",
   "exec_mode"  : "fork_mode",
   "min_uptime": 5000,
