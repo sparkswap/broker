@@ -166,16 +166,11 @@ const OrderStateMachine = StateMachine.factory({
 
       this.logger.debug(`Attempting to pay fees for order: ${orderId}`)
 
-      this.engine.client.listChannels({}, (err, response) => {
-        if (err) throw err
-        this.logger.info('ListChannels: ', { response })
-      })
-
       const [feeRefundPaymentRequest, depositRefundPaymentRequest] = await this.engine.sendFeePayments(feePaymentRequest, depositPaymentRequest, relayerPubKey)
 
-      this.logger.info(`Successfully paid fees for order: ${orderId}`, { feeRefundPaymentRequest, depositRefundPaymentRequest })
+      this.logger.info(`Successfully paid fees for order: ${orderId}`)
 
-      // const res = await this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest })
+      await this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest })
 
       this.logger.info(`Placed order ${this.order.orderId} on the relayer`)
     },
