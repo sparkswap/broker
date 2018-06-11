@@ -4,7 +4,7 @@
  */
 
 const BrokerDaemonClient = require('./broker-daemon-client')
-const { validations, askQuestion } = require('./utils')
+const { ENUMS, validations, askQuestion } = require('./utils')
 
 /**
  * @constant
@@ -99,20 +99,28 @@ async function commitBalance (args, opts, logger) {
   const { symbol } = args
   const { rpcAddress = null } = opts
 
-  const client = new BrokerDaemonClient(rpcAddress)
-  const { balance } = await client.walletService.getBalance({})
-
-  if (parseInt(balance) === 0) return logger.info('Your current balance is 0, please add funds to your daemon (or check the status of your daemon)')
-
-  const answer = await askQuestion(`Are you OK committing ${balance} in ${symbol} to the relayer? (Y/N) `)
-
-  if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return logger.info('Received \'no\' response. Quitting setup')
-
   try {
-    const res = client.adminService.setup(balance, symbol)
+    const client = new BrokerDaemonClient(rpcAddress)
+    const { balance } = await client.walletService.getBalance({})
+
+    if (parseInt(balance) === 0) {
+      return logger.info('Your current balance is 0, please add funds to your daemon (or check the status of your daemon)')
+    }
+
+    const maxSupportedBalance = Math.min(parseInt(balance), ENUMS.MAX_CHANNEL_BALANCE)
+
+    logger.info(`For your knowledge, the Maximum supported balance at this time is: ${ENUMS.MAX_CHANNEL_BALANCE}`)
+    logger.info(`Your current wallet balance is: ${balance}`)
+
+    const answer = await askQuestion(`Are you OK committing ${maxSupportedBalance} in ${symbol}? (Y/N)`)
+
+    if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
+
+    const res = await client.walletService.commitBalance({ balance: maxSupportedBalance, symbol })
+
     logger.info('Successfully added broker daemon to the kinesis exchange!', res)
   } catch (e) {
-    logger.error('Error in commitBalance', e)
+    throw e
   }
 }
 

@@ -38,8 +38,6 @@ const ORDER_TYPES = Object.freeze({
 })
 
 /**
- * STATUS CODES
- *
  * @constant
  * @type {Object<key, String>}
  * @default
@@ -48,8 +46,18 @@ const STATUS_CODES = Object.freeze({
   OK: 'OK'
 })
 
+/**
+ * Max channel balance for an lnd node
+ *
+ * @constant
+ * @type {Number}
+ * @default
+ */
+const MAX_CHANNEL_BALANCE = 16777215
+
 module.exports = {
   TIME_IN_FORCE,
   ORDER_TYPES,
-  STATUS_CODES
+  STATUS_CODES,
+  MAX_CHANNEL_BALANCE
 }

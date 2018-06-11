@@ -40,7 +40,7 @@ describe('cli wallet', () => {
     })
   })
 
-  describe('walletBalance', () => {
+  describe('balance', () => {
     let daemonStub
     let walletBalanceStub
     let rpcAddress
@@ -68,6 +68,58 @@ describe('cli wallet', () => {
     it('calls broker daemon for a wallet balance', () => {
       expect(daemonStub).to.have.been.calledWith(rpcAddress)
       expect(walletBalanceStub).to.have.been.calledOnce()
+    })
+  })
+
+  describe('commitBalance', () => {
+    let args
+    let opts
+    let logger
+    let rpcAddress
+    let symbol
+    let walletBalanceStub
+    let balance
+    let daemonStub
+    let commitBalanceStub
+    let askQuestionStub
+
+    const commitBalance = program.__get__('commitBalance')
+
+    beforeEach(() => {
+      symbol = 'BTC'
+      args = { symbol }
+      rpcAddress = 'test:1337'
+      balance = 10000
+      walletBalanceStub = sinon.stub().returns({ balance })
+      commitBalanceStub = sinon.stub()
+      askQuestionStub = sinon.stub().returns('Y')
+      opts = { rpcAddress }
+      logger = { info: sinon.stub(), error: sinon.stub() }
+
+      daemonStub = sinon.stub()
+      daemonStub.prototype.walletService = {
+        getBalance: walletBalanceStub,
+        commitBalance: commitBalanceStub
+      }
+
+      program.__set__('BrokerDaemonClient', daemonStub)
+      program.__set__('askQuestion', askQuestionStub)
+    })
+
+    beforeEach(async () => {
+      await commitBalance(args, opts, logger)
+    })
+
+    it('gets a balance from the daemon', () => {
+      expect(walletBalanceStub).to.have.been.called()
+    })
+
+    it('calls the daemon to commit a balance to the relayer', () => {
+      expect(commitBalanceStub).to.have.been.calledWith({ balance, symbol })
+    })
+
+    it('asks the user if they are ok to commit to a balance', () => {
+      expect(askQuestionStub).to.have.been.called()
     })
   })
 })

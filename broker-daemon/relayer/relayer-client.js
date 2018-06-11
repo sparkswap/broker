@@ -2,7 +2,7 @@ const path = require('path')
 const caller = require('grpc-caller')
 
 const { MarketEvent } = require('../models')
-const { loadProto, grpcDeadline } = require('../utils')
+const { loadProto } = require('../utils')
 
 /**
  * @todo Add this config to CLI
@@ -38,37 +38,7 @@ class RelayerClient {
     this.takerService = caller(this.address, this.proto.TakerService)
     this.healthService = caller(this.address, this.proto.HealthService)
     this.orderbookService = caller(this.address, this.proto.OrderBookService)
-  }
-
-  /**
-   * Creates an order on the relayer
-   *
-   * @param {Object} params
-   * @returns {Promise}
-   */
-  createOrder (params) {
-    return new Promise((resolve, reject) => {
-      this.maker.createOrder(params, { deadline: grpcDeadline() }, (err, res) => {
-        if (err) return reject(err)
-        return resolve(res)
-      })
-    })
-  }
-
-  /**
-   * Place an order on the Relayer
-   * @param  {String} options.orderId                     Relayer-assigned unique identifier
-   * @param  {String} options.feeRefundPaymentRequest     Lightning Network payment request to refund the paid fee in case of order cancellation
-   * @param  {String} options.depositRefundPaymentRequest Lightning Network payment request to refund the deposit in case or cancellation or completion
-   * @return {Promise<void>}
-   */
-  async placeOrder ({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest }) {
-    return new Promise((resolve, reject) => {
-      this.maker.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest }, { deadline: grpcDeadline() }, (err, res) => {
-        if (err) return reject(err)
-        return resolve()
-      })
-    })
+    this.paymentNetworkService = caller(this.address, this.proto.PaymentNetworkService)
   }
 
   /**
@@ -124,35 +94,6 @@ class RelayerClient {
       } catch (e) {
         return reject(e)
       }
-    })
-  }
-
-  /**
-   * Checks the health of the relayer
-   *
-   * @param {Object} params
-   * @returns {Promise}
-   */
-  healthCheck () {
-    return new Promise((resolve, reject) => {
-      this.health.check({}, { deadline: grpcDeadline() }, (err, res) => {
-        if (err) return reject(err)
-        return resolve(res)
-      })
-    })
-  }
-
-  /**
-   * Returns a public key from the relayer
-   *
-   * @returns {Promise<Object>} response
-   */
-  getPublicKey () {
-    return new Promise((resolve, reject) => {
-      this.paymentNetwork.getPublicKey({}, { deadline: grpcDeadline() }, (err, res) => {
-        if (err) return reject(err)
-        return resolve(res)
-      })
     })
   }
 }

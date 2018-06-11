@@ -7,6 +7,15 @@ const StateMachineLogging = require('./plugins/logging')
 const { Order } = require('../models')
 
 /**
+ * If Orders are saved in the database before they are created on the remote, they lack an ID
+ * This string indicates an order that does not have an assigned remote ID
+ * @type {String}
+ * @constant
+ * @default
+ */
+const UNASSIGNED_PREFIX = 'NO_ASSIGNED_ID_'
+
+/**
  * @class Finite State Machine for managing order lifecycle
  */
 const OrderStateMachine = StateMachine.factory({
@@ -23,7 +32,7 @@ const OrderStateMachine = StateMachine.factory({
       key: function (key) {
         // this only defines a getter - it will be set by the `order` setter
         if (!key) {
-          return this.order.key || `NO_RELAYER_KEY_${safeid()}`
+          return this.order.key || `${UNASSIGNED_PREFIX}${safeid()}`
         }
       },
       additionalFields: {
@@ -167,11 +176,7 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onBeforeReject: function (lifecycle, error) {
-      if (!error) {
-        return this.logger.error(`Rejecting transition without error`)
-      }
-
-      this.logger.error(`Encountered error during transition, rejecting`, { message: error.message, stack: error.stack })
+      this.logger.error(`Encountered error during transition, rejecting`, error)
     },
 
     /**

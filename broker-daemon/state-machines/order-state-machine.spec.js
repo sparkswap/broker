@@ -392,7 +392,7 @@ describe('OrderStateMachine', () => {
       await osm.reject()
 
       expect(store.put).to.have.been.calledOnce()
-      expect(store.put).to.have.been.calledWith(sinon.match(/^NO_RELAYER_KEY_\S+$/))
+      expect(store.put).to.have.been.calledWith(sinon.match(/^NO_ASSIGNED_ID\S+$/))
     })
 
     it('calls an onRejection function', async () => {
