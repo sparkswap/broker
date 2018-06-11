@@ -14,7 +14,7 @@ function askQuestion (message) {
 
   return new Promise((resolve, reject) => {
     try {
-      rl.question(message, (answer) => {
+      rl.question(`${message} `, (answer) => {
         rl.close()
         return resolve(answer)
       })

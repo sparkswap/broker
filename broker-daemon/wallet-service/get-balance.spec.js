@@ -8,19 +8,19 @@ describe('get-balance', () => {
   let logger
   let walletBalanceStub
   let expectedBalance
+  let engine
 
-  before(() => {
+  beforeEach(() => {
     logger = sinon.stub()
     expectedBalance = 1000
     walletBalanceStub = sinon.stub().returns(expectedBalance)
     balanceResponseStub = sinon.stub()
 
-    const engine = {
-      getTotalBalance: walletBalanceStub
-    }
-
+    engine = { getTotalBalance: walletBalanceStub }
     logger = { info: sinon.stub() }
+  })
 
+  beforeEach(async () => {
     balance({ logger, engine }, { GetBalanceResponse: balanceResponseStub })
   })
 

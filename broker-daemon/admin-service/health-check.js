@@ -32,7 +32,7 @@ async function getEngineStatus (engine) {
  */
 async function getRelayerStatus (relayer) {
   try {
-    await relayer.healthService.check()
+    await relayer.healthService.check({})
     return STATUS_CODES.OK
   } catch (e) {
     return e.toString()
