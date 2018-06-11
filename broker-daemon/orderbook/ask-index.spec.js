@@ -16,6 +16,10 @@ describe('AskIndex', () => {
     MarketEventOrderFromStorage = sinon.stub()
 
     AskIndex.__set__('MarketEventOrder', {
+      SIDES: {
+        ASK: 'ASK',
+        BID: 'BID'
+      },
       fromStorage: MarketEventOrderFromStorage
     })
   })
@@ -27,6 +31,19 @@ describe('AskIndex', () => {
   })
 
   describe('#keyForPrice', () => {
-    xit('left pads the price')
+    let index
+
+    beforeEach(() => {
+      index = new AskIndex(store)
+    })
+
+    it('left pads the price', () => {
+      const price = '12345'
+      const keyForPrice = index.keyForPrice(price)
+
+      expect(keyForPrice).to.have.lengthOf(32)
+      expect(keyForPrice.slice(0, 27)).to.be.equal('000000000000000000000000000')
+      expect(keyForPrice.slice(27)).to.be.equal(price)
+    })
   })
 })
