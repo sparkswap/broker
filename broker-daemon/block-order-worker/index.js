@@ -169,7 +169,7 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`Insufficient depth in ${blockOrder.inverseSide} to fill ${targetDepth.toString()}`)
     }
 
-    return this._fillOrders(blockOrder, orders, targetDepth)
+    return this._fillOrders(blockOrder, orders, targetDepth.toString())
   }
 
   /**
@@ -188,7 +188,7 @@ class BlockOrderWorker extends EventEmitter {
 
     // fill as many orders at our price or better
     const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString(), price: blockOrder.price.toString() })
-    await this._fillOrders(blockOrder, orders, targetDepth)
+    await this._fillOrders(blockOrder, orders, targetDepth.toString())
 
     if (targetDepth.gt(availableDepth)) {
       // place an order for the remaining depth that we could not fill

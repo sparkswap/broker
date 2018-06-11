@@ -3,7 +3,7 @@ const { rewire, sinon, expect } = require('test/test-helper')
 
 const BidIndex = rewire(path.resolve(__dirname, 'bid-index'))
 
-describe.only('#BidIndex', () => {
+describe('#BidIndex', () => {
   let store
   let MarketEventOrderFromStorage
 
