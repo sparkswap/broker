@@ -159,7 +159,17 @@ describe('PriceIndex', () => {
         expect(createReadStreamStub).to.have.been.calledOnce()
       })
 
-      xit('filters that stream to keys less than the index for the given price')
+      it('filters that stream to keys less than the index for the given price', () => {
+        fakeIndex = 'mykey'
+        keyForPriceStub.returns(fakeIndex)
+        index.streamOrdersAtPriceOrBetter('100')
+
+        expect(keyForPriceStub).to.have.been.calledOnce()
+        expect(keyForPriceStub).to.have.been.calledWith('100')
+
+        expect(createReadStreamStub).to.have.been.calledOnce()
+        expect(createReadStreamStub).to.have.been.calledWith(sinon.match({ lte: fakeIndex }))
+      })
     })
   })
 })
