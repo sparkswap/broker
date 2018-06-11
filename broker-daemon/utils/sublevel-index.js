@@ -46,9 +46,11 @@ class Index {
    */
   createReadStream (opts) {
     const stream = this._index.createReadStream(opts)
+    // through2 - the lib used below - overrides function context to provide access to `this.push` to push
+    // objects into the downstream stream. In order to get access to `#_isMarkedForDeletion`, we need to 
+    // reference the Index context in a local variable
     const index = this
 
-    // TODO: fix the keys to be the right keys
     return stream.pipe(through.obj(function ({ key, value }, encoding, callback) {
       // skip objects that are marked for deletion
       if (index._isMarkedForDeletion(key)) {
@@ -56,6 +58,8 @@ class Index {
       }
 
       // give back the base key to the caller
+      // Note: `this` is provided by the through library to give access to this function,
+      // so we can't use a lambda here
       this.push({ key: index._extractBaseKey(key), value })
 
       callback()
