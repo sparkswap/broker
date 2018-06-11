@@ -386,6 +386,15 @@ describe('OrderStateMachine', () => {
       expect(store.put).to.have.been.calledWith(osm.order.key, sinon.match('"state":"rejected"'))
     })
 
+    it('saves with a placeholder key if one is not available', async () => {
+      osm.order.key = undefined
+
+      await osm.reject()
+
+      expect(store.put).to.have.been.calledOnce()
+      expect(store.put).to.have.been.calledWith(sinon.match(/^NO_ASSIGNED_ID\S+$/))
+    })
+
     it('calls an onRejection function', async () => {
       const err = new Error('fake')
       await osm.reject(err)

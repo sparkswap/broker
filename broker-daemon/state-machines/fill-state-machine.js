@@ -1,9 +1,19 @@
+const safeid = require('generate-safe-id')
 const StateMachine = require('./state-machine')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 const StateMachinePersistence = require('./plugins/persistence')
 const StateMachineRejection = require('./plugins/rejection')
 const StateMachineLogging = require('./plugins/logging')
 const { Fill } = require('../models')
+
+/**
+ * If Fills are saved in the database before they are created on the remote, they lack an ID
+ * This string indicates an order that does not have an assigned remote ID
+ * @type {String}
+ * @constant
+ * @default
+ */
+const UNASSIGNED_PREFIX = 'NO_ASSIGNED_ID_'
 
 /**
  * @class Finite State Machine for managing fill lifecycle
@@ -22,7 +32,7 @@ const FillStateMachine = StateMachine.factory({
       key: function (key) {
         // this only defines a getter - it will be set by the `fill` setter
         if (!key) {
-          return this.fill.key
+          return this.fill.key || `${UNASSIGNED_PREFIX}${safeid()}`
         }
       },
       additionalFields: {
