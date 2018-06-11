@@ -3,7 +3,7 @@ const { rewire, sinon, expect } = require('test/test-helper')
 
 const BidIndex = rewire(path.resolve(__dirname, 'bid-index'))
 
-describe('#BidIndex', () => {
+describe.only('#BidIndex', () => {
   let store
   let MarketEventOrderFromStorage
 
@@ -16,6 +16,10 @@ describe('#BidIndex', () => {
     MarketEventOrderFromStorage = sinon.stub()
 
     BidIndex.__set__('MarketEventOrder', {
+      SIDES: {
+        ASK: 'ASK',
+        BID: 'BID'
+      },
       fromStorage: MarketEventOrderFromStorage
     })
   })
@@ -27,10 +31,32 @@ describe('#BidIndex', () => {
   })
 
   describe('#keyForPrice', () => {
-    xit('left pads the price')
+    let index
 
-    xit('provides a consistent amount of decimal places')
+    beforeEach(() => {
+      index = new BidIndex(store)
+    })
 
-    xit('gives higher prices lower indexes')
+    it('left pads the price', () => {
+      const price = '12345'
+      const keyForPrice = index.keyForPrice(price)
+
+      expect(keyForPrice).to.have.lengthOf(40)
+      expect(keyForPrice.slice(0, 1)).to.be.equal('0')
+    })
+
+    it('provides a consistent amount of decimal places', () => {
+      const price = '12345'
+      const keyForPrice = index.keyForPrice(price)
+
+      expect(keyForPrice.split('.')[1]).to.be.equal('0000000000000000000')
+    })
+
+    it('gives higher prices lower indexes', () => {
+      const priceLow = '1'
+      const priceHigh = '2'
+
+      expect(index.keyForPrice(priceLow).localeCompare(index.keyForPrice(priceHigh))).to.be.equal(1)
+    })
   })
 })

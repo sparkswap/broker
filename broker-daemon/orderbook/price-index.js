@@ -14,14 +14,14 @@ const MAX_VALUE = '9223372036854775807'
  * @default
  * @type {Number}
  */
-const PAD_SIZE = 32
+const PAD_SIZE = 40
 /**
  * Number of decimal places all keys should have
  * @constant
  * @default
  * @type {Number}
  */
-const DECIMAL_PLACES = 16
+const DECIMAL_PLACES = 19
 
 /**
  * @class Index by price for a side of the market

@@ -1,4 +1,5 @@
 const PriceIndex = require('./price-index')
+const { Big } = require('../utils')
 const { MarketEventOrder } = require('../models')
 
 /**

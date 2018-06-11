@@ -1,5 +1,6 @@
 const PriceIndex = require('./price-index')
 const { MarketEventOrder } = require('../models')
+const { Big } = require('../utils')
 
 /**
  * @class Index Ask orders in a market
@@ -21,8 +22,8 @@ class AskIndex extends PriceIndex {
    * @return {String}       Key to be used as a prefix in the store
    */
   keyForPrice (price) {
-    const { PAD_SIZE } = this
-    return price.padStart(PAD_SIZE, '0')
+    const { PAD_SIZE, DECIMAL_PLACES } = this
+    return Big(price).toFixed(DECIMAL_PLACES).padStart(PAD_SIZE, '0')
   }
 }
 

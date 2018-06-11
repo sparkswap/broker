@@ -41,9 +41,16 @@ describe('AskIndex', () => {
       const price = '12345'
       const keyForPrice = index.keyForPrice(price)
 
-      expect(keyForPrice).to.have.lengthOf(32)
-      expect(keyForPrice.slice(0, 27)).to.be.equal('000000000000000000000000000')
-      expect(keyForPrice.slice(27)).to.be.equal(price)
+      expect(keyForPrice).to.have.lengthOf(40)
+      expect(keyForPrice.slice(0, 35)).to.be.equal('000000000000000000000000000')
+      expect(keyForPrice.slice(35)).to.be.equal(price)
+    })
+
+    it('provides a consistent amount of decimal places', () => {
+      const price = '12345'
+      const keyForPrice = index.keyForPrice(price)
+
+      expect(keyForPrice.split('.')[1]).to.be.equal('0000000000000000000')
     })
   })
 })
