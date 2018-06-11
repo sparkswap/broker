@@ -505,6 +505,20 @@ describe('Orderbook', () => {
       expect(stream.unpipe).to.have.been.calledOnce()
       expect(stream.pause).to.have.been.calledOnce()
     })
+
+    xit('returns only orders better or equal to the given price for ASK', async () => {
+      const price = '100'
+
+      await orderbook.getBestOrders({ side: 'ASK', depth: '100', price })
+    })
+
+    xit('returns only orders better or equal to the given price for BID', () => {
+
+    })
+
+    xit('returns all available orders when given no price', () => {
+
+    })
   })
 
   describe('get baseSymbol', () => {

@@ -31,13 +31,55 @@ class PriceIndex extends SublevelIndex {
    * Create an index by price for a side of the market
    * @param  {sublevel} store    Store with the underlying orders
    * @param  {String}   side     Side of the market to index (i.e. `BID` or `ASK`)
-   * @param  {Function} getValue Function that returns the index value for a given key/value pair
    * @return {PriceIndex}
    */
-  constructor (store, side, getValue) {
-    super(store, side, getValue, (key, value) => {
-      const order = MarketEventOrder.fromStorage(key, value)
-      return order.side === side
+  constructor (store, side) {
+    super(store, side)
+    this.side = side
+    this.getValue = this._getValue.bind(this)
+    this.filter = this._filter.bind(this)
+  }
+
+  /**
+   * Filter out orders that are not from this side of the market
+   * @param  {String} key   Key of the order to store
+   * @param  {String} value Value of the order to store
+   * @return {Boolean}      Whether this order should be included in the index
+   */
+  _filter (key, value) {
+    const order = MarketEventOrder.fromStorage(key, value)
+    return order.side === this.side
+  }
+
+  /**
+   * Get index values for the order being stored
+   * @param  {String} key   Key of the order to store
+   * @param  {String} value Value of the order to store
+   * @return {String}       Index value for the order
+   */
+  _getValue (key, value) {
+    const order = MarketEventOrder.fromStorage(key, value)
+
+    return this.keyForPrice(order.price)
+  }
+
+  /**
+   * Placeholder for implementations of the price index
+   * @param  {String} price Decimal of the price
+   * @return {String}       Index key to be used
+   */
+  keyForPrice (price) {
+    throw new Error('`keyForPrice` must be implemented by child classes.')
+  }
+
+  /**
+   * create a read stream of orders with prices at least as good as the given on
+   * @param  {String} price Decimal of the price
+   * @return {ReadableStream}       ReadableStream from sublevel-index
+   */
+  streamOrdersAtPriceOrBetter (price) {
+    return this.createReadStream({
+      lte: this.keyForPrice(price)
     })
   }
 }
@@ -52,13 +94,17 @@ class AskIndex extends PriceIndex {
    * @return {AskIndex}
    */
   constructor (store) {
-    super(store, MarketEventOrder.SIDES.ASK, (key, value) => {
-      const order = MarketEventOrder.fromStorage(key, value)
-      const price = order.price
+    super(store, MarketEventOrder.SIDES.ASK)
+  }
 
-      // Asks are sorted so that the lowest price comes first
-      return price.padStart(PAD_SIZE, '0')
-    })
+  /**
+   * Get the index key prefix for a given price
+   * Asks are sorted so that the lowest price comes first
+   * @param  {String} price Decimal string representation of the price
+   * @return {String}       Key to be used as a prefix in the store
+   */
+  keyForPrice (price) {
+    return price.padStart(PAD_SIZE, '0')
   }
 }
 
@@ -72,13 +118,18 @@ class BidIndex extends PriceIndex {
    * @return {BidIndex}
    */
   constructor (store) {
-    super(store, MarketEventOrder.SIDES.BID, (key, value) => {
-      const order = MarketEventOrder.fromStorage(key, value)
-      const price = order.price
+    super(store, MarketEventOrder.SIDES.BID)
+  }
 
-      // Bids are sorted with highest prices first
-      return Big(MAX_VALUE).minus(Big(price)).toFixed(DECIMAL_PLACES).padStart(PAD_SIZE, '0')
-    })
+  /**
+   * Get the index key prefix for a given price
+   * Bids are sorted with highest prices first, so they are subtracted from max value
+   * So that they can be streamed in order.
+   * @param  {String} price Decimal string representation of the price
+   * @return {String}       Key to be used as a prefix in the store
+   */
+  keyForPrice (price) {
+    return Big(MAX_VALUE).minus(Big(price)).toFixed(DECIMAL_PLACES).padStart(PAD_SIZE, '0')
   }
 }
 

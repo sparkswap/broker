@@ -251,7 +251,7 @@ class BlockOrderWorker extends EventEmitter {
       const depthRemaining = targetDepth.minus(currentDepth)
 
       // if we have already reached our target depth, create no further fills
-      if(depthRemaining.lte(0)) {
+      if (depthRemaining.lte(0)) {
         return
       }
 

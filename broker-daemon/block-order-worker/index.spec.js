@@ -451,6 +451,12 @@ describe('BlockOrderWorker', () => {
       OrderStateMachine.create.resolves(order)
     })
 
+    xit('fills as many orders as possible at the given price or better')
+
+    xit('places an order for the remaining amount')
+
+    xit('does not place an order if it can be filled with fills only')
+
     it('creates an OrderStateMachine', async () => {
       await worker.workLimitBlockOrder(blockOrder)
 
@@ -617,5 +623,13 @@ describe('BlockOrderWorker', () => {
       expect(worker.failBlockOrder).to.have.been.calledOnce()
       expect(worker.failBlockOrder).to.have.been.calledWith(blockOrder.id, err)
     })
+  })
+
+  describe('#_fillOrders', () => {
+
+  })
+
+  describe('#_placeOrder', () => {
+
   })
 })
