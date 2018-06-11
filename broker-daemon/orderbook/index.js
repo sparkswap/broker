@@ -1,4 +1,5 @@
 const { MarketEvent, MarketEventOrder } = require('../models')
+const { AskIndex, BidIndex } = require('./price-indexes')
 const { getRecords } = require('../utils')
 
 class Orderbook {
@@ -27,13 +28,16 @@ class Orderbook {
 
     await this.relayer.watchMarket(this.eventStore, params)
 
+    this.askIndex = await (new AskIndex(this.store)).ensureIndex()
+    this.bidIndex = await (new BidIndex(this.store)).ensureIndex()
+
     return this.logger.info(`Market ${this.marketName} initialized.`)
   }
 
   /**
    * Returns all records in the current orderbook
    *
-   * @returns {Promise<Array>} A promise that resolves an array of MarketEventOrder records
+   * @returns {Promise<Array<MarketEventOrder>>} A promise that resolves an array of MarketEventOrder records
    */
   async all () {
     this.logger.info(`Retrieving all records for ${this.marketName}`)
