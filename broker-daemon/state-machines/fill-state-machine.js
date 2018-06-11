@@ -7,6 +7,15 @@ const StateMachineLogging = require('./plugins/logging')
 const { Fill } = require('../models')
 
 /**
+ * If Fills are saved in the database before they are created on the remote, they lack an ID
+ * This string indicates an order that does not have an assigned remote ID
+ * @type {String}
+ * @constant
+ * @default
+ */
+const UNASSIGNED_PREFIX = 'NO_ASSIGNED_ID_'
+
+/**
  * @class Finite State Machine for managing fill lifecycle
  */
 const FillStateMachine = StateMachine.factory({
@@ -23,7 +32,7 @@ const FillStateMachine = StateMachine.factory({
       key: function (key) {
         // this only defines a getter - it will be set by the `fill` setter
         if (!key) {
-          return this.fill.key || `NO_RELAYER_KEY_${safeid()}`
+          return this.fill.key || `${UNASSIGNED_PREFIX}${safeid()}`
         }
       },
       additionalFields: {
@@ -170,13 +179,8 @@ const FillStateMachine = StateMachine.factory({
      * @return {void}
      */
     onBeforeReject: function (lifecycle, error) {
-      if (!error) {
-        return this.logger.error(`Rejecting transition without error`)
-      }
-
-      this.logger.error(`Encountered error during transition, rejecting`, { message: error.message, stack: error.stack })
+      this.logger.error(`Encountered error during transition, rejecting`, error)
     },
-
     /**
      * Handle rejected state by calling a passed in handler
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine

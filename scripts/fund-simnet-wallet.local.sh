@@ -19,31 +19,14 @@ set -e -u
 echo "Generating new deposit address through KCLI"
 
 WALLET_ADDR=$(./bin/kcli wallet new-deposit-address)
-echo $WALLET_ADDR
 
 # Restart the btcd container w/ the mining-address for our account
-echo "Restarting BTCD with the generated wallet address"
+echo "Running funding script on the relayer w/ wallet addr"
 
-docker-compose rm btcd
-MINING_ADDRESS=$WALLET_ADDR docker-compose up -d btcd
+(cd ../relayer && WALLET_ADDR="$WALLET_ADDR" bash ./scripts/fund-simnet-wallet.sh)
 
-# Take a wallet address and fund it with some simnet BTC
-echo "Generating blocks to be mined w/ supplied wallet address"
-
-GENERATE_CMD='btcctl --simnet --rpcuser="$RPC_USER" --rpcpass="$RPC_PASS" --rpccert="$RPC_CERT" generate 400'
-docker-compose exec -T btcd /bin/sh -c "$GENERATE_CMD"
-
-echo "Waiting 5 seconds for segwit response..."
-
-sleep 5
-
-# Check segwit to make sure we are A-OK
-SEGWIT_CMD='btcctl --simnet --rpcuser="$RPC_USER" --rpcpass="$RPC_PASS" --rpccert="$RPC_CERT" getblockchaininfo'
-RAW_SEGWIT_RESPONSE=$(docker-compose exec -T btcd /bin/sh -c "$SEGWIT_CMD")
-SEGWIT_RESPONSE=$(node ./scripts/parse-lnd-response.js segwit $RAW_SEGWIT_RESPONSE)
-
-echo "Segwit Response: $SEGWIT_RESPONSE"
+echo "Waiting 10 seconds for blocks to be confirmed"
+sleep 10
 
 echo "Checking wallet balance"
-
 ./bin/kcli wallet balance

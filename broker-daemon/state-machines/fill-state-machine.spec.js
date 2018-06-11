@@ -357,7 +357,7 @@ describe('FillStateMachine', () => {
       await fsm.reject()
 
       expect(store.put).to.have.been.calledOnce()
-      expect(store.put).to.have.been.calledWith(sinon.match(/^NO_RELAYER_KEY_\S+$/))
+      expect(store.put).to.have.been.calledWith(sinon.match(/^NO_ASSIGNED_ID_\S+$/))
     })
 
     it('calls an onRejection function', async () => {

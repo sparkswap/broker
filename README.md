@@ -39,9 +39,9 @@ NOTE: Running a command on the kcli container will initialize a new container on
 
 #### Funding a wallet on SIMNET
 
-Using the `deposit` command on KCLI, we've created a script `setup/fund-simnet-wallet.sh` that generates BTC for a broker-daemon wallet
+Using the `deposit` command on KCLI, we've created a script `setup/fund-simnet-wallet.local.sh` that generates BTC for a broker-daemon wallet
 
-Use the following command to generate $$$: `npm run money`
+Use the following command to generate $$$: `npm run fund`
 
 ### Authentication between Daemon and LND
 
@@ -60,3 +60,18 @@ This structure allows the end user to submit specific desires (e.g. market price
 The overall flow looks something like this:
 
 `buy (kcli) -> BlockOrder (kbd) -> Order (kbd) -> Order (relayer)`
+
+### Development Steps for Relayer/Broker channels
+
+STEPS FOR CHANNELS
+
+1. Start all containers on the relayer and run `npm run fund`
+2. On the broker, start all containers
+3. On the broker, run `nom run fund-setup`
+4. One the broker, run `nom run fund`
+5. On the broker, run `./bin/kcli wallet commit-balance BTC`
+6. Wait for a little (6 confirmation blocks)
+7. Channel is now open
+    1. You can check this by going to the relayer and running `docker-compose exec relayer bash -c ‘node ./test-client-scripts/test-lnd.js`
+
+**NOTE**: If the channel does not open after a few minutes, restart the relayer w/ `docker-compose restart`. You may also have to restart the broker
