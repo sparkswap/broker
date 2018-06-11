@@ -56,7 +56,7 @@ describe.only('#BidIndex', () => {
       const priceLow = '1'
       const priceHigh = '2'
 
-      expect(index.keyForPrice(priceLow).localeCompare(index.keyForPrice(priceHigh))).to.be.equal(1)
+      expect(index.keyForPrice(priceHigh).localeCompare(index.keyForPrice(priceLow))).to.be.lessThan(0)
     })
   })
 })
