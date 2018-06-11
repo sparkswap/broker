@@ -1,7 +1,7 @@
 const path = require('path')
 const { rewire, sinon, expect } = require('test/test-helper')
 
-const BidIndex = rewire(path.resolve(__dirname, 'price-indexes'))
+const BidIndex = rewire(path.resolve(__dirname, 'bid-index'))
 
 describe('#BidIndex', () => {
   let store
@@ -19,7 +19,6 @@ describe('#BidIndex', () => {
       fromStorage: MarketEventOrderFromStorage
     })
   })
-
 
   describe('constructor', () => {
     xit('passes the store through')

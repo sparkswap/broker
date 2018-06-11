@@ -139,7 +139,7 @@ describe('PriceIndex', () => {
       beforeEach(() => {
         createReadStreamStub = sinon.stub()
 
-        SublevelIndex = Indexes.__get__('SublevelIndex')
+        SublevelIndex = PriceIndex.__get__('SublevelIndex')
         createReadStream = SublevelIndex.prototype.createReadStream
         SublevelIndex.prototype.createReadStream = createReadStreamStub
 

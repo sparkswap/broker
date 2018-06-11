@@ -37,6 +37,9 @@ describe('BlockOrderWorker', () => {
       COMPLETED: 'COMPLETED',
       FAILED: 'FAILED'
     }
+    BlockOrder.TIME_RESTRICTIONS = {
+      GTC: 'GTC'
+    }
     BlockOrder.fromStorage = sinon.stub()
     BlockOrderWorker.__set__('BlockOrder', BlockOrder)
 
@@ -443,12 +446,22 @@ describe('BlockOrderWorker', () => {
         counterSymbol: 'LTC',
         side: 'BID',
         amount: Big('100'),
-        price: Big('1000')
+        price: Big('1000'),
+        timeInForce: 'GTC'
       }
       order = {
         id: 'anotherId'
       }
       OrderStateMachine.create.resolves(order)
+
+      orders = [
+        { orderId: '1', baseAmount: '90' }
+      ]
+
+      orderbooks.get('BTC/LTC').getBestOrders.resolves({
+        orders,
+        depth: '90'
+      })
     })
 
     xit('fills as many orders as possible at the given price or better')
@@ -553,7 +566,7 @@ describe('BlockOrderWorker', () => {
         depth: '0'
       })
 
-      return expect(worker.workMarketBlockOrder(blockOrder)).to.eventually.rejectWith('Insufficient depth in ASK to fill 100')
+      return expect(worker.workMarketBlockOrder(blockOrder)).to.eventually.rejectedWith('Insufficient depth in ASK to fill 100')
     })
 
     it('creates FillStateMachines for each fill', async () => {

@@ -27,7 +27,6 @@ const DECIMAL_PLACES = 16
  * @class Index by price for a side of the market
  */
 class PriceIndex extends SublevelIndex {
-
   /**
    * Getter for MAX_VALUE for use by descendant classes
    */
