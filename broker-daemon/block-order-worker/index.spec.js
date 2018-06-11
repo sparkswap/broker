@@ -437,6 +437,8 @@ describe('BlockOrderWorker', () => {
     let worker
     let blockOrder
     let order
+    let orders
+
     beforeEach(() => {
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
       blockOrder = {

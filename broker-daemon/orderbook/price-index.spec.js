@@ -160,7 +160,7 @@ describe('PriceIndex', () => {
       })
 
       it('filters that stream to keys less than the index for the given price', () => {
-        fakeIndex = 'mykey'
+        const fakeIndex = 'mykey'
         keyForPriceStub.returns(fakeIndex)
         index.streamOrdersAtPriceOrBetter('100')
 

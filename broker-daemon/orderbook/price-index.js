@@ -1,4 +1,4 @@
-const { Big, SublevelIndex } = require('../utils')
+const { SublevelIndex } = require('../utils')
 const { MarketEventOrder } = require('../models')
 /**
  * Largest int64, also the maximum value of prices and amounts
