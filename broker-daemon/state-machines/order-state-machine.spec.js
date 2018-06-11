@@ -324,15 +324,55 @@ describe('OrderStateMachine', () => {
   })
 
   describe('#place', () => {
+    let fakeOrder
     let osm
+    let payInvoiceStub
+    let placeOrderStub
+    let invoice
+    let feePaymentRequest
+    let depositPaymentRequest
+    let orderId
 
     beforeEach(async () => {
+      invoice = '1234'
+      payInvoiceStub = sinon.stub().returns(invoice)
+      placeOrderStub = sinon.stub()
+      feePaymentRequest = 'fee'
+      depositPaymentRequest = 'deposit'
+      orderId = '1234'
+
+      fakeOrder = { feePaymentRequest, depositPaymentRequest, orderId }
+      engine = { payInvoice: payInvoiceStub }
+      relayer = {
+        makerService: {
+          placeOrder: placeOrderStub
+        }
+      }
+
       osm = new OrderStateMachine({ store, logger, relayer, engine })
+      osm.order = fakeOrder
+
       await osm.goto('created')
     })
 
-    it('throws while unimplemented', () => {
-      return expect(osm.place()).to.eventually.be.rejectedWith(Error)
+    beforeEach(async () => {
+      await osm.place()
+    })
+
+    it('pays a fee invoice', () => {
+      expect(payInvoiceStub).to.have.been.calledWith(feePaymentRequest)
+    })
+
+    it('pays a deposit invoice', () => {
+      expect(payInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
+    })
+
+    it('places an order on the relayer', () => {
+      expect(placeOrderStub).to.have.been.calledWith(sinon.match({
+        feeRefundPaymentRequest: invoice,
+        depositRefundPaymentRequest: invoice,
+        orderId
+      }))
     })
   })
 

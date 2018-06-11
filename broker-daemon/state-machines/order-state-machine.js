@@ -177,7 +177,7 @@ const OrderStateMachine = StateMachine.factory({
 
       this.logger.info(`Successfully paid fees for order: ${orderId}`)
 
-      // await this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest })
+      await this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest })
 
       this.logger.info(`Placed order ${this.order.orderId} on the relayer`)
     },
