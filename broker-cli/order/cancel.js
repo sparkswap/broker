@@ -20,7 +20,7 @@ async function cancel (args, opts, logger) {
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const blockOrderResult = await client.orderService.cancelBlockOrder(request)
+    await client.orderService.cancelBlockOrder(request)
     logger.info(`Cancelled ${blockOrderId}`)
   } catch (e) {
     logger.error(e)

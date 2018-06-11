@@ -29,15 +29,17 @@ module.exports = (program) => {
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
 
+      let blockOrderId
+
       switch (command) {
         case SUPPORTED_COMMANDS.STATUS:
-          var [blockOrderId] = subArguments
+          [blockOrderId] = subArguments
 
           args.blockOrderId = validations.isBlockOrderId(blockOrderId || '')
 
           return status(args, opts, logger)
         case SUPPORTED_COMMANDS.CANCEL:
-          var [blockOrderId] = subArguments
+          [blockOrderId] = subArguments
 
           args.blockOrderId = validations.isBlockOrderId(blockOrderId || '')
 
