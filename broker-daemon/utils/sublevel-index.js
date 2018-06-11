@@ -2,7 +2,21 @@ const { promisify } = require('util')
 const through = require('through2')
 const migrateStore = require('./migrate-store')
 const logger = require('./logger')
+
+/**
+ * Return true for every call
+ * Used to create a non-filtering filter
+ * @return {Boolean} True for every item passed
+ */
 const returnTrue = function () { return true }
+
+/**
+ * Default key delimiter
+ * @constant
+ * @default
+ * @type {String}
+ */
+const DELIMITER = ':'
 
 /**
  * @class Indexed values for sublevel
@@ -10,14 +24,14 @@ const returnTrue = function () { return true }
 class Index {
   /**
    * Create a new index for sublevel store
-   * @param  {sublevel} store     Sublevel of the base store
-   * @param  {String}   name      Name of the index
-   * @param  {Function} getValue  User-passed function that returns the indexed value
-   * @param  {Function} filter    Filter for items to not index
-   * @param  {String}   delimiter Delimiter between the index value and the base key. It should never appear in the base key.
+   * @param  {sublevel} store               Sublevel of the base store
+   * @param  {String}   name                Name of the index
+   * @param  {Function} getValue            User-passed function that returns the indexed value
+   * @param  {Function} [filter=returnTrue] Filter for items to not index
+   * @param  {String}   [delimiter=DELIMITER]     Delimiter between the index value and the base key. It should never appear in the base key.
    * @return {Index}
    */
-  constructor (store, name, getValue, filter = returnTrue, delimiter = ':') {
+  constructor (store, name, getValue, filter = returnTrue, delimiter = DELIMITER) {
     this.store = store
     this.name = name
     this.getValue = getValue
