@@ -27,6 +27,28 @@ const DECIMAL_PLACES = 16
  * @class Index by price for a side of the market
  */
 class PriceIndex extends SublevelIndex {
+
+  /**
+   * Getter for MAX_VALUE for use by descendant classes
+   */
+  get MAX_VALUE () {
+    return MAX_VALUE
+  }
+
+  /**
+   * Getter for PAD_SIZE for use by descendant classes
+   */
+  get PAD_SIZE () {
+    return PAD_SIZE
+  }
+
+  /**
+   * Getter for DECIMAL_PLACES for use by descendant classes
+   */
+  get DECIMAL_PLACES () {
+    return DECIMAL_PLACES
+  }
+
   /**
    * Create an index by price for a side of the market
    * @param  {sublevel} store    Store with the underlying orders
@@ -84,56 +106,4 @@ class PriceIndex extends SublevelIndex {
   }
 }
 
-/**
- * @class Index Ask orders in a market
- */
-class AskIndex extends PriceIndex {
-  /**
-   * Create an index for ask orders in an underlying store
-   * @param  {sublevel} store Underlying store with the orders
-   * @return {AskIndex}
-   */
-  constructor (store) {
-    super(store, MarketEventOrder.SIDES.ASK)
-  }
-
-  /**
-   * Get the index key prefix for a given price
-   * Asks are sorted so that the lowest price comes first
-   * @param  {String} price Decimal string representation of the price
-   * @return {String}       Key to be used as a prefix in the store
-   */
-  keyForPrice (price) {
-    return price.padStart(PAD_SIZE, '0')
-  }
-}
-
-/**
- * @class Index Bid orders in a market
- */
-class BidIndex extends PriceIndex {
-  /**
-   * Create an index for bid orders in an underlying store
-   * @param  {sublevel} store Underlying store with the orders
-   * @return {BidIndex}
-   */
-  constructor (store) {
-    super(store, MarketEventOrder.SIDES.BID)
-  }
-
-  /**
-   * Get the index key prefix for a given price
-   * Bids are sorted with highest prices first, so they are subtracted from max value
-   * So that they can be streamed in order.
-   * @param  {String} price Decimal string representation of the price
-   * @return {String}       Key to be used as a prefix in the store
-   */
-  keyForPrice (price) {
-    return Big(MAX_VALUE).minus(Big(price)).toFixed(DECIMAL_PLACES).padStart(PAD_SIZE, '0')
-  }
-}
-
-module.exports = {
-  AskIndex,
-  BidIndex
-}
+module.exports = PriceIndex

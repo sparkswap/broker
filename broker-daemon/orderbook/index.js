@@ -1,5 +1,6 @@
 const { MarketEvent, MarketEventOrder } = require('../models')
-const { AskIndex, BidIndex } = require('./price-indexes')
+const AskIndex = require('./ask-index')
+const BidIndex = require('./bid-index')
 const { getRecords, Big } = require('../utils')
 
 class Orderbook {
