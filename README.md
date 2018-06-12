@@ -80,6 +80,6 @@ The following steps will get your broker/relayer projects to a state where you c
 
 **IMPORTANT: ** If you down your containers and remove the volumes, you will need to run all of these steps again.
 
-Additionally, you can check the status of the channel by running `docker-compose exec relayer bash -c ‘node ./test-client-scripts/test-lnd.js`
+Additionally, you can check the status of the channel by running the following command in the relayer directory `docker-compose exec relayer bash -c 'node ./test-client-scripts/test-lnd.js'`
 
 **NOTE**: If the channel does not open after a few minutes, you need to rerun steps 9/10. For some reason, on simnet, because of the way we fund our wallets, BTCD has a problem with handling so many block confirmations at the same time.
