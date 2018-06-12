@@ -192,8 +192,36 @@ const OrderStateMachine = StateMachine.factory({
       this.logger.info(`Placed order ${this.order.orderId} on the relayer`)
     },
 
-    onAfterPlace: function (lifecycle) {
-      this.logger.error('Transition for onAfterPlace not implemented')
+    /**
+     * Listen for order fills when in the `placed` state
+     * This is done based on the state and not the transition so that it gets actioned when being re-hydrated from storage
+     * [is that the right thing to do?]
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {void}
+     */
+    onEnterPlaced: function (lifecycle) {
+      const { orderId } = this.order
+      this.logger.info(`In placed state, attempting to listen for fills for order ${orderId}`)
+
+      // NOTE: this method should NOT reject a promise, as that may prevent the state of the order from saving
+
+      const call = this.relayer.makerService.subscribeFill({ orderId })
+
+      call.on('error', (e) => {
+        this.reject(e)
+      })
+
+      call.on('data', ({ swapHash, fillAmount }) => {
+        try {
+          this.order.setFilledParams({ swapHash, fillAmount })
+
+          this.logger.info(`Order ${orderId} is being filled`)
+
+          this.tryTo('execute')
+        } catch (e) {
+          this.reject(e)
+        }
+      })
     },
 
     /**

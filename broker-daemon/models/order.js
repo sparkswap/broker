@@ -49,7 +49,7 @@ class Order {
    */
   setFilledParams ({ swapHash, fillAmount }) {
     this.swapHash = swapHash
-    this.fillAmount = fillAmount  
+    this.fillAmount = fillAmount
   }
 
   /**
