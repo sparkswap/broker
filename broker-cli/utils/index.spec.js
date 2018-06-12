@@ -3,7 +3,8 @@ const { expect } = require('test/test-helper')
 const {
   ENUMS,
   validations,
-  Big
+  Big,
+  strToPrice
 } = require('./index')
 
 describe('utils index', () => {
@@ -20,5 +21,10 @@ describe('utils index', () => {
   it('defines Big', () => {
     expect(Big).to.not.be.null()
     expect(Big).to.not.be.undefined()
+  })
+
+  it('defines strToPrice', () => {
+    expect(strToPrice).to.not.be.null()
+    expect(strToPrice).to.not.be.undefined()
   })
 })

@@ -1,5 +1,5 @@
 const BrokerDaemonClient = require('./broker-daemon-client')
-const { ENUMS, validations } = require('./utils')
+const { ENUMS, validations, strToPrice } = require('./utils')
 
 const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
 
@@ -31,9 +31,7 @@ async function buy (args, opts, logger) {
   }
 
   if (price) {
-    let [ integer, decimal ] = price.split('.')
-    decimal = decimal || '0'
-    request.limitPrice = { integer, decimal }
+    request.limitPrice = strToPrice(price)
   } else {
     request.isMarketOrder = true
   }

@@ -1,4 +1,4 @@
-const Big = require('big.js')
+const { Big, strToPrice } = require('../utils')
 
 /**
  * @class Model representing Block Orders
@@ -132,7 +132,7 @@ class BlockOrder {
       return {
         orderId: order.orderId,
         amount: order.baseAmount,
-        price: order.price,
+        price: strToPrice(order.price),
         orderStatus: state.toUpperCase()
       }
     })
@@ -142,7 +142,7 @@ class BlockOrder {
         orderId: fill.order.orderId,
         fillId: fill.fillId,
         amount: fill.fillAmount,
-        price: fill.price,
+        price: strToPrice(fill.price),
         fillStatus: state.toUpperCase()
       }
     })
@@ -158,7 +158,7 @@ class BlockOrder {
     }
 
     if (this.price) {
-      serialized.limitPrice = this.price.toString()
+      serialized.limitPrice = strToPrice(this.price.toString())
     } else {
       serialized.isMarketOrder = true
     }

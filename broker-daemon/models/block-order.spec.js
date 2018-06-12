@@ -283,7 +283,11 @@ describe('BlockOrder', () => {
 
           const serialized = blockOrder.serialize()
 
-          expect(serialized.openOrders[0]).to.have.property('price', '10.0000000000000000')
+          expect(serialized.openOrders[0]).to.have.property('price')
+          expect(serialized.openOrders[0].price).to.be.eql({
+            integer: '10',
+            decimal: '0000000000000000'
+          })
         })
 
         it('serializes the state of the order', () => {
@@ -374,7 +378,11 @@ describe('BlockOrder', () => {
 
           const serialized = blockOrder.serialize()
 
-          expect(serialized.fills[0]).to.have.property('price', '10.0000000000000000')
+          expect(serialized.fills[0]).to.have.property('price')
+          expect(serialized.fills[0].price).to.be.eql({
+            integer: '10',
+            decimal: '0000000000000000'
+          })
         })
 
         it('serializes the state of the fill', () => {
