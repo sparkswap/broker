@@ -309,6 +309,8 @@ describe('FillStateMachine', () => {
     let fsm
     let payInvoiceStub
     let fillOrderStub
+    let subscribeExecuteStub
+    let subscribeExecuteStream
     let invoice
     let feePaymentRequest
     let depositPaymentRequest
@@ -318,6 +320,10 @@ describe('FillStateMachine', () => {
       invoice = '1234'
       payInvoiceStub = sinon.stub().returns(invoice)
       fillOrderStub = sinon.stub()
+      subscribeExecuteStream = {
+        on: sinon.stub()
+      }
+      subscribeExecuteStub = sinon.stub().returns(subscribeExecuteStream)
       feePaymentRequest = 'fee'
       depositPaymentRequest = 'deposit'
       fillId = '1234'
@@ -326,7 +332,8 @@ describe('FillStateMachine', () => {
       engine = { payInvoice: payInvoiceStub }
       relayer = {
         takerService: {
-          fillOrder: fillOrderStub
+          fillOrder: fillOrderStub,
+          subscribeExecute: subscribeExecuteStub
         }
       }
 
@@ -336,19 +343,18 @@ describe('FillStateMachine', () => {
       await fsm.goto('created')
     })
 
-    beforeEach(async () => {
-      await fsm.fillOrder()
-    })
-
     it('pays a fee invoice', () => {
+      await fsm.fillOrder()
       expect(payInvoiceStub).to.have.been.calledWith(feePaymentRequest)
     })
 
     it('pays a deposit invoice', () => {
+      await fsm.fillOrder()
       expect(payInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
     })
 
     it('fills an order on the relayer', () => {
+      await fsm.fillOrder()
       expect(fillOrderStub).to.have.been.calledWith(sinon.match({
         feeRefundPaymentRequest: invoice,
         depositRefundPaymentRequest: invoice,
@@ -356,18 +362,14 @@ describe('FillStateMachine', () => {
       }))
     })
 
-    it('errors if a feePaymentRequest isnt available on the fill', async () => {
-      const badFsm = new FillStateMachine({ store, logger, relayer, engine })
-      badFsm.fill = {}
-      await badFsm.goto('created')
-      return expect(badFsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because fee')
+    it('errors if a feePaymentRequest isnt available on the fill', () => {
+      fsm.fill = {}
+      return expect(fsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because fee')
     })
 
-    it('errors if a feePaymentRequest isnt available on the fill', async () => {
-      const badFsm = new FillStateMachine({ store, logger, relayer, engine })
-      badFsm.fill = { feePaymentRequest }
-      await badFsm.goto('created')
-      return expect(badFsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because deposit')
+    it('errors if a feePaymentRequest isnt available on the fill', () => {
+      fsm.fill = { feePaymentRequest }
+      return expect(fsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because deposit')
     })
   })
 
