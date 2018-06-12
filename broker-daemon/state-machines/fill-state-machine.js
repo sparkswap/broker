@@ -216,7 +216,7 @@ const FillStateMachine = StateMachine.factory({
 
       call.on('data', ({ payTo }) => {
         try {
-          this.order.setExecuteParams({ payTo })
+          this.fill.setExecuteParams({ payTo })
 
           this.logger.info(`Fill ${fillId} is being executed`)
 

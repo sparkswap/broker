@@ -343,17 +343,17 @@ describe('FillStateMachine', () => {
       await fsm.goto('created')
     })
 
-    it('pays a fee invoice', () => {
+    it('pays a fee invoice', async () => {
       await fsm.fillOrder()
       expect(payInvoiceStub).to.have.been.calledWith(feePaymentRequest)
     })
 
-    it('pays a deposit invoice', () => {
+    it('pays a deposit invoice', async () => {
       await fsm.fillOrder()
       expect(payInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
     })
 
-    it('fills an order on the relayer', () => {
+    it('fills an order on the relayer', async () => {
       await fsm.fillOrder()
       expect(fillOrderStub).to.have.been.calledWith(sinon.match({
         feeRefundPaymentRequest: invoice,
@@ -370,6 +370,55 @@ describe('FillStateMachine', () => {
     it('errors if a feePaymentRequest isnt available on the fill', () => {
       fsm.fill = { feePaymentRequest }
       return expect(fsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because deposit')
+    })
+
+    it('does not subscribe to executions for fills that fail', async () => {
+      fillOrderStub.rejects(new Error('fake error'))
+
+      expect(subscribeExecuteStub).to.not.have.been.called()
+    })
+
+    it('subscribes to fills on the relayer', async () => {
+      await fsm.fillOrder()
+      expect(subscribeExecuteStub).to.have.been.calledOnce()
+      expect(subscribeExecuteStub).to.have.been.calledWith(sinon.match({ fillId }))
+    })
+
+    it('rejects on error from the relayer subscribe fill hook', async () => {
+      fsm.reject = sinon.stub()
+      subscribeExecuteStream.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
+
+      await fsm.fillOrder()
+
+      await delay(10)
+
+      expect(fsm.reject).to.have.been.calledOnce()
+      expect(fsm.reject.args[0][0]).to.be.instanceOf(Error)
+      expect(fsm.reject.args[0][0]).to.have.property('message', 'fake error')
+    })
+
+    it('sets execute params on the fill when it is executed', async () => {
+      const payTo = 'ln:asdfjas0d9f09aj'
+      fsm.fill.setExecuteParams = sinon.stub()
+      subscribeExecuteStream.on.withArgs('data').callsArgWithAsync(1, { payTo })
+
+      await fsm.fillOrder()
+      await delay(10)
+
+      expect(fsm.fill.setExecuteParams).to.have.been.calledOnce()
+      expect(fsm.fill.setExecuteParams).to.have.been.calledWith(sinon.match({ payTo }))
+    })
+
+    it('executes the order after being filled', async () => {
+      fsm.fill.setExecuteParams = sinon.stub()
+      fsm.tryTo = sinon.stub()
+      subscribeExecuteStream.on.withArgs('data').callsArgWithAsync(1, {})
+
+      await fsm.fillOrder()
+      await delay(10)
+
+      expect(fsm.tryTo).to.have.been.calledOnce()
+      expect(fsm.tryTo).to.have.been.calledWith('execute')
     })
   })
 
