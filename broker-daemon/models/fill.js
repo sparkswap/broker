@@ -55,6 +55,14 @@ class Fill {
   }
 
   /**
+   * Set params from execution on an order
+   * @param {String} options.payTo Address of the counterparty for the swap
+   */
+  setExecuteParams ({ payTo }) {
+    this.payTo = payTo
+  }
+
+  /**
    * Params required to create an order on the relayer
    * @return {Object} Object of parameters the relayer expects
    */
