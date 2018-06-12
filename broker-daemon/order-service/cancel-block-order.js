@@ -2,7 +2,7 @@ const { PublicError } = require('grpc-methods')
 const { BlockOrderNotFoundError } = require('../block-order-worker/errors')
 
 /**
- * Check on the status of a block order
+ * Cancels a block order in progress
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Object} request.params - Request parameters from the client
