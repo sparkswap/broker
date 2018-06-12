@@ -83,6 +83,14 @@ describe('BlockOrder', () => {
       expect(blockOrder).to.have.property('side', params.side)
     })
 
+    it('throws if it has an invalid time restriction', () => {
+      params.timeInForce = undefined
+
+      expect(() => {
+        new BlockOrder(params) // eslint-disable-line
+      }).to.throw()
+    })
+
     it('throws if it does not have an amouont', () => {
       params.amount = undefined
 

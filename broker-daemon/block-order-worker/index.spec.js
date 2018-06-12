@@ -795,7 +795,10 @@ describe('BlockOrderWorker', () => {
         { orderId: '2', baseAmount: '100' }
       ]
 
-      orderbooks.get('BTC/LTC').getBestOrders.resolves(orders)
+      orderbooks.get('BTC/LTC').getBestOrders.resolves({
+        orders,
+        depth: '190'
+      })
     })
 
     it('gets the best orders from the orderbook', async () => {
