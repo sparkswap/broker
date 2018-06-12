@@ -403,10 +403,10 @@ describe('Orderbook', () => {
         pause: sinon.stub()
       }
       askIndex = {
-        createReadStream: sinon.stub().returns(stream)
+        streamOrdersAtPriceOrBetter: sinon.stub().returns(stream)
       }
       bidIndex = {
-        createReadStream: sinon.stub().returns(stream)
+        streamOrdersAtPriceOrBetter: sinon.stub().returns(stream)
       }
 
       orderbook.askIndex = askIndex
@@ -458,7 +458,7 @@ describe('Orderbook', () => {
     it('pulls a read stream from the correct side', () => {
       orderbook.getBestOrders({ side: 'ASK', depth: '100' })
 
-      expect(askIndex.createReadStream).to.have.been.calledOnce()
+      expect(askIndex.streamOrdersAtPriceOrBetter).to.have.been.calledOnce()
     })
 
     it('rejects on stream error', () => {
@@ -506,18 +506,18 @@ describe('Orderbook', () => {
       expect(stream.pause).to.have.been.calledOnce()
     })
 
-    xit('returns only orders better or equal to the given price for ASK', async () => {
+    it('returns only orders better or equal to the given price', async () => {
       const price = '100'
 
       await orderbook.getBestOrders({ side: 'ASK', depth: '100', price })
+
+      expect(askIndex.streamOrdersAtPriceOrBetter).to.have.been.calledWith('100')
     })
 
-    xit('returns only orders better or equal to the given price for BID', () => {
+    it('returns all available orders when given no price', async () => {
+      await orderbook.getBestOrders({ side: 'ASK', depth: '100' })
 
-    })
-
-    xit('returns all available orders when given no price', () => {
-
+      expect(askIndex.streamOrdersAtPriceOrBetter).to.have.been.calledWith(undefined)
     })
   })
 

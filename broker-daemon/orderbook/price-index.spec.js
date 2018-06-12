@@ -170,6 +170,13 @@ describe('PriceIndex', () => {
         expect(createReadStreamStub).to.have.been.calledOnce()
         expect(createReadStreamStub).to.have.been.calledWith(sinon.match({ lte: fakeIndex }))
       })
+
+      it('returns a normal stream if no price is provided', () => {
+        index.streamOrdersAtPriceOrBetter()
+
+        expect(createReadStreamStub).to.have.been.calledOnce()
+        expect(createReadStreamStub).to.have.been.calledWith({})
+      })
     })
   })
 })

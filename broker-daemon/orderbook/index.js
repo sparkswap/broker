@@ -66,16 +66,6 @@ class Orderbook {
         return reject(new Error(`${side} is not a valid market side`))
       }
 
-      if (!price) {
-        if (side === MarketEventOrder.SIDES.BID) {
-          // default price for BID is the worst price, i.e. Infinity
-          price = Infinity
-        } else {
-          // default price for ASK is the worst price, i.e. 0
-          price = 0
-        }
-      }
-
       let resolved = false
       const orders = []
 
@@ -92,7 +82,7 @@ class Orderbook {
       }
 
       const index = side === MarketEventOrder.SIDES.BID ? this.bidIndex : this.askIndex
-      const stream = index.createReadStream()
+      const stream = index.streamOrdersAtPriceOrBetter(price)
 
       stream.on('error', reject)
 

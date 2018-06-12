@@ -99,9 +99,12 @@ class PriceIndex extends SublevelIndex {
    * @return {ReadableStream}       ReadableStream from sublevel-index
    */
   streamOrdersAtPriceOrBetter (price) {
-    return this.createReadStream({
-      lte: this.keyForPrice(price)
-    })
+    const opts = {}
+
+    if (price) {
+      opts.lte = this.keyForPrice(price)
+    }
+    return this.createReadStream(opts)
   }
 }
 
