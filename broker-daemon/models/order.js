@@ -43,6 +43,16 @@ class Order {
   }
 
   /**
+   * Add parameters to the order from it being filled on the Relayer
+   * @param {String} options.swapHash   Base64 string of the swap hash being used for the fill
+   * @param {String} options.fillAmount Int64 String of the amount, in base currency's base units, of the fill
+   */
+  setFilledParams ({ swapHash, fillAmount }) {
+    this.swapHash = swapHash
+    this.fillAmount = fillAmount  
+  }
+
+  /**
    * Get the symbol of the currency we will receive inbound if the order is completed
    * @return {String} Currency symbol
    */
@@ -126,7 +136,9 @@ class Order {
       ownerId,
       payTo,
       feePaymentRequest,
-      depositPaymentRequest
+      depositPaymentRequest,
+      swapHash,
+      fillAmount
     } = this
 
     return {
@@ -138,7 +150,9 @@ class Order {
       ownerId,
       payTo,
       feePaymentRequest,
-      depositPaymentRequest
+      depositPaymentRequest,
+      swapHash,
+      fillAmount
     }
   }
 
@@ -166,10 +180,10 @@ class Order {
     // instantiate with the correct set of params
     const order = new this({ baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo })
 
-    const { feePaymentRequest, depositPaymentRequest } = otherParams
+    const { feePaymentRequest, depositPaymentRequest, swapHash, fillAmount } = otherParams
 
     // add any (white-listed) leftover params into the object
-    Object.assign(order, { orderId, feePaymentRequest, depositPaymentRequest })
+    Object.assign(order, { orderId, feePaymentRequest, depositPaymentRequest, swapHash, fillAmount })
 
     return order
   }
