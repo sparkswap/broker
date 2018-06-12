@@ -15,7 +15,7 @@ enum TimeInForce {
 
 message Price {
   uint64 integer = 0;
-  unit64 decimal = 1;
+  uint64 decimal = 1;
 }
 
 message CreateBlockOrderRequest {
@@ -24,7 +24,7 @@ message CreateBlockOrderRequest {
   int64 amount = 2;
   oneof price_restriction {
     bool is_market_order = 3;
-    int64 limit_price = 4;
+    Price limit_price = 4;
   }
 
   TimeInForce time_in_force = 5 [default = GTC];
