@@ -93,7 +93,14 @@ const OrderStateMachine = StateMachine.factory({
      * place transition: second transition in the order lifecycle
      * @type {Object}
      */
-    { name: 'place', from: 'created', to: 'placed' }
+    { name: 'place', from: 'created', to: 'placed' },
+
+    /**
+     * cancel transition: cancel an outstanding created or placed order
+     * @type {Object}
+     */
+    { name: 'cancel', from: 'created', to: 'cancelled' },
+    { name: 'cancel', from: 'placed', to: 'cancelled' }
   ],
   /**
    * Instantiate the data on the state machine
@@ -194,6 +201,26 @@ const OrderStateMachine = StateMachine.factory({
 
     onAfterPlace: function (lifecycle) {
       this.logger.error('Transition for onAfterPlace not implemented')
+    },
+
+    /**
+     * Cancel the order on the relayer during transition.
+     * This function gets called before the `cancel` transition (triggered by a call to `cancel`)
+     * Actual cancellation on the relayer is done in `onBeforePlace` so that the transition can be cancelled
+     * if cancellation on the Relayer fails.
+     *
+     * @todo monitor for refunds from the relayer
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {Promise}          Promise that rejects if cancellation on the relayer fails
+     */
+    onBeforeCancel: async function (lifecycle) {
+      const { orderId } = this.order
+
+      this.logger.info(`Cancelling order ${orderId} on the relayer`)
+
+      await this.relayer.makerService.cancelOrder({ orderId })
+
+      this.logger.info(`Cancelled order ${orderId} on the relayer`)
     },
 
     /**
