@@ -9,7 +9,7 @@ services:
       - './bin:/home/app/bin'
       - './broker-cli:/home/app/broker-cli/'
     environment:
-      - BROKER_DAEMON_HOST=kbd:27492
+      - BROKER_DAEMON_HOST=bd:27492
     networks:
       - broker
 
