@@ -283,5 +283,26 @@ describe('Order', () => {
         expect(order.value).to.include(`"depositPaymentRequest":"${createdParams.depositPaymentRequest}"`)
       })
     })
+
+    describe('#setFilledParams', () => {
+      let filledParams = {
+        swapHash: 'asdfjasofj9s8fu',
+        fillAmount: '10000'
+      }
+
+      it('updates the object with the params from creating on the relayer', () => {
+        order.setFilledParams(filledParams)
+
+        expect(order).to.have.property('swapHash', filledParams.swapHash)
+        expect(order).to.have.property('fillAmount', filledParams.fillAmount)
+      })
+
+      it('includes the updated params with the saved value', () => {
+        order.setFilledParams(filledParams)
+
+        expect(order.value).to.include(`"swapHash":"${filledParams.swapHash}"`)
+        expect(order.value).to.include(`"fillAmount":"${filledParams.fillAmount}"`)
+      })
+    })
   })
 })
