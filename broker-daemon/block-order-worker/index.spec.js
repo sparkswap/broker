@@ -767,4 +767,110 @@ describe('BlockOrderWorker', () => {
       expect(worker.failBlockOrder).to.have.been.calledWith(blockOrder.id, err)
     })
   })
+
+  describe('#workMarketBlockOrder', () => {
+    let worker
+    let blockOrder
+    let fill
+    let orders
+
+    beforeEach(() => {
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      blockOrder = {
+        id: 'fakeId',
+        marketName: 'BTC/LTC',
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        inverseSide: 'ASK',
+        amount: Big('100'),
+        price: null
+      }
+      fill = {
+        id: 'anotherId'
+      }
+      FillStateMachine.create.resolves(fill)
+      orders = [
+        { orderId: '1', baseAmount: '90' },
+        { orderId: '2', baseAmount: '100' }
+      ]
+
+      orderbooks.get('BTC/LTC').getBestOrders.resolves(orders)
+    })
+
+    it('gets the best orders from the orderbook', async () => {
+      await worker.workMarketBlockOrder(blockOrder)
+
+      expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledOnce()
+      expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledWith(sinon.match({ side: 'ASK', depth: '100' }))
+    })
+
+    it('creates FillStateMachines for each fill', async () => {
+      await worker.workMarketBlockOrder(blockOrder)
+
+      expect(FillStateMachine.create).to.have.been.calledTwice()
+      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match.any, orders[0])
+      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match.any, orders[1])
+    })
+
+    it('provides the full fill amount for orders before the last', async () => {
+      await worker.workMarketBlockOrder(blockOrder)
+
+      const call = FillStateMachine.create.args[0]
+
+      expect(call[2]).to.eql({ fillAmount: orders[0].baseAmount })
+    })
+
+    it('provides the remaining fill amount for the last order', async () => {
+      await worker.workMarketBlockOrder(blockOrder)
+
+      const call = FillStateMachine.create.args[1]
+
+      expect(call[2]).to.eql({ fillAmount: '10' })
+    })
+
+    it('provides a sublevel of the block order for the FillStateMachine', async () => {
+      const thirdLevel = 'mylevel'
+      secondLevel.sublevel.returns(thirdLevel)
+
+      await worker.workMarketBlockOrder(blockOrder)
+
+      expect(store.sublevel).to.have.been.calledWith(blockOrder.id)
+      expect(secondLevel.sublevel).to.have.been.calledWith('fills')
+      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match({ store: thirdLevel }))
+    })
+
+    it('provides the relayer to the FillStateMachine', async () => {
+      await worker.workMarketBlockOrder(blockOrder)
+
+      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match({ relayer }))
+    })
+
+    it('provides the engine to the FillStateMachine', async () => {
+      await worker.workMarketBlockOrder(blockOrder)
+
+      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match({ engine }))
+    })
+
+    it('provides a handler for onRejection', async () => {
+      await worker.workMarketBlockOrder(blockOrder)
+
+      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match({ onRejection: sinon.match.func }))
+    })
+
+    it('fails the block order if the order is rejected', async () => {
+      worker.failBlockOrder = sinon.stub()
+      await worker.workMarketBlockOrder(blockOrder)
+
+      const { onRejection } = FillStateMachine.create.args[0][0]
+
+      const err = new Error('fale')
+      onRejection(err)
+
+      await delay(10)
+
+      expect(worker.failBlockOrder).to.have.been.calledOnce()
+      expect(worker.failBlockOrder).to.have.been.calledWith(blockOrder.id, err)
+    })
+  })
 })
