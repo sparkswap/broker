@@ -2,6 +2,7 @@ const { expect } = require('test/test-helper')
 
 const {
   isPrice,
+  isAmount,
   isMarketName,
   isHost,
   areValidMarketNames,
@@ -11,21 +12,57 @@ const {
 
 describe('Validations', () => {
   describe('isPrice', () => {
-    const expectedError = 'Invalid Price Format'
+    const expectedError = 'Invalid price format'
 
     it('returns a valid price', () => {
       const validPrice = '100'
       expect(isPrice(validPrice)).to.eql(validPrice)
     })
 
-    it('throws an error if a price is too large (over 99999)', () => {
-      const invalidPrice = '100000'
+    it('allows decimal prices', () => {
+      const validPrice = '100.8789'
+      expect(isPrice(validPrice)).to.eql(validPrice)
+    })
+
+    it('throws if the price is greater than max value', () => {
+      const invalidPrice = '9223372036854775808'
+      expect(() => isPrice(invalidPrice)).to.throw(expectedError)
+    })
+
+    it('throws if the any part of the price is greater than max value', () => {
+      const invalidPrice = '0.9223372036854775808'
       expect(() => isPrice(invalidPrice)).to.throw(expectedError)
     })
 
     it('throws an error for an incorrect string', () => {
       const invalidPrice = 'banana'
       expect(() => isPrice(invalidPrice)).to.throw(expectedError)
+    })
+  })
+
+  describe('isAmount', () => {
+    const expectedError = 'Invalid amount format'
+
+    it('returns a valid amount', () => {
+      const validAmount = '100'
+      expect(isPrice(validAmount)).to.eql(validAmount)
+    })
+
+    it('does not allow decimal amounts', () => {
+      const invalidAmount = '100.34'
+
+      expect(() => isAmount(invalidAmount)).to.throw(expectedError)
+    })
+
+    it('throws if the amount is greater than max value', () => {
+      const invalidAmount = '9223372036854775808'
+
+      expect(() => isAmount(invalidAmount)).to.throw(expectedError)
+    })
+
+    it('throws an error for an incorrect string', () => {
+      const invalidAmount = 'banana'
+      expect(() => isAmount(invalidAmount)).to.throw(expectedError)
     })
   })
 

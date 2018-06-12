@@ -1,4 +1,11 @@
-const { isInt, isAlpha, isURL, matches } = require('validator')
+const { isInt, isAlpha, isURL, isDecimal, matches } = require('validator')
+const Big = require('./big')
+
+/**
+ * Largest int64 is our maximum value for amounts
+ * @type {String}
+ */
+const MAX_VALUE = '9223372036854775807'
 
 /**
  * Checks if the specified string is a valid price for kinesis
@@ -8,10 +15,27 @@ const { isInt, isAlpha, isURL, matches } = require('validator')
  * @throws {Error} returns an error if price is not a valid format
  */
 function isPrice (str) {
-  if (isInt(str, { lt: 99999 })) {
+  if (isDecimal(str, { decimal_places: '1,19' }) && str.split('.').every(part => Big(part).lte(MAX_VALUE))) {
+    return str
+  } else if (isInt(str) && Big(str).lte(MAX_VALUE)) {
     return str
   }
-  throw new Error('Invalid Price Format')
+
+  throw new Error('Invalid price format')
+}
+
+/**
+ * Checks if the specified string is a valid amount
+ * @param  {String}  str
+ * @return {String}     validated amount
+ * @throws {Error} If amount is not an integer or is too large
+ */
+function isAmount (str) {
+  if (isInt(str, { lt: MAX_VALUE })) {
+    return str
+  }
+
+  throw new Error('Invalid amount format')
 }
 
 /**
@@ -131,6 +155,7 @@ function isBlockOrderId (str) {
 
 module.exports = {
   isPrice,
+  isAmount,
   isMarketName,
   isHost,
   isFormattedPath,

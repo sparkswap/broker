@@ -29,7 +29,9 @@ async function sell (args, opts, logger) {
   }
 
   if (price) {
-    request.limitPrice = price
+    let [ integer, decimal ] = price.split('.')
+    decimal = decimal || '0'
+    request.limitPrice = { integer, decimal }
   } else {
     request.isMarketOrder = true
   }
@@ -51,7 +53,7 @@ async function sell (args, opts, logger) {
 module.exports = (program) => {
   program
     .command('sell', 'Submit an order to sell.')
-    .argument('<amount>', 'Amount of counter currency to sell.', validations.isPrice)
+    .argument('<amount>', 'Amount of counter currency to sell.', validations.isAmount)
     .argument('[price]', 'Worst price that this order should be executed at. (If omitted, the market price will be used)', validations.isPrice)
     .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
     .option('-t, --time-in-force', 'Time in force policy for this order.', Object.keys(TIME_IN_FORCE), 'GTC')
