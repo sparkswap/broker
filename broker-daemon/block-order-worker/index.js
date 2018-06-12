@@ -118,7 +118,23 @@ class BlockOrderWorker extends EventEmitter {
       return Order.fromObject(key, orderObject)
     })
 
-    return Promise.all(orders.map(order => this.relayer.makerService.cancelOrder({ orderId })))
+    try {
+      await Promise.all(orders.map(order => this.relayer.makerService.cancelOrder({ orderId })))
+    } catch(e) {
+      return this.failBlockOrder(blockOrderId, e)
+    }
+
+    this.logger.info(`Cancelled ${orders.length} underlying orders for ${blockOrder.id}`)
+
+    blockOrder.cancel()
+
+    await promisify(this.store.put)(blockOrder.key, blockOrder.value)
+
+    this.logger.info('Moved block order to cancelled state', { id: blockOrder.id })
+
+    this.emit('BlockOrder:cancel', blockOrder)
+
+    return blockOrder
   }
 
   /**
