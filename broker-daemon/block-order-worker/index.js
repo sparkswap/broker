@@ -1,10 +1,10 @@
 const EventEmitter = require('events')
 const { promisify } = require('util')
 const safeid = require('generate-safe-id')
-const { BlockOrder } = require('../models')
+const { BlockOrder, Order } = require('../models')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const { BlockOrderNotFoundError } = require('./errors')
-const { Big } = require('../utils')
+const { Big, getRecords } = require('../utils')
 
 /**
  * @class Create and work Block Orders
@@ -95,6 +95,30 @@ class BlockOrderWorker extends EventEmitter {
     blockOrder.fills = fills
 
     return blockOrder
+  }
+
+  async cancelBlockOrder (blockOrderId) {
+    this.logger.info('Cancelling block order ', { id: blockOrderId })
+
+    try {
+      var value = await promisify(this.store.get)(blockOrderId)
+    } catch (e) {
+      if (e.notFound) {
+        throw new BlockOrderNotFoundError(blockOrderId, e)
+      } else {
+        throw e
+      }
+    }
+
+    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+    const orderStore = this.store.sublevel(blockOrder.id).sublevel('orders')
+
+    const orders = getRecords(store, (key, value) => {
+      const orderObject = JSON.parse(value).order
+      return Order.fromObject(key, orderObject)
+    })
+
+    return Promise.all(orders.map(order => this.relayer.makerService.cancelOrder({ orderId })))
   }
 
   /**
