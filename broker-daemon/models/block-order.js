@@ -19,8 +19,12 @@ class BlockOrder {
     this.id = id
     this.marketName = marketName
     this.price = price ? Big(price) : null
-    this.timeInForce = timeInForce
     this.status = status
+
+    if (!BlockOrder.TIME_RESTRICTIONS[timeInForce]) {
+      throw new Error(`${timeInForce} is not a supported time restriction`)
+    }
+    this.timeInForce = timeInForce
 
     if (!BlockOrder.SIDES[side]) {
       throw new Error(`${side} is not a valid side for a BlockOrder`)
@@ -179,6 +183,10 @@ class BlockOrder {
     return new this({ id, marketName, side, amount, price, timeInForce, status })
   }
 }
+
+BlockOrder.TIME_RESTRICTIONS = Object.freeze({
+  GTC: 'GTC'
+})
 
 BlockOrder.SIDES = Object.freeze({
   BID: 'BID',

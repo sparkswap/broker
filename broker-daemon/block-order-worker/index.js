@@ -163,24 +163,103 @@ class BlockOrderWorker extends EventEmitter {
   async workMarketBlockOrder (blockOrder) {
     const orderbook = this.orderbooks.get(blockOrder.marketName)
     const targetDepth = Big(blockOrder.amount)
-    let currentDepth = Big('0')
 
-    const orders = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString() })
+    const { orders, depth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString() })
+
+    if (Big(depth).lt(targetDepth)) {
+      throw new Error(`Insufficient depth in ${blockOrder.inverseSide} to fill ${targetDepth.toString()}`)
+    }
+
+    return this._fillOrders(blockOrder, orders, targetDepth.toString())
+  }
+
+  /**
+   * Work limit block order
+   * @todo make limit orders more sophisticated than just sending a single limit order to the relayer
+   * @param  {BlockOrder} blockOrder BlockOrder with a limit price
+   * @return {void}
+   */
+  async workLimitBlockOrder (blockOrder) {
+    if (blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.GTC) {
+      throw new Error('Only Good-til-cancelled limit orders are currently supported.')
+    }
+
+    const orderbook = this.orderbooks.get(blockOrder.marketName)
+    const targetDepth = Big(blockOrder.amount)
+
+    // fill as many orders at our price or better
+    const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString(), price: blockOrder.price.toString() })
+    await this._fillOrders(blockOrder, orders, targetDepth.toString())
+
+    if (targetDepth.gt(availableDepth)) {
+      // place an order for the remaining depth that we could not fill
+      this._placeOrder(blockOrder, targetDepth.minus(availableDepth).toString())
+    }
+  }
+
+  /**
+   * Place an order for a block order of a given amount
+   * @param  {BlockOrder} blockOrder Block Order to place an order on behalf of
+   * @param  {String} amount     Int64 amount, in base currency's base units to place the order for
+   * @return {void}
+   */
+  async _placeOrder (blockOrder, amount) {
+    // order params
+    const { baseSymbol, counterSymbol, side } = blockOrder
+    const baseAmount = amount.toString()
+    const counterAmount = Big(amount).times(blockOrder.price).round(0).toString()
+
+    // state machine params
+    const { relayer, engine, logger } = this
+    const store = this.store.sublevel(blockOrder.id).sublevel('orders')
+
+    this.logger.info('Creating order for BlockOrder', { blockOrderId: blockOrder.id })
+
+    const order = await OrderStateMachine.create(
+      {
+        relayer,
+        engine,
+        logger,
+        store,
+        onRejection: (err) => {
+          this.failBlockOrder(blockOrder.id, err)
+        }
+      },
+      { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
+    )
+
+    this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
+  }
+
+  /**
+   * Fill given orders for a given block order up to a target depth
+   * @param  {BlockOrder}              blockOrder  BlockOrder that the orders are being filled on behalf of
+   * @param  {Array<MarketEventOrder>} orders      Orders to be filled
+   * @param  {String}                  targetDepth Int64 string of the maximum depth to fill
+   * @return {Promise<Array<FillStateMachine>>}    Promise that resolves the array of Fill State Machines for these fills
+   */
+  async _fillOrders (blockOrder, orders, targetDepth) {
+    this.logger.info(`Filling ${orders.length} orders for ${blockOrder.id} up to depth of ${targetDepth}`)
+
+    targetDepth = Big(targetDepth)
+    let currentDepth = Big('0')
 
     // state machine params
     const { relayer, engine, logger } = this
     const store = this.store.sublevel(blockOrder.id).sublevel('fills')
 
-    return Promise.all(orders.map((order, index) => {
-      let fillAmount
+    const promisedFills = orders.map((order, index) => {
+      const depthRemaining = targetDepth.minus(currentDepth)
 
-      // Only the last order is a partial fill
-      if (index < orders.length - 1) {
-        fillAmount = order.baseAmount
-      } else {
-        fillAmount = targetDepth.minus(currentDepth).toString()
+      // if we have already reached our target depth, create no further fills
+      if (depthRemaining.lte(0)) {
+        return
       }
 
+      // Take the smaller of the remaining desired depth or the base amount of the order
+      const fillAmount = depthRemaining.gt(order.baseAmount) ? order.baseAmount : depthRemaining.toString()
+
+      // track our current depth so we know what to fill on the next order
       currentDepth = currentDepth.plus(fillAmount)
 
       return FillStateMachine.create(
@@ -197,39 +276,10 @@ class BlockOrderWorker extends EventEmitter {
         order,
         { fillAmount }
       )
-    }))
-  }
+    })
 
-  /**
-   * Work limit block order
-   * @todo make limit orders more sophisticated than just sending a single limit order to the relayer
-   * @param  {BlockOrder} blockOrder BlockOrder with a limit price
-   * @return {void}
-   */
-  async workLimitBlockOrder (blockOrder) {
-    // order params
-    const { baseSymbol, counterSymbol, baseAmount, counterAmount, side } = blockOrder
-
-    // state machine params
-    const { relayer, engine, logger } = this
-    const store = this.store.sublevel(blockOrder.id).sublevel('orders')
-
-    this.logger.info('Creating single order for BlockOrder', { blockOrderId: blockOrder.id })
-
-    const order = await OrderStateMachine.create(
-      {
-        relayer,
-        engine,
-        logger,
-        store,
-        onRejection: (err) => {
-          this.failBlockOrder(blockOrder.id, err)
-        }
-      },
-      { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
-    )
-
-    this.logger.info('Created single order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
+    // filter out null values, they are orders we decided not to fill
+    return Promise.all(promisedFills.filter(promise => promise))
   }
 }
 
