@@ -28,7 +28,7 @@ async function status (args, opts, logger) {
       order.price = `${order.price.integer}.${order.price.decimal}`
       return order
     })
-    blockOrderResult.fills.map((order) => {
+    blockOrderResult.fills.map((fill) => {
       fill.price = `${fill.price.integer}.${fill.price.decimal}`
       return fill
     })
