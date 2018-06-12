@@ -76,5 +76,6 @@ STEPS FOR CHANNELS
     1. You can check this by going to the relayer and running `docker-compose exec relayer bash -c ‘node ./test-client-scripts/test-lnd.js`
 9. restart the relayer (`docker-compose restart`)
 10. restart the broker (`docker-compose restart`)
+11. If you down your containers and remove the volumes, you will need to run all of these steps again.
 
 **NOTE**: If the channel does not open after a few minutes, restart the relayer w/ `docker-compose restart`. You may also have to restart the broker
