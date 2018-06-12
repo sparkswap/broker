@@ -97,6 +97,30 @@ class BlockOrderWorker extends EventEmitter {
     return blockOrder
   }
 
+  async cancelBlockOrder (blockOrderId) {
+    this.logger.info('Cancelling block order', { id: blockOrderId })
+
+    let value
+
+    try {
+      value = await promisify(this.store.get)(blockOrderId)
+    } catch (e) {
+      if (e.notFound) {
+        throw new BlockOrderNotFoundError(blockOrderId, e)
+      } else {
+        throw e
+      }
+    }
+
+    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+
+    this.logger.info('Retrieved block order for cancellation', { id: blockOrder.id })
+
+    // BIG QUESTION: should we make sure we have a single instance of each state machine?
+    // is there danger in instantiating multiple
+    throw new Error('Cancelling block orders is not yet implemented')
+  }
+
   /**
    * Move a block order to a failed state
    * @param  {String} blockOrderId ID of the block order to be failed
