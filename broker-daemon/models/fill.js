@@ -170,7 +170,8 @@ class Fill {
       fillAmount,
       swapHash,
       feePaymentRequest,
-      depositPaymentRequest
+      depositPaymentRequest,
+      payTo
     } = this
 
     return {
@@ -185,7 +186,8 @@ class Fill {
       fillAmount,
       swapHash,
       feePaymentRequest,
-      depositPaymentRequest
+      depositPaymentRequest,
+      payTo
     }
   }
 
@@ -213,10 +215,10 @@ class Fill {
     // instantiate with the correct set of params
     const fill = new this({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount })
 
-    const { swapHash, feePaymentRequest, depositPaymentRequest } = otherParams
+    const { swapHash, feePaymentRequest, depositPaymentRequest, payTo } = otherParams
 
     // add any (white-listed) leftover params into the object
-    Object.assign(fill, { fillId, swapHash, feePaymentRequest, depositPaymentRequest })
+    Object.assign(fill, { fillId, swapHash, feePaymentRequest, depositPaymentRequest, payTo })
 
     return fill
   }
