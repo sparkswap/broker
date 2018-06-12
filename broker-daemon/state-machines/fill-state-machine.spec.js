@@ -305,15 +305,69 @@ describe('FillStateMachine', () => {
   })
 
   describe('#fillOrder', () => {
+    let fakeFill
     let fsm
+    let payInvoiceStub
+    let fillOrderStub
+    let invoice
+    let feePaymentRequest
+    let depositPaymentRequest
+    let fillId
 
     beforeEach(async () => {
+      invoice = '1234'
+      payInvoiceStub = sinon.stub().returns(invoice)
+      fillOrderStub = sinon.stub()
+      feePaymentRequest = 'fee'
+      depositPaymentRequest = 'deposit'
+      fillId = '1234'
+
+      fakeFill = { feePaymentRequest, depositPaymentRequest, fillId }
+      engine = { payInvoice: payInvoiceStub }
+      relayer = {
+        takerService: {
+          fillOrder: fillOrderStub
+        }
+      }
+
       fsm = new FillStateMachine({ store, logger, relayer, engine })
+      fsm.fill = fakeFill
+
       await fsm.goto('created')
     })
 
-    it('throws while unimplemented', () => {
-      return expect(fsm.fillOrder()).to.eventually.be.rejectedWith(Error)
+    beforeEach(async () => {
+      await fsm.fillOrder()
+    })
+
+    it('pays a fee invoice', () => {
+      expect(payInvoiceStub).to.have.been.calledWith(feePaymentRequest)
+    })
+
+    it('pays a deposit invoice', () => {
+      expect(payInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
+    })
+
+    it('fills an order on the relayer', () => {
+      expect(fillOrderStub).to.have.been.calledWith(sinon.match({
+        feeRefundPaymentRequest: invoice,
+        depositRefundPaymentRequest: invoice,
+        fillId
+      }))
+    })
+
+    it('errors if a feePaymentRequest isnt available on the fill', async () => {
+      const badFsm = new FillStateMachine({ store, logger, relayer, engine })
+      badFsm.fill = {}
+      await badFsm.goto('created')
+      return expect(badFsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because fee')
+    })
+
+    it('errors if a feePaymentRequest isnt available on the fill', async () => {
+      const badFsm = new FillStateMachine({ store, logger, relayer, engine })
+      badFsm.fill = { feePaymentRequest }
+      await badFsm.goto('created')
+      return expect(badFsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because deposit')
     })
   })
 
