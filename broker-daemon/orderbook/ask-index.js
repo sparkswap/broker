@@ -3,6 +3,29 @@ const { MarketEventOrder } = require('../models')
 const { Big } = require('../utils')
 
 /**
+ * Largest int64, also the maximum value of prices and amounts
+ * @constant
+ * @default
+ * @type {String}
+ */
+const MAX_VALUE = '9223372036854775807'
+/**
+ * Total size of keys for price-based indexes, indicating 16 digits to the left and right of the decimal
+ * Used for zero-filling so we can lexicographically sort correctly
+ * @constant
+ * @default
+ * @type {Number}
+ */
+const PAD_SIZE = 40
+/**
+ * Number of decimal places all keys should have
+ * @constant
+ * @default
+ * @type {Number}
+ */
+const DECIMAL_PLACES = 19
+
+/**
  * @class Index Ask orders in a market
  */
 class AskIndex extends PriceIndex {
@@ -22,7 +45,6 @@ class AskIndex extends PriceIndex {
    * @return {String}       Key to be used as a prefix in the store
    */
   keyForPrice (price) {
-    const { PAD_SIZE, DECIMAL_PLACES } = this
     return Big(price).toFixed(DECIMAL_PLACES).padStart(PAD_SIZE, '0')
   }
 }

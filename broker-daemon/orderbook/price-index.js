@@ -1,53 +1,10 @@
 const { SublevelIndex } = require('../utils')
 const { MarketEventOrder } = require('../models')
-/**
- * Largest int64, also the maximum value of prices and amounts
- * @constant
- * @default
- * @type {String}
- */
-const MAX_VALUE = '9223372036854775807'
-/**
- * Total size of keys for price-based indexes, indicating 16 digits to the left and right of the decimal
- * Used for zero-filling so we can lexicographically sort correctly
- * @constant
- * @default
- * @type {Number}
- */
-const PAD_SIZE = 40
-/**
- * Number of decimal places all keys should have
- * @constant
- * @default
- * @type {Number}
- */
-const DECIMAL_PLACES = 19
 
 /**
  * @class Index by price for a side of the market
  */
 class PriceIndex extends SublevelIndex {
-  /**
-   * Getter for MAX_VALUE for use by descendant classes
-   */
-  get MAX_VALUE () {
-    return MAX_VALUE
-  }
-
-  /**
-   * Getter for PAD_SIZE for use by descendant classes
-   */
-  get PAD_SIZE () {
-    return PAD_SIZE
-  }
-
-  /**
-   * Getter for DECIMAL_PLACES for use by descendant classes
-   */
-  get DECIMAL_PLACES () {
-    return DECIMAL_PLACES
-  }
-
   /**
    * Create an index by price for a side of the market
    * @param  {sublevel} store    Store with the underlying orders
