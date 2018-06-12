@@ -1,6 +1,7 @@
 const { MarketEvent, MarketEventOrder } = require('../models')
-const { AskIndex, BidIndex } = require('./price-indexes')
-const { getRecords } = require('../utils')
+const AskIndex = require('./ask-index')
+const BidIndex = require('./bid-index')
+const { getRecords, Big } = require('../utils')
 
 class Orderbook {
   constructor (marketName, relayer, store, logger = console) {
@@ -42,6 +43,66 @@ class Orderbook {
   async all () {
     this.logger.info(`Retrieving all records for ${this.marketName}`)
     return getRecords(this.store, MarketEventOrder.fromStorage.bind(MarketEventOrder))
+  }
+
+  /**
+   * @typedef {Object} BestOrders
+   * @property {String} depth Int64 string of the total depth represented by the orders
+   * @property {Array<MarketEventOrder>} orders Array of the best market event orders
+   */
+
+  /**
+   * get the best price orders in the orderbook
+   * @param  {String} options.side  Side of the orderbook to get the best priced orders for (i.e. `BID` or `ASK`)
+   * @param  {String} options.depth int64 String of the amount, in base currency base units to ge the best prices up to
+   * @param  {String} options.price Decimal String of the price that all orders should be better than
+   * @return {Promise<BestOrders>} A promise that resolves MarketEventOrders of the best priced orders
+   */
+  getBestOrders ({ side, depth, price }) {
+    return new Promise((resolve, reject) => {
+      this.logger.info(`Retrieving best priced from ${side} up to ${depth}`)
+
+      if (!MarketEventOrder.SIDES[side]) {
+        return reject(new Error(`${side} is not a valid market side`))
+      }
+
+      let resolved = false
+      const orders = []
+
+      const targetDepth = Big(depth)
+      let currentDepth = Big('0')
+
+      function finish () {
+        // AFAIK, this is the best way to stop a stream in progress
+        resolved = true
+        stream.pause()
+        stream.unpipe()
+
+        resolve({ orders, depth: currentDepth.toString() })
+      }
+
+      const index = side === MarketEventOrder.SIDES.BID ? this.bidIndex : this.askIndex
+      const stream = index.streamOrdersAtPriceOrBetter(price)
+
+      stream.on('error', reject)
+
+      stream.on('end', () => {
+        finish()
+      })
+
+      stream.on('data', ({ key, value }) => {
+        if (resolved) return
+
+        const order = MarketEventOrder.fromStorage(key, value)
+        orders.push(order)
+
+        currentDepth = currentDepth.plus(order.baseAmount)
+
+        if (currentDepth.gte(targetDepth)) {
+          finish()
+        }
+      })
+    })
   }
 
   /**

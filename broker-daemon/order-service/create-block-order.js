@@ -14,19 +14,14 @@ const { PublicError } = require('grpc-methods')
 async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce }) {
   const {
     amount,
-    price,
+    limitPrice,
+    isMarketOrder,
     market,
     side,
     timeInForce
   } = params
 
-  // Price is optional. If no price is provided, we treat it as a Market Order.
-  if (!price) {
-    throw new PublicError(`Market orders are not currently supported`)
-  }
-
-  // default time in force is GTC
-  if (timeInForce && TimeInForce[timeInForce] !== TimeInForce.GTC) {
+  if (TimeInForce[timeInForce] !== TimeInForce.GTC) {
     throw new PublicError('Only Good-til-cancelled orders are currently supported')
   }
 
@@ -34,7 +29,7 @@ async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrde
     marketName: market,
     side: side,
     amount,
-    price,
+    price: isMarketOrder ? null : limitPrice,
     timeInForce: 'GTC'
   })
 

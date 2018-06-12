@@ -2,7 +2,7 @@ const { expect, sinon } = require('test/test-helper')
 const { Big } = require('../utils')
 
 const BlockOrder = require('./block-order')
-const { OrderStateMachine } = require('../state-machines')
+const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 
 describe('BlockOrder', () => {
   describe('::fromStorage', () => {
@@ -81,6 +81,14 @@ describe('BlockOrder', () => {
       const blockOrder = new BlockOrder(params)
 
       expect(blockOrder).to.have.property('side', params.side)
+    })
+
+    it('throws if it has an invalid time restriction', () => {
+      params.timeInForce = undefined
+
+      expect(() => {
+        new BlockOrder(params) // eslint-disable-line
+      }).to.throw()
     })
 
     it('throws if it does not have an amouont', () => {
@@ -286,6 +294,97 @@ describe('BlockOrder', () => {
           expect(serialized.openOrders[0]).to.have.property('orderStatus', 'CREATED')
         })
       })
+
+      describe('fills', () => {
+        let fsm
+
+        beforeEach(() => {
+          fsm = FillStateMachine.fromStore({
+            logger: {
+              info: sinon.stub(),
+              debug: sinon.stub(),
+              error: sinon.stub()
+            },
+            store: {
+              get: sinon.stub(),
+              put: sinon.stub(),
+              createReadStream: sinon.stub()
+            }
+          }, { key: 'mykey',
+            value: JSON.stringify({
+              fill: {
+                order: {
+                  orderId: 'otherkey',
+                  baseSymbol: 'BTC',
+                  counterSymbol: 'XYZ',
+                  side: 'BID',
+                  baseAmount: '1000',
+                  counterAmount: '10000'
+                },
+                fillAmount: '900',
+                feePaymentRequest: 'lnbcasodifjoija',
+                depositPaymentRequest: 'lnbcaosdifjaosdfj'
+              },
+              state: 'created',
+              history: []
+            })})
+        })
+
+        it('assigns an empty array if fills is not defined', () => {
+          const serialized = blockOrder.serialize()
+
+          expect(serialized).to.have.property('fills')
+          expect(serialized.fills).to.be.eql([])
+        })
+
+        it('serializes all of the fills', () => {
+          blockOrder.fills = [ fsm ]
+
+          const serialized = blockOrder.serialize()
+
+          expect(serialized.fills).to.have.lengthOf(1)
+        })
+
+        it('serializes the fill id', () => {
+          blockOrder.fills = [ fsm ]
+
+          const serialized = blockOrder.serialize()
+
+          expect(serialized.fills[0]).to.have.property('fillId', 'mykey')
+        })
+
+        it('serializes the order id', () => {
+          blockOrder.fills = [ fsm ]
+
+          const serialized = blockOrder.serialize()
+
+          expect(serialized.fills[0]).to.have.property('orderId', 'otherkey')
+        })
+
+        it('serializes the amount', () => {
+          blockOrder.fills = [ fsm ]
+
+          const serialized = blockOrder.serialize()
+
+          expect(serialized.fills[0]).to.have.property('amount', '900')
+        })
+
+        it('converts the price', () => {
+          blockOrder.fills = [ fsm ]
+
+          const serialized = blockOrder.serialize()
+
+          expect(serialized.fills[0]).to.have.property('price', '10.0000000000000000')
+        })
+
+        it('serializes the state of the fill', () => {
+          blockOrder.fills = [ fsm ]
+
+          const serialized = blockOrder.serialize()
+
+          expect(serialized.fills[0]).to.have.property('fillStatus', 'CREATED')
+        })
+      })
     })
 
     describe('#serializeSummary', () => {
@@ -365,6 +464,12 @@ describe('BlockOrder', () => {
     describe('get counterSymbol', () => {
       it('defines a counterSymbol getter', () => {
         expect(blockOrder).to.have.property('counterSymbol', 'LTC')
+      })
+    })
+
+    describe('get inverseSide', () => {
+      it('defines an inverse side getter', () => {
+        expect(blockOrder).to.have.property('inverseSide', 'ASK')
       })
     })
 

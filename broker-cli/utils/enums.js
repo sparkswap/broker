@@ -34,7 +34,7 @@ const TIME_IN_FORCE = Object.freeze({
  */
 const ORDER_TYPES = Object.freeze({
   BID: 'BID',
-  SELL: 'SELL'
+  ASK: 'ASK'
 })
 
 /**

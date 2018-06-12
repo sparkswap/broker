@@ -45,7 +45,6 @@ async function commitBalance ({ params, relayer, logger, engine }, { CommitBalan
   const { balance, market } = params
 
   logger.info(`Attempting to create channel with ${EXCHANGE_LND_HOST} on ${market} with ${balance}`)
-  logger.info(balance)
 
   // TODO: Validate that the amount is above the minimum channel balance
   // TODO: Choose the correct engine depending on the market

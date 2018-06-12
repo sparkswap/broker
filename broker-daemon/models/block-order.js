@@ -18,10 +18,18 @@ class BlockOrder {
   constructor ({ id, marketName, side, amount, price, timeInForce, status = BlockOrder.STATUSES.ACTIVE }) {
     this.id = id
     this.marketName = marketName
-    this.side = side
     this.price = price ? Big(price) : null
-    this.timeInForce = timeInForce
     this.status = status
+
+    if (!BlockOrder.TIME_RESTRICTIONS[timeInForce]) {
+      throw new Error(`${timeInForce} is not a supported time restriction`)
+    }
+    this.timeInForce = timeInForce
+
+    if (!BlockOrder.SIDES[side]) {
+      throw new Error(`${side} is not a valid side for a BlockOrder`)
+    }
+    this.side = side
 
     if (!amount) {
       throw new Error(`A transaction amount is required to create a block order`)
@@ -29,6 +37,19 @@ class BlockOrder {
     this.amount = Big(amount)
 
     this.openOrders = []
+    this.fills = []
+  }
+
+  /**
+   * Convenience getter for the inverse side of the market
+   * @return {String} `BID` or `ASK`
+   */
+  get inverseSide () {
+    if (this.side === BlockOrder.SIDES.BID) {
+      return BlockOrder.SIDES.ASK
+    }
+
+    return BlockOrder.SIDES.BID
   }
 
   /**
@@ -116,15 +137,33 @@ class BlockOrder {
       }
     })
 
-    return {
+    const fills = this.fills.map(({ fill, state }) => {
+      return {
+        orderId: fill.order.orderId,
+        fillId: fill.fillId,
+        amount: fill.fillAmount,
+        price: fill.price,
+        fillStatus: state.toUpperCase()
+      }
+    })
+
+    const serialized = {
       market: this.marketName,
       side: this.side,
       amount: this.amount.toString(),
-      price: this.price ? this.price.toString() : null,
       timeInForce: this.timeInForce,
       status: this.status,
-      openOrders: openOrders
+      openOrders: openOrders,
+      fills: fills
     }
+
+    if (this.price) {
+      serialized.limitPrice = this.price.toString()
+    } else {
+      serialized.isMarketOrder = true
+    }
+
+    return serialized
   }
 
   serializeSummary () {
@@ -156,6 +195,15 @@ class BlockOrder {
     return new this({ id, marketName, side, amount, price, timeInForce, status })
   }
 }
+
+BlockOrder.TIME_RESTRICTIONS = Object.freeze({
+  GTC: 'GTC'
+})
+
+BlockOrder.SIDES = Object.freeze({
+  BID: 'BID',
+  ASK: 'ASK'
+})
 
 BlockOrder.STATUSES = Object.freeze({
   ACTIVE: 'ACTIVE',
