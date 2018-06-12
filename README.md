@@ -65,13 +65,17 @@ The overall flow looks something like this:
 
 STEPS FOR CHANNELS
 
-1. Start all containers on the relayer and run `npm run fund`
-2. On the broker, start all containers
-3. On the broker, run `nom run fund-setup`
-4. One the broker, run `nom run fund`
-5. On the broker, run `./bin/kcli wallet commit-balance BTC`
-6. Wait for a little (6 confirmation blocks)
-7. Channel is now open
+1. npm run build && docker-compose build --force-rm
+2. Start all containers on the relayer and run `npm run fund` in the relayer
+3. On the broker, start all containers
+4. On the broker, run `npm run fund-setup`
+5. One the broker, run `npm run fund` (this command expects that the relayer is at ../relayer)
+6. On the broker, run `./bin/kcli wallet commit-balance BTC`
+7. Wait for a little (6 confirmation blocks)
+8. Channel is now open
     1. You can check this by going to the relayer and running `docker-compose exec relayer bash -c ‘node ./test-client-scripts/test-lnd.js`
+9. restart the relayer (`docker-compose restart`)
+10. restart the broker (`docker-compose restart`)
+11. If you down your containers and remove the volumes, you will need to run all of these steps again.
 
 **NOTE**: If the channel does not open after a few minutes, restart the relayer w/ `docker-compose restart`. You may also have to restart the broker
