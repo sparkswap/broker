@@ -328,6 +328,7 @@ describe('OrderStateMachine', () => {
     let osm
     let payInvoiceStub
     let placeOrderStub
+    let subscribeFillStub
     let invoice
     let feePaymentRequest
     let depositPaymentRequest
@@ -337,6 +338,7 @@ describe('OrderStateMachine', () => {
       invoice = '1234'
       payInvoiceStub = sinon.stub().returns(invoice)
       placeOrderStub = sinon.stub()
+      subscribeFillStub = sinon.stub()
       feePaymentRequest = 'fee'
       depositPaymentRequest = 'deposit'
       orderId = '1234'
@@ -345,7 +347,8 @@ describe('OrderStateMachine', () => {
       engine = { payInvoice: payInvoiceStub }
       relayer = {
         makerService: {
-          placeOrder: placeOrderStub
+          placeOrder: placeOrderStub,
+          subscribeFill: subscribeFillStub.returns({ on: sinon.stub() })
         }
       }
 

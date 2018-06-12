@@ -237,7 +237,9 @@ describe('Order', () => {
       it('defines a getter for retrieving a plain object', () => {
         const valueObject = Object.assign({
           feePaymentRequest: undefined,
-          depositPaymentRequest: undefined
+          depositPaymentRequest: undefined,
+          swapHash: undefined,
+          fillAmount: undefined
         }, params)
         expect(order).to.have.property('valueObject')
         expect(order.valueObject).to.be.eql(valueObject)
