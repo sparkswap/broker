@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/empty.proto";
+
 enum Side {
   BID = 0;
   ASK = 1;
@@ -87,7 +89,12 @@ message GetBlockOrderResponse {
   repeated Fill fills = 22;
 }
 
+message CancelBlockOrderRequest {
+  string block_order_id = 0;
+}
+
 service OrderService {
   rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse);
   rpc GetBlockOrder (GetBlockOrderRequest) returns (GetBlockOrderResponse);
+  rpc CancelBlockOrder (CancelBlockOrderRequest) returns (google.protobuf.Empty);
 }
