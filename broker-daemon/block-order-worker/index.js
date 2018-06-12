@@ -112,6 +112,10 @@ class BlockOrderWorker extends EventEmitter {
       }
     }
 
+    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+
+    this.logger.info('Retrieved block order for cancellation', { id: blockOrderId })
+
     // BIG QUESTION: should we make sure we have a single instance of each state machine?
     // is there danger in instantiating multiple
     throw new Error('Cancelling block orders is not yet implemented')
