@@ -31,7 +31,7 @@ function isPrice (str) {
  * @throws {Error} If amount is not an integer or is too large
  */
 function isAmount (str) {
-  if (isInt(str, { lt: MAX_VALUE })) {
+  if (isInt(str) && Big(str).lte(MAX_VALUE)) {
     return str
   }
 
