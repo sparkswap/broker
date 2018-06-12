@@ -4,6 +4,7 @@ const safeid = require('generate-safe-id')
 const { BlockOrder } = require('../models')
 const { OrderStateMachine } = require('../state-machines')
 const { BlockOrderNotFoundError } = require('./errors')
+const { getRecords } = require('../utils')
 
 /**
  * @class Create and work Block Orders
@@ -92,6 +93,19 @@ class BlockOrderWorker extends EventEmitter {
     blockOrder.openOrders = openOrders
 
     return blockOrder
+  }
+
+  /**
+   * Get existing block orders
+   * @param  {String} market to filter by
+   * @return {Array<BlockOrder>}
+   */
+  async getBlockOrders (market) {
+    this.logger.info('Getting all block orders')
+    console.log(BlockOrder)
+    const allRecords = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder))
+    const recordsForMarket = allRecords.filter((record) => record.marketName === market)
+    return recordsForMarket
   }
 
   /**

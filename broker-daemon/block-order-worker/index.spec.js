@@ -433,4 +433,35 @@ describe('BlockOrderWorker', () => {
 
     // NOTE: other testing is TODO until workBlockOrder supports more sophisticated order handling
   })
+
+  describe('getBlockOrders', () => {
+    let market
+    let worker
+    let getRecords
+    let firstBlockOrder
+    let secondBlockOrder
+
+    beforeEach(() => {
+      market = 'BTC/LTC'
+      firstBlockOrder = { marketName: 'BTC/LTC' }
+      secondBlockOrder = { marketName: 'ABC/XYZ' }
+      getRecords = sinon.stub().resolves([firstBlockOrder, secondBlockOrder])
+      BlockOrderWorker.__set__('getRecords', getRecords)
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+    })
+
+    it('retrieves all block orders from the store', async () => {
+      BlockOrder.fromStorage.bind = sinon.stub()
+      await worker.getBlockOrders(market)
+
+      expect(getRecords).to.have.been.calledOnce()
+      expect(getRecords).to.have.been.calledWith(store, BlockOrder.fromStorage.bind(BlockOrder))
+    })
+
+    it('filters the block orders by market', async () => {
+      const res = await worker.getBlockOrders(market)
+
+      expect(res).to.eql([firstBlockOrder])
+    })
+  })
 })

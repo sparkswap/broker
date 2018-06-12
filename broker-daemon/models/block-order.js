@@ -127,6 +127,18 @@ class BlockOrder {
     }
   }
 
+  serializeSummary () {
+    return {
+      blockOrderId: this.id,
+      market: this.marketName,
+      side: this.side,
+      amount: this.amount.toString(),
+      price: this.price ? this.price.toString() : null,
+      timeInForce: this.timeInForce,
+      status: this.status
+    }
+  }
+
   /**
    * Re-instantiate a previously saved BlockOrder
    * @param  {String} key   Key used to retrieve the BlockOrder
