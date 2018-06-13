@@ -28,9 +28,7 @@ Run the following commands in order:
 
 #### Using the CLI
 
-You can run `./bin/kcli -h` to view all available commands. (this can be done in the kcli container using `docker-compose run kcli bash -c './bin/kcli -h'`)
-
-NOTE: Running a command on the kcli container will initialize a new container on every run, which can become very process heavy.
+You can run `./bin/kcli -h` to view all available commands.
 
 #### Running tests
 
