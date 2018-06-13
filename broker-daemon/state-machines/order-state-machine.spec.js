@@ -441,7 +441,6 @@ describe('OrderStateMachine', () => {
       expect(osm.tryTo).to.have.been.calledWith('execute')
     })
   })
-
   describe('#goto', () => {
     let osm
 
