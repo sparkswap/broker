@@ -4,12 +4,7 @@ const safeid = require('generate-safe-id')
 const { BlockOrder, Order } = require('../models')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const { BlockOrderNotFoundError } = require('./errors')
-<<<<<<< HEAD
-const { Big } = require('../utils')
-const { getRecords } = require('../utils')
-=======
 const { Big, getRecords } = require('../utils')
->>>>>>> master
 
 /**
  * @class Create and work Block Orders
