@@ -124,6 +124,16 @@ class BlockOrder {
   }
 
   /**
+   * Move the block order to a cancelled status
+   * @return {BlockOrder} Modified block order instance
+   */
+  cancel () {
+    this.status = BlockOrder.STATUSES.CANCELLED
+
+    return this
+  }
+
+  /**
    * serialize a block order for transmission via grpc
    * @return {Object} Object to be serialized into a GRPC message
    */

@@ -97,9 +97,9 @@ const OrderStateMachine = StateMachine.factory({
 
     /**
      * cancel transition: cancel an outstanding created or placed order
+     * @todo monitor for refunds from the relayer
      * @type {Object}
      */
-    { name: 'cancel', from: 'created', to: 'cancelled' },
     { name: 'cancel', from: 'placed', to: 'cancelled' }
   ],
   /**
@@ -199,28 +199,36 @@ const OrderStateMachine = StateMachine.factory({
       this.logger.info(`Placed order ${this.order.orderId} on the relayer`)
     },
 
-    onAfterPlace: function (lifecycle) {
-      this.logger.error('Transition for onAfterPlace not implemented')
-    },
-
     /**
-     * Cancel the order on the relayer during transition.
-     * This function gets called before the `cancel` transition (triggered by a call to `cancel`)
-     * Actual cancellation on the relayer is done in `onBeforePlace` so that the transition can be cancelled
-     * if cancellation on the Relayer fails.
-     *
-     * @todo monitor for refunds from the relayer
+     * Listen for order fills when in the `placed` state
+     * This is done based on the state and not the transition so that it gets actioned when being re-hydrated from storage
+     * [is that the right thing to do?]
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
-     * @return {Promise}          Promise that rejects if cancellation on the relayer fails
+     * @return {void}
      */
-    onBeforeCancel: async function (lifecycle) {
+    onEnterPlaced: function (lifecycle) {
       const { orderId } = this.order
+      this.logger.info(`In placed state, attempting to listen for fills for order ${orderId}`)
 
-      this.logger.info(`Cancelling order ${orderId} on the relayer`)
+      // NOTE: this method should NOT reject a promise, as that may prevent the state of the order from saving
 
-      await this.relayer.makerService.cancelOrder({ orderId })
+      const call = this.relayer.makerService.subscribeFill({ orderId })
 
-      this.logger.info(`Cancelled order ${orderId} on the relayer`)
+      call.on('error', (e) => {
+        this.reject(e)
+      })
+
+      call.on('data', ({ swapHash, fillAmount }) => {
+        try {
+          this.order.setFilledParams({ swapHash, fillAmount })
+
+          this.logger.info(`Order ${orderId} is being filled`)
+
+          this.tryTo('execute')
+        } catch (e) {
+          this.reject(e)
+        }
+      })
     },
 
     /**
@@ -256,5 +264,12 @@ OrderStateMachine.create = async function (initParams, createParams) {
 
   return osm
 }
+
+OrderStateMachine.STATES = Object.freeze({
+  NONE: 'none',
+  CREATED: 'created',
+  PLACED: 'placed',
+  CANCELLED: 'cancelled'
+})
 
 module.exports = OrderStateMachine
