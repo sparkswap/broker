@@ -176,6 +176,25 @@ class BlockOrder {
     return serialized
   }
 
+  serializeSummary () {
+    const serialized = {
+      blockOrderId: this.id,
+      market: this.marketName,
+      side: this.side,
+      amount: this.amount.toString(),
+      timeInForce: this.timeInForce,
+      status: this.status
+    }
+
+    if (this.price) {
+      serialized.limitPrice = this.price.toString()
+    } else {
+      serialized.isMarketOrder = true
+    }
+
+    return serialized
+  }
+
   /**
    * Re-instantiate a previously saved BlockOrder
    * @param  {String} key   Key used to retrieve the BlockOrder
