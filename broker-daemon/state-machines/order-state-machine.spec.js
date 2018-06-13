@@ -447,6 +447,8 @@ describe('OrderStateMachine', () => {
     let osm
     let cancelOrderStub
     let orderId
+    let subscribeFillStub
+    let subscribeFillStreamStub
 
     beforeEach(async () => {
       cancelOrderStub = sinon.stub()
@@ -455,9 +457,14 @@ describe('OrderStateMachine', () => {
       fakeOrder = { orderId }
       relayer = {
         makerService: {
-          cancelOrder: cancelOrderStub
+          cancelOrder: cancelOrderStub,
+          subscribeFill: subscribeFillStub
         }
       }
+      subscribeFillStreamStub = {
+        on: sinon.stub()
+      }
+      subscribeFillStub = sinon.stub().returns(subscribeFillStreamStub)
 
       osm = new OrderStateMachine({ store, logger, relayer, engine })
       osm.order = fakeOrder
