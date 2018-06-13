@@ -1,10 +1,10 @@
 const EventEmitter = require('events')
 const { promisify } = require('util')
 const safeid = require('generate-safe-id')
-const { BlockOrder } = require('../models')
+const { BlockOrder, Order } = require('../models')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const { BlockOrderNotFoundError } = require('./errors')
-const { Big } = require('../utils')
+const { Big, getRecords } = require('../utils')
 
 /**
  * @class Create and work Block Orders
@@ -97,13 +97,16 @@ class BlockOrderWorker extends EventEmitter {
     return blockOrder
   }
 
+  /**
+   * Cancel a block order in progress
+   * @param  {String} blockOrderId Id of the block order to cancel
+   * @return {BlockOrder}          Block order that was cancelled
+   */
   async cancelBlockOrder (blockOrderId) {
-    this.logger.info('Cancelling block order', { id: blockOrderId })
-
-    let value
+    this.logger.info('Cancelling block order ', { id: blockOrderId })
 
     try {
-      value = await promisify(this.store.get)(blockOrderId)
+      var value = await promisify(this.store.get)(blockOrderId)
     } catch (e) {
       if (e.notFound) {
         throw new BlockOrderNotFoundError(blockOrderId, e)
@@ -113,12 +116,38 @@ class BlockOrderWorker extends EventEmitter {
     }
 
     const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+    const orderStore = this.store.sublevel(blockOrder.id).sublevel('orders')
 
-    this.logger.info('Retrieved block order for cancellation', { id: blockOrder.id })
+    const orders = await getRecords(orderStore, (key, value) => {
+      const { order, state } = JSON.parse(value)
+      return { order: Order.fromObject(key, order), state }
+    })
 
-    // BIG QUESTION: should we make sure we have a single instance of each state machine?
-    // is there danger in instantiating multiple
-    throw new Error('Cancelling block orders is not yet implemented')
+    this.logger.info(`Found ${orders.length} orders associated with Block Order ${blockOrder.id}`)
+
+    // filter for only orders we can cancel
+    const { CREATED, PLACED } = OrderStateMachine.STATES
+    const openOrders = orders.filter(({ state }) => state === CREATED || state === PLACED)
+
+    this.logger.info(`Found ${openOrders.length} orders in a state to be cancelled for Block order ${blockOrder.id}`)
+
+    try {
+      await Promise.all(openOrders.map(({ order }) => this.relayer.makerService.cancelOrder({ orderId: order.orderId })))
+    } catch (e) {
+      return this.failBlockOrder(blockOrderId, e)
+    }
+
+    this.logger.info(`Cancelled ${orders.length} underlying orders for ${blockOrder.id}`)
+
+    blockOrder.cancel()
+
+    await promisify(this.store.put)(blockOrder.key, blockOrder.value)
+
+    this.logger.info('Moved block order to cancelled state', { id: blockOrder.id })
+
+    this.emit('BlockOrder:cancel', blockOrder)
+
+    return blockOrder
   }
 
   /**

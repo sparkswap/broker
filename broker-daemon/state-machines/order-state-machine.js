@@ -97,9 +97,9 @@ const OrderStateMachine = StateMachine.factory({
 
     /**
      * cancel transition: cancel an outstanding created or placed order
+     * @todo monitor for refunds from the relayer
      * @type {Object}
      */
-    { name: 'cancel', from: 'created', to: 'cancelled' },
     { name: 'cancel', from: 'placed', to: 'cancelled' }
   ],
   /**
@@ -232,26 +232,6 @@ const OrderStateMachine = StateMachine.factory({
     },
 
     /**
-     * Cancel the order on the relayer during transition.
-     * This function gets called before the `cancel` transition (triggered by a call to `cancel`)
-     * Actual cancellation on the relayer is done in `onBeforePlace` so that the transition can be cancelled
-     * if cancellation on the Relayer fails.
-     *
-     * @todo monitor for refunds from the relayer
-     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
-     * @return {Promise}          Promise that rejects if cancellation on the relayer fails
-     */
-    onBeforeCancel: async function (lifecycle) {
-      const { orderId } = this.order
-
-      this.logger.info(`Cancelling order ${orderId} on the relayer`)
-
-      await this.relayer.makerService.cancelOrder({ orderId })
-
-      this.logger.info(`Cancelled order ${orderId} on the relayer`)
-    },
-
-    /**
      * Log errors from rejection
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @param  {Error}  error     Error that caused the rejection
@@ -284,5 +264,12 @@ OrderStateMachine.create = async function (initParams, createParams) {
 
   return osm
 }
+
+OrderStateMachine.STATES = Object.freeze({
+  NONE: 'none',
+  CREATED: 'created',
+  PLACED: 'placed',
+  CANCELLED: 'cancelled'
+})
 
 module.exports = OrderStateMachine

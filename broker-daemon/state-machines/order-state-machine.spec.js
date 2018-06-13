@@ -442,42 +442,6 @@ describe('OrderStateMachine', () => {
     })
   })
 
-  describe('#cancel', () => {
-    let fakeOrder
-    let osm
-    let cancelOrderStub
-    let orderId
-
-    beforeEach(async () => {
-      cancelOrderStub = sinon.stub()
-      orderId = '1234'
-
-      fakeOrder = { orderId }
-      relayer = {
-        makerService: {
-          cancelOrder: cancelOrderStub
-        }
-      }
-
-      osm = new OrderStateMachine({ store, logger, relayer, engine })
-      osm.order = fakeOrder
-    })
-
-    it('cancels an order on the relayer in the created state', async () => {
-      await osm.goto('created')
-      await osm.cancel()
-
-      expect(cancelOrderStub).to.have.been.calledWith(sinon.match({ orderId }))
-    })
-
-    it('cancels an order on the relayer in the placed state', async () => {
-      await osm.goto('placed')
-      await osm.cancel()
-
-      expect(cancelOrderStub).to.have.been.calledWith(sinon.match({ orderId }))
-    })
-  })
-
   describe('#goto', () => {
     let osm
 
