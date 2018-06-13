@@ -73,8 +73,8 @@ The following steps will get your broker/relayer projects to a state where you c
     - **NOTE: (this command expects that the relayer is at `../relayer`)**
 6. In the broker, commit a balance to the relayer by running `./bin/kcli wallet commit-balance BTC`
 7. If successful, a channel from the `broker -> relayer` is now in a pending state!
-9. In the relayer directory, restart the relayer so that it can catch up to the blocks we have just generated (`docker-compose restart`)
-10. In the broker directory, restart the broker for the same thing ^^ (`docker-compose restart`)
+9. In the relayer directory, re-create the relayer so that it can catch up to the blocks we have just generated (`docker-compose up -d --force-recreate`)
+10. In the broker directory, re-create the broker for the same thing ^^ (`docker-compose up -d --force-recreate`)
 
 **IMPORTANT: ** If you down your containers and remove the volumes, you will need to run all of these steps again.
 
