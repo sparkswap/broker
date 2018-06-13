@@ -15,6 +15,8 @@ describe('get-daemon-config', () => {
   let markets
   let rpcHost
   let lndHost
+  let lndExternal
+  let daemonExternal
   let revert
 
   beforeEach(() => {
@@ -22,6 +24,8 @@ describe('get-daemon-config', () => {
     rpcHost = '127.0.0.1:8675309'
     lndHost = '127.0.0.1:10009'
     pubKey = 'PUBLIC_KEY'
+    lndExternal = '127.0.0.1:10011'
+    daemonExternal = '127.0.0.1:27984'
     GetDaemonConfigResponse = sinon.stub()
     publicKeyStub = sinon.stub().returns(pubKey)
     engine = {
@@ -32,7 +36,9 @@ describe('get-daemon-config', () => {
       env: {
         EXCHANGE_RPC_HOST: rpcHost,
         EXCHANGE_LND_HOST: lndHost,
-        MARKETS: markets
+        MARKETS: markets,
+        EXTERNAL_ADDRESS: daemonExternal,
+        LND_EXTERNAL_ADDRESS: lndExternal
       }
     })
   })
@@ -51,10 +57,12 @@ describe('get-daemon-config', () => {
 
   it('constructs a daemon config response', () => {
     expect(GetDaemonConfigResponse).to.have.been.calledWith(sinon.match({
-      publicKey: pubKey,
-      exchangeLndHost: lndHost,
-      exchangeRpcHost: rpcHost,
-      markets
+      daemonPublicKey: pubKey,
+      relayerLndHost: lndHost,
+      relayerRpcHost: rpcHost,
+      daemonDefaultMarkets: markets,
+      daemonRpcHost: daemonExternal,
+      daemonLndHost: lndExternal
     }))
   })
 })

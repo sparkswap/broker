@@ -9,19 +9,23 @@
  * @return {responses.GetDaemonConfigResponse}
  */
 async function getDaemonConfig ({ logger, engine }, { GetDaemonConfigResponse }) {
-  const publicKey = await engine.getPublicKey({})
+  const daemonPublicKey = await engine.getPublicKey({})
 
   const {
-    MARKETS: markets,
-    EXCHANGE_RPC_HOST: exchangeRpcHost,
-    EXCHANGE_LND_HOST: exchangeLndHost
+    MARKETS: daemonDefaultMarkets,
+    EXCHANGE_RPC_HOST: relayerRpcHost,
+    EXCHANGE_LND_HOST: relayerLndHost,
+    LND_EXTERNAL_ADDRESS: daemonLndHost,
+    EXTERNAL_ADDRESS: daemonRpcHost
   } = process.env
 
   return new GetDaemonConfigResponse({
-    publicKey,
-    exchangeLndHost,
-    exchangeRpcHost,
-    markets
+    relayerRpcHost,
+    relayerLndHost,
+    daemonRpcHost,
+    daemonLndHost,
+    daemonPublicKey,
+    daemonDefaultMarkets
   })
 }
 
