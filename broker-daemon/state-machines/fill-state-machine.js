@@ -169,7 +169,7 @@ const FillStateMachine = StateMachine.factory({
      * @return {Promise}          romise that rejects if filling on the relayer fails
      */
     onBeforeFillOrder: async function (lifecycle) {
-      const { feePaymentRequest, depositPaymentRequest, fillId } = this.fill
+      const { feePaymentRequest, depositPaymentRequest, fillId, payTo } = this.fill
 
       if (!feePaymentRequest) throw new Error('Cant pay invoices because fee invoice does not exist')
       if (!depositPaymentRequest) throw new Error('Cant pay invoices because deposit invoice does not exist')
@@ -190,7 +190,7 @@ const FillStateMachine = StateMachine.factory({
 
       this.logger.info(`Successfully paid fees for fill: ${fillId}`)
 
-      await this.relayer.takerService.fillOrder({ fillId, feeRefundPaymentRequest, depositRefundPaymentRequest })
+      await this.relayer.takerService.fillOrder({ fillId, feeRefundPaymentRequest, depositRefundPaymentRequest, payTo })
 
       this.logger.info(`Filled order ${fillId} on the relayer`)
     },

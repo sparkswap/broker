@@ -315,6 +315,7 @@ describe('FillStateMachine', () => {
     let feePaymentRequest
     let depositPaymentRequest
     let fillId
+    let payTo
 
     beforeEach(async () => {
       invoice = '1234'
@@ -327,8 +328,9 @@ describe('FillStateMachine', () => {
       feePaymentRequest = 'fee'
       depositPaymentRequest = 'deposit'
       fillId = '1234'
+      payTo = 'ln:asdfsdff'
 
-      fakeFill = { feePaymentRequest, depositPaymentRequest, fillId }
+      fakeFill = { feePaymentRequest, depositPaymentRequest, fillId, payTo }
       engine = { payInvoice: payInvoiceStub }
       relayer = {
         takerService: {
@@ -355,11 +357,12 @@ describe('FillStateMachine', () => {
 
     it('fills an order on the relayer', async () => {
       await fsm.fillOrder()
-      expect(fillOrderStub).to.have.been.calledWith(sinon.match({
+      expect(fillOrderStub).to.have.been.calledWith({
         feeRefundPaymentRequest: invoice,
         depositRefundPaymentRequest: invoice,
-        fillId
-      }))
+        fillId,
+        payTo
+      })
     })
 
     it('errors if a feePaymentRequest isnt available on the fill', () => {
