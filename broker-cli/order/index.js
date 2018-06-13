@@ -28,7 +28,7 @@ module.exports = (program) => {
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
-    .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
+    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
 
@@ -49,7 +49,8 @@ module.exports = (program) => {
           return cancel(args, opts, logger)
 
         case SUPPORTED_COMMANDS.SUMMARY:
-
+          const { market } = opts
+          opts.market = validations.isMarketName(market)
           return summary(args, opts, logger)
       }
     })
