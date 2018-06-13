@@ -151,6 +151,18 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
+   * Get existing block orders
+   * @param  {String} market to filter by
+   * @return {Array<BlockOrder>}
+   */
+  async getBlockOrders (market) {
+    this.logger.info(`Getting all block orders for market: ${market}`)
+    const allRecords = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder))
+    const recordsForMarket = allRecords.filter((record) => record.marketName === market)
+    return recordsForMarket
+  }
+
+  /**
    * Move a block order to a failed state
    * @param  {String} blockOrderId ID of the block order to be failed
    * @param  {Error}  err          Error that caused the failure

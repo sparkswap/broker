@@ -68,6 +68,19 @@ message Fill {
   int64 price = 4;
 }
 
+message BlockOrder {
+  string block_order_id = 0;
+  string market = 1;
+  Side side = 2;
+  int64 amount = 3;
+  oneof price_restriction {
+    bool is_market_order = 13;
+    int64 limit_price = 14;
+  }
+  TimeInForce time_in_force = 5;
+  BlockOrderStatus status = 6;
+}
+
 message GetBlockOrderRequest {
   string block_order_id = 0;
 }
@@ -93,8 +106,17 @@ message CancelBlockOrderRequest {
   string block_order_id = 0;
 }
 
+message GetBlockOrdersResponse {
+  repeated BlockOrder block_orders = 1;
+}
+
+message GetBlockOrdersRequest {
+  string market = 0;
+}
+
 service OrderService {
   rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse);
   rpc GetBlockOrder (GetBlockOrderRequest) returns (GetBlockOrderResponse);
   rpc CancelBlockOrder (CancelBlockOrderRequest) returns (google.protobuf.Empty);
+  rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse);
 }
