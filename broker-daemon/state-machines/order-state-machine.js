@@ -209,7 +209,7 @@ const OrderStateMachine = StateMachine.factory({
      * @param  {Error}  error     Error that caused the rejection
      * @return {void}
      */
-    onBeforeReject: function (lifecycle, error) {
+  onBeforeReject: function (lifecycle, error) {
       this.logger.error(`Encountered error during transition, rejecting`, error)
     },
 

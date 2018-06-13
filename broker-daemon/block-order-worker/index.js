@@ -119,8 +119,8 @@ class BlockOrderWorker extends EventEmitter {
     const orderStore = this.store.sublevel(blockOrder.id).sublevel('orders')
 
     const orders = await getRecords(orderStore, (key, value) => {
-      const parsedValue = JSON.parse(value)
-      return { order: Order.fromObject(key, parsedValue.order), state: parsedValue.state }
+      const { order, state } = JSON.parse(value)
+      return { order: Order.fromObject(key, order), state }
     })
 
     this.logger.info(`Found ${orders.length} orders associated with Block Order ${blockOrder.id}`)
