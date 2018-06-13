@@ -8,10 +8,12 @@ message HealthCheckResponse {
 }
 
 message GetDaemonConfigResponse {
-  string exchange_rpc_host = 0;
-  string exchange_lnd_host = 1;
-  string markets = 2;
-  string public_key = 3;
+  string relayer_rpc_host = 0;
+  string relayer_lnd_host = 1;
+  string daemon_rpc_host = 2;
+  string daemon_lnd_host = 3;
+  string daemon_public_key = 5;
+  string daemon_default_markets = 6;
 }
 
 service AdminService {
