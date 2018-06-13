@@ -14,9 +14,10 @@ class Fill {
    * @param  {String} order.baseAmount    Amount, represented as an integer in the base currency's smallest unit, to be transacted
    * @param  {String} order.counterAmount Amount, represented as an integer in the counter currency's smallest unit, to be transacted
    * @param  {String} fill.fillAmount     Amount, represented as an integer in the base currency's smallets unit, that the order is filled with
+   * @param  {String} fill.takerPayTo     address for the taker
    * @return {Fill}                       Fill instance
    */
-  constructor ({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount }) {
+  constructor ({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerPayTo }) {
     this.order = {
       orderId,
       baseSymbol,
@@ -32,6 +33,7 @@ class Fill {
     this.order.side = side
 
     this.fillAmount = fillAmount
+    this.takerPayTo = takerPayTo
   }
 
   /**
@@ -67,9 +69,9 @@ class Fill {
    * @return {Object} Object of parameters the relayer expects
    */
   get paramsForCreate () {
-    const { fillAmount, swapHash, order: { orderId } } = this
+    const { fillAmount, swapHash, takerPayTo, order: { orderId } } = this
 
-    return { fillAmount, orderId, swapHash }
+    return { fillAmount, orderId, swapHash, takerPayTo }
   }
 
   /**
@@ -171,7 +173,8 @@ class Fill {
       swapHash,
       feePaymentRequest,
       depositPaymentRequest,
-      payTo
+      payTo,
+      takerPayTo
     } = this
 
     return {
@@ -187,7 +190,8 @@ class Fill {
       swapHash,
       feePaymentRequest,
       depositPaymentRequest,
-      payTo
+      payTo,
+      takerPayTo
     }
   }
 
@@ -210,10 +214,10 @@ class Fill {
   static fromObject (key, valueObject) {
     const fillId = key
 
-    const { order: { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, fillAmount, ...otherParams } = valueObject
+    const { order: { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, fillAmount, takerPayTo, ...otherParams } = valueObject
 
     // instantiate with the correct set of params
-    const fill = new this({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount })
+    const fill = new this({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerPayTo })
 
     const { swapHash, feePaymentRequest, depositPaymentRequest, payTo } = otherParams
 

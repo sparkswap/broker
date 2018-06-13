@@ -30,7 +30,8 @@ describe('FillStateMachine', () => {
       }
     }
     engine = {
-      createSwapHash: sinon.stub().resolves()
+      createSwapHash: sinon.stub().resolves(),
+      getPublicKey: sinon.stub().resolves('asdfasdf')
     }
   })
 
@@ -175,6 +176,7 @@ describe('FillStateMachine', () => {
     let fakeKey
     let fakeValueObject
     let createFillResponse
+
     beforeEach(() => {
       fakeKey = 'mykey'
       fakeValueObject = {
@@ -315,7 +317,6 @@ describe('FillStateMachine', () => {
     let feePaymentRequest
     let depositPaymentRequest
     let fillId
-    let payTo
 
     beforeEach(async () => {
       invoice = '1234'
@@ -328,9 +329,8 @@ describe('FillStateMachine', () => {
       feePaymentRequest = 'fee'
       depositPaymentRequest = 'deposit'
       fillId = '1234'
-      payTo = 'ln:asdfsdff'
 
-      fakeFill = { feePaymentRequest, depositPaymentRequest, fillId, payTo }
+      fakeFill = { feePaymentRequest, depositPaymentRequest, fillId }
       engine = { payInvoice: payInvoiceStub }
       relayer = {
         takerService: {
@@ -360,8 +360,7 @@ describe('FillStateMachine', () => {
       expect(fillOrderStub).to.have.been.calledWith({
         feeRefundPaymentRequest: invoice,
         depositRefundPaymentRequest: invoice,
-        fillId,
-        payTo
+        fillId
       })
     })
 
@@ -500,7 +499,8 @@ describe('FillStateMachine', () => {
         counterAmount: '1000'
       }
       fillParams = {
-        fillAmount: '90000'
+        fillAmount: '90000',
+        takerPayTo: 'ln:asdfasdf'
       }
       fakeKey = 'mykey'
       fakeValueObject = {
