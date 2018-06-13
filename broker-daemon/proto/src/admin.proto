@@ -7,7 +7,7 @@ message HealthCheckResponse {
   string relayer_status = 1;
 }
 
-message GetInfoResponse {
+message GetDaemonConfigResponse {
   string exchange_rpc_host = 0;
   string exchange_lnd_host = 1;
   string markets = 2;
@@ -16,5 +16,5 @@ message GetInfoResponse {
 
 service AdminService {
   rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
-  rpc GetInfo (google.protobuf.Empty) returns (GetInfoResponse);
+  rpc GetDaemonConfig (google.protobuf.Empty) returns (GetDaemonConfigResponse);
 }

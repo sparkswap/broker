@@ -2,7 +2,7 @@ const { GrpcUnaryMethod } = require('grpc-methods')
 const { loadProto } = require('../utils')
 
 const healthCheck = require('./health-check')
-const getInfo = require('./get-info')
+const getDaemonConfig = require('./get-daemon-config')
 
 class AdminService {
   constructor (protoPath, { logger, relayer, engine }) {
@@ -15,12 +15,12 @@ class AdminService {
 
     const {
       HealthCheckResponse,
-      GetInfoResponse
+      GetDaemonConfigResponse
     } = this.proto
 
     this.implementation = {
       healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer, engine }, { HealthCheckResponse }).register(),
-      getInfo: new GrpcUnaryMethod(getInfo, this.messageId('getInfo'), { logger, engine }, { GetInfoResponse }).register()
+      getDaemonConfig: new GrpcUnaryMethod(getDaemonConfig, this.messageId('getDaemonConfig'), { logger, engine }, { GetDaemonConfigResponse }).register()
     }
   }
 

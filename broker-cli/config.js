@@ -2,7 +2,7 @@ const BrokerDaemonClient = require('./broker-daemon-client')
 const { validations } = require('./utils')
 
 /**
- * Returns configuration information for a particular broker
+ * Returns configuration information for a particular broker daemon
  *
  * @param {Object} args
  * @param {String} [args.rpcAddress=null]
@@ -14,15 +14,13 @@ async function config (args, opts, logger) {
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const res = await client.adminService.getInfo({})
+    const res = await client.adminService.getDaemonConfig({})
 
     logger.info('Current Kinesis Configuration:')
 
-    if (res) {
-      Object.keys(res).forEach(key => logger.info(`${key}: ${res[key]}`))
-    }
+    Object.keys(res).forEach(key => logger.info(`${key}: ${res[key]}`))
   } catch (e) {
-    logger.error(e)
+    logger.error(e.toString())
   }
 }
 
