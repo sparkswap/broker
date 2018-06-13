@@ -1,5 +1,6 @@
 const BrokerDaemonClient = require('../broker-daemon-client')
 const Table = require('cli-table')
+const { ENUMS: { ORDER_TYPES } } = require('../utils')
 require('colors')
 
 /**
@@ -10,8 +11,6 @@ require('colors')
  * @returns {Void}
  */
 function createUI (market, orders) {
-  console.log('hello')
-  console.log(orders)
   const orderTable = new Table({
     head: ['Order ID', 'Side', 'Amount', 'Limit Price', 'Time', 'Status'],
     colWidths: [45, 7, 18, 18, 6, 10],
@@ -25,8 +24,8 @@ function createUI (market, orders) {
   ui.push('')
 
   orders.forEach((order) => {
-    const price = order.limitPrice || 'MARKET'
-    const side = order.side === 'BID' ? order.side.green : order.side.red
+    const price = order.isMarketOrder ? 'MARKET' : order.limitPrice
+    const side = order.side === ORDER_TYPES.BID ? order.side.green : order.side.red
     orderTable.push([order.blockOrderId, side, order.amount, price, order.timeInForce, order.status])
   })
 
@@ -50,10 +49,7 @@ async function summary (args, opts, logger) {
   const request = { market }
   try {
     const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)
-    console.log('wtf')
     const orders = await brokerDaemonClient.orderService.getBlockOrders(request)
-    console.log('hello friends')
-    console.log(orders)
     createUI(market, orders.blockOrders)
   } catch (e) {
     logger.error(e)

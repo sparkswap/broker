@@ -5,7 +5,7 @@ const {
   expect
 } = require('test/test-helper')
 
-const programPath = path.resolve('broker-cli', 'order', 'summary')
+const programPath = path.resolve(__dirname, 'summary')
 const program = rewire(programPath)
 
 describe('summary', () => {
@@ -19,9 +19,10 @@ describe('summary', () => {
   let brokerStub
   let market
   let rpcAddress
-  let createUIStub
-  let revertCreateUI
   let order
+  let tableStub
+  let revertTable
+  let instanceTableStub
 
   const summary = program.__get__('summary')
 
@@ -34,20 +35,21 @@ describe('summary', () => {
     errorSpy = sinon.spy()
     order = {
       side: 'BID',
-      amount: 1000,
-      price: 10,
+      amount: '1000',
+      limitPrice: '10',
+      isMarketOrder: false,
       timeInForce: 'GTC',
       blockOrderId: 'asdfasdf',
       status: 'FAILED'
     }
     getBlockOrdersStub = sinon.stub().resolves({blockOrders: [order]})
-    createUIStub = sinon.stub()
 
     brokerStub = sinon.stub()
     brokerStub.prototype.orderService = { getBlockOrders: getBlockOrdersStub }
-
+    instanceTableStub = {push: sinon.stub()}
+    tableStub = sinon.stub().returns(instanceTableStub)
     revert = program.__set__('BrokerDaemonClient', brokerStub)
-    revertCreateUI = program.__set__('createUI', createUIStub)
+    revertTable = program.__set__('Table', tableStub)
 
     logger = {
       info: infoSpy,
@@ -57,7 +59,7 @@ describe('summary', () => {
 
   afterEach(() => {
     revert()
-    revertCreateUI()
+    revertTable()
   })
 
   it('makes a request to the broker', async () => {
@@ -65,9 +67,27 @@ describe('summary', () => {
     expect(getBlockOrdersStub).to.have.been.calledWith({market})
   })
 
-  it('outputs a UI with orders', async () => {
+  it('adds orders to the table', async () => {
     await summary(args, opts, logger)
-    expect(createUIStub).to.have.been.called()
-    expect(createUIStub).to.have.been.calledWith(market, [order])
+
+    expect(instanceTableStub.push).to.have.been.called()
+    expect(instanceTableStub.push).to.have.been.calledWith([order.blockOrderId, order.side.green, order.amount, order.limitPrice, order.timeInForce, order.status])
+  })
+
+  it('uses MARKET as price if there is no price', async () => {
+    const order = {
+      side: 'BID',
+      amount: '1000',
+      limitPrice: '0',
+      isMarketOrder: true,
+      timeInForce: 'GTC',
+      blockOrderId: 'asdfasdf',
+      status: 'FAILED'
+    }
+    brokerStub.prototype.orderService = { getBlockOrders: sinon.stub().resolves({blockOrders: [order]}) }
+    await summary(args, opts, logger)
+
+    expect(instanceTableStub.push).to.have.been.called()
+    expect(instanceTableStub.push).to.have.been.calledWith([order.blockOrderId, order.side.green, order.amount, 'MARKET', order.timeInForce, order.status])
   })
 })
