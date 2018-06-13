@@ -309,6 +309,8 @@ describe('FillStateMachine', () => {
     let fsm
     let payInvoiceStub
     let fillOrderStub
+    let subscribeExecuteStub
+    let subscribeExecuteStream
     let invoice
     let feePaymentRequest
     let depositPaymentRequest
@@ -318,6 +320,10 @@ describe('FillStateMachine', () => {
       invoice = '1234'
       payInvoiceStub = sinon.stub().returns(invoice)
       fillOrderStub = sinon.stub()
+      subscribeExecuteStream = {
+        on: sinon.stub()
+      }
+      subscribeExecuteStub = sinon.stub().returns(subscribeExecuteStream)
       feePaymentRequest = 'fee'
       depositPaymentRequest = 'deposit'
       fillId = '1234'
@@ -326,7 +332,8 @@ describe('FillStateMachine', () => {
       engine = { payInvoice: payInvoiceStub }
       relayer = {
         takerService: {
-          fillOrder: fillOrderStub
+          fillOrder: fillOrderStub,
+          subscribeExecute: subscribeExecuteStub
         }
       }
 
@@ -336,19 +343,18 @@ describe('FillStateMachine', () => {
       await fsm.goto('created')
     })
 
-    beforeEach(async () => {
+    it('pays a fee invoice', async () => {
       await fsm.fillOrder()
-    })
-
-    it('pays a fee invoice', () => {
       expect(payInvoiceStub).to.have.been.calledWith(feePaymentRequest)
     })
 
-    it('pays a deposit invoice', () => {
+    it('pays a deposit invoice', async () => {
+      await fsm.fillOrder()
       expect(payInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
     })
 
-    it('fills an order on the relayer', () => {
+    it('fills an order on the relayer', async () => {
+      await fsm.fillOrder()
       expect(fillOrderStub).to.have.been.calledWith(sinon.match({
         feeRefundPaymentRequest: invoice,
         depositRefundPaymentRequest: invoice,
@@ -356,18 +362,63 @@ describe('FillStateMachine', () => {
       }))
     })
 
-    it('errors if a feePaymentRequest isnt available on the fill', async () => {
-      const badFsm = new FillStateMachine({ store, logger, relayer, engine })
-      badFsm.fill = {}
-      await badFsm.goto('created')
-      return expect(badFsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because fee')
+    it('errors if a feePaymentRequest isnt available on the fill', () => {
+      fsm.fill = {}
+      return expect(fsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because fee')
     })
 
-    it('errors if a feePaymentRequest isnt available on the fill', async () => {
-      const badFsm = new FillStateMachine({ store, logger, relayer, engine })
-      badFsm.fill = { feePaymentRequest }
-      await badFsm.goto('created')
-      return expect(badFsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because deposit')
+    it('errors if a feePaymentRequest isnt available on the fill', () => {
+      fsm.fill = { feePaymentRequest }
+      return expect(fsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because deposit')
+    })
+
+    it('does not subscribe to executions for fills that fail', async () => {
+      fillOrderStub.rejects(new Error('fake error'))
+
+      expect(subscribeExecuteStub).to.not.have.been.called()
+    })
+
+    it('subscribes to fills on the relayer', async () => {
+      await fsm.fillOrder()
+      expect(subscribeExecuteStub).to.have.been.calledOnce()
+      expect(subscribeExecuteStub).to.have.been.calledWith(sinon.match({ fillId }))
+    })
+
+    it('rejects on error from the relayer subscribe fill hook', async () => {
+      fsm.reject = sinon.stub()
+      subscribeExecuteStream.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
+
+      await fsm.fillOrder()
+
+      await delay(10)
+
+      expect(fsm.reject).to.have.been.calledOnce()
+      expect(fsm.reject.args[0][0]).to.be.instanceOf(Error)
+      expect(fsm.reject.args[0][0]).to.have.property('message', 'fake error')
+    })
+
+    it('sets execute params on the fill when it is executed', async () => {
+      const payTo = 'ln:asdfjas0d9f09aj'
+      fsm.fill.setExecuteParams = sinon.stub()
+      subscribeExecuteStream.on.withArgs('data').callsArgWithAsync(1, { payTo })
+
+      await fsm.fillOrder()
+      await delay(10)
+
+      expect(fsm.fill.setExecuteParams).to.have.been.calledOnce()
+      expect(fsm.fill.setExecuteParams).to.have.been.calledWith(sinon.match({ payTo }))
+    })
+
+    it('executes the order after being filled', async () => {
+      fsm.fill.setExecuteParams = sinon.stub()
+      fsm.tryTo = sinon.stub()
+      subscribeExecuteStream.on.withArgs('data').callsArgWithAsync(1, {})
+
+      await fsm.fillOrder()
+      await delay(10)
+
+      expect(fsm.tryTo).to.have.been.calledOnce()
+      expect(fsm.tryTo).to.have.been.calledWith('execute')
     })
   })
 

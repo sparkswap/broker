@@ -63,19 +63,23 @@ The overall flow looks something like this:
 
 ### Development Steps for Relayer/Broker channels
 
-STEPS FOR CHANNELS
+The following steps will get your broker/relayer projects to a state where you can successfully buy/sell orders.
 
-1. npm run build && docker-compose build --force-rm
-2. Start all containers on the relayer and run `npm run fund` in the relayer
-3. On the broker, start all containers
-4. On the broker, run `npm run fund-setup`
-5. One the broker, run `npm run fund` (this command expects that the relayer is at ../relayer)
-6. On the broker, run `./bin/kcli wallet commit-balance BTC`
-7. Wait for a little (6 confirmation blocks)
-8. Channel is now open
-    1. You can check this by going to the relayer and running `docker-compose exec relayer bash -c ‘node ./test-client-scripts/test-lnd.js`
-9. restart the relayer (`docker-compose restart`)
-10. restart the broker (`docker-compose restart`)
-11. If you down your containers and remove the volumes, you will need to run all of these steps again.
+1. If this is your first time running the new code, down all of your containers (relayer/broker)
+1. In the relayer directory, build the project and containers w/ `npm run build && docker-compose build --force-rm`
+2. In the relayer directory, Start all containers w/ `docker-compose up -d`
+3. In the relayer directory, fund the relayer w/ `npm run fund`
+4. In the broker directory, build the project with `npm run build`
+5. In the broker directory, transfer the certs from relayer to broker w/ `npm run fund-setup`
+6. In the broker directory, fund the broker w/ `npm run fund`
+    - **NOTE: (this command expects that the relayer is at `../relayer`)**
+6. In the broker, commit a balance to the relayer by running `./bin/kcli wallet commit-balance BTC`
+7. If successful, a channel from the `broker -> relayer` is now in a pending state!
+9. In the relayer directory, restart the relayer so that it can catch up to the blocks we have just generated (`docker-compose restart`)
+10. In the broker directory, restart the broker for the same thing ^^ (`docker-compose restart`)
 
-**NOTE**: If the channel does not open after a few minutes, restart the relayer w/ `docker-compose restart`. You may also have to restart the broker
+**IMPORTANT: ** If you down your containers and remove the volumes, you will need to run all of these steps again.
+
+Additionally, you can check the status of the channel by running the following command in the relayer directory `docker-compose exec relayer bash -c 'node ./test-client-scripts/test-lnd.js'`
+
+**NOTE**: If the channel does not open after a few minutes, you need to rerun steps 9/10. For some reason, on simnet, because of the way we fund our wallets, BTCD has a problem with handling so many block confirmations at the same time.

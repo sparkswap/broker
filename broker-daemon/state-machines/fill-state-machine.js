@@ -196,6 +196,38 @@ const FillStateMachine = StateMachine.factory({
     },
 
     /**
+     * Listen for order executions
+     * This is done based on the state and not the transition so that it gets actioned when being re-hydrated from storage
+     * [is that the right thing to do?]
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {void}
+     */
+    onEnterFilled: function (lifecycle) {
+      const { fillId } = this.fill
+      this.logger.info(`In filled state, attempting to listen for executions on fill ${fillId}`)
+
+      // NOTE: this method should NOT reject a promise, as that may prevent the state of the fill from saving
+
+      const call = this.relayer.takerService.subscribeExecute({ fillId })
+
+      call.on('error', (e) => {
+        this.reject(e)
+      })
+
+      call.on('data', ({ payTo }) => {
+        try {
+          this.fill.setExecuteParams({ payTo })
+
+          this.logger.info(`Fill ${fillId} is being executed`)
+
+          this.tryTo('execute')
+        } catch (e) {
+          this.reject(e)
+        }
+      })
+    },
+
+    /**
      * Log errors from rejection
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @param  {Error}  error     Error that caused the rejection
