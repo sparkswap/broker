@@ -248,7 +248,8 @@ describe('Fill', () => {
         const valueObject = Object.assign({
           feePaymentRequest: undefined,
           depositPaymentRequest: undefined,
-          swapHash: undefined
+          swapHash: undefined,
+          payTo: undefined
         }, params, { order })
         expect(fill).to.have.property('valueObject')
         expect(fill.valueObject).to.be.eql(valueObject)
@@ -302,6 +303,24 @@ describe('Fill', () => {
 
         expect(fill.value).to.include(`"feePaymentRequest":"${createdParams.feePaymentRequest}"`)
         expect(fill.value).to.include(`"depositPaymentRequest":"${createdParams.depositPaymentRequest}"`)
+      })
+    })
+
+    describe('#setExecuteParams', () => {
+      let executeParams = {
+        payTo: 'ln:asoifjaosfij'
+      }
+
+      it('updates the object with the params from creating on the relayer', () => {
+        fill.setExecuteParams(executeParams)
+
+        expect(fill).to.have.property('payTo', executeParams.payTo)
+      })
+
+      it('includes the updated params with the saved value', () => {
+        fill.setExecuteParams(executeParams)
+
+        expect(fill.value).to.include(`"payTo":"${executeParams.payTo}"`)
       })
     })
   })
