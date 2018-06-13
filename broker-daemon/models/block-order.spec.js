@@ -161,6 +161,22 @@ describe('BlockOrder', () => {
       blockOrder = new BlockOrder(params)
     })
 
+    describe('#fail', () => {
+      it('moves the block order to a failed state', () => {
+        blockOrder.fail()
+
+        expect(blockOrder).to.have.property('status', 'FAILED')
+      })
+    })
+
+    describe('#cancel', () => {
+      it('moves the block order to a cancelled state', () => {
+        blockOrder.cancel()
+
+        expect(blockOrder).to.have.property('status', 'CANCELLED')
+      })
+    })
+
     describe('#serialize', () => {
       it('creates a plain object', () => {
         const serialized = blockOrder.serialize()
