@@ -128,8 +128,7 @@ class BlockOrderWorker extends EventEmitter {
    * @return {Array<BlockOrder>}
    */
   async getBlockOrders (market) {
-    this.logger.info('Getting all block orders')
-    console.log(BlockOrder)
+    this.logger.info(`Getting all block orders for market: ${market}`)
     const allRecords = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder))
     const recordsForMarket = allRecords.filter((record) => record.marketName === market)
     return recordsForMarket

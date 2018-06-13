@@ -1,5 +1,4 @@
-const BrokerDaemonClient = require('./broker-daemon-client')
-const { validations } = require('./utils')
+const BrokerDaemonClient = require('../broker-daemon-client')
 const Table = require('cli-table')
 require('colors')
 
@@ -11,6 +10,8 @@ require('colors')
  * @returns {Void}
  */
 function createUI (market, orders) {
+  console.log('hello')
+  console.log(orders)
   const orderTable = new Table({
     head: ['Order ID', 'Side', 'Amount', 'Limit Price', 'Time', 'Status'],
     colWidths: [45, 7, 18, 18, 6, 10],
@@ -24,7 +25,9 @@ function createUI (market, orders) {
   ui.push('')
 
   orders.forEach((order) => {
-    orderTable.push([order.blockOrderId, order.side, order.amount, order.price, order.timeInForce, order.status])
+    const price = order.limitPrice || 'MARKET'
+    const side = order.side === 'BID' ? order.side.green : order.side.red
+    orderTable.push([order.blockOrderId, side, order.amount, price, order.timeInForce, order.status])
   })
 
   ui.push(orderTable.toString())
@@ -32,9 +35,9 @@ function createUI (market, orders) {
 }
 
 /**
- * kcli orderbook
+ * kcli order summary
  *
- * ex: `kcli orderbook --market 'BTC/LTC'
+ * ex: `kcli order summary --market 'BTC/LTC'
  *
  * @param {Object} args
  * @param {Object} opts
@@ -42,22 +45,19 @@ function createUI (market, orders) {
  * @param {String} [rpcaddress] opts.rpcaddress
  * @param {Logger} logger
  */
-async function myOrders (args, opts, logger) {
+async function summary (args, opts, logger) {
   const { market, rpcAddress = null } = opts
   const request = { market }
   try {
     const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)
+    console.log('wtf')
     const orders = await brokerDaemonClient.orderService.getBlockOrders(request)
+    console.log('hello friends')
+    console.log(orders)
     createUI(market, orders.blockOrders)
   } catch (e) {
     logger.error(e)
   }
 };
 
-module.exports = (program) => {
-  program
-    .command('my-orders', 'View your orders.')
-    .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
-    .option('--rpc-address <server>', 'Location of the RPC server to use.', validations.isHost)
-    .action(myOrders)
-}
+module.exports = summary

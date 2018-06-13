@@ -13,11 +13,13 @@ const { validations } = require('../utils')
  */
 const SUPPORTED_COMMANDS = Object.freeze({
   STATUS: 'status',
-  CANCEL: 'cancel'
+  CANCEL: 'cancel',
+  SUMMARY: 'summary'
 })
 
 const status = require('./status')
 const cancel = require('./cancel')
+const summary = require('./summary')
 
 module.exports = (program) => {
   program
@@ -26,6 +28,7 @@ module.exports = (program) => {
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
 
@@ -44,10 +47,15 @@ module.exports = (program) => {
           args.blockOrderId = validations.isBlockOrderId(blockOrderId || '')
 
           return cancel(args, opts, logger)
+
+        case SUPPORTED_COMMANDS.SUMMARY:
+
+          return summary(args, opts, logger)
       }
     })
     .command(`order ${SUPPORTED_COMMANDS.STATUS}`, 'Get the status of a block order')
     .argument('<blockOrderId>', 'Block order to get status of.', validations.isBlockOrderId)
     .command(`order ${SUPPORTED_COMMANDS.CANCEL}`, 'Cancel a block order')
     .argument('<blockOrderId>', 'Block Order to cancel.', validations.isBlockOrderId)
+    .command(`order ${SUPPORTED_COMMANDS.SUMMARY}`, 'View your orders.')
 }

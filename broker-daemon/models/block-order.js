@@ -167,15 +167,22 @@ class BlockOrder {
   }
 
   serializeSummary () {
-    return {
+    const serialized = {
       blockOrderId: this.id,
       market: this.marketName,
       side: this.side,
       amount: this.amount.toString(),
-      price: this.price ? this.price.toString() : null,
       timeInForce: this.timeInForce,
       status: this.status
     }
+
+    if (this.price) {
+      serialized.limitPrice = this.price.toString()
+    } else {
+      serialized.isMarketOrder = true
+    }
+
+    return serialized
   }
 
   /**

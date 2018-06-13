@@ -38,23 +38,15 @@ describe('getBlockOrders', () => {
     expect(blockOrderWorker.getBlockOrders).to.have.been.calledWith('BTC/LTC')
   })
 
-  it('serializes the block order', async () => {
+  it('serializes the block orders and returns an object with the orders', async () => {
     const firstSerialized = { my: 'object' }
     const secondSerialized = { another: 'object' }
     blockOrder.serializeSummary.returns(firstSerialized)
     anotherBlockOrder.serializeSummary.returns(secondSerialized)
-    await getBlockOrders({ params, blockOrderWorker }, { GetBlockOrdersResponse })
+    const response = await getBlockOrders({ params, blockOrderWorker }, { GetBlockOrdersResponse })
 
     expect(blockOrder.serializeSummary).to.have.been.calledOnce()
     expect(anotherBlockOrder.serializeSummary).to.have.been.calledOnce()
-    expect(GetBlockOrdersResponse).to.have.been.calledWith({blockOrders: [firstSerialized, secondSerialized]})
-  })
-
-  it('returns a block order response', async () => {
-    const response = await getBlockOrders({ params, blockOrderWorker }, { GetBlockOrdersResponse })
-
-    expect(GetBlockOrdersResponse).to.have.been.calledOnce()
-    expect(GetBlockOrdersResponse).to.have.been.calledWithNew()
-    expect(response).to.be.instanceOf(GetBlockOrdersResponse)
+    expect(response).to.eql({blockOrders: [firstSerialized, secondSerialized]})
   })
 })

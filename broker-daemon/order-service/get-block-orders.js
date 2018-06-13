@@ -11,8 +11,9 @@
  */
 async function getBlockOrders ({ params, logger, blockOrderWorker }, { GetBlockOrdersResponse }) {
   try {
-    const blockOrders = await blockOrderWorker.getBlockOrders(params.market)
-    return new GetBlockOrdersResponse({blockOrders: blockOrders.map((blockOrder) => blockOrder.serializeSummary())})
+    const orders = await blockOrderWorker.getBlockOrders(params.market)
+    const blockOrders = orders.map(order => order.serializeSummary())
+    return {blockOrders}
   } catch (err) {
     throw new Error(err.message)
   }

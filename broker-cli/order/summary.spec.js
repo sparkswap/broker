@@ -5,10 +5,10 @@ const {
   expect
 } = require('test/test-helper')
 
-const programPath = path.resolve('broker-cli', 'my-orders')
+const programPath = path.resolve('broker-cli', 'order', 'summary')
 const program = rewire(programPath)
 
-describe('myOrders', () => {
+describe('summary', () => {
   let args
   let opts
   let logger
@@ -23,7 +23,7 @@ describe('myOrders', () => {
   let revertCreateUI
   let order
 
-  const myOrders = program.__get__('myOrders')
+  const summary = program.__get__('summary')
 
   beforeEach(() => {
     rpcAddress = undefined
@@ -61,12 +61,12 @@ describe('myOrders', () => {
   })
 
   it('makes a request to the broker', async () => {
-    await myOrders(args, opts, logger)
+    await summary(args, opts, logger)
     expect(getBlockOrdersStub).to.have.been.calledWith({market})
   })
 
   it('outputs a UI with orders', async () => {
-    await myOrders(args, opts, logger)
+    await summary(args, opts, logger)
     expect(createUIStub).to.have.been.called()
     expect(createUIStub).to.have.been.calledWith(market, [order])
   })
