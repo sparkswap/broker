@@ -126,7 +126,8 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info(`Found ${orders.length} orders associated with Block Order ${blockOrder.id}`)
 
     // filter for only orders we can cancel
-    const openOrders = orders.filter(({ state }) => state === 'created' || state === 'placed')
+    const { CREATED, PLACED } = OrderStateMachine.STATES
+    const openOrders = orders.filter(({ state }) => state === CREATED || state === PLACED)
 
     this.logger.info(`Found ${openOrders.length} orders in a state to be cancelled for Block order ${blockOrder.id}`)
 

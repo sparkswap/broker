@@ -209,7 +209,7 @@ const OrderStateMachine = StateMachine.factory({
      * @param  {Error}  error     Error that caused the rejection
      * @return {void}
      */
-  onBeforeReject: function (lifecycle, error) {
+    onBeforeReject: function (lifecycle, error) {
       this.logger.error(`Encountered error during transition, rejecting`, error)
     },
 
@@ -236,5 +236,12 @@ OrderStateMachine.create = async function (initParams, createParams) {
 
   return osm
 }
+
+OrderStateMachine.STATES = Object.freeze({
+  NONE: 'none',
+  CREATED: 'created',
+  PLACED: 'placed',
+  CANCELLED: 'cancelled'
+})
 
 module.exports = OrderStateMachine

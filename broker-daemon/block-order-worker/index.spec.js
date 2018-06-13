@@ -46,10 +46,21 @@ describe('BlockOrderWorker', () => {
     OrderStateMachine = sinon.stub()
     OrderStateMachine.create = sinon.stub()
     OrderStateMachine.getAll = sinon.stub()
+    OrderStateMachine.STATES = {
+      NONE: 'none',
+      CREATED: 'created',
+      PLACED: 'placed',
+      CANCELLED: 'cancelled'
+    }
 
     FillStateMachine = sinon.stub()
     FillStateMachine.create = sinon.stub()
     FillStateMachine.getAll = sinon.stub()
+    FillStateMachine.STATES = {
+      NONE: 'none',
+      CREATED: 'created',
+      FILLED: 'filled'
+    }
 
     BlockOrderWorker.__set__('OrderStateMachine', OrderStateMachine)
     BlockOrderWorker.__set__('FillStateMachine', FillStateMachine)
