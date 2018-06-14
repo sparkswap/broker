@@ -106,7 +106,7 @@ const OrderStateMachine = StateMachine.factory({
      * execute transition: prepare the swap for execution, and tell the relayer
      * @type {Object}
      */
-    { name: 'execute', from: 'placed', to: 'executing' },
+    { name: 'execute', from: 'placed', to: 'executing' }
   ],
   /**
    * Instantiate the data on the state machine

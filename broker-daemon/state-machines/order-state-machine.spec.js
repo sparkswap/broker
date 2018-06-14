@@ -441,6 +441,62 @@ describe('OrderStateMachine', () => {
       expect(osm.tryTo).to.have.been.calledWith('execute')
     })
   })
+
+  describe('#execute', () => {
+    let fakeOrder
+    let osm
+    let executeOrderStub
+    let prepareSwapStub
+    let orderId
+    let swapHash
+    let inboundSymbol
+    let inboundAmount
+    let outboundSymbol
+    let outboundAmount
+
+    beforeEach(async () => {
+      executeOrderStub = sinon.stub().resolves()
+      prepareSwapStub = sinon.stub().resolves()
+      orderId = '1234'
+      swapHash = '0q9wudf09asdf'
+      inboundSymbol = 'LTC'
+      inboundAmount = '10000'
+      outboundSymbol = 'BTC'
+      outboundAmount = '100'
+
+      fakeOrder = { orderId, swapHash, inboundAmount, inboundSymbol, outboundSymbol, outboundAmount }
+      engine = { prepareSwap: prepareSwapStub }
+      relayer = {
+        makerService: {
+          executeOrder: executeOrderStub
+        }
+      }
+
+      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      osm.onEnterPlaced = sinon.stub()
+      osm.order = fakeOrder
+
+      await osm.goto('placed')
+    })
+
+    it('prepares the swap on the engine', async () => {
+      await osm.execute()
+
+      expect(prepareSwapStub).to.have.been.calledOnce()
+
+      const inbound = { amount: inboundAmount, symbol: inboundSymbol }
+      const outbound = { amount: outboundAmount, symbol: outboundSymbol }
+      expect(prepareSwapStub).to.have.been.calledWith(swapHash, inbound, outbound)
+    })
+
+    it('executes the order on the relayer', async () => {
+      await osm.execute()
+
+      expect(relayer.makerService.executeOrder).to.have.been.calledOnce()
+      expect(relayer.makerService.executeOrder).to.have.been.calledWith({ orderId })
+    })
+  })
+
   describe('#goto', () => {
     let osm
 
