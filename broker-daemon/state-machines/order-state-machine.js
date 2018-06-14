@@ -100,7 +100,13 @@ const OrderStateMachine = StateMachine.factory({
      * @todo monitor for refunds from the relayer
      * @type {Object}
      */
-    { name: 'cancel', from: 'placed', to: 'cancelled' }
+    { name: 'cancel', from: 'placed', to: 'cancelled' },
+
+    /**
+     * execute transition: prepare the swap for execution, and tell the relayer
+     * @type {Object}
+     */
+    { name: 'execute', from: 'placed', to: 'executing' },
   ],
   /**
    * Instantiate the data on the state machine
@@ -229,6 +235,23 @@ const OrderStateMachine = StateMachine.factory({
           this.reject(e)
         }
       })
+    },
+
+    /**
+     * Prepare for execution and notify the relayer when preparation is complete
+     * This function gets called before the `execute` transition (triggered by a call to `execute`)
+     * Action is taken in `onBeforeExecute` so that the transition will fail if this function rejects its promise
+     *
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {Promise}          Promise that rejects if execution prep or notification fails
+     */
+    onBeforeExecute: async function (lifecycle) {
+      const { orderId, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount } = this.order
+      const outbound = { symbol: outboundSymbol, amount: outboundAmount }
+      const inbound = { symbol: inboundSymbol, amount: inboundAmount }
+      await this.engine.prepareSwap(swapHash, inbound, outbound)
+
+      return this.relayer.makerService.executeOrder({ orderId })
     },
 
     /**
