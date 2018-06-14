@@ -20,7 +20,7 @@ async function config (args, opts, logger) {
 
     Object.keys(res).forEach(key => logger.info(`${key}: ${res[key]}`))
   } catch (e) {
-    logger.error(e.toString())
+    logger.error(e)
   }
 }
 

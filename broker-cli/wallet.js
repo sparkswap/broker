@@ -120,7 +120,7 @@ async function commitBalance (args, opts, logger) {
 
     logger.info('Successfully added broker daemon to the kinesis exchange!', res)
   } catch (e) {
-    throw e
+    logger.error(e)
   }
 }
 
