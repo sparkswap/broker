@@ -5,6 +5,9 @@
 
 const BrokerDaemonClient = require('./broker-daemon-client')
 const { ENUMS, validations, askQuestion } = require('./utils')
+const {
+  config: { symbol: SYSTEM_SYMBOL }
+} = require('../package.json')
 
 /**
  * @constant
@@ -98,6 +101,10 @@ async function newDepositAddress (args, opts, logger) {
 async function commitBalance (args, opts, logger) {
   const { symbol } = args
   const { rpcAddress = null } = opts
+
+  if (SYSTEM_SYMBOL !== symbol) {
+    return logger.info('Your current balance is 0. Please add funds or switch the daemon to another supported currency.')
+  }
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)

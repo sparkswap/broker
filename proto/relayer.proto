@@ -23,6 +23,15 @@ message google {
     }
 }
 
+enum OrderStatus {
+
+    CREATED = 0;
+    PLACED = 1;
+    CANCELLED = 2;
+    FILLED = 3;
+    COMPLETED = 4;
+}
+
 message CreateOrderRequest {
 
     string pay_to = 0;
@@ -58,10 +67,16 @@ message SubscribeFillRequest {
     string order_id = 0;
 }
 
-message SubscribeFillResponse {
+message Fill {
 
     bytes swap_hash = 0;
     int64 fill_amount = 1;
+}
+
+message SubscribeFillResponse {
+
+    OrderStatus order_status = 0;
+    Fill fill = 1;
 }
 
 message ExecuteOrderRequest {
