@@ -241,8 +241,10 @@ const FillStateMachine = StateMachine.factory({
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @return {Promise}          Promise that rejects if execution fails
      */
-    onBeforeExecute: function (lifecycle) {
+    onBeforeExecute: async function (lifecycle) {
+      const { counterpartyPubKey, swapHash, inbound, outbound } = this.fill.paramsForSwap
 
+      await this.engine.executeSwap(counterpartyPubKey, swapHash, inbound, outbound)
     },
 
     /**
