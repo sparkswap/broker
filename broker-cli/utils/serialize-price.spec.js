@@ -1,12 +1,12 @@
 const { expect } = require('test/test-helper')
 
-const strToPrice = require('./str-to-price')
+const serializePrice = require('./serialize-price')
 
-describe('strToPrice', () => {
+describe('serializePrice', () => {
   it('converts prices to objects', () => {
     const price = '1234.5678'
 
-    const obj = strToPrice(price)
+    const obj = serializePrice(price)
     expect(obj).to.have.property('integer', '1234')
     expect(obj).to.have.property('decimal', '5678')
   })
@@ -14,7 +14,7 @@ describe('strToPrice', () => {
   it('converts integers to objects', () => {
     const price = '1234'
 
-    const obj = strToPrice(price)
+    const obj = serializePrice(price)
     expect(obj).to.have.property('integer', '1234')
     expect(obj).to.have.property('decimal', '0')
   })

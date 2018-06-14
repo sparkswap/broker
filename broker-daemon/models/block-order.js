@@ -1,4 +1,4 @@
-const { Big, strToPrice } = require('../utils')
+const { Big, serializePrice } = require('../utils')
 
 /**
  * @class Model representing Block Orders
@@ -132,7 +132,7 @@ class BlockOrder {
       return {
         orderId: order.orderId,
         amount: order.baseAmount,
-        price: strToPrice(order.price),
+        price: serializePrice(order.price),
         orderStatus: state.toUpperCase()
       }
     })
@@ -142,7 +142,7 @@ class BlockOrder {
         orderId: fill.order.orderId,
         fillId: fill.fillId,
         amount: fill.fillAmount,
-        price: strToPrice(fill.price),
+        price: serializePrice(fill.price),
         fillStatus: state.toUpperCase()
       }
     })
@@ -158,7 +158,7 @@ class BlockOrder {
     }
 
     if (this.price) {
-      serialized.limitPrice = strToPrice(this.price.toString())
+      serialized.limitPrice = serializePrice(this.price.toString())
     } else {
       serialized.isMarketOrder = true
     }

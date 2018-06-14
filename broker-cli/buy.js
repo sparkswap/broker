@@ -1,5 +1,5 @@
 const BrokerDaemonClient = require('./broker-daemon-client')
-const { ENUMS, validations, strToPrice } = require('./utils')
+const { ENUMS, validations, serializePrice } = require('./utils')
 
 const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
 
@@ -31,7 +31,7 @@ async function buy (args, opts, logger) {
   }
 
   if (price) {
-    request.limitPrice = strToPrice(price)
+    request.limitPrice = serializePrice(price)
   } else {
     request.isMarketOrder = true
   }

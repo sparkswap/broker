@@ -4,7 +4,7 @@ const {
   ENUMS,
   validations,
   Big,
-  strToPrice
+  serializePrice
 } = require('./index')
 
 describe('utils index', () => {
@@ -23,8 +23,8 @@ describe('utils index', () => {
     expect(Big).to.not.be.undefined()
   })
 
-  it('defines strToPrice', () => {
-    expect(strToPrice).to.not.be.null()
-    expect(strToPrice).to.not.be.undefined()
+  it('defines serializePrice', () => {
+    expect(serializePrice).to.not.be.null()
+    expect(serializePrice).to.not.be.undefined()
   })
 })
