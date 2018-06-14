@@ -416,11 +416,22 @@ describe('OrderStateMachine', () => {
       expect(osm.reject.args[0][0]).to.have.property('message', 'fake error')
     })
 
+    it('cancels the order when the order is in a cancelled state', async () => {
+      osm.tryTo = sinon.stub()
+      subscribeFillStreamStub.on.withArgs('data').callsArgWithAsync(1, { orderStatus: 'CANCELLED' })
+
+      await osm.place()
+      await delay(10)
+
+      expect(osm.tryTo).to.have.been.calledOnce()
+      expect(osm.tryTo).to.have.been.calledWith('cancel')
+    })
+
     it('sets fill params on the order when it is filled', async () => {
       const swapHash = 'asofijasfd'
       const fillAmount = '1000'
       osm.order.setFilledParams = sinon.stub()
-      subscribeFillStreamStub.on.withArgs('data').callsArgWithAsync(1, { swapHash, fillAmount })
+      subscribeFillStreamStub.on.withArgs('data').callsArgWithAsync(1, { fill: { swapHash, fillAmount } })
 
       await osm.place()
       await delay(10)
@@ -432,7 +443,7 @@ describe('OrderStateMachine', () => {
     it('executes the order after being filled', async () => {
       osm.order.setFilledParams = sinon.stub()
       osm.tryTo = sinon.stub()
-      subscribeFillStreamStub.on.withArgs('data').callsArgWithAsync(1, {})
+      subscribeFillStreamStub.on.withArgs('data').callsArgWithAsync(1, { fill: {} })
 
       await osm.place()
       await delay(10)
