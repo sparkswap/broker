@@ -283,6 +283,30 @@ describe('Fill', () => {
       })
     })
 
+    describe('get paramsForSwap', () => {
+      it('defines a getter for params required to execute a swap with the engine', () => {
+        const fakeSwapHash = 'hello'
+        fill.setSwapHash(fakeSwapHash)
+
+        const fakePayTo = 'ln:asd0f9uasf09u'
+        fill.setExecuteParams({ payTo: fakePayTo })
+
+        expect(fill).to.have.property('paramsForSwap')
+        expect(fill.paramsForSwap).to.be.eql({
+          counterpartyPubKey: fakePayTo,
+          swapHash: fakeSwapHash,
+          inbound: {
+            symbol: fill.inboundSymbol,
+            amount: fill.inboundAmount
+          },
+          outbound: {
+            symbol: fill.outboundSymbol,
+            amount: fill.outboundAmount
+          }
+        })
+      })
+    })
+
     describe('#setCreatedParams', () => {
       let createdParams = {
         fillId: 'myid',
