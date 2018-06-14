@@ -261,6 +261,30 @@ describe('Order', () => {
       })
     })
 
+    describe('get paramsForPrepareSwap', () => {
+      it('defines a getter for params required to prepare a swap in an engine', () => {
+        const swapHash = 'asoifdjaofj02309832'
+        Object.assign(order, { swapHash })
+
+        expect(order).to.have.property('paramsForPrepareSwap')
+        expect(order.paramsForPrepareSwap).to.be.eql({
+          swapHash: swapHash,
+          inbound: {
+            symbol: params.baseSymbol,
+            amount: params.baseAmount
+          },
+          outbound: {
+            symbol: params.counterSymbol,
+            amount: params.counterAmount
+          }
+        })
+      })
+
+      it('throws an error if a param is missing', () => {
+        expect(() => order.paramsForPrepareSwap).to.throw()
+      })
+    })
+
     describe('#setCreatedParams', () => {
       let createdParams = {
         orderId: 'myid',
