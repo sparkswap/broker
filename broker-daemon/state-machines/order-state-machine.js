@@ -220,6 +220,8 @@ const OrderStateMachine = StateMachine.factory({
 
       call.on('data', ({ orderStatus, fill }) => {
         try {
+          // the Relayer will send a single data message containing the order's state as cancelled and close
+          // the stream if the order has been cancelled. We should handle that and cancel the order locally.
           if (OrderStateMachine.STATES[orderStatus] === OrderStateMachine.STATES.CANCELLED) {
             this.logger.info(`Order ${orderId} was cancelled on the relayer, cancelling locally.`)
             return this.tryTo('cancel')
