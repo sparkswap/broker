@@ -6,4 +6,4 @@ CERT_STRING=$(cd ../relayer && docker-compose exec relayer bash -c 'cat /shared/
 
 docker-compose exec kbd bash -c "echo \"$CERT_STRING\" >> /shared/simnet-rpc.cert"
 
-docker-compose restart
+docker-compose up -d --force-recreate
