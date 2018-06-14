@@ -246,11 +246,10 @@ const OrderStateMachine = StateMachine.factory({
      * @return {Promise}          Promise that rejects if execution prep or notification fails
      */
     onBeforeExecute: async function (lifecycle) {
-      const { orderId, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount } = this.order
-      const outbound = { symbol: outboundSymbol, amount: outboundAmount }
-      const inbound = { symbol: inboundSymbol, amount: inboundAmount }
+      const { swapHash, inbound, outbound } = this.order.paramsForPrepareSwap
       await this.engine.prepareSwap(swapHash, inbound, outbound)
 
+      const { orderId } = this.order
       return this.relayer.makerService.executeOrder({ orderId })
     },
 

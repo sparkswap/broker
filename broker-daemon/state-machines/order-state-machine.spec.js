@@ -464,7 +464,25 @@ describe('OrderStateMachine', () => {
       outboundSymbol = 'BTC'
       outboundAmount = '100'
 
-      fakeOrder = { orderId, swapHash, inboundAmount, inboundSymbol, outboundSymbol, outboundAmount }
+      fakeOrder = {
+        orderId,
+        swapHash,
+        inboundAmount,
+        inboundSymbol,
+        outboundSymbol,
+        outboundAmount,
+        paramsForPrepareSwap: {
+          swapHash,
+          inbound: {
+            symbol: inboundSymbol,
+            amount: inboundAmount
+          },
+          outbound: {
+            symbol: outboundSymbol,
+            amount: outboundAmount
+          }
+        }
+      }
       engine = { prepareSwap: prepareSwapStub }
       relayer = {
         makerService: {
