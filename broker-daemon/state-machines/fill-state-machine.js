@@ -93,7 +93,13 @@ const FillStateMachine = StateMachine.factory({
      * fillOrder transition: second transition in the order lifecycle
      * @type {Object}
      */
-    { name: 'fillOrder', from: 'created', to: 'filled' }
+    { name: 'fillOrder', from: 'created', to: 'filled' },
+
+    /**
+     * execute transition: execute the swap itself
+     * @type {Object}
+     */
+    { name: 'execute', from: 'filled', to: 'executed' }
   ],
   /**
    * Instantiate the data on the state machine
@@ -225,6 +231,18 @@ const FillStateMachine = StateMachine.factory({
           this.reject(e)
         }
       })
+    },
+
+    /**
+     * Execute the swap on the Payment Channel Network
+     * This function gets called before the `exuecte` transition (triggered by a call to `exuecte`)
+     * Actual execution is done in `onBeforeFill` so that the transition can be cancelled if execution fails
+     *
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {Promise}          Promise that rejects if execution fails
+     */
+    onBeforeExecute: function (lifecycle) {
+
     },
 
     /**
