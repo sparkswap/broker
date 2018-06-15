@@ -52,9 +52,13 @@ async function balance (args, opts, logger) {
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { balance } = await client.walletService.getBalance({})
+    const { totalBalance, balances = [] } = await client.walletService.getBalance({})
 
-    logger.info(`Total Balance: ${balance}`)
+    logger.info(`Total Balance: ${totalBalance}`)
+
+    balances.forEach(({ symbol, value }) => {
+      logger.info(`${symbol} Balance: ${value}`)
+    })
   } catch (e) {
     logger.error(e)
   }

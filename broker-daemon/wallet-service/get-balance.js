@@ -9,9 +9,19 @@
  * @return {responses.GetBalanaceResponse}
  */
 async function getBalance ({ logger, engine }, { GetBalanceResponse }) {
-  const balance = await engine.getTotalBalance()
-  logger.info(`Received wallet balance: ${balance}`)
-  return new GetBalanceResponse({ balance })
+  const totalBalance = await engine.getTotalBalance()
+
+  logger.info(`Received wallet balance: ${totalBalance}`)
+
+  // Contains a hash of <symbol, value>
+  const channelBalances = await engine.getChannelBalances()
+
+  logger.info('Received channel balances')
+
+  return new GetBalanceResponse({
+    totalBalance,
+    channelBalances
+  })
 }
 
 module.exports = getBalance

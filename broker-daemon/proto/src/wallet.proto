@@ -7,12 +7,18 @@ enum Symbol {
   LTC = 1;
 }
 
+enum Balance {
+  Symbol symbol = 0;
+  int64 value = 1;
+}
+
 message NewDepositAddressResponse {
   string address = 0;
 }
 
 message GetBalanceResponse {
-  int64 balance = 0;
+  int64 total_balance = 0;
+  repeated Balance balances = 0;
 }
 
 message CommitBalanceRequest {
