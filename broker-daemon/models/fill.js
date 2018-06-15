@@ -73,6 +73,24 @@ class Fill {
   }
 
   /**
+   * Params required to execute a swap on the payment channel network
+   * @return {Object} Object of parameters an engine expects
+   */
+  get paramsForSwap () {
+    const { payTo, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount } = this
+
+    if (![ payTo, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount ].every(param => !!param)) {
+      throw new Error('payTo, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount are required params for execution')
+    }
+
+    const counterpartyPubKey = payTo
+    const inbound = { symbol: inboundSymbol, amount: inboundAmount }
+    const outbound = { symbol: outboundSymbol, amount: outboundAmount }
+
+    return { counterpartyPubKey, swapHash, inbound, outbound }
+  }
+
+  /**
    * Alias for `fillAmount`
    * @return {String} Amount, represented as an integer in the base currency's smallest unit, that the order is filled with
    */

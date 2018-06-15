@@ -422,6 +422,59 @@ describe('FillStateMachine', () => {
     })
   })
 
+  describe('#execute', () => {
+    let fakeFill
+    let fsm
+    let executeSwapStub
+    let fakeSwapHash
+    let fakeCounterpartyPubKey
+    let fakeInbound
+    let fakeOutbound
+
+    beforeEach(async () => {
+      executeSwapStub = sinon.stub().resolves()
+      fakeSwapHash = 'afaosijf'
+      fakeCounterpartyPubKey = 'afasdf980as98f'
+      fakeInbound = { fake: 'inbound' }
+      fakeOutbound = { fake: 'outbound' }
+
+      fakeFill = {
+        paramsForSwap: {
+          swapHash: fakeSwapHash,
+          inbound: fakeInbound,
+          outbound: fakeOutbound,
+          counterpartyPubKey: fakeCounterpartyPubKey
+        }
+      }
+      engine = { executeSwap: executeSwapStub }
+      relayer = {
+        takerService: {
+          subscribeExecute: sinon.stub().returns({
+            on: sinon.stub()
+          })
+        }
+      }
+
+      fsm = new FillStateMachine({ store, logger, relayer, engine })
+      fsm.fill = fakeFill
+
+      await fsm.goto('filled')
+    })
+
+    it('executes the swap', async () => {
+      await fsm.execute()
+
+      expect(executeSwapStub).to.have.been.calledOnce()
+      expect(executeSwapStub).to.have.been.calledWith(fakeCounterpartyPubKey, fakeSwapHash, fakeInbound, fakeOutbound)
+    })
+
+    it('errors if the swap fails', () => {
+      executeSwapStub.rejects(new Error('fake error'))
+
+      return expect(fsm.execute()).to.eventually.be.rejectedWith('fake error')
+    })
+  })
+
   describe('#reject', () => {
     let fsm
     let onRejection
