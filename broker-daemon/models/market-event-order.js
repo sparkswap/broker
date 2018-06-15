@@ -2,12 +2,14 @@ const MarketEvent = require('./market-event')
 const Big = require('../utils/big')
 
 class MarketEventOrder {
-  constructor ({ orderId, createdAt, baseAmount, counterAmount, side }) {
+  constructor ({ orderId, createdAt, baseAmount, counterAmount, side, baseSymbol, counterSymbol }) {
     this.orderId = orderId
     this.createdAt = createdAt
     this.baseAmount = baseAmount
     this.counterAmount = counterAmount
     this.side = side
+    this.baseSymbol = baseSymbol
+    this.counterSymbol = counterSymbol
   }
 
   get key () {
@@ -15,8 +17,8 @@ class MarketEventOrder {
   }
 
   get value () {
-    const { createdAt, baseAmount, counterAmount, side } = this
-    return JSON.stringify({ createdAt, baseAmount, counterAmount, side })
+    const { createdAt, baseAmount, counterAmount, side, baseSymbol, counterSymbol } = this
+    return JSON.stringify({ createdAt, baseAmount, counterAmount, side, baseSymbol, counterSymbol })
   }
 
   /**
@@ -31,7 +33,7 @@ class MarketEventOrder {
     return counterAmount.div(baseAmount).toFixed(16)
   }
 
-  static fromEvent (event) {
+  static fromEvent (event, marketName) {
     const params = {
       orderId: event.orderId
     }
@@ -41,7 +43,9 @@ class MarketEventOrder {
         createdAt: event.timestamp,
         baseAmount: event.payload.baseAmount.toString(),
         counterAmount: event.payload.counterAmount.toString(),
-        side: event.payload.side
+        side: event.payload.side,
+        baseSymbol: marketName.split('/')[0],
+        counterSymbol: marketName.split('/')[1]
       })
     }
 
