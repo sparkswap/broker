@@ -30,7 +30,8 @@ describe('FillStateMachine', () => {
       }
     }
     engine = {
-      createSwapHash: sinon.stub().resolves()
+      createSwapHash: sinon.stub().resolves(),
+      getPublicKey: sinon.stub().resolves('asdfasdf')
     }
   })
 
@@ -175,6 +176,7 @@ describe('FillStateMachine', () => {
     let fakeKey
     let fakeValueObject
     let createFillResponse
+
     beforeEach(() => {
       fakeKey = 'mykey'
       fakeValueObject = {
@@ -355,11 +357,11 @@ describe('FillStateMachine', () => {
 
     it('fills an order on the relayer', async () => {
       await fsm.fillOrder()
-      expect(fillOrderStub).to.have.been.calledWith(sinon.match({
+      expect(fillOrderStub).to.have.been.calledWith({
         feeRefundPaymentRequest: invoice,
         depositRefundPaymentRequest: invoice,
         fillId
-      }))
+      })
     })
 
     it('errors if a feePaymentRequest isnt available on the fill', () => {
@@ -550,7 +552,8 @@ describe('FillStateMachine', () => {
         counterAmount: '1000'
       }
       fillParams = {
-        fillAmount: '90000'
+        fillAmount: '90000',
+        takerPayTo: 'ln:asdfasdf'
       }
       fakeKey = 'mykey'
       fakeValueObject = {

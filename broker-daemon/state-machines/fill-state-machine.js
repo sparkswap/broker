@@ -134,7 +134,8 @@ const FillStateMachine = StateMachine.factory({
      * @return {void}
      */
     onBeforeCreate: async function (lifecycle, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
-      this.fill = new Fill({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount })
+      const takerPayTo = `ln:${await this.engine.getPublicKey()}`
+      this.fill = new Fill({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerPayTo })
 
       const { inboundAmount } = this.fill
 

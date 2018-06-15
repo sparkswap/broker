@@ -194,7 +194,8 @@ describe('Fill', () => {
         counterAmount: '100000'
       }
       params = {
-        fillAmount: '9000'
+        fillAmount: '9000',
+        takerPayTo: 'ln:asdfasdf'
       }
 
       fill = new Fill(order, params)
@@ -278,7 +279,8 @@ describe('Fill', () => {
         expect(fill.paramsForCreate).to.be.eql({
           orderId: order.orderId,
           swapHash: fakeSwapHash,
-          fillAmount: params.fillAmount
+          fillAmount: params.fillAmount,
+          takerPayTo: 'ln:asdfasdf'
         })
       })
     })
