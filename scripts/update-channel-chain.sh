@@ -21,4 +21,4 @@ read SYMBOL
 
 echo "Updating channel $CHANNEL_POINT to $SYMBOL"
 
-docker-compose exec -T relayer bash -c "node ./scripts/update-channel-chain.js $CHANNEL_POINT $SYMBOL"
+docker-compose exec -T kbd bash -c "node ./scripts/update-channel-chain.js $CHANNEL_POINT $SYMBOL"
