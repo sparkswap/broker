@@ -30,12 +30,11 @@ lnd.client.updateChannelPolicy({
     fundingTxidStr,
     outputIndex: parseInt(outputIndex, 10)
   },
-  feeRate: parseInt(chainFees[symbol], 10),
+  feeRate: parseInt(chainFees[symbol], 10) / 1000000,
   timeLockDelta: 9
 }, (err) => {
-  if(err) {
+  if (err) {
     throw err
   }
-
   console.log(`Updated channel to ${symbol}`)
 })
