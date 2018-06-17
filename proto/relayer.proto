@@ -103,6 +103,7 @@ message CreateFillRequest {
     string order_id = 0;
     bytes swap_hash = 1;
     int64 fill_amount = 2;
+    string taker_pay_to = 3;
 }
 
 message CreateFillResponse {

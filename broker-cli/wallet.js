@@ -6,7 +6,7 @@
 const BrokerDaemonClient = require('./broker-daemon-client')
 const { ENUMS, validations, askQuestion } = require('./utils')
 const {
-  config: { symbol: SYSTEM_SYMBOL }
+  config: { network: DEFAULT_NETWORK }
 } = require('../package.json')
 
 /**
@@ -102,7 +102,7 @@ async function commitBalance (args, opts, logger) {
   const { symbol } = args
   const { rpcAddress = null } = opts
 
-  if (SYSTEM_SYMBOL !== symbol) {
+  if (DEFAULT_NETWORK !== symbol) {
     return logger.info('Your current balance is 0. Please add funds or switch the daemon to another supported currency.')
   }
 
@@ -149,7 +149,7 @@ module.exports = (program) => {
         case SUPPORTED_COMMANDS.COMMIT_BALANCE:
           const [symbol] = subArguments
 
-          if (!SUPPORTED_SYMBOLS.includes(symbol)) {
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
             throw new Error(`Provided symbol is not a valid currency for the exchange: ${symbol}`)
           }
 
