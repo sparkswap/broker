@@ -295,7 +295,7 @@ describe('Fill', () => {
 
         expect(fill).to.have.property('paramsForSwap')
         expect(fill.paramsForSwap).to.be.eql({
-          counterpartyPubKey: fakePayTo,
+          counterpartyPubKey: 'asd0f9uasf09u',
           swapHash: fakeSwapHash,
           inbound: {
             symbol: fill.inboundSymbol,
