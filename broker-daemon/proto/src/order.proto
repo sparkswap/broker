@@ -16,7 +16,7 @@ enum TimeInForce {
 message CreateBlockOrderRequest {
   string market = 0;
   Side side = 1;
-  int64 amount = 2;
+  string amount = 2;
   oneof price_restriction {
     bool is_market_order = 3;
     string limit_price = 4;
@@ -48,7 +48,7 @@ enum OrderStatus {
 message Order {
   string order_id = 0;
   OrderStatus order_status = 1;
-  int64 amount = 2;
+  string amount = 2;
   string price = 3;
 }
 
@@ -64,7 +64,7 @@ message Fill {
   string order_id = 0;
   string fill_id = 1;
   FillStatus fill_status = 2;
-  int64 amount = 3;
+  string amount = 3;
   string price = 4;
 }
 
@@ -77,14 +77,14 @@ message GetBlockOrderResponse {
 
   string market = 10;
   Side side = 11;
-  int64 amount = 12;
+  string amount = 12;
   oneof price_restriction {
     bool is_market_order = 13;
     string limit_price = 14;
   }
   TimeInForce time_in_force = 15;
 
-  int64 fill_amount = 20;
+  string fill_amount = 20;
   repeated Order open_orders = 21;
   repeated Fill fills = 22;
 }
