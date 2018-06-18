@@ -30,7 +30,7 @@ describe('commit-balance', () => {
     }
     params = {
       balance: 10000000,
-      market: 'BTC'
+      symbol: 'BTC'
     }
     relayer = { paymentNetworkService: { getPublicKey: publicKeyStub } }
     envRevert = commitBalance.__set__('EXCHANGE_LND_HOST', '127.0.0.1')
