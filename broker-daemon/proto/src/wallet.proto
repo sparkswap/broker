@@ -11,14 +11,16 @@ message NewDepositAddressResponse {
   string address = 0;
 }
 
-message ChannelBalance {
+message CommittedBalance {
   Symbol symbol = 0;
-  string value = 1;
+  int64 value = 1;
 }
 
-message GetBalanceResponse {
+message GetBalancesResponse {
   int64 total_balance = 0;
-  repeated ChannelBalance channel_balances = 1;
+  int64 total_uncommitted_balance = 1;
+  int64 total_committed_balance = 2;
+  repeated CommittedBalance committed_balances = 3;
 }
 
 message CommitBalanceRequest {
@@ -32,6 +34,6 @@ message CommitBalanceResponse {
 
 service WalletService {
   rpc NewDepositAddress (google.protobuf.Empty) returns (NewDepositAddressResponse);
-  rpc GetBalance (google.protobuf.Empty) returns (GetBalanceResponse);
+  rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse);
   rpc CommitBalance (CommitBalanceRequest) returns (CommitBalanceResponse);
 }
