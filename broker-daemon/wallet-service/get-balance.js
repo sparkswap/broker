@@ -14,9 +14,11 @@ async function getBalance ({ logger, engine }, { GetBalanceResponse }) {
   logger.info(`Received wallet balance: ${totalBalance}`)
 
   // Contains a hash of <symbol, value>
-  const channelBalances = await engine.getChannelBalances()
+  const balances = await engine.getChannelBalances()
 
-  logger.info('Received channel balances')
+  logger.info('Received channel balances', { balances })
+
+  const channelBalances = balances.map(({symbol, value}) => ({ symbol, value: value.toString() }))
 
   return new GetBalanceResponse({
     totalBalance,

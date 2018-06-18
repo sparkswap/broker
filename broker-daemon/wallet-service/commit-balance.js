@@ -66,7 +66,7 @@ async function commitBalance ({ params, relayer, logger, engine }, { CommitBalan
     throw new PublicError(`Maxium balance of ${MAX_CHANNEL_BALANCE} exceeded for committing to the relayer. Please try again.`)
   }
 
-  if (!SUPPORTED_SYMBOLS.includes(symbol)) {
+  if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
     throw new PublicError(`Unsupported symbol for committing a balance: ${symbol}`)
   }
 

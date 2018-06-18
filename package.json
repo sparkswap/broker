@@ -6,7 +6,7 @@
   "config": {
     "project_name": "broker",
     "daemon": "kbd",
-    "symbol": "btc"
+    "symbol": "BTC"
   },
   "scripts": {
     "prebuild": "bash ./scripts/prebuild.sh",
