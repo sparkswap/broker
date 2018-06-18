@@ -104,7 +104,7 @@ describe('cli wallet', () => {
 
       program.__set__('BrokerDaemonClient', daemonStub)
       program.__set__('askQuestion', askQuestionStub)
-      program.__set__('SYSTEM_SYMBOL', symbol)
+      program.__set__('DEFAULT_NETWORK', symbol)
     })
 
     beforeEach(async () => {
