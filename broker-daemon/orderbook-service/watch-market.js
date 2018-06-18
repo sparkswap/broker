@@ -24,7 +24,7 @@ async function watchMarket ({ params, send, onCancel, onError, logger, orderbook
   const { market } = params
   const orderbook = orderbooks.get(market)
 
-  if(!orderbook) {
+  if (!orderbook) {
     throw new Error(`${market} is not being tracked as a market.`)
   }
 

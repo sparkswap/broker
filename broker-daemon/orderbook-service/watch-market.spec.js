@@ -47,6 +47,12 @@ describe('watchMarket', () => {
     revertFunction()
   })
 
+  it('throws if there is no orderbook', () => {
+    params.market = 'ABC/XYZ'
+
+    return expect(watchMarket({ params, send: sendStub, onCancel: onCancelStub, onError: onErrorStub, logger, orderbooks }, { WatchMarketResponse })).to.eventually.be.rejectedWith('not being tracked as a market')
+  })
+
   it('creates a liveStream from the store', () => {
     watchMarket({ params, send: sendStub, onCancel: onCancelStub, onError: onErrorStub, logger, orderbooks }, { WatchMarketResponse })
 
