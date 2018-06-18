@@ -23,8 +23,23 @@ async function watchMarket ({ params, send, onCancel, onError, logger, orderbook
   // from the relayer so we dont event make a request if it is invalid
   const { market } = params
   const orderbook = orderbooks.get(market)
+
+  if(!orderbook) {
+    throw new Error(`${market} is not being tracked as a market.`)
+  }
+
   const liveStream = createLiveStream(orderbook.store)
   const DB_ACTIONS = { DELETE: 'del', ADD: 'put' }
+
+  /**
+   * Send market events to clients when records are added/deleted in the orderbook data store
+   * @param  {Object}  opts       Database operation from LevelDb
+   * @param  {String}  opts.type  type of database operation, i.e. `put` or `del`
+   * @param  {String}  opts.key   Key of the database object being `put`ed or `del`ed
+   * @param  {String}  opts.value Value of the database object to be `put` (undefined for `del`)
+   * @param  {Boolean} opts.sync  Flag from level-live-stream indicating that the stream is caught up to the present
+   * @return {void}
+   */
   const onData = (opts) => {
     if (opts === undefined) {
       logger.info('Undefined event in the stream, likely from a delete event')
