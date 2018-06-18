@@ -85,7 +85,7 @@ class Fill {
       throw new Error('payTo, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount are required params for execution')
     }
 
-    const counterpartyPubKey = payTo
+    const counterpartyPubKey = payTo.split(':')[1]
     const inbound = { symbol: inboundSymbol, amount: inboundAmount }
     const outbound = { symbol: outboundSymbol, amount: outboundAmount }
 
