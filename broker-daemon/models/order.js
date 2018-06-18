@@ -95,6 +95,23 @@ class Order {
   }
 
   /**
+   * Params required to prepare a swap in  an engine
+   * @return {Object} Object of parameters the engine expects
+   */
+  get paramsForPrepareSwap () {
+    const { swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount } = this
+
+    if (![ swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount ].every(param => !!param)) {
+      throw new Error('orderId, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount are required to prepare a swap.')
+    }
+
+    const outbound = { symbol: outboundSymbol, amount: outboundAmount }
+    const inbound = { symbol: inboundSymbol, amount: inboundAmount }
+
+    return { swapHash, inbound, outbound }
+  }
+
+  /**
    * Price of the order
    * @return {String} Number, rounded to 16 decimal places, represented as a string
    */

@@ -50,13 +50,17 @@ describe('MarketEventOrder', () => {
       const baseAmount = 123214234
       const counterAmount = 123214324
       const side = MarketEventOrder.SIDES.BID
+      const baseSymbol = 'BTC'
+      const counterSymbol = 'LTC'
 
       const key = orderId
       const value = JSON.stringify({
         createdAt,
         baseAmount,
         counterAmount,
-        side
+        side,
+        baseSymbol,
+        counterSymbol
       })
 
       const order = MarketEventOrder.fromStorage(key, value)
@@ -71,11 +75,15 @@ describe('MarketEventOrder', () => {
       expect(order.counterAmount).to.be.eql(counterAmount)
       expect(order).to.have.property('side')
       expect(order.side).to.be.eql(side)
+      expect(order).to.have.property('baseSymbol')
+      expect(order.baseSymbol).to.be.eql(baseSymbol)
+      expect(order).to.have.property('counterSymbol')
+      expect(order.counterSymbol).to.be.eql(counterSymbol)
     })
   })
 
   describe('::fromEvent', () => {
-    it('defines a static method for creating orderss from an event', () => {
+    it('defines a static method for creating orders from an event', () => {
       expect(MarketEventOrder).itself.to.respondTo('fromEvent')
     })
 
@@ -85,6 +93,9 @@ describe('MarketEventOrder', () => {
       const baseAmount = '123214234'
       const counterAmount = '123214324'
       const side = MarketEventOrder.SIDES.BID
+      const baseSymbol = 'BTC'
+      const counterSymbol = 'LTC'
+      const marketName = 'BTC/LTC'
 
       const event = {
         eventId: 'asodifj',
@@ -98,7 +109,7 @@ describe('MarketEventOrder', () => {
         }
       }
 
-      const order = MarketEventOrder.fromEvent(event)
+      const order = MarketEventOrder.fromEvent(event, marketName)
 
       expect(order).to.have.property('orderId')
       expect(order.orderId).to.be.eql(orderId)
@@ -110,11 +121,15 @@ describe('MarketEventOrder', () => {
       expect(order.counterAmount).to.be.eql(counterAmount)
       expect(order).to.have.property('side')
       expect(order.side).to.be.eql(side)
+      expect(order).to.have.property('baseSymbol')
+      expect(order.baseSymbol).to.be.eql(baseSymbol)
+      expect(order).to.have.property('counterSymbol')
+      expect(order.counterSymbol).to.be.eql(counterSymbol)
     })
 
     it('creates stub orders from a CANCELLED event', () => {
       const orderId = 'myorder'
-
+      const marketName = 'BTC/LTC'
       const event = {
         eventId: 'asodifj',
         orderId,
@@ -122,7 +137,7 @@ describe('MarketEventOrder', () => {
         eventType: MarketEvent.TYPES.CANCELLED
       }
 
-      const order = MarketEventOrder.fromEvent(event)
+      const order = MarketEventOrder.fromEvent(event, marketName)
 
       expect(order).to.have.property('orderId')
       expect(order.orderId).to.be.eql(orderId)
@@ -130,7 +145,7 @@ describe('MarketEventOrder', () => {
 
     it('creates stub orders from a FILLED event', () => {
       const orderId = 'myorder'
-
+      const marketName = 'BTC/LTC'
       const event = {
         eventId: 'asodifj',
         orderId,
@@ -138,7 +153,7 @@ describe('MarketEventOrder', () => {
         eventType: MarketEvent.TYPES.FILLED
       }
 
-      const order = MarketEventOrder.fromEvent(event)
+      const order = MarketEventOrder.fromEvent(event, marketName)
 
       expect(order).to.have.property('orderId')
       expect(order.orderId).to.be.eql(orderId)
@@ -152,8 +167,9 @@ describe('MarketEventOrder', () => {
       const baseAmount = 123214234
       const counterAmount = 123214324
       const side = MarketEventOrder.SIDES.BID
-
-      const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side })
+      const baseSymbol = 'BTC'
+      const counterSymbol = 'LTC'
+      const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side, baseSymbol, counterSymbol })
 
       expect(order).to.have.property('orderId')
       expect(order.orderId).to.be.eql(orderId)
@@ -165,6 +181,10 @@ describe('MarketEventOrder', () => {
       expect(order.counterAmount).to.be.eql(counterAmount)
       expect(order).to.have.property('side')
       expect(order.side).to.be.eql(side)
+      expect(order).to.have.property('baseSymbol')
+      expect(order.baseSymbol).to.be.eql(baseSymbol)
+      expect(order).to.have.property('counterSymbol')
+      expect(order.counterSymbol).to.be.eql(counterSymbol)
     })
   })
 
@@ -175,8 +195,10 @@ describe('MarketEventOrder', () => {
       const baseAmount = 123214234
       const counterAmount = 123214324
       const side = MarketEventOrder.SIDES.BID
+      const baseSymbol = 'BTC'
+      const counterSymbol = 'LTC'
 
-      const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side })
+      const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side, baseSymbol, counterSymbol })
 
       expect(order).to.have.property('key')
       expect(order.key).to.be.eql(orderId)
@@ -190,15 +212,19 @@ describe('MarketEventOrder', () => {
       const baseAmount = 123214234
       const counterAmount = 123214324
       const side = MarketEventOrder.SIDES.BID
+      const baseSymbol = 'BTC'
+      const counterSymbol = 'LTC'
 
-      const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side })
+      const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side, baseSymbol, counterSymbol })
 
       expect(order).to.have.property('value')
       expect(order.value).to.be.eql(JSON.stringify({
         createdAt,
         baseAmount,
         counterAmount,
-        side
+        side,
+        baseSymbol,
+        counterSymbol
       }))
     })
   })
@@ -210,8 +236,9 @@ describe('MarketEventOrder', () => {
       const baseAmount = '123214234'
       const counterAmount = '123214324'
       const side = MarketEventOrder.SIDES.BID
-
-      const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side })
+      const baseSymbol = 'BTC'
+      const counterSymbol = 'LTC'
+      const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side, baseSymbol, counterSymbol })
 
       expect(order).to.have.property('price')
       expect(order.price).to.be.eql('1.0000007304350892')
