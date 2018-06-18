@@ -4,6 +4,7 @@ const EventEmitter = require('events')
 
 const GrpcServer = require('./grpc-server')
 const { logger } = require('./utils')
+const CONFIG = require('./config')
 
 const {
   RPC_ADDRESS,
@@ -50,6 +51,14 @@ class BrokerDaemon {
   async initialize () {
     try {
       logger.info(`Initializing ${this.marketNames.length} markets`)
+
+      if(!this.marketNames.every((marketName) => {
+        const symbols = marketName.split('/')
+        return symbols.every(symbol => CONFIG.currencies.find(({ sym }) => sym === symbol.toUpperCase() ))
+      })) {
+        throw new Error('Need currency configuration for every inititalized market')
+      }
+
       await this.server.initializeMarkets(this.marketNames)
       logger.info(`Caught up to ${this.marketNames.length} markets`)
       this.server.listen(this.rpcAddress)

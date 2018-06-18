@@ -1,0 +1,14 @@
+{
+  currencies: [
+    {
+      name: 'Bitcoin',
+      symbol: 'BTC',
+      commonUnitMultipleOfSmallestUnit: '100000000'
+    },
+    {
+      name: 'Litecoin',
+      symbol: 'LTC',
+      commonUnitMultipleOfSmallestUnit: '100000000'
+    }
+  ]
+}
