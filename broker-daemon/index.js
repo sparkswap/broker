@@ -52,10 +52,12 @@ class BrokerDaemon {
     try {
       logger.info(`Initializing ${this.marketNames.length} markets`)
 
-      if(!this.marketNames.every((marketName) => {
+      const currenciesHaveConfig = this.marketNames.every((marketName) => {
         const symbols = marketName.split('/')
-        return symbols.every(symbol => CONFIG.currencies.find(({ sym }) => sym === symbol.toUpperCase() ))
-      })) {
+        return symbols.every(symbol => CONFIG.currencies.find(({ sym }) => sym === symbol.toUpperCase()))
+      })
+
+      if (!currenciesHaveConfig) {
         throw new Error('Need currency configuration for every inititalized market')
       }
 

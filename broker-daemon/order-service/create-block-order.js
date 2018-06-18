@@ -30,12 +30,12 @@ async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrde
   const baseSymbol = market.split('/')[0].toUpperCase()
   const currencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === baseSymbol)
 
-  if(!currencyConfig) {
+  if (!currencyConfig) {
     throw new PublicError(`No currency configuration is available for ${baseSymbol}`)
   }
 
   const baseUnitAmount = Big(amount).times(currencyConfig.multipleOfSmallestUnit)
-  if(!baseUnitAmount.eq(baseUnitAmount.round())) {
+  if (!baseUnitAmount.eq(baseUnitAmount.round())) {
     throw new Error(`Amount is too precise for ${baseSymbol}`)
   }
 
