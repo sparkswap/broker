@@ -21,18 +21,6 @@ async function status (args, opts, logger) {
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const blockOrderResult = await client.orderService.getBlockOrder(request)
-
-    // convert prices from the wire into something we like
-    blockOrderResult.limitPrice = `${blockOrderResult.limitPrice.integer}.${blockOrderResult.limitPrice.decimal}`
-    blockOrderResult.openOrders.map((order) => {
-      order.price = `${order.price.integer}.${order.price.decimal}`
-      return order
-    })
-    blockOrderResult.fills.map((fill) => {
-      fill.price = `${fill.price.integer}.${fill.price.decimal}`
-      return fill
-    })
-
     logger.info(blockOrderResult)
   } catch (e) {
     logger.error(e)

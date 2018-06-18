@@ -85,10 +85,10 @@ class Order {
   }
 
   /**
-   * Price of the order
+   * Price of the order in the smallest unit of each currency
    * @return {String} Number, rounded to 16 decimal places, represented as a string
    */
-  get price () {
+  get quantumPrice () {
     const counterAmount = Big(this.counterAmount)
     const baseAmount = Big(this.baseAmount)
 

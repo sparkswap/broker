@@ -38,7 +38,7 @@ class PriceIndex extends SublevelIndex {
   _getValue (key, value) {
     const order = MarketEventOrder.fromStorage(key, value)
 
-    return this.keyForPrice(order.price)
+    return this.keyForPrice(order.quantumPrice)
   }
 
   /**

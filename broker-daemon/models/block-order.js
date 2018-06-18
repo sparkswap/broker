@@ -125,7 +125,16 @@ class BlockOrder {
    * @return {String} Decimal of the price expressed as a string with 16 decimal places
    */
   get quantumPrice () {
+    if(!this.counterAmount) return
     return Big(this.counterAmount).div(this.baseAmount).toFixed(16)
+  }
+
+  /**
+   * Ratio of the smallest units of the counter currency as compared to the base currency
+   * @return {String} Decimal of the ratio expressed as a string with 16 decimal places
+   */
+  get quantumRatio () {
+    return Big(this.counterCurrencyConfig.multipleOfSmallestUnit).div(this.baseCurrencyConfig.multipleOfSmallestUnit).toFixed(16)
   }
 
   /**
@@ -168,23 +177,30 @@ class BlockOrder {
    * @return {Object} Object to be serialized into a GRPC message
    */
   serialize () {
-    const amountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol).multipleOfSmallestUnit
+    const baseAmountFactor = this.baseCurrencyConfig.multipleOfSmallestUnit
+    const counterAmountFactor = this.counterCurrencyConfig.multipleOfSmallestUnit
 
     const openOrders = this.openOrders.map(({ order, state }) => {
+      const baseCommonAmount = Big(order.baseAmount).div(baseAmountFactor)
+      const counterCommonAmount = Big(order.counterAmount).div(counterAmountFactor)
+
       return {
         orderId: order.orderId,
-        amount: Big(order.baseAmount).div(amountFactor).toFixed(16),
-        price: order.price,
+        amount: baseCommonAmount.toFixed(16),
+        price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
         orderStatus: state.toUpperCase()
       }
     })
 
     const fills = this.fills.map(({ fill, state }) => {
+      const baseCommonAmount = Big(fill.fillAmount).div(baseAmountFactor)
+      const counterCommonAmount = Big(fill.counterFillAmount).div(counterAmountFactor)
+
       return {
         orderId: fill.order.orderId,
         fillId: fill.fillId,
-        amount: Big(fill.fillAmount).div(amountFactor).toFixed(16),
-        price: fill.price,
+        amount: baseCommonAmount.toFixed(16),
+        price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
         fillStatus: state.toUpperCase()
       }
     })
@@ -192,7 +208,7 @@ class BlockOrder {
     const serialized = {
       market: this.marketName,
       side: this.side,
-      amount: Big(this.amount).div(amountFactor).toFixed(16),
+      amount: this.amount.toFixed(16),
       timeInForce: this.timeInForce,
       status: this.status,
       openOrders: openOrders,
