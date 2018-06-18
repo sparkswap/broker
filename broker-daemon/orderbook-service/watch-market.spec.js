@@ -87,8 +87,8 @@ describe('watchMarket', () => {
     const fakeOrder = { key: 'key', value: JSON.stringify({ baseAmount: '100', counterAmount: '1000', side: 'BID' }) }
     const marketEvent = {
       orderId: fakeOrder.key,
-      baseAmount: '100',
-      counterAmount: '1000',
+      price: '10.0000000000000000',
+      amount: '0.0000000100000000'
       side: 'BID'
     }
 

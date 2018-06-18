@@ -1,5 +1,6 @@
 const MarketEvent = require('./market-event')
 const Big = require('../utils/big')
+const CONFIG = require('../config')
 
 /**
  * Create a MarketEventOrder
@@ -42,6 +43,44 @@ class MarketEventOrder {
 
     // TODO: make the number of decimal places configurable
     return counterAmount.div(baseAmount).toFixed(16)
+  }
+
+  /**
+   * Price of the order in common units for each currency
+   * @return {String} Decimal string of the price in common units
+   */
+  get price () {
+    const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
+    const counterCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === this.counterSymbol)
+
+    const baseCommonAmount = Big(this.baseAmount).div(baseCurrencyConfig.multipleOfSmallestUnit)
+    const counterCommonAmount = Big(this.counterAmount).div(counterCurrencyConfig.multipleOfSmallestUnit)
+
+    return counterCommonAmount.div(baseCommonAmount).toFixed(16)
+  }
+
+  /**
+   * Get the amount of the order - i.e. the number of common units of base currency
+   * @return {String} Decimal string of the amount
+   */
+  get amount () {
+    const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
+    
+    return Big(this.baseAmount).div(baseCurrencyConfig.multipleOfSmallestUnit).toFixed(16)
+  }
+
+  /**
+   * Serialize the market event order for use by end users
+   * @return {Object}
+   */
+  serialize () {
+    const { orderId, side, price, amount } = this
+    return {
+      orderId,
+      side,
+      price,
+      amount
+    }
   }
 
   static fromEvent (event, marketName) {

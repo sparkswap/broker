@@ -1,5 +1,6 @@
 const createLiveStream = require('level-live-stream')
 const { Big } = require('../utils')
+const { MarketEventOrder } = require('../models')
 const neverResolve = new Promise(() => {})
 /**
  * Creates a stream with the exchange that watches for market events
@@ -56,15 +57,9 @@ async function watchMarket ({ params, send, onCancel, onError, logger, orderbook
           marketEvent: { orderId: opts.key }
         }
       } else {
-        const parsedValue = JSON.parse(opts.value)
         params = {
           type: WatchMarketResponse.EventType.ADD,
-          marketEvent: {
-            orderId: opts.key,
-            baseAmount: Big(parsedValue.baseAmount).toString(),
-            counterAmount: Big(parsedValue.counterAmount).toString(),
-            side: parsedValue.side
-          }
+          marketEvent: MarketEventOrder.fromStorage(opts.key, opts.value).serialize()
         }
       }
       send(new WatchMarketResponse(params))
