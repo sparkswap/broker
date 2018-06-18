@@ -43,6 +43,16 @@ class Order {
   }
 
   /**
+   * Add parameters to the order from it being filled on the Relayer
+   * @param {String} options.swapHash   Base64 string of the swap hash being used for the fill
+   * @param {String} options.fillAmount Int64 String of the amount, in base currency's base units, of the fill
+   */
+  setFilledParams ({ swapHash, fillAmount }) {
+    this.swapHash = swapHash
+    this.fillAmount = fillAmount
+  }
+
+  /**
    * Get the symbol of the currency we will receive inbound if the order is completed
    * @return {String} Currency symbol
    */
@@ -82,6 +92,23 @@ class Order {
     const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo } = this
 
     return { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo }
+  }
+
+  /**
+   * Params required to prepare a swap in  an engine
+   * @return {Object} Object of parameters the engine expects
+   */
+  get paramsForPrepareSwap () {
+    const { swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount } = this
+
+    if (![ swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount ].every(param => !!param)) {
+      throw new Error('orderId, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount are required to prepare a swap.')
+    }
+
+    const outbound = { symbol: outboundSymbol, amount: outboundAmount }
+    const inbound = { symbol: inboundSymbol, amount: inboundAmount }
+
+    return { swapHash, inbound, outbound }
   }
 
   /**
@@ -126,7 +153,9 @@ class Order {
       ownerId,
       payTo,
       feePaymentRequest,
-      depositPaymentRequest
+      depositPaymentRequest,
+      swapHash,
+      fillAmount
     } = this
 
     return {
@@ -138,7 +167,9 @@ class Order {
       ownerId,
       payTo,
       feePaymentRequest,
-      depositPaymentRequest
+      depositPaymentRequest,
+      swapHash,
+      fillAmount
     }
   }
 
@@ -166,10 +197,10 @@ class Order {
     // instantiate with the correct set of params
     const order = new this({ baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo })
 
-    const { feePaymentRequest, depositPaymentRequest } = otherParams
+    const { feePaymentRequest, depositPaymentRequest, swapHash, fillAmount } = otherParams
 
     // add any (white-listed) leftover params into the object
-    Object.assign(order, { orderId, feePaymentRequest, depositPaymentRequest })
+    Object.assign(order, { orderId, feePaymentRequest, depositPaymentRequest, swapHash, fillAmount })
 
     return order
   }

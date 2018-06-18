@@ -14,9 +14,10 @@ class Fill {
    * @param  {String} order.baseAmount    Amount, represented as an integer in the base currency's smallest unit, to be transacted
    * @param  {String} order.counterAmount Amount, represented as an integer in the counter currency's smallest unit, to be transacted
    * @param  {String} fill.fillAmount     Amount, represented as an integer in the base currency's smallets unit, that the order is filled with
+   * @param  {String} fill.takerPayTo     address for the taker
    * @return {Fill}                       Fill instance
    */
-  constructor ({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount }) {
+  constructor ({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerPayTo }) {
     this.order = {
       orderId,
       baseSymbol,
@@ -32,6 +33,7 @@ class Fill {
     this.order.side = side
 
     this.fillAmount = fillAmount
+    this.takerPayTo = takerPayTo
   }
 
   /**
@@ -55,13 +57,39 @@ class Fill {
   }
 
   /**
+   * Set params from execution on an order
+   * @param {String} options.payTo Address of the counterparty for the swap
+   */
+  setExecuteParams ({ payTo }) {
+    this.payTo = payTo
+  }
+
+  /**
    * Params required to create an order on the relayer
    * @return {Object} Object of parameters the relayer expects
    */
   get paramsForCreate () {
-    const { fillAmount, swapHash, order: { orderId } } = this
+    const { fillAmount, swapHash, takerPayTo, order: { orderId } } = this
 
-    return { fillAmount, orderId, swapHash }
+    return { fillAmount, orderId, swapHash, takerPayTo }
+  }
+
+  /**
+   * Params required to execute a swap on the payment channel network
+   * @return {Object} Object of parameters an engine expects
+   */
+  get paramsForSwap () {
+    const { payTo, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount } = this
+
+    if (![ payTo, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount ].every(param => !!param)) {
+      throw new Error('payTo, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount are required params for execution')
+    }
+
+    const counterpartyPubKey = payTo.split(':')[1]
+    const inbound = { symbol: inboundSymbol, amount: inboundAmount }
+    const outbound = { symbol: outboundSymbol, amount: outboundAmount }
+
+    return { counterpartyPubKey, swapHash, inbound, outbound }
   }
 
   /**
@@ -162,7 +190,9 @@ class Fill {
       fillAmount,
       swapHash,
       feePaymentRequest,
-      depositPaymentRequest
+      depositPaymentRequest,
+      payTo,
+      takerPayTo
     } = this
 
     return {
@@ -177,7 +207,9 @@ class Fill {
       fillAmount,
       swapHash,
       feePaymentRequest,
-      depositPaymentRequest
+      depositPaymentRequest,
+      payTo,
+      takerPayTo
     }
   }
 
@@ -200,15 +232,15 @@ class Fill {
   static fromObject (key, valueObject) {
     const fillId = key
 
-    const { order: { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, fillAmount, ...otherParams } = valueObject
+    const { order: { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, fillAmount, takerPayTo, ...otherParams } = valueObject
 
     // instantiate with the correct set of params
-    const fill = new this({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount })
+    const fill = new this({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerPayTo })
 
-    const { swapHash, feePaymentRequest, depositPaymentRequest } = otherParams
+    const { swapHash, feePaymentRequest, depositPaymentRequest, payTo } = otherParams
 
     // add any (white-listed) leftover params into the object
-    Object.assign(fill, { fillId, swapHash, feePaymentRequest, depositPaymentRequest })
+    Object.assign(fill, { fillId, swapHash, feePaymentRequest, depositPaymentRequest, payTo })
 
     return fill
   }

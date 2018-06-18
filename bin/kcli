@@ -10,7 +10,6 @@ const {
 } = require('../package.json')
 
 const commands = require('../broker-cli')
-const { logger } = require('../broker-cli/utils')
 
 const clientVersion = process.version.substring(1)
 
@@ -25,7 +24,7 @@ if (compareVersions(clientVersion, currentVersion) !== 0) {
  * @author kinesis
  */
 program
-  .logger(logger)
+  .logger(console)
   .version(CLI_VERSION)
   .description('KINESIS BROKER CLI')
 

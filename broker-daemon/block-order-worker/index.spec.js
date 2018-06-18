@@ -46,10 +46,21 @@ describe('BlockOrderWorker', () => {
     OrderStateMachine = sinon.stub()
     OrderStateMachine.create = sinon.stub()
     OrderStateMachine.getAll = sinon.stub()
+    OrderStateMachine.STATES = {
+      NONE: 'none',
+      CREATED: 'created',
+      PLACED: 'placed',
+      CANCELLED: 'cancelled'
+    }
 
     FillStateMachine = sinon.stub()
     FillStateMachine.create = sinon.stub()
     FillStateMachine.getAll = sinon.stub()
+    FillStateMachine.STATES = {
+      NONE: 'none',
+      CREATED: 'created',
+      FILLED: 'filled'
+    }
 
     BlockOrderWorker.__set__('OrderStateMachine', OrderStateMachine)
     BlockOrderWorker.__set__('FillStateMachine', FillStateMachine)
@@ -381,6 +392,164 @@ describe('BlockOrderWorker', () => {
       store.get.callsArgWithAsync(1, err)
 
       return expect(worker.getBlockOrder('fakeId')).to.eventually.be.rejectedWith(BlockOrderNotFoundError)
+    })
+  })
+
+  describe('#cancelBlockOrder', () => {
+    let worker
+    let blockOrder = JSON.stringify({
+      marketName: 'BTC/LTC',
+      side: 'BID',
+      amount: '100',
+      price: '1000'
+    })
+    let blockOrderId = 'fakeId'
+    let blockOrderCancel
+    let blockOrderKey = blockOrderId
+    let blockOrderValue = blockOrder
+    let orders
+    let getRecords
+    let OrderFromObject
+
+    beforeEach(() => {
+      orders = [
+        {
+          order: {
+            orderId: 'someId'
+          },
+          state: 'created'
+        }
+      ]
+      store.get.callsArgWithAsync(1, null, blockOrder)
+      blockOrderCancel = sinon.stub()
+      BlockOrder.fromStorage.returns({
+        id: blockOrderId,
+        cancel: blockOrderCancel,
+        key: blockOrderKey,
+        value: blockOrderValue
+      })
+      getRecords = sinon.stub().resolves(orders)
+      OrderFromObject = sinon.stub()
+
+      BlockOrderWorker.__set__('getRecords', getRecords)
+      BlockOrderWorker.__set__('Order', {
+        fromObject: OrderFromObject
+      })
+
+      relayer.makerService = {
+        cancelOrder: sinon.stub().resolves()
+      }
+
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+    })
+
+    it('retrieves a block order from the store', async () => {
+      const fakeId = 'myid'
+      await worker.cancelBlockOrder(fakeId)
+
+      expect(store.get).to.have.been.calledOnce()
+      expect(store.get).to.have.been.calledWith(fakeId)
+    })
+
+    it('inflates the BlockOrder model', async () => {
+      const fakeId = 'myid'
+      const bO = await worker.cancelBlockOrder(fakeId)
+
+      expect(BlockOrder.fromStorage).to.have.been.calledOnce()
+      expect(BlockOrder.fromStorage).to.have.been.calledWith(fakeId, blockOrder)
+
+      expect(bO).to.be.have.property('id', blockOrderId)
+    })
+
+    it('retrieves all orders associated with a block order', async () => {
+      const fakeId = 'myid'
+      const fakeStore = 'mystore'
+      secondLevel.sublevel.returns(fakeStore)
+
+      await worker.cancelBlockOrder(fakeId)
+
+      expect(store.sublevel).to.have.been.calledOnce()
+      expect(store.sublevel).to.have.been.calledWith(blockOrderId)
+      expect(secondLevel.sublevel).to.have.been.calledOnce()
+      expect(secondLevel.sublevel).to.have.been.calledWith('orders')
+      expect(getRecords).to.have.been.calledOnce()
+      expect(getRecords).to.have.been.calledWith(fakeStore)
+    })
+
+    it('inflates order models for all of the order records', async () => {
+      const fakeId = 'myid'
+
+      await worker.cancelBlockOrder(fakeId)
+
+      const eachRecord = getRecords.args[0][1]
+
+      const fakeKey = 'mykey'
+      const fakeValue = { my: 'value' }
+      const fakeState = 'created'
+      const fakeValueStr = JSON.stringify({ state: fakeState, order: fakeValue })
+      const fakeOrder = 'my order'
+
+      OrderFromObject.returns(fakeOrder)
+
+      expect(eachRecord(fakeKey, fakeValueStr)).to.be.eql({ state: fakeState, order: fakeOrder })
+      expect(OrderFromObject).to.have.been.calledOnce()
+      expect(OrderFromObject).to.have.been.calledWith(fakeKey, sinon.match(fakeValue))
+    })
+
+    it('cancels all of the orders on the relayer', async () => {
+      const fakeId = 'myid'
+
+      await worker.cancelBlockOrder(fakeId)
+
+      expect(relayer.makerService.cancelOrder).to.have.been.calledOnce()
+      expect(relayer.makerService.cancelOrder).to.have.been.calledWith(sinon.match({ orderId: orders[0].order.orderId }))
+    })
+
+    it('filters out orders not in a placed or created state', async () => {
+      const fakeId = 'myid'
+
+      orders.push({ order: { orderId: 'hello' }, state: 'rejected' })
+      orders.push({ order: { orderId: 'darkness' }, state: 'cancelled' })
+      orders.push({ order: { orderId: 'my old' }, state: 'filled' })
+      orders.push({ order: { orderId: 'friend' }, state: 'none' })
+
+      await worker.cancelBlockOrder(fakeId)
+      expect(relayer.makerService.cancelOrder).to.have.been.calledOnce()
+      expect(relayer.makerService.cancelOrder).to.have.been.calledWith(sinon.match({ orderId: orders[0].order.orderId }))
+    })
+
+    it('updates the block order to failed status', async () => {
+      const fakeId = 'myid'
+      await worker.cancelBlockOrder(fakeId)
+
+      expect(blockOrderCancel).to.have.been.calledOnce()
+    })
+
+    it('saves the updated block order', async () => {
+      const fakeId = 'myid'
+      await worker.cancelBlockOrder(fakeId)
+
+      expect(store.put).to.have.been.calledOnce()
+      expect(store.put).to.have.been.calledWith(blockOrderKey, blockOrderValue)
+    })
+
+    it('emits a failed status event', async () => {
+      const fakeId = 'myid'
+      worker.emit = sinon.stub()
+      await worker.cancelBlockOrder(fakeId)
+
+      expect(worker.emit).to.have.been.calledOnce()
+      expect(worker.emit).to.have.been.calledWith('BlockOrder:cancel', sinon.match({ id: blockOrderId }))
+    })
+
+    it('throws a not found error if no order exists', async () => {
+      const BlockOrderNotFoundError = BlockOrderWorker.__get__('BlockOrderNotFoundError')
+
+      const err = new Error('fake error')
+      err.notFound = true
+      store.get.callsArgWithAsync(1, err)
+
+      return expect(worker.cancelBlockOrder('fakeId')).to.eventually.be.rejectedWith(BlockOrderNotFoundError)
     })
   })
 
@@ -874,6 +1043,37 @@ describe('BlockOrderWorker', () => {
 
       expect(worker.failBlockOrder).to.have.been.calledOnce()
       expect(worker.failBlockOrder).to.have.been.calledWith(blockOrder.id, err)
+    })
+  })
+
+  describe('getBlockOrders', () => {
+    let market
+    let worker
+    let getRecords
+    let firstBlockOrder
+    let secondBlockOrder
+
+    beforeEach(() => {
+      market = 'BTC/LTC'
+      firstBlockOrder = { marketName: 'BTC/LTC' }
+      secondBlockOrder = { marketName: 'ABC/XYZ' }
+      getRecords = sinon.stub().resolves([firstBlockOrder, secondBlockOrder])
+      BlockOrderWorker.__set__('getRecords', getRecords)
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+    })
+
+    it('retrieves all block orders from the store', async () => {
+      BlockOrder.fromStorage.bind = sinon.stub()
+      await worker.getBlockOrders(market)
+
+      expect(getRecords).to.have.been.calledOnce()
+      expect(getRecords).to.have.been.calledWith(store, BlockOrder.fromStorage.bind(BlockOrder))
+    })
+
+    it('filters the block orders by market', async () => {
+      const res = await worker.getBlockOrders(market)
+
+      expect(res).to.eql([firstBlockOrder])
     })
   })
 })

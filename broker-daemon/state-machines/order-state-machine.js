@@ -97,10 +97,16 @@ const OrderStateMachine = StateMachine.factory({
 
     /**
      * cancel transition: cancel an outstanding created or placed order
+     * @todo monitor for refunds from the relayer
      * @type {Object}
      */
-    { name: 'cancel', from: 'created', to: 'cancelled' },
-    { name: 'cancel', from: 'placed', to: 'cancelled' }
+    { name: 'cancel', from: 'placed', to: 'cancelled' },
+
+    /**
+     * execute transition: prepare the swap for execution, and tell the relayer
+     * @type {Object}
+     */
+    { name: 'execute', from: 'placed', to: 'executing' }
   ],
   /**
    * Instantiate the data on the state machine
@@ -199,28 +205,61 @@ const OrderStateMachine = StateMachine.factory({
       this.logger.info(`Placed order ${this.order.orderId} on the relayer`)
     },
 
-    onAfterPlace: function (lifecycle) {
-      this.logger.error('Transition for onAfterPlace not implemented')
+    /**
+     * Listen for order fills when in the `placed` state
+     * This is done based on the state and not the transition so that it gets actioned when being re-hydrated from storage
+     * [is that the right thing to do?]
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {void}
+     */
+    onEnterPlaced: function (lifecycle) {
+      const { orderId } = this.order
+      this.logger.info(`In placed state, attempting to listen for fills for order ${orderId}`)
+
+      // NOTE: this method should NOT reject a promise, as that may prevent the state of the order from saving
+
+      const call = this.relayer.makerService.subscribeFill({ orderId })
+
+      call.on('error', (e) => {
+        this.reject(e)
+      })
+
+      call.on('data', ({ orderStatus, fill }) => {
+        try {
+          // the Relayer will send a single data message containing the order's state as cancelled and close
+          // the stream if the order has been cancelled. We should handle that and cancel the order locally.
+          if (OrderStateMachine.STATES[orderStatus] === OrderStateMachine.STATES.CANCELLED) {
+            this.logger.info(`Order ${orderId} was cancelled on the relayer, cancelling locally.`)
+            return this.tryTo('cancel')
+          }
+
+          const { swapHash, fillAmount } = fill
+
+          this.order.setFilledParams({ swapHash, fillAmount })
+
+          this.logger.info(`Order ${orderId} is being filled`)
+
+          this.tryTo('execute')
+        } catch (e) {
+          this.reject(e)
+        }
+      })
     },
 
     /**
-     * Cancel the order on the relayer during transition.
-     * This function gets called before the `cancel` transition (triggered by a call to `cancel`)
-     * Actual cancellation on the relayer is done in `onBeforePlace` so that the transition can be cancelled
-     * if cancellation on the Relayer fails.
+     * Prepare for execution and notify the relayer when preparation is complete
+     * This function gets called before the `execute` transition (triggered by a call to `execute`)
+     * Action is taken in `onBeforeExecute` so that the transition will fail if this function rejects its promise
      *
-     * @todo monitor for refunds from the relayer
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
-     * @return {Promise}          Promise that rejects if cancellation on the relayer fails
+     * @return {Promise}          Promise that rejects if execution prep or notification fails
      */
-    onBeforeCancel: async function (lifecycle) {
+    onBeforeExecute: async function (lifecycle) {
+      const { swapHash, inbound, outbound } = this.order.paramsForPrepareSwap
+      await this.engine.prepareSwap(swapHash, inbound, outbound)
+
       const { orderId } = this.order
-
-      this.logger.info(`Cancelling order ${orderId} on the relayer`)
-
-      await this.relayer.makerService.cancelOrder({ orderId })
-
-      this.logger.info(`Cancelled order ${orderId} on the relayer`)
+      return this.relayer.makerService.executeOrder({ orderId })
     },
 
     /**
@@ -256,5 +295,12 @@ OrderStateMachine.create = async function (initParams, createParams) {
 
   return osm
 }
+
+OrderStateMachine.STATES = Object.freeze({
+  NONE: 'none',
+  CREATED: 'created',
+  PLACED: 'placed',
+  CANCELLED: 'cancelled'
+})
 
 module.exports = OrderStateMachine

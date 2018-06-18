@@ -30,7 +30,8 @@ describe('FillStateMachine', () => {
       }
     }
     engine = {
-      createSwapHash: sinon.stub().resolves()
+      createSwapHash: sinon.stub().resolves(),
+      getPublicKey: sinon.stub().resolves('asdfasdf')
     }
   })
 
@@ -175,6 +176,7 @@ describe('FillStateMachine', () => {
     let fakeKey
     let fakeValueObject
     let createFillResponse
+
     beforeEach(() => {
       fakeKey = 'mykey'
       fakeValueObject = {
@@ -309,6 +311,8 @@ describe('FillStateMachine', () => {
     let fsm
     let payInvoiceStub
     let fillOrderStub
+    let subscribeExecuteStub
+    let subscribeExecuteStream
     let invoice
     let feePaymentRequest
     let depositPaymentRequest
@@ -318,6 +322,10 @@ describe('FillStateMachine', () => {
       invoice = '1234'
       payInvoiceStub = sinon.stub().returns(invoice)
       fillOrderStub = sinon.stub()
+      subscribeExecuteStream = {
+        on: sinon.stub()
+      }
+      subscribeExecuteStub = sinon.stub().returns(subscribeExecuteStream)
       feePaymentRequest = 'fee'
       depositPaymentRequest = 'deposit'
       fillId = '1234'
@@ -326,7 +334,8 @@ describe('FillStateMachine', () => {
       engine = { payInvoice: payInvoiceStub }
       relayer = {
         takerService: {
-          fillOrder: fillOrderStub
+          fillOrder: fillOrderStub,
+          subscribeExecute: subscribeExecuteStub
         }
       }
 
@@ -336,38 +345,135 @@ describe('FillStateMachine', () => {
       await fsm.goto('created')
     })
 
-    beforeEach(async () => {
+    it('pays a fee invoice', async () => {
       await fsm.fillOrder()
-    })
-
-    it('pays a fee invoice', () => {
       expect(payInvoiceStub).to.have.been.calledWith(feePaymentRequest)
     })
 
-    it('pays a deposit invoice', () => {
+    it('pays a deposit invoice', async () => {
+      await fsm.fillOrder()
       expect(payInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
     })
 
-    it('fills an order on the relayer', () => {
-      expect(fillOrderStub).to.have.been.calledWith(sinon.match({
+    it('fills an order on the relayer', async () => {
+      await fsm.fillOrder()
+      expect(fillOrderStub).to.have.been.calledWith({
         feeRefundPaymentRequest: invoice,
         depositRefundPaymentRequest: invoice,
         fillId
-      }))
+      })
     })
 
-    it('errors if a feePaymentRequest isnt available on the fill', async () => {
-      const badFsm = new FillStateMachine({ store, logger, relayer, engine })
-      badFsm.fill = {}
-      await badFsm.goto('created')
-      return expect(badFsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because fee')
+    it('errors if a feePaymentRequest isnt available on the fill', () => {
+      fsm.fill = {}
+      return expect(fsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because fee')
     })
 
-    it('errors if a feePaymentRequest isnt available on the fill', async () => {
-      const badFsm = new FillStateMachine({ store, logger, relayer, engine })
-      badFsm.fill = { feePaymentRequest }
-      await badFsm.goto('created')
-      return expect(badFsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because deposit')
+    it('errors if a feePaymentRequest isnt available on the fill', () => {
+      fsm.fill = { feePaymentRequest }
+      return expect(fsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because deposit')
+    })
+
+    it('does not subscribe to executions for fills that fail', async () => {
+      fillOrderStub.rejects(new Error('fake error'))
+
+      expect(subscribeExecuteStub).to.not.have.been.called()
+    })
+
+    it('subscribes to fills on the relayer', async () => {
+      await fsm.fillOrder()
+      expect(subscribeExecuteStub).to.have.been.calledOnce()
+      expect(subscribeExecuteStub).to.have.been.calledWith(sinon.match({ fillId }))
+    })
+
+    it('rejects on error from the relayer subscribe fill hook', async () => {
+      fsm.reject = sinon.stub()
+      subscribeExecuteStream.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
+
+      await fsm.fillOrder()
+
+      await delay(10)
+
+      expect(fsm.reject).to.have.been.calledOnce()
+      expect(fsm.reject.args[0][0]).to.be.instanceOf(Error)
+      expect(fsm.reject.args[0][0]).to.have.property('message', 'fake error')
+    })
+
+    it('sets execute params on the fill when it is executed', async () => {
+      const payTo = 'ln:asdfjas0d9f09aj'
+      fsm.fill.setExecuteParams = sinon.stub()
+      subscribeExecuteStream.on.withArgs('data').callsArgWithAsync(1, { payTo })
+
+      await fsm.fillOrder()
+      await delay(10)
+
+      expect(fsm.fill.setExecuteParams).to.have.been.calledOnce()
+      expect(fsm.fill.setExecuteParams).to.have.been.calledWith(sinon.match({ payTo }))
+    })
+
+    it('executes the order after being filled', async () => {
+      fsm.fill.setExecuteParams = sinon.stub()
+      fsm.tryTo = sinon.stub()
+      subscribeExecuteStream.on.withArgs('data').callsArgWithAsync(1, {})
+
+      await fsm.fillOrder()
+      await delay(10)
+
+      expect(fsm.tryTo).to.have.been.calledOnce()
+      expect(fsm.tryTo).to.have.been.calledWith('execute')
+    })
+  })
+
+  describe('#execute', () => {
+    let fakeFill
+    let fsm
+    let executeSwapStub
+    let fakeSwapHash
+    let fakeCounterpartyPubKey
+    let fakeInbound
+    let fakeOutbound
+
+    beforeEach(async () => {
+      executeSwapStub = sinon.stub().resolves()
+      fakeSwapHash = 'afaosijf'
+      fakeCounterpartyPubKey = 'afasdf980as98f'
+      fakeInbound = { fake: 'inbound' }
+      fakeOutbound = { fake: 'outbound' }
+
+      fakeFill = {
+        paramsForSwap: {
+          swapHash: fakeSwapHash,
+          inbound: fakeInbound,
+          outbound: fakeOutbound,
+          counterpartyPubKey: fakeCounterpartyPubKey
+        }
+      }
+      engine = { executeSwap: executeSwapStub }
+      relayer = {
+        takerService: {
+          subscribeExecute: sinon.stub().returns({
+            on: sinon.stub()
+          })
+        }
+      }
+
+      fsm = new FillStateMachine({ store, logger, relayer, engine })
+      fsm.fill = fakeFill
+
+      await fsm.goto('filled')
+    })
+
+    it('executes the swap', async () => {
+      await fsm.execute()
+
+      expect(executeSwapStub).to.have.been.calledOnce()
+      expect(executeSwapStub).to.have.been.calledWith(fakeCounterpartyPubKey, fakeSwapHash, fakeInbound, fakeOutbound)
+    })
+
+    it('errors if the swap fails', () => {
+      executeSwapStub.rejects(new Error('fake error'))
+
+      return expect(fsm.execute()).to.eventually.be.rejectedWith('fake error')
     })
   })
 
@@ -446,7 +552,8 @@ describe('FillStateMachine', () => {
         counterAmount: '1000'
       }
       fillParams = {
-        fillAmount: '90000'
+        fillAmount: '90000',
+        takerPayTo: 'ln:asdfasdf'
       }
       fakeKey = 'mykey'
       fakeValueObject = {

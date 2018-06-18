@@ -1,18 +1,6 @@
 version: '2.4'
 
 services:
-  kcli:
-    build:
-      context: ./
-      dockerfile: docker/kcli/Dockerfile
-    volumes:
-      - './bin:/home/app/bin'
-      - './broker-cli:/home/app/broker-cli/'
-    environment:
-      - BROKER_DAEMON_HOST=kbd:27492
-    networks:
-      - broker
-
   kbd:
     depends_on:
       # If you are using a separate instance of lnd, this is unnecessary
@@ -42,6 +30,8 @@ services:
       # for the relayer. In a testnet/mainnet setting, this will be a public IP.
       - EXCHANGE_RPC_HOST=docker.for.mac.host.internal:28492
       - EXCHANGE_LND_HOST=docker.for.mac.host.internal:10111
+      - LND_EXTERNAL_ADDRESS=docker.for.mac.host.internal:10112
+      - EXTERNAL_ADDRESS=docker.for.mac.host.internal:27492
       - MARKETS=BTC/LTC
     ports:
       - '27492:27492'

@@ -237,7 +237,9 @@ describe('Order', () => {
       it('defines a getter for retrieving a plain object', () => {
         const valueObject = Object.assign({
           feePaymentRequest: undefined,
-          depositPaymentRequest: undefined
+          depositPaymentRequest: undefined,
+          swapHash: undefined,
+          fillAmount: undefined
         }, params)
         expect(order).to.have.property('valueObject')
         expect(order.valueObject).to.be.eql(valueObject)
@@ -256,6 +258,30 @@ describe('Order', () => {
           ownerId: params.ownerId,
           payTo: params.payTo
         })
+      })
+    })
+
+    describe('get paramsForPrepareSwap', () => {
+      it('defines a getter for params required to prepare a swap in an engine', () => {
+        const swapHash = 'asoifdjaofj02309832'
+        Object.assign(order, { swapHash })
+
+        expect(order).to.have.property('paramsForPrepareSwap')
+        expect(order.paramsForPrepareSwap).to.be.eql({
+          swapHash: swapHash,
+          inbound: {
+            symbol: params.baseSymbol,
+            amount: params.baseAmount
+          },
+          outbound: {
+            symbol: params.counterSymbol,
+            amount: params.counterAmount
+          }
+        })
+      })
+
+      it('throws an error if a param is missing', () => {
+        expect(() => order.paramsForPrepareSwap).to.throw()
       })
     })
 
@@ -279,6 +305,27 @@ describe('Order', () => {
 
         expect(order.value).to.include(`"feePaymentRequest":"${createdParams.feePaymentRequest}"`)
         expect(order.value).to.include(`"depositPaymentRequest":"${createdParams.depositPaymentRequest}"`)
+      })
+    })
+
+    describe('#setFilledParams', () => {
+      let filledParams = {
+        swapHash: 'asdfjasofj9s8fu',
+        fillAmount: '10000'
+      }
+
+      it('updates the object with the params from creating on the relayer', () => {
+        order.setFilledParams(filledParams)
+
+        expect(order).to.have.property('swapHash', filledParams.swapHash)
+        expect(order).to.have.property('fillAmount', filledParams.fillAmount)
+      })
+
+      it('includes the updated params with the saved value', () => {
+        order.setFilledParams(filledParams)
+
+        expect(order.value).to.include(`"swapHash":"${filledParams.swapHash}"`)
+        expect(order.value).to.include(`"fillAmount":"${filledParams.fillAmount}"`)
       })
     })
   })
