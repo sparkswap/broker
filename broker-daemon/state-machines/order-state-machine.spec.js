@@ -327,6 +327,7 @@ describe('OrderStateMachine', () => {
     let fakeOrder
     let osm
     let payInvoiceStub
+    let createRefundInvoiceStub
     let placeOrderStub
     let subscribeFillStub
     let subscribeFillStreamStub
@@ -337,7 +338,8 @@ describe('OrderStateMachine', () => {
 
     beforeEach(async () => {
       invoice = '1234'
-      payInvoiceStub = sinon.stub().returns(invoice)
+      payInvoiceStub = sinon.stub()
+      createRefundInvoiceStub = sinon.stub().returns(invoice)
       placeOrderStub = sinon.stub()
       subscribeFillStreamStub = {
         on: sinon.stub()
@@ -348,7 +350,7 @@ describe('OrderStateMachine', () => {
       orderId = '1234'
 
       fakeOrder = { feePaymentRequest, depositPaymentRequest, orderId }
-      engine = { payInvoice: payInvoiceStub }
+      engine = { payInvoice: payInvoiceStub, createRefundInvoice: createRefundInvoiceStub }
       relayer = {
         makerService: {
           placeOrder: placeOrderStub,
@@ -370,6 +372,16 @@ describe('OrderStateMachine', () => {
     it('pays a deposit invoice', async () => {
       await osm.place()
       expect(payInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
+    })
+
+    it('creates a deposit refund invoice', async () => {
+      await osm.place()
+      expect(createRefundInvoiceStub).to.have.been.calledWith(feePaymentRequest)
+    })
+
+    it('pays a fee refund invoice', async () => {
+      await osm.place()
+      expect(createRefundInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
     })
 
     it('places an order on the relayer', async () => {

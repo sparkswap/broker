@@ -184,6 +184,8 @@ const FillStateMachine = StateMachine.factory({
       this.logger.debug(`Attempting to pay fees for fill: ${fillId}`)
 
       const [feeRefundPaymentRequest, depositRefundPaymentRequest] = await Promise.all([
+        this.engine.createRefundInvoice(feePaymentRequest),
+        this.engine.createRefundInvoice(depositPaymentRequest),
         this.engine.payInvoice(feePaymentRequest),
         this.engine.payInvoice(depositPaymentRequest)
       ])
