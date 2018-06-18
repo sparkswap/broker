@@ -14,6 +14,8 @@ describe('watchMarket', () => {
   let store
   let params
   let sendStub
+  let onCancelStub
+  let onErrorStub
   let logger
   let orderbooks
   let WatchMarketResponse
@@ -27,8 +29,11 @@ describe('watchMarket', () => {
     }
     params = { market: 'BTC/LTC' }
     sendStub = sinon.stub()
+    onCancelStub = sinon.stub()
+    onErrorStub = sinon.stub()
     liveStream = {
-      on: sinon.stub()
+      on: sinon.stub(),
+      removeListener: sinon.stub()
     }
     store = sinon.stub()
     orderbooks = new Map([['BTC/LTC', { store: store }]])
@@ -43,13 +48,31 @@ describe('watchMarket', () => {
   })
 
   it('creates a liveStream from the store', () => {
-    watchMarket({ params, send: sendStub, logger, orderbooks }, { WatchMarketResponse })
+    watchMarket({ params, send: sendStub, onCancel: onCancelStub, onError: onErrorStub, logger, orderbooks }, { WatchMarketResponse })
 
     expect(createLiveStream).to.have.been.calledWith(store)
   })
 
+  it('stops sending data if the stream is cancelled', () => {
+    watchMarket({ params, send: sendStub, onCancel: onCancelStub, onError: onErrorStub, logger, orderbooks }, { WatchMarketResponse })
+
+    onCancelStub.args[0][0]()
+
+    expect(liveStream.removeListener).to.have.been.calledOnce()
+    expect(liveStream.removeListener).to.have.been.calledWith('data', sinon.match.func)
+  })
+
+  it('stops sending data if the stream errors', () => {
+    watchMarket({ params, send: sendStub, onCancel: onCancelStub, onError: onErrorStub, logger, orderbooks }, { WatchMarketResponse })
+
+    onErrorStub.args[0][0]()
+
+    expect(liveStream.removeListener).to.have.been.calledOnce()
+    expect(liveStream.removeListener).to.have.been.calledWith('data', sinon.match.func)
+  })
+
   it('sets an data handler', () => {
-    watchMarket({ params, send: sendStub, logger, orderbooks }, { WatchMarketResponse })
+    watchMarket({ params, send: sendStub, onCancel: onCancelStub, onError: onErrorStub, logger, orderbooks }, { WatchMarketResponse })
 
     expect(liveStream.on).to.have.been.calledWith('data', sinon.match.func)
   })
@@ -65,7 +88,7 @@ describe('watchMarket', () => {
 
     liveStream.on.withArgs('data').callsArgWithAsync(1, fakeOrder)
 
-    watchMarket({ params, send: sendStub, logger, orderbooks }, { WatchMarketResponse })
+    watchMarket({ params, send: sendStub, onCancel: onCancelStub, onError: onErrorStub, logger, orderbooks }, { WatchMarketResponse })
 
     await delay(10)
     expect(sendStub).to.have.been.calledOnce()
@@ -81,7 +104,7 @@ describe('watchMarket', () => {
 
     liveStream.on.withArgs('data').callsArgWithAsync(1, fakeOrder)
 
-    watchMarket({ params, send: sendStub, logger, orderbooks }, { WatchMarketResponse })
+    watchMarket({ params, send: sendStub, onCancel: onCancelStub, onError: onErrorStub, logger, orderbooks }, { WatchMarketResponse })
 
     await delay(10)
     expect(sendStub).to.have.been.calledOnce()
