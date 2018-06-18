@@ -43,23 +43,23 @@ class PriceIndex extends SublevelIndex {
 
   /**
    * Placeholder for implementations of the price index
-   * @param  {String} price Decimal of the price
+   * @param  {String} quantumPrice Decimal of the quantumPrice
    * @return {String}       Index key to be used
    */
-  keyForPrice (price) {
+  keyForPrice (quantumPrice) {
     throw new Error('`keyForPrice` must be implemented by child classes.')
   }
 
   /**
    * create a read stream of orders with prices at least as good as the given on
-   * @param  {String} price Decimal of the price
+   * @param  {String} quantumPrice Decimal of the price
    * @return {ReadableStream}       ReadableStream from sublevel-index
    */
-  streamOrdersAtPriceOrBetter (price) {
+  streamOrdersAtPriceOrBetter (quantumPrice) {
     const opts = {}
 
-    if (price) {
-      opts.lte = this.keyForPrice(price)
+    if (quantumPrice) {
+      opts.lte = this.keyForPrice(quantumPrice)
     }
     return this.createReadStream(opts)
   }

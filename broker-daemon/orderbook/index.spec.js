@@ -507,9 +507,9 @@ describe('Orderbook', () => {
     })
 
     it('returns only orders better or equal to the given price', async () => {
-      const price = '100'
+      const quantumPrice = '100'
 
-      await orderbook.getBestOrders({ side: 'ASK', depth: '100', price })
+      await orderbook.getBestOrders({ side: 'ASK', depth: '100', quantumPrice })
 
       expect(askIndex.streamOrdersAtPriceOrBetter).to.have.been.calledWith('100')
     })

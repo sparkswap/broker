@@ -473,7 +473,7 @@ describe('BlockOrderWorker', () => {
       await worker.workLimitBlockOrder(blockOrder)
 
       expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledOnce()
-      expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledWith(sinon.match({ side: 'ASK', depth: '100', price: '1000' }))
+      expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledWith(sinon.match({ side: 'ASK', depth: '100', quantumPrice: '1000' }))
     })
 
     it('fills as many orders as possible at the given price or better', async () => {

@@ -213,7 +213,7 @@ class BlockOrderWorker extends EventEmitter {
     const targetDepth = Big(blockOrder.baseAmount)
 
     // fill as many orders at our price or better
-    const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString(), price: blockOrder.quantumPrice })
+    const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString(), quantumPrice: blockOrder.quantumPrice })
     await this._fillOrders(blockOrder, orders, targetDepth.toString())
 
     if (targetDepth.gt(availableDepth)) {

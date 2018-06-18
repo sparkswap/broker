@@ -203,8 +203,8 @@ describe('MarketEventOrder', () => {
     })
   })
 
-  describe('get price', () => {
-    it('defines a price getter', () => {
+  describe('get quantumPrice', () => {
+    it('defines a quantumPrice getter', () => {
       const orderId = 'myorder'
       const createdAt = '12234324235'
       const baseAmount = '123214234'
@@ -213,8 +213,7 @@ describe('MarketEventOrder', () => {
 
       const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side })
 
-      expect(order).to.have.property('price')
-      expect(order.price).to.be.eql('1.0000007304350892')
+      expect(order).to.have.property('quantumPrice', '1.0000007304350892')
     })
   })
 })
