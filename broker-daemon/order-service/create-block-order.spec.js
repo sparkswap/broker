@@ -8,6 +8,8 @@ describe('createBlockOrder', () => {
   let CreateBlockOrderResponse
   let blockOrderWorker
   let TimeInForce
+  let CONFIG
+  let revert
 
   beforeEach(() => {
     PublicError = createBlockOrder.__get__('PublicError')
@@ -19,6 +21,25 @@ describe('createBlockOrder', () => {
     blockOrderWorker = {
       createBlockOrder: sinon.stub().resolves('fakeId')
     }
+
+    CONFIG = {
+      currencies: [
+        {
+          symbol: 'BTC',
+          multipleOfSmallestUnit: '100000000'
+        },
+        {
+          symbol: 'XYZ',
+          multipleOfSmallestUnit: '10000'
+        }
+      ]
+    }
+
+    revert = createBlockOrder.__set__('CONFIG', CONFIG)
+  })
+
+  afterEach(() => {
+    revert()
   })
 
   it('throws if trying to use a time in force other than GTC', () => {
@@ -40,7 +61,7 @@ describe('createBlockOrder', () => {
     await createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })
 
     expect(blockOrderWorker.createBlockOrder).to.have.been.calledOnce()
-    expect(blockOrderWorker.createBlockOrder).to.have.been.calledWith({ marketName: 'XYZ/ABC', side: 'BID', amount: '100', price: '1000.678', timeInForce: 'GTC' })
+    expect(blockOrderWorker.createBlockOrder).to.have.been.calledWith({ marketName: 'XYZ/ABC', side: 'BID', amount: '1000000', price: '1000.678', timeInForce: 'GTC' })
   })
 
   it('creates a market priced block order', async () => {
@@ -54,7 +75,7 @@ describe('createBlockOrder', () => {
     await createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })
 
     expect(blockOrderWorker.createBlockOrder).to.have.been.calledOnce()
-    expect(blockOrderWorker.createBlockOrder).to.have.been.calledWith({ marketName: 'XYZ/ABC', price: null, side: 'BID', amount: '100', timeInForce: 'GTC' })
+    expect(blockOrderWorker.createBlockOrder).to.have.been.calledWith({ marketName: 'XYZ/ABC', price: null, side: 'BID', amount: '1000000', timeInForce: 'GTC' })
   })
 
   it('returns a block order response', async () => {

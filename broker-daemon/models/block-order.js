@@ -1,4 +1,5 @@
 const { Big } = require('../utils')
+const CONFIG = require('../config')
 
 /**
  * @class Model representing Block Orders
@@ -128,10 +129,12 @@ class BlockOrder {
    * @return {Object} Object to be serialized into a GRPC message
    */
   serialize () {
+    const amountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol).multipleOfSmallestUnit
+
     const openOrders = this.openOrders.map(({ order, state }) => {
       return {
         orderId: order.orderId,
-        amount: order.baseAmount,
+        amount: Big(order.baseAmount).div(amountFactor).toFixed(16),
         price: order.price,
         orderStatus: state.toUpperCase()
       }
@@ -141,7 +144,7 @@ class BlockOrder {
       return {
         orderId: fill.order.orderId,
         fillId: fill.fillId,
-        amount: fill.fillAmount,
+        amount: Big(fill.fillAmount).div(amountFactor).toFixed(16),
         price: fill.price,
         fillStatus: state.toUpperCase()
       }
@@ -150,7 +153,7 @@ class BlockOrder {
     const serialized = {
       market: this.marketName,
       side: this.side,
-      amount: this.amount.toString(),
+      amount: Big(this.amount).div(amountFactor).toFixed(16),
       timeInForce: this.timeInForce,
       status: this.status,
       openOrders: openOrders,
@@ -158,7 +161,7 @@ class BlockOrder {
     }
 
     if (this.price) {
-      serialized.limitPrice = this.price.toString()
+      serialized.limitPrice = this.price.toFixed(16)
     } else {
       serialized.isMarketOrder = true
     }

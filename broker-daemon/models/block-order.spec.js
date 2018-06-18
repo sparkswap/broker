@@ -1,7 +1,8 @@
-const { expect, sinon } = require('test/test-helper')
+const path = require('path')
+const { expect, sinon, rewire } = require('test/test-helper')
 const { Big } = require('../utils')
 
-const BlockOrder = require('./block-order')
+const BlockOrder = rewire(path.resolve(__dirname, 'block-order'))
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 
 describe('BlockOrder', () => {
@@ -146,6 +147,8 @@ describe('BlockOrder', () => {
   describe('instance', () => {
     let params
     let blockOrder
+    let CONFIG
+    let revert
 
     beforeEach(() => {
       params = {
@@ -157,8 +160,26 @@ describe('BlockOrder', () => {
         timeInForce: 'GTC',
         status: 'ACTIVE'
       }
+      CONFIG = {
+        currencies: [
+          {
+            symbol: 'BTC',
+            multipleOfSmallestUnit: '100000000'
+          },
+          {
+            symbol: 'XYZ',
+            multipleOfSmallestUnit: '10000'
+          }
+        ]
+      }
+
+      revert = BlockOrder.__set__('CONFIG', CONFIG)
 
       blockOrder = new BlockOrder(params)
+    })
+
+    afterEach(() => {
+      revert()
     })
 
     describe('#serialize', () => {
@@ -180,18 +201,17 @@ describe('BlockOrder', () => {
         expect(serialized).to.have.property('side', params.side)
       })
 
-      it('converts the amount to a string', () => {
+      it('converts the amount to a string factored into common units', () => {
         const serialized = blockOrder.serialize()
 
-        expect(serialized).to.have.property('amount', params.amount)
+        expect(serialized).to.have.property('amount', '0.0001000000000000')
         expect(serialized.amount).to.be.a('string')
       })
 
       it('converts the price to a string', () => {
         const serialized = blockOrder.serialize()
 
-        expect(serialized).to.have.property('amount', params.amount)
-        expect(serialized.amount).to.be.a('string')
+        expect(serialized).to.have.property('limitPrice', '100.0000000000000000')
       })
 
       it('provides null if the price is not present', () => {
@@ -199,7 +219,16 @@ describe('BlockOrder', () => {
         blockOrder = new BlockOrder(params)
         const serialized = blockOrder.serialize()
 
-        return expect(serialized.price).to.be.null
+        return expect(serialized.limitPrice).to.be.null
+      })
+
+      it('returns a market price if the price is not present', () => {
+        params.price = undefined
+
+        blockOrder = new BlockOrder(params)
+        const serialized = blockOrder.serialize()
+
+        expect(serialized.isMarketOrder).to.be.eql(true)
       })
 
       it('serializes the time in force', () => {
@@ -270,12 +299,12 @@ describe('BlockOrder', () => {
           expect(serialized.openOrders[0]).to.have.property('orderId', 'mykey')
         })
 
-        it('serializes the amount', () => {
+        it('serializes the amount into common units', () => {
           blockOrder.openOrders = [ osm ]
 
           const serialized = blockOrder.serialize()
 
-          expect(serialized.openOrders[0]).to.have.property('amount', '1000')
+          expect(serialized.openOrders[0]).to.have.property('amount', '0.0000100000000000')
         })
 
         it('converts the price', () => {
@@ -367,7 +396,7 @@ describe('BlockOrder', () => {
 
           const serialized = blockOrder.serialize()
 
-          expect(serialized.fills[0]).to.have.property('amount', '900')
+          expect(serialized.fills[0]).to.have.property('amount', '0.0000090000000000')
         })
 
         it('converts the price', () => {

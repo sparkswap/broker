@@ -1,14 +1,14 @@
 {
-  currencies: [
+  "currencies": [
     {
-      name: 'Bitcoin',
-      symbol: 'BTC',
-      multipleOfSmallestUnit: '100000000'
+      "name": "Bitcoin",
+      "symbol": "BTC",
+      "multipleOfSmallestUnit": "100000000"
     },
     {
-      name: 'Litecoin',
-      symbol: 'LTC',
-      multipleOfSmallestUnit: '100000000'
+      "name": "Litecoin",
+      "symbol": "LTC",
+      "multipleOfSmallestUnit": "100000000"
     }
   ]
 }
