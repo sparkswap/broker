@@ -121,6 +121,14 @@ class BlockOrder {
   }
 
   /**
+   * Price of an order expressed in terms of the smallest unit of each currency
+   * @return {String} Decimal of the price expressed as a string with 16 decimal places
+   */
+  get quantumPrice () {
+    return Big(this.counterAmount).div(this.baseAmount).toFixed(16)
+  }
+
+  /**
    * get key for storage in leveldb
    * @return {String} Block order id
    */
