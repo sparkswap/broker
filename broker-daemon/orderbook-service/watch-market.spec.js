@@ -88,7 +88,7 @@ describe('watchMarket', () => {
     const marketEvent = {
       orderId: fakeOrder.key,
       price: '10.0000000000000000',
-      amount: '0.0000000100000000'
+      amount: '0.0000000100000000',
       side: 'BID'
     }
 

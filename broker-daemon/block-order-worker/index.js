@@ -5,7 +5,6 @@ const { BlockOrder, Order } = require('../models')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const { BlockOrderNotFoundError } = require('./errors')
 const { Big, getRecords } = require('../utils')
-const CONFIG = require('../config')
 
 /**
  * @class Create and work Block Orders

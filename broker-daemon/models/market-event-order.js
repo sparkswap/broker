@@ -65,7 +65,7 @@ class MarketEventOrder {
    */
   get amount () {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
-    
+
     return Big(this.baseAmount).div(baseCurrencyConfig.multipleOfSmallestUnit).toFixed(16)
   }
 

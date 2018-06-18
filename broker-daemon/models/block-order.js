@@ -22,11 +22,11 @@ class BlockOrder {
     this.price = price ? Big(price) : null
     this.status = status
 
-    if(!this.baseCurrencyConfig) {
+    if (!this.baseCurrencyConfig) {
       throw new Error(`No currency configuration is available for ${this.baseSymbol}`)
     }
 
-    if(!this.counterCurrencyConfig) {
+    if (!this.counterCurrencyConfig) {
       throw new Error(`No currency configuration is available for ${this.counterSymbol}`)
     }
 
@@ -46,7 +46,7 @@ class BlockOrder {
 
     this.amount = Big(amount)
 
-    if(this.baseAmount !== this.amount.times(this.baseCurrencyConfig.multipleOfSmallestUnit).toString()) {
+    if (this.baseAmount !== this.amount.times(this.baseCurrencyConfig.multipleOfSmallestUnit).toString()) {
       throw new Error(`Amount is too precise for ${this.baseSymbol}`)
     }
 
@@ -93,7 +93,7 @@ class BlockOrder {
   /**
    * Get configuration for the counterSymbol
    * @return {Object} Currency configuration
-   */ 
+   */
   get counterCurrencyConfig () {
     return CONFIG.currencies.find(({ symbol }) => symbol === this.counterSymbol)
   }
@@ -125,7 +125,7 @@ class BlockOrder {
    * @return {String} Decimal of the price expressed as a string with 16 decimal places
    */
   get quantumPrice () {
-    if(!this.counterAmount) return
+    if (!this.counterAmount) return
     return Big(this.counterAmount).div(this.baseAmount).toFixed(16)
   }
 

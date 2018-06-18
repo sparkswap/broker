@@ -1,5 +1,4 @@
 const createLiveStream = require('level-live-stream')
-const { Big } = require('../utils')
 const { MarketEventOrder } = require('../models')
 const neverResolve = new Promise(() => {})
 /**
