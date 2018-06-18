@@ -29,7 +29,7 @@ async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrde
     marketName: market,
     side: side,
     amount,
-    price: isMarketOrder ? null : `${limitPrice.integer}.${limitPrice.decimal}`,
+    price: isMarketOrder ? null : limitPrice,
     timeInForce: 'GTC'
   })
 

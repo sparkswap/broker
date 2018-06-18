@@ -5,7 +5,6 @@ const grpcDeadline = require('./grpc-deadline')
 const Big = require('./big')
 const migrateStore = require('./migrate-store')
 const SublevelIndex = require('./sublevel-index')
-const serializePrice = require('./serialize-price')
 
 module.exports = {
   getRecords,
@@ -14,6 +13,5 @@ module.exports = {
   grpcDeadline,
   Big,
   migrateStore,
-  SublevelIndex,
-  serializePrice
+  SublevelIndex
 }

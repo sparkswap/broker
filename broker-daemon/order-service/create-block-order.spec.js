@@ -23,10 +23,7 @@ describe('createBlockOrder', () => {
 
   it('throws if trying to use a time in force other than GTC', () => {
     const params = {
-      limitPrice: {
-        integer: '1000',
-        decimal: '678'
-      },
+      limitPrice: '1000.678',
       timeInForce: 'FOK'
     }
     return expect(createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })).to.be.rejectedWith(PublicError)
@@ -35,10 +32,7 @@ describe('createBlockOrder', () => {
   it('creates a block order on the BlockOrderWorker', async () => {
     const params = {
       amount: '100',
-      limitPrice: {
-        integer: '1000',
-        decimal: '678'
-      },
+      limitPrice: '1000.678',
       market: 'XYZ/ABC',
       side: 'BID',
       timeInForce: 'GTC'
@@ -66,10 +60,7 @@ describe('createBlockOrder', () => {
   it('returns a block order response', async () => {
     const params = {
       amount: '100',
-      limitPrice: {
-        integer: '1000',
-        decimal: '678'
-      },
+      limitPrice: '1000.678',
       market: 'XYZ/ABC',
       side: 'BID',
       timeInForce: 'GTC'
@@ -87,10 +78,7 @@ describe('createBlockOrder', () => {
 
     const params = {
       amount: '100',
-      limitPrice: {
-        integer: '1000',
-        decimal: '678'
-      },
+      limitPrice: '1000.678',
       market: 'XYZ/ABC',
       side: 'BID',
       timeInForce: 'GTC'

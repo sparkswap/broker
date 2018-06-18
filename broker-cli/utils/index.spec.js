@@ -3,8 +3,7 @@ const { expect } = require('test/test-helper')
 const {
   ENUMS,
   validations,
-  Big,
-  serializePrice
+  Big
 } = require('./index')
 
 describe('utils index', () => {
@@ -21,10 +20,5 @@ describe('utils index', () => {
   it('defines Big', () => {
     expect(Big).to.not.be.null()
     expect(Big).to.not.be.undefined()
-  })
-
-  it('defines serializePrice', () => {
-    expect(serializePrice).to.not.be.null()
-    expect(serializePrice).to.not.be.undefined()
   })
 })

@@ -64,10 +64,7 @@ describe('sell', () => {
     args.price = '10'
     const expectedRequest = {
       amount: args.amount,
-      limitPrice: {
-        integer: '10',
-        decimal: '0'
-      },
+      limitPrice: args.price,
       market: opts.market,
       side: 'ASK',
       timeInForce: opts.timeInForce
@@ -77,14 +74,11 @@ describe('sell', () => {
     expect(createBlockOrderSpy).to.have.been.calledWith(expectedRequest)
   })
 
-  it('converts decimal prices in limit orders', () => {
+  it('allows decimal prices in limit orders', () => {
     args.price = '10.56'
     const expectedRequest = {
       amount: args.amount,
-      limitPrice: {
-        integer: '10',
-        decimal: '56'
-      },
+      limitPrice: args.price,
       market: opts.market,
       side: 'ASK',
       timeInForce: opts.timeInForce
