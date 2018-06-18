@@ -1,7 +1,7 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
 
-const getBalance = rewire(path.resolve(__dirname, 'get-balance'))
+const getBalances = rewire(path.resolve(__dirname, 'get-balances'))
 
 describe('get-balance', () => {
   let balanceResponseStub
@@ -11,36 +11,36 @@ describe('get-balance', () => {
   let engine
   let channelBalancesStub
   let channelBalances
-  let committedBalanceStub
-  let uncommittedBalanceStub
-  let uncommittedBalance
-  let committedBalance
+  let confirmedBalanceStub
+  let unconfirmedBalanceStub
+  let unconfirmedBalance
+  let confirmedBalance
 
   beforeEach(() => {
     logger = sinon.stub()
     expectedBalance = 1000
-    committedBalance = expectedBalance - 500
-    uncommittedBalance = expectedBalance - 500
+    confirmedBalance = expectedBalance - 500
+    unconfirmedBalance = expectedBalance - 500
     channelBalances = [
       { symbol: 'BTC', value: '100' }
     ]
     walletBalanceStub = sinon.stub().returns(expectedBalance)
     balanceResponseStub = sinon.stub()
     channelBalancesStub = sinon.stub().returns(channelBalances)
-    committedBalanceStub = sinon.stub().returns(committedBalance)
-    uncommittedBalanceStub = sinon.stub().returns(uncommittedBalance)
+    confirmedBalanceStub = sinon.stub().returns(confirmedBalance)
+    unconfirmedBalanceStub = sinon.stub().returns(unconfirmedBalance)
 
     engine = {
       getTotalBalance: walletBalanceStub,
-      getCommittedBalance: committedBalanceStub,
-      getUncommittedBalance: uncommittedBalanceStub,
+      getConfirmedBalance: confirmedBalanceStub,
+      getUnconfirmedBalance: unconfirmedBalanceStub,
       getChannelBalances: channelBalancesStub
     }
     logger = { info: sinon.stub() }
   })
 
   beforeEach(async () => {
-    await getBalance({ logger, engine }, { GetBalanceResponse: balanceResponseStub })
+    await getBalances({ logger, engine }, { GetBalancesResponse: balanceResponseStub })
   })
 
   it('calls an engine.getTotalBalance', () => {
@@ -55,8 +55,8 @@ describe('get-balance', () => {
     expect(balanceResponseStub).to.have.been.calledWith(
       sinon.match({
         totalBalance: expectedBalance,
-        totalCommittedBalance: committedBalance,
-        totalUncommittedBalance: uncommittedBalance,
+        totalCommittedBalance: confirmedBalance,
+        totalUncommittedBalance: unconfirmedBalance,
         committedBalances: channelBalances
       })
     )

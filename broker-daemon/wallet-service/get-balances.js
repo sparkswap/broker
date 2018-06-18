@@ -8,22 +8,24 @@
  * @param {function} responses.GetBalanceResponse
  * @return {responses.GetBalanaceResponse}
  */
-async function getBalance ({ logger, engine }, { GetBalanceResponse }) {
+async function getBalances ({ logger, engine }, { GetBalancesResponse }) {
   const [
     totalBalance,
     totalCommittedBalance,
     totalUncommittedBalance,
-    committedBalances
+    channelBalances
   ] = await Promise.all([
     engine.getTotalBalance(),
-    engine.getCommittedBalance(),
-    engine.getUncommittedBalance(),
+    engine.getUnconfirmedBalance(),
+    engine.getConfirmedBalance(),
     engine.getChannelBalances()
   ])
 
   logger.info(`Received wallet balance: ${totalBalance}`)
 
-  return new GetBalanceResponse({
+  const committedBalances = channelBalances.map(({ symbol, value }) => ({ symbol, value: value.toString() }))
+
+  return new GetBalancesResponse({
     totalBalance,
     totalCommittedBalance,
     totalUncommittedBalance,
@@ -31,4 +33,4 @@ async function getBalance ({ logger, engine }, { GetBalanceResponse }) {
   })
 }
 
-module.exports = getBalance
+module.exports = getBalances
