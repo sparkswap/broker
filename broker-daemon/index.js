@@ -54,7 +54,7 @@ class BrokerDaemon {
 
       const currenciesHaveConfig = this.marketNames.every((marketName) => {
         const symbols = marketName.split('/')
-        return symbols.every(symbol => CONFIG.currencies.find(({ sym }) => sym === symbol.toUpperCase()))
+        return symbols.every(sym => CONFIG.currencies.find(({ symbol }) => symbol === sym.toUpperCase()))
       })
 
       if (!currenciesHaveConfig) {
@@ -66,7 +66,7 @@ class BrokerDaemon {
       this.server.listen(this.rpcAddress)
       logger.info(`gRPC server started: Server listening on ${this.rpcAddress}`)
     } catch (e) {
-      logger.error('BrokerDaemon failed to initialize', e)
+      logger.error('BrokerDaemon failed to initialize', { error: e.toString() })
     }
   }
 }
