@@ -5,7 +5,7 @@ const { PublicError } = require('grpc-methods')
 const commitBalance = rewire(path.resolve(__dirname, 'commit-balance'))
 
 describe('commit-balance', () => {
-  let CommitBalanceResponse
+  let EmptyResponse
   let params
   let relayer
   let logger
@@ -17,7 +17,7 @@ describe('commit-balance', () => {
   let envRevert
 
   beforeEach(() => {
-    CommitBalanceResponse = sinon.stub()
+    EmptyResponse = sinon.stub()
     publicKey = '12345'
     publicKeyStub = sinon.stub().returns({ publicKey })
     createChannelStub = sinon.stub()
@@ -42,7 +42,7 @@ describe('commit-balance', () => {
 
   describe('committing a balance to the exchange', () => {
     beforeEach(async () => {
-      res = await commitBalance({ params, relayer, logger, engine }, { CommitBalanceResponse })
+      res = await commitBalance({ params, relayer, logger, engine }, { EmptyResponse })
     })
 
     it('receives a public key from the relayer', () => {
@@ -54,14 +54,12 @@ describe('commit-balance', () => {
       expect(createChannelStub).to.have.been.calledWith(lndHost, publicKey, params.balance)
     })
 
-    it('constructs a CommitBalanceResponse', () => {
-      expect(CommitBalanceResponse).to.have.been.calledWith(
-        sinon.match({ status: 'channel opened successfully' })
-      )
+    it('constructs a EmptyResponse', () => {
+      expect(EmptyResponse).to.have.been.calledWith({})
     })
 
-    it('returns a CommitBalanceResponse', () => {
-      expect(res).to.be.eql(new CommitBalanceResponse())
+    it('returns a EmptyResponse', () => {
+      expect(res).to.be.eql(new EmptyResponse())
     })
   })
 
@@ -69,7 +67,7 @@ describe('commit-balance', () => {
     it('throws an error for an incorrect balance', () => {
       params.balance = 100
       return expect(
-        commitBalance({ params, relayer, logger, engine }, { CommitBalanceResponse })
+        commitBalance({ params, relayer, logger, engine }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError)
     })
   })
@@ -80,7 +78,7 @@ describe('commit-balance', () => {
     it('throws an error for an incorrect balance', () => {
       params.balance = maxBalance + 1
       return expect(
-        commitBalance({ params, relayer, logger, engine }, { CommitBalanceResponse })
+        commitBalance({ params, relayer, logger, engine }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError)
     })
   })

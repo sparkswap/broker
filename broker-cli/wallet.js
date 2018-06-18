@@ -123,9 +123,9 @@ async function commitBalance (args, opts, logger) {
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    const res = await client.walletService.commitBalance({ balance: maxSupportedBalance, symbol })
+    await client.walletService.commitBalance({ balance: maxSupportedBalance, symbol })
 
-    logger.info('Successfully added broker daemon to the kinesis exchange!', res)
+    logger.info('Successfully added broker daemon to the kinesis exchange!')
   } catch (e) {
     logger.error(e)
   }

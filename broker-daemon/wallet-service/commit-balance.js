@@ -47,10 +47,10 @@ const SUPPORTED_SYMBOLS = Object.freeze({
  * @param {Logger} request.logger
  * @param {Engine} request.engine
  * @param {Object} responses
- * @param {function} responses.CommitBalanceResponse - constructor for HealthCheckResponse messages
- * @return {responses.CommitBalanceResponse}
+ * @param {function} responses.EmptyResponse
+ * @return {responses.EmptyResponse}
  */
-async function commitBalance ({ params, relayer, logger, engine }, { CommitBalanceResponse }) {
+async function commitBalance ({ params, relayer, logger, engine }, { EmptyResponse }) {
   const { publicKey: relayerPubKey } = await relayer.paymentNetworkService.getPublicKey({})
   const { balance, symbol } = params
 
@@ -70,9 +70,9 @@ async function commitBalance ({ params, relayer, logger, engine }, { CommitBalan
     throw new PublicError(`Unsupported symbol for committing a balance: ${symbol}`)
   }
 
-  await engine.createChannel(EXCHANGE_LND_HOST, relayerPubKey, balance, 'LTC')
+  await engine.createChannel(EXCHANGE_LND_HOST, relayerPubKey, balance, symbol)
 
-  return new CommitBalanceResponse({ status: 'channel opened successfully' })
+  return new EmptyResponse({})
 }
 
 module.exports = commitBalance
