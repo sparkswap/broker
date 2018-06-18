@@ -22,6 +22,14 @@ class BlockOrder {
     this.price = price ? Big(price) : null
     this.status = status
 
+    if(!this.baseCurrencyConfig) {
+      throw new Error(`No currency configuration is available for ${this.baseSymbol}`)
+    }
+
+    if(!this.counterCurrencyConfig) {
+      throw new Error(`No currency configuration is available for ${this.counterSymbol}`)
+    }
+
     if (!BlockOrder.TIME_RESTRICTIONS[timeInForce]) {
       throw new Error(`${timeInForce} is not a supported time restriction`)
     }
@@ -35,7 +43,12 @@ class BlockOrder {
     if (!amount) {
       throw new Error(`A transaction amount is required to create a block order`)
     }
+
     this.amount = Big(amount)
+
+    if(this.baseAmount !== this.amount.times(this.baseCurrencyConfig.multipleOfSmallestUnit).toString()) {
+      throw new Error(`Amount is too precise for ${this.baseSymbol}`)
+    }
 
     this.openOrders = []
     this.fills = []
@@ -70,11 +83,27 @@ class BlockOrder {
   }
 
   /**
+   * Get configuration for the baseSymbol
+   * @return {Object} Currency configuration
+   */
+  get baseCurrencyConfig () {
+    return CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
+  }
+
+  /**
+   * Get configuration for the counterSymbol
+   * @return {Object} Currency configuration
+   */ 
+  get counterCurrencyConfig () {
+    return CONFIG.currencies.find(({ symbol }) => symbol === this.counterSymbol)
+  }
+
+  /**
    * Convenience getter for baseAmount
    * @return {String} String representation of the amount of currency to be transacted in base currency's smallest unit
    */
   get baseAmount () {
-    return this.amount.toString()
+    return this.amount.times(this.baseCurrencyConfig.multipleOfSmallestUnit).round(0).toString()
   }
 
   /**
@@ -86,7 +115,9 @@ class BlockOrder {
       // if we can't calculate the amount, we treat the property as unset, i.e. undefined
       return
     }
-    return this.amount.times(this.price).round(0).toString()
+
+    const counterCommonAmount = this.amount.times(this.price)
+    return counterCommonAmount.times(this.counterCurrencyConfig.multipleOfSmallestUnit).round(0).toString()
   }
 
   /**
