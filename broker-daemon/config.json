@@ -3,12 +3,12 @@
     {
       name: 'Bitcoin',
       symbol: 'BTC',
-      commonUnitMultipleOfSmallestUnit: '100000000'
+      multipleOfSmallestUnit: '100000000'
     },
     {
       name: 'Litecoin',
       symbol: 'LTC',
-      commonUnitMultipleOfSmallestUnit: '100000000'
+      multipleOfSmallestUnit: '100000000'
     }
   ]
 }
