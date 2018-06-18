@@ -194,7 +194,8 @@ describe('Fill', () => {
         counterAmount: '100000'
       }
       params = {
-        fillAmount: '9000'
+        fillAmount: '9000',
+        takerPayTo: 'ln:asdfasdf'
       }
 
       fill = new Fill(order, params)
@@ -248,7 +249,8 @@ describe('Fill', () => {
         const valueObject = Object.assign({
           feePaymentRequest: undefined,
           depositPaymentRequest: undefined,
-          swapHash: undefined
+          swapHash: undefined,
+          payTo: undefined
         }, params, { order })
         expect(fill).to.have.property('valueObject')
         expect(fill.valueObject).to.be.eql(valueObject)
@@ -277,7 +279,32 @@ describe('Fill', () => {
         expect(fill.paramsForCreate).to.be.eql({
           orderId: order.orderId,
           swapHash: fakeSwapHash,
-          fillAmount: params.fillAmount
+          fillAmount: params.fillAmount,
+          takerPayTo: 'ln:asdfasdf'
+        })
+      })
+    })
+
+    describe('get paramsForSwap', () => {
+      it('defines a getter for params required to execute a swap with the engine', () => {
+        const fakeSwapHash = 'hello'
+        fill.setSwapHash(fakeSwapHash)
+
+        const fakePayTo = 'ln:asd0f9uasf09u'
+        fill.setExecuteParams({ payTo: fakePayTo })
+
+        expect(fill).to.have.property('paramsForSwap')
+        expect(fill.paramsForSwap).to.be.eql({
+          counterpartyPubKey: 'asd0f9uasf09u',
+          swapHash: fakeSwapHash,
+          inbound: {
+            symbol: fill.inboundSymbol,
+            amount: fill.inboundAmount
+          },
+          outbound: {
+            symbol: fill.outboundSymbol,
+            amount: fill.outboundAmount
+          }
         })
       })
     })
@@ -302,6 +329,24 @@ describe('Fill', () => {
 
         expect(fill.value).to.include(`"feePaymentRequest":"${createdParams.feePaymentRequest}"`)
         expect(fill.value).to.include(`"depositPaymentRequest":"${createdParams.depositPaymentRequest}"`)
+      })
+    })
+
+    describe('#setExecuteParams', () => {
+      let executeParams = {
+        payTo: 'ln:asoifjaosfij'
+      }
+
+      it('updates the object with the params from creating on the relayer', () => {
+        fill.setExecuteParams(executeParams)
+
+        expect(fill).to.have.property('payTo', executeParams.payTo)
+      })
+
+      it('includes the updated params with the saved value', () => {
+        fill.setExecuteParams(executeParams)
+
+        expect(fill.value).to.include(`"payTo":"${executeParams.payTo}"`)
       })
     })
   })

@@ -161,6 +161,22 @@ describe('BlockOrder', () => {
       blockOrder = new BlockOrder(params)
     })
 
+    describe('#fail', () => {
+      it('moves the block order to a failed state', () => {
+        blockOrder.fail()
+
+        expect(blockOrder).to.have.property('status', 'FAILED')
+      })
+    })
+
+    describe('#cancel', () => {
+      it('moves the block order to a cancelled state', () => {
+        blockOrder.cancel()
+
+        expect(blockOrder).to.have.property('status', 'CANCELLED')
+      })
+    })
+
     describe('#serialize', () => {
       it('creates a plain object', () => {
         const serialized = blockOrder.serialize()
@@ -386,6 +402,60 @@ describe('BlockOrder', () => {
 
           expect(serialized.fills[0]).to.have.property('fillStatus', 'CREATED')
         })
+      })
+    })
+
+    describe('#serializeSummary', () => {
+      it('creates a plain object', () => {
+        const serialized = blockOrder.serializeSummary()
+
+        expect(serialized).to.be.an('object')
+      })
+
+      it('serializes the market name', () => {
+        const serialized = blockOrder.serializeSummary()
+
+        expect(serialized).to.have.property('market', params.marketName)
+      })
+
+      it('serializes the side', () => {
+        const serialized = blockOrder.serializeSummary()
+
+        expect(serialized).to.have.property('side', params.side)
+      })
+
+      it('converts the amount to a string', () => {
+        const serialized = blockOrder.serializeSummary()
+
+        expect(serialized).to.have.property('amount', params.amount)
+        expect(serialized.amount).to.be.a('string')
+      })
+
+      it('converts the price to a string', () => {
+        const serialized = blockOrder.serializeSummary()
+
+        expect(serialized).to.have.property('amount', params.amount)
+        expect(serialized.amount).to.be.a('string')
+      })
+
+      it('provides null if the price is not present', () => {
+        params.price = undefined
+        blockOrder = new BlockOrder(params)
+        const serialized = blockOrder.serializeSummary()
+
+        return expect(serialized.price).to.be.null
+      })
+
+      it('serializes the time in force', () => {
+        const serialized = blockOrder.serializeSummary()
+
+        expect(serialized).to.have.property('timeInForce', params.timeInForce)
+      })
+
+      it('serializes the status', () => {
+        const serialized = blockOrder.serializeSummary()
+
+        expect(serialized).to.have.property('status', params.status)
       })
     })
 

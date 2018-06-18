@@ -124,6 +124,16 @@ class BlockOrder {
   }
 
   /**
+   * Move the block order to a cancelled status
+   * @return {BlockOrder} Modified block order instance
+   */
+  cancel () {
+    this.status = BlockOrder.STATUSES.CANCELLED
+
+    return this
+  }
+
+  /**
    * serialize a block order for transmission via grpc
    * @return {Object} Object to be serialized into a GRPC message
    */
@@ -155,6 +165,25 @@ class BlockOrder {
       status: this.status,
       openOrders: openOrders,
       fills: fills
+    }
+
+    if (this.price) {
+      serialized.limitPrice = this.price.toString()
+    } else {
+      serialized.isMarketOrder = true
+    }
+
+    return serialized
+  }
+
+  serializeSummary () {
+    const serialized = {
+      blockOrderId: this.id,
+      market: this.marketName,
+      side: this.side,
+      amount: this.amount.toString(),
+      timeInForce: this.timeInForce,
+      status: this.status
     }
 
     if (this.price) {

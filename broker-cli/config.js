@@ -1,10 +1,32 @@
+const BrokerDaemonClient = require('./broker-daemon-client')
+const { validations } = require('./utils')
+
+/**
+ * Returns configuration information for a particular broker daemon
+ *
+ * @param {Object} args
+ * @param {String} [args.rpcAddress=null]
+ * @param {Object} opts
+ * @param {Logger} logger
+ */
+async function config (args, opts, logger) {
+  const { rpcAddress = null } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+    const res = await client.adminService.getDaemonConfig({})
+
+    logger.info('Current Kinesis Configuration:')
+
+    Object.keys(res).forEach(key => logger.info(`${key}: ${res[key]}`))
+  } catch (e) {
+    logger.error(e)
+  }
+}
+
 module.exports = (program) => {
   program
     .command('config', 'All current configuration settings')
-    .action((args, options, logger) => {
-      logger.info('Current Kinesis Configuration:')
-      logger.info('{')
-      logger.info(`  BROKER_DAEMON_HOST: ${process.env.BROKER_DAEMON_HOST}`)
-      logger.info('}')
-    })
+    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .action(config)
 }

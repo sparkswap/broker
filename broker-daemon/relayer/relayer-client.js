@@ -89,6 +89,7 @@ class RelayerClient {
 
         watcher.on('error', (err) => {
           this.logger.error('Relayer watchMarket grpc failed', err)
+          process.exit(1)
           reject(err)
         })
       } catch (e) {

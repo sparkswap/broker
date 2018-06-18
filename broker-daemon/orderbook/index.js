@@ -8,7 +8,7 @@ class Orderbook {
     this.marketName = marketName
     this.relayer = relayer
     this.eventStore = store.sublevel('events')
-    this.store = Orderbook.createStore(store, this.eventStore)
+    this.store = Orderbook.createStore(store, this.eventStore, marketName)
     this.logger = logger
   }
 
@@ -134,7 +134,7 @@ class Orderbook {
    *
    * @returns {sublevel} A store that contains the orderbook built from the event store
    */
-  static createStore (baseStore, eventStore) {
+  static createStore (baseStore, eventStore, marketName) {
     const store = baseStore.sublevel('orderbook')
 
     eventStore.pre((dbOperation, add) => {
@@ -142,8 +142,7 @@ class Orderbook {
         return
       }
       const event = MarketEvent.fromStorage(dbOperation.key, dbOperation.value)
-      const order = MarketEventOrder.fromEvent(event)
-
+      const order = MarketEventOrder.fromEvent(event, marketName)
       if (event.eventType === MarketEvent.TYPES.PLACED) {
         add({ key: order.key, value: order.value, type: 'put', prefix: store })
       } else {
