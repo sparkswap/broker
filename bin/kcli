@@ -26,7 +26,8 @@ if (compareVersions(clientVersion, currentVersion) !== 0) {
 program
   .logger(console)
   .version(CLI_VERSION)
-  .description('KINESIS BROKER CLI')
+  .description(
+`☍ Kinesis Broker Daemon CLI - http://kinesis.network`)
 
 /**
  * Initialize Commands
