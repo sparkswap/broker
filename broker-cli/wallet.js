@@ -125,8 +125,8 @@ async function commitBalance (args, opts, logger) {
       totalUncommittedBalance
     } = await client.walletService.getBalances({})
 
-    if (parseInt(balance) === 0) {
-      return logger.info('Your current balance is 0, please add funds to your daemon (or check the status of your daemon)')
+    if (parseInt(totalUncommittedBalance) === 0) {
+      return logger.info('Your current uncommitted balance is 0, please add funds to your daemon')
     }
 
     // TODO: BIG this var instead of using `parseInt`
