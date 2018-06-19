@@ -59,9 +59,9 @@ async function balance (args, opts, logger) {
       committedBalances = []
     } = await client.walletService.getBalances({})
 
-    logger.info(`Total Balance: ${totalBalance}`)
-    logger.info(`Total Uncommitted Balance: ${totalUncommittedBalance}`)
-    logger.info(`Total Committed Balance: ${totalCommittedBalance}`)
+    logger.info(`Total Balance (${DEFAULT_TICKER_SYMBOL}): ${totalBalance}`)
+    logger.info(`Total Uncommitted Balance (${DEFAULT_TICKER_SYMBOL}): ${totalUncommittedBalance}`)
+    logger.info(`Total Committed Balance (${DEFAULT_TICKER_SYMBOL}: ${totalCommittedBalance}`)
 
     committedBalances.forEach(({ symbol, value }) => {
       logger.info(`${symbol} Balance: ${value}`)
