@@ -1,7 +1,7 @@
 const { expect } = require('test/test-helper')
 
 const {
-  isPrice,
+  isDecimal,
   isMarketName,
   isHost,
   areValidMarketNames,
@@ -10,22 +10,27 @@ const {
 } = require('./validations')
 
 describe('Validations', () => {
-  describe('isPrice', () => {
-    const expectedError = 'Invalid Price Format'
+  describe('isDecimal', () => {
+    const expectedError = 'Invalid decimal format'
 
     it('returns a valid price', () => {
       const validPrice = '100'
-      expect(isPrice(validPrice)).to.eql(validPrice)
+      expect(isDecimal(validPrice)).to.eql(validPrice)
     })
 
-    it('throws an error if a price is too large (over 99999)', () => {
-      const invalidPrice = '100000'
-      expect(() => isPrice(invalidPrice)).to.throw(expectedError)
+    it('allows decimal prices', () => {
+      const validPrice = '100.8789'
+      expect(isDecimal(validPrice)).to.eql(validPrice)
+    })
+
+    it('throws if the price is greater than max value', () => {
+      const invalidPrice = '9223372036854775808'
+      expect(() => isDecimal(invalidPrice)).to.throw(expectedError)
     })
 
     it('throws an error for an incorrect string', () => {
       const invalidPrice = 'banana'
-      expect(() => isPrice(invalidPrice)).to.throw(expectedError)
+      expect(() => isDecimal(invalidPrice)).to.throw(expectedError)
     })
   })
 

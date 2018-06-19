@@ -61,10 +61,24 @@ describe('sell', () => {
   })
 
   it('makes a limit order request to the broker', () => {
-    args.price = '10000'
+    args.price = '10'
     const expectedRequest = {
       amount: args.amount,
-      limitPrice: '10000',
+      limitPrice: args.price,
+      market: opts.market,
+      side: 'ASK',
+      timeInForce: opts.timeInForce
+    }
+    sell(args, opts, logger)
+    expect(createBlockOrderSpy).to.have.been.called()
+    expect(createBlockOrderSpy).to.have.been.calledWith(expectedRequest)
+  })
+
+  it('allows decimal prices in limit orders', () => {
+    args.price = '10.56'
+    const expectedRequest = {
+      amount: args.amount,
+      limitPrice: args.price,
       market: opts.market,
       side: 'ASK',
       timeInForce: opts.timeInForce

@@ -28,12 +28,8 @@ message CommitBalanceRequest {
   Symbol symbol = 1;
 }
 
-message CommitBalanceResponse {
-  string status = 0;
-}
-
 service WalletService {
   rpc NewDepositAddress (google.protobuf.Empty) returns (NewDepositAddressResponse);
   rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse);
-  rpc CommitBalance (CommitBalanceRequest) returns (CommitBalanceResponse);
+  rpc CommitBalance (CommitBalanceRequest) returns (google.protobuf.Empty);
 }

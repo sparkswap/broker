@@ -1,4 +1,4 @@
-const Big = require('big.js')
+const { Big } = require('../utils')
 
 /**
  * @class Model representing Block Orders

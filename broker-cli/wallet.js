@@ -6,7 +6,7 @@
 const BrokerDaemonClient = require('./broker-daemon-client')
 const { ENUMS, validations, askQuestion } = require('./utils')
 const {
-  config: { symbol: DEFAULT_TICKER_SYMBOL }
+  config: { default_currency_symbol: DEFAULT_CURRENCY_SYMBOL }
 } = require('../package.json')
 
 /**
@@ -59,9 +59,9 @@ async function balance (args, opts, logger) {
       committedBalances = []
     } = await client.walletService.getBalances({})
 
-    logger.info(`Total Balance (${DEFAULT_TICKER_SYMBOL}): ${totalBalance}`)
-    logger.info(`Total Uncommitted Balance (${DEFAULT_TICKER_SYMBOL}): ${totalUncommittedBalance}`)
-    logger.info(`Total Committed Balance (${DEFAULT_TICKER_SYMBOL}: ${totalCommittedBalance}`)
+    logger.info(`Total Balance (${DEFAULT_CURRENCY_SYMBOL}): ${totalBalance}`)
+    logger.info(`Total Uncommitted Balance (${DEFAULT_CURRENCY_SYMBOL}): ${totalUncommittedBalance}`)
+    logger.info(`Total Committed Balance (${DEFAULT_CURRENCY_SYMBOL}: ${totalCommittedBalance}`)
 
     committedBalances.forEach(({ symbol, value }) => {
       logger.info(`${symbol} Balance: ${value}`)
@@ -113,7 +113,7 @@ async function commitBalance (args, opts, logger) {
   const { symbol } = args
   const { rpcAddress = null } = opts
 
-  if (DEFAULT_TICKER_SYMBOL !== symbol) {
+  if (DEFAULT_CURRENCY_SYMBOL !== symbol) {
     return logger.info('Please switch the daemon to another supported currency.')
   }
 
@@ -140,9 +140,9 @@ async function commitBalance (args, opts, logger) {
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    const res = await client.walletService.commitBalance({ balance: maxSupportedBalance, symbol })
+    await client.walletService.commitBalance({ balance: maxSupportedBalance, symbol })
 
-    logger.info('Successfully added broker daemon to the kinesis exchange!', res)
+    logger.info('Successfully added broker daemon to the kinesis exchange!')
   } catch (e) {
     logger.error(e)
   }
