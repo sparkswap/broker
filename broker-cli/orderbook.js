@@ -30,7 +30,7 @@ function createUI (market, asks, bids) {
   // The extensive options are required because the default for cli-table is to have
   // borders between every row and column.
   const innerTableOptions = {
-    head: ['Price', 'Depth'],
+    head: ['Price', `Depth (${market.split('/')[0].toUpperCase()})`],
     style: { head: ['gray'] },
     colWidths: [innerTableWidth, innerTableWidth],
     chars: {
