@@ -27,7 +27,7 @@ program
   .logger(console)
   .version(CLI_VERSION)
   .description(
-`☍ Kinesis Broker Daemon CLI - http://kinesis.network`)
+`☍ Kinesis Broker CLI - http://kinesis.network`)
 
 /**
  * Initialize Commands
