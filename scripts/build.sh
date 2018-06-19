@@ -34,6 +34,7 @@ rm -f ./docker/LND-README.md
 echo "Installing lnd-engine"
 git clone git@github.com:kinesis-exchange/lnd-engine.git ./node_modules/lnd-engine
 
+
 # Remove git file or npm will complain
 rm -rf ./node_modules/lnd-engine/.git
 

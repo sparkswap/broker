@@ -5,6 +5,9 @@
 
 const BrokerDaemonClient = require('./broker-daemon-client')
 const { ENUMS, validations, askQuestion } = require('./utils')
+const {
+  config: { default_currency_symbol: DEFAULT_CURRENCY_SYMBOL }
+} = require('../package.json')
 
 /**
  * @constant
@@ -99,6 +102,10 @@ async function commitBalance (args, opts, logger) {
   const { symbol } = args
   const { rpcAddress = null } = opts
 
+  if (DEFAULT_CURRENCY_SYMBOL !== symbol) {
+    return logger.info(`Unable to commit balance for ${symbol}. Please switch the daemon to ${symbol} in package.json.`)
+  }
+
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const { balance } = await client.walletService.getBalance({})
@@ -116,9 +123,9 @@ async function commitBalance (args, opts, logger) {
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    const res = await client.walletService.commitBalance({ balance: maxSupportedBalance, symbol })
+    await client.walletService.commitBalance({ balance: maxSupportedBalance, symbol })
 
-    logger.info('Successfully added broker daemon to the kinesis exchange!', res)
+    logger.info('Successfully added broker daemon to the kinesis exchange!')
   } catch (e) {
     logger.error(e)
   }
@@ -142,7 +149,7 @@ module.exports = (program) => {
         case SUPPORTED_COMMANDS.COMMIT_BALANCE:
           const [symbol] = subArguments
 
-          if (!SUPPORTED_SYMBOLS.includes(symbol)) {
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
             throw new Error(`Provided symbol is not a valid currency for the exchange: ${symbol}`)
           }
 

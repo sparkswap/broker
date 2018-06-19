@@ -29,6 +29,16 @@ const MINIMUM_FUNDING_AMOUNT = 400000
 const MAX_CHANNEL_BALANCE = 16777215
 
 /**
+ * @constant
+ * @type {Array<key, string>}
+ * @default
+ */
+const SUPPORTED_SYMBOLS = Object.freeze({
+  BTC: 'BTC',
+  LTC: 'LTC'
+})
+
+/**
  * Grabs public lightning network information from relayer and opens a channel
  *
  * @param {Object} request - request object
@@ -37,14 +47,14 @@ const MAX_CHANNEL_BALANCE = 16777215
  * @param {Logger} request.logger
  * @param {Engine} request.engine
  * @param {Object} responses
- * @param {function} responses.CommitBalanceResponse - constructor for HealthCheckResponse messages
- * @return {responses.CommitBalanceResponse}
+ * @param {function} responses.EmptyResponse
+ * @return {responses.EmptyResponse}
  */
-async function commitBalance ({ params, relayer, logger, engine }, { CommitBalanceResponse }) {
+async function commitBalance ({ params, relayer, logger, engine }, { EmptyResponse }) {
   const { publicKey: relayerPubKey } = await relayer.paymentNetworkService.getPublicKey({})
-  const { balance, market } = params
+  const { balance, symbol } = params
 
-  logger.info(`Attempting to create channel with ${EXCHANGE_LND_HOST} on ${market} with ${balance}`)
+  logger.info(`Attempting to create channel with ${EXCHANGE_LND_HOST} on ${symbol} with ${balance}`)
 
   // TODO: Validate that the amount is above the minimum channel balance
   // TODO: Choose the correct engine depending on the market
@@ -56,9 +66,13 @@ async function commitBalance ({ params, relayer, logger, engine }, { CommitBalan
     throw new PublicError(`Maxium balance of ${MAX_CHANNEL_BALANCE} exceeded for committing to the relayer. Please try again.`)
   }
 
-  await engine.createChannel(EXCHANGE_LND_HOST, relayerPubKey, balance)
+  if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
+    throw new PublicError(`Unsupported symbol for committing a balance: ${symbol}`)
+  }
 
-  return new CommitBalanceResponse({ status: 'channel opened successfully' })
+  await engine.createChannel(EXCHANGE_LND_HOST, relayerPubKey, balance, symbol)
+
+  return new EmptyResponse({})
 }
 
 module.exports = commitBalance

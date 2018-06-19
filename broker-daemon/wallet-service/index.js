@@ -29,13 +29,17 @@ class WalletService {
     const {
       NewDepositAddressResponse,
       GetBalanceResponse,
-      CommitBalanceResponse
+      google: {
+        protobuf: {
+          Empty: EmptyResponse
+        }
+      }
     } = this.proto
 
     this.implementation = {
       newDepositAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engine }, { NewDepositAddressResponse }).register(),
       getBalance: new GrpcUnaryMethod(getBalance, this.messageId('getBalance'), { logger, engine }, { GetBalanceResponse }).register(),
-      commitBalance: new GrpcUnaryMethod(commitBalance, this.messageId('newDepositAddress'), { logger, engine, relayer }, { CommitBalanceResponse }).register()
+      commitBalance: new GrpcUnaryMethod(commitBalance, this.messageId('commitBalance'), { logger, engine, relayer }, { EmptyResponse }).register()
     }
   }
 
