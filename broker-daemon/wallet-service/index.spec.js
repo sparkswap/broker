@@ -23,7 +23,7 @@ describe('WalletService', () => {
     loadProtoStub = sinon.stub().returns({
       WalletService: { service: sinon.stub() },
       NewDepositAddressResponse: responseStub,
-      GetBalanceResponse: responseStub,
+      GetBalancesResponse: responseStub,
       google: {
         protobuf: {
           Empty: responseStub
@@ -43,7 +43,7 @@ describe('WalletService', () => {
     WalletService.__set__('loadProto', loadProtoStub)
     WalletService.__set__('GrpcUnaryMethod', unaryMethodStub)
     WalletService.__set__('newDepositAddress', newDepositAddress)
-    WalletService.__set__('getBalance', balanceSpy)
+    WalletService.__set__('getBalances', balanceSpy)
     WalletService.__set__('commitBalance', commitBalanceSpy)
 
     wallet = new WalletService(protoPath, { logger, engine, relayer })
@@ -69,14 +69,14 @@ describe('WalletService', () => {
       )
     })
 
-    it('creates a unary method for getBalance', () => {
-      const expectedMessageId = '[WalletService:getBalance]'
+    it('creates a unary method for getBalances', () => {
+      const expectedMessageId = '[WalletService:getBalances]'
 
       expect(unaryMethodStub).to.have.been.calledWith(
         balanceSpy,
         expectedMessageId,
         { logger, engine },
-        { GetBalanceResponse: responseStub }
+        { GetBalancesResponse: responseStub }
       )
     })
 

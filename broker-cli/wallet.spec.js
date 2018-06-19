@@ -58,7 +58,7 @@ describe('cli wallet', () => {
 
       walletBalanceStub = sinon.stub()
       daemonStub = sinon.stub()
-      daemonStub.prototype.walletService = { getBalance: walletBalanceStub }
+      daemonStub.prototype.walletService = { getBalances: walletBalanceStub }
 
       program.__set__('BrokerDaemonClient', daemonStub)
 
@@ -90,7 +90,10 @@ describe('cli wallet', () => {
       args = { symbol }
       rpcAddress = 'test:1337'
       balance = 10000
-      walletBalanceStub = sinon.stub().returns({ balance })
+      walletBalanceStub = sinon.stub().returns({
+        totalBalance: balance,
+        totalUncommittedBalance: balance
+      })
       commitBalanceStub = sinon.stub()
       askQuestionStub = sinon.stub().returns('Y')
       opts = { rpcAddress }
@@ -98,13 +101,13 @@ describe('cli wallet', () => {
 
       daemonStub = sinon.stub()
       daemonStub.prototype.walletService = {
-        getBalance: walletBalanceStub,
+        getBalances: walletBalanceStub,
         commitBalance: commitBalanceStub
       }
 
       program.__set__('BrokerDaemonClient', daemonStub)
       program.__set__('askQuestion', askQuestionStub)
-      program.__set__('DEFAULT_NETWORK', symbol)
+      program.__set__('DEFAULT_CURRENCY_SYMBOL', symbol)
     })
 
     beforeEach(async () => {

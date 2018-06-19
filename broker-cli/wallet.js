@@ -52,9 +52,20 @@ async function balance (args, opts, logger) {
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { balance } = await client.walletService.getBalance({})
+    const {
+      totalBalance,
+      totalUncommittedBalance,
+      totalCommittedBalance,
+      committedBalances = []
+    } = await client.walletService.getBalances({})
 
-    logger.info(`Total Balance: ${balance}`)
+    logger.info(`Total Balance (${DEFAULT_CURRENCY_SYMBOL}): ${totalBalance}`)
+    logger.info(`Total Uncommitted Balance (${DEFAULT_CURRENCY_SYMBOL}): ${totalUncommittedBalance}`)
+    logger.info(`Total Committed Balance (${DEFAULT_CURRENCY_SYMBOL}: ${totalCommittedBalance}`)
+
+    committedBalances.forEach(({ symbol, value }) => {
+      logger.info(`${symbol} Balance: ${value}`)
+    })
   } catch (e) {
     logger.error(e)
   }
@@ -103,23 +114,29 @@ async function commitBalance (args, opts, logger) {
   const { rpcAddress = null } = opts
 
   if (DEFAULT_CURRENCY_SYMBOL !== symbol) {
-    return logger.info(`Unable to commit balance for ${symbol}. Please switch the daemon to ${symbol} in package.json.`)
+    return logger.info('Please switch the daemon to another supported currency.')
   }
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { balance } = await client.walletService.getBalance({})
+
+    const {
+      totalBalance,
+      totalUncommittedBalance
+    } = await client.walletService.getBalances({})
 
     if (parseInt(balance) === 0) {
       return logger.info('Your current balance is 0, please add funds to your daemon (or check the status of your daemon)')
     }
 
-    const maxSupportedBalance = Math.min(parseInt(balance), ENUMS.MAX_CHANNEL_BALANCE)
+    // TODO: BIG this var instead of using `parseInt`
+    const maxSupportedBalance = Math.min(parseInt(totalUncommittedBalance), ENUMS.MAX_CHANNEL_BALANCE)
 
     logger.info(`For your knowledge, the Maximum supported balance at this time is: ${ENUMS.MAX_CHANNEL_BALANCE}`)
-    logger.info(`Your current wallet balance is: ${balance}`)
+    logger.info(`Your current wallet balance is: ${totalBalance}`)
+    logger.info(`Your current uncommitted wallet balance is: ${totalUncommittedBalance}`)
 
-    const answer = await askQuestion(`Are you OK committing ${maxSupportedBalance} in ${symbol}? (Y/N)`)
+    const answer = await askQuestion(`Are you OK committing ${maxSupportedBalance} of your uncommitted balance in ${symbol}? (Y/N)`)
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
