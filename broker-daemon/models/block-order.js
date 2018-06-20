@@ -46,7 +46,7 @@ class BlockOrder {
 
     this.amount = Big(amount)
 
-    if (this.baseAmount !== this.amount.times(this.baseCurrencyConfig.multipleOfSmallestUnit).toString()) {
+    if (this.baseAmount !== this.amount.times(this.baseCurrencyConfig.quantumsPerCommon).toString()) {
       throw new Error(`Amount is too precise for ${this.baseSymbol}`)
     }
 
@@ -103,7 +103,7 @@ class BlockOrder {
    * @return {String} String representation of the amount of currency to be transacted in base currency's smallest unit
    */
   get baseAmount () {
-    return this.amount.times(this.baseCurrencyConfig.multipleOfSmallestUnit).round(0).toString()
+    return this.amount.times(this.baseCurrencyConfig.quantumsPerCommon).round(0).toString()
   }
 
   /**
@@ -117,7 +117,7 @@ class BlockOrder {
     }
 
     const counterCommonAmount = this.amount.times(this.price)
-    return counterCommonAmount.times(this.counterCurrencyConfig.multipleOfSmallestUnit).round(0).toString()
+    return counterCommonAmount.times(this.counterCurrencyConfig.quantumsPerCommon).round(0).toString()
   }
 
   /**
@@ -179,8 +179,8 @@ class BlockOrder {
    * @return {Object} Object to be serialized into a GRPC message
    */
   serialize () {
-    const baseAmountFactor = this.baseCurrencyConfig.multipleOfSmallestUnit
-    const counterAmountFactor = this.counterCurrencyConfig.multipleOfSmallestUnit
+    const baseAmountFactor = this.baseCurrencyConfig.quantumsPerCommon
+    const counterAmountFactor = this.counterCurrencyConfig.quantumsPerCommon
 
     const openOrders = this.openOrders.map(({ order, state }) => {
       const baseCommonAmount = Big(order.baseAmount).div(baseAmountFactor)

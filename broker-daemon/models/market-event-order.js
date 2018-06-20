@@ -53,8 +53,8 @@ class MarketEventOrder {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
     const counterCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === this.counterSymbol)
 
-    const baseCommonAmount = Big(this.baseAmount).div(baseCurrencyConfig.multipleOfSmallestUnit)
-    const counterCommonAmount = Big(this.counterAmount).div(counterCurrencyConfig.multipleOfSmallestUnit)
+    const baseCommonAmount = Big(this.baseAmount).div(baseCurrencyConfig.quantumsPerCommon)
+    const counterCommonAmount = Big(this.counterAmount).div(counterCurrencyConfig.quantumsPerCommon)
 
     return counterCommonAmount.div(baseCommonAmount).toFixed(16)
   }
@@ -66,7 +66,7 @@ class MarketEventOrder {
   get amount () {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
 
-    return Big(this.baseAmount).div(baseCurrencyConfig.multipleOfSmallestUnit).toFixed(16)
+    return Big(this.baseAmount).div(baseCurrencyConfig.quantumsPerCommon).toFixed(16)
   }
 
   /**

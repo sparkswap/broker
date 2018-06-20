@@ -26,11 +26,11 @@ describe('createBlockOrder', () => {
       currencies: [
         {
           symbol: 'BTC',
-          multipleOfSmallestUnit: '100000000'
+          quantumsPerCommon: '100000000'
         },
         {
           symbol: 'XYZ',
-          multipleOfSmallestUnit: '10000'
+          quantumsPerCommon: '10000'
         }
       ]
     }
