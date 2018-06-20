@@ -127,7 +127,7 @@ async function orderbook (args, opts, logger) {
       }
 
       sortedAsks = Array.from(asks.values()).sort(function (a, b) { return (Big(a.price).cmp(b.price)) })
-      sortedBids = Array.from(bids.values()).sort(function (a, b) { return (Big(a.price).cmp(b.price)) })
+      sortedBids = Array.from(bids.values()).sort(function (a, b) { return (Big(b.price).cmp(a.price)) })
       console.clear()
       createUI(market, sortedAsks, sortedBids)
     })

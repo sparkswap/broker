@@ -5,7 +5,6 @@ const {
   expect,
   delay
 } = require('test/test-helper')
-const { Big } = require('./utils')
 
 const programPath = path.resolve('broker-cli', 'orderbook')
 const program = rewire(programPath)
@@ -93,43 +92,42 @@ describe('orderbook', () => {
   })
 
   it('adds a bid to the UI', async () => {
-    const addEvent = { type: 'ADD', marketEvent: { orderId: 'orderId', counterAmount: '1000', baseAmount: '10', side: 'BID' } }
+    const addEvent = { type: 'ADD', marketEvent: { orderId: 'orderId', price: '100.0000000000000000', amount: '0.0000000100000000', side: 'BID' } }
     stream.on.withArgs('data').callsArgWithAsync(1, addEvent)
     orderbook(args, opts, logger)
 
     await delay(10)
 
     expect(createUIStub).to.have.been.calledTwice()
-    expect(createUIStub).to.have.been.calledWith(market, [], [{ depth: Big(10), price: Big(100) }])
+    expect(createUIStub).to.have.been.calledWith(market, [], [{ amount: '0.0000000100000000', price: '100.0000000000000000' }])
   })
 
   it('adds a bid with a large counter amount', async () => {
-    const addEvent = { type: 'ADD', marketEvent: { orderId: 'orderId', counterAmount: '922337203685477580733', baseAmount: '10', side: 'BID' } }
-    const expectedValue = Big(addEvent.marketEvent.counterAmount).div(Big(addEvent.marketEvent.baseAmount))
+    const addEvent = { type: 'ADD', marketEvent: { orderId: 'orderId', price: '1000000.0000000000000000', amount: '0.0000000100000000', side: 'BID' } }
     stream.on.withArgs('data').callsArgWithAsync(1, addEvent)
     orderbook(args, opts, logger)
 
     await delay(10)
 
-    expect(createUIStub).to.have.been.calledWith(market, [], [{ depth: Big(10), price: expectedValue }])
+    expect(createUIStub).to.have.been.calledWith(market, [], [{ price: '1000000.0000000000000000', amount: '0.0000000100000000' }])
   })
 
   it('adds an ask to the UI', async () => {
-    const addEvent = { type: 'ADD', marketEvent: { orderId: 'orderId', counterAmount: '1000', baseAmount: '10', side: 'ASK' } }
+    const addEvent = { type: 'ADD', marketEvent: { orderId: 'orderId', price: '100.0000000000000000', amount: '0.0000000100000000', side: 'ASK' } }
     stream.on.withArgs('data').callsArgWithAsync(1, addEvent)
     orderbook(args, opts, logger)
 
     await delay(10)
 
     expect(createUIStub).to.have.been.calledTwice()
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: Big(10), price: Big(100) }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ price: '100.0000000000000000', amount: '0.0000000100000000' }], [])
   })
 
   it('sorts bids and asks by price', async () => {
-    const firstAsk = { type: 'ADD', marketEvent: { orderId: 'orderId', counterAmount: '10000', baseAmount: '10', side: 'ASK' } }
-    const secondAsk = { type: 'ADD', marketEvent: { orderId: 'orderId2', counterAmount: '1000', baseAmount: '10', side: 'ASK' } }
-    const firstBid = { type: 'ADD', marketEvent: { orderId: 'orderId3', counterAmount: '1000', baseAmount: '10', side: 'BID' } }
-    const secondBid = { type: 'ADD', marketEvent: { orderId: 'orderId4', counterAmount: '10000', baseAmount: '10', side: 'BID' } }
+    const firstAsk = { type: 'ADD', marketEvent: { orderId: 'orderId', price: '1000.0000000000000000', amount: '0.0000000100000000', side: 'ASK' } }
+    const secondAsk = { type: 'ADD', marketEvent: { orderId: 'orderId2', price: '100.0000000000000000', amount: '0.0000000100000000', side: 'ASK' } }
+    const firstBid = { type: 'ADD', marketEvent: { orderId: 'orderId3', price: '1000.0000000000000000', amount: '0.0000000100000000', side: 'BID' } }
+    const secondBid = { type: 'ADD', marketEvent: { orderId: 'orderId4', price: '100.0000000000000000', amount: '0.0000000100000000', side: 'BID' } }
 
     stream.on.withArgs('data').callsFake(async (evt, fn) => {
       await delay(10)
@@ -148,17 +146,17 @@ describe('orderbook', () => {
 
     expect(createUIStub).to.have.been.calledWith(
       market, [
-        { depth: Big(10), price: Big(100) },
-        { depth: Big(10), price: Big(1000) }
+        { price: '100.0000000000000000', amount: '0.0000000100000000' },
+        { price: '1000.0000000000000000', amount: '0.0000000100000000' }
       ], [
-        { depth: Big(10), price: Big(1000) },
-        { depth: Big(10), price: Big(100) }
+        { price: '1000.0000000000000000', amount: '0.0000000100000000' },
+        { price: '100.0000000000000000', amount: '0.0000000100000000' }
       ])
   })
 
   it('deletes bids or asks on delete events coming from the broker daemon', async () => {
-    const firstAsk = { type: 'ADD', marketEvent: { orderId: 'orderId', counterAmount: '1000', baseAmount: '10', side: 'ASK' } }
-    const secondAsk = { type: 'ADD', marketEvent: { orderId: 'orderId2', counterAmount: '10000', baseAmount: '10', side: 'ASK' } }
+    const firstAsk = { type: 'ADD', marketEvent: { orderId: 'orderId', price: '100.0000000000000000', amount: '0.0000000100000000', side: 'ASK' } }
+    const secondAsk = { type: 'ADD', marketEvent: { orderId: 'orderId2', price: '1000.0000000000000000', amount: '0.0000000100000000', side: 'ASK' } }
     const deleteFirstAsk = { type: 'DELETE', marketEvent: { orderId: 'orderId' } }
 
     stream.on.withArgs('data').callsFake(async (evt, fn) => {
@@ -175,9 +173,9 @@ describe('orderbook', () => {
     await delay(100)
 
     expect(createUIStub).to.have.been.calledWith(market, [], [])
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: Big(10), price: Big(100) }], [])
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: Big(10), price: Big(100) }, { depth: Big(10), price: Big(1000) }], [])
-    expect(createUIStub).to.have.been.calledWith(market, [{ depth: Big(10), price: Big(1000) }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ price: '100.0000000000000000', amount: '0.0000000100000000' }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ price: '100.0000000000000000', amount: '0.0000000100000000' }, { price: '1000.0000000000000000', amount: '0.0000000100000000' }], [])
+    expect(createUIStub).to.have.been.calledWith(market, [{ price: '1000.0000000000000000', amount: '0.0000000100000000' }], [])
   })
 
   it('sets a resize event handler that results in recreating the UI', async () => {
