@@ -20,6 +20,7 @@ const EVENT_TYPES = Object.freeze({
  */
 function createUI (market, asks, bids) {
   console.clear()
+  const baseCurrencySymbol = market.split('/')[0].toUpperCase()
   const { mainTableWidth, innerTableWidth } = calculateTableWidths(size.get().width)
   const table = new Table({
     head: ['ASKS', 'BIDS'],
@@ -30,7 +31,7 @@ function createUI (market, asks, bids) {
   // The extensive options are required because the default for cli-table is to have
   // borders between every row and column.
   const innerTableOptions = {
-    head: ['Price', `Depth (${market.split('/')[0].toUpperCase()})`],
+    head: ['Price', `Depth (${baseCurrencySymbol})`],
     style: { head: ['gray'] },
     colWidths: [innerTableWidth, innerTableWidth],
     chars: {
