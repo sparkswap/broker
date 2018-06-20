@@ -130,14 +130,6 @@ class BlockOrder {
   }
 
   /**
-   * Ratio of the smallest units of the counter currency as compared to the base currency
-   * @return {String} Decimal of the ratio expressed as a string with 16 decimal places
-   */
-  get quantumRatio () {
-    return Big(this.counterCurrencyConfig.multipleOfSmallestUnit).div(this.baseCurrencyConfig.multipleOfSmallestUnit).toFixed(16)
-  }
-
-  /**
    * get key for storage in leveldb
    * @return {String} Block order id
    */
@@ -239,13 +231,13 @@ class BlockOrder {
       blockOrderId: this.id,
       market: this.marketName,
       side: this.side,
-      amount: this.amount.toString(),
+      amount: this.amount.toFixed(16),
       timeInForce: this.timeInForce,
       status: this.status
     }
 
     if (this.price) {
-      serialized.limitPrice = this.price.toString()
+      serialized.limitPrice = this.price.toFixed(16)
     } else {
       serialized.isMarketOrder = true
     }

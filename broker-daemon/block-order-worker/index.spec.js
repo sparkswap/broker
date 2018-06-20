@@ -620,6 +620,7 @@ describe('BlockOrderWorker', () => {
         side: 'BID',
         inverseSide: 'ASK',
         amount: Big('100'),
+        baseAmount: '100.000000000000',
         price: Big('1000'),
         timeInForce: 'GTC'
       }
