@@ -10,7 +10,6 @@ message WatchMarketResponse {
   MarketEvent market_event = 1;
 
   enum EventType {
-
       ADD = 1;
       DELETE = 2;
   }

@@ -2,7 +2,7 @@ const { GrpcUnaryMethod } = require('grpc-methods')
 const { loadProto } = require('../utils')
 
 const newDepositAddress = require('./new-deposit-address')
-const getBalance = require('./get-balance')
+const getBalances = require('./get-balances')
 const commitBalance = require('./commit-balance')
 
 /**
@@ -28,14 +28,18 @@ class WalletService {
 
     const {
       NewDepositAddressResponse,
-      GetBalanceResponse,
-      CommitBalanceResponse
+      GetBalancesResponse,
+      google: {
+        protobuf: {
+          Empty: EmptyResponse
+        }
+      }
     } = this.proto
 
     this.implementation = {
       newDepositAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engine }, { NewDepositAddressResponse }).register(),
-      getBalance: new GrpcUnaryMethod(getBalance, this.messageId('getBalance'), { logger, engine }, { GetBalanceResponse }).register(),
-      commitBalance: new GrpcUnaryMethod(commitBalance, this.messageId('newDepositAddress'), { logger, engine, relayer }, { CommitBalanceResponse }).register()
+      getBalances: new GrpcUnaryMethod(getBalances, this.messageId('getBalances'), { logger, engine }, { GetBalancesResponse }).register(),
+      commitBalance: new GrpcUnaryMethod(commitBalance, this.messageId('commitBalance'), { logger, engine, relayer }, { EmptyResponse }).register()
     }
   }
 

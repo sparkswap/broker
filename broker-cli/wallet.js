@@ -5,6 +5,9 @@
 
 const BrokerDaemonClient = require('./broker-daemon-client')
 const { ENUMS, validations, askQuestion } = require('./utils')
+const {
+  config: { default_currency_symbol: DEFAULT_CURRENCY_SYMBOL }
+} = require('../package.json')
 
 /**
  * @constant
@@ -49,9 +52,20 @@ async function balance (args, opts, logger) {
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { balance } = await client.walletService.getBalance({})
+    const {
+      totalBalance,
+      totalUncommittedBalance,
+      totalCommittedBalance,
+      committedBalances = []
+    } = await client.walletService.getBalances({})
 
-    logger.info(`Total Balance: ${balance}`)
+    logger.info(`Total Balance (${DEFAULT_CURRENCY_SYMBOL}): ${totalBalance}`)
+    logger.info(`Total Uncommitted Balance (${DEFAULT_CURRENCY_SYMBOL}): ${totalUncommittedBalance}`)
+    logger.info(`Total Committed Balance (${DEFAULT_CURRENCY_SYMBOL}: ${totalCommittedBalance}`)
+
+    committedBalances.forEach(({ symbol, value }) => {
+      logger.info(`${symbol} Balance: ${value}`)
+    })
   } catch (e) {
     logger.error(e)
   }
@@ -99,26 +113,36 @@ async function commitBalance (args, opts, logger) {
   const { symbol } = args
   const { rpcAddress = null } = opts
 
+  if (DEFAULT_CURRENCY_SYMBOL !== symbol) {
+    return logger.info('Please switch the daemon to another supported currency.')
+  }
+
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { balance } = await client.walletService.getBalance({})
 
-    if (parseInt(balance) === 0) {
-      return logger.info('Your current balance is 0, please add funds to your daemon (or check the status of your daemon)')
+    const {
+      totalBalance,
+      totalUncommittedBalance
+    } = await client.walletService.getBalances({})
+
+    if (parseInt(totalUncommittedBalance) === 0) {
+      return logger.info('Your current uncommitted balance is 0, please add funds to your daemon')
     }
 
-    const maxSupportedBalance = Math.min(parseInt(balance), ENUMS.MAX_CHANNEL_BALANCE)
+    // TODO: BIG this var instead of using `parseInt`
+    const maxSupportedBalance = Math.min(parseInt(totalUncommittedBalance), ENUMS.MAX_CHANNEL_BALANCE)
 
     logger.info(`For your knowledge, the Maximum supported balance at this time is: ${ENUMS.MAX_CHANNEL_BALANCE}`)
-    logger.info(`Your current wallet balance is: ${balance}`)
+    logger.info(`Your current wallet balance is: ${totalBalance}`)
+    logger.info(`Your current uncommitted wallet balance is: ${totalUncommittedBalance}`)
 
-    const answer = await askQuestion(`Are you OK committing ${maxSupportedBalance} in ${symbol}? (Y/N)`)
+    const answer = await askQuestion(`Are you OK committing ${maxSupportedBalance} of your uncommitted balance in ${symbol}? (Y/N)`)
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    const res = await client.walletService.commitBalance({ balance: maxSupportedBalance, symbol })
+    await client.walletService.commitBalance({ balance: maxSupportedBalance, symbol })
 
-    logger.info('Successfully added broker daemon to the kinesis exchange!', res)
+    logger.info('Successfully added broker daemon to the kinesis exchange!')
   } catch (e) {
     logger.error(e)
   }
@@ -142,7 +166,7 @@ module.exports = (program) => {
         case SUPPORTED_COMMANDS.COMMIT_BALANCE:
           const [symbol] = subArguments
 
-          if (!SUPPORTED_SYMBOLS.includes(symbol)) {
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
             throw new Error(`Provided symbol is not a valid currency for the exchange: ${symbol}`)
           }
 

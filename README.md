@@ -11,11 +11,14 @@ This repo contains source for the following products:
 
 ### Before you begin
 
-You will need to have nvm (and our current node version) installed on your machine.
+1. Install nvm - `brew install nvm` or your favorite package manager
+2. Install the current LTS node and npm version - `nvm install --lts --latest-npm`
+3. Install [docker](https://docs.docker.com/install/)
+4. Set up a local [Relayer](https://github.com/kinesis-exchange/relayer)
 
 It is also recommended that you install a [Standard](https://standardjs.com/) plugin for your editor. We currently follow StandardJS formatting.
 
-Additonally, you must have ssh/private access to the lnd-engine repo: `kinesis-exchange/lnd-engine`.
+Additonally, you must have ssh/private access to the lnd-engine repo: https://github.com/kinesis-exchange/lnd-engine.
 
 ### Getting Started
 

@@ -1,11 +1,12 @@
 {
   "name": "broker",
-  "version": "0.1.0",
+  "version": "0.1.0-alpha-preview",
   "description": "",
   "main": "index.js",
   "config": {
     "project_name": "broker",
-    "daemon": "kbd"
+    "daemon": "kbd",
+    "default_currency_symbol": "BTC"
   },
   "scripts": {
     "prebuild": "bash ./scripts/prebuild.sh",

@@ -8,12 +8,14 @@ describe('WalletService', () => {
   let loadProtoStub
   let logger
   let engine
+  let relayer
   let unaryMethodStub
   let responseStub
   let wallet
   let registerSpy
   let newDepositAddress
   let balanceSpy
+  let commitBalanceSpy
 
   before(() => {
     responseStub = sinon.stub()
@@ -21,12 +23,19 @@ describe('WalletService', () => {
     loadProtoStub = sinon.stub().returns({
       WalletService: { service: sinon.stub() },
       NewDepositAddressResponse: responseStub,
-      GetBalanceResponse: responseStub
+      GetBalancesResponse: responseStub,
+      google: {
+        protobuf: {
+          Empty: responseStub
+        }
+      }
     })
     logger = sinon.stub()
     engine = sinon.stub()
+    relayer = sinon.stub()
     newDepositAddress = sinon.spy()
     balanceSpy = sinon.spy()
+    commitBalanceSpy = sinon.spy()
     unaryMethodStub = sinon.stub()
     registerSpy = sinon.spy()
     unaryMethodStub.prototype.register = registerSpy
@@ -34,9 +43,10 @@ describe('WalletService', () => {
     WalletService.__set__('loadProto', loadProtoStub)
     WalletService.__set__('GrpcUnaryMethod', unaryMethodStub)
     WalletService.__set__('newDepositAddress', newDepositAddress)
-    WalletService.__set__('getBalance', balanceSpy)
+    WalletService.__set__('getBalances', balanceSpy)
+    WalletService.__set__('commitBalance', commitBalanceSpy)
 
-    wallet = new WalletService(protoPath, { logger, engine })
+    wallet = new WalletService(protoPath, { logger, engine, relayer })
   })
 
   it('sets a protoPath', () => expect(wallet.protoPath).to.eql(protoPath))
@@ -59,14 +69,25 @@ describe('WalletService', () => {
       )
     })
 
-    it('creates a unary method for getBalance', () => {
-      const expectedMessageId = '[WalletService:getBalance]'
+    it('creates a unary method for getBalances', () => {
+      const expectedMessageId = '[WalletService:getBalances]'
 
       expect(unaryMethodStub).to.have.been.calledWith(
         balanceSpy,
         expectedMessageId,
         { logger, engine },
-        { GetBalanceResponse: responseStub }
+        { GetBalancesResponse: responseStub }
+      )
+    })
+
+    it('creates a unary method for commitBalance', () => {
+      const expectedMessageId = '[WalletService:commitBalance]'
+
+      expect(unaryMethodStub).to.have.been.calledWith(
+        commitBalanceSpy,
+        expectedMessageId,
+        { logger, engine, relayer },
+        { EmptyResponse: responseStub }
       )
     })
   })
