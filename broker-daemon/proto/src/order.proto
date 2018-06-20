@@ -16,9 +16,16 @@ enum TimeInForce {
 message CreateBlockOrderRequest {
   string market = 0;
   Side side = 1;
+  /**
+   * Amounts are expressed in common units for a currency (e.g. BTC) and therefore support decimals
+   * Protobuf does not support a decimal type, so we represent it as a string
+   */
   string amount = 2;
   oneof price_restriction {
     bool is_market_order = 3;
+    /**
+     * Prices are decimals but are represented as strings since Protobuf does not support a decimal type
+     */
     string limit_price = 4;
   }
 
@@ -48,7 +55,14 @@ enum OrderStatus {
 message Order {
   string order_id = 0;
   OrderStatus order_status = 1;
+  /**
+   * Amounts are expressed in common units for a currency (e.g. BTC) and therefore support decimals
+   * Protobuf does not support a decimal type, so we represent it as a string
+   */
   string amount = 2;
+  /**
+   * Prices are decimals but are represented as strings since Protobuf does not support a decimal type
+   */
   string price = 3;
 }
 
@@ -64,6 +78,10 @@ message Fill {
   string order_id = 0;
   string fill_id = 1;
   FillStatus fill_status = 2;
+  /**
+   * Amounts are expressed in common units for a currency (e.g. BTC) and therefore support decimals
+   * Protobuf does not support a decimal type, so we represent it as a string
+   */
   string amount = 3;
   string price = 4;
 }
@@ -72,10 +90,17 @@ message BlockOrder {
   string block_order_id = 0;
   string market = 1;
   Side side = 2;
-  int64 amount = 3;
+  /**
+   * Amounts are expressed in common units for a currency (e.g. BTC) and therefore support decimals
+   * Protobuf does not support a decimal type, so we represent it as a string
+   */
+  string amount = 3;
   oneof price_restriction {
     bool is_market_order = 13;
-    int64 limit_price = 14;
+    /**
+     * Prices are decimals but are represented as strings since Protobuf does not support a decimal type
+     */
+    string limit_price = 14;
   }
   TimeInForce time_in_force = 5;
   BlockOrderStatus status = 6;
@@ -90,9 +115,16 @@ message GetBlockOrderResponse {
 
   string market = 10;
   Side side = 11;
+  /**
+   * Amounts are expressed in common units for a currency (e.g. BTC) and therefore support decimals
+   * Protobuf does not support a decimal type, so we represent it as a string
+   */
   string amount = 12;
   oneof price_restriction {
     bool is_market_order = 13;
+    /**
+     * Prices are decimals but are represented as strings since Protobuf does not support a decimal type
+     */
     string limit_price = 14;
   }
   TimeInForce time_in_force = 15;
