@@ -7,7 +7,7 @@ describe('PriceIndex', () => {
   let store
   let MarketEventOrderFromStorage
   let side
-  let price
+  let quantumPrice
 
   beforeEach(() => {
     store = {
@@ -18,7 +18,7 @@ describe('PriceIndex', () => {
     MarketEventOrderFromStorage = sinon.stub().returns({
       orderId: 'abc',
       side,
-      price
+      quantumPrice
     })
 
     PriceIndex.__set__('MarketEventOrder', {
@@ -26,7 +26,7 @@ describe('PriceIndex', () => {
     })
 
     side = 'ASK'
-    price = '100'
+    quantumPrice = '100'
   })
 
   describe('constructor', () => {
@@ -115,12 +115,12 @@ describe('PriceIndex', () => {
         expect(MarketEventOrderFromStorage).to.have.been.calledWith(fakeKey, fakeValue)
       })
 
-      it('retrieves the index value for the order price', () => {
+      it('retrieves the index value for the order quantumPrice', () => {
         const fakeIndex = '029348023984'
         keyForPriceStub.returns(fakeIndex)
 
         expect(index._getValue(fakeKey, fakeValue)).to.be.equal(fakeIndex)
-        expect(keyForPriceStub).to.have.been.calledWith(price)
+        expect(keyForPriceStub).to.have.been.calledWith(quantumPrice)
       })
     })
 

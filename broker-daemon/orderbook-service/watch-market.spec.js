@@ -21,7 +21,6 @@ describe('watchMarket', () => {
   let WatchMarketResponse
   let createLiveStream
   let liveStream
-  let revertFunction
   let MarketEventOrder
 
   beforeEach(() => {
