@@ -1,5 +1,5 @@
 const {
-  version: BROKER_VERSION,
+  version: BROKER_VERSION
 } = require('../package.json')
 const BrokerDaemonClient = require('./broker-daemon-client')
 const { validations, Big } = require('./utils')
@@ -60,14 +60,15 @@ function createUI (market, asks, bids) {
 
   const ui = []
 
-
   let leftHeader = `Market: ${market.toUpperCase()}`
   let rightHeader = '☍ Kinesis Broker'
-  let rightSubHeader = 'http://kinesis.network'
+  let rightSubHeader = `v${BROKER_VERSION}`
+  let rightSubSubHeader = 'http://kinesis.network'
 
   ui.push('')
   ui.push(' ' + leftHeader.bold.white + Array(windowWidth - 1 - leftHeader.length - rightHeader.length).join(' ') + rightHeader.bold.cyan)
-  ui.push(' ' + Array(windowWidth - 1 - rightSubHeader.length).join(' ') + rightSubHeader.underline.gray)
+  ui.push(' ' + Array(windowWidth - 1 - rightSubHeader.length).join(' ') + rightSubHeader.gray)
+  ui.push(' ' + Array(windowWidth - 1 - rightSubSubHeader.length).join(' ') + rightSubSubHeader.underline.gray)
   ui.push('')
 
   table.push([askTable, bidTable])
