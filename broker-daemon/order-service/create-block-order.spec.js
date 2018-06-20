@@ -75,7 +75,7 @@ describe('createBlockOrder', () => {
     await createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })
 
     expect(blockOrderWorker.createBlockOrder).to.have.been.calledOnce()
-    expect(blockOrderWorker.createBlockOrder).to.have.been.calledWith({ marketName: 'XYZ/ABC', price: null, side: 'BID', amount: '1000000', timeInForce: 'GTC' })
+    expect(blockOrderWorker.createBlockOrder).to.have.been.calledWith({ marketName: 'XYZ/ABC', price: null, side: 'BID', amount: '100', timeInForce: 'GTC' })
   })
 
   it('returns a block order response', async () => {
