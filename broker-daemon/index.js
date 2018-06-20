@@ -67,6 +67,7 @@ class BrokerDaemon {
       logger.info(`gRPC server started: Server listening on ${this.rpcAddress}`)
     } catch (e) {
       logger.error('BrokerDaemon failed to initialize', { error: e.toString() })
+      logger.error(e)
     }
   }
 }
