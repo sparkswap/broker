@@ -270,9 +270,7 @@ class BlockOrderWorker extends EventEmitter {
    */
   async _placeOrder (blockOrder, baseAmount) {
     // order params
-    const { baseSymbol, counterSymbol, side } = blockOrder
-
-    const counterAmount = Big(baseAmount).times(blockOrder.quantumPrice).round(0).toString()
+    const { baseSymbol, counterSymbol, side, counterAmount } = blockOrder
 
     // state machine params
     const { relayer, engine, logger } = this

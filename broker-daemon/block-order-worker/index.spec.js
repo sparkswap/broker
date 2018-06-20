@@ -566,7 +566,10 @@ describe('BlockOrderWorker', () => {
         counterSymbol: 'LTC',
         side: 'BID',
         amount: Big('100'),
-        price: Big('1000')
+        price: Big('1000'),
+        baseAmount: '0.0000001000000000',
+        counterAmount: '0.0001000000000000',
+        quantumPrice: '1000.00000000000000000'
       }
       order = {
         id: 'anotherId'
@@ -620,9 +623,11 @@ describe('BlockOrderWorker', () => {
         side: 'BID',
         inverseSide: 'ASK',
         amount: Big('100'),
-        baseAmount: '100.000000000000',
+        baseAmount: '100000000000',
         price: Big('1000'),
-        timeInForce: 'GTC'
+        timeInForce: 'GTC',
+        counterAmount: '100000000000000',
+        quantumPrice: '1000.00000000000000000'
       }
       order = {
         id: 'anotherId'
@@ -630,12 +635,12 @@ describe('BlockOrderWorker', () => {
       OrderStateMachine.create.resolves(order)
 
       orders = [
-        { orderId: '1', baseAmount: '90' }
+        { orderId: '1', baseAmount: '90000000000' }
       ]
 
       orderbooks.get('BTC/LTC').getBestOrders.resolves({
         orders,
-        depth: '90'
+        depth: '90000000000'
       })
     })
 
@@ -643,7 +648,7 @@ describe('BlockOrderWorker', () => {
       await worker.workLimitBlockOrder(blockOrder)
 
       expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledOnce()
-      expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledWith(sinon.match({ side: 'ASK', depth: '100', quantumPrice: '1000' }))
+      expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledWith(sinon.match({ side: 'ASK', depth: '100000000000', quantumPrice: '1000.00000000000000000' }))
     })
 
     it('fills as many orders as possible at the given price or better', async () => {
@@ -652,7 +657,7 @@ describe('BlockOrderWorker', () => {
       expect(worker._fillOrders).to.have.been.calledOnce()
       expect(worker._fillOrders.args[0][0]).to.be.eql(blockOrder)
       expect(worker._fillOrders.args[0][1]).to.be.eql(orders)
-      expect(worker._fillOrders.args[0][2]).to.be.eql('100')
+      expect(worker._fillOrders.args[0][2]).to.be.eql('100000000000')
     })
 
     it('places an order for the remaining amount', async () => {
@@ -660,14 +665,14 @@ describe('BlockOrderWorker', () => {
 
       expect(worker._placeOrder).to.have.been.calledOnce()
       expect(worker._placeOrder.args[0][0]).to.be.eql(blockOrder)
-      expect(worker._placeOrder.args[0][1]).to.be.eql('10')
+      expect(worker._placeOrder.args[0][1]).to.be.eql('10000000000')
     })
 
     it('does not place an order if it can be filled with fills only', async () => {
-      orders.push({ orderId: '1', baseAmount: '100' })
+      orders.push({ orderId: '1', baseAmount: '10000000000' })
       orderbooks.get('BTC/LTC').getBestOrders.resolves({
         orders,
-        depth: '190'
+        depth: '190000000000'
       })
 
       await worker.workLimitBlockOrder(blockOrder)
@@ -692,7 +697,8 @@ describe('BlockOrderWorker', () => {
         counterSymbol: 'LTC',
         side: 'BID',
         inverseSide: 'ASK',
-        amount: Big('100'),
+        amount: Big('0.000000100'),
+        baseAmount: '100',
         price: null
       }
 
@@ -751,7 +757,8 @@ describe('BlockOrderWorker', () => {
         counterSymbol: 'LTC',
         side: 'BID',
         inverseSide: 'ASK',
-        amount: Big('100'),
+        amount: Big('0.000000100'),
+        baseAmount: '100',
         price: null
       }
       fill = {
@@ -855,7 +862,9 @@ describe('BlockOrderWorker', () => {
         baseSymbol: 'BTC',
         counterSymbol: 'LTC',
         side: 'BID',
-        amount: Big('100'),
+        amount: Big('0.000000100'),
+        baseAmount: '100',
+        counterAmount: '100000',
         price: Big('1000'),
         timeInForce: 'GTC'
       }
@@ -953,7 +962,8 @@ describe('BlockOrderWorker', () => {
         counterSymbol: 'LTC',
         side: 'BID',
         inverseSide: 'ASK',
-        amount: Big('100'),
+        amount: Big('0.000000100'),
+        baseAmount: '100',
         price: null
       }
       fill = {
