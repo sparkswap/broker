@@ -1,3 +1,6 @@
+const {
+  version: BROKER_VERSION
+} = require('../package.json')
 const BrokerDaemonClient = require('./broker-daemon-client')
 const { validations, Big } = require('./utils')
 const Table = require('cli-table')
@@ -20,7 +23,8 @@ const EVENT_TYPES = Object.freeze({
  */
 function createUI (market, asks, bids) {
   console.clear()
-  const { mainTableWidth, innerTableWidth } = calculateTableWidths(size.get().width)
+  const windowWidth = size.get().width
+  const { mainTableWidth, innerTableWidth } = calculateTableWidths(windowWidth)
   const table = new Table({
     head: ['ASKS', 'BIDS'],
     style: { head: ['gray'] },
@@ -56,8 +60,15 @@ function createUI (market, asks, bids) {
 
   const ui = []
 
+  let leftHeader = `Market: ${market.toUpperCase()}`
+  let rightHeader = '☍ Kinesis Broker'
+  let rightSubHeader = `v${BROKER_VERSION}`
+  let rightSubSubHeader = 'http://kinesis.network'
+
   ui.push('')
-  ui.push(String(`Market: ${market.toUpperCase()}`).bold.white)
+  ui.push(' ' + leftHeader.bold.white + Array(windowWidth - 1 - leftHeader.length - rightHeader.length).join(' ') + rightHeader.bold.cyan)
+  ui.push(' ' + Array(windowWidth - 1 - rightSubHeader.length).join(' ') + rightSubHeader.gray)
+  ui.push(' ' + Array(windowWidth - 1 - rightSubSubHeader.length).join(' ') + rightSubSubHeader.underline.gray)
   ui.push('')
 
   table.push([askTable, bidTable])
