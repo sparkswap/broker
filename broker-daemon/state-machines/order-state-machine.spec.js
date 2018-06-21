@@ -209,8 +209,8 @@ describe('OrderStateMachine', () => {
       Order.prototype.setCreatedParams = setCreatedParams
       createOrderResponse = {
         orderId: 'fakeID',
-        feeRequest: 'lnbcq0w98f0as98df',
-        depositRequest: 'lnbcas09fas09df8'
+        feePaymentRequest: 'lnbcq0w98f0as98df',
+        depositPaymentRequest: 'lnbcas09fas09df8'
       }
       relayer.makerService.createOrder.resolves(createOrderResponse)
       osm = new OrderStateMachine({ store, logger, relayer, engine })
@@ -268,8 +268,8 @@ describe('OrderStateMachine', () => {
       expect(setCreatedParams).to.have.been.calledOnce()
       expect(setCreatedParams).to.have.been.calledWith(sinon.match({
         orderId: createOrderResponse.orderId,
-        feePaymentRequest: createOrderResponse.feeRequest,
-        depositPaymentRequest: createOrderResponse.depositRequest
+        feePaymentRequest: createOrderResponse.feePaymentRequest,
+        depositPaymentRequest: createOrderResponse.depositPaymentRequest
       }))
     })
 
@@ -623,8 +623,8 @@ describe('OrderStateMachine', () => {
       Order.prototype.setCreatedParams = setCreatedParams
       createOrderResponse = {
         orderId: 'fakeID',
-        feeRequest: 'lnbcq0w98f0as98df',
-        depositRequest: 'lnbcas09fas09df8'
+        feePaymentRequest: 'lnbcq0w98f0as98df',
+        depositPaymentRequest: 'lnbcas09fas09df8'
       }
       relayer.makerService.createOrder.resolves(createOrderResponse)
     })
