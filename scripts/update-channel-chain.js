@@ -5,8 +5,8 @@
  */
 
 const chainFees = {
-  BTC: '6667',
-  LTC: '7667'
+  BTC: '6',
+  LTC: '7'
 }
 
 const LndEngine = require('lnd-engine')
