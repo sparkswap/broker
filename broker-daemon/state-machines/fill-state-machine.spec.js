@@ -310,6 +310,7 @@ describe('FillStateMachine', () => {
     let fakeFill
     let fsm
     let payInvoiceStub
+    let createRefundInvoiceStub
     let fillOrderStub
     let subscribeExecuteStub
     let subscribeExecuteStream
@@ -320,7 +321,8 @@ describe('FillStateMachine', () => {
 
     beforeEach(async () => {
       invoice = '1234'
-      payInvoiceStub = sinon.stub().returns(invoice)
+      payInvoiceStub = sinon.stub()
+      createRefundInvoiceStub = sinon.stub().returns(invoice)
       fillOrderStub = sinon.stub()
       subscribeExecuteStream = {
         on: sinon.stub()
@@ -331,7 +333,7 @@ describe('FillStateMachine', () => {
       fillId = '1234'
 
       fakeFill = { feePaymentRequest, depositPaymentRequest, fillId }
-      engine = { payInvoice: payInvoiceStub }
+      engine = { payInvoice: payInvoiceStub, createRefundInvoice: createRefundInvoiceStub }
       relayer = {
         takerService: {
           fillOrder: fillOrderStub,
@@ -353,6 +355,16 @@ describe('FillStateMachine', () => {
     it('pays a deposit invoice', async () => {
       await fsm.fillOrder()
       expect(payInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
+    })
+
+    it('creates a fee refund invoice', async () => {
+      await fsm.fillOrder()
+      expect(createRefundInvoiceStub).to.have.been.calledWith(feePaymentRequest)
+    })
+
+    it('creates a deposit refund invoice', async () => {
+      await fsm.fillOrder()
+      expect(createRefundInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
     })
 
     it('fills an order on the relayer', async () => {
