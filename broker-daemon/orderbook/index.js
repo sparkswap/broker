@@ -55,10 +55,10 @@ class Orderbook {
    * get the best price orders in the orderbook
    * @param  {String} options.side  Side of the orderbook to get the best priced orders for (i.e. `BID` or `ASK`)
    * @param  {String} options.depth int64 String of the amount, in base currency base units to ge the best prices up to
-   * @param  {String} options.price Decimal String of the price that all orders should be better than
+   * @param  {String} options.quantumPrice Decimal String of the price that all orders should be better than
    * @return {Promise<BestOrders>} A promise that resolves MarketEventOrders of the best priced orders
    */
-  getBestOrders ({ side, depth, price }) {
+  getBestOrders ({ side, depth, quantumPrice }) {
     return new Promise((resolve, reject) => {
       this.logger.info(`Retrieving best priced from ${side} up to ${depth}`)
 
@@ -82,7 +82,7 @@ class Orderbook {
       }
 
       const index = side === MarketEventOrder.SIDES.BID ? this.bidIndex : this.askIndex
-      const stream = index.streamOrdersAtPriceOrBetter(price)
+      const stream = index.streamOrdersAtPriceOrBetter(quantumPrice)
 
       stream.on('error', reject)
 

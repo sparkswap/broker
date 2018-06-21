@@ -23,6 +23,7 @@ const EVENT_TYPES = Object.freeze({
  */
 function createUI (market, asks, bids) {
   console.clear()
+  const baseCurrencySymbol = market.split('/')[0].toUpperCase()
   const windowWidth = size.get().width
   const { mainTableWidth, innerTableWidth } = calculateTableWidths(windowWidth)
   const table = new Table({
@@ -34,7 +35,7 @@ function createUI (market, asks, bids) {
   // The extensive options are required because the default for cli-table is to have
   // borders between every row and column.
   const innerTableOptions = {
-    head: ['Price', 'Depth'],
+    head: ['Price', `Depth (${baseCurrencySymbol})`],
     style: { head: ['gray'] },
     colWidths: [innerTableWidth, innerTableWidth],
     chars: {
@@ -77,15 +78,15 @@ function createUI (market, asks, bids) {
 
   asks.forEach((ask) => {
     // TODO: make display of amounts consistent with inputs (buys, prices, etc)
-    let price = String(` ${ask.price.toFixed(16)} `)
-    let depth = String(` ${ask.depth} `)
+    let price = String(` ${ask.price} `)
+    let depth = String(` ${ask.amount} `)
     askTable.push([price.red, depth.white])
   })
 
   bids.forEach((bid) => {
     // TODO: make display of amounts consistent with inputs (buys, prices, etc)
-    let price = String(` ${bid.price.toFixed(16)} `)
-    let depth = String(` ${bid.depth} `)
+    let price = String(` ${bid.price} `)
+    let depth = String(` ${bid.amount} `)
     bidTable.push([price.green, depth.white])
   })
 
@@ -124,23 +125,21 @@ async function orderbook (args, opts, logger) {
     createUI(market, [], [])
 
     call.on('data', (order) => {
-      const { orderId, baseAmount, counterAmount, side } = order.marketEvent
+      const { orderId, side, price, amount } = order.marketEvent
       const { type } = order
       if (type === EVENT_TYPES.DELETE) {
         asks.delete(orderId)
         bids.delete(orderId)
       } else {
         if (side === 'ASK') {
-          asks.set(orderId, { counterAmount: Big(counterAmount), baseAmount: Big(baseAmount) })
+          asks.set(orderId, { price, amount })
         } else {
-          bids.set(orderId, { counterAmount: Big(counterAmount), baseAmount: Big(baseAmount) })
+          bids.set(orderId, { price, amount })
         }
       }
 
-      let transformedAsks = Array.from(asks.values()).map(ask => { return calculatePriceandDepth(ask) })
-      let transformedBids = Array.from(bids.values()).map(bid => { return calculatePriceandDepth(bid) })
-      sortedAsks = transformedAsks.sort(function (a, b) { return (a.price.cmp(b.price)) })
-      sortedBids = transformedBids.sort(function (a, b) { return (b.price.cmp(a.price)) })
+      sortedAsks = Array.from(asks.values()).sort(function (a, b) { return (Big(a.price).cmp(b.price)) })
+      sortedBids = Array.from(bids.values()).sort(function (a, b) { return (Big(b.price).cmp(a.price)) })
       console.clear()
       createUI(market, sortedAsks, sortedBids)
     })
@@ -155,19 +154,6 @@ async function orderbook (args, opts, logger) {
     logger.error(e)
   }
 };
-
-/**
- * Takes in an order object with counterAmount and baseAmount and outputs new object with
- * price and depth
- *
- * @param {Object} order with counter amount and base amount
- * @returns {Object} order with price and depth
- */
-
-function calculatePriceandDepth (order) {
-  let price = (order.counterAmount.div(order.baseAmount))
-  return {price, depth: order.baseAmount}
-}
 
 /**
  * Takes in an window width and returns object with appropriate table widths

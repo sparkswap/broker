@@ -21,7 +21,7 @@ describe('watchMarket', () => {
   let WatchMarketResponse
   let createLiveStream
   let liveStream
-  let revertFunction
+  let MarketEventOrder
 
   beforeEach(() => {
     logger = {
@@ -35,16 +35,16 @@ describe('watchMarket', () => {
       on: sinon.stub(),
       removeListener: sinon.stub()
     }
+    MarketEventOrder = {
+      fromStorage: sinon.stub()
+    }
     store = sinon.stub()
     orderbooks = new Map([['BTC/LTC', { store: store }]])
     WatchMarketResponse = sinon.stub()
     WatchMarketResponse.EventType = { ADD: 'ADD', DELETE: 'DELETE' }
     createLiveStream = sinon.stub().returns(liveStream)
-    revertFunction = watchMarket.__set__('createLiveStream', createLiveStream)
-  })
-
-  afterEach(() => {
-    revertFunction()
+    watchMarket.__set__('createLiveStream', createLiveStream)
+    watchMarket.__set__('MarketEventOrder', MarketEventOrder)
   })
 
   it('throws if there is no orderbook', () => {
@@ -85,21 +85,23 @@ describe('watchMarket', () => {
 
   it('sends add events', async () => {
     const fakeOrder = { key: 'key', value: JSON.stringify({ baseAmount: '100', counterAmount: '1000', side: 'BID' }) }
-    const marketEvent = {
-      orderId: fakeOrder.key,
-      baseAmount: '100',
-      counterAmount: '1000',
-      side: 'BID'
-    }
+    const fakeSerialized = 'blah'
+    const serialize = sinon.stub().returns(fakeSerialized)
 
     liveStream.on.withArgs('data').callsArgWithAsync(1, fakeOrder)
+    MarketEventOrder.fromStorage.returns({
+      serialize
+    })
 
     watchMarket({ params, send: sendStub, onCancel: onCancelStub, onError: onErrorStub, logger, orderbooks }, { WatchMarketResponse })
 
     await delay(10)
+    expect(MarketEventOrder.fromStorage).to.have.been.calledOnce()
+    expect(MarketEventOrder.fromStorage).to.have.been.calledWith(fakeOrder.key, fakeOrder.value)
+    expect(serialize).to.have.been.calledOnce()
     expect(sendStub).to.have.been.calledOnce()
     expect(WatchMarketResponse).to.have.been.calledOnce()
-    expect(WatchMarketResponse).to.have.been.calledWith({type: 'ADD', marketEvent: marketEvent})
+    expect(WatchMarketResponse).to.have.been.calledWith({type: 'ADD', marketEvent: fakeSerialized})
   })
 
   it('sends delete events if type is del', async () => {

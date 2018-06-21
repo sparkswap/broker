@@ -1,4 +1,5 @@
 const { Big } = require('../utils')
+const CONFIG = require('../config')
 
 /**
  * @class Model representing Block Orders
@@ -21,6 +22,14 @@ class BlockOrder {
     this.price = price ? Big(price) : null
     this.status = status
 
+    if (!this.baseCurrencyConfig) {
+      throw new Error(`No currency configuration is available for ${this.baseSymbol}`)
+    }
+
+    if (!this.counterCurrencyConfig) {
+      throw new Error(`No currency configuration is available for ${this.counterSymbol}`)
+    }
+
     if (!BlockOrder.TIME_RESTRICTIONS[timeInForce]) {
       throw new Error(`${timeInForce} is not a supported time restriction`)
     }
@@ -34,7 +43,12 @@ class BlockOrder {
     if (!amount) {
       throw new Error(`A transaction amount is required to create a block order`)
     }
+
     this.amount = Big(amount)
+
+    if (this.baseAmount !== this.amount.times(this.baseCurrencyConfig.quantumsPerCommon).toString()) {
+      throw new Error(`Amount is too precise for ${this.baseSymbol}`)
+    }
 
     this.openOrders = []
     this.fills = []
@@ -69,11 +83,27 @@ class BlockOrder {
   }
 
   /**
+   * Get configuration for the baseSymbol
+   * @return {Object} Currency configuration
+   */
+  get baseCurrencyConfig () {
+    return CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
+  }
+
+  /**
+   * Get configuration for the counterSymbol
+   * @return {Object} Currency configuration
+   */
+  get counterCurrencyConfig () {
+    return CONFIG.currencies.find(({ symbol }) => symbol === this.counterSymbol)
+  }
+
+  /**
    * Convenience getter for baseAmount
    * @return {String} String representation of the amount of currency to be transacted in base currency's smallest unit
    */
   get baseAmount () {
-    return this.amount.toString()
+    return this.amount.times(this.baseCurrencyConfig.quantumsPerCommon).round(0).toString()
   }
 
   /**
@@ -85,7 +115,18 @@ class BlockOrder {
       // if we can't calculate the amount, we treat the property as unset, i.e. undefined
       return
     }
-    return this.amount.times(this.price).round(0).toString()
+
+    const counterCommonAmount = this.amount.times(this.price)
+    return counterCommonAmount.times(this.counterCurrencyConfig.quantumsPerCommon).round(0).toString()
+  }
+
+  /**
+   * Price of an order expressed in terms of the smallest unit of each currency
+   * @return {String} Decimal of the price expressed as a string with 16 decimal places
+   */
+  get quantumPrice () {
+    if (!this.counterAmount) return
+    return Big(this.counterAmount).div(this.baseAmount).toFixed(16)
   }
 
   /**
@@ -138,21 +179,30 @@ class BlockOrder {
    * @return {Object} Object to be serialized into a GRPC message
    */
   serialize () {
+    const baseAmountFactor = this.baseCurrencyConfig.quantumsPerCommon
+    const counterAmountFactor = this.counterCurrencyConfig.quantumsPerCommon
+
     const openOrders = this.openOrders.map(({ order, state }) => {
+      const baseCommonAmount = Big(order.baseAmount).div(baseAmountFactor)
+      const counterCommonAmount = Big(order.counterAmount).div(counterAmountFactor)
+
       return {
         orderId: order.orderId,
-        amount: order.baseAmount,
-        price: order.price,
+        amount: baseCommonAmount.toFixed(16),
+        price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
         orderStatus: state.toUpperCase()
       }
     })
 
     const fills = this.fills.map(({ fill, state }) => {
+      const baseCommonAmount = Big(fill.fillAmount).div(baseAmountFactor)
+      const counterCommonAmount = Big(fill.counterFillAmount).div(counterAmountFactor)
+
       return {
         orderId: fill.order.orderId,
         fillId: fill.fillId,
-        amount: fill.fillAmount,
-        price: fill.price,
+        amount: baseCommonAmount.toFixed(16),
+        price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
         fillStatus: state.toUpperCase()
       }
     })
@@ -160,7 +210,7 @@ class BlockOrder {
     const serialized = {
       market: this.marketName,
       side: this.side,
-      amount: this.amount.toString(),
+      amount: this.amount.toFixed(16),
       timeInForce: this.timeInForce,
       status: this.status,
       openOrders: openOrders,
@@ -168,7 +218,7 @@ class BlockOrder {
     }
 
     if (this.price) {
-      serialized.limitPrice = this.price.toString()
+      serialized.limitPrice = this.price.toFixed(16)
     } else {
       serialized.isMarketOrder = true
     }
@@ -181,13 +231,13 @@ class BlockOrder {
       blockOrderId: this.id,
       market: this.marketName,
       side: this.side,
-      amount: this.amount.toString(),
+      amount: this.amount.toFixed(16),
       timeInForce: this.timeInForce,
       status: this.status
     }
 
     if (this.price) {
-      serialized.limitPrice = this.price.toString()
+      serialized.limitPrice = this.price.toFixed(16)
     } else {
       serialized.isMarketOrder = true
     }

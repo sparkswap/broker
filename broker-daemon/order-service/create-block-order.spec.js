@@ -8,6 +8,8 @@ describe('createBlockOrder', () => {
   let CreateBlockOrderResponse
   let blockOrderWorker
   let TimeInForce
+  let CONFIG
+  let revert
 
   beforeEach(() => {
     PublicError = createBlockOrder.__get__('PublicError')
@@ -19,6 +21,25 @@ describe('createBlockOrder', () => {
     blockOrderWorker = {
       createBlockOrder: sinon.stub().resolves('fakeId')
     }
+
+    CONFIG = {
+      currencies: [
+        {
+          symbol: 'BTC',
+          quantumsPerCommon: '100000000'
+        },
+        {
+          symbol: 'XYZ',
+          quantumsPerCommon: '10000'
+        }
+      ]
+    }
+
+    revert = createBlockOrder.__set__('CONFIG', CONFIG)
+  })
+
+  afterEach(() => {
+    revert()
   })
 
   it('throws if trying to use a time in force other than GTC', () => {

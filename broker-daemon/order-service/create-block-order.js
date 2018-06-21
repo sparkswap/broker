@@ -28,7 +28,7 @@ async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrde
   const blockOrderId = await blockOrderWorker.createBlockOrder({
     marketName: market,
     side: side,
-    amount,
+    amount: amount,
     price: isMarketOrder ? null : limitPrice,
     timeInForce: 'GTC'
   })

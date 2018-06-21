@@ -229,6 +229,36 @@ describe('MarketEventOrder', () => {
     })
   })
 
+  describe('get quantumPrice', () => {
+    it('defines a quantumPrice getter', () => {
+      const orderId = 'myorder'
+      const createdAt = '12234324235'
+      const baseAmount = '123214234'
+      const counterAmount = '123214324'
+      const side = MarketEventOrder.SIDES.BID
+      const baseSymbol = 'BTC'
+      const counterSymbol = 'LTC'
+      const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side, baseSymbol, counterSymbol })
+
+      expect(order).to.have.property('quantumPrice', '1.0000007304350892')
+    })
+  })
+
+  describe('get amount', () => {
+    it('defines an amount getter', () => {
+      const orderId = 'myorder'
+      const createdAt = '12234324235'
+      const baseAmount = '123214234'
+      const counterAmount = '123214324'
+      const side = MarketEventOrder.SIDES.BID
+      const baseSymbol = 'BTC'
+      const counterSymbol = 'LTC'
+      const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side, baseSymbol, counterSymbol })
+
+      expect(order).to.have.property('amount', '1.2321423400000000')
+    })
+  })
+
   describe('get price', () => {
     it('defines a price getter', () => {
       const orderId = 'myorder'
@@ -240,8 +270,29 @@ describe('MarketEventOrder', () => {
       const counterSymbol = 'LTC'
       const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side, baseSymbol, counterSymbol })
 
-      expect(order).to.have.property('price')
-      expect(order.price).to.be.eql('1.0000007304350892')
+      expect(order).to.have.property('price', '1.0000007304350892')
+    })
+  })
+
+  describe('#serialize', () => {
+    it('serializes the order', () => {
+      const orderId = 'myorder'
+      const createdAt = '12234324235'
+      const baseAmount = '123214234'
+      const counterAmount = '123214324'
+      const side = MarketEventOrder.SIDES.BID
+      const baseSymbol = 'BTC'
+      const counterSymbol = 'LTC'
+      const order = new MarketEventOrder({ orderId, createdAt, baseAmount, counterAmount, side, baseSymbol, counterSymbol })
+
+      const serialized = order.serialize()
+
+      expect(serialized).to.be.eql({
+        orderId,
+        side,
+        price: '1.0000007304350892',
+        amount: '1.2321423400000000'
+      })
     })
   })
 })

@@ -227,7 +227,7 @@ class BlockOrderWorker extends EventEmitter {
    */
   async workMarketBlockOrder (blockOrder) {
     const orderbook = this.orderbooks.get(blockOrder.marketName)
-    const targetDepth = Big(blockOrder.amount)
+    const targetDepth = Big(blockOrder.baseAmount)
 
     const { orders, depth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString() })
 
@@ -250,10 +250,10 @@ class BlockOrderWorker extends EventEmitter {
     }
 
     const orderbook = this.orderbooks.get(blockOrder.marketName)
-    const targetDepth = Big(blockOrder.amount)
+    const targetDepth = Big(blockOrder.baseAmount)
 
     // fill as many orders at our price or better
-    const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString(), price: blockOrder.price.toString() })
+    const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString(), quantumPrice: blockOrder.quantumPrice })
     await this._fillOrders(blockOrder, orders, targetDepth.toString())
 
     if (targetDepth.gt(availableDepth)) {
@@ -268,11 +268,9 @@ class BlockOrderWorker extends EventEmitter {
    * @param  {String} amount     Int64 amount, in base currency's base units to place the order for
    * @return {void}
    */
-  async _placeOrder (blockOrder, amount) {
+  async _placeOrder (blockOrder, baseAmount) {
     // order params
-    const { baseSymbol, counterSymbol, side } = blockOrder
-    const baseAmount = amount.toString()
-    const counterAmount = Big(amount).times(blockOrder.price).round(0).toString()
+    const { baseSymbol, counterSymbol, side, counterAmount } = blockOrder
 
     // state machine params
     const { relayer, engine, logger } = this
