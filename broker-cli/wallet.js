@@ -72,7 +72,7 @@ async function balance (args, opts, logger) {
       balancesTable.push([symbol, committedBalance.green, uncommittedBalance])
     })
 
-    logger.info('Balances')
+    logger.info('Wallet Balances'.bold.white)
     logger.info(balancesTable.toString())
   } catch (e) {
     logger.error(e)
