@@ -6,7 +6,8 @@
 const Table = require('cli-table')
 require('colors')
 const BrokerDaemonClient = require('./broker-daemon-client')
-const { ENUMS, validations, askQuestion } = require('./utils')
+const { ENUMS, validations, askQuestion, Big } = require('./utils')
+const { currencies: currencyConfig } = require('./configuration')
 const {
   config: { default_currency_symbol: DEFAULT_CURRENCY_SYMBOL }
 } = require('../package.json')
@@ -66,10 +67,17 @@ async function balance (args, opts, logger) {
     })
 
     committedBalances.forEach(({ symbol, value }) => {
+      const divideBy = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
       const committedBalance = value
       const uncommittedBalance = symbol === DEFAULT_CURRENCY_SYMBOL ? totalBalance - value : 0
 
-      balancesTable.push([symbol, committedBalance.green, uncommittedBalance])
+      balancesTable.push(
+        [
+          symbol,
+          Big(committedBalance).div(divideBy).toFixed(16).green,
+          Big(uncommittedBalance).div(divideBy).toFixed(16)
+        ]
+      )
     })
 
     logger.info('Wallet Balances'.bold.white)
