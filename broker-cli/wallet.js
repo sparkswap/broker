@@ -3,6 +3,8 @@
  * @module broker-cli/wallet
  */
 
+const Table = require('cli-table')
+require('colors')
 const BrokerDaemonClient = require('./broker-daemon-client')
 const { ENUMS, validations, askQuestion } = require('./utils')
 const {
@@ -54,18 +56,24 @@ async function balance (args, opts, logger) {
     const client = new BrokerDaemonClient(rpcAddress)
     const {
       totalBalance,
-      totalUncommittedBalance,
-      totalCommittedBalance,
       committedBalances = []
     } = await client.walletService.getBalances({})
 
-    logger.info(`Total Balance (${DEFAULT_CURRENCY_SYMBOL}): ${totalBalance}`)
-    logger.info(`Total Uncommitted Balance (${DEFAULT_CURRENCY_SYMBOL}): ${totalUncommittedBalance}`)
-    logger.info(`Total Committed Balance (${DEFAULT_CURRENCY_SYMBOL}: ${totalCommittedBalance}`)
+    const balancesTable = new Table({
+      head: ['', 'Committed', 'Uncommitted'],
+      colWidths: [10, 45, 45],
+      style: { head: ['gray'] }
+    })
 
     committedBalances.forEach(({ symbol, value }) => {
-      logger.info(`${symbol} Balance: ${value}`)
+      const committedBalance = value
+      const uncommittedBalance = symbol === DEFAULT_CURRENCY_SYMBOL ? totalBalance - value : 0
+
+      balancesTable.push([symbol, committedBalance.green, uncommittedBalance])
     })
+
+    logger.info('Balances')
+    logger.info(balancesTable.toString())
   } catch (e) {
     logger.error(e)
   }

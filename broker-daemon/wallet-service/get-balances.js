@@ -11,13 +11,9 @@
 async function getBalances ({ logger, engine }, { GetBalancesResponse }) {
   const [
     totalBalance,
-    totalCommittedBalance,
-    totalUncommittedBalance,
     channelBalances
   ] = await Promise.all([
     engine.getTotalBalance(),
-    engine.getUnconfirmedBalance(),
-    engine.getConfirmedBalance(),
     engine.getChannelBalances()
   ])
 
@@ -27,8 +23,6 @@ async function getBalances ({ logger, engine }, { GetBalancesResponse }) {
 
   return new GetBalancesResponse({
     totalBalance,
-    totalCommittedBalance,
-    totalUncommittedBalance,
     committedBalances
   })
 }
