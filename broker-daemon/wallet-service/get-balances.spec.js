@@ -11,29 +11,19 @@ describe('get-balance', () => {
   let engine
   let channelBalancesStub
   let channelBalances
-  let confirmedBalanceStub
-  let unconfirmedBalanceStub
-  let unconfirmedBalance
-  let confirmedBalance
 
   beforeEach(() => {
     logger = sinon.stub()
     expectedBalance = 1000
-    confirmedBalance = expectedBalance - 500
-    unconfirmedBalance = expectedBalance - 500
     channelBalances = [
       { symbol: 'BTC', value: '100' }
     ]
     walletBalanceStub = sinon.stub().returns(expectedBalance)
     balanceResponseStub = sinon.stub()
     channelBalancesStub = sinon.stub().returns(channelBalances)
-    confirmedBalanceStub = sinon.stub().returns(confirmedBalance)
-    unconfirmedBalanceStub = sinon.stub().returns(unconfirmedBalance)
 
     engine = {
       getTotalBalance: walletBalanceStub,
-      getConfirmedBalance: confirmedBalanceStub,
-      getUnconfirmedBalance: unconfirmedBalanceStub,
       getChannelBalances: channelBalancesStub
     }
     logger = { info: sinon.stub() }
@@ -55,8 +45,6 @@ describe('get-balance', () => {
     expect(balanceResponseStub).to.have.been.calledWith(
       sinon.match({
         totalBalance: expectedBalance,
-        totalCommittedBalance: confirmedBalance,
-        totalUncommittedBalance: unconfirmedBalance,
         committedBalances: channelBalances
       })
     )
