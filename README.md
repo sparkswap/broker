@@ -34,7 +34,7 @@ Run the following commands in order:
 You can run `./bin/kcli -h` to view all available commands.
 
 To set your user configuration, copy `./broker-cli/sample-.kcli.js` to `~/.kcli.js` and edit the file.
-You can view default configuration for kcli in `./broker-lic/.kcli.default.js`.
+You can view default configuration for kcli in `./broker-cli/.kcli.default.js`.
 
 Current configuration is limited to:
 - Default Daemon RPC address
