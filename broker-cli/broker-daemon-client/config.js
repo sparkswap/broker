@@ -1,6 +1,6 @@
 const path = require('path')
 const os = require('os')
-const DEFAULT_CONFIG = require('../.kcli.js')
+const DEFAULT_CONFIG = require('../.kcli.default.js')
 
 try {
   var USER_CONFIG = require(path.resolve(os.homedir(), '.kcli.js'))
