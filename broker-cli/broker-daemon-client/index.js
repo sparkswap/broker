@@ -15,6 +15,12 @@ class BrokerDaemonClient {
    * @param {String} address grpc host address
    */
   constructor (address) {
+    /**
+     * Broker Daemon grpc host address
+     * If not set, defaults to the user settings at ~/.kcli.js
+     * or the installation settings at ../kcli.js
+     * @type {String}
+     */
     this.address = address || CONFIG.rpcAddress
     this.proto = loadProto(PROTO_PATH)
 
