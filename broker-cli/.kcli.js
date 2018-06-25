@@ -1,7 +1,9 @@
 /**
  * KCLI configuration
+ *
  * Default configuration is stored with kcli [DO NOT EDIT THIS]
- * User configuration is located in ~/.kcli.js
+ *
+ * User configuration is located in ~/.kcli.js [EDIT THIS]
  */
 
 module.exports = {
