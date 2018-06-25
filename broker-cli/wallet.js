@@ -140,8 +140,17 @@ async function commitBalance (args, opts, logger) {
 
     const {
       totalBalance,
-      totalUncommittedBalance
+      committedBalances = []
     } = await client.walletService.getBalances({})
+
+    const totalCommittedBalance = committedBalances.reduce((acc, { symbol, value }) => {
+      if (symbol === DEFAULT_CURRENCY_SYMBOL) {
+        Big(value).plus(acc)
+      }
+      return acc
+    }, 0)
+
+    const totalUncommittedBalance = Big(totalBalance).minus(totalCommittedBalance)
 
     if (parseInt(totalUncommittedBalance) === 0) {
       return logger.info('Your current uncommitted balance is 0, please add funds to your daemon')
