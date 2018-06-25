@@ -3,8 +3,11 @@
  * @module broker-cli/wallet
  */
 
+const Table = require('cli-table')
+require('colors')
 const BrokerDaemonClient = require('./broker-daemon-client')
-const { ENUMS, validations, askQuestion } = require('./utils')
+const { ENUMS, validations, askQuestion, Big } = require('./utils')
+const { currencies: currencyConfig } = require('./configuration')
 const {
   config: { default_currency_symbol: DEFAULT_CURRENCY_SYMBOL }
 } = require('../package.json')
@@ -54,18 +57,33 @@ async function balance (args, opts, logger) {
     const client = new BrokerDaemonClient(rpcAddress)
     const {
       totalBalance,
-      totalUncommittedBalance,
-      totalCommittedBalance,
       committedBalances = []
     } = await client.walletService.getBalances({})
 
-    logger.info(`Total Balance (${DEFAULT_CURRENCY_SYMBOL}): ${totalBalance}`)
-    logger.info(`Total Uncommitted Balance (${DEFAULT_CURRENCY_SYMBOL}): ${totalUncommittedBalance}`)
-    logger.info(`Total Committed Balance (${DEFAULT_CURRENCY_SYMBOL}: ${totalCommittedBalance}`)
+    const balancesTable = new Table({
+      head: ['', 'Committed', 'Uncommitted'],
+      colWidths: [10, 45, 45],
+      style: { head: ['gray'] }
+    })
+
+    const totalCommittedBalance = committedBalances.reduce((acc, { value }) => Big(value).plus(acc), 0)
 
     committedBalances.forEach(({ symbol, value }) => {
-      logger.info(`${symbol} Balance: ${value}`)
+      const divideBy = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
+      const committedBalance = value
+      const uncommittedBalance = symbol === DEFAULT_CURRENCY_SYMBOL ? Big(totalBalance).minus(totalCommittedBalance): 0
+
+      balancesTable.push(
+        [
+          symbol,
+          Big(committedBalance).div(divideBy).toFixed(16).green,
+          Big(uncommittedBalance).div(divideBy).toFixed(16)
+        ]
+      )
     })
+
+    logger.info('Wallet Balances'.bold.white)
+    logger.info(balancesTable.toString())
   } catch (e) {
     logger.error(e)
   }
