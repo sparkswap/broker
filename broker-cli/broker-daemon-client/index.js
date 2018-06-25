@@ -1,6 +1,6 @@
 const path = require('path')
 const caller = require('grpc-caller')
-
+const CONFIG = require('./config')
 const { loadProto } = require('../utils')
 
 /**
@@ -10,26 +10,18 @@ const { loadProto } = require('../utils')
  */
 const PROTO_PATH = path.resolve('./broker-daemon/proto/broker.proto')
 
-/**
- * @constant
- * @type {String}
- * @default
- */
-const BROKER_DAEMON_HOST = process.env.BROKER_DAEMON_HOST
-
-/**
- * @constant
- * @type {String}
- * @default
- */
-const DEFAULT_BROKER_DAEMON_HOST = 'localhost:27492'
-
 class BrokerDaemonClient {
   /**
    * @param {String} address grpc host address
    */
   constructor (address) {
-    this.address = address || BROKER_DAEMON_HOST || DEFAULT_BROKER_DAEMON_HOST
+    /**
+     * Broker Daemon grpc host address
+     * If not set, defaults to the user settings at ~/.kcli.js
+     * or the installation settings at ../kcli.js
+     * @type {String}
+     */
+    this.address = address || CONFIG.rpcAddress
     this.proto = loadProto(PROTO_PATH)
 
     // TODO: Change this to use npm instead of a relative path to the daemon

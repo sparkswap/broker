@@ -71,7 +71,7 @@ async function balance (args, opts, logger) {
     committedBalances.forEach(({ symbol, value }) => {
       const divideBy = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
       const committedBalance = value
-      const uncommittedBalance = symbol === DEFAULT_CURRENCY_SYMBOL ? Big(totalBalance).minus(totalCommittedBalance): 0
+      const uncommittedBalance = symbol === DEFAULT_CURRENCY_SYMBOL ? Big(totalBalance).minus(totalCommittedBalance) : 0
 
       balancesTable.push(
         [
