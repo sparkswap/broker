@@ -78,7 +78,8 @@ describe('cli wallet', () => {
     let rpcAddress
     let symbol
     let walletBalanceStub
-    let balance
+    let totalBalance
+    let committedBalance
     let daemonStub
     let commitBalanceStub
     let askQuestionStub
@@ -89,10 +90,11 @@ describe('cli wallet', () => {
       symbol = 'BTC'
       args = { symbol }
       rpcAddress = 'test:1337'
-      balance = 10000
+      totalBalance = 10000
+      committedBalance = 100
       walletBalanceStub = sinon.stub().returns({
-        totalBalance: balance,
-        totalUncommittedBalance: balance
+        totalBalance: totalBalance,
+        committedBalances: [{ symbol: 'BTC', value: committedBalance }]
       })
       commitBalanceStub = sinon.stub()
       askQuestionStub = sinon.stub().returns('Y')
@@ -119,7 +121,8 @@ describe('cli wallet', () => {
     })
 
     it('calls the daemon to commit a balance to the relayer', () => {
-      expect(commitBalanceStub).to.have.been.calledWith({ balance, symbol })
+      const uncommittedBalance = totalBalance - committedBalance
+      expect(commitBalanceStub).to.have.been.calledWith(sinon.match({ balance: uncommittedBalance.toString(), symbol }))
     })
 
     it('asks the user if they are ok to commit to a balance', () => {

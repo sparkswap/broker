@@ -140,25 +140,36 @@ async function commitBalance (args, opts, logger) {
 
     const {
       totalBalance,
-      totalUncommittedBalance
+      committedBalances = []
     } = await client.walletService.getBalances({})
 
-    if (parseInt(totalUncommittedBalance) === 0) {
+    const totalCommittedBalance = committedBalances.reduce((acc, { value }) => Big(value).plus(acc), 0)
+    const totalUncommittedBalance = Big(totalBalance).minus(totalCommittedBalance)
+
+    if (totalUncommittedBalance.eq(0)) {
       return logger.info('Your current uncommitted balance is 0, please add funds to your daemon')
     }
 
-    // TODO: BIG this var instead of using `parseInt`
-    const maxSupportedBalance = Math.min(parseInt(totalUncommittedBalance), ENUMS.MAX_CHANNEL_BALANCE)
+    // We try to take the `Math.min` total here between 2 Big numbers due to a
+    // commit limit specified as MAX_CHANNEL_BALANCE
+    let maxSupportedBalance = totalUncommittedBalance
 
-    logger.info(`For your knowledge, the Maximum supported balance at this time is: ${ENUMS.MAX_CHANNEL_BALANCE}`)
-    logger.info(`Your current wallet balance is: ${totalBalance}`)
-    logger.info(`Your current uncommitted wallet balance is: ${totalUncommittedBalance}`)
+    if (totalUncommittedBalance.gt(ENUMS.MAX_CHANNEL_BALANCE)) {
+      maxSupportedBalance = ENUMS.MAX_CHANNEL_BALANCE
+    }
 
-    const answer = await askQuestion(`Are you OK committing ${maxSupportedBalance} of your uncommitted balance in ${symbol}? (Y/N)`)
+    const divideBy = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
+
+    logger.info(`For your knowledge, the Maximum supported balance at this time is: ${Big(ENUMS.MAX_CHANNEL_BALANCE).div(divideBy)} ${symbol}`)
+    logger.info(`Your current uncommitted wallet balance is: ${Big(totalUncommittedBalance).div(divideBy)} ${symbol}`)
+
+    const answer = await askQuestion(`Are you OK committing ${Big(maxSupportedBalance).div(divideBy)} ${symbol} to the kinesis exchange? (Y/N)`)
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    await client.walletService.commitBalance({ balance: maxSupportedBalance, symbol })
+    logger.info(`Operation will take roughly 3 minutes. Please DO NOT exit while operation runs: ${new Date()}`)
+
+    await client.walletService.commitBalance({ balance: maxSupportedBalance.toString(), symbol })
 
     logger.info('Successfully added broker daemon to the kinesis exchange!')
   } catch (e) {
