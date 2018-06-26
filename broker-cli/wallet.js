@@ -163,9 +163,11 @@ async function commitBalance (args, opts, logger) {
     logger.info(`For your knowledge, the Maximum supported balance at this time is: ${Big(ENUMS.MAX_CHANNEL_BALANCE).div(divideBy)} ${symbol}`)
     logger.info(`Your current uncommitted wallet balance is: ${Big(totalUncommittedBalance).div(divideBy)} ${symbol}`)
 
-    const answer = await askQuestion(`Are you OK committing ${Big(maxSupportedBalance).div(divideBy)} of your uncommitted balance in ${symbol}? (Y/N)`)
+    const answer = await askQuestion(`Are you OK committing ${Big(maxSupportedBalance).div(divideBy)} ${symbol} to the kinesis exchange? (Y/N)`)
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
+
+    logger.info(`Operation will take roughly 3 minutes. Please DO NOT exit while operation runs: ${new Date()}`)
 
     await client.walletService.commitBalance({ balance: maxSupportedBalance.toString(), symbol })
 
