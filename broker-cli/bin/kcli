@@ -9,7 +9,7 @@ const {
   engines: { node: currentVersion }
 } = require('../package.json')
 
-const commands = require('../broker-cli')
+const commands = require('../')
 
 const clientVersion = process.version.substring(1)
 
