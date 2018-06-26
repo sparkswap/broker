@@ -40,7 +40,6 @@
     "cli-table": "0.3.1",
     "colors": "1.2.4",
     "compare-versions": "3.1.0",
-    "generate-safe-id": "1.0.2",
     "grpc": "1.11.3",
     "grpc-caller": "0.5.0",
     "prettyjson": "1.2.1",
