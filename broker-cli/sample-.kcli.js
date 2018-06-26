@@ -1,7 +1,12 @@
 /**
  * KCLI User configuration
  *
- * In order to work, this file should be located in ~/.kcli.js (It is installed there by default)
+ * In order to edit this file, first move it to your home directory
+ * and rename it to '.kcli.js'
+ *
+ * On *nix, you can do this by running:
+ * `npm explore broker-cli -- cp -n sample-.kcli.js ~/.kcli.js`
+ *
  */
 
 module.exports = {

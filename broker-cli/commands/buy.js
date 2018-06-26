@@ -1,5 +1,5 @@
-const BrokerDaemonClient = require('./broker-daemon-client')
-const { ENUMS, validations } = require('./utils')
+const BrokerDaemonClient = require('../broker-daemon-client')
+const { ENUMS, validations } = require('../utils')
 
 const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
 

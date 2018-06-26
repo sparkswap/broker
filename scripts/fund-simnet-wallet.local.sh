@@ -18,7 +18,7 @@ set -e -u
 # Hit the kcli endpoint to generate a new wallet address
 echo "Generating new deposit address through KCLI"
 
-WALLET_ADDR=$(./bin/kcli wallet new-deposit-address)
+WALLET_ADDR=$(./broker-cli/bin/kcli wallet new-deposit-address)
 
 # Restart the btcd container w/ the mining-address for our account
 echo "Running funding script on the relayer w/ wallet addr"
@@ -29,4 +29,4 @@ echo "Waiting 10 seconds for blocks to be confirmed"
 sleep 10
 
 echo "Checking wallet balance"
-./bin/kcli wallet balance
+./broker-cli/bin/kcli wallet balance

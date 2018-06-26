@@ -1,6 +1,6 @@
-const BrokerDaemonClient = require('../broker-daemon-client')
+const BrokerDaemonClient = require('../../broker-daemon-client')
 const Table = require('cli-table')
-const { ENUMS: { ORDER_TYPES } } = require('../utils')
+const { ENUMS: { ORDER_TYPES } } = require('../../utils')
 require('colors')
 
 /**

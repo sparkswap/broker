@@ -27,3 +27,19 @@ jobs:
           key: v1-dependencies-{{ checksum "package.json" }}
 
       - run: npm run ci-test
+  publish-cli:
+    docker:
+      - image: node:8
+    working_directory: ~/broker
+    steps:
+      - checkout
+      - run: npm run dist-cli
+
+workflows:
+  version: 2
+  master-publish-cli:
+    jobs:
+      - publish-cli:
+        filters:
+          branches:
+            only: master
