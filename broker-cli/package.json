@@ -16,7 +16,7 @@
     "postinstall": "cp -n sample-.kcli.js ~/.kcli.js"
   },
   "bin": {
-    "kcli": "./broker-cli/bin/kcli"
+    "kcli": "./bin/kcli"
   },
   "standard": {
     "env": [
