@@ -6,7 +6,7 @@ const {
   delay
 } = require('test/test-helper')
 
-const programPath = path.resolve('broker-cli', 'orderbook')
+const programPath = path.resolve(__dirname, 'orderbook')
 const program = rewire(programPath)
 
 describe('orderbook', () => {
