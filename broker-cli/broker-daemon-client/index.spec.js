@@ -53,16 +53,10 @@ describe('BrokerDaemonClient', () => {
       address = '172.0.0.1'
     })
 
-    it('defaults to localhost', () => {
-      address = null
-      BrokerDaemonClient.__set__('BROKER_DAEMON_HOST', address)
-      broker = new BrokerDaemonClient()
-      const defaultHost = BrokerDaemonClient.__get__('DEFAULT_BROKER_DAEMON_HOST')
-      expect(broker.address).to.eql(defaultHost)
-    })
-
-    it('defaults to BROKER_DAEMON_HOST is address is not passed in', () => {
-      BrokerDaemonClient.__set__('BROKER_DAEMON_HOST', address)
+    it('defaults to CONFIG is address is not passed in', () => {
+      BrokerDaemonClient.__set__('CONFIG', {
+        rpcAddress: address
+      })
       broker = new BrokerDaemonClient()
       expect(broker.address).to.eql(address)
     })
