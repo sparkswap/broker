@@ -54,6 +54,9 @@ jobs:
 # for info on workflows, see: https://circleci.com/docs/2.0/workflows/
 workflows:
   version: 2
+  build-and-test:
+    jobs:
+      - build
   master-publish-cli:
     jobs:
       - publish-cli:
