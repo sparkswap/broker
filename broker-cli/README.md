@@ -18,10 +18,19 @@ Run `npm install -g https://github.com/kinesis-exchange/broker-cli.git`
 This installs `kcli` globally, so you may need to give it additional permissions.
 
 ### Configure the client
-Your user configuration should be installed at `~/.kcli.js` (or the Windows equivalent).
-If it was not created there, you can copy the [sample configuration](./sample-.kcli.js): `cp ./sample-.kcli.js ~/.kcli.js`.
+You can set your default configuration by moving the [sample configuration](./sample-.kcli.js) to your home directory and renaming it `.kcli.js`.
 
-Edit the file to include your custom configuration.
+You can do this on \*nix by running:
+```
+npm explore broker-cli -- cp -n ./sample-.kcli.js ~/.kcli.js
+```
+
+Or if you are already in the `broker-cli` directory,
+```
+cp -n ./sample-.kcli.js ~/.kcli.js
+```
+
+Once installed, in the correct location, you can edit the file to include your custom configuration.
 
 Currently, supported custom configuration includes:
 - RPC address of the Kinesis Broker Daemon you are controlling

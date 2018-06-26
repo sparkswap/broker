@@ -13,7 +13,7 @@
     "test": "NODE_PATH=. mocha './{,!(node_modules)/**/}*.spec.js'",
     "coverage": "nyc npm test",
     "ci-test": "npm run format && npm test",
-    "postinstall": "yn \"A configuration file (.kcli.js) will be installed in your home directory. Is that ok? [y/N]\" && cp -n sample-.kcli.js ~/.kcli.js"
+    "postinstall": "sh scripts/postinstall.sh"
   },
   "bin": {
     "kcli": "./bin/kcli"
