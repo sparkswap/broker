@@ -12,7 +12,8 @@
     "pretest": "npm run format; exit 0",
     "test": "NODE_PATH=. mocha './{,!(node_modules)/**/}*.spec.js'",
     "coverage": "nyc npm test",
-    "ci-test": "npm run format && npm test"
+    "ci-test": "npm run format && npm test",
+    "postinstall": "cp -n sample-.kcli.js ~/.kcli.js"
   },
   "bin": {
     "kcli": "./broker-cli/bin/kcli"
