@@ -174,9 +174,11 @@ const OrderStateMachine = StateMachine.factory({
      * This function gets called before the `place` transition (triggered by a call to `place`)
      * Actual placement on the relayer is done in `onBeforePlace` so that the transition can be cancelled
      * if placement on the Relayer fails.
-     *
+     * Listen for order fills when in the `placed` state
+     * This is done based on the state and not the transition so that it gets actioned when being re-hydrated from storage
+     * [is that the right thing to do?]
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
-     * @return {Promise}          romise that rejects if placement on the relayer fails
+     * @return {void}
      */
     onBeforePlace: async function (lifecycle) {
       const { feePaymentRequest, depositPaymentRequest, orderId } = this.order
@@ -202,25 +204,8 @@ const OrderStateMachine = StateMachine.factory({
 
       this.logger.info(`Successfully paid fees for order: ${orderId}`)
 
-      await this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest })
-
-      this.logger.info(`Placed order ${this.order.orderId} on the relayer`)
-    },
-
-    /**
-     * Listen for order fills when in the `placed` state
-     * This is done based on the state and not the transition so that it gets actioned when being re-hydrated from storage
-     * [is that the right thing to do?]
-     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
-     * @return {void}
-     */
-    onEnterPlaced: function (lifecycle) {
-      const { orderId } = this.order
-      this.logger.info(`In placed state, attempting to listen for fills for order ${orderId}`)
-
       // NOTE: this method should NOT reject a promise, as that may prevent the state of the order from saving
-
-      const call = this.relayer.makerService.subscribeFill({ orderId })
+      const call = this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest })
 
       call.on('error', (e) => {
         this.reject(e)
@@ -235,12 +220,12 @@ const OrderStateMachine = StateMachine.factory({
             return this.tryTo('cancel')
           }
 
+          this.logger.info(`Placed order ${this.order.orderId} on the relayer`)
           const { swapHash, fillAmount } = fill
 
           this.order.setFilledParams({ swapHash, fillAmount })
 
-          this.logger.info(`Order ${orderId} is being filled`)
-
+          this.logger.info(`Order ${this.order.orderId} is being filled`)
           this.tryTo('execute')
         } catch (e) {
           this.reject(e)
