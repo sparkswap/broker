@@ -12,6 +12,7 @@
     "prebuild": "bash ./scripts/prebuild.sh",
     "build": "bash ./scripts/build.sh",
     "destroy": "bash ./scripts/destroy.sh",
+    "dist-cli": "npm run broker-proto && bash ./scripts/publish-broker-cli.sh",
     "format": "standard --fix",
     "pretest": "npm run format; exit 0",
     "test": "NODE_PATH=. mocha 'broker-cli/**/*.spec.js' 'broker-daemon/**/*.spec.js'",
