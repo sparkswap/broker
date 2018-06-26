@@ -21,3 +21,7 @@ RUN npm i --production
 
 RUN mkdir "./node_modules/lnd-engine"
 COPY node_modules/lnd-engine ./node_modules/lnd-engine
+WORKDIR ./node_modules/lnd-engine
+RUN npm i --production
+
+WORKDIR ../..
