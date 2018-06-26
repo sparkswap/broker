@@ -143,24 +143,20 @@ async function commitBalance (args, opts, logger) {
       committedBalances = []
     } = await client.walletService.getBalances({})
 
-    const totalCommittedBalance = committedBalances.reduce((acc, { symbol, value }) => {
-      if (symbol === DEFAULT_CURRENCY_SYMBOL) {
-        Big(value).plus(acc)
-      }
-      return acc
-    }, 0)
-
+    const totalCommittedBalance = committedBalances.reduce((acc, { value }) => Big(value).plus(acc), 0)
     const totalUncommittedBalance = Big(totalBalance).minus(totalCommittedBalance)
 
     if (parseInt(totalUncommittedBalance) === 0) {
       return logger.info('Your current uncommitted balance is 0, please add funds to your daemon')
     }
 
-    // TODO: BIG this var instead of using `parseInt`
-    const maxSupportedBalance = Math.min(parseInt(totalUncommittedBalance), ENUMS.MAX_CHANNEL_BALANCE)
+    let maxSupportedBalance = totalUncommittedBalance
+
+    if (totalCommittedBalance.gt(ENUMS.MAX_CHANNEL_BALANCE)) {
+      maxSupportedBalance = ENUMS.MAX_CHANNEL_BALANCE
+    }
 
     logger.info(`For your knowledge, the Maximum supported balance at this time is: ${ENUMS.MAX_CHANNEL_BALANCE}`)
-    logger.info(`Your current wallet balance is: ${totalBalance}`)
     logger.info(`Your current uncommitted wallet balance is: ${totalUncommittedBalance}`)
 
     const answer = await askQuestion(`Are you OK committing ${maxSupportedBalance} of your uncommitted balance in ${symbol}? (Y/N)`)
