@@ -13,7 +13,7 @@
     "test": "NODE_PATH=. mocha './{,!(node_modules)/**/}*.spec.js'",
     "coverage": "nyc npm test",
     "ci-test": "npm run format && npm test",
-    "postinstall": "cp -n sample-.kcli.js ~/.kcli.js"
+    "postinstall": "yn \"A configuration file (.kcli.js) will be installed in your home directory. Is that ok? [y/N]\" && cp -n sample-.kcli.js ~/.kcli.js"
   },
   "bin": {
     "kcli": "./bin/kcli"
@@ -44,7 +44,8 @@
     "grpc-caller": "0.5.0",
     "prettyjson": "1.2.1",
     "validator": "10.2.0",
-    "window-size": "1.1.0"
+    "window-size": "1.1.0",
+    "yn-cli": "1.0.0"
   },
   "devDependencies": {
     "chai": "4.1.2",
