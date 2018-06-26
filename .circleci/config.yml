@@ -2,6 +2,8 @@
 #
 # Check https://circleci.com/docs/2.0/language-javascript/ for more details
 #
+# If you are modifying this file, use this tool to validate: https://circleci.com/docs/2.0/local-cli/#validating-20-yaml-syntax
+#
 version: 2
 jobs:
   build:
@@ -33,8 +35,23 @@ jobs:
     working_directory: ~/broker
     steps:
       - checkout
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      - run: npm install
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+
       - run: npm run dist-cli
 
+# for info on workflows, see: https://circleci.com/docs/2.0/workflows/
 workflows:
   version: 2
   master-publish-cli:
