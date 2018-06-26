@@ -31,7 +31,7 @@ git remote rm origin
 git remote add origin git@github.com:kinesis-exchange/broker-cli.git
 
 echo "Pushing to GitHub"
-git push -u origin master
+git push origin master
 
 echo "Removing working directory"
 
