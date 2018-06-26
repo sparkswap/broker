@@ -1,0 +1,230 @@
+syntax = "proto3";
+
+message HealthCheckResponse {
+
+    string engine_status = 0;
+    string relayer_status = 1;
+}
+
+message GetDaemonConfigResponse {
+
+    string relayer_rpc_host = 0;
+    string relayer_lnd_host = 1;
+    string daemon_rpc_host = 2;
+    string daemon_lnd_host = 3;
+    string daemon_public_key = 5;
+    string daemon_default_markets = 6;
+}
+service AdminService {
+    rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
+    rpc GetDaemonConfig (google.protobuf.Empty) returns (GetDaemonConfigResponse);
+}
+
+message google {
+
+    message protobuf {
+
+        message Empty {
+        }
+    }
+}
+
+enum Side {
+
+    BID = 0;
+    ASK = 1;
+}
+
+enum TimeInForce {
+
+    GTC = 0;
+    FOK = 1;
+    IOC = 2;
+}
+
+message CreateBlockOrderRequest {
+
+    oneof price_restriction {
+
+        bool is_market_order = 3;
+        string limit_price = 4;
+    }
+
+    string market = 0;
+    Side side = 1;
+    string amount = 2;
+    TimeInForce time_in_force = 5;
+}
+
+message CreateBlockOrderResponse {
+
+    string block_order_id = 0;
+}
+
+enum BlockOrderStatus {
+
+    ACTIVE = 0;
+    CANCELLED = 1;
+    COMPLETED = 2;
+    FAILED = 3;
+}
+
+enum OrderStatus {
+
+    CREATED = 0;
+    PLACED = 1;
+    FILLED = 2;
+    EXECUTED = 3;
+    COMPLETED = 4;
+    REJECTED = 5;
+}
+
+message Order {
+
+    string order_id = 0;
+    OrderStatus order_status = 1;
+    string amount = 2;
+    string price = 3;
+}
+
+enum FillStatus {
+
+    CREATED = 0;
+    FILLED = 1;
+    EXECUTED = 2;
+    COMPLETED = 3;
+    REJECTED = 4;
+}
+
+message Fill {
+
+    string order_id = 0;
+    string fill_id = 1;
+    FillStatus fill_status = 2;
+    string amount = 3;
+    string price = 4;
+}
+
+message BlockOrder {
+
+    oneof price_restriction {
+
+        bool is_market_order = 13;
+        string limit_price = 14;
+    }
+
+    string block_order_id = 0;
+    string market = 1;
+    Side side = 2;
+    string amount = 3;
+    TimeInForce time_in_force = 5;
+    BlockOrderStatus status = 6;
+}
+
+message GetBlockOrderRequest {
+
+    string block_order_id = 0;
+}
+
+message GetBlockOrderResponse {
+
+    oneof price_restriction {
+
+        bool is_market_order = 13;
+        string limit_price = 14;
+    }
+
+    BlockOrderStatus status = 0;
+    string market = 10;
+    Side side = 11;
+    string amount = 12;
+    TimeInForce time_in_force = 15;
+    string fill_amount = 20;
+    repeated Order open_orders = 21;
+    repeated Fill fills = 22;
+}
+
+message CancelBlockOrderRequest {
+
+    string block_order_id = 0;
+}
+
+message GetBlockOrdersResponse {
+
+    repeated BlockOrder block_orders = 1;
+}
+
+message GetBlockOrdersRequest {
+
+    string market = 0;
+}
+service OrderService {
+    rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse);
+    rpc GetBlockOrder (GetBlockOrderRequest) returns (GetBlockOrderResponse);
+    rpc CancelBlockOrder (CancelBlockOrderRequest) returns (google.protobuf.Empty);
+    rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse);
+}
+
+message WatchMarketRequest {
+
+    string market = 0;
+}
+
+message WatchMarketResponse {
+
+    EventType type = 0;
+    MarketEvent market_event = 1;
+
+    enum EventType {
+
+        ADD = 1;
+        DELETE = 2;
+    }
+}
+
+message MarketEvent {
+
+    string order_id = 0;
+    string amount = 1;
+    string price = 2;
+    Side side = 3;
+}
+service OrderBookService {
+    rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
+}
+
+enum Symbol {
+
+    BTC = 0;
+    LTC = 1;
+}
+
+message NewDepositAddressResponse {
+
+    string address = 0;
+}
+
+message CommittedBalance {
+
+    Symbol symbol = 0;
+    int64 value = 1;
+}
+
+message GetBalancesResponse {
+
+    int64 total_balance = 0;
+    int64 total_uncommitted_balance = 1;
+    int64 total_committed_balance = 2;
+    repeated CommittedBalance committed_balances = 3;
+}
+
+message CommitBalanceRequest {
+
+    int64 balance = 0;
+    Symbol symbol = 1;
+}
+service WalletService {
+    rpc NewDepositAddress (google.protobuf.Empty) returns (NewDepositAddressResponse);
+    rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse);
+    rpc CommitBalance (CommitBalanceRequest) returns (google.protobuf.Empty);
+}
