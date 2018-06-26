@@ -1,8 +1,8 @@
 const {
   version: BROKER_VERSION
 } = require('../package.json')
-const BrokerDaemonClient = require('./broker-daemon-client')
-const { validations, Big } = require('./utils')
+const BrokerDaemonClient = require('../broker-daemon-client')
+const { validations, Big } = require('../utils')
 const Table = require('cli-table')
 const size = require('window-size')
 require('colors')

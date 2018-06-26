@@ -9,7 +9,7 @@ const {
   engines: { node: currentVersion }
 } = require('../package.json')
 
-const commands = require('../')
+const commands = require('../commands')
 
 const clientVersion = process.version.substring(1)
 
