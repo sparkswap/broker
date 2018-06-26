@@ -5,7 +5,7 @@ const {
   expect
 } = require('test/test-helper')
 
-const programPath = path.resolve('broker-cli', 'health-check')
+const programPath = path.resolve(__dirname, 'health-check')
 const program = rewire(programPath)
 
 describe('healthCheck', () => {

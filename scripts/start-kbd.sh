@@ -2,4 +2,4 @@
 
 set -e
 
-./bin/kbd
+./broker-daemon/bin/kbd

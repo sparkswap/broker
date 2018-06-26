@@ -1,5 +1,5 @@
-const BrokerDaemonClient = require('./broker-daemon-client')
-const { validations } = require('./utils')
+const BrokerDaemonClient = require('../broker-daemon-client')
+const { validations } = require('../utils')
 
 /**
  * Returns configuration information for a particular broker daemon
