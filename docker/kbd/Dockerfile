@@ -18,5 +18,10 @@ WORKDIR /home/app
 
 RUN npm i --production
 
+# install lnd-engine and its dependencies
 RUN mkdir "./node_modules/lnd-engine"
 COPY node_modules/lnd-engine ./node_modules/lnd-engine
+WORKDIR ./node_modules/lnd-engine
+RUN npm i --production
+
+WORKDIR ../..
