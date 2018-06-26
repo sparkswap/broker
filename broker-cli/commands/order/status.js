@@ -1,4 +1,4 @@
-const BrokerDaemonClient = require('../broker-daemon-client')
+const BrokerDaemonClient = require('../../broker-daemon-client')
 
 /**
  * kcli order status
