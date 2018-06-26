@@ -1,3 +1,5 @@
+![Kinesis](./images/logo-black.png?raw=true)
+
 `kcli` - Kinesis Broker Command Line Interface
 ==============================================
 
@@ -46,20 +48,28 @@ Things to try
 ### Streaming the orderbook
 Run `kcli orderbook --market BTC/LTC` to get a live view of the orderbook.
 
+![BTC/LTC Orderbook](./images/kcli_orderbook_--market_BTCLTC_no-orders?raw=true)
+
 I usually keep this running in a separate window while I do other commands.
 
 ### Checking your balance
 Run `kcli wallet balance` to see the balance of your wallet in the supported currencies.
+
+![Check wallet balance](./images/kcli_wallet_balance?raw=true)
 
 The “committed” balance is what you have available to trade.
 
 ### Placing a Limit Order
 Run `kcli buy 0.01 100 --market BTC/LTC` to place a limit order to buy 0.01 BTC at a price of 100 LTC per BTC.
 
+![Place a limit order of 0.01 BTC](./images/kcli_buy_0.01_100_--market_BTCLTC?raw=true)
+
 There is a corresponding `sell` command as well.
 
 ### Placing a Market Order
 Run `kcli buy 0.01 --market BTC/LTC` to place a market order to buy 0.01 BTC.
+
+![Place a market order of 0.01 BTC](./images/kcli_buy_0.01_--market_BTCLTC?raw=true)
 
 Note that your order will not complete if there is not enough depth in the market to complete the order right away.
 
