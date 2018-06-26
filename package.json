@@ -25,6 +25,10 @@
     "fund-confirm": "bash ./scripts/confirm-simnet.sh",
     "broker-proto": "pbjs -t proto3 admin.proto order.proto orderbook.proto wallet.proto -p ./broker-daemon/proto/src -o ./broker-daemon/proto/broker.proto"
   },
+  "bin": {
+    "kbd": "./broker-daemon/bin/kbd",
+    "kcli": "./broker-cli/bin/kcli"
+  },
   "standard": {
     "env": [
       "mocha",

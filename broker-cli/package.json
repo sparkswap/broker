@@ -14,6 +14,9 @@
     "coverage": "nyc npm test",
     "ci-test": "npm run format && npm test"
   },
+  "bin": {
+    "kcli": "./broker-cli/bin/kcli"
+  },
   "standard": {
     "env": [
       "mocha",
