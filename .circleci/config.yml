@@ -40,6 +40,6 @@ workflows:
   master-publish-cli:
     jobs:
       - publish-cli:
-        filters:
-          branches:
-            only: master
+          filters:
+            branches:
+              only: master
