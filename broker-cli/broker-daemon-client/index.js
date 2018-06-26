@@ -8,7 +8,7 @@ const { loadProto } = require('../utils')
  * @type {String}
  * @default
  */
-const PROTO_PATH = path.resolve('../proto/broker.proto')
+const PROTO_PATH = path.resolve('broker-cli/proto/broker.proto')
 
 class BrokerDaemonClient {
   /**
