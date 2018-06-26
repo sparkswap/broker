@@ -146,24 +146,28 @@ async function commitBalance (args, opts, logger) {
     const totalCommittedBalance = committedBalances.reduce((acc, { value }) => Big(value).plus(acc), 0)
     const totalUncommittedBalance = Big(totalBalance).minus(totalCommittedBalance)
 
-    if (parseInt(totalUncommittedBalance) === 0) {
+    if (totalUncommittedBalance.eq(0)) {
       return logger.info('Your current uncommitted balance is 0, please add funds to your daemon')
     }
 
+    // We try to take the `Math.min` total here between 2 Big numbers due to a
+    // commit limit specified as MAX_CHANNEL_BALANCE
     let maxSupportedBalance = totalUncommittedBalance
 
-    if (totalCommittedBalance.gt(ENUMS.MAX_CHANNEL_BALANCE)) {
+    if (totalUncommittedBalance.gt(ENUMS.MAX_CHANNEL_BALANCE)) {
       maxSupportedBalance = ENUMS.MAX_CHANNEL_BALANCE
     }
 
-    logger.info(`For your knowledge, the Maximum supported balance at this time is: ${ENUMS.MAX_CHANNEL_BALANCE}`)
-    logger.info(`Your current uncommitted wallet balance is: ${totalUncommittedBalance}`)
+    const divideBy = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
 
-    const answer = await askQuestion(`Are you OK committing ${maxSupportedBalance} of your uncommitted balance in ${symbol}? (Y/N)`)
+    logger.info(`For your knowledge, the Maximum supported balance at this time is: ${Big(ENUMS.MAX_CHANNEL_BALANCE).div(divideBy)} ${symbol}`)
+    logger.info(`Your current uncommitted wallet balance is: ${Big(totalUncommittedBalance).div(divideBy)} ${symbol}`)
+
+    const answer = await askQuestion(`Are you OK committing ${Big(maxSupportedBalance).div(divideBy)} of your uncommitted balance in ${symbol}? (Y/N)`)
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    await client.walletService.commitBalance({ balance: maxSupportedBalance, symbol })
+    await client.walletService.commitBalance({ balance: maxSupportedBalance.toString(), symbol })
 
     logger.info('Successfully added broker daemon to the kinesis exchange!')
   } catch (e) {
