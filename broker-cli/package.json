@@ -2,7 +2,7 @@
   "name": "broker-cli",
   "version": "0.1.0-alpha-preview",
   "description": "",
-  "main": "index.js",
+  "main": "./bin/kcli",
   "config": {
     "daemon": "kbd",
     "default_currency_symbol": "BTC"
