@@ -22,9 +22,9 @@ This installs `kcli` globally, so you may need to give it additional permissions
 ### Configure the client
 You can set your default configuration by moving the [sample configuration](./sample-.kcli.js) to your home directory and renaming it `.kcli.js`.
 
-You can do this on \*nix by running:
+You can do this in bash by running:
 ```
-npm explore broker-cli -- cp -n ./sample-.kcli.js ~/.kcli.js
+cp -n "$(dirname $(which kcli))/../lib/node_modules/broker-cli/sample-.kcli.js" ~/.kcli.js
 ```
 
 Or if you are already in the `broker-cli` directory,
