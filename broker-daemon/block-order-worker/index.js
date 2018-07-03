@@ -47,6 +47,10 @@ class BlockOrderWorker extends EventEmitter {
     })
   }
 
+  /**
+   * Initialize the BlockOrderWorker by clearing and rebuilding the ordersByHash index
+   * @return {Promise}
+   */
   async initialize () {
     await this.ordersByHash.ensureIndex()
   }
