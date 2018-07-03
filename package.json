@@ -12,6 +12,7 @@
     "prebuild": "bash ./scripts/prebuild.sh",
     "build": "bash ./scripts/build.sh",
     "destroy": "bash ./scripts/destroy.sh",
+    "dist-cli": "npm run broker-proto && bash ./scripts/publish-broker-cli.sh",
     "format": "standard --fix",
     "pretest": "npm run format; exit 0",
     "test": "NODE_PATH=. mocha 'broker-cli/**/*.spec.js' 'broker-daemon/**/*.spec.js'",
@@ -23,7 +24,11 @@
     "fund": "bash ./scripts/fund-simnet-wallet.local.sh",
     "fund-setup": "bash ./scripts/add-simnet-cert.local.sh",
     "fund-confirm": "bash ./scripts/confirm-simnet.sh",
-    "broker-proto": "pbjs -t proto3 admin.proto order.proto orderbook.proto wallet.proto -p ./broker-daemon/proto/src -o ./broker-daemon/proto/broker.proto"
+    "broker-proto": "pbjs -t proto3 admin.proto order.proto orderbook.proto wallet.proto -p ./broker-daemon/proto/src -o ./broker-daemon/proto/broker.proto && cp ./broker-daemon/proto/broker.proto ./broker-cli/proto/broker.proto"
+  },
+  "bin": {
+    "kbd": "./broker-daemon/bin/kbd",
+    "kcli": "./broker-cli/bin/kcli"
   },
   "standard": {
     "env": [

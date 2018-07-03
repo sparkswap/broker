@@ -13,7 +13,6 @@ COPY proto /home/app/proto
 
 # bin/kbd uses these utils for parameter validation
 COPY broker-cli/utils /home/app/broker-cli/utils
-COPY bin/kbd /home/app/bin/kbd
 
 WORKDIR /home/app
 

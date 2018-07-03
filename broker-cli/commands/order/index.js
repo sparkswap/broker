@@ -1,4 +1,4 @@
-const { validations } = require('../utils')
+const { validations } = require('../../utils')
 /**
  * Order
  * @module broker-cli/order
