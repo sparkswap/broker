@@ -1,7 +1,7 @@
 const EventEmitter = require('events')
 const { promisify } = require('util')
 const safeid = require('generate-safe-id')
-const { BlockOrder, Order } = require('../models')
+const { BlockOrder, Order, Fill } = require('../models')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const { BlockOrderNotFoundError } = require('./errors')
 const { Big, getRecords } = require('../utils')
@@ -23,6 +23,8 @@ class BlockOrderWorker extends EventEmitter {
     super()
     this.orderbooks = orderbooks
     this.store = store
+    this.ordersStore = store.sublevel('orders')
+    this.fillsStore = store.sublevel('fills')
     this.logger = logger
     this.relayer = relayer
     this.engine = engine
@@ -88,8 +90,18 @@ class BlockOrderWorker extends EventEmitter {
     const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
 
     const { relayer, engine, logger } = this
-    const openOrders = await OrderStateMachine.getAll({ store: this.store.sublevel(blockOrder.id).sublevel('orders'), relayer, engine, logger })
-    const fills = await FillStateMachine.getAll({ store: this.store.sublevel(blockOrder.id).sublevel('fills'), relayer, engine, logger })
+    const openOrders = await OrderStateMachine.getAll(
+      { store: this.ordersStore, relayer, engine, logger },
+      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
+      // its prefix range.
+      Order.rangeForBlockOrder(blockOrder.id)
+    )
+    const fills = await FillStateMachine.getAll(
+      { store: this.fillsStore, relayer, engine, logger },
+      // limit the fills we retrieve to those that belong to this blockOrder, i.e. those that are in
+      // its prefix range.
+      Fill.rangeForBlockOrder(blockOrder.id)
+    )
 
     blockOrder.openOrders = openOrders
     blockOrder.fills = fills
@@ -116,12 +128,17 @@ class BlockOrderWorker extends EventEmitter {
     }
 
     const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
-    const orderStore = this.store.sublevel(blockOrder.id).sublevel('orders')
 
-    const orders = await getRecords(orderStore, (key, value) => {
-      const { order, state } = JSON.parse(value)
-      return { order: Order.fromObject(key, order), state }
-    })
+    const orders = await getRecords(
+      this.ordersStore,
+      (key, value) => {
+        const { order, state } = JSON.parse(value)
+        return { order: Order.fromObject(key, order), state }
+      },
+      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
+      // its prefix range.
+      Order.rangeForBlockOrder(blockOrder.id)
+    )
 
     this.logger.info(`Found ${orders.length} orders associated with Block Order ${blockOrder.id}`)
 
@@ -189,6 +206,7 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
 
+    // TODO: fail the remaining orders that are tied to this block order?
     blockOrder.fail()
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
@@ -274,7 +292,7 @@ class BlockOrderWorker extends EventEmitter {
 
     // state machine params
     const { relayer, engine, logger } = this
-    const store = this.store.sublevel(blockOrder.id).sublevel('orders')
+    const store = this.ordersStore
 
     this.logger.info('Creating order for BlockOrder', { blockOrderId: blockOrder.id })
 
@@ -288,6 +306,7 @@ class BlockOrderWorker extends EventEmitter {
           this.failBlockOrder(blockOrder.id, err)
         }
       },
+      blockOrder.id,
       { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
     )
 
@@ -309,7 +328,7 @@ class BlockOrderWorker extends EventEmitter {
 
     // state machine params
     const { relayer, engine, logger } = this
-    const store = this.store.sublevel(blockOrder.id).sublevel('fills')
+    const store = this.fillsStore
 
     const promisedFills = orders.map((order, index) => {
       const depthRemaining = targetDepth.minus(currentDepth)
@@ -336,6 +355,7 @@ class BlockOrderWorker extends EventEmitter {
             this.failBlockOrder(blockOrder.id, err)
           }
         },
+        blockOrder.id,
         order,
         { fillAmount }
       )
