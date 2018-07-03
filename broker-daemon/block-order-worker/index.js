@@ -4,7 +4,7 @@ const safeid = require('generate-safe-id')
 const { BlockOrder, Order, Fill } = require('../models')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const { BlockOrderNotFoundError } = require('./errors')
-const { Big, getRecords } = require('../utils')
+const { Big, getRecords, SublevelIndex } = require('../utils')
 
 /**
  * @class Create and work Block Orders
@@ -24,6 +24,16 @@ class BlockOrderWorker extends EventEmitter {
     this.orderbooks = orderbooks
     this.store = store
     this.ordersStore = store.sublevel('orders')
+
+    // create an index for the ordersStore so that orders can be retrieved by their swapHash
+    this.ordersByHash = new SublevelIndex(
+      this.ordersStore,
+      'ordersByHash',
+      // index by swap hash
+      (key, value) => Order.fromStorage(key, value).swapHash,
+      // only index orders that have a swap hash defined
+      (key, value) => !!Order.fromStorage(key, value).swapHash
+    )
     this.fillsStore = store.sublevel('fills')
     this.logger = logger
     this.relayer = relayer
