@@ -19,6 +19,7 @@ services:
       # - GRPC_TRACE=all
       - NODE_PATH=.
       - RPC_ADDRESS=0.0.0.0:27492
+      - INTERCHAIN_ROUTER_ADDRESS=0.0.0.0:40369
       - DATA_DIR=/data
       - LND_HOST=lnd_btc:10009
       - LND_TLS_CERT=/shared/lnd-engine-tls.cert

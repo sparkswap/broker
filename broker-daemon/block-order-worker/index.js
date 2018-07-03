@@ -24,7 +24,6 @@ class BlockOrderWorker extends EventEmitter {
     this.orderbooks = orderbooks
     this.store = store
     this.ordersStore = store.sublevel('orders')
-
     // create an index for the ordersStore so that orders can be retrieved by their swapHash
     this.ordersByHash = new SublevelIndex(
       this.ordersStore,
@@ -220,7 +219,7 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
 
-    // TODO: fail the remaining orders that are tied to this block order?
+    // TODO: fail the remaining orders that are tied to this block order in the ordersStore?
     blockOrder.fail()
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)

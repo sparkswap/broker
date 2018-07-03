@@ -273,6 +273,8 @@ const FillStateMachine = StateMachine.factory({
 
 /**
  * Instantiate and create a fill
+ * This method is a pure pass through to the state machine, so any parameter checking should happen in
+ * `data` and `onBeforeCreate`, respectively.
  * @param  {Object} initParams      Params to pass to the FillStateMachine constructor (also to the `data` function)
  * @param  {Object} ...createParams Params to pass to the `create` method (also to the `onBeforeCreate` method)
  * @return {Promise<FillStateMachine>}

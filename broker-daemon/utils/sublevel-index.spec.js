@@ -150,6 +150,13 @@ describe('Index', () => {
 
         expect(index._extractBaseKey(`${indexValue}:${baseKey}`)).to.be.eql(baseKey)
       })
+
+      it('extracts base keys that contain the delimiter', () => {
+        const baseKey = 'hello:world'
+        const indexValue = 'world'
+
+        expect(index._extractBaseKey(`${indexValue}:${baseKey}`)).to.be.eql(baseKey)
+      })
     })
 
     describe('#_createIndexKey', () => {
@@ -164,6 +171,28 @@ describe('Index', () => {
 
         expect(getValue).to.have.been.calledOnce()
         expect(getValue).to.have.been.calledWith(baseKey, baseValue)
+        expect(indexKey).to.be.eql(`${indexValue}:${baseKey}`)
+      })
+
+      it('throws if the index value contains the delimiter', () => {
+        const baseKey = 'hello'
+        const baseValue = '{"there": "world"}'
+        const indexValue = 'world:there'
+
+        getValue.returns(indexValue)
+
+        expect(() => index._createIndexKey(baseKey, baseValue)).to.throw()
+      })
+
+      it('constructs index keys in which the base key contains the delimiter', () => {
+        const baseKey = 'hello:world'
+        const baseValue = '{"there": "world"}'
+        const indexValue = 'world'
+
+        getValue.returns(indexValue)
+
+        const indexKey = index._createIndexKey(baseKey, baseValue)
+
         expect(indexKey).to.be.eql(`${indexValue}:${baseKey}`)
       })
     })
@@ -192,10 +221,11 @@ describe('Index', () => {
     describe('#_isMarkedForDeletion', () => {
       it('determines if the key is marked for deletion', () => {
         const baseKey = 'hello'
+        const indexKey = `world:${baseKey}`
 
         index._deleted[baseKey] = true
 
-        expect(index._isMarkedForDeletion(baseKey)).to.be.equal(true)
+        expect(index._isMarkedForDeletion(indexKey)).to.be.equal(true)
       })
     })
 
