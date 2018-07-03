@@ -80,29 +80,49 @@ class Index {
     }))
   }
 
-  /** x
+  /**
    * Get the key corresponding to the base store from the index key
+   * @example
+   * // returns 'abc:123'
+   * index._extractBaseKey('xyz:abc:123')
+   * @example
+   * // returns '123'
+   * index._extractBaseKey('xyz:123')
    * @param  {String} indexKey Key of the object in the index
    * @return {String}          Key of the object in the base store
    */
   _extractBaseKey (indexKey) {
+    // in most cases, we will have only two chunks: the indexValue and the baseKey
+    // However, if the base key contains `this.delimiter`, we will end up with more.
+    // e.g. if the indexKey is `'xyz:abc:123'`, the chunks will be `['xyz', 'abc', '123']`
     const chunks = indexKey.split(this.delimiter)
     // remove the index value, which is the first value that is delimited
+    // e.g. `['xyz', 'abc', '123']` => `['abc', '123']`
     const baseKeyChunks = chunks.slice(1)
     // rejoin the remaining chunks in case the base key contained the delimiter
+    // e.g. `['abc', '123']` => `abc:123`
     return baseKeyChunks.join(this.delimiter)
   }
 
   /**
    * Create an index key
+   * @example
+   * index.getValue = (baseKey, baseValue) => return baseValue
+   * // returns 'xyz:abc'
+   * index._createIndexKey('abc', 'xyz')
+   * // returns 'xyz:abc:123'
+   * index._createIndexKey('abc:123', 'xyz')
    * @param  {String}   baseKey   Key of the object in the base store
    * @param  {String}   baseValue Value of the object in the base store
    * @param  {Function} getValue
    * @return {String}
+   * @throws {Error} If the derived index value contains `this.delimiter`
    */
   _createIndexKey (baseKey, baseValue) {
     const indexValue = this.getValue(baseKey, baseValue)
 
+    // if the index value were to contain the delimiter, we would have no way
+    // of knowing where the index value ends and the base key begins
     if (indexValue && indexValue.indexOf(this.delimiter) !== -1) {
       throw new Error(`Index values cannot contain the delimiter (${this.delimiter}). If your index value requires it, change the delimiter of the index and rebuild it.`)
     }
