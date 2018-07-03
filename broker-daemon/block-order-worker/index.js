@@ -48,6 +48,10 @@ class BlockOrderWorker extends EventEmitter {
     })
   }
 
+  async initialize () {
+    await this.ordersByHash.ensureIndex()
+  }
+
   /**
    * Create a new block order
    * @param  {String} options.marketName  Name of the market to creat the block order in (e.g. BTC/LTC)
