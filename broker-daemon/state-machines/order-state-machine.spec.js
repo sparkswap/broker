@@ -331,8 +331,7 @@ describe('OrderStateMachine', () => {
     let payInvoiceStub
     let createRefundInvoiceStub
     let placeOrderStub
-    let subscribeFillStub
-    let subscribeFillStreamStub
+    let placeOrderStreamStub
     let invoice
     let feePaymentRequest
     let depositPaymentRequest
@@ -342,11 +341,10 @@ describe('OrderStateMachine', () => {
       invoice = '1234'
       payInvoiceStub = sinon.stub()
       createRefundInvoiceStub = sinon.stub().returns(invoice)
-      placeOrderStub = sinon.stub()
-      subscribeFillStreamStub = {
+      placeOrderStreamStub = {
         on: sinon.stub()
       }
-      subscribeFillStub = sinon.stub().returns(subscribeFillStreamStub)
+      placeOrderStub = sinon.stub().returns(placeOrderStreamStub)
       feePaymentRequest = 'fee'
       depositPaymentRequest = 'deposit'
       orderId = '1234'
@@ -355,8 +353,7 @@ describe('OrderStateMachine', () => {
       engine = { payInvoice: payInvoiceStub, createRefundInvoice: createRefundInvoiceStub }
       relayer = {
         makerService: {
-          placeOrder: placeOrderStub,
-          subscribeFill: subscribeFillStub
+          placeOrder: placeOrderStub
         }
       }
 
@@ -405,21 +402,9 @@ describe('OrderStateMachine', () => {
       return expect(osm.place()).to.eventually.be.rejectedWith('Cant pay invoices because deposit')
     })
 
-    it('does not subscribe to fills for orders that fail', async () => {
-      placeOrderStub.rejects(new Error('fake error'))
-
-      expect(subscribeFillStub).to.not.have.been.called()
-    })
-
-    it('subscribes to fills on the relayer', async () => {
-      await osm.place()
-      expect(subscribeFillStub).to.have.been.calledOnce()
-      expect(subscribeFillStub).to.have.been.calledWith(sinon.match({ orderId }))
-    })
-
-    it('rejects on error from the relayer subscribe fill hook', async () => {
+    it('rejects on error from the relayer place order hook', async () => {
       osm.reject = sinon.stub()
-      subscribeFillStreamStub.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
+      placeOrderStreamStub.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
 
       await osm.place()
 
@@ -432,7 +417,7 @@ describe('OrderStateMachine', () => {
 
     it('cancels the order when the order is in a cancelled state', async () => {
       osm.tryTo = sinon.stub()
-      subscribeFillStreamStub.on.withArgs('data').callsArgWithAsync(1, { orderStatus: 'CANCELLED' })
+      placeOrderStreamStub.on.withArgs('data').callsArgWithAsync(1, { orderStatus: 'CANCELLED' })
 
       await osm.place()
       await delay(10)
@@ -445,8 +430,8 @@ describe('OrderStateMachine', () => {
       const swapHash = 'asofijasfd'
       const fillAmount = '1000'
       osm.order.setFilledParams = sinon.stub()
-      subscribeFillStreamStub.on.withArgs('data').callsArgWithAsync(1, { fill: { swapHash, fillAmount } })
-
+      placeOrderStreamStub.on.withArgs('data').callsArgWithAsync(1, { fill: { swapHash, fillAmount } })
+      osm.tryTo = sinon.stub()
       await osm.place()
       await delay(10)
 
@@ -457,7 +442,7 @@ describe('OrderStateMachine', () => {
     it('executes the order after being filled', async () => {
       osm.order.setFilledParams = sinon.stub()
       osm.tryTo = sinon.stub()
-      subscribeFillStreamStub.on.withArgs('data').callsArgWithAsync(1, { fill: {} })
+      placeOrderStreamStub.on.withArgs('data').callsArgWithAsync(1, { fill: {} })
 
       await osm.place()
       await delay(10)
