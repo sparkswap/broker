@@ -2,11 +2,33 @@ const Order = require('./order')
 const { Big } = require('../utils')
 
 /**
+ * Delimiter for the block order id and fill id when storing fills
+ * @type {String}
+ * @constant
+ */
+const DELIMITER = ':'
+
+/**
+ * Lower bound for leveldb ranged queries
+ * @type {String}
+ * @constant
+ */
+const LOWER_BOUND = '\x00'
+
+/**
+ * Upper bound for leveldb ranged queries
+ * @type {String}
+ * @constant
+ */
+const UPPER_BOUND = '\uffff'
+
+/**
  * @class Fill that we create on the Relayer
  */
 class Fill {
   /**
    * Create a fill for an existing order
+   * @param  {String} blockOrderId        Id of the block order this fill is associated with
    * @param  {String} order.orderId       Unique ID assigned by the relayer to identify an order
    * @param  {String} order.baseSymbol    Currency symbol for the base currency in the market, e.g. BTC
    * @param  {String} order.counterSymbol Currency symbol for the counter or quote currency in the market, e.g. LTC
@@ -17,7 +39,9 @@ class Fill {
    * @param  {String} fill.takerPayTo     address for the taker
    * @return {Fill}                       Fill instance
    */
-  constructor ({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerPayTo }) {
+  constructor (blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerPayTo }) {
+    this.blockOrderId = blockOrderId
+
     this.order = {
       orderId,
       baseSymbol,
@@ -159,10 +183,16 @@ class Fill {
 
   /**
    * Get the unique key that this object can be stored with
-   * @return {String} Unique key for storage. In the case of an order, its Relayer-assigned orderId
+   * It is prefixed by the blockOrderId so that it can be retrieved easily
+   * @return {String} Unique key for storage. In the case of a fill it is a combination of the blockOrderId and Relayer-assigned fillId
    */
   get key () {
-    return this.fillId
+    // if either part of our key is undefined we return undefined so as not to create
+    // a record with a bad key (e.g. no fillId or no blockOrderId)
+    if (!this.fillId || !this.blockOrderId) {
+      return undefined
+    }
+    return `${this.blockOrderId}${DELIMITER}${this.fillId}`
   }
 
   /**
@@ -225,17 +255,19 @@ class Fill {
 
   /**
    * Create an instance of an fill from an object representation
-   * @param  {String} key         Unique key for the fill, i.e. its `fillId`
+   * @param  {String} key         Unique key for the fill, i.e. its `blockOrderId` and `fillId`
    * @param  {Object} valueObject Plain object representation of the fill
    * @return {Fill}              Inflated fill object
    */
   static fromObject (key, valueObject) {
-    const fillId = key
+    // keys are the unique id for the object (orderId) prefixed by the object they belong to (blockOrderId)
+    // and are separated by the delimiter (:)
+    const [ blockOrderId, fillId ] = key.split(DELIMITER)
 
     const { order: { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, fillAmount, takerPayTo, ...otherParams } = valueObject
 
     // instantiate with the correct set of params
-    const fill = new this({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerPayTo })
+    const fill = new this(blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerPayTo })
 
     const { swapHash, feePaymentRequest, depositPaymentRequest, payTo } = otherParams
 
@@ -243,6 +275,20 @@ class Fill {
     Object.assign(fill, { fillId, swapHash, feePaymentRequest, depositPaymentRequest, payTo })
 
     return fill
+  }
+
+  /**
+   * Create a set of options that can be passed to a LevelUP `createReadStream` call
+   * that limits the set to fills that belong to the given blockOrderId.
+   * This works because all fills are prefixed with their blockOrderId and the Delimiter.
+   * @param  {String} Id of of the block order to create a range for
+   * @return {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
+   */
+  static rangeForBlockOrder (blockOrderId) {
+    return {
+      gte: `${blockOrderId}${DELIMITER}${LOWER_BOUND}`,
+      lte: `${blockOrderId}${DELIMITER}${UPPER_BOUND}`
+    }
   }
 }
 

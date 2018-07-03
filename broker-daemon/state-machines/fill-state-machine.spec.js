@@ -170,6 +170,7 @@ describe('FillStateMachine', () => {
 
   describe('#create', () => {
     let fsm
+    let blockOrderId
     let orderParams
     let fillParams
     let setCreatedParams
@@ -194,6 +195,7 @@ describe('FillStateMachine', () => {
       Fill.prototype.setSwapHash = sinon.stub()
       relayer.takerService.createFill.resolves(createFillResponse)
       fsm = new FillStateMachine({ store, logger, relayer, engine })
+      blockOrderId = 'blockid'
       orderParams = {
         orderId: 'faklsadfjo',
         side: 'BID',
@@ -211,7 +213,7 @@ describe('FillStateMachine', () => {
     })
 
     it('creates a fill model', async () => {
-      await fsm.create(orderParams, fillParams)
+      await fsm.create(blockOrderId, orderParams, fillParams)
 
       expect(Fill).to.have.been.calledOnce()
       expect(Fill).to.have.been.calledWithNew()
@@ -220,16 +222,16 @@ describe('FillStateMachine', () => {
     })
 
     it('passes the params to the fill model', async () => {
-      await fsm.create(orderParams, fillParams)
+      await fsm.create(blockOrderId, orderParams, fillParams)
 
-      expect(Fill).to.have.been.calledWith(sinon.match(orderParams), sinon.match(fillParams))
+      expect(Fill).to.have.been.calledWith(blockOrderId, sinon.match(orderParams), sinon.match(fillParams))
     })
 
     it('creates a swap hash for the fill', async () => {
       const fakeHash = Buffer.from('fakeHash')
       engine.createSwapHash.resolves(fakeHash)
 
-      await fsm.create(orderParams, fillParams)
+      await fsm.create(blockOrderId, orderParams, fillParams)
 
       expect(engine.createSwapHash).to.have.been.calledOnce()
       expect(engine.createSwapHash).to.have.been.calledWith(orderParams.orderId, '900')
@@ -243,28 +245,28 @@ describe('FillStateMachine', () => {
       }
       Fill.prototype.paramsForCreate = fakeParams
 
-      await fsm.create(orderParams, fillParams)
+      await fsm.create(blockOrderId, orderParams, fillParams)
 
       expect(relayer.takerService.createFill).to.have.been.calledOnce()
       expect(relayer.takerService.createFill).to.have.been.calledWith(fakeParams)
     })
 
     it('updates the fill with returned params', async () => {
-      await fsm.create(orderParams, fillParams)
+      await fsm.create(blockOrderId, orderParams, fillParams)
 
       expect(setCreatedParams).to.have.been.calledOnce()
       expect(setCreatedParams).to.have.been.calledWith(sinon.match(createFillResponse))
     })
 
     it('saves a copy in the store', async () => {
-      await fsm.create(orderParams, fillParams)
+      await fsm.create(blockOrderId, orderParams, fillParams)
 
       expect(store.put).to.have.been.calledOnce()
       expect(store.put).to.have.been.calledWith(fakeKey, sinon.match('"my":"object"'))
     })
 
     it('saves the current state in the store', async () => {
-      await fsm.create(orderParams, fillParams)
+      await fsm.create(blockOrderId, orderParams, fillParams)
 
       expect(store.put).to.have.been.calledOnce()
       expect(store.put).to.have.been.calledWith(fakeKey, sinon.match('"state":"created"'))
@@ -273,14 +275,14 @@ describe('FillStateMachine', () => {
     it('throws an error in creation on the relayer fails', () => {
       relayer.takerService.createFill.rejects(new Error('fake error'))
 
-      return expect(fsm.create(orderParams, fillParams)).to.be.rejectedWith(Error)
+      return expect(fsm.create(blockOrderId, orderParams, fillParams)).to.be.rejectedWith(Error)
     })
 
     it('cancels the transition if the creation on the relayer fails', async () => {
       relayer.takerService.createFill.rejects()
 
       try {
-        await fsm.create(orderParams, fillParams)
+        await fsm.create(blockOrderId, orderParams, fillParams)
       } catch (e) {
         expect(fsm.state).to.be.equal('none')
       }
@@ -290,7 +292,7 @@ describe('FillStateMachine', () => {
       relayer.takerService.createFill.rejects()
 
       try {
-        await fsm.create(orderParams, fillParams)
+        await fsm.create(blockOrderId, orderParams, fillParams)
       } catch (e) {
         return expect(store.put).to.not.have.been.called
       }
@@ -298,7 +300,7 @@ describe('FillStateMachine', () => {
 
     it('automatically attempts to fill the order after fill creation', async () => {
       fsm.tryTo = sinon.stub()
-      await fsm.create(orderParams, fillParams)
+      await fsm.create(blockOrderId, orderParams, fillParams)
 
       await delay(10)
       expect(fsm.tryTo).to.have.been.calledOnce()
@@ -542,6 +544,7 @@ describe('FillStateMachine', () => {
   })
 
   describe('::create', () => {
+    let blockOrderId
     let orderParams
     let fillParams
     let fakeKey
@@ -556,6 +559,7 @@ describe('FillStateMachine', () => {
         depositPaymentRequest: 'lnbcasd9fuas90f'
       }
       relayer.takerService.createFill.resolves(createFillResponse)
+      blockOrderId = 'blockid'
       orderParams = {
         side: 'BID',
         baseSymbol: 'ABC',
@@ -581,14 +585,14 @@ describe('FillStateMachine', () => {
     })
 
     it('initializes a state machine', async () => {
-      const fsm = await FillStateMachine.create({ store, logger, relayer, engine }, orderParams, fillParams)
+      const fsm = await FillStateMachine.create({ store, logger, relayer, engine }, blockOrderId, orderParams, fillParams)
 
       expect(fsm).to.be.instanceOf(FillStateMachine)
       expect(fsm).to.have.property('store', store)
     })
 
     it('runs a create transition on the state machine', async () => {
-      const fsm = await FillStateMachine.create({ store, logger, relayer, engine }, orderParams, fillParams)
+      const fsm = await FillStateMachine.create({ store, logger, relayer, engine }, blockOrderId, orderParams, fillParams)
 
       expect(fsm.state).to.be.equal('created')
       expect(store.put).to.have.been.calledOnce()

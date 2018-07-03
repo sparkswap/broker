@@ -124,6 +124,7 @@ const FillStateMachine = StateMachine.factory({
      * on the Relayer fails.
      *
      * @param  {Object} lifecycle           Lifecycle object passed by javascript-state-machine
+     * @param  {String} blockOrderid        Id of the block order that this fill belongs to
      * @param  {String} order.orderId       Relayer-assigned unique ID for the order being filled
      * @param  {String} order.side          Side of the market the order is on (i.e. BID or ASK)
      * @param  {String} order.baseSymbol    Base symbol (e.g. BTC)
@@ -133,9 +134,9 @@ const FillStateMachine = StateMachine.factory({
      * @param  {String} fill.fillAmount     Amount of base currency (in base units) of the order to fill
      * @return {void}
      */
-    onBeforeCreate: async function (lifecycle, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
+    onBeforeCreate: async function (lifecycle, blockOrderId, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
       const takerPayTo = `ln:${await this.engine.getPublicKey()}`
-      this.fill = new Fill({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerPayTo })
+      this.fill = new Fill(blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerPayTo })
 
       const { inboundAmount } = this.fill
 
@@ -272,14 +273,15 @@ const FillStateMachine = StateMachine.factory({
 
 /**
  * Instantiate and create a fill
- * @param  {Object} initParams   Params to pass to the FillStateMachine constructor (also to the `data` function)
- * @param  {Object} orderParams  Params for the order to pass to the create method (also to the `onBeforeCreate` method)
- * @param  {Object} fillParams   Params for the fill to pass to the create method (also to the `onBeforeCreate` method)
+ * This method is a pure pass through to the state machine, so any parameter checking should happen in
+ * `data` and `onBeforeCreate`, respectively.
+ * @param  {Object} initParams      Params to pass to the FillStateMachine constructor (also to the `data` function)
+ * @param  {Object} ...createParams Params to pass to the `create` method (also to the `onBeforeCreate` method)
  * @return {Promise<FillStateMachine>}
  */
-FillStateMachine.create = async function (initParams, orderParams, fillParams) {
+FillStateMachine.create = async function (initParams, ...createParams) {
   const fsm = new FillStateMachine(initParams)
-  await fsm.tryTo('create', orderParams, fillParams)
+  await fsm.tryTo('create', ...createParams)
 
   return fsm
 }

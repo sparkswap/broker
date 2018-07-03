@@ -192,6 +192,7 @@ describe('OrderStateMachine', () => {
 
   describe('#create', () => {
     let osm
+    let blockOrderId
     let params
     let setCreatedParams
     let fakeKey
@@ -214,6 +215,7 @@ describe('OrderStateMachine', () => {
       }
       relayer.makerService.createOrder.resolves(createOrderResponse)
       osm = new OrderStateMachine({ store, logger, relayer, engine })
+      blockOrderId = 'blockid'
       params = {
         side: 'BID',
         baseSymbol: 'ABC',
@@ -224,7 +226,7 @@ describe('OrderStateMachine', () => {
     })
 
     it('creates an order model', async () => {
-      await osm.create(params)
+      await osm.create(blockOrderId, params)
 
       expect(Order).to.have.been.calledOnce()
       expect(Order).to.have.been.calledWithNew()
@@ -233,19 +235,19 @@ describe('OrderStateMachine', () => {
     })
 
     it('passes the params to the order model', async () => {
-      await osm.create(params)
+      await osm.create(blockOrderId, params)
 
-      expect(Order).to.have.been.calledWith(sinon.match(params))
+      expect(Order).to.have.been.calledWith(blockOrderId, sinon.match(params))
     })
 
     it('creates a payTo for the order', async () => {
       const fakeKey = 'mykey'
       engine.getPublicKey.resolves(fakeKey)
 
-      await osm.create(params)
+      await osm.create(blockOrderId, params)
 
       expect(engine.getPublicKey).to.have.been.calledOnce()
-      expect(Order).to.have.been.calledWith(sinon.match({ payTo: `ln:${fakeKey}` }))
+      expect(Order).to.have.been.calledWith(sinon.match.any, sinon.match({ payTo: `ln:${fakeKey}` }))
     })
 
     xit('creates an ownerId for the order')
@@ -256,14 +258,14 @@ describe('OrderStateMachine', () => {
       }
       Order.prototype.paramsForCreate = fakeParams
 
-      await osm.create(params)
+      await osm.create(blockOrderId, params)
 
       expect(relayer.makerService.createOrder).to.have.been.calledOnce()
       expect(relayer.makerService.createOrder).to.have.been.calledWith(fakeParams)
     })
 
     it('updates the order with returned params', async () => {
-      await osm.create(params)
+      await osm.create(blockOrderId, params)
 
       expect(setCreatedParams).to.have.been.calledOnce()
       expect(setCreatedParams).to.have.been.calledWith(sinon.match({
@@ -274,14 +276,14 @@ describe('OrderStateMachine', () => {
     })
 
     it('saves a copy in the store', async () => {
-      await osm.create(params)
+      await osm.create(blockOrderId, params)
 
       expect(store.put).to.have.been.calledOnce()
       expect(store.put).to.have.been.calledWith(fakeKey, sinon.match('"my":"object"'))
     })
 
     it('saves the current state in the store', async () => {
-      await osm.create(params)
+      await osm.create(blockOrderId, params)
 
       expect(store.put).to.have.been.calledOnce()
       expect(store.put).to.have.been.calledWith(fakeKey, sinon.match('"state":"created"'))
@@ -290,14 +292,14 @@ describe('OrderStateMachine', () => {
     it('throws an error in creation on the relayer fails', () => {
       relayer.makerService.createOrder.rejects(new Error('fake error'))
 
-      return expect(osm.create(params)).to.be.rejectedWith(Error)
+      return expect(osm.create(blockOrderId, params)).to.be.rejectedWith(Error)
     })
 
     it('cancels the transition if the creation on the relayer fails', async () => {
       relayer.makerService.createOrder.rejects()
 
       try {
-        await osm.create(params)
+        await osm.create(blockOrderId, params)
       } catch (e) {
         expect(osm.state).to.be.equal('none')
       }
@@ -307,7 +309,7 @@ describe('OrderStateMachine', () => {
       relayer.makerService.createOrder.rejects()
 
       try {
-        await osm.create(params)
+        await osm.create(blockOrderId, params)
       } catch (e) {
         return expect(store.put).to.not.have.been.called
       }
@@ -315,7 +317,7 @@ describe('OrderStateMachine', () => {
 
     it('automatically attempts to place an order after creation', async () => {
       osm.tryTo = sinon.stub()
-      await osm.create(params)
+      await osm.create(blockOrderId, params)
 
       await delay(10)
       expect(osm.tryTo).to.have.been.calledOnce()
@@ -611,6 +613,7 @@ describe('OrderStateMachine', () => {
   })
 
   describe('::create', () => {
+    let blockOrderId
     let params
     let fakeKey
     let fakeValueObject
@@ -618,6 +621,7 @@ describe('OrderStateMachine', () => {
     let createOrderResponse
 
     beforeEach(() => {
+      blockOrderId = 'blockid'
       params = {
         side: 'BID',
         baseSymbol: 'ABC',
@@ -642,14 +646,14 @@ describe('OrderStateMachine', () => {
     })
 
     it('initializes a state machine', async () => {
-      const osm = await OrderStateMachine.create({ store, logger, relayer, engine }, params)
+      const osm = await OrderStateMachine.create({ store, logger, relayer, engine }, blockOrderId, params)
 
       expect(osm).to.be.instanceOf(OrderStateMachine)
       expect(osm).to.have.property('store', store)
     })
 
     it('runs a create transition on the state machine', async () => {
-      const osm = await OrderStateMachine.create({ store, logger, relayer, engine }, params)
+      const osm = await OrderStateMachine.create({ store, logger, relayer, engine }, blockOrderId, params)
 
       expect(osm.state).to.be.equal('created')
       expect(store.put).to.have.been.calledOnce()
