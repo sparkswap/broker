@@ -3,13 +3,15 @@ const sublevel = require('level-sublevel')
 const EventEmitter = require('events')
 
 const GrpcServer = require('./grpc-server')
+const InterchainRouter = require('./interchain-router')
 const { logger } = require('./utils')
 const CONFIG = require('./config')
 
 const {
   RPC_ADDRESS,
   DATA_DIR,
-  MARKETS
+  MARKETS,
+  INTERCHAIN_ROUTER_ADDRESS
 } = process.env
 
 const ENGINE_TYPE = process.env.ENGINE_TYPE || 'lnd'
@@ -28,10 +30,11 @@ class BrokerDaemon {
    * @param {String} dataDir data directory path
    * @param
    */
-  constructor (rpcAddress, dataDir, markets) {
+  constructor (rpcAddress, dataDir, markets, interchainRouterAddress) {
     this.rpcAddress = rpcAddress || RPC_ADDRESS || '0.0.0.0:27492'
     this.dataDir = dataDir || DATA_DIR || '~/.kinesis/data'
     this.markets = markets || MARKETS || ''
+    this.interchainRouterAddress = interchainRouterAddress || INTERCHAIN_ROUTER_ADDRESS || '0.0.0.0:40369'
 
     this.engineType = ENGINE_TYPE
     this.exchangeRpcHost = EXCHANGE_RPC_HOST
@@ -43,6 +46,7 @@ class BrokerDaemon {
     this.store = sublevel(level(this.dataDir))
     this.eventHandler = new EventEmitter()
     this.server = new GrpcServer(this.logger, this.store, this.eventHandler)
+    this.interchainRouter = new InterchainRouter(this.logger)
     this.marketNames = (markets || '').split(',').filter(m => m)
 
     this.initialize()
@@ -64,7 +68,9 @@ class BrokerDaemon {
       await this.server.initializeMarkets(this.marketNames)
       logger.info(`Caught up to ${this.marketNames.length} markets`)
       this.server.listen(this.rpcAddress)
-      logger.info(`gRPC server started: Server listening on ${this.rpcAddress}`)
+      logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
+      this.interchainRouter.listen(this.interchainRouterAddress)
+      logger.info(`Interchain Router server started: gRPC Server listening on ${this.interchainRouterAddress}`)
     } catch (e) {
       logger.error('BrokerDaemon failed to initialize', { error: e.toString() })
       logger.error(e)

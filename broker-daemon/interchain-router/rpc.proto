@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+enum Symbol {
+  BTC = 0;
+  LTC = 1;
+}
+
+message GetPreimageRequest {
+ // Hash of the payment for which we want to retrieve the preimage
+ bytes payment_hash = 1;
+
+ // The amount of the payment, in integer units (e.g. Satoshis)
+ int64 amount = 5;
+ // Symbol of the amount
+ Symbol symbol = 6;
+
+ // time lock of the payment extended to us
+ int64 time_lock = 10;
+ // current height of the blockchain
+ int64 best_height = 11;
+}
+
+message GetPreimageResponse {
+  // preimage for the requested payment
+  bytes payment_preimage = 1;
+}
+
+service ExternalPreimageService {
+  rpc GetPreimage (GetPreimageRequest) returns (stream GetPreimageResponse);
+}
