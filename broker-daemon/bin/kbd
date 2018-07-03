@@ -60,7 +60,9 @@ program
       // lndMacaroon
     } = opts
 
-    return new BrokerDaemon(rpcAddress, dataDir, markets, interchainRouterAddress)
+    const brokerDaemon = new BrokerDaemon(rpcAddress, dataDir, markets, interchainRouterAddress)
+    brokerDaemon.initialize()
+    return brokerDaemon
   })
 
 program.parse(process.argv)

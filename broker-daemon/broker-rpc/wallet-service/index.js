@@ -1,5 +1,5 @@
 const { GrpcUnaryMethod } = require('grpc-methods')
-const { loadProto } = require('../utils')
+const { loadProto } = require('../../utils')
 
 const newDepositAddress = require('./new-deposit-address')
 const getBalances = require('./get-balances')
