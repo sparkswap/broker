@@ -24,11 +24,11 @@ const DELIMITER = ':'
 class Index {
   /**
    * Create a new index for sublevel store
-   * @param  {sublevel} store               Sublevel of the base store
-   * @param  {String}   name                Name of the index
-   * @param  {Function} getValue            User-passed function that returns the indexed value
-   * @param  {Function} [filter=returnTrue] Filter for items to not index
-   * @param  {String}   [delimiter=DELIMITER]     Delimiter between the index value and the base key. It should never appear in the base key.
+   * @param  {sublevel} store                 Sublevel of the base store
+   * @param  {String}   name                  Name of the index
+   * @param  {Function} getValue              User-passed function that returns the indexed value
+   * @param  {Function} [filter=returnTrue]   Filter for items to not index
+   * @param  {String}   [delimiter=DELIMITER] Delimiter between the index value and the base key. It may appear in the base key, but cannot appear in the index value produced by `getValue`.
    * @return {Index}
    */
   constructor (store, name, getValue, filter = returnTrue, delimiter = DELIMITER) {
@@ -80,14 +80,17 @@ class Index {
     }))
   }
 
-  /**
+  /** x
    * Get the key corresponding to the base store from the index key
    * @param  {String} indexKey Key of the object in the index
    * @return {String}          Key of the object in the base store
    */
   _extractBaseKey (indexKey) {
     const chunks = indexKey.split(this.delimiter)
-    return chunks[chunks.length - 1]
+    // remove the index value, which is the first value that is delimited
+    const baseKeyChunks = chunks.slice(1)
+    // rejoin the remaining chunks in case the base key contained the delimiter
+    return baseKeyChunks.join(this.delimiter)
   }
 
   /**
@@ -99,6 +102,10 @@ class Index {
    */
   _createIndexKey (baseKey, baseValue) {
     const indexValue = this.getValue(baseKey, baseValue)
+
+    if (indexValue && indexValue.indexOf(this.delimiter) !== -1) {
+      throw new Error(`Index values cannot contain the delimiter (${this.delimiter}). If your index value requires it, change the delimiter of the index and rebuild it.`)
+    }
 
     return `${indexValue}${this.delimiter}${baseKey}`
   }
