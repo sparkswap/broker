@@ -1,11 +1,33 @@
 const { Big } = require('../utils')
 
 /**
+ * Delimiter for the block order id and order when storing orders
+ * @type {String}
+ * @constant
+ */
+const DELIMITER = ':'
+
+/**
+ * Lower bound for leveldb ranged queries
+ * @type {String}
+ * @constant
+ */
+const LOWER_BOUND = '\x00'
+
+/**
+ * Upper bound for leveldb ranged queries
+ * @type {String}
+ * @constant
+ */
+const UPPER_BOUND = '\uffff'
+
+/**
  * @class Order that we create on the Relayer
  */
 class Order {
   /**
    * Create a new order representation
+   * @param  {String} blockOrderId          Id of the block order that this order belongs to
    * @param  {String} options.baseSymbol    Currency symbol for the base currency in the market, e.g. BTC
    * @param  {String} options.counterSymbol Currency symbol for the counter or quote currency in the market, e.g. LTC
    * @param  {String} options.side          Side of the transaction that the order is on, either BID or ASK
@@ -15,7 +37,8 @@ class Order {
    * @param  {String} options.payTo         Identifier on the payment channel network for the maker. e.g. for the lightning network: `ln:{node public key}`
    * @return {Order}                        Order instance
    */
-  constructor ({ baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo }) {
+  constructor (blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo }) {
+    this.blockOrderId = blockOrderId
     this.baseSymbol = baseSymbol
     this.counterSymbol = counterSymbol
     this.baseAmount = baseAmount
@@ -125,10 +148,16 @@ class Order {
 
   /**
    * Get the unique key that this object can be stored with
-   * @return {String} Unique key for storage. In the case of an order, its Relayer-assigned orderId
+   * It is prefixed by the blockOrderId so that it can be retrieved easily
+   * @return {String} Unique key for storage. In the case of an order, it is a combination of the blockOrderId and Relayer-assigned orderId
    */
   get key () {
-    return this.orderId
+    // if either part of our key is undefined we return undefined so as not to create
+    // a record with a bad key (e.g. no orderId or no blockOrderId)
+    if (!this.orderId || !this.blockOrderId) {
+      return undefined
+    }
+    return `${this.blockOrderId}${DELIMITER}${this.orderId}`
   }
 
   /**
@@ -185,17 +214,19 @@ class Order {
 
   /**
    * Create an instance of an order from an object representation
-   * @param  {String} key         Unique key for the order, i.e. its `orderId`
+   * @param  {String} key         Unique key for the order, i.e. its `blockOrderId` and `orderId`
    * @param  {Object} valueObject Plain object representation of the order
    * @return {Order}              Inflated order object
    */
   static fromObject (key, valueObject) {
-    const orderId = key
+    // keys are the unique id for the object (orderId) prefixed by the object they belong to (blockOrderId)
+    // and are separated by the delimiter (:)
+    const [ blockOrderId, orderId ] = key.split(DELIMITER)
 
     const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo, ...otherParams } = valueObject
 
     // instantiate with the correct set of params
-    const order = new this({ baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo })
+    const order = new this(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo })
 
     const { feePaymentRequest, depositPaymentRequest, swapHash, fillAmount } = otherParams
 
@@ -203,6 +234,20 @@ class Order {
     Object.assign(order, { orderId, feePaymentRequest, depositPaymentRequest, swapHash, fillAmount })
 
     return order
+  }
+
+  /**
+   * Create a set of options that can be passed to a LevelUP `createReadStream` call
+   * that limits the set to orders that belong to the given blockOrderid.
+   * This works because all orders are prefixed with their blockOrderId and the Delimiter.
+   * @param  {String} Id of of the block order to create a range for
+   * @return {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
+   */
+  static rangeForBlockOrder (blockOrderId) {
+    return {
+      gte: `${blockOrderId}${DELIMITER}${LOWER_BOUND}`,
+      lte: `${blockOrderId}${DELIMITER}${UPPER_BOUND}`
+    }
   }
 }
 

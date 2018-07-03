@@ -39,10 +39,13 @@ describe('Order', () => {
         ownerId: 'fakeID',
         payTo: 'ln:123019230jasofdij'
       }
+      const blockOrderId = 'blockid'
       const orderId = 'myid'
+      const key = `${blockOrderId}:${orderId}`
 
-      const order = Order.fromStorage(orderId, JSON.stringify(params))
+      const order = Order.fromStorage(key, JSON.stringify(params))
 
+      expect(order).to.have.property('blockOrderId', blockOrderId)
       expect(order).to.have.property('orderId', orderId)
       expect(order).to.have.property('baseSymbol', params.baseSymbol)
       expect(order).to.have.property('counterSymbol', params.counterSymbol)
@@ -65,10 +68,13 @@ describe('Order', () => {
         feePaymentRequest: 'myrequest',
         depositPaymentRequest: 'yourrequest'
       }
+      const blockOrderId = 'blockid'
       const orderId = 'myid'
+      const key = `${blockOrderId}:${orderId}`
 
-      const order = Order.fromStorage(orderId, JSON.stringify(params))
+      const order = Order.fromStorage(key, JSON.stringify(params))
 
+      expect(order).to.have.property('blockOrderId', blockOrderId)
       expect(order).to.have.property('orderId', orderId)
       expect(order).to.have.property('feePaymentRequest', params.feePaymentRequest)
       expect(order).to.have.property('depositPaymentRequest', params.depositPaymentRequest)
@@ -90,10 +96,13 @@ describe('Order', () => {
         ownerId: 'fakeID',
         payTo: 'ln:123019230jasofdij'
       }
+      const blockOrderId = 'blockid'
       const orderId = 'myid'
+      const key = `${blockOrderId}:${orderId}`
 
-      const order = Order.fromObject(orderId, params)
+      const order = Order.fromObject(key, params)
 
+      expect(order).to.have.property('blockOrderId', blockOrderId)
       expect(order).to.have.property('orderId', orderId)
       expect(order).to.have.property('baseSymbol', params.baseSymbol)
       expect(order).to.have.property('counterSymbol', params.counterSymbol)
@@ -116,18 +125,33 @@ describe('Order', () => {
         feePaymentRequest: 'myrequest',
         depositPaymentRequest: 'yourrequest'
       }
+      const blockOrderId = 'blockid'
       const orderId = 'myid'
+      const key = `${blockOrderId}:${orderId}`
 
-      const order = Order.fromObject(orderId, params)
+      const order = Order.fromObject(key, params)
 
+      expect(order).to.have.property('blockOrderId', blockOrderId)
       expect(order).to.have.property('orderId', orderId)
       expect(order).to.have.property('feePaymentRequest', params.feePaymentRequest)
       expect(order).to.have.property('depositPaymentRequest', params.depositPaymentRequest)
     })
   })
 
+  describe('::rangeForBlockOrder', () => {
+    it('creates a range for block orders', () => {
+      const blockOrderId = 'blockid'
+
+      expect(Order.rangeForBlockOrder(blockOrderId)).to.be.eql({
+        gte: 'blockid:' + '\x00',
+        lte: 'blockid:' + '\uffff'
+      })
+    })
+  })
+
   describe('new', () => {
     it('creates an order', () => {
+      const blockOrderId = 'blockid'
       const params = {
         baseSymbol: 'BTC',
         counterSymbol: 'LTC',
@@ -138,7 +162,7 @@ describe('Order', () => {
         payTo: 'ln:123019230jasofdij'
       }
 
-      const order = new Order(params)
+      const order = new Order(blockOrderId, params)
 
       expect(order).to.have.property('baseSymbol', params.baseSymbol)
       expect(order).to.have.property('counterSymbol', params.counterSymbol)
@@ -150,6 +174,7 @@ describe('Order', () => {
     })
 
     it('creates an ask', () => {
+      const blockOrderId = 'blockid'
       const params = {
         baseSymbol: 'BTC',
         counterSymbol: 'LTC',
@@ -160,12 +185,13 @@ describe('Order', () => {
         payTo: 'ln:123019230jasofdij'
       }
 
-      const order = new Order(params)
+      const order = new Order(blockOrderId, params)
 
       expect(order).to.have.property('side', 'ASK')
     })
 
     it('throws if using an invalid side', () => {
+      const blockOrderId = 'blockid'
       const params = {
         baseSymbol: 'BTC',
         counterSymbol: 'LTC',
@@ -177,7 +203,7 @@ describe('Order', () => {
       }
 
       expect(() => {
-        new Order(params) // eslint-disable-line
+        new Order(blockOrderId, params) // eslint-disable-line
       }).to.throw()
     })
   })
@@ -185,8 +211,10 @@ describe('Order', () => {
   describe('instance', () => {
     let params
     let order
+    let blockOrderId
 
     beforeEach(() => {
+      blockOrderId = 'blockid'
       params = {
         baseSymbol: 'BTC',
         counterSymbol: 'LTC',
@@ -197,7 +225,7 @@ describe('Order', () => {
         payTo: 'ln:123019230jasofdij'
       }
 
-      order = new Order(params)
+      order = new Order(blockOrderId, params)
     })
 
     describe('inbound/outbound getters', () => {
@@ -223,7 +251,7 @@ describe('Order', () => {
         const fakeId = 'fakeId'
         order.orderId = fakeId
 
-        expect(order).to.have.property('key', fakeId)
+        expect(order).to.have.property('key', `${blockOrderId}:${fakeId}`)
       })
     })
 
