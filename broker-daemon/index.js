@@ -87,8 +87,13 @@ class BrokerDaemon {
   async initialize () {
     try {
       logger.info(`Initializing ${this.marketNames.length} markets`)
-      await this.initializeMarkets(this.marketNames)
+      logger.info('Initializing BlockOrderWorker')
+      await Promise.all([
+        this.initializeMarkets(this.marketNames),
+        this.blockOrderWorker.initialize()
+      ])
       logger.info(`Caught up to ${this.marketNames.length} markets`)
+      logger.info('BlockOrderWorker initialized')
 
       this.rpcServer.listen(this.rpcAddress)
       logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
