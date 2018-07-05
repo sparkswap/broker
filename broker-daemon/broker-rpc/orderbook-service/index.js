@@ -1,5 +1,5 @@
 const { GrpcServerStreamingMethod } = require('grpc-methods')
-const { loadProto } = require('../utils')
+const { loadProto } = require('../../utils')
 
 const watchMarket = require('./watch-market')
 
