@@ -1,7 +1,7 @@
 const path = require('path')
 const { expect, sinon, rewire } = require('test/test-helper')
 
-const BrokerRPCServer = rewire(path.resolve(__dirname, 'server'))
+const BrokerRPCServer = rewire(path.resolve(__dirname, 'broker-rpc-server'))
 
 describe('BrokerRPCServer', () => {
   let rpcServer
