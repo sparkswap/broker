@@ -1,8 +1,12 @@
 const level = require('level')
 const sublevel = require('level-sublevel')
 const EventEmitter = require('events')
+const LndEngine = require('lnd-engine')
 
-const GrpcServer = require('./grpc-server')
+const RelayerClient = require('./relayer')
+const Orderbook = require('./orderbook')
+const BlockOrderWorker = require('./block-order-worker')
+const BrokerRPCServer = require('./broker-rpc/broker-rpc-server')
 const InterchainRouter = require('./interchain-router')
 const { logger } = require('./utils')
 const CONFIG = require('./config')
@@ -18,24 +22,31 @@ const ENGINE_TYPE = process.env.ENGINE_TYPE || 'lnd'
 const EXCHANGE_RPC_HOST = process.env.EXCHANGE_RPC_HOST || '0.0.0.0:28492'
 const LND_TLS_CERT = process.env.LND_TLS_CERT || '~/.lnd/tls.cert'
 const LND_MACAROON = process.env.LND_MACAROON || '~/.lnd/admin.macaroon'
-const LND_RPC_HOST = process.env.ENGINE_RPC_HOST || '0.0.0.0:10009'
+const LND_RPC_HOST = process.env.LND_HOST || '0.0.0.0:10009'
 
+/**
+ * @class BrokerDaemon is a collection of services to allow a user to run a broker on the Kinesis Network.
+ * It exposes a user-facing RPC server, an interchain router, watches markets on the relayer, and works
+ * block orders in the background.
+ */
 class BrokerDaemon {
   /**
-   * Creates an RPC server with params from kbd cli
+   * Creates a Broker Daemon with params from kbd cli
    *
    * @todo Validation of constructor params
    * @todo put defaults into a defaults.env file
-   * @param {Array<String>} markets
-   * @param {String} dataDir data directory path
-   * @param
+   * @param  {String} rpcAddress              Host and port where the user-facing RPC server should listen
+   * @param  {String} dataDir                 Relative path to a directory where application data should be stored
+   * @param  {String} markets                 Comma-delimited list of market names (e.g. 'BTC/LTC') to support
+   * @param  {String} interchainRouterAddress Host and port where the interchain router should listen
+   * @return {BrokerDaemon}
    */
   constructor (rpcAddress, dataDir, markets, interchainRouterAddress) {
     this.rpcAddress = rpcAddress || RPC_ADDRESS || '0.0.0.0:27492'
     this.dataDir = dataDir || DATA_DIR || '~/.kinesis/data'
     this.markets = markets || MARKETS || ''
+    this.marketNames = (markets || '').split(',').filter(m => m)
     this.interchainRouterAddress = interchainRouterAddress || INTERCHAIN_ROUTER_ADDRESS || '0.0.0.0:40369'
-
     this.engineType = ENGINE_TYPE
     this.exchangeRpcHost = EXCHANGE_RPC_HOST
     this.lndTlsCert = LND_TLS_CERT
@@ -45,36 +56,83 @@ class BrokerDaemon {
     this.logger = logger
     this.store = sublevel(level(this.dataDir))
     this.eventHandler = new EventEmitter()
-    this.server = new GrpcServer(this.logger, this.store, this.eventHandler)
-    this.interchainRouter = new InterchainRouter(this.logger)
-    this.marketNames = (markets || '').split(',').filter(m => m)
+    this.relayer = new RelayerClient()
+    this.engine = new LndEngine(this.lndRpcHost, { logger: this.logger, tlsCertPath: this.lndTlsCert, macaroonPath: this.lndMacaroon })
+    this.orderbooks = new Map()
 
-    this.initialize()
+    this.blockOrderWorker = new BlockOrderWorker({
+      relayer: this.relayer,
+      engine: this.engine,
+      orderbooks: this.orderbooks,
+      store: this.store.sublevel('block-orders'),
+      logger: this.logger
+    })
+    this.rpcServer = new BrokerRPCServer({
+      logger: this.logger,
+      engine: this.engine,
+      relayer: this.relayer,
+      orderbooks: this.orderbooks,
+      blockOrderWorker: this.blockOrderWorker
+    })
+    this.interchainRouter = new InterchainRouter(this.logger)
   }
 
+  /**
+   * Initialize the broker daemon which:
+   * - listens to market events on the Relayer
+   * - Sets up the user-facing RPC Server
+   * - Sets up the Interchain Router
+   * @return {Promise}
+   */
   async initialize () {
     try {
       logger.info(`Initializing ${this.marketNames.length} markets`)
-
-      const currenciesHaveConfig = this.marketNames.every((marketName) => {
-        const symbols = marketName.split('/')
-        return symbols.every(sym => CONFIG.currencies.find(({ symbol }) => symbol === sym.toUpperCase()))
-      })
-
-      if (!currenciesHaveConfig) {
-        throw new Error('Need currency configuration for every inititalized market')
-      }
-
-      await this.server.initializeMarkets(this.marketNames)
+      await this.initializeMarkets(this.marketNames)
       logger.info(`Caught up to ${this.marketNames.length} markets`)
-      this.server.listen(this.rpcAddress)
+
+      this.rpcServer.listen(this.rpcAddress)
       logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
+
       this.interchainRouter.listen(this.interchainRouterAddress)
       logger.info(`Interchain Router server started: gRPC Server listening on ${this.interchainRouterAddress}`)
     } catch (e) {
       logger.error('BrokerDaemon failed to initialize', { error: e.toString() })
       logger.error(e)
     }
+  }
+
+  /**
+   * Listens to the assigned markets
+   *
+   * @param {Array<String>} markets
+   * @returns {Promise<void>} promise that resolves when markets are caught up to the remote
+   * @throws {Error} If markets include a currency with no currency configuration
+   */
+  initializeMarkets (markets) {
+    return Promise.all(markets.map((marketName) => {
+      return this.initializeMarket(marketName)
+    }))
+  }
+
+  /**
+   * Listens to the assigned market
+   *
+   * @param {String} marketName
+   * @returns {Promise<void>} promise that resolves when market is caught up to the remote
+   */
+  async initializeMarket (marketName) {
+    const symbols = marketName.split('/')
+    if (!symbols.every(sym => CONFIG.currencies.find(({ symbol }) => symbol === sym.toUpperCase()))) {
+      throw new Error(`Currency config is required for both symbols of ${marketName}`)
+    }
+
+    if (this.orderbooks.get(marketName)) {
+      this.logger.warn(`initializeMarket: Already have an orderbook for ${marketName}, skipping.`)
+      return
+    }
+
+    this.orderbooks.set(marketName, new Orderbook(marketName, this.relayer, this.store.sublevel(marketName), this.logger))
+    return this.orderbooks.get(marketName).initialize()
   }
 }
 

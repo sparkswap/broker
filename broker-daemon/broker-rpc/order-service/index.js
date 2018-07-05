@@ -1,5 +1,5 @@
 const { GrpcUnaryMethod } = require('grpc-methods')
-const { loadProto } = require('../utils')
+const { loadProto } = require('../../utils')
 
 const createBlockOrder = require('./create-block-order')
 const getBlockOrder = require('./get-block-order')
