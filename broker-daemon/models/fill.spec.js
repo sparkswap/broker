@@ -35,10 +35,13 @@ describe('Fill', () => {
         fillAmount: '9000',
         swapHash: 'asdfasdf'
       }
+      const blockOrderId = 'blockid'
       const fillId = 'myid'
+      const key = `${blockOrderId}:${fillId}`
 
-      const fill = Fill.fromStorage(fillId, JSON.stringify(params))
+      const fill = Fill.fromStorage(key, JSON.stringify(params))
 
+      expect(fill).to.have.property('blockOrderId', blockOrderId)
       expect(fill).to.have.property('fillId', fillId)
       expect(fill).to.have.property('fillAmount', params.fillAmount)
       expect(fill).to.have.property('swapHash', params.swapHash)
@@ -65,9 +68,11 @@ describe('Fill', () => {
         feePaymentRequest: 'myrequest',
         depositPaymentRequest: 'yourrequest'
       }
+      const blockOrderId = 'blockid'
       const fillId = 'myid'
+      const key = `${blockOrderId}:${fillId}`
 
-      const fill = Fill.fromStorage(fillId, JSON.stringify(params))
+      const fill = Fill.fromStorage(key, JSON.stringify(params))
 
       expect(fill).to.have.property('fillId', fillId)
       expect(fill).to.have.property('feePaymentRequest', params.feePaymentRequest)
@@ -93,10 +98,13 @@ describe('Fill', () => {
         fillAmount: '9000',
         swapHash: 'asdfasdf'
       }
+      const blockOrderId = 'blockid'
       const fillId = 'myid'
+      const key = `${blockOrderId}:${fillId}`
 
-      const fill = Fill.fromObject(fillId, params)
+      const fill = Fill.fromObject(key, params)
 
+      expect(fill).to.have.property('blockOrderId', blockOrderId)
       expect(fill).to.have.property('fillId', fillId)
       expect(fill).to.have.property('fillAmount', params.fillAmount)
       expect(fill).to.have.property('swapHash', params.swapHash)
@@ -123,9 +131,11 @@ describe('Fill', () => {
         feePaymentRequest: 'myrequest',
         depositPaymentRequest: 'yourrequest'
       }
+      const blockOrderId = 'blockid'
       const fillId = 'myid'
+      const key = `${blockOrderId}:${fillId}`
 
-      const fill = Fill.fromObject(fillId, params)
+      const fill = Fill.fromObject(key, params)
 
       expect(fill).to.have.property('fillId', fillId)
       expect(fill).to.have.property('feePaymentRequest', params.feePaymentRequest)
@@ -133,8 +143,20 @@ describe('Fill', () => {
     })
   })
 
+  describe('::rangeForBlockOrder', () => {
+    it('creates a range for block orders', () => {
+      const blockOrderId = 'blockid'
+
+      expect(Fill.rangeForBlockOrder(blockOrderId)).to.be.eql({
+        gte: 'blockid:' + '\x00',
+        lte: 'blockid:' + '\uffff'
+      })
+    })
+  })
+
   describe('new', () => {
     it('creates an fill', () => {
+      const blockOrderId = 'blockid'
       const order = {
         orderId: 'fakeId',
         baseSymbol: 'BTC',
@@ -147,8 +169,9 @@ describe('Fill', () => {
         fillAmount: '9000'
       }
 
-      const fill = new Fill(order, params)
+      const fill = new Fill(blockOrderId, order, params)
 
+      expect(fill).to.have.property('blockOrderId', blockOrderId)
       expect(fill).to.have.property('fillAmount', params.fillAmount)
       expect(fill).to.have.property('order')
       expect(fill.order).to.have.property('orderId', order.orderId)
@@ -160,6 +183,7 @@ describe('Fill', () => {
     })
 
     it('throws if using an invalid side', () => {
+      const blockOrderId = 'blockid'
       const order = {
         orderId: '1asdf',
         baseSymbol: 'BTC',
@@ -174,7 +198,7 @@ describe('Fill', () => {
       }
 
       expect(() => {
-        new Fill(order, params) // eslint-disable-line
+        new Fill(blockOrderId, order, params) // eslint-disable-line
       }).to.throw()
     })
   })
@@ -183,8 +207,10 @@ describe('Fill', () => {
     let params
     let fill
     let order
+    let blockOrderId
 
     beforeEach(() => {
+      blockOrderId = 'blockid'
       order = {
         orderId: 'fakeId',
         baseSymbol: 'BTC',
@@ -198,7 +224,7 @@ describe('Fill', () => {
         takerPayTo: 'ln:asdfasdf'
       }
 
-      fill = new Fill(order, params)
+      fill = new Fill(blockOrderId, order, params)
     })
 
     describe('inbound/outbound getters', () => {
@@ -234,7 +260,7 @@ describe('Fill', () => {
         const fakeId = 'fakeId'
         fill.fillId = fakeId
 
-        expect(fill).to.have.property('key', fakeId)
+        expect(fill).to.have.property('key', `${blockOrderId}:${fakeId}`)
       })
     })
 

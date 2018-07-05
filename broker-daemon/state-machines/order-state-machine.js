@@ -131,6 +131,7 @@ const OrderStateMachine = StateMachine.factory({
      * on the Relayer fails.
      *
      * @param  {Object} lifecycle             Lifecycle object passed by javascript-state-machine
+     * @param  {String} blockOrderid          Id of the block order that the order belongs to
      * @param  {String} options.side          Side of the market being taken (i.e. BID or ASK)
      * @param  {String} options.baseSymbol    Base symbol (e.g. BTC)
      * @param  {String} options.counterSymbol Counter symbol (e.g. LTC)
@@ -138,13 +139,13 @@ const OrderStateMachine = StateMachine.factory({
      * @param  {String} options.counterAmount Amount of counter currency (in base units) to be traded
      * @return {void}
      */
-    onBeforeCreate: async function (lifecycle, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
+    onBeforeCreate: async function (lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
       // TODO: move payTo translation somewhere else
       // TODO: figure out a way to cache the publicKey instead of making a request
       const payTo = `ln:${await this.engine.getPublicKey()}`
       const ownerId = 'TODO: create real owner ids'
 
-      this.order = new Order({ baseSymbol, counterSymbol, side, baseAmount, counterAmount, payTo, ownerId })
+      this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, payTo, ownerId })
 
       const { orderId, feePaymentRequest, depositPaymentRequest } = await this.relayer.makerService.createOrder(this.order.paramsForCreate)
       this.order.setCreatedParams({ orderId, feePaymentRequest, depositPaymentRequest })
@@ -174,9 +175,11 @@ const OrderStateMachine = StateMachine.factory({
      * This function gets called before the `place` transition (triggered by a call to `place`)
      * Actual placement on the relayer is done in `onBeforePlace` so that the transition can be cancelled
      * if placement on the Relayer fails.
-     *
+     * Listen for order fills when in the `placed` state
+     * This is done based on the state and not the transition so that it gets actioned when being re-hydrated from storage
+     * [is that the right thing to do?]
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
-     * @return {Promise}          romise that rejects if placement on the relayer fails
+     * @return {void}
      */
     onBeforePlace: async function (lifecycle) {
       const { feePaymentRequest, depositPaymentRequest, orderId } = this.order
@@ -202,25 +205,8 @@ const OrderStateMachine = StateMachine.factory({
 
       this.logger.info(`Successfully paid fees for order: ${orderId}`)
 
-      await this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest })
-
-      this.logger.info(`Placed order ${this.order.orderId} on the relayer`)
-    },
-
-    /**
-     * Listen for order fills when in the `placed` state
-     * This is done based on the state and not the transition so that it gets actioned when being re-hydrated from storage
-     * [is that the right thing to do?]
-     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
-     * @return {void}
-     */
-    onEnterPlaced: function (lifecycle) {
-      const { orderId } = this.order
-      this.logger.info(`In placed state, attempting to listen for fills for order ${orderId}`)
-
       // NOTE: this method should NOT reject a promise, as that may prevent the state of the order from saving
-
-      const call = this.relayer.makerService.subscribeFill({ orderId })
+      const call = this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest })
 
       call.on('error', (e) => {
         this.reject(e)
@@ -235,12 +221,12 @@ const OrderStateMachine = StateMachine.factory({
             return this.tryTo('cancel')
           }
 
+          this.logger.info(`Placed order ${this.order.orderId} on the relayer`)
           const { swapHash, fillAmount } = fill
 
           this.order.setFilledParams({ swapHash, fillAmount })
 
-          this.logger.info(`Order ${orderId} is being filled`)
-
+          this.logger.info(`Order ${this.order.orderId} is being filled`)
           this.tryTo('execute')
         } catch (e) {
           this.reject(e)
@@ -287,13 +273,15 @@ const OrderStateMachine = StateMachine.factory({
 
 /**
  * Instantiate and create an order
+ * This method is a pure pass through to the state machine, so any parameter checking should happen in
+ * `data` and `onBeforeCreate`, respectively.
  * @param  {Object} initParams   Params to pass to the OrderStateMachine constructor (also to the `data` function)
  * @param  {Object} createParams Params to pass to the create method (also to the `onBeforeCreate` method)
  * @return {Promise<OrderStateMachine>}
  */
-OrderStateMachine.create = async function (initParams, createParams) {
+OrderStateMachine.create = async function (initParams, ...createParams) {
   const osm = new OrderStateMachine(initParams)
-  await osm.tryTo('create', createParams)
+  await osm.tryTo('create', ...createParams)
 
   return osm
 }

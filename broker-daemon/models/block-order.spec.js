@@ -294,7 +294,7 @@ describe('BlockOrder', () => {
               put: sinon.stub(),
               createReadStream: sinon.stub()
             }
-          }, { key: 'mykey',
+          }, { key: 'blockid:mykey',
             value: JSON.stringify({
               order: {
                 baseSymbol: 'BTC',
@@ -376,7 +376,7 @@ describe('BlockOrder', () => {
               put: sinon.stub(),
               createReadStream: sinon.stub()
             }
-          }, { key: 'mykey',
+          }, { key: 'blockid:mykey',
             value: JSON.stringify({
               fill: {
                 order: {
