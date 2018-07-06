@@ -2,18 +2,15 @@ version: '2.4'
 
 services:
   kbd:
+    image: kinesis_kbd:latest
     depends_on:
       - lnd_btc
       - lnd_ltc
-    build:
-      context: ./
-      dockerfile: docker/kbd/Dockerfile
     volumes:
       - './broker-daemon:/home/app/broker-daemon/'
       - './proto:/home/app/proto/'
       - '/home/app/node_modules'
       - './node_modules/lnd-engine:/home/app/node_modules/lnd-engine'
-      - './node_modules/timeout-as-promise:/home/app/node_modules/timeout-as-promise'
       - '/data'
       # This is populated externally w/ an engine
       - 'shared:/shared'

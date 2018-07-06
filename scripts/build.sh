@@ -9,11 +9,6 @@ echo ""
 echo "Reinstalling dependencies"
 npm i
 
-# This is for lnd-engine while we wait to export it as a project. The dependency
-# itself is only used to mimic channel behaivor between btc/ltc while we test
-# the swaps and separate nodes
-npm i timeout-as-promise
-
 echo "Building broker proto files"
 rm -rf ./broker-daemon/proto/broker.proto
 npm run broker-proto
