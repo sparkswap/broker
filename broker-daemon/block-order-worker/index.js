@@ -43,14 +43,17 @@ class BlockOrderWorker extends EventEmitter {
    * @return {Promise}
    */
   async initialize () {
+    const filterOrdersWithHash = (key, value) => !!Order.fromStorage(key, value).swapHash
+    const getHashFromOrder = (key, value) => Order.fromStorage(key, value).swapHash
+
     // create an index for the ordersStore so that orders can be retrieved by their swapHash
     this.ordersByHash = new SublevelIndex(
       this.ordersStore,
       'ordersByHash',
       // index by swap hash
-      (key, value) => Order.fromStorage(key, value).swapHash,
+      getHashFromOrder,
       // only index orders that have a swap hash defined
-      (key, value) => !!Order.fromStorage(key, value).swapHash
+      filterOrdersWithHash
     )
 
     await this.ordersByHash.ensureIndex()
