@@ -36,7 +36,7 @@ class GrpcServer {
    * @param {sublevel} store
    * @param {EventEmitter} eventHandler
    */
-  constructor (logger, store, eventHandler, marketNames) {
+  constructor (logger, store, eventHandler) {
     this.logger = logger
     this.store = store
     this.eventHandler = eventHandler
@@ -47,7 +47,6 @@ class GrpcServer {
     this.relayer = new RelayerClient()
     this.engine = new LndEngine(LND_HOST, { logger: this.logger, tlsCertPath: LND_TLS_CERT, macaroonPath: LND_MACAROON })
     this.orderbooks = new Map()
-    this.marketNames = marketNames
     this.blockOrderWorker = new BlockOrderWorker({ relayer: this.relayer, engine: this.engine, orderbooks: this.orderbooks, store: this.store.sublevel('block-orders'), logger: this.logger })
 
     this.adminService = new AdminService(this.protoPath, this)

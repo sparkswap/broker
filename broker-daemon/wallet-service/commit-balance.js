@@ -50,7 +50,7 @@ const SUPPORTED_SYMBOLS = Object.freeze({
  * @param {function} responses.EmptyResponse
  * @return {responses.EmptyResponse}
  */
-async function commitBalance ({ params, relayer, logger, engine, marketNames }, { EmptyResponse }) {
+async function commitBalance ({ params, relayer, logger, engine }, { EmptyResponse }) {
   const { publicKey: relayerPubKey } = await relayer.paymentNetworkService.getPublicKey({})
   const { balance, symbol } = params
 
@@ -77,6 +77,7 @@ async function commitBalance ({ params, relayer, logger, engine, marketNames }, 
 
   let symbolForRelayer
   let convertedBalance
+
   // This is temporary until we have other markets
   if (symbol === SUPPORTED_SYMBOLS.LTC) {
     symbolForRelayer = SUPPORTED_SYMBOLS.BTC
@@ -85,20 +86,7 @@ async function commitBalance ({ params, relayer, logger, engine, marketNames }, 
     symbolForRelayer = SUPPORTED_SYMBOLS.LTC
     convertedBalance = convertBalance(Big(balance), SUPPORTED_SYMBOLS.BTC, SUPPORTED_SYMBOLS.LTC)
   }
-  await relayer.paymentNetworkService.createChannel({publicKey, host, balance: convertedBalance, symbol: symbolForRelayer})
-
-  // TODO uncomment this code when we have other markets besides BTC/LTC
-  // for (let market of marketNames) {
-  //   const base = market.split('/')[0]
-  //   const counter = market.split('/')[1]
-  //   if (base === symbol) {
-  //     convertedBalance = convertBalance(Big(balance), base, counter)
-  //     await relayer.paymentNetworkService.createChannel({publicKey, host, balance: convertedBalance, symbol: counter})
-  //   } else if (counter === symbol) {
-  //     convertedBalance = convertBalance(Big(balance), counter, base)
-  //     await relayer.paymentNetworkService.createChannel({publicKey, host, balance: convertedBalance, symbol: base})
-  //   }
-  // }
+  await relayer.paymentNetworkService.createChannel({publicKey, host, balance: convertedBalance.toString(), symbol: symbolForRelayer})
 
   return new EmptyResponse({})
 }
