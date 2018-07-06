@@ -11,7 +11,11 @@ const MARKET_CONVERSION = {
  * @return {Integer} balance in the counter currency
  */
 function convertBalance (balance, currency, currencyToConvertTo) {
-  return balance.times(MARKET_CONVERSION[`${currency}/${currencyToConvertTo}`])
+  const market = `${currency}/${currencyToConvertTo}`
+  if (!MARKET_CONVERSION.hasOwnProperty(market)) {
+    throw Error(`Market ${market} is not currently supported`)
+  }
+  return balance.times(MARKET_CONVERSION[market])
 }
 
 module.exports = convertBalance

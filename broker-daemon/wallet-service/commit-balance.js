@@ -9,6 +9,13 @@ const EXCHANGE_LND_HOST = process.env.EXCHANGE_LND_HOST
 
 /**
  * @constant
+ * @type {String}
+ * @default
+ */
+const LND_EXTERNAL_ADDRESS = process.env.LND_EXTERNAL_ADDRESS
+
+/**
+ * @constant
  * @type {Long}
  * @default
  */
@@ -72,7 +79,6 @@ async function commitBalance ({ params, relayer, logger, engine }, { EmptyRespon
 
   await engine.createChannel(EXCHANGE_LND_HOST, relayerPubKey, balance, symbol)
 
-  const { LND_EXTERNAL_ADDRESS: host } = process.env
   const publicKey = await engine.getPublicKey({})
 
   let symbolForRelayer
@@ -86,7 +92,7 @@ async function commitBalance ({ params, relayer, logger, engine }, { EmptyRespon
     symbolForRelayer = SUPPORTED_SYMBOLS.LTC
     convertedBalance = convertBalance(Big(balance), SUPPORTED_SYMBOLS.BTC, SUPPORTED_SYMBOLS.LTC)
   }
-  await relayer.paymentNetworkService.createChannel({publicKey, host, balance: convertedBalance.toString(), symbol: symbolForRelayer})
+  await relayer.paymentNetworkService.createChannel({publicKey, host: LND_EXTERNAL_ADDRESS, balance: convertedBalance.toString(), symbol: symbolForRelayer})
 
   return new EmptyResponse({})
 }
