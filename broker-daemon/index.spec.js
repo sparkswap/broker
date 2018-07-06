@@ -42,6 +42,7 @@ describe('broker daemon', () => {
     Orderbook = sinon.stub()
     Orderbook.prototype.initialize = sinon.stub()
     BlockOrderWorker = sinon.stub()
+    BlockOrderWorker.prototype.initialize = sinon.stub()
     CONFIG = {
       currencies: [
         {
@@ -242,6 +243,12 @@ describe('broker daemon', () => {
 
       expect(brokerDaemon.initializeMarkets).to.have.been.calledOnce()
       expect(brokerDaemon.initializeMarkets).to.have.been.calledWith(markets.split(','))
+    })
+
+    it('initializes the block order worker', async () => {
+      await brokerDaemon.initialize()
+
+      expect(BlockOrderWorker.prototype.initialize).to.have.been.calledOnce()
     })
   })
 
