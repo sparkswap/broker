@@ -26,7 +26,6 @@ services:
       - LND_MACAROON=/shared/lnd-engine-admin-btc.macaroon
       - GRPC_SSL_CIPHER_SUITES=HIGH+ECDSA
       # TODO: Should be removed as we will have multiple engine types
-      - ENGINE_TYPE=lnd
       - EXCHANGE_RPC_HOST=docker.for.mac.host.internal:28492
       - EXCHANGE_LND_HOST=docker.for.mac.host.internal:10111
       - LND_EXTERNAL_ADDRESS=docker.for.mac.host.internal:10112

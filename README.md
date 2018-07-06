@@ -41,7 +41,7 @@ You can view default configuration for kcli in `./broker-cli/.kcli.default.js`.
 Current configuration is limited to:
 - Default Daemon RPC address
 
-Additionally, you can access the local version of kbd by setting `--rpc-address` on kcli commands to `localhost:27492`
+Additionally, you can access a specific version of kbd by setting the --rpc-address on any kcli commands.
 
 #### Running tests
 
