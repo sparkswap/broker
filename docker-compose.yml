@@ -115,7 +115,7 @@ services:
       - NETWORK=simnet
       # We use bitcoin/btcd chain here because ltc simnet is not currently supported
       # on LND
-      # see:
+      # see: https://github.com/lightningnetwork/lnd/blob/d83f4fbb85489ffc9b50da4c4162966046e9053e/config.go#L510-L514
       - CHAIN=bitcoin
       - NODE=btcd
       - DEBUG=info
