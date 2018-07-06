@@ -7,7 +7,9 @@
   "exec_mode"  : "fork_mode",
   "min_uptime": 5000,
   "watch": [
-    "broker-daemon"
+    "broker-daemon",
+    "proto",
+    "node_modules/lnd-engine"
   ],
   "env": {
     "NODE_ENV": "development",
