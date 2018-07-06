@@ -42,8 +42,8 @@ class BrokerDaemon {
     this.logger = logger
     this.store = sublevel(level(this.dataDir))
     this.eventHandler = new EventEmitter()
+    this.server = new GrpcServer(this.logger, this.store, this.eventHandler)
     this.marketNames = (markets || '').split(',').filter(m => m)
-    this.server = new GrpcServer(this.logger, this.store, this.eventHandler, this.marketNames)
 
     this.initialize()
   }
