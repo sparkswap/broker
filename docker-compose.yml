@@ -48,7 +48,7 @@ services:
     environment:
       - RPC_USER=kuser
       - RPC_PASS=kpass
-      - RPC_HOST=docker.for.mac.host.internal
+      - RPC_HOST=docker.for.mac.host.internal:18556
       - RPC_CERT_PATH=/shared/rpc-btc.cert
       - ADMIN_MACAROON=/shared/lnd-engine-admin-btc.macaroon
       - READ_ONLY_MACAROON=/shared/lnd-engine-readonly-btc.macaroon
@@ -72,27 +72,30 @@ services:
       - broker
     entrypoint: ["./start-lnd.sh"]
 
-  btcd:
-    image: kinesis_btcd:latest
-    volumes:
-      - shared:/shared
-      - bitcoin:/data
-    ports:
-      - '18555:18555'
-      - '18556:18556'
-    environment:
-      - RPC_USER=kuser
-      - RPC_PASS=kpass
-      - NETWORK=simnet
-      - DEBUG=info
-      - DATA_DIR=/data
-      - LOG_DIR=/data
-      - RPC_KEY=/secure/rpc.key
-      - RPC_CERT=/shared/rpc-btc.cert
-      - RPC_LISTEN=0.0.0.0
-      - "MINING_ADDRESS=$MINING_ADDRESS"
-      - MAX_WEB_SOCKETS=100
-    entrypoint: ["./start-btcd.sh"]
+  # We comment this section out due to simnet only allowing one node to be active
+  # at a time. We use shared ltcd/btcd nodes from the relayer, for the dev environment.
+  #
+  # btcd:
+  #   image: kinesis_btcd:latest
+  #   volumes:
+  #     - shared:/shared
+  #     - bitcoin:/data
+  #   ports:
+  #     - '18555:18555'
+  #     - '18556:18556'
+  #   environment:
+  #     - RPC_USER=kuser
+  #     - RPC_PASS=kpass
+  #     - NETWORK=simnet
+  #     - DEBUG=info
+  #     - DATA_DIR=/data
+  #     - LOG_DIR=/data
+  #     - RPC_KEY=/secure/rpc.key
+  #     - RPC_CERT=/shared/rpc-btc.cert
+  #     - RPC_LISTEN=0.0.0.0
+  #     - "MINING_ADDRESS=$MINING_ADDRESS"
+  #     - MAX_WEB_SOCKETS=100
+  #   entrypoint: ["./start-btcd.sh"]
 
   lnd_ltc:
     image: kinesis_lnd_ltc:latest
@@ -132,29 +135,32 @@ services:
       - broker
     entrypoint: ["./start-lnd.sh"]
 
-  ltcd:
-    image: kinesis_ltcd:latest
-    ports:
-      - '18666:18556'
-    volumes:
-      - shared:/shared
-      - litecoin:/data
-    environment:
-      - RPC_USER=kuser
-      - RPC_PASS=kpass
-      - NETWORK=simnet
-      - DEBUG=info
-      - DATA_DIR=/data
-      - LOG_DIR=/data
-      - RPC_KEY=/secure/rpc.key
-      - RPC_CERT=/shared/rpc-ltc.cert
-      - RPC_LISTEN=0.0.0.0
-      - MAX_WEB_SOCKETS=100
-      # This is set dynamically in the startup scripts
-      # TODO: figure out how to dynamically set this variable and prevent it from
-      # triggering warnings
-      - "MINING_ADDRESS=$MINING_ADDRESS"
-    entrypoint: ["./start-ltcd.sh"]
+  # We comment this section out due to simnet only allowing one node to be active
+  # at a time. We use shared ltcd/btcd nodes from the relayer, for the dev environment.
+  #
+  # ltcd:
+  #   image: kinesis_ltcd:latest
+  #   ports:
+  #     - '18666:18556'
+  #   volumes:
+  #     - shared:/shared
+  #     - litecoin:/data
+  #   environment:
+  #     - RPC_USER=kuser
+  #     - RPC_PASS=kpass
+  #     - NETWORK=simnet
+  #     - DEBUG=info
+  #     - DATA_DIR=/data
+  #     - LOG_DIR=/data
+  #     - RPC_KEY=/secure/rpc.key
+  #     - RPC_CERT=/shared/rpc-ltc.cert
+  #     - RPC_LISTEN=0.0.0.0
+  #     - MAX_WEB_SOCKETS=100
+  #     # This is set dynamically in the startup scripts
+  #     # TODO: figure out how to dynamically set this variable and prevent it from
+  #     # triggering warnings
+  #     - "MINING_ADDRESS=$MINING_ADDRESS"
+  #   entrypoint: ["./start-ltcd.sh"]
 
 
 volumes:
