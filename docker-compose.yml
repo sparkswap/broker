@@ -40,6 +40,8 @@ services:
 
   lnd_btc:
     image: kinesis_lnd_btc:latest
+    depends_on:
+      - btcd
     ports:
       - '10113:10113'
     environment:
@@ -71,6 +73,9 @@ services:
 
   # This BTCD section is not used due to simnet only allowing one node to be active
   # at a time. We use shared ltcd/btcd nodes from the relayer, for the dev environment.
+  #
+  # However, this node needs to be created so that we have access to the correct
+  # certs for the shared nodes (certs are created on image build)
   #
   btcd:
     image: kinesis_btcd:latest
@@ -108,6 +113,9 @@ services:
       - TLS_CERT_PATH=/shared/lnd-engine-tls-ltc.cert
       - TLS_KEY_PATH=/secure/lnd-engine-tls-ltc.key
       - NETWORK=simnet
+      # We use bitcoin/btcd chain here because ltc simnet is not currently supported
+      # on LND
+      # see:
       - CHAIN=bitcoin
       - NODE=btcd
       - DEBUG=info
@@ -132,6 +140,9 @@ services:
   # This LTCD section is not used due to simnet only allowing one node to be active
   # at a time. We use shared ltcd/btcd nodes from the relayer, for the dev environment.
   #
+  # However, this node needs to be created so that we have access to the correct
+  # certs for the shared nodes (certs are created on image build)
+  #
   ltcd:
     image: kinesis_ltcd:latest
     volumes:
@@ -149,8 +160,6 @@ services:
       - RPC_LISTEN=0.0.0.0
       - MAX_WEB_SOCKETS=100
       # This is set dynamically in the startup scripts
-      # TODO: figure out how to dynamically set this variable and prevent it from
-      # triggering warnings
       - "MINING_ADDRESS=$MINING_ADDRESS"
     entrypoint: ["./start-ltcd.sh"]
 
