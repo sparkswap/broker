@@ -86,23 +86,25 @@ class BrokerDaemon {
    */
   async initialize () {
     try {
-      logger.info(`Initializing ${this.marketNames.length} markets`)
-      logger.info('Initializing BlockOrderWorker')
+      // Since both of these are potentially long-running operations, we run them in parallel to speed
+      // up BrokerDaemon startup time.
       await Promise.all([
         this.initializeMarkets(this.marketNames),
-        this.blockOrderWorker.initialize()
+        (async () => {
+          this.logger.info(`Initializing BlockOrderWorker`)
+          await this.blockOrderWorker.initialize()
+          this.logger.info('BlockOrderWorker initialized')
+        })()
       ])
-      logger.info(`Caught up to ${this.marketNames.length} markets`)
-      logger.info('BlockOrderWorker initialized')
 
       this.rpcServer.listen(this.rpcAddress)
-      logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
+      this.logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
 
       this.interchainRouter.listen(this.interchainRouterAddress)
-      logger.info(`Interchain Router server started: gRPC Server listening on ${this.interchainRouterAddress}`)
+      this.logger.info(`Interchain Router server started: gRPC Server listening on ${this.interchainRouterAddress}`)
     } catch (e) {
-      logger.error('BrokerDaemon failed to initialize', { error: e.toString() })
-      logger.error(e)
+      this.logger.error('BrokerDaemon failed to initialize', { error: e.toString() })
+      this.logger.error(e)
     }
   }
 
@@ -113,10 +115,12 @@ class BrokerDaemon {
    * @returns {Promise<void>} promise that resolves when markets are caught up to the remote
    * @throws {Error} If markets include a currency with no currency configuration
    */
-  initializeMarkets (markets) {
-    return Promise.all(markets.map((marketName) => {
+  async initializeMarkets (markets) {
+    this.logger.info(`Initializing ${markets.length} markets`)
+    await Promise.all(markets.map((marketName) => {
       return this.initializeMarket(marketName)
     }))
+    this.logger.info(`Caught up to ${markets.length} markets`)
   }
 
   /**
