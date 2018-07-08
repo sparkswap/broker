@@ -74,7 +74,10 @@ class BrokerDaemon {
       orderbooks: this.orderbooks,
       blockOrderWorker: this.blockOrderWorker
     })
-    this.interchainRouter = new InterchainRouter(this.logger)
+    this.interchainRouter = new InterchainRouter({
+      ordersByHash: this.blockOrderWorker.ordersByHash,
+      logger: this.logger
+    })
   }
 
   /**

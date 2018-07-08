@@ -19,6 +19,20 @@ const returnTrue = function () { return true }
 const DELIMITER = ':'
 
 /**
+ * Lower bound for leveldb ranged queries
+ * @type {String}
+ * @constant
+ */
+const LOWER_BOUND = '\x00'
+
+/**
+ * Upper bound for leveldb ranged queries
+ * @type {String}
+ * @constant
+ */
+const UPPER_BOUND = '\uffff'
+
+/**
  * @class Indexed values for sublevel
  */
 class Index {
@@ -51,6 +65,27 @@ class Index {
     this._addIndexHook()
 
     return this
+  }
+
+  /**
+   * Build a sublevel-compatible option range for this index
+   * @param  {Object} opts Options from which to build a range
+   * @return {Object} Sublevel readStream options
+   */
+  range (opts = {}) {
+    if (opts.gt) {
+      opts.gt = `${opts.gt}${this.delimiter}${LOWER_BOUND}`
+    } else if (opts.gte) {
+      opts.gte = `${opts.gte}${this.delimiter}${LOWER_BOUND}`
+    }
+
+    if (opts.lt) {
+      opts.lt = `${opts.lt}${this.delimiter}${UPPER_BOUND}`
+    } else if (opts.lte) {
+      opts.lte = `${opts.lte}${this.delimiter}${UPPER_BOUND}`
+    }
+
+    return opts
   }
 
   /**

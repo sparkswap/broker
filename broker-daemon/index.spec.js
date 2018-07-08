@@ -103,6 +103,26 @@ describe('broker daemon', () => {
     expect(brokerDaemon.engine).to.be.instanceOf(LndEngine)
   })
 
+  describe('InterchainRouter', () => {
+    it('creates an InterchainRouter', () => {
+      expect(interchainRouter).to.have.been.calledOnce()
+      expect(interchainRouter).to.have.been.calledWithNew()
+    })
+
+    it('provides the logger to the InterchainRouter', () => {
+      expect(interchainRouter).to.have.been.calledWith(sinon.match({ logger: logger }))
+    })
+
+    it('provides the ordersByHash to the InterchainRouter', () => {
+      expect(interchainRouter).to.have.been.calledWith(sinon.match({ ordersByHash: brokerDaemon.blockOrderWorker.ordersByHash }))
+    })
+
+    it('assigns the InterchainRouter', () => {
+      expect(brokerDaemon).to.have.property('interchainRouter')
+      expect(brokerDaemon.interchainRouter).to.be.instanceOf(interchainRouter)
+    })
+  })
+
   describe('BlockOrderWorker', () => {
     it('creates a BlockOrderWorker', () => {
       expect(BlockOrderWorker).to.have.been.calledOnce()
