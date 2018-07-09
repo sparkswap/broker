@@ -130,9 +130,6 @@ services:
     volumes:
       - 'shared:/shared'
       - 'lnd_ltc:/data'
-    # Please refer to the lnd docker file for details on exposed ports
-    # ports:
-    #   - '10111:10111'
     networks:
       - broker
     entrypoint: ["./start-lnd.sh"]
