@@ -44,8 +44,8 @@ class BrokerDaemon {
       let engineConfig = engines[symbol]
       if (engineConfig.type === 'LND') {
         this.engines[symbol] = new LndEngine(
-          symbol,
           engineConfig.lndRpc,
+          symbol,
           {
             logger: this.logger,
             tlsCertPath: engineConfig.lndTls,
@@ -99,9 +99,9 @@ class BrokerDaemon {
           this.logger.info('BlockOrderWorker initialized')
         })(),
         ...Object.entries(this.engines).map(async ([ symbol, engine ]) => {
-          this.logger.info(`Validating engine configuration for ${symbol}`)
-          await engine.validateNodeConfig()
-          this.logger.info(`Validated engine configuration for ${symbol}`)
+          this.logger.info(`Initializing engine for ${symbol}`)
+          await engine.initialize()
+          this.logger.info(`initialized engine for ${symbol}`)
         })
       ])
 

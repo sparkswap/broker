@@ -40,7 +40,7 @@ describe('broker daemon', () => {
       info: sinon.spy()
     }
     LndEngine = sinon.stub()
-    LndEngine.prototype.validateNodeConfig = sinon.stub().resolves()
+    LndEngine.prototype.initialize = sinon.stub().resolves()
     Orderbook = sinon.stub()
     Orderbook.prototype.initialize = sinon.stub()
     BlockOrderWorker = sinon.stub()
@@ -123,7 +123,7 @@ describe('broker daemon', () => {
 
     it('provides lnd parameters to lnd engine', () => {
       expect(LndEngine).to.have.been.calledOnce()
-      expect(LndEngine).to.have.been.calledWith('BTC', engines.BTC.lndRpc, { logger, tlsCertPath: engines.BTC.lndTls, macaroonPath: engines.BTC.lndMacaroon })
+      expect(LndEngine).to.have.been.calledWith(engines.BTC.lndRpc, 'BTC', { logger, tlsCertPath: engines.BTC.lndTls, macaroonPath: engines.BTC.lndMacaroon })
     })
 
     it('TEMPORARILY aliases the first engine', () => {
@@ -283,12 +283,12 @@ describe('broker daemon', () => {
       expect(interchainRouterListenSpy).to.have.been.calledWith(brokerDaemon.interchainRouterAddress)
     })
 
-    it('validates engine configuration', async () => {
+    it('initializes the enegines', async () => {
       const btcEngine = {
-        validateNodeConfig: sinon.stub().resolves()
+        initialize: sinon.stub().resolves()
       }
       const ltcEngine = {
-        validateNodeConfig: sinon.stub().resolves()
+        initialize: sinon.stub().resolves()
       }
       brokerDaemon.engines = {
         BTC: btcEngine,
@@ -297,8 +297,8 @@ describe('broker daemon', () => {
 
       await brokerDaemon.initialize()
 
-      expect(btcEngine.validateNodeConfig).to.have.been.calledOnce()
-      expect(ltcEngine.validateNodeConfig).to.have.been.calledOnce()
+      expect(btcEngine.initialize).to.have.been.calledOnce()
+      expect(ltcEngine.initialize).to.have.been.calledOnce()
     })
 
     it('initializes markets', async () => {
