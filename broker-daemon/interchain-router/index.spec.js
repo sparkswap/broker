@@ -8,6 +8,7 @@ describe('InterchainRouter', () => {
   let grpcServer
   let ExternalPreimageService
   let logger
+  let ordersByHash
   let router
   let PROTO_PATH = InterchainRouter.__get__('PROTO_PATH')
 
@@ -33,16 +34,24 @@ describe('InterchainRouter', () => {
     })
     InterchainRouter.__set__('ExternalPreimageService', ExternalPreimageService)
 
+    ordersByHash = {
+      createReadStream: sinon.stub()
+    }
+
     logger = {
       info: sinon.stub(),
       error: sinon.stub(),
       log: sinon.stub()
     }
 
-    router = new InterchainRouter(logger)
+    router = new InterchainRouter({ ordersByHash, logger })
   })
 
   describe('#constructor', () => {
+    it('assigns an ordersByHash index', () => {
+      expect(router).to.have.property('ordersByHash', ordersByHash)
+    })
+
     it('assigns a logger', () => {
       expect(router).to.have.property('logger', logger)
     })
@@ -56,7 +65,7 @@ describe('InterchainRouter', () => {
     it('creates an ExternalPreimageService', () => {
       expect(ExternalPreimageService).to.have.been.calledOnce()
       expect(ExternalPreimageService).to.have.been.calledWithNew()
-      expect(ExternalPreimageService).to.have.been.calledWith(PROTO_PATH, router)
+      expect(ExternalPreimageService).to.have.been.calledWith(PROTO_PATH, { logger, ordersByHash })
       expect(router.externalPreimageService).to.be.instanceOf(ExternalPreimageService)
     })
 

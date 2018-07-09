@@ -142,6 +142,65 @@ describe('BlockOrderWorker', () => {
       expect(worker).to.have.property('engine', engine)
     })
 
+    it('creates an index for the orders store', async () => {
+      expect(SublevelIndex).to.have.been.calledOnce()
+      expect(SublevelIndex).to.have.been.calledWithNew()
+      expect(SublevelIndex).to.have.been.calledWith(secondLevel, 'ordersByHash')
+      expect(worker).to.have.property('ordersByHash')
+      expect(worker.ordersByHash).to.be.instanceOf(SublevelIndex)
+    })
+
+    it('indexes the orders store by swap hash', async () => {
+      const getValue = SublevelIndex.args[0][2]
+
+      const fakeKey = 'mykey'
+      const fakeValue = 'myvalue'
+      const fakeOrder = {
+        swapHash: 'fakeHash'
+      }
+      Order.fromStorage.returns(fakeOrder)
+
+      const indexValue = getValue(fakeKey, fakeValue)
+
+      expect(Order.fromStorage).to.have.been.calledOnce()
+      expect(Order.fromStorage).to.have.been.calledWith(fakeKey, fakeValue)
+      expect(indexValue).to.be.equal(fakeOrder.swapHash)
+    })
+
+    it('indexes the orders that have a swap hash', async () => {
+      const filter = SublevelIndex.args[0][3]
+
+      const fakeKey = 'mykey'
+      const fakeValue = 'myvalue'
+      const fakeOrder = {
+        swapHash: 'fakeHash'
+      }
+      Order.fromStorage.returns(fakeOrder)
+
+      const filtered = filter(fakeKey, fakeValue)
+
+      expect(Order.fromStorage).to.have.been.calledOnce()
+      expect(Order.fromStorage).to.have.been.calledWith(fakeKey, fakeValue)
+      expect(filtered).to.be.equal(true)
+    })
+
+    it('does not index the orders that do not have a swap hash', async () => {
+      const filter = SublevelIndex.args[0][3]
+
+      const fakeKey = 'mykey'
+      const fakeValue = 'myvalue'
+      const fakeOrder = {
+        swapHash: undefined
+      }
+      Order.fromStorage.returns(fakeOrder)
+
+      const filtered = filter(fakeKey, fakeValue)
+
+      expect(Order.fromStorage).to.have.been.calledOnce()
+      expect(Order.fromStorage).to.have.been.calledWith(fakeKey, fakeValue)
+      expect(filtered).to.be.equal(false)
+    })
+
     it('works a block order when one is created', async () => {
       const fakeBlockOrder = 'my fake'
       eventsOn.withArgs('BlockOrder:create').callsFake(async (evt, fn) => {
@@ -184,73 +243,6 @@ describe('BlockOrderWorker', () => {
       ensureIndex = sinon.stub().resolves()
       SublevelIndex.prototype.ensureIndex = ensureIndex
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
-    })
-
-    it('creates an index for the orders store', async () => {
-      await worker.initialize()
-
-      expect(SublevelIndex).to.have.been.calledOnce()
-      expect(SublevelIndex).to.have.been.calledWithNew()
-      expect(SublevelIndex).to.have.been.calledWith(secondLevel, 'ordersByHash')
-      expect(worker).to.have.property('ordersByHash')
-      expect(worker.ordersByHash).to.be.instanceOf(SublevelIndex)
-    })
-
-    it('indexes the orders store by swap hash', async () => {
-      await worker.initialize()
-
-      const getValue = SublevelIndex.args[0][2]
-
-      const fakeKey = 'mykey'
-      const fakeValue = 'myvalue'
-      const fakeOrder = {
-        swapHash: 'fakeHash'
-      }
-      Order.fromStorage.returns(fakeOrder)
-
-      const indexValue = getValue(fakeKey, fakeValue)
-
-      expect(Order.fromStorage).to.have.been.calledOnce()
-      expect(Order.fromStorage).to.have.been.calledWith(fakeKey, fakeValue)
-      expect(indexValue).to.be.equal(fakeOrder.swapHash)
-    })
-
-    it('indexes the orders that have a swap hash', async () => {
-      await worker.initialize()
-
-      const filter = SublevelIndex.args[0][3]
-
-      const fakeKey = 'mykey'
-      const fakeValue = 'myvalue'
-      const fakeOrder = {
-        swapHash: 'fakeHash'
-      }
-      Order.fromStorage.returns(fakeOrder)
-
-      const filtered = filter(fakeKey, fakeValue)
-
-      expect(Order.fromStorage).to.have.been.calledOnce()
-      expect(Order.fromStorage).to.have.been.calledWith(fakeKey, fakeValue)
-      expect(filtered).to.be.equal(true)
-    })
-
-    it('does not index the orders that do not have a swap hash', async () => {
-      await worker.initialize()
-
-      const filter = SublevelIndex.args[0][3]
-
-      const fakeKey = 'mykey'
-      const fakeValue = 'myvalue'
-      const fakeOrder = {
-        swapHash: undefined
-      }
-      Order.fromStorage.returns(fakeOrder)
-
-      const filtered = filter(fakeKey, fakeValue)
-
-      expect(Order.fromStorage).to.have.been.calledOnce()
-      expect(Order.fromStorage).to.have.been.calledWith(fakeKey, fakeValue)
-      expect(filtered).to.be.equal(false)
     })
 
     it('rebuilds the ordersByHash index', async () => {

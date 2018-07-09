@@ -17,13 +17,15 @@ const PROTO_PATH = path.resolve(__dirname, 'rpc.proto')
 class InterchainRouter {
   /**
    * Create a new Interchain Router instance
-   * @param  {Object} logger
+   * @param  {SublevelIndex} ordersByHash Index of orders for which we are the maker, indexed by their swap hash
+   * @param  {Object}        logger
    * @return {InterchainRouter}
    */
-  constructor (logger) {
+  constructor ({ ordersByHash, logger }) {
+    this.ordersByHash = ordersByHash
     this.logger = logger
     this.server = new grpc.Server()
-    this.externalPreimageService = new ExternalPreimageService(PROTO_PATH, this)
+    this.externalPreimageService = new ExternalPreimageService(PROTO_PATH, { ordersByHash, logger })
     this.server.addService(this.externalPreimageService.definition, this.externalPreimageService.implementation)
   }
 

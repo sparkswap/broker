@@ -77,18 +77,20 @@ The overall flow looks something like this:
 The following steps will get your broker/relayer projects to a state where you can successfully buy/sell orders.
 
 1. If this is your first time running the new code, down all of your containers (relayer/broker)
-1. In the relayer directory, build the project and containers w/ `npm run build && docker-compose build --force-rm`
-2. In the relayer directory, Start all containers w/ `docker-compose up -d`
-3. In the relayer directory, fund the relayer w/ `npm run fund`
-4. In the broker directory, build the project with `npm run build`
-5. In the broker directory, transfer the certs from relayer to broker w/ `npm run fund-setup`
-6. In the broker directory, fund the broker w/ `npm run fund`
+2. In the lnd-engine directory, run `npm run build-images`
+3. In the relayer directory, build the relayer image w/ `npm run build-images`
+4. In the broker directory, build the broker image w/ `npm run build-images`
+5. In the relayer directory, build the project w/ `npm run build`
+6. In the relayer directory, Start all containers w/ `docker-compose up -d`
+7. In the relayer directory, fund the relayer w/ `npm run fund`
+    - This command may fail with a weird js error due to the relayer still initializing. If the command fails, just rerun it.
+8. In the broker directory, build the project with `npm run build`
+10. In the broker directory, fund the broker w/ `npm run fund`
     - **NOTE: (this command expects that the relayer is at `../relayer`)**
-6. In the broker, commit a balance to the relayer by running `./bin/kcli wallet commit-balance BTC`
-7. If successful, a channel from the `broker -> relayer` is now in a pending state!
-9. In the relayer directory, re-create the relayer so that it can catch up to the blocks we have just generated (`docker-compose up -d --force-recreate`)
-10. In the broker directory, re-create the broker for the same thing ^^ (`docker-compose up -d --force-recreate`)
-
+11. In the broker, commit a balance to the relayer by running `./bin/kcli wallet commit-balance BTC`
+12. If successful, a channel from the `broker -> relayer` is now in a pending state!
+13. In the relayer directory, re-create relayer/lnd so that it can catch up to the blocks we have just generated (`docker-compose up -d --force-recreate`)
+14. In the broker directory, re-create the broker/lnd for the same thing ^^ (`docker-compose up -d --force-recreate`)
 **IMPORTANT: ** If you down your containers and remove the volumes, you will need to run all of these steps again.
 
 Additionally, you can check the status of the channel by running the following command in the relayer directory `docker-compose exec relayer bash -c 'node ./test-client-scripts/test-lnd.js'`

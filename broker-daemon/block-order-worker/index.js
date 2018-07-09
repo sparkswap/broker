@@ -29,6 +29,19 @@ class BlockOrderWorker extends EventEmitter {
     this.relayer = relayer
     this.engine = engine
 
+    const filterOrdersWithHash = (key, value) => !!Order.fromStorage(key, value).swapHash
+    const getHashFromOrder = (key, value) => Order.fromStorage(key, value).swapHash
+
+    // create an index for the ordersStore so that orders can be retrieved by their swapHash
+    this.ordersByHash = new SublevelIndex(
+      this.ordersStore,
+      'ordersByHash',
+      // index by swap hash
+      getHashFromOrder,
+      // only index orders that have a swap hash defined
+      filterOrdersWithHash
+    )
+
     this.on('BlockOrder:create', async (blockOrder) => {
       try {
         await this.workBlockOrder(blockOrder)
@@ -43,19 +56,6 @@ class BlockOrderWorker extends EventEmitter {
    * @return {Promise}
    */
   async initialize () {
-    const filterOrdersWithHash = (key, value) => !!Order.fromStorage(key, value).swapHash
-    const getHashFromOrder = (key, value) => Order.fromStorage(key, value).swapHash
-
-    // create an index for the ordersStore so that orders can be retrieved by their swapHash
-    this.ordersByHash = new SublevelIndex(
-      this.ordersStore,
-      'ordersByHash',
-      // index by swap hash
-      getHashFromOrder,
-      // only index orders that have a swap hash defined
-      filterOrdersWithHash
-    )
-
     await this.ordersByHash.ensureIndex()
   }
 
