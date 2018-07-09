@@ -12,6 +12,29 @@ const { logger } = require('./utils')
 const CONFIG = require('./config')
 
 /**
+ * Create an instance of an engine from provided configuration
+ * @param  {String} symbol         Symbol that this engine is responsible for
+ * @param  {Object} engineConfig   Configuration object for this engine
+ * @param  {Logger} options.logger Logger that this engine should use
+ * @return {LndEngine}
+ */
+function createEngineFromConfig (symbol, engineConfig, { logger }) {
+  if (engineConfig.type === 'LND') {
+    return new LndEngine(
+      engineConfig.lndRpc,
+      symbol,
+      {
+        logger,
+        tlsCertPath: engineConfig.lndTls,
+        macaroonPath: engineConfig.lndMacaroon
+      }
+    )
+  } else {
+    throw new Error(`Unknown engine type of ${engineConfig.type} for ${symbol}`)
+  }
+}
+
+/**
  * @class BrokerDaemon is a collection of services to allow a user to run a broker on the Kinesis Network.
  * It exposes a user-facing RPC server, an interchain router, watches markets on the relayer, and works
  * block orders in the background.
@@ -39,23 +62,9 @@ class BrokerDaemon {
     this.relayer = new RelayerClient(this.relayerRpcHost, this.logger)
 
     this.engines = {}
-    engines = engines || {}
-    for (let symbol in engines) {
-      let engineConfig = engines[symbol]
-      if (engineConfig.type === 'LND') {
-        this.engines[symbol] = new LndEngine(
-          engineConfig.lndRpc,
-          symbol,
-          {
-            logger: this.logger,
-            tlsCertPath: engineConfig.lndTls,
-            macaroonPath: engineConfig.lndMacaroon
-          }
-        )
-      } else {
-        throw new Error(`Unknown engine type of ${engineConfig.type} for ${symbol}`)
-      }
-    }
+    Object.entries(engines || {}).forEach(([ symbol, engineConfig ]) => {
+      this.engines[symbol] = createEngineFromConfig(symbol, engines[symbol], { logger: this.logger })
+    })
     // REMOVE THIS WHEN WE IMPLEMENT ENGINE ID: temporary mapping to not break the broker
     this.engine = this.engines[Object.keys(this.engines)[0]]
 
