@@ -222,9 +222,9 @@ const OrderStateMachine = StateMachine.factory({
           }
 
           this.logger.info(`Placed order ${this.order.orderId} on the relayer`)
-          const { swapHash, fillAmount } = fill
+          const { swapHash, fillAmount, takerAddress } = fill
 
-          this.order.setFilledParams({ swapHash, fillAmount })
+          this.order.setFilledParams({ swapHash, fillAmount, takerAddress })
 
           this.logger.info(`Order ${this.order.orderId} is being filled`)
           this.tryTo('execute')
