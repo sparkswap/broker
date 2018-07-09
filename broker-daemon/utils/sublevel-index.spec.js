@@ -84,6 +84,94 @@ describe('Index', () => {
       })
     })
 
+    describe('#range', () => {
+      beforeEach(async () => {
+        await index.ensureIndex()
+      })
+
+      const tests = {
+        'gt range': {
+          in: {
+            gt: '1000'
+          },
+          out: {
+            gt: '1000:' + '\x00'
+          }
+        },
+        'gte range': {
+          in: {
+            gte: 'abcde'
+          },
+          out: {
+            gte: 'abcde:' + '\x00'
+          }
+        },
+        'lt range': {
+          in: {
+            lt: '1000'
+          },
+          out: {
+            lt: '1000:' + '\uffff'
+          }
+        },
+        'lte range': {
+          in: {
+            lte: '1000'
+          },
+          out: {
+            lte: '1000:' + '\uffff'
+          }
+        },
+        'gt lt range': {
+          in: {
+            gt: '1000',
+            lt: '10000'
+          },
+          out: {
+            gt: '1000:' + '\x00',
+            lt: '10000:' + '\uffff'
+          }
+        },
+        'gt lte range': {
+          in: {
+            gt: '1000',
+            lte: '10000'
+          },
+          out: {
+            gt: '1000:' + '\x00',
+            lte: '10000:' + '\uffff'
+          }
+        },
+        'gte lt range': {
+          in: {
+            gte: '1000',
+            lt: '10000'
+          },
+          out: {
+            gte: '1000:' + '\x00',
+            lt: '10000:' + '\uffff'
+          }
+        },
+        'gte lte range': {
+          in: {
+            gte: '1000',
+            lte: '10000'
+          },
+          out: {
+            gte: '1000:' + '\x00',
+            lte: '10000:' + '\uffff'
+          }
+        }
+      }
+
+      for (var testName in tests) {
+        let test = tests[testName]
+        it(`creates a ${testName}`, () => {
+          expect(index.range(test.in)).to.be.eql(test.out)
+        })
+      }
+    })
+
     describe('#createReadStream', () => {
       beforeEach(async () => {
         await index.ensureIndex()
