@@ -110,9 +110,8 @@ describe('broker daemon', () => {
   describe('engines', () => {
     it('instantiates the engines', () => {
       expect(brokerDaemon).to.have.property('engines')
-      expect(brokerDaemon.engines).to.be.an('object')
-      expect(brokerDaemon.engines).to.have.property('BTC')
-      expect(brokerDaemon.engines.BTC).to.be.an.instanceOf(LndEngine)
+      expect(brokerDaemon.engines).to.be.a('Map')
+      expect(brokerDaemon.engines.get('BTC')).to.be.an.instanceOf(LndEngine)
     })
 
     it('throws for unrecognized engine types', () => {
@@ -128,7 +127,7 @@ describe('broker daemon', () => {
 
     it('TEMPORARILY aliases the first engine', () => {
       expect(brokerDaemon).to.have.property('engine')
-      expect(brokerDaemon.engine).to.be.equal(brokerDaemon.engines.BTC)
+      expect(brokerDaemon.engine).to.be.equal(brokerDaemon.engines.get('BTC'))
     })
   })
 
@@ -169,10 +168,10 @@ describe('broker daemon', () => {
   describe('initializeMarket', () => {
     beforeEach(() => {
       Orderbook.prototype.initialize.resolves()
-      brokerDaemon.engines = {
-        ABC: {},
-        XYZ: {}
-      }
+      brokerDaemon.engines = new Map([
+        [ 'ABC', {} ],
+        [ 'XYZ', {} ]
+      ])
     })
 
     it('throws if currency config is not available for one of the currencies', () => {
@@ -243,12 +242,12 @@ describe('broker daemon', () => {
   describe('#initializeMarkets', () => {
     beforeEach(() => {
       Orderbook.prototype.initialize.resolves()
-      brokerDaemon.engines = {
-        ABC: {},
-        BTC: {},
-        LTC: {},
-        XYZ: {}
-      }
+      brokerDaemon.engines = new Map([
+        [ 'ABC', {} ],
+        [ 'BTC', {} ],
+        [ 'LTC', {} ],
+        [ 'XYZ', {} ]
+      ])
     })
 
     it('initializes all markets', async () => {
@@ -290,10 +289,10 @@ describe('broker daemon', () => {
       const ltcEngine = {
         validateNodeConfig: sinon.stub().resolves()
       }
-      brokerDaemon.engines = {
-        BTC: btcEngine,
-        LTC: ltcEngine
-      }
+      brokerDaemon.engines = new Map([
+        [ 'BTC', btcEngine ],
+        [ 'LTC', ltcEngine ]
+      ])
 
       await brokerDaemon.initialize()
 

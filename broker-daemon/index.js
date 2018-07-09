@@ -89,12 +89,11 @@ class BrokerDaemon {
     this.eventHandler = new EventEmitter()
     this.relayer = new RelayerClient(this.relayerRpcHost, this.logger)
 
-    this.engines = {}
-    Object.entries(engines || {}).forEach(([ symbol, engineConfig ]) => {
-      this.engines[symbol] = createEngineFromConfig(symbol, engines[symbol], { logger: this.logger })
-    })
+    this.engines = new Map(Object.entries(engines || {}).map(([ symbol, engineConfig ]) => {
+      return [ symbol, createEngineFromConfig(symbol, engines[symbol], { logger: this.logger }) ]
+    }))
     // REMOVE THIS WHEN WE IMPLEMENT ENGINE ID: temporary mapping to not break the broker
-    this.engine = this.engines[Object.keys(this.engines)[0]]
+    this.engine = this.engines.values().next().value
 
     this.orderbooks = new Map()
 
@@ -137,7 +136,7 @@ class BrokerDaemon {
           await this.blockOrderWorker.initialize()
           this.logger.info('BlockOrderWorker initialized')
         })(),
-        ...Object.entries(this.engines).map(async ([ symbol, engine ]) => {
+        ...Array.from(this.engines, async ([ symbol, engine ]) => {
           this.logger.info(`Validating engine configuration for ${symbol}`)
           await engine.validateNodeConfig()
           this.logger.info(`Validated engine configuration for ${symbol}`)
@@ -182,7 +181,7 @@ class BrokerDaemon {
       throw new Error(`Currency config is required for both symbols of ${marketName}`)
     }
 
-    if (!symbols.every(sym => !!this.engines[sym])) {
+    if (!symbols.every(sym => !!this.engines.get(sym))) {
       throw new Error(`An engine is required for both symbols of ${marketName}`)
     }
 
