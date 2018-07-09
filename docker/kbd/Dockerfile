@@ -2,11 +2,9 @@ FROM node:8 as builder
 
 LABEL maintainer="Danny Paz <kinesis.exchange>"
 
-# Set the version of the broker used for this image
-ARG BROKER_VERSION='v0.1.0-alpha-preview-rc2'
-
-# Set the version of the relayer used for this image
-ARG RELAYER_VERSION='v0.1.0-alpha-preview-rc2'
+ARG BROKER_VERSION='master'
+ARG RELAYER_VERSION='master'
+ARG LND_ENGINE_VERSION='master'
 
 # Install dependencies and install/build lnd.
 RUN apt-get update && \
@@ -31,7 +29,7 @@ RUN git clone --branch ${BROKER_VERSION} git@github.com:kinesis-exchange/broker.
 RUN npm install --quiet
 
 # Installing lnd-engine on the relayer
-RUN git clone --branch master git@github.com:kinesis-exchange/lnd-engine.git ./node_modules/lnd-engine
+RUN git clone --branch ${LND_ENGINE_VERSION} git@github.com:kinesis-exchange/lnd-engine.git ./node_modules/lnd-engine
 RUN (cd ./node_modules/lnd-engine && npm i --production)
 
 # Remove git file or npm will complain
