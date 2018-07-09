@@ -11,6 +11,7 @@
   "scripts": {
     "prebuild": "bash ./scripts/prebuild.sh",
     "build": "bash ./scripts/build.sh",
+    "build-images": "bash ./scripts/build-images.sh",
     "destroy": "bash ./scripts/destroy.sh",
     "dist-cli": "npm run broker-proto && bash ./scripts/publish-broker-cli.sh",
     "format": "standard --fix",
@@ -22,8 +23,6 @@
     "ci-test": "bash ./scripts/ci-test.sh",
     "start-kbd": "pm2-docker pm2.json --watch",
     "fund": "bash ./scripts/fund-simnet-wallet.local.sh",
-    "fund-setup": "bash ./scripts/add-simnet-cert.local.sh",
-    "fund-confirm": "bash ./scripts/confirm-simnet.sh",
     "broker-proto": "pbjs -t proto3 admin.proto order.proto orderbook.proto wallet.proto -p ./broker-daemon/proto/src -o ./broker-daemon/proto/broker.proto && cp ./broker-daemon/proto/broker.proto ./broker-cli/proto/broker.proto"
   },
   "bin": {

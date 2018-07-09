@@ -25,7 +25,9 @@ Additonally, you must have ssh/private access to the lnd-engine repo: https://gi
 Run the following commands in order:
 
 1. `npm run build` - This command will install local dependencies, install proto files and build all broker containers
-2. `docker-compose up -d` - starts all the containers
+2. `npm run build-images` - builds the kbd image to be used by docker-compose
+2a. Make sure that you have ran `npm run build-images` on the lnd-engine before trying to start all containers for the broker
+3. `docker-compose up -d` - starts all the containers
 
 ### Workflow
 
@@ -38,6 +40,8 @@ You can view default configuration for kcli in `./broker-cli/.kcli.default.js`.
 
 Current configuration is limited to:
 - Default Daemon RPC address
+
+Additionally, you can access a specific version of kbd by setting the --rpc-address on any kcli command.
 
 #### Running tests
 

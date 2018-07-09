@@ -105,6 +105,7 @@ class BrokerDaemon {
       store: this.store.sublevel('block-orders'),
       logger: this.logger
     })
+
     this.rpcServer = new BrokerRPCServer({
       logger: this.logger,
       engine: this.engine,
@@ -112,6 +113,7 @@ class BrokerDaemon {
       orderbooks: this.orderbooks,
       blockOrderWorker: this.blockOrderWorker
     })
+
     this.interchainRouter = new InterchainRouter(this.logger)
   }
 

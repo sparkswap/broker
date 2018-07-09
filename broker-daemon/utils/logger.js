@@ -21,11 +21,7 @@ const logger = winston.createLogger({
   ),
   json: true,
   humanReadableUnhandledException: true,
-  handleExceptions: true,
-  transports: [
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' })
-  ]
+  handleExceptions: true
 })
 
 if (process.env.NODE_ENV !== 'production') {
