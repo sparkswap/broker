@@ -22,7 +22,7 @@ describe('RelayerClient', () => {
   let fakeConsole
   let callerStub
 
-  let exchangeRpcHost = 'localhost:1337'
+  let relayerHost = 'localhost:1337'
 
   beforeEach(() => {
     MarketEvent = sinon.stub()
@@ -50,7 +50,6 @@ describe('RelayerClient', () => {
     loadProto = sinon.stub().returns(proto)
 
     RelayerClient.__set__('loadProto', loadProto)
-    RelayerClient.__set__('EXCHANGE_RPC_HOST', exchangeRpcHost)
 
     callerStub = sinon.stub()
     RelayerClient.__set__('caller', callerStub)
@@ -73,14 +72,14 @@ describe('RelayerClient', () => {
   describe('new', () => {
     it('assigns a logger', () => {
       const logger = {}
-      const relayer = new RelayerClient(logger)
+      const relayer = new RelayerClient(relayerHost, logger)
 
       expect(relayer).to.have.property('logger')
       expect(relayer.logger).to.be.equal(logger)
     })
 
     it('defaults the logger to the console', () => {
-      const relayer = new RelayerClient()
+      const relayer = new RelayerClient(relayerHost)
 
       expect(relayer).to.have.property('logger')
       expect(relayer.logger).to.be.equal(fakeConsole)
@@ -89,7 +88,7 @@ describe('RelayerClient', () => {
     it('loads the proto', () => {
       const fakePath = 'mypath'
       pathResolve.returns(fakePath)
-      const relayer = new RelayerClient()
+      const relayer = new RelayerClient(relayerHost)
 
       expect(pathResolve).to.have.been.calledOnce()
       expect(pathResolve).to.have.been.calledWith('./proto/relayer.proto')
@@ -103,7 +102,7 @@ describe('RelayerClient', () => {
       let relayer
 
       beforeEach(() => {
-        relayer = new RelayerClient()
+        relayer = new RelayerClient(relayerHost)
       })
 
       it('creates an makerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, MakerService))
@@ -128,7 +127,7 @@ describe('RelayerClient', () => {
       watchMarket = sinon.stub().returns(stream)
 
       callerStub.withArgs(sinon.match.any, OrderBookService).returns({ watchMarket })
-      relayer = new RelayerClient()
+      relayer = new RelayerClient(relayerHost)
       store = {
         put: sinon.stub()
       }

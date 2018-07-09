@@ -11,19 +11,6 @@ const InterchainRouter = require('./interchain-router')
 const { logger } = require('./utils')
 const CONFIG = require('./config')
 
-const {
-  RPC_ADDRESS,
-  DATA_DIR,
-  MARKETS,
-  INTERCHAIN_ROUTER_ADDRESS
-} = process.env
-
-const ENGINE_TYPE = process.env.ENGINE_TYPE || 'lnd'
-const EXCHANGE_RPC_HOST = process.env.EXCHANGE_RPC_HOST || '0.0.0.0:28492'
-const LND_TLS_CERT = process.env.LND_TLS_CERT || '~/.lnd/tls.cert'
-const LND_MACAROON = process.env.LND_MACAROON || '~/.lnd/admin.macaroon'
-const LND_RPC_HOST = process.env.LND_HOST || '0.0.0.0:10009'
-
 /**
  * @class BrokerDaemon is a collection of services to allow a user to run a broker on the Kinesis Network.
  * It exposes a user-facing RPC server, an interchain router, watches markets on the relayer, and works
@@ -41,23 +28,39 @@ class BrokerDaemon {
    * @param  {String} interchainRouterAddress Host and port where the interchain router should listen
    * @return {BrokerDaemon}
    */
-  constructor (rpcAddress, dataDir, markets, interchainRouterAddress) {
-    this.rpcAddress = rpcAddress || RPC_ADDRESS || '0.0.0.0:27492'
-    this.dataDir = dataDir || DATA_DIR || '~/.kinesis/data'
-    this.markets = markets || MARKETS || ''
-    this.marketNames = (markets || '').split(',').filter(m => m)
-    this.interchainRouterAddress = interchainRouterAddress || INTERCHAIN_ROUTER_ADDRESS || '0.0.0.0:40369'
-    this.engineType = ENGINE_TYPE
-    this.exchangeRpcHost = EXCHANGE_RPC_HOST
-    this.lndTlsCert = LND_TLS_CERT
-    this.lndMacaroon = LND_MACAROON
-    this.lndRpcHost = LND_RPC_HOST
+  constructor (rpcAddress, interchainRouterAddress, exchangeRpcHost, dataDir, marketNames, engines) {
+    this.rpcAddress = rpcAddress || '0.0.0.0:27492'
+    this.dataDir = dataDir || '~/.kinesis/data'
+    this.marketNames = marketNames || []
+    this.interchainRouterAddress = interchainRouterAddress || '0.0.0.0:40369'
 
     this.logger = logger
     this.store = sublevel(level(this.dataDir))
     this.eventHandler = new EventEmitter()
-    this.relayer = new RelayerClient()
-    this.engine = new LndEngine(this.lndRpcHost, { logger: this.logger, tlsCertPath: this.lndTlsCert, macaroonPath: this.lndMacaroon })
+    this.relayerHost = exchangeRpcHost || '0.0.0.0:28492'
+    this.relayer = new RelayerClient(this.relayerHost, this.logger)
+
+    this.engines = {}
+    engines = engines || {}
+    for (let symbol in engines) {
+      let engineConfig = engines[symbol]
+      if (engineConfig.type === 'LND') {
+        this.engines[symbol] = new LndEngine(
+          symbol,
+          engineConfig.lndRpc,
+          {
+            logger: this.logger,
+            tlsCertPath: engineConfig.lndTls,
+            macaroonPath: engineConfig.lndMacaroon
+          }
+        )
+      } else {
+        throw new Error(`Unknown engine type of ${engineConfig.type} for ${symbol}`)
+      }
+    }
+    // REMOVE THIS WHEN WE IMPLEMENT ENGINE ID: temporary mapping to not break the broker
+    this.engine = this.engines[Object.keys(this.engines)[0]]
+
     this.orderbooks = new Map()
 
     this.blockOrderWorker = new BlockOrderWorker({
@@ -86,7 +89,7 @@ class BrokerDaemon {
    */
   async initialize () {
     try {
-      // Since both of these are potentially long-running operations, we run them in parallel to speed
+      // Since these are potentially long-running operations, we run them in parallel to speed
       // up BrokerDaemon startup time.
       await Promise.all([
         this.initializeMarkets(this.marketNames),
@@ -94,7 +97,12 @@ class BrokerDaemon {
           this.logger.info(`Initializing BlockOrderWorker`)
           await this.blockOrderWorker.initialize()
           this.logger.info('BlockOrderWorker initialized')
-        })()
+        })(),
+        ...Object.entries(this.engines).map(async ([ symbol, engine ]) => {
+          this.logger.info(`Validating engine configuration for ${symbol}`)
+          await engine.validateNodeConfig()
+          this.logger.info(`Validated engine configuration for ${symbol}`)
+        })
       ])
 
       this.rpcServer.listen(this.rpcAddress)
@@ -133,6 +141,10 @@ class BrokerDaemon {
     const symbols = marketName.split('/')
     if (!symbols.every(sym => CONFIG.currencies.find(({ symbol }) => symbol === sym.toUpperCase()))) {
       throw new Error(`Currency config is required for both symbols of ${marketName}`)
+    }
+
+    if (!symbols.every(sym => !!this.engines[sym])) {
+      throw new Error(`An engine is required for both symbols of ${marketName}`)
     }
 
     if (this.orderbooks.get(marketName)) {
