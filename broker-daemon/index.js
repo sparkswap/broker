@@ -12,6 +12,34 @@ const { logger } = require('./utils')
 const CONFIG = require('./config')
 
 /**
+ * Default host and port for the BrokerRPCServer to listen on
+ * @constant
+ * @type {String}
+ */
+const DEFAULT_RPC_ADDRESS = '0.0.0.0:27492'
+
+/**
+ * Default file path to store broker data
+ * @constant
+ * @type {String}
+ */
+const DEFAULT_DATA_DIR = '~/.kinesis/data'
+
+/**
+ * Default host and port for the InterchainRouter to listen on
+ * @constant
+ * @type {String}
+ */
+const DEFAULT_INTERCHAIN_ROUTER_ADDRESS = '0.0.0.0:40369'
+
+/**
+ * Default host and port that the Relayer is set up on
+ * @constant
+ * @type {String}
+ */
+const DEFAULT_RELAYER_HOST = 'localhost:28492'
+
+/**
  * Create an instance of an engine from provided configuration
  * @param  {String} symbol         Symbol that this engine is responsible for
  * @param  {Object} engineConfig   Configuration object for this engine
@@ -50,15 +78,15 @@ class BrokerDaemon {
    * @return {BrokerDaemon}
    */
   constructor (rpcAddress, interchainRouterAddress, relayerRpcHost, dataDir, marketNames, engines) {
-    this.rpcAddress = rpcAddress || '0.0.0.0:27492'
-    this.dataDir = dataDir || '~/.kinesis/data'
+    this.rpcAddress = rpcAddress || DEFAULT_RPC_ADDRESS
+    this.dataDir = dataDir || DEFAULT_DATA_DIR
     this.marketNames = marketNames || []
-    this.interchainRouterAddress = interchainRouterAddress || '0.0.0.0:40369'
+    this.interchainRouterAddress = interchainRouterAddress || DEFAULT_INTERCHAIN_ROUTER_ADDRESS
+    this.relayerRpcHost = relayerRpcHost || DEFAULT_RELAYER_HOST
 
     this.logger = logger
     this.store = sublevel(level(this.dataDir))
     this.eventHandler = new EventEmitter()
-    this.relayerRpcHost = relayerRpcHost || '0.0.0.0:28492'
     this.relayer = new RelayerClient(this.relayerRpcHost, this.logger)
 
     this.engines = {}
