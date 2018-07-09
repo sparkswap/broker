@@ -18,17 +18,15 @@ const CONFIG = require('./config')
  */
 class BrokerDaemon {
   /**
-   * Creates a Broker Daemon with params from kbd cli
-   *
-   * @todo Validation of constructor params
-   * @todo put defaults into a defaults.env file
    * @param  {String} rpcAddress              Host and port where the user-facing RPC server should listen
-   * @param  {String} dataDir                 Relative path to a directory where application data should be stored
-   * @param  {String} markets                 Comma-delimited list of market names (e.g. 'BTC/LTC') to support
    * @param  {String} interchainRouterAddress Host and port where the interchain router should listen
+   * @param  {String} relayerRpcHost          Host and port for the Relayer RPC
+   * @param  {String} dataDir                 Relative path to a directory where application data should be stored
+   * @param  {Array}  marketNames             List of market names (e.g. 'BTC/LTC') to support
+   * @param  {Object} engines                 Configuration for all the engines to instantiate
    * @return {BrokerDaemon}
    */
-  constructor (rpcAddress, interchainRouterAddress, exchangeRpcHost, dataDir, marketNames, engines) {
+  constructor (rpcAddress, interchainRouterAddress, relayerRpcHost, dataDir, marketNames, engines) {
     this.rpcAddress = rpcAddress || '0.0.0.0:27492'
     this.dataDir = dataDir || '~/.kinesis/data'
     this.marketNames = marketNames || []
@@ -37,8 +35,8 @@ class BrokerDaemon {
     this.logger = logger
     this.store = sublevel(level(this.dataDir))
     this.eventHandler = new EventEmitter()
-    this.relayerHost = exchangeRpcHost || '0.0.0.0:28492'
-    this.relayer = new RelayerClient(this.relayerHost, this.logger)
+    this.relayerRpcHost = relayerRpcHost || '0.0.0.0:28492'
+    this.relayer = new RelayerClient(this.relayerRpcHost, this.logger)
 
     this.engines = {}
     engines = engines || {}
