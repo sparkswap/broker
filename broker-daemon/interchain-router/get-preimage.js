@@ -15,7 +15,7 @@ const { Order } = require('../models')
  * @param  {Object}        request.logger
  * @return {String}        base64 encoded string of the preimage
  */
-async function getPreimage ({ params, send, onCancel, onError, ordersByHash, logger }) {
+async function getPreimage ({ params, send, onCancel, onError, ordersByHash, logger = console }) {
   const {
     paymentHash,
     symbol,
