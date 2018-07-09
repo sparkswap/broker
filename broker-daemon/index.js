@@ -108,9 +108,9 @@ class BrokerDaemon {
           this.logger.info('BlockOrderWorker initialized')
         })(),
         ...Object.entries(this.engines).map(async ([ symbol, engine ]) => {
-          this.logger.info(`Initializing engine for ${symbol}`)
-          await engine.initialize()
-          this.logger.info(`initialized engine for ${symbol}`)
+          this.logger.info(`Validating engine configuration for ${symbol}`)
+          await engine.validateNodeConfig()
+          this.logger.info(`Validated engine configuration for ${symbol}`)
         })
       ])
 

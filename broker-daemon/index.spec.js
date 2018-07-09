@@ -40,7 +40,7 @@ describe('broker daemon', () => {
       info: sinon.spy()
     }
     LndEngine = sinon.stub()
-    LndEngine.prototype.initialize = sinon.stub().resolves()
+    LndEngine.prototype.validateNodeConfig = sinon.stub().resolves()
     Orderbook = sinon.stub()
     Orderbook.prototype.initialize = sinon.stub()
     BlockOrderWorker = sinon.stub()
@@ -283,12 +283,12 @@ describe('broker daemon', () => {
       expect(interchainRouterListenSpy).to.have.been.calledWith(brokerDaemon.interchainRouterAddress)
     })
 
-    it('initializes the enegines', async () => {
+    it('validates the engines', async () => {
       const btcEngine = {
-        initialize: sinon.stub().resolves()
+        validateNodeConfig: sinon.stub().resolves()
       }
       const ltcEngine = {
-        initialize: sinon.stub().resolves()
+        validateNodeConfig: sinon.stub().resolves()
       }
       brokerDaemon.engines = {
         BTC: btcEngine,
@@ -297,8 +297,8 @@ describe('broker daemon', () => {
 
       await brokerDaemon.initialize()
 
-      expect(btcEngine.initialize).to.have.been.calledOnce()
-      expect(ltcEngine.initialize).to.have.been.calledOnce()
+      expect(btcEngine.validateNodeConfig).to.have.been.calledOnce()
+      expect(ltcEngine.validateNodeConfig).to.have.been.calledOnce()
     })
 
     it('initializes markets', async () => {
