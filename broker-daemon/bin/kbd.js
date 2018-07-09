@@ -37,7 +37,7 @@ for (let currency of currencies) {
   let LND_MACAROON = process.env[`${currency.symbol}_LND_MACAROON`]
   let LND_RPC_HOST = process.env[`${currency.symbol}_LND_RPC_HOST`]
   program
-    .option(`--${lowerSymbol}-engine-type`, `The type of underlying Lightning node for ${currency.name}`, null, ENGINE_TYPE)
+    .option(`--${lowerSymbol}-engine-type <type>`, `The type of underlying Lightning node for ${currency.name}`, [ 'LND' ], ENGINE_TYPE)
   // LND Specific commands
   // These will be validated based off of the engine type
   program

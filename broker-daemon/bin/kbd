@@ -1,4 +1,4 @@
 #!/usr/bin/env node
 
-const kbd = require('./kbd')
+const kbd = require('./kbd.js')
 kbd(process.argv)
