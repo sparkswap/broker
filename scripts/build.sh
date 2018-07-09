@@ -15,8 +15,8 @@ npm run broker-proto
 
 echo "Downloading relayer proto files"
 rm -rf ./proto/relayer
-git clone git@github.com:kinesis-exchange/relayer.git ./proto/relayer
-cp ./proto/relayer/proto/relayer.proto ./proto/
+git clone git@github.com:kinesis-exchange/relayer-proto.git ./proto/relayer
+cp ./proto/relayer/relayer.proto ./proto/
 rm -rf ./proto/relayer
 
 echo "Installing lnd-engine"
