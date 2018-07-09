@@ -28,6 +28,9 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, log
     gte: paymentHash,
     lte: paymentHash
   }
+
+  // We are assuming that only one order has this swap hash. Any more and we have an error of internal
+  // consistency. Any less and we don't actually know about this swap.
   const orders = await getRecords(ordersByHash, Order.fromStorage.bind(Order), ordersByHash.range(range))
 
   if (orders.length === 0) {
