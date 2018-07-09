@@ -18,7 +18,6 @@ const {
   INTERCHAIN_ROUTER_ADDRESS
 } = process.env
 
-const ENGINE_TYPE = process.env.ENGINE_TYPE || 'lnd'
 const EXCHANGE_RPC_HOST = process.env.EXCHANGE_RPC_HOST || '0.0.0.0:28492'
 const LND_TLS_CERT = process.env.LND_TLS_CERT || '~/.lnd/tls.cert'
 const LND_MACAROON = process.env.LND_MACAROON || '~/.lnd/admin.macaroon'
@@ -47,7 +46,6 @@ class BrokerDaemon {
     this.markets = markets || MARKETS || ''
     this.marketNames = (markets || '').split(',').filter(m => m)
     this.interchainRouterAddress = interchainRouterAddress || INTERCHAIN_ROUTER_ADDRESS || '0.0.0.0:40369'
-    this.engineType = ENGINE_TYPE
     this.exchangeRpcHost = EXCHANGE_RPC_HOST
     this.lndTlsCert = LND_TLS_CERT
     this.lndMacaroon = LND_MACAROON
@@ -67,6 +65,7 @@ class BrokerDaemon {
       store: this.store.sublevel('block-orders'),
       logger: this.logger
     })
+
     this.rpcServer = new BrokerRPCServer({
       logger: this.logger,
       engine: this.engine,
@@ -74,6 +73,7 @@ class BrokerDaemon {
       orderbooks: this.orderbooks,
       blockOrderWorker: this.blockOrderWorker
     })
+
     this.interchainRouter = new InterchainRouter({
       ordersByHash: this.blockOrderWorker.ordersByHash,
       logger: this.logger

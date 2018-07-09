@@ -13,18 +13,14 @@ const { validations } = require('../../broker-cli/utils')
 
 const { version: CLI_VERSION } = require('../../package.json')
 
-// KBD Specific ENV variables
 const {
   RPC_ADDRESS,
   DATA_DIR,
-  ENGINE_TYPE,
   EXCHANGE_RPC_HOST,
   MARKETS,
   INTERCHAIN_ROUTER_ADDRESS
 } = process.env
 
-// LND Specific ENV variables. ONLY used if ENGINE_TYPE is LND
-// TODO: this may not be the correct way to set environment variables for a particular engine
 const {
   LND_TLS_CERT,
   LND_MACAROON,
@@ -32,14 +28,12 @@ const {
   ENGINE_RPC_HOST: LND_RPC_HOST
 } = process.env
 
-// TODO: Add validations to ./bin/kbd when they become available
 program
   .version(CLI_VERSION)
   .option('--rpc-address <server>', 'Add a host/port to listen for daemon RPC connections', validations.isHost, RPC_ADDRESS)
   .option('--interchain-router-address <server>', 'Add a host/port to listen for interchain router RPC connections', validations.isHost, INTERCHAIN_ROUTER_ADDRESS)
   .option('--data-dir <path>', 'Location to store kinesis data', validations.isFormattedPath, DATA_DIR)
   .option('--markets <markets>', 'Comma-separated market names to track on startup', validations.areValidMarketNames, MARKETS)
-  .option('--engine-type', 'The type of Kinesis engine. Example: lnd', null, ENGINE_TYPE)
   .option('--exchange-host', 'The host address for the Kinesis Relayer', validations.isHost, EXCHANGE_RPC_HOST)
 
   // LND Specific commands

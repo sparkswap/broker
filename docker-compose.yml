@@ -2,15 +2,15 @@ version: '2.4'
 
 services:
   kbd:
+    image: kinesis_kbd:latest
     depends_on:
-      # If you are using a separate instance of lnd, this is unnecessary
       - lnd_btc
-    build:
-      context: ./
-      dockerfile: docker/kbd/Dockerfile
+      - lnd_ltc
     volumes:
-      - './bin:/home/app/bin'
       - './broker-daemon:/home/app/broker-daemon/'
+      - './proto:/home/app/proto/'
+      - '/home/app/node_modules'
+      - './node_modules/lnd-engine:/home/app/node_modules/lnd-engine'
       - '/data'
       # This is populated externally w/ an engine
       - 'shared:/shared'
@@ -22,13 +22,10 @@ services:
       - INTERCHAIN_ROUTER_ADDRESS=0.0.0.0:40369
       - DATA_DIR=/data
       - LND_HOST=lnd_btc:10009
-      - LND_TLS_CERT=/shared/lnd-engine-tls.cert
-      - LND_MACAROON=/shared/lnd-engine-admin.macaroon
+      - LND_TLS_CERT=/shared/lnd-engine-tls-btc.cert
+      - LND_MACAROON=/shared/lnd-engine-admin-btc.macaroon
       - GRPC_SSL_CIPHER_SUITES=HIGH+ECDSA
-      # This address is specifically tied to the relayer network
-      - ENGINE_TYPE=lnd
-      # This is a temporary workaround for preventing the use of external networks
-      # for the relayer. In a testnet/mainnet setting, this will be a public IP.
+      # TODO: Should be removed as we will have multiple engine types
       - EXCHANGE_RPC_HOST=docker.for.mac.host.internal:28492
       - EXCHANGE_LND_HOST=docker.for.mac.host.internal:10111
       - LND_EXTERNAL_ADDRESS=docker.for.mac.host.internal:10112
@@ -36,49 +33,140 @@ services:
       - MARKETS=BTC/LTC
     ports:
       - '27492:27492'
-    expose:
-      - '27492'
     networks:
       - broker
-      - lnd
     working_dir: '/home/app'
     entrypoint: bash -c 'npm run start-kbd'
 
   lnd_btc:
+    image: kinesis_lnd_btc:latest
     depends_on:
       - btcd
-    extends:
-      file: ./docker/lnd-docker-compose.yml
-      service: lnd_btc
-    build:
-      context: ./docker
     ports:
-      - '10112:10112'
+      - '10113:10113'
     environment:
-      - LISTEN=0.0.0.0:10112
-      - EXTERNAL_ADDRESS=docker.for.mac.host.internal:10112
-      # This is only needed for simnet w/ relayer due to having 1 simnet btcd
-      # node for the entire network
-      #
-      # Here we are setting the host to a public IP and also using a different
-      # public cert
-      - RPC_HOST=docker.for.mac.host.internal
-      - RPC_CERT_PATH=/shared/simnet-rpc.cert
+      - RPC_USER=kuser
+      - RPC_PASS=kpass
+      - RPC_HOST=docker.for.mac.host.internal:18556
+      - RPC_CERT_PATH=/shared/rpc-btc.cert
+      - ADMIN_MACAROON=/shared/lnd-engine-admin-btc.macaroon
+      - READ_ONLY_MACAROON=/shared/lnd-engine-readonly-btc.macaroon
+      - INVOICE_MACAROON=/shared/lnd-engine-invoice-btc.macaroon
+      - TLS_CERT_PATH=/shared/lnd-engine-tls-btc.cert
+      - TLS_KEY_PATH=/secure/lnd-engine-tls-btc.key
+      - NETWORK=simnet
+      - CHAIN=bitcoin
+      - DEBUG=info
+      - RPC_LISTEN=0.0.0.0:10009
+      - LISTEN=0.0.0.0:10113
+      - EXTERNAL_ADDRESS=0.0.0.0:10113
+      - REST_LISTEN=0.0.0.0:8101
+      - DATA_DIR=/data
+      - LOG_DIR=/data
+      - NODE=btcd
+    volumes:
+      - 'shared:/shared'
+      - 'lnd_btc:/data'
+    networks:
+      - broker
+    entrypoint: ["./start-lnd.sh"]
 
+  # This BTCD section is not used due to simnet only allowing one node to be active
+  # at a time. We use shared ltcd/btcd nodes from the relayer, for the dev environment.
+  #
+  # However, this node needs to be created so that we have access to the correct
+  # certs for the shared nodes (certs are created on image build)
+  #
   btcd:
-    extends:
-      file: ./docker/lnd-docker-compose.yml
-      service: btcd
-    build:
-      context: ./docker
+    image: kinesis_btcd:latest
+    volumes:
+      - shared:/shared
+      - bitcoin:/data
+    environment:
+      - RPC_USER=kuser
+      - RPC_PASS=kpass
+      - NETWORK=simnet
+      - DEBUG=info
+      - DATA_DIR=/data
+      - LOG_DIR=/data
+      - RPC_KEY=/secure/rpc.key
+      - RPC_CERT=/shared/rpc-btc.cert
+      - RPC_LISTEN=0.0.0.0
+      - "MINING_ADDRESS=$MINING_ADDRESS"
+      - MAX_WEB_SOCKETS=100
+    entrypoint: ["./start-btcd.sh"]
+
+  lnd_ltc:
+    image: kinesis_lnd_ltc:latest
+    ports:
+      - '10114:10114'
+    depends_on:
+      - ltcd
+    environment:
+      - RPC_USER=kuser
+      - RPC_PASS=kpass
+      - RPC_HOST=docker.for.mac.host.internal:18666
+      - RPC_CERT_PATH=/shared/rpc-ltc.cert
+      - ADMIN_MACAROON=/shared/lnd-engine-admin-ltc.macaroon
+      - READ_ONLY_MACAROON=/shared/lnd-engine-readonly-ltc.macaroon
+      - INVOICE_MACAROON=/shared/lnd-engine-invoice-ltc.macaroon
+      - TLS_CERT_PATH=/shared/lnd-engine-tls-ltc.cert
+      - TLS_KEY_PATH=/secure/lnd-engine-tls-ltc.key
+      - NETWORK=simnet
+      # We use bitcoin/btcd chain here because ltc simnet is not currently supported
+      # on LND
+      # see: https://github.com/lightningnetwork/lnd/blob/d83f4fbb85489ffc9b50da4c4162966046e9053e/config.go#L510-L514
+      - CHAIN=bitcoin
+      - NODE=btcd
+      - DEBUG=info
+      - RPC_LISTEN=0.0.0.0:10009
+      - LISTEN=0.0.0.0:10114
+      # This address is for development only. You must change this to a
+      # tld to use in a production setting
+      - EXTERNAL_ADDRESS=0.0.0.0:10114
+      - REST_LISTEN=0.0.0.0:8101
+      - DATA_DIR=/data
+      - LOG_DIR=/data
+    volumes:
+      - 'shared:/shared'
+      - 'lnd_ltc:/data'
+    networks:
+      - broker
+    entrypoint: ["./start-lnd.sh"]
+
+  # This LTCD section is not used due to simnet only allowing one node to be active
+  # at a time. We use shared ltcd/btcd nodes from the relayer, for the dev environment.
+  #
+  # However, this node needs to be created so that we have access to the correct
+  # certs for the shared nodes (certs are created on image build)
+  #
+  ltcd:
+    image: kinesis_ltcd:latest
+    volumes:
+      - shared:/shared
+      - litecoin:/data
+    environment:
+      - RPC_USER=kuser
+      - RPC_PASS=kpass
+      - NETWORK=simnet
+      - DEBUG=info
+      - DATA_DIR=/data
+      - LOG_DIR=/data
+      - RPC_KEY=/secure/rpc.key
+      - RPC_CERT=/shared/rpc-ltc.cert
+      - RPC_LISTEN=0.0.0.0
+      - MAX_WEB_SOCKETS=100
+      # This is set dynamically in the startup scripts
+      - "MINING_ADDRESS=$MINING_ADDRESS"
+    entrypoint: ["./start-ltcd.sh"]
 
 
 volumes:
   shared:
-  # These volumes are used in lnd/btc
-  lnd:
+  lnd_btc:
+  lnd_ltc:
   bitcoin:
+  litecoin:
 
 networks:
   broker:
-  lnd:
