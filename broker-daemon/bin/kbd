@@ -13,13 +13,6 @@ const { validations } = require('../../broker-cli/utils')
 
 const { version: CLI_VERSION } = require('../../package.json')
 
-/**
- * KBD Specific ENV variables.
- *
- * @constant
- * @type {Array<string>}
- * @default
- */
 const {
   RPC_ADDRESS,
   DATA_DIR,
@@ -28,13 +21,6 @@ const {
   INTERCHAIN_ROUTER_ADDRESS
 } = process.env
 
-/**
- * LND Specific ENV variables.
- *
- * @constant
- * @type {Array<string>}
- * @default
- */
 const {
   LND_TLS_CERT,
   LND_MACAROON,

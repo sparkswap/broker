@@ -31,7 +31,7 @@ RUN git clone --branch ${BROKER_VERSION} git@github.com:kinesis-exchange/broker.
 RUN npm install --quiet
 
 # Installing lnd-engine on the relayer
-RUN git clone git@github.com:kinesis-exchange/lnd-engine.git ./node_modules/lnd-engine
+RUN git clone --branch master git@github.com:kinesis-exchange/lnd-engine.git ./node_modules/lnd-engine
 RUN (cd ./node_modules/lnd-engine && npm i --production)
 
 # Remove git file or npm will complain
