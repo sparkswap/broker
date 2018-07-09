@@ -80,7 +80,9 @@ class BrokerDaemon {
 
   /**
    * Initialize the broker daemon which:
-   * - listens to market events on the Relayer
+   * - Sets up the orderbooks (listens to market events on the Relayer, re-indexes data store)
+   * - Sets up the BlockOrderWorker (re-indexing the orders)
+   * - Validates engine configuration
    * - Sets up the user-facing RPC Server
    * - Sets up the Interchain Router
    * @return {Promise}
@@ -130,7 +132,7 @@ class BrokerDaemon {
   }
 
   /**
-   * Listens to the assigned market
+   * Creates and initializes an orderbook for every market
    *
    * @param {String} marketName
    * @returns {Promise<void>} promise that resolves when market is caught up to the remote
