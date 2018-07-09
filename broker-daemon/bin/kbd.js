@@ -16,7 +16,7 @@ const { version: CLI_VERSION } = require('../../package.json')
 const {
   RPC_ADDRESS,
   DATA_DIR,
-  RELAYER_RPC_HOST,
+  EXCHANGE_RPC_HOST,
   MARKETS,
   INTERCHAIN_ROUTER_ADDRESS
 } = process.env
@@ -28,7 +28,7 @@ program
   .option('--interchain-router-address <server>', 'Add a host/port to listen for interchain router RPC connections', validations.isHost, INTERCHAIN_ROUTER_ADDRESS)
   .option('--data-dir <path>', 'Location to store kinesis data', validations.isFormattedPath, DATA_DIR)
   .option('--markets <markets>', 'Comma-separated market names to track on startup', validations.areValidMarketNames, MARKETS)
-  .option('--relayer-host', 'The host address for the Kinesis Relayer', validations.isHost, RELAYER_RPC_HOST)
+  .option('--relayer-host', 'The host address for the Kinesis Relayer', validations.isHost, EXCHANGE_RPC_HOST)
 
 for (let currency of currencies) {
   let lowerSymbol = currency.symbol.toLowerCase()
