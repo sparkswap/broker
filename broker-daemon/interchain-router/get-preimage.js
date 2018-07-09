@@ -68,7 +68,7 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, log
   // TODO: ensure timelock is sufficient for downstream payment
   // TODO: handle client cancellations and errors
 
-  // UNIMPLEMENTED
+  logger.error('UNIMPLEMENTED: Made a call to unimplemented getPreimage method')
   send({})
 }
 
