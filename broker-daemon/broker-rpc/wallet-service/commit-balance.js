@@ -51,7 +51,7 @@ const SUPPORTED_SYMBOLS = Object.freeze({
  * @return {responses.EmptyResponse}
  */
 async function commitBalance ({ params, relayer, logger, engine }, { EmptyResponse }) {
-  const { publicKey: relayerPubKey } = await relayer.paymentNetworkService.getPublicKey({})
+  const { address } = await relayer.paymentChannelNetworkService.getAddress({})
   const { balance, symbol } = params
 
   logger.info(`Attempting to create channel with ${EXCHANGE_LND_HOST} on ${symbol} with ${balance}`)
@@ -70,7 +70,7 @@ async function commitBalance ({ params, relayer, logger, engine }, { EmptyRespon
     throw new PublicError(`Unsupported symbol for committing a balance: ${symbol}`)
   }
 
-  await engine.createChannel(EXCHANGE_LND_HOST, relayerPubKey, balance, symbol)
+  await engine.createChannel(address, balance, symbol)
 
   return new EmptyResponse({})
 }

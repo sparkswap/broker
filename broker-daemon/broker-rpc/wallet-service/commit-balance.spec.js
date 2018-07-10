@@ -10,16 +10,15 @@ describe('commit-balance', () => {
   let relayer
   let logger
   let engine
-  let publicKeyStub
+  let addressStub
   let createChannelStub
-  let publicKey
+  let address
   let res
-  let envRevert
 
   beforeEach(() => {
     EmptyResponse = sinon.stub()
-    publicKey = '12345'
-    publicKeyStub = sinon.stub().returns({ publicKey })
+    address = 'asdf12345@localhost'
+    addressStub = sinon.stub().returns({ address })
     createChannelStub = sinon.stub()
     logger = {
       info: sinon.stub(),
@@ -32,12 +31,7 @@ describe('commit-balance', () => {
       balance: 10000000,
       symbol: 'BTC'
     }
-    relayer = { paymentNetworkService: { getPublicKey: publicKeyStub } }
-    envRevert = commitBalance.__set__('EXCHANGE_LND_HOST', '127.0.0.1')
-  })
-
-  afterEach(() => {
-    envRevert()
+    relayer = { paymentChannelNetworkService: { getAddress: addressStub } }
   })
 
   describe('committing a balance to the exchange', () => {
@@ -46,12 +40,11 @@ describe('commit-balance', () => {
     })
 
     it('receives a public key from the relayer', () => {
-      expect(publicKeyStub).to.have.been.calledWith({})
+      expect(addressStub).to.have.been.calledWith({})
     })
 
     it('creates a channel through an engine', () => {
-      const lndHost = commitBalance.__get__('EXCHANGE_LND_HOST')
-      expect(createChannelStub).to.have.been.calledWith(lndHost, publicKey, params.balance)
+      expect(createChannelStub).to.have.been.calledWith(address, params.balance)
     })
 
     it('constructs a EmptyResponse', () => {
