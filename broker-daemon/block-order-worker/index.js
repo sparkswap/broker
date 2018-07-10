@@ -79,6 +79,14 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`${marketName} is not being tracked as a market. Configure kbd to track ${marketName} using the MARKETS environment variable.`)
     }
 
+    if (!this.engines.get(orderbook.baseSymbol)) {
+      throw new Error(`No engine available for ${orderbook.baseSymbol}.`)
+    }
+
+    if (!this.engines.get(orderbook.counterSymbol)) {
+      throw new Error(`No engine available for ${orderbook.counterSymbol}.`)
+    }
+
     const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)

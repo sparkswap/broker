@@ -85,7 +85,9 @@ describe('BlockOrderWorker', () => {
     BlockOrderWorker.__set__('SublevelIndex', SublevelIndex)
 
     orderbooks = new Map([['BTC/LTC', {
-      getBestOrders: sinon.stub()
+      getBestOrders: sinon.stub(),
+      baseSymbol: 'BTC',
+      counterSymbol: 'LTC'
     }]])
 
     secondLevel = {
@@ -103,7 +105,7 @@ describe('BlockOrderWorker', () => {
     }
     relayer = sinon.stub()
     engine = sinon.stub()
-    engines = new Map([ ['BTC', sinon.stub()] ])
+    engines = new Map([ ['BTC', sinon.stub()], ['LTC', sinon.stub()] ])
   })
 
   describe('new', () => {
@@ -267,7 +269,7 @@ describe('BlockOrderWorker', () => {
   describe('createBlockOrder', () => {
     let worker
     beforeEach(() => {
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine, engines })
     })
 
     it('throws if the market is not supported', () => {
@@ -278,7 +280,22 @@ describe('BlockOrderWorker', () => {
         price: '100',
         timeInForce: 'GTC'
       }
-      expect(worker.createBlockOrder(params)).to.be.rejectedWith(Error)
+      expect(worker.createBlockOrder(params)).to.be.rejectedWith('is not being tracked as a market')
+    })
+
+    it('throws if an engine does not exist', () => {
+      worker.orderbooks.set('BTC/XYZ', {
+        baseSymbol: 'BTC',
+        counterSymbol: 'XYZ'
+      })
+      const params = {
+        marketName: 'BTC/XYZ',
+        side: 'BID',
+        amount: '10000',
+        price: '100',
+        timeInForce: 'GTC'
+      }
+      expect(worker.createBlockOrder(params)).to.be.rejectedWith('No engine available')
     })
 
     it('creates an id', async () => {
