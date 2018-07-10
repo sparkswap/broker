@@ -31,7 +31,7 @@ describe('FillStateMachine', () => {
     }
     engine = {
       createSwapHash: sinon.stub().resolves(),
-      getPublicKey: sinon.stub().resolves('asdfasdf')
+      getPaymentChannelNetworkAddress: sinon.stub().resolves('bolt:asdfasdf')
     }
   })
 
@@ -414,15 +414,15 @@ describe('FillStateMachine', () => {
     })
 
     it('sets execute params on the fill when it is executed', async () => {
-      const payTo = 'ln:asdfjas0d9f09aj'
+      const makerAddress = 'bolt:asdfjas0d9f09aj'
       fsm.fill.setExecuteParams = sinon.stub()
-      subscribeExecuteStream.on.withArgs('data').callsArgWithAsync(1, { payTo })
+      subscribeExecuteStream.on.withArgs('data').callsArgWithAsync(1, { makerAddress })
 
       await fsm.fillOrder()
       await delay(10)
 
       expect(fsm.fill.setExecuteParams).to.have.been.calledOnce()
-      expect(fsm.fill.setExecuteParams).to.have.been.calledWith(sinon.match({ payTo }))
+      expect(fsm.fill.setExecuteParams).to.have.been.calledWith(sinon.match({ makerAddress }))
     })
 
     it('executes the order after being filled', async () => {
@@ -443,14 +443,14 @@ describe('FillStateMachine', () => {
     let fsm
     let executeSwapStub
     let fakeSwapHash
-    let fakeCounterpartyPubKey
+    let fakeMakerAddress
     let fakeInbound
     let fakeOutbound
 
     beforeEach(async () => {
       executeSwapStub = sinon.stub().resolves()
       fakeSwapHash = 'afaosijf'
-      fakeCounterpartyPubKey = 'afasdf980as98f'
+      fakeMakerAddress = 'bolt:afasdf980as98f'
       fakeInbound = { fake: 'inbound' }
       fakeOutbound = { fake: 'outbound' }
 
@@ -459,7 +459,7 @@ describe('FillStateMachine', () => {
           swapHash: fakeSwapHash,
           inbound: fakeInbound,
           outbound: fakeOutbound,
-          counterpartyPubKey: fakeCounterpartyPubKey
+          makerAddress: fakeMakerAddress
         }
       }
       engine = { executeSwap: executeSwapStub }
@@ -481,7 +481,7 @@ describe('FillStateMachine', () => {
       await fsm.execute()
 
       expect(executeSwapStub).to.have.been.calledOnce()
-      expect(executeSwapStub).to.have.been.calledWith(fakeCounterpartyPubKey, fakeSwapHash, fakeInbound, fakeOutbound)
+      expect(executeSwapStub).to.have.been.calledWith(fakeMakerAddress, fakeSwapHash, fakeInbound, fakeOutbound)
     })
 
     it('errors if the swap fails', () => {
@@ -569,7 +569,7 @@ describe('FillStateMachine', () => {
       }
       fillParams = {
         fillAmount: '90000',
-        takerPayTo: 'ln:asdfasdf'
+        takerAddress: 'ln:asdfasdf'
       }
       fakeKey = 'mykey'
       fakeValueObject = {

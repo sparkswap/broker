@@ -303,7 +303,7 @@ describe('BlockOrder', () => {
                 baseAmount: '1000',
                 counterAmount: '10000',
                 ownerId: 'fakeID',
-                payTo: 'ln:1231243fasdf',
+                makerAddress: 'bolt:1231243fasdf',
                 feePaymentRequest: 'lnbcasodifjoija',
                 depositPaymentRequest: 'lnbcaosdifjaosdfj'
               },

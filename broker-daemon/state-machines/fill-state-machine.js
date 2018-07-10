@@ -135,8 +135,8 @@ const FillStateMachine = StateMachine.factory({
      * @return {void}
      */
     onBeforeCreate: async function (lifecycle, blockOrderId, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
-      const takerPayTo = `ln:${await this.engine.getPublicKey()}`
-      this.fill = new Fill(blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerPayTo })
+      const takerAddress = await this.engine.getPaymentChannelNetworkAddress()
+      this.fill = new Fill(blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerAddress })
 
       const { inboundAmount } = this.fill
 
@@ -224,9 +224,9 @@ const FillStateMachine = StateMachine.factory({
         this.reject(e)
       })
 
-      call.on('data', ({ payTo }) => {
+      call.on('data', ({ makerAddress }) => {
         try {
-          this.fill.setExecuteParams({ payTo })
+          this.fill.setExecuteParams({ makerAddress })
 
           this.logger.info(`Fill ${fillId} is being executed`)
 
@@ -246,9 +246,9 @@ const FillStateMachine = StateMachine.factory({
      * @return {Promise}          Promise that rejects if execution fails
      */
     onBeforeExecute: async function (lifecycle) {
-      const { counterpartyPubKey, swapHash, inbound, outbound } = this.fill.paramsForSwap
+      const { makerAddress, swapHash, inbound, outbound } = this.fill.paramsForSwap
 
-      await this.engine.executeSwap(counterpartyPubKey, swapHash, inbound, outbound)
+      await this.engine.executeSwap(makerAddress, swapHash, inbound, outbound)
     },
 
     /**

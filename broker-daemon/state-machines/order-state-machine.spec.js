@@ -30,7 +30,7 @@ describe('OrderStateMachine', () => {
       }
     }
     engine = {
-      getPublicKey: sinon.stub()
+      getPaymentChannelNetworkAddress: sinon.stub()
     }
   })
 
@@ -240,14 +240,14 @@ describe('OrderStateMachine', () => {
       expect(Order).to.have.been.calledWith(blockOrderId, sinon.match(params))
     })
 
-    it('creates a payTo for the order', async () => {
-      const fakeKey = 'mykey'
-      engine.getPublicKey.resolves(fakeKey)
+    it('creates a makerAddress for the order', async () => {
+      const fakeAddress = 'bolt:mykey'
+      engine.getPaymentChannelNetworkAddress.resolves(fakeAddress)
 
       await osm.create(blockOrderId, params)
 
-      expect(engine.getPublicKey).to.have.been.calledOnce()
-      expect(Order).to.have.been.calledWith(sinon.match.any, sinon.match({ payTo: `ln:${fakeKey}` }))
+      expect(engine.getPaymentChannelNetworkAddress).to.have.been.calledOnce()
+      expect(Order).to.have.been.calledWith(sinon.match.any, sinon.match({ makerAddress: fakeAddress }))
     })
 
     xit('creates an ownerId for the order')

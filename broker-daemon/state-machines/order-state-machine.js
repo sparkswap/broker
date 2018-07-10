@@ -140,12 +140,11 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onBeforeCreate: async function (lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
-      // TODO: move payTo translation somewhere else
-      // TODO: figure out a way to cache the publicKey instead of making a request
-      const payTo = `ln:${await this.engine.getPublicKey()}`
+      // TODO: figure out a way to cache the maker address instead of making a request
+      const makerAddress = await this.engine.getPaymentChannelNetworkAddress()
       const ownerId = 'TODO: create real owner ids'
 
-      this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, payTo, ownerId })
+      this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, makerAddress, ownerId })
 
       const { orderId, feePaymentRequest, depositPaymentRequest } = await this.relayer.makerService.createOrder(this.order.paramsForCreate)
       this.order.setCreatedParams({ orderId, feePaymentRequest, depositPaymentRequest })
