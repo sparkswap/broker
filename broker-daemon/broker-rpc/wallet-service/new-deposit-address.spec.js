@@ -3,29 +3,47 @@ const { expect, rewire, sinon } = require('test/test-helper')
 
 const newDepositAddress = rewire(path.resolve(__dirname, 'new-deposit-address'))
 
-describe('newDepositAddress', () => {
+describe('new-deposit-address', () => {
   let logger
+  let params
   let engine
+  let engines
   let newAddressStub
   let newAddressResponse
   let responseStub
 
   before(() => {
     logger = sinon.stub()
+    params = {
+      symbol: 'BTC'
+    }
     newAddressResponse = '12345'
     newAddressStub = sinon.stub().returns(newAddressResponse)
     responseStub = sinon.stub()
     engine = { createNewAddress: newAddressStub }
-
-    newDepositAddress({ logger, engine }, { NewDepositAddressResponse: responseStub })
+    engines = new Map([['BTC', engine]])
   })
 
-  it('calls an engine with createNewAddress', () => {
-    expect(newAddressStub).to.have.been.called()
+  describe('newDepositAddress', () => {
+    beforeEach(async () => {
+      await newDepositAddress({ logger, engines, params }, { NewDepositAddressResponse: responseStub })
+    })
+
+    it('calls an engine with createNewAddress', () => {
+      expect(newAddressStub).to.have.been.called()
+    })
+
+    it('constructs a NewAddressResponse', () => {
+      const address = newAddressResponse
+      expect(responseStub).to.have.been.calledWith({ address })
+    })
   })
 
-  it('constructs a NewAddressResponse', () => {
-    const address = newAddressResponse
-    expect(responseStub).to.have.been.calledWith({ address })
+  describe('invalid engine type', () => {
+    const badParams = {symbol: 'BAD'}
+
+    it('throws an error', () => {
+      expect(async () => newDepositAddress({ logger, engines, badParams }, { NewDepositAddressResponse: responseStub })).to.be.throw('Could not find engine')
+    })
   })
 })

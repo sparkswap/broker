@@ -7,6 +7,10 @@ enum Symbol {
   LTC = 1;
 }
 
+message NewDepositAddressRequest {
+  Symbol symbol = 0;
+}
+
 message NewDepositAddressResponse {
   string address = 0;
 }
