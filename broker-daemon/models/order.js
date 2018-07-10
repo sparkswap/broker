@@ -34,7 +34,7 @@ class Order {
    * @param  {String} options.baseAmount    Amount, represented as an integer in the base currency's smallest unit, to be transacted
    * @param  {String} options.counterAmount Amount, represented as an integer in the counter currency's smallest unit, to be transacted
    * @param  {String} options.ownerId
-   * @param  {String} options.makerAddress         Identifier on the payment channel network for the maker. e.g. for the lightning network: `bolt:{node public key}`
+   * @param  {String} options.makerAddress  Identifier on the payment channel network for the maker. e.g. for the lightning network: `bolt:{node public key}`
    * @return {Order}                        Order instance
    */
   constructor (blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, makerAddress }) {
