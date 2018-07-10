@@ -99,6 +99,7 @@ class BrokerDaemon {
 
     this.blockOrderWorker = new BlockOrderWorker({
       relayer: this.relayer,
+      engines: this.engines,
       engine: this.engine,
       orderbooks: this.orderbooks,
       store: this.store.sublevel('block-orders'),
