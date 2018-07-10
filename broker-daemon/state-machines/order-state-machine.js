@@ -145,7 +145,11 @@ const OrderStateMachine = StateMachine.factory({
 
       this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId })
       // TODO: figure out a way to cache the maker address instead of making a request
-      this.order.makerAddress = await this.engines.get(this.order.inboundSymbol).getPaymentChannelNetworkAddress()
+      const inboundEngine = this.engines.get(this.order.inboundSymbol)
+      if (!inboundEngine) {
+        throw new Error(`No engine available for ${this.order.inboundSymbol}`)
+      }
+      this.order.makerAddress = await inboundEngine.getPaymentChannelNetworkAddress()
 
       const { orderId, feePaymentRequest, depositPaymentRequest } = await this.relayer.makerService.createOrder(this.order.paramsForCreate)
       this.order.setCreatedParams({ orderId, feePaymentRequest, depositPaymentRequest })

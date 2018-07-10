@@ -265,6 +265,11 @@ describe('OrderStateMachine', () => {
       expect(osm.order.makerAddress).to.be.equal(fakeAddress)
     })
 
+    it('throws if no engine exists for the inbound symbol', () => {
+      Order.prototype.inboundSymbol = 'XYZ'
+      return expect(osm.create(blockOrderId, params)).to.eventually.be.rejectedWith('No engine available')
+    })
+
     it('creates an order on the relayer', async () => {
       const fakeParams = {
         my: 'fake'
