@@ -354,6 +354,7 @@ describe('OrderStateMachine', () => {
     let feePaymentRequest
     let depositPaymentRequest
     let orderId
+    let outboundSymbol
 
     beforeEach(async () => {
       invoice = '1234'
@@ -366,19 +367,25 @@ describe('OrderStateMachine', () => {
       feePaymentRequest = 'fee'
       depositPaymentRequest = 'deposit'
       orderId = '1234'
+      outboundSymbol = 'BTC'
 
-      fakeOrder = { feePaymentRequest, depositPaymentRequest, orderId }
-      engine = { payInvoice: payInvoiceStub, createRefundInvoice: createRefundInvoiceStub }
+      fakeOrder = { feePaymentRequest, depositPaymentRequest, orderId, outboundSymbol }
+      engines = new Map([['BTC', { payInvoice: payInvoiceStub, createRefundInvoice: createRefundInvoiceStub }]])
       relayer = {
         makerService: {
           placeOrder: placeOrderStub
         }
       }
 
-      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.order = fakeOrder
 
       await osm.goto('created')
+    })
+
+    it('throws if no engine is available', () => {
+      osm.order.outboundSymbol = 'ABC'
+      return expect(osm.place()).to.eventually.be.rejectedWith('No engine available')
     })
 
     it('pays a fee invoice', async () => {

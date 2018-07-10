@@ -186,18 +186,23 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onBeforePlace: async function (lifecycle) {
-      const { feePaymentRequest, depositPaymentRequest, orderId } = this.order
+      const { feePaymentRequest, depositPaymentRequest, orderId, outboundSymbol } = this.order
 
       if (!feePaymentRequest) throw new Error('Cant pay invoices because fee invoice does not exist')
       if (!depositPaymentRequest) throw new Error('Cant pay invoices because deposit invoice does not exist')
 
       this.logger.debug(`Attempting to pay fees for order: ${orderId}`)
 
+      const outboundEngine = this.engines.get(outboundSymbol)
+      if (!outboundEngine) {
+        throw new Error(`No engine available for ${outboundSymbol}`)
+      }
+
       const [feeRefundPaymentRequest, depositRefundPaymentRequest] = await Promise.all([
-        this.engine.createRefundInvoice(feePaymentRequest),
-        this.engine.createRefundInvoice(depositPaymentRequest),
-        this.engine.payInvoice(feePaymentRequest),
-        this.engine.payInvoice(depositPaymentRequest)
+        outboundEngine.createRefundInvoice(feePaymentRequest),
+        outboundEngine.createRefundInvoice(depositPaymentRequest),
+        outboundEngine.payInvoice(feePaymentRequest),
+        outboundEngine.payInvoice(depositPaymentRequest)
       ])
 
       this.logger.info('Received response for successful payment')
