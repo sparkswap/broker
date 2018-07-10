@@ -89,6 +89,11 @@ describe('Validations', () => {
       expect(isHost(validHost)).to.eql(validHost)
     })
 
+    it('returns a valid local container host', () => {
+      const validHost = 'lnd_btc:10009'
+      expect(isHost(validHost)).to.eql(validHost)
+    })
+
     it('returns a valid url host', () => {
       const validHost = 'http://test.exchange.kines.is'
       expect(isHost(validHost)).to.eql(validHost)

@@ -92,17 +92,18 @@ function areValidMarketNames (marketNames) {
  * @throws {Error} returns an error if the given string is invalid for an host
  */
 function isHost (str) {
-  // We can disable the `valid_protocol` and `tld` options for now because we use URLs
-  // that are local to the container. However, we should remove this in the future to
-  // be more strict in our input checking
+  // We can disable the `valid_protocol`, `tld` options and enable `allow_underscores`
+  // for now because we use URLs that are local to the container.
+  // However, we should remove this in the future to be more strict in our input checking
   if (isURL(str, {
     require_valid_protocol: false,
-    require_tld: false
+    require_tld: false,
+    allow_underscores: true
   })) {
     return str
   }
 
-  throw new Error()
+  throw new Error('Invalid address')
 }
 
 /**
