@@ -12,14 +12,15 @@ const { Big, getRecords, SublevelIndex } = require('../utils')
 class BlockOrderWorker extends EventEmitter {
   /**
    * Create a new BlockOrderWorker instance
-   * @param  {Map} options.orderbooks         Collection of all active Orderbooks
-   * @param  {sublevel} options.store         Sublevel in which to store block orders and child orders
-   * @param  {Object} options.logger
-   * @param  {RelayerClient} options.relayer
-   * @param  {Engine} options.engine
+   * @param  {Map<String, Orderbook>} options.orderbooks Collection of all active Orderbooks
+   * @param  {sublevel}               options.store      Sublevel in which to store block orders and child orders
+   * @param  {Object}                 options.logger
+   * @param  {RelayerClient}          options.relayer
+   * @param  {Map<String, Engine>}    options.engines    Collection of all available engines
+   * @param  {Engine}                 options.engine     Single engine, kept for backward compatibility until all dependencies use `engines`
    * @return {BlockOrderWorker}
    */
-  constructor ({ orderbooks, store, logger, relayer, engine }) {
+  constructor ({ orderbooks, store, logger, relayer, engines, engine }) {
     super()
     this.orderbooks = orderbooks
     this.store = store
@@ -27,6 +28,7 @@ class BlockOrderWorker extends EventEmitter {
     this.fillsStore = store.sublevel('fills')
     this.logger = logger
     this.relayer = relayer
+    this.engines = engines
     this.engine = engine
 
     const filterOrdersWithHash = (key, value) => !!Order.fromStorage(key, value).swapHash

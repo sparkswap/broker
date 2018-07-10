@@ -20,6 +20,7 @@ describe('BlockOrderWorker', () => {
   let logger
   let relayer
   let engine
+  let engines
 
   let secondLevel
 
@@ -102,12 +103,13 @@ describe('BlockOrderWorker', () => {
     }
     relayer = sinon.stub()
     engine = sinon.stub()
+    engines = new Map([ ['BTC', sinon.stub()] ])
   })
 
   describe('new', () => {
     let worker
     beforeEach(() => {
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines, engine })
     })
 
     it('assigns the orderbooks', () => {
@@ -140,6 +142,10 @@ describe('BlockOrderWorker', () => {
 
     it('assigns the engine', () => {
       expect(worker).to.have.property('engine', engine)
+    })
+
+    it('assigns the engines', () => {
+      expect(worker).to.have.property('engines', engines)
     })
 
     it('creates an index for the orders store', async () => {
