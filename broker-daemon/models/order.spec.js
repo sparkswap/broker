@@ -341,7 +341,7 @@ describe('Order', () => {
       let filledParams = {
         swapHash: 'asdfjasofj9s8fu',
         fillAmount: '10000',
-        takerAddress: 'ln:asdf'
+        takerAddress: 'bolt:123192380asfasdf@localhost'
       }
 
       it('updates the object with the params from creating on the relayer', () => {
