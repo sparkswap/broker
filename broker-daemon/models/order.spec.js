@@ -37,7 +37,7 @@ describe('Order', () => {
         baseAmount: '10000',
         counterAmount: '100000',
         ownerId: 'fakeID',
-        payTo: 'ln:123019230jasofdij'
+        makerAddress: 'bolt:123019230jasofdij'
       }
       const blockOrderId = 'blockid'
       const orderId = 'myid'
@@ -53,7 +53,7 @@ describe('Order', () => {
       expect(order).to.have.property('baseAmount', params.baseAmount)
       expect(order).to.have.property('counterAmount', params.counterAmount)
       expect(order).to.have.property('ownerId', params.ownerId)
-      expect(order).to.have.property('payTo', params.payTo)
+      expect(order).to.have.property('makerAddress', params.makerAddress)
     })
 
     it('assigns parameters from after order creation to the order object', () => {
@@ -64,7 +64,7 @@ describe('Order', () => {
         baseAmount: '10000',
         counterAmount: '100000',
         ownerId: 'fakeID',
-        payTo: 'ln:123019230jasofdij',
+        makerAddress: 'bolt:123019230jasofdij',
         feePaymentRequest: 'myrequest',
         depositPaymentRequest: 'yourrequest'
       }
@@ -94,7 +94,7 @@ describe('Order', () => {
         baseAmount: '10000',
         counterAmount: '100000',
         ownerId: 'fakeID',
-        payTo: 'ln:123019230jasofdij'
+        makerAddress: 'bolt:123019230jasofdij'
       }
       const blockOrderId = 'blockid'
       const orderId = 'myid'
@@ -110,7 +110,7 @@ describe('Order', () => {
       expect(order).to.have.property('baseAmount', params.baseAmount)
       expect(order).to.have.property('counterAmount', params.counterAmount)
       expect(order).to.have.property('ownerId', params.ownerId)
-      expect(order).to.have.property('payTo', params.payTo)
+      expect(order).to.have.property('makerAddress', params.makerAddress)
     })
 
     it('assigns parameters from after order creation to the order object', () => {
@@ -121,7 +121,7 @@ describe('Order', () => {
         baseAmount: '10000',
         counterAmount: '100000',
         ownerId: 'fakeID',
-        payTo: 'ln:123019230jasofdij',
+        makerAddress: 'bolt:123019230jasofdij',
         feePaymentRequest: 'myrequest',
         depositPaymentRequest: 'yourrequest'
       }
@@ -159,7 +159,7 @@ describe('Order', () => {
         baseAmount: '10000',
         counterAmount: '100000',
         ownerId: 'fakeID',
-        payTo: 'ln:123019230jasofdij'
+        makerAddress: 'bolt:123019230jasofdij'
       }
 
       const order = new Order(blockOrderId, params)
@@ -170,7 +170,7 @@ describe('Order', () => {
       expect(order).to.have.property('baseAmount', params.baseAmount)
       expect(order).to.have.property('counterAmount', params.counterAmount)
       expect(order).to.have.property('ownerId', params.ownerId)
-      expect(order).to.have.property('payTo', params.payTo)
+      expect(order).to.have.property('makerAddress', params.makerAddress)
     })
 
     it('creates an ask', () => {
@@ -182,7 +182,7 @@ describe('Order', () => {
         baseAmount: '10000',
         counterAmount: '100000',
         ownerId: 'fakeID',
-        payTo: 'ln:123019230jasofdij'
+        makerAddress: 'bolt:123019230jasofdij'
       }
 
       const order = new Order(blockOrderId, params)
@@ -199,7 +199,7 @@ describe('Order', () => {
         baseAmount: '10000',
         counterAmount: '100000',
         ownerId: 'fakeID',
-        payTo: 'ln:123019230jasofdij'
+        makerAddress: 'bolt:123019230jasofdij'
       }
 
       expect(() => {
@@ -222,7 +222,7 @@ describe('Order', () => {
         baseAmount: '10000',
         counterAmount: '100000',
         ownerId: 'fakeID',
-        payTo: 'ln:123019230jasofdij'
+        makerAddress: 'bolt:123019230jasofdij'
       }
 
       order = new Order(blockOrderId, params)
@@ -284,7 +284,7 @@ describe('Order', () => {
           baseAmount: params.baseAmount,
           counterAmount: params.counterAmount,
           ownerId: params.ownerId,
-          payTo: params.payTo
+          makerAddress: params.makerAddress
         })
       })
     })

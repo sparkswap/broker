@@ -34,17 +34,17 @@ class Order {
    * @param  {String} options.baseAmount    Amount, represented as an integer in the base currency's smallest unit, to be transacted
    * @param  {String} options.counterAmount Amount, represented as an integer in the counter currency's smallest unit, to be transacted
    * @param  {String} options.ownerId
-   * @param  {String} options.payTo         Identifier on the payment channel network for the maker. e.g. for the lightning network: `ln:{node public key}`
+   * @param  {String} options.makerAddress         Identifier on the payment channel network for the maker. e.g. for the lightning network: `bolt:{node public key}`
    * @return {Order}                        Order instance
    */
-  constructor (blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo }) {
+  constructor (blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, makerAddress }) {
     this.blockOrderId = blockOrderId
     this.baseSymbol = baseSymbol
     this.counterSymbol = counterSymbol
     this.baseAmount = baseAmount
     this.counterAmount = counterAmount
     this.ownerId = ownerId
-    this.payTo = payTo
+    this.makerAddress = makerAddress
 
     if (!Order.SIDES[side]) {
       throw new Error(`${side} is not a valid order side.`)
@@ -112,9 +112,9 @@ class Order {
    * @return {Object} Object of parameters the relayer expects
    */
   get paramsForCreate () {
-    const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo } = this
+    const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, makerAddress } = this
 
-    return { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo }
+    return { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, makerAddress }
   }
 
   /**
@@ -180,7 +180,7 @@ class Order {
       baseAmount,
       counterAmount,
       ownerId,
-      payTo,
+      makerAddress,
       feePaymentRequest,
       depositPaymentRequest,
       swapHash,
@@ -194,7 +194,7 @@ class Order {
       baseAmount,
       counterAmount,
       ownerId,
-      payTo,
+      makerAddress,
       feePaymentRequest,
       depositPaymentRequest,
       swapHash,
@@ -223,10 +223,10 @@ class Order {
     // and are separated by the delimiter (:)
     const [ blockOrderId, orderId ] = key.split(DELIMITER)
 
-    const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo, ...otherParams } = valueObject
+    const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, makerAddress, ...otherParams } = valueObject
 
     // instantiate with the correct set of params
-    const order = new this(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo })
+    const order = new this(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, makerAddress })
 
     const { feePaymentRequest, depositPaymentRequest, swapHash, fillAmount } = otherParams
 
