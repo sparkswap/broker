@@ -209,11 +209,11 @@ class Order {
   /**
    * Create an instance of an order from a stored copy
    * @param  {String} key   Unique key for the order, i.e. its `orderId`
-   * @param  {String} value Stringified representation of the order
+   * @param  {String} orderStateMachineRecord Stringified representation of the order state machine record
    * @return {Order}        Inflated order object
    */
-  static fromStorage (key, value) {
-    return this.fromObject(key, JSON.parse(value))
+  static fromStorage (key, orderStateMachineRecord) {
+    return this.fromObject(key, JSON.parse(orderStateMachineRecord).order)
   }
 
   /**
