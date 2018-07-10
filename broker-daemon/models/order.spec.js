@@ -267,7 +267,8 @@ describe('Order', () => {
           feePaymentRequest: undefined,
           depositPaymentRequest: undefined,
           swapHash: undefined,
-          fillAmount: undefined
+          fillAmount: undefined,
+          takerAddress: undefined
         }, params)
         expect(order).to.have.property('valueObject')
         expect(order.valueObject).to.be.eql(valueObject)
@@ -339,7 +340,8 @@ describe('Order', () => {
     describe('#setFilledParams', () => {
       let filledParams = {
         swapHash: 'asdfjasofj9s8fu',
-        fillAmount: '10000'
+        fillAmount: '10000',
+        takerAddress: 'bolt:123192380asfasdf@localhost'
       }
 
       it('updates the object with the params from creating on the relayer', () => {
@@ -347,6 +349,7 @@ describe('Order', () => {
 
         expect(order).to.have.property('swapHash', filledParams.swapHash)
         expect(order).to.have.property('fillAmount', filledParams.fillAmount)
+        expect(order).to.have.property('takerAddress', filledParams.takerAddress)
       })
 
       it('includes the updated params with the saved value', () => {
@@ -354,6 +357,7 @@ describe('Order', () => {
 
         expect(order.value).to.include(`"swapHash":"${filledParams.swapHash}"`)
         expect(order.value).to.include(`"fillAmount":"${filledParams.fillAmount}"`)
+        expect(order.value).to.include(`"takerAddress":"${filledParams.takerAddress}"`)
       })
     })
   })
