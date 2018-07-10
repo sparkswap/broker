@@ -116,13 +116,12 @@ const OrderStateMachine = StateMachine.factory({
    * @param  {sublevel}            options.store       Sublevel partition for storing this order in
    * @param  {Object}              options.logger
    * @param  {RelayerClient}       options.relayer
-   * @param  {Engine}              options.engine      DEPRECATED - single engine until we get rid of references
    * @param  {Map<String, Engine>} options.engines     Map of all available engines
    * @param  {Function}            options.onRejection A function to handle rejections of the order
    * @return {Object}                                  Data to attach to the state machine
    */
-  data: function ({ store, logger, relayer, engine, engines, onRejection = function () {} }) {
-    return { store, logger, relayer, engine, engines, onRejection, order: {} }
+  data: function ({ store, logger, relayer, engines, onRejection = function () {} }) {
+    return { store, logger, relayer, engines, onRejection, order: {} }
   },
   methods: {
     /**

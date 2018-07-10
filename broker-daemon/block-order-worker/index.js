@@ -122,7 +122,7 @@ class BlockOrderWorker extends EventEmitter {
 
     const { relayer, engine, logger } = this
     const openOrders = await OrderStateMachine.getAll(
-      { store: this.ordersStore, relayer, engine, logger },
+      { store: this.ordersStore, logger },
       // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
       // its prefix range.
       Order.rangeForBlockOrder(blockOrder.id)

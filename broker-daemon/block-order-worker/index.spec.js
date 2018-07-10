@@ -269,7 +269,7 @@ describe('BlockOrderWorker', () => {
   describe('createBlockOrder', () => {
     let worker
     beforeEach(() => {
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine, engines })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
     })
 
     it('throws if the market is not supported', () => {
@@ -462,7 +462,7 @@ describe('BlockOrderWorker', () => {
       OrderStateMachine.getAll.resolves(orders)
       FillStateMachine.getAll.resolves(fills)
       BlockOrder.fromStorage.returns({ id: blockOrderId })
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine, engines })
     })
 
     it('retrieves a block order from the store', async () => {
