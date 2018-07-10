@@ -124,16 +124,13 @@ class Order {
    * @return {Object} Object of parameters the engine expects
    */
   get paramsForPrepareSwap () {
-    const { swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount } = this
+    const { orderId, swapHash, inboundSymbol, inboundAmount } = this
 
-    if (![ swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount ].every(param => !!param)) {
-      throw new Error('orderId, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount are required to prepare a swap.')
+    if (![ orderId, swapHash, inboundSymbol, inboundAmount ].every(param => !!param)) {
+      throw new Error('orderId, swapHash, inboundSymbol, inboundAmount are required to prepare a swap.')
     }
 
-    const outbound = { symbol: outboundSymbol, amount: outboundAmount }
-    const inbound = { symbol: inboundSymbol, amount: inboundAmount }
-
-    return { swapHash, inbound, outbound }
+    return { orderId, swapHash, symbol: inboundSymbol, amount: inboundAmount }
   }
 
   /**

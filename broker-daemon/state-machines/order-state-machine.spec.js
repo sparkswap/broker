@@ -507,15 +507,10 @@ describe('OrderStateMachine', () => {
         outboundSymbol,
         outboundAmount,
         paramsForPrepareSwap: {
+          orderId,
           swapHash,
-          inbound: {
-            symbol: inboundSymbol,
-            amount: inboundAmount
-          },
-          outbound: {
-            symbol: outboundSymbol,
-            amount: outboundAmount
-          }
+          symbol: inboundSymbol,
+          amount: inboundAmount
         }
       }
       engine = { prepareSwap: prepareSwapStub }
@@ -525,7 +520,9 @@ describe('OrderStateMachine', () => {
         }
       }
 
-      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      let engines = new Map([ [inboundSymbol, engine] ])
+
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.onEnterPlaced = sinon.stub()
       osm.order = fakeOrder
 
@@ -536,10 +533,7 @@ describe('OrderStateMachine', () => {
       await osm.execute()
 
       expect(prepareSwapStub).to.have.been.calledOnce()
-
-      const inbound = { amount: inboundAmount, symbol: inboundSymbol }
-      const outbound = { amount: outboundAmount, symbol: outboundSymbol }
-      expect(prepareSwapStub).to.have.been.calledWith(swapHash, inbound, outbound)
+      expect(prepareSwapStub).to.have.been.calledWith(orderId, swapHash, inboundAmount)
     })
 
     it('executes the order on the relayer', async () => {

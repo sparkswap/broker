@@ -252,10 +252,12 @@ const OrderStateMachine = StateMachine.factory({
      * @return {Promise}          Promise that rejects if execution prep or notification fails
      */
     onBeforeExecute: async function (lifecycle) {
-      const { swapHash, inbound, outbound } = this.order.paramsForPrepareSwap
-      await this.engine.prepareSwap(swapHash, inbound, outbound)
-
-      const { orderId } = this.order
+      const { orderId, swapHash, symbol, amount } = this.order.paramsForPrepareSwap
+      const engine = this.engines.get(symbol)
+      if (!engine) {
+        throw new Error(`No engine available for ${symbol}`)
+      }
+      await engine.prepareSwap(orderId, swapHash, amount)
       return this.relayer.makerService.executeOrder({ orderId })
     },
 
