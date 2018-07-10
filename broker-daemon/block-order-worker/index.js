@@ -322,15 +322,23 @@ class BlockOrderWorker extends EventEmitter {
     const { baseSymbol, counterSymbol, side, counterAmount } = blockOrder
 
     // state machine params
-    const { relayer, engine, logger } = this
+    const { relayer, engines, logger } = this
     const store = this.ordersStore
+
+    if (!engines.get(baseSymbol)) {
+      throw new Error(`No engine available for ${baseSymbol}`)
+    }
+
+    if (!engines.get(counterSymbol)) {
+      throw new Error(`No engine available for ${counterSymbol}`)
+    }
 
     this.logger.info('Creating order for BlockOrder', { blockOrderId: blockOrder.id })
 
     const order = await OrderStateMachine.create(
       {
         relayer,
-        engine,
+        engines,
         logger,
         store,
         onRejection: (err) => {

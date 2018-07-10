@@ -280,7 +280,7 @@ describe('BlockOrderWorker', () => {
         price: '100',
         timeInForce: 'GTC'
       }
-      expect(worker.createBlockOrder(params)).to.be.rejectedWith('is not being tracked as a market')
+      return expect(worker.createBlockOrder(params)).to.be.rejectedWith('is not being tracked as a market')
     })
 
     it('throws if an engine does not exist', () => {
@@ -295,7 +295,7 @@ describe('BlockOrderWorker', () => {
         price: '100',
         timeInForce: 'GTC'
       }
-      expect(worker.createBlockOrder(params)).to.be.rejectedWith('No engine available')
+      return expect(worker.createBlockOrder(params)).to.be.rejectedWith('No engine available')
     })
 
     it('creates an id', async () => {
@@ -978,7 +978,7 @@ describe('BlockOrderWorker', () => {
     let order
 
     beforeEach(() => {
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       blockOrder = {
         id: 'fakeId',
         marketName: 'BTC/LTC',
@@ -995,6 +995,13 @@ describe('BlockOrderWorker', () => {
         id: 'anotherId'
       }
       OrderStateMachine.create.resolves(order)
+    })
+
+    it('throws if one of the engines is missing', () => {
+      blockOrder.marketName = 'BTC/XYZ'
+      blockOrder.counterSymbol = 'XYZ'
+
+      return expect(worker._placeOrder(blockOrder, '100')).to.eventually.be.rejectedWith('No engine available')
     })
 
     it('creates an OrderStateMachine', async () => {
@@ -1046,10 +1053,10 @@ describe('BlockOrderWorker', () => {
       expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match({ relayer }))
     })
 
-    it('provides the engine to the OrderStateMachine', async () => {
+    it('provides the engines to the OrderStateMachine', async () => {
       await worker._placeOrder(blockOrder, '100')
 
-      expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match({ engine }))
+      expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match({ engines }))
     })
 
     it('provides a handler for onRejection', async () => {
