@@ -120,11 +120,8 @@ services:
       - TLS_CERT_PATH=/shared/lnd-engine-tls-ltc.cert
       - TLS_KEY_PATH=/secure/lnd-engine-tls-ltc.key
       - NETWORK=simnet
-      # We use bitcoin/btcd chain here because ltc simnet is not currently supported
-      # on LND
-      # see: https://github.com/lightningnetwork/lnd/blob/d83f4fbb85489ffc9b50da4c4162966046e9053e/config.go#L510-L514
-      - CHAIN=bitcoin
-      - NODE=btcd
+      - CHAIN=litecoin
+      - NODE=ltcd
       - DEBUG=info
       - RPC_LISTEN=0.0.0.0:10009
       - LISTEN=0.0.0.0:10114
