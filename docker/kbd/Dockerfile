@@ -36,8 +36,8 @@ RUN (cd ./node_modules/lnd-engine && npm i --production)
 RUN rm -rf ./node_modules/lnd-engine/.git
 
 # Install relayer proto
-RUN git clone --branch ${RELAYER_VERSION} git@github.com:kinesis-exchange/relayer.git ./proto/relayer
-RUN cp ./proto/relayer/proto/relayer.proto ./proto/
+RUN git clone git@github.com:kinesis-exchange/relayer-proto.git ./proto/relayer
+RUN cp ./proto/relayer/relayer.proto ./proto/
 RUN rm -rf ./proto/relayer
 
 # Build the broker proto
