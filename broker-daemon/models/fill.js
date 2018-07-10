@@ -243,13 +243,13 @@ class Fill {
   }
 
   /**
-   * Create an instance of an order from a stored copy
-   * @param  {String} key   Unique key for the order, i.e. its `orderId`
-   * @param  {String} value Stringified representation of the order
-   * @return {Order}        Inflated order object
+   * Create an instance of an fill object from a stored copy
+   * @param  {String} key   Unique key for the order, i.e. its `fillId`
+   * @param  {String} fillStateMachineRecord Stringified representation of the order
+   * @return {Object} Inflated fill object
    */
-  static fromStorage (key, value) {
-    return this.fromObject(key, JSON.parse(value))
+  static fromStorage (key, fillStateMachineRecord) {
+    return this.fromObject(key, JSON.parse(fillStateMachineRecord).fill)
   }
 
   /**

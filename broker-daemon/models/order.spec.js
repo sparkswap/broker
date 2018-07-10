@@ -31,13 +31,15 @@ describe('Order', () => {
 
     it('creates orders from a key and value', () => {
       const params = {
-        baseSymbol: 'BTC',
-        counterSymbol: 'LTC',
-        side: 'BID',
-        baseAmount: '10000',
-        counterAmount: '100000',
-        ownerId: 'fakeID',
-        makerAddress: 'bolt:123019230jasofdij'
+        order: {
+          baseSymbol: 'BTC',
+          counterSymbol: 'LTC',
+          side: 'BID',
+          baseAmount: '10000',
+          counterAmount: '100000',
+          ownerId: 'fakeID',
+          makerAddress: 'bolt:123019230jasofdij'
+        }
       }
       const blockOrderId = 'blockid'
       const orderId = 'myid'
@@ -47,26 +49,28 @@ describe('Order', () => {
 
       expect(order).to.have.property('blockOrderId', blockOrderId)
       expect(order).to.have.property('orderId', orderId)
-      expect(order).to.have.property('baseSymbol', params.baseSymbol)
-      expect(order).to.have.property('counterSymbol', params.counterSymbol)
-      expect(order).to.have.property('side', params.side)
-      expect(order).to.have.property('baseAmount', params.baseAmount)
-      expect(order).to.have.property('counterAmount', params.counterAmount)
-      expect(order).to.have.property('ownerId', params.ownerId)
-      expect(order).to.have.property('makerAddress', params.makerAddress)
+      expect(order).to.have.property('baseSymbol', params.order.baseSymbol)
+      expect(order).to.have.property('counterSymbol', params.order.counterSymbol)
+      expect(order).to.have.property('side', params.order.side)
+      expect(order).to.have.property('baseAmount', params.order.baseAmount)
+      expect(order).to.have.property('counterAmount', params.order.counterAmount)
+      expect(order).to.have.property('ownerId', params.order.ownerId)
+      expect(order).to.have.property('makerAddress', params.order.makerAddress)
     })
 
     it('assigns parameters from after order creation to the order object', () => {
       const params = {
-        baseSymbol: 'BTC',
-        counterSymbol: 'LTC',
-        side: 'BID',
-        baseAmount: '10000',
-        counterAmount: '100000',
-        ownerId: 'fakeID',
-        makerAddress: 'bolt:123019230jasofdij',
-        feePaymentRequest: 'myrequest',
-        depositPaymentRequest: 'yourrequest'
+        order: {
+          baseSymbol: 'BTC',
+          counterSymbol: 'LTC',
+          side: 'BID',
+          baseAmount: '10000',
+          counterAmount: '100000',
+          ownerId: 'fakeID',
+          makerAddress: 'bolt:123019230jasofdij',
+          feePaymentRequest: 'myrequest',
+          depositPaymentRequest: 'yourrequest'
+        }
       }
       const blockOrderId = 'blockid'
       const orderId = 'myid'
@@ -76,8 +80,8 @@ describe('Order', () => {
 
       expect(order).to.have.property('blockOrderId', blockOrderId)
       expect(order).to.have.property('orderId', orderId)
-      expect(order).to.have.property('feePaymentRequest', params.feePaymentRequest)
-      expect(order).to.have.property('depositPaymentRequest', params.depositPaymentRequest)
+      expect(order).to.have.property('feePaymentRequest', params.order.feePaymentRequest)
+      expect(order).to.have.property('depositPaymentRequest', params.order.depositPaymentRequest)
     })
   })
 
@@ -267,7 +271,8 @@ describe('Order', () => {
           feePaymentRequest: undefined,
           depositPaymentRequest: undefined,
           swapHash: undefined,
-          fillAmount: undefined
+          fillAmount: undefined,
+          takerAddress: undefined
         }, params)
         expect(order).to.have.property('valueObject')
         expect(order.valueObject).to.be.eql(valueObject)
@@ -339,7 +344,8 @@ describe('Order', () => {
     describe('#setFilledParams', () => {
       let filledParams = {
         swapHash: 'asdfjasofj9s8fu',
-        fillAmount: '10000'
+        fillAmount: '10000',
+        takerAddress: 'bolt:123192380asfasdf@localhost'
       }
 
       it('updates the object with the params from creating on the relayer', () => {
@@ -347,6 +353,7 @@ describe('Order', () => {
 
         expect(order).to.have.property('swapHash', filledParams.swapHash)
         expect(order).to.have.property('fillAmount', filledParams.fillAmount)
+        expect(order).to.have.property('takerAddress', filledParams.takerAddress)
       })
 
       it('includes the updated params with the saved value', () => {
@@ -354,6 +361,7 @@ describe('Order', () => {
 
         expect(order.value).to.include(`"swapHash":"${filledParams.swapHash}"`)
         expect(order.value).to.include(`"fillAmount":"${filledParams.fillAmount}"`)
+        expect(order.value).to.include(`"takerAddress":"${filledParams.takerAddress}"`)
       })
     })
   })

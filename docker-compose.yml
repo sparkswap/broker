@@ -21,11 +21,18 @@ services:
       - RPC_ADDRESS=0.0.0.0:27492
       - INTERCHAIN_ROUTER_ADDRESS=0.0.0.0:40369
       - DATA_DIR=/data
-      - LND_HOST=lnd_btc:10009
-      - LND_TLS_CERT=/shared/lnd-engine-tls-btc.cert
-      - LND_MACAROON=/shared/lnd-engine-admin-btc.macaroon
+      - BTC_ENGINE_TYPE=LND
+      - BTC_LND_RPC_HOST=lnd_btc:10009
+      - BTC_LND_TLS_CERT=/shared/lnd-engine-tls-btc.cert
+      - BTC_LND_MACAROON=/shared/lnd-engine-admin-btc.macaroon
+      - LTC_ENGINE_TYPE=LND
+      - LTC_LND_RPC_HOST=lnd_ltc:10009
+      - LTC_LND_TLS_CERT=/shared/lnd-engine-tls-ltc.cert
+      - LTC_LND_MACAROON=/shared/lnd-engine-admin-ltc.macaroon
       - GRPC_SSL_CIPHER_SUITES=HIGH+ECDSA
-      # TODO: Should be removed as we will have multiple engine types
+      # This address is specifically tied to the relayer network
+      # This is a temporary workaround for preventing the use of external networks
+      # for the relayer. In a testnet/mainnet setting, this will be a public IP.
       - EXCHANGE_RPC_HOST=docker.for.mac.host.internal:28492
       - EXCHANGE_LND_HOST=docker.for.mac.host.internal:10111
       - LND_EXTERNAL_ADDRESS=docker.for.mac.host.internal:10112

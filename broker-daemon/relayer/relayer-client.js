@@ -5,14 +5,6 @@ const { MarketEvent } = require('../models')
 const { loadProto } = require('../utils')
 
 /**
- * @todo Add this config to CLI
- * @constant
- * @type {String}
- * @default
- */
-const EXCHANGE_RPC_HOST = process.env.EXCHANGE_RPC_HOST || 'localhost:28492'
-
-/**
  * @constant
  * @type {String}
  * @default
@@ -28,9 +20,9 @@ class RelayerClient {
   /**
    * @param {Logger} logger
    */
-  constructor (logger) {
+  constructor (host = 'localhost:28492', logger) {
     this.logger = logger || console
-    this.address = EXCHANGE_RPC_HOST
+    this.address = host
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
 
     // TODO: we will need to add auth for daemon for a non-local address
