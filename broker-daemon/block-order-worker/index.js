@@ -79,6 +79,14 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`${marketName} is not being tracked as a market. Configure kbd to track ${marketName} using the MARKETS environment variable.`)
     }
 
+    if (!this.engines.get(orderbook.baseSymbol)) {
+      throw new Error(`No engine available for ${orderbook.baseSymbol}.`)
+    }
+
+    if (!this.engines.get(orderbook.counterSymbol)) {
+      throw new Error(`No engine available for ${orderbook.counterSymbol}.`)
+    }
+
     const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
@@ -314,15 +322,23 @@ class BlockOrderWorker extends EventEmitter {
     const { baseSymbol, counterSymbol, side, counterAmount } = blockOrder
 
     // state machine params
-    const { relayer, engine, logger } = this
+    const { relayer, engines, logger } = this
     const store = this.ordersStore
+
+    if (!engines.get(baseSymbol)) {
+      throw new Error(`No engine available for ${baseSymbol}`)
+    }
+
+    if (!engines.get(counterSymbol)) {
+      throw new Error(`No engine available for ${counterSymbol}`)
+    }
 
     this.logger.info('Creating order for BlockOrder', { blockOrderId: blockOrder.id })
 
     const order = await OrderStateMachine.create(
       {
         relayer,
-        engine,
+        engines,
         logger,
         store,
         onRejection: (err) => {

@@ -113,15 +113,16 @@ const OrderStateMachine = StateMachine.factory({
    * This function is effectively a constructor for the state machine
    * So we pass it all the objects we'll need later.
    *
-   * @param  {sublevel}      options.store       Sublevel partition for storing this order in
-   * @param  {Object}        options.logger
-   * @param  {RelayerClient} options.relayer
-   * @param  {Engine}        options.engine
-   * @param  {Function}      options.onRejection A function to handle rejections of the order
-   * @return {Object}                            Data to attach to the state machine
+   * @param  {sublevel}            options.store       Sublevel partition for storing this order in
+   * @param  {Object}              options.logger
+   * @param  {RelayerClient}       options.relayer
+   * @param  {Engine}              options.engine      DEPRECATED - single engine until we get rid of references
+   * @param  {Map<String, Engine>} options.engines     Map of all available engines
+   * @param  {Function}            options.onRejection A function to handle rejections of the order
+   * @return {Object}                                  Data to attach to the state machine
    */
-  data: function ({ store, logger, relayer, engine, onRejection = function () {} }) {
-    return { store, logger, relayer, engine, onRejection, order: {} }
+  data: function ({ store, logger, relayer, engine, engines, onRejection = function () {} }) {
+    return { store, logger, relayer, engine, engines, onRejection, order: {} }
   },
   methods: {
     /**
@@ -140,11 +141,15 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onBeforeCreate: async function (lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
-      // TODO: figure out a way to cache the maker address instead of making a request
-      const makerAddress = await this.engine.getPaymentChannelNetworkAddress()
       const ownerId = 'TODO: create real owner ids'
 
-      this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, makerAddress, ownerId })
+      this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId })
+      // TODO: figure out a way to cache the maker address instead of making a request
+      const inboundEngine = this.engines.get(this.order.inboundSymbol)
+      if (!inboundEngine) {
+        throw new Error(`No engine available for ${this.order.inboundSymbol}`)
+      }
+      this.order.makerAddress = await inboundEngine.getPaymentChannelNetworkAddress()
 
       const { orderId, feePaymentRequest, depositPaymentRequest } = await this.relayer.makerService.createOrder(this.order.paramsForCreate)
       this.order.setCreatedParams({ orderId, feePaymentRequest, depositPaymentRequest })
