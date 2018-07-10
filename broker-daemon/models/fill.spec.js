@@ -24,16 +24,18 @@ describe('Fill', () => {
 
     it('creates orders from a key and value', () => {
       const params = {
-        order: {
-          orderId: 'fakeID',
-          baseSymbol: 'BTC',
-          counterSymbol: 'LTC',
-          side: 'BID',
-          baseAmount: '10000',
-          counterAmount: '100000'
-        },
-        fillAmount: '9000',
-        swapHash: 'asdfasdf'
+        fill: {
+          order: {
+            orderId: 'fakeID',
+            baseSymbol: 'BTC',
+            counterSymbol: 'LTC',
+            side: 'BID',
+            baseAmount: '10000',
+            counterAmount: '100000'
+          },
+          fillAmount: '9000',
+          swapHash: 'asdfasdf'
+        }
       }
       const blockOrderId = 'blockid'
       const fillId = 'myid'
@@ -43,30 +45,32 @@ describe('Fill', () => {
 
       expect(fill).to.have.property('blockOrderId', blockOrderId)
       expect(fill).to.have.property('fillId', fillId)
-      expect(fill).to.have.property('fillAmount', params.fillAmount)
-      expect(fill).to.have.property('swapHash', params.swapHash)
+      expect(fill).to.have.property('fillAmount', params.fill.fillAmount)
+      expect(fill).to.have.property('swapHash', params.fill.swapHash)
       expect(fill).to.have.property('order')
-      expect(fill.order).to.have.property('baseSymbol', params.order.baseSymbol)
-      expect(fill.order).to.have.property('counterSymbol', params.order.counterSymbol)
-      expect(fill.order).to.have.property('side', params.order.side)
-      expect(fill.order).to.have.property('baseAmount', params.order.baseAmount)
-      expect(fill.order).to.have.property('counterAmount', params.order.counterAmount)
+      expect(fill.order).to.have.property('baseSymbol', params.fill.order.baseSymbol)
+      expect(fill.order).to.have.property('counterSymbol', params.fill.order.counterSymbol)
+      expect(fill.order).to.have.property('side', params.fill.order.side)
+      expect(fill.order).to.have.property('baseAmount', params.fill.order.baseAmount)
+      expect(fill.order).to.have.property('counterAmount', params.fill.order.counterAmount)
     })
 
     it('assigns parameters from after fill creation to the fill object', () => {
       const params = {
-        order: {
-          orderId: 'fakeID',
-          baseSymbol: 'BTC',
-          counterSymbol: 'LTC',
-          side: 'BID',
-          baseAmount: '10000',
-          counterAmount: '100000'
-        },
-        fillAmount: '9000',
-        swapHash: 'asdfasdf',
-        feePaymentRequest: 'myrequest',
-        depositPaymentRequest: 'yourrequest'
+        fill: {
+          order: {
+            orderId: 'fakeID',
+            baseSymbol: 'BTC',
+            counterSymbol: 'LTC',
+            side: 'BID',
+            baseAmount: '10000',
+            counterAmount: '100000'
+          },
+          fillAmount: '9000',
+          swapHash: 'asdfasdf',
+          feePaymentRequest: 'myrequest',
+          depositPaymentRequest: 'yourrequest'
+        }
       }
       const blockOrderId = 'blockid'
       const fillId = 'myid'
@@ -75,8 +79,8 @@ describe('Fill', () => {
       const fill = Fill.fromStorage(key, JSON.stringify(params))
 
       expect(fill).to.have.property('fillId', fillId)
-      expect(fill).to.have.property('feePaymentRequest', params.feePaymentRequest)
-      expect(fill).to.have.property('depositPaymentRequest', params.depositPaymentRequest)
+      expect(fill).to.have.property('feePaymentRequest', params.fill.feePaymentRequest)
+      expect(fill).to.have.property('depositPaymentRequest', params.fill.depositPaymentRequest)
     })
   })
 
