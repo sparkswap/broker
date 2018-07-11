@@ -77,11 +77,11 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`${marketName} is not being tracked as a market. Configure kbd to track ${marketName} using the MARKETS environment variable.`)
     }
 
-    if (!this.engines.get(orderbook.baseSymbol)) {
+    if (!this.engines.has(orderbook.baseSymbol)) {
       throw new Error(`No engine available for ${orderbook.baseSymbol}.`)
     }
 
-    if (!this.engines.get(orderbook.counterSymbol)) {
+    if (!this.engines.has(orderbook.counterSymbol)) {
       throw new Error(`No engine available for ${orderbook.counterSymbol}.`)
     }
 
@@ -323,11 +323,11 @@ class BlockOrderWorker extends EventEmitter {
     const { relayer, engines, logger } = this
     const store = this.ordersStore
 
-    if (!engines.get(baseSymbol)) {
+    if (!engines.has(baseSymbol)) {
       throw new Error(`No engine available for ${baseSymbol}`)
     }
 
-    if (!engines.get(counterSymbol)) {
+    if (!engines.has(counterSymbol)) {
       throw new Error(`No engine available for ${counterSymbol}`)
     }
 
@@ -368,11 +368,11 @@ class BlockOrderWorker extends EventEmitter {
     const store = this.fillsStore
 
     const { baseSymbol, counterSymbol } = blockOrder
-    if (!engines.get(baseSymbol)) {
+    if (!engines.has(baseSymbol)) {
       throw new Error(`No engine available for ${baseSymbol}`)
     }
 
-    if (!engines.get(counterSymbol)) {
+    if (!engines.has(counterSymbol)) {
       throw new Error(`No engine available for ${counterSymbol}`)
     }
 
