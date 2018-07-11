@@ -11,7 +11,6 @@ describe('commit-balance', () => {
   let logger
   let engine
   let addressStub
-  let createChannelStub
   let address
   let res
 
@@ -19,13 +18,12 @@ describe('commit-balance', () => {
     EmptyResponse = sinon.stub()
     address = 'asdf12345@localhost'
     addressStub = sinon.stub().returns({ address })
-    createChannelStub = sinon.stub()
     logger = {
       info: sinon.stub(),
       error: sinon.stub()
     }
     engine = {
-      createChannel: createChannelStub
+      createChannel: sinon.stub()
     }
     params = {
       balance: 10000000,
@@ -40,11 +38,11 @@ describe('commit-balance', () => {
     })
 
     it('receives a public key from the relayer', () => {
-      expect(addressStub).to.have.been.calledWith({})
+      expect(addressStub).to.have.been.calledWith({symbol: params.symbol})
     })
 
     it('creates a channel through an engine', () => {
-      expect(createChannelStub).to.have.been.calledWith(address, params.balance)
+      expect(engine.createChannel).to.have.been.calledWith(address, params.balance, params.symbol)
     })
 
     it('constructs a EmptyResponse', () => {
