@@ -17,10 +17,9 @@ class BlockOrderWorker extends EventEmitter {
    * @param  {Object}                 options.logger
    * @param  {RelayerClient}          options.relayer
    * @param  {Map<String, Engine>}    options.engines    Collection of all available engines
-   * @param  {Engine}                 options.engine     Single engine, kept for backward compatibility until all dependencies use `engines`
    * @return {BlockOrderWorker}
    */
-  constructor ({ orderbooks, store, logger, relayer, engines, engine }) {
+  constructor ({ orderbooks, store, logger, relayer, engines }) {
     super()
     this.orderbooks = orderbooks
     this.store = store
@@ -29,7 +28,6 @@ class BlockOrderWorker extends EventEmitter {
     this.logger = logger
     this.relayer = relayer
     this.engines = engines
-    this.engine = engine
 
     const filterOrdersWithHash = (key, value) => !!Order.fromStorage(key, value).swapHash
     const getHashFromOrder = (key, value) => Order.fromStorage(key, value).swapHash
@@ -120,7 +118,7 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
 
-    const { relayer, engine, logger } = this
+    const { logger } = this
     const openOrders = await OrderStateMachine.getAll(
       { store: this.ordersStore, logger },
       // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
@@ -128,7 +126,7 @@ class BlockOrderWorker extends EventEmitter {
       Order.rangeForBlockOrder(blockOrder.id)
     )
     const fills = await FillStateMachine.getAll(
-      { store: this.fillsStore, relayer, engine, logger },
+      { store: this.fillsStore, logger },
       // limit the fills we retrieve to those that belong to this blockOrder, i.e. those that are in
       // its prefix range.
       Fill.rangeForBlockOrder(blockOrder.id)
@@ -366,8 +364,17 @@ class BlockOrderWorker extends EventEmitter {
     let currentDepth = Big('0')
 
     // state machine params
-    const { relayer, engine, logger } = this
+    const { relayer, engines, logger } = this
     const store = this.fillsStore
+
+    const { baseSymbol, counterSymbol } = blockOrder
+    if (!engines.get(baseSymbol)) {
+      throw new Error(`No engine available for ${baseSymbol}`)
+    }
+
+    if (!engines.get(counterSymbol)) {
+      throw new Error(`No engine available for ${counterSymbol}`)
+    }
 
     const promisedFills = orders.map((order, index) => {
       const depthRemaining = targetDepth.minus(currentDepth)
@@ -386,7 +393,7 @@ class BlockOrderWorker extends EventEmitter {
       return FillStateMachine.create(
         {
           relayer,
-          engine,
+          engines,
           logger,
           store,
           onRejection: (err) => {
