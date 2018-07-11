@@ -113,15 +113,15 @@ const OrderStateMachine = StateMachine.factory({
    * This function is effectively a constructor for the state machine
    * So we pass it all the objects we'll need later.
    *
-   * @param  {sublevel}      options.store       Sublevel partition for storing this order in
-   * @param  {Object}        options.logger
-   * @param  {RelayerClient} options.relayer
-   * @param  {Engine}        options.engine
-   * @param  {Function}      options.onRejection A function to handle rejections of the order
-   * @return {Object}                            Data to attach to the state machine
+   * @param  {sublevel}            options.store       Sublevel partition for storing this order in
+   * @param  {Object}              options.logger
+   * @param  {RelayerClient}       options.relayer
+   * @param  {Map<String, Engine>} options.engines     Map of all available engines
+   * @param  {Function}            options.onRejection A function to handle rejections of the order
+   * @return {Object}                                  Data to attach to the state machine
    */
-  data: function ({ store, logger, relayer, engine, onRejection = function () {} }) {
-    return { store, logger, relayer, engine, onRejection, order: {} }
+  data: function ({ store, logger, relayer, engines, onRejection = function () {} }) {
+    return { store, logger, relayer, engines, onRejection, order: {} }
   },
   methods: {
     /**
@@ -140,11 +140,15 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onBeforeCreate: async function (lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
-      // TODO: figure out a way to cache the maker address instead of making a request
-      const makerAddress = await this.engine.getPaymentChannelNetworkAddress()
       const ownerId = 'TODO: create real owner ids'
 
-      this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, makerAddress, ownerId })
+      this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId })
+      // TODO: figure out a way to cache the maker address instead of making a request
+      const inboundEngine = this.engines.get(this.order.inboundSymbol)
+      if (!inboundEngine) {
+        throw new Error(`No engine available for ${this.order.inboundSymbol}`)
+      }
+      this.order.makerAddress = await inboundEngine.getPaymentChannelNetworkAddress()
 
       const { orderId, feePaymentRequest, depositPaymentRequest } = await this.relayer.makerService.createOrder(this.order.paramsForCreate)
       this.order.setCreatedParams({ orderId, feePaymentRequest, depositPaymentRequest })
@@ -181,18 +185,23 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onBeforePlace: async function (lifecycle) {
-      const { feePaymentRequest, depositPaymentRequest, orderId } = this.order
+      const { feePaymentRequest, depositPaymentRequest, orderId, outboundSymbol } = this.order
 
       if (!feePaymentRequest) throw new Error('Cant pay invoices because fee invoice does not exist')
       if (!depositPaymentRequest) throw new Error('Cant pay invoices because deposit invoice does not exist')
 
       this.logger.debug(`Attempting to pay fees for order: ${orderId}`)
 
+      const outboundEngine = this.engines.get(outboundSymbol)
+      if (!outboundEngine) {
+        throw new Error(`No engine available for ${outboundSymbol}`)
+      }
+
       const [feeRefundPaymentRequest, depositRefundPaymentRequest] = await Promise.all([
-        this.engine.createRefundInvoice(feePaymentRequest),
-        this.engine.createRefundInvoice(depositPaymentRequest),
-        this.engine.payInvoice(feePaymentRequest),
-        this.engine.payInvoice(depositPaymentRequest)
+        outboundEngine.createRefundInvoice(feePaymentRequest),
+        outboundEngine.createRefundInvoice(depositPaymentRequest),
+        outboundEngine.payInvoice(feePaymentRequest),
+        outboundEngine.payInvoice(depositPaymentRequest)
       ])
 
       this.logger.info('Received response for successful payment')
@@ -242,10 +251,12 @@ const OrderStateMachine = StateMachine.factory({
      * @return {Promise}          Promise that rejects if execution prep or notification fails
      */
     onBeforeExecute: async function (lifecycle) {
-      const { swapHash, inbound, outbound } = this.order.paramsForPrepareSwap
-      await this.engine.prepareSwap(swapHash, inbound, outbound)
-
-      const { orderId } = this.order
+      const { orderId, swapHash, symbol, amount } = this.order.paramsForPrepareSwap
+      const engine = this.engines.get(symbol)
+      if (!engine) {
+        throw new Error(`No engine available for ${symbol}`)
+      }
+      await engine.prepareSwap(orderId, swapHash, amount)
       return this.relayer.makerService.executeOrder({ orderId })
     },
 

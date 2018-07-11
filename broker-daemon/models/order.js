@@ -34,7 +34,7 @@ class Order {
    * @param  {String} options.baseAmount    Amount, represented as an integer in the base currency's smallest unit, to be transacted
    * @param  {String} options.counterAmount Amount, represented as an integer in the counter currency's smallest unit, to be transacted
    * @param  {String} options.ownerId
-   * @param  {String} options.makerAddress         Identifier on the payment channel network for the maker. e.g. for the lightning network: `bolt:{node public key}`
+   * @param  {String} options.makerAddress  Identifier on the payment channel network for the maker. e.g. for the lightning network: `bolt:{node public key}`
    * @return {Order}                        Order instance
    */
   constructor (blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, makerAddress }) {
@@ -124,16 +124,13 @@ class Order {
    * @return {Object} Object of parameters the engine expects
    */
   get paramsForPrepareSwap () {
-    const { swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount } = this
+    const { orderId, swapHash, inboundSymbol, inboundAmount } = this
 
-    if (![ swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount ].every(param => !!param)) {
-      throw new Error('orderId, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount are required to prepare a swap.')
+    if (![ orderId, swapHash, inboundSymbol, inboundAmount ].every(param => !!param)) {
+      throw new Error('orderId, swapHash, inboundSymbol, inboundAmount are required to prepare a swap.')
     }
 
-    const outbound = { symbol: outboundSymbol, amount: outboundAmount }
-    const inbound = { symbol: inboundSymbol, amount: inboundAmount }
-
-    return { swapHash, inbound, outbound }
+    return { orderId, swapHash, symbol: inboundSymbol, amount: inboundAmount }
   }
 
   /**

@@ -327,14 +327,8 @@ describe('Fill', () => {
         expect(fill.paramsForSwap).to.be.eql({
           makerAddress: 'bolt:asd0f9uasf09u',
           swapHash: fakeSwapHash,
-          inbound: {
-            symbol: fill.inboundSymbol,
-            amount: fill.inboundAmount
-          },
-          outbound: {
-            symbol: fill.outboundSymbol,
-            amount: fill.outboundAmount
-          }
+          symbol: fill.outboundSymbol,
+          amount: fill.outboundAmount
         })
       })
     })

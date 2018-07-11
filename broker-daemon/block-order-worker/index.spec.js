@@ -19,7 +19,7 @@ describe('BlockOrderWorker', () => {
   let store
   let logger
   let relayer
-  let engine
+  let engines
 
   let secondLevel
 
@@ -84,7 +84,9 @@ describe('BlockOrderWorker', () => {
     BlockOrderWorker.__set__('SublevelIndex', SublevelIndex)
 
     orderbooks = new Map([['BTC/LTC', {
-      getBestOrders: sinon.stub()
+      getBestOrders: sinon.stub(),
+      baseSymbol: 'BTC',
+      counterSymbol: 'LTC'
     }]])
 
     secondLevel = {
@@ -101,13 +103,13 @@ describe('BlockOrderWorker', () => {
       debug: sinon.stub()
     }
     relayer = sinon.stub()
-    engine = sinon.stub()
+    engines = new Map([ ['BTC', sinon.stub()], ['LTC', sinon.stub()] ])
   })
 
   describe('new', () => {
     let worker
     beforeEach(() => {
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
     })
 
     it('assigns the orderbooks', () => {
@@ -138,8 +140,8 @@ describe('BlockOrderWorker', () => {
       expect(worker).to.have.property('relayer', relayer)
     })
 
-    it('assigns the engine', () => {
-      expect(worker).to.have.property('engine', engine)
+    it('assigns the engines', () => {
+      expect(worker).to.have.property('engines', engines)
     })
 
     it('creates an index for the orders store', async () => {
@@ -207,7 +209,7 @@ describe('BlockOrderWorker', () => {
         await delay(10)
         fn(fakeBlockOrder)
       })
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       worker.workBlockOrder = sinon.stub().resolves()
 
       await delay(15)
@@ -225,7 +227,7 @@ describe('BlockOrderWorker', () => {
         await delay(10)
         fn(fakeBlockOrder)
       })
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       worker.workBlockOrder = sinon.stub().throws(fakeErr)
       worker.failBlockOrder = sinon.stub()
 
@@ -242,7 +244,7 @@ describe('BlockOrderWorker', () => {
     beforeEach(() => {
       ensureIndex = sinon.stub().resolves()
       SublevelIndex.prototype.ensureIndex = ensureIndex
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
     })
 
     it('rebuilds the ordersByHash index', async () => {
@@ -261,7 +263,7 @@ describe('BlockOrderWorker', () => {
   describe('createBlockOrder', () => {
     let worker
     beforeEach(() => {
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
     })
 
     it('throws if the market is not supported', () => {
@@ -272,7 +274,22 @@ describe('BlockOrderWorker', () => {
         price: '100',
         timeInForce: 'GTC'
       }
-      expect(worker.createBlockOrder(params)).to.be.rejectedWith(Error)
+      return expect(worker.createBlockOrder(params)).to.be.rejectedWith('is not being tracked as a market')
+    })
+
+    it('throws if an engine does not exist', () => {
+      worker.orderbooks.set('BTC/XYZ', {
+        baseSymbol: 'BTC',
+        counterSymbol: 'XYZ'
+      })
+      const params = {
+        marketName: 'BTC/XYZ',
+        side: 'BID',
+        amount: '10000',
+        price: '100',
+        timeInForce: 'GTC'
+      }
+      return expect(worker.createBlockOrder(params)).to.be.rejectedWith('No engine available')
     })
 
     it('creates an id', async () => {
@@ -373,7 +390,7 @@ describe('BlockOrderWorker', () => {
       }
 
       BlockOrder.fromStorage.returns(fakeBlockOrder)
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       fakeErr = new Error('fake')
       fakeId = 'myid'
     })
@@ -439,7 +456,7 @@ describe('BlockOrderWorker', () => {
       OrderStateMachine.getAll.resolves(orders)
       FillStateMachine.getAll.resolves(fills)
       BlockOrder.fromStorage.returns({ id: blockOrderId })
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
     })
 
     it('retrieves a block order from the store', async () => {
@@ -539,7 +556,7 @@ describe('BlockOrderWorker', () => {
         cancelOrder: sinon.stub().resolves()
       }
 
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
     })
 
     it('retrieves a block order from the store', async () => {
@@ -655,7 +672,7 @@ describe('BlockOrderWorker', () => {
     let blockOrder
     let order
     beforeEach(() => {
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       blockOrder = {
         id: 'fakeId',
         marketName: 'BTC/LTC',
@@ -709,7 +726,7 @@ describe('BlockOrderWorker', () => {
     let orders
 
     beforeEach(() => {
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       worker._fillOrders = sinon.stub()
       worker._placeOrder = sinon.stub()
       blockOrder = {
@@ -786,7 +803,7 @@ describe('BlockOrderWorker', () => {
     let orders
 
     beforeEach(() => {
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       blockOrder = {
         id: 'fakeId',
         marketName: 'BTC/LTC',
@@ -846,7 +863,7 @@ describe('BlockOrderWorker', () => {
     let targetDepth
 
     beforeEach(() => {
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       blockOrder = {
         id: 'fakeId',
         marketName: 'BTC/LTC',
@@ -867,6 +884,13 @@ describe('BlockOrderWorker', () => {
         { orderId: '2', baseAmount: '100' }
       ]
       targetDepth = '100'
+    })
+
+    it('throws if one of the engines is missing', () => {
+      blockOrder.marketName = 'BTC/XYZ'
+      blockOrder.counterSymbol = 'XYZ'
+
+      return expect(worker._placeOrder(blockOrder, orders, targetDepth)).to.eventually.be.rejectedWith('No engine available')
     })
 
     it('creates FillStateMachines for each fill', async () => {
@@ -924,7 +948,7 @@ describe('BlockOrderWorker', () => {
     it('provides the engine to the FillStateMachine', async () => {
       await worker._fillOrders(blockOrder, orders, targetDepth)
 
-      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match({ engine }))
+      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match({ engines }))
     })
 
     it('provides a handler for onRejection', async () => {
@@ -955,7 +979,7 @@ describe('BlockOrderWorker', () => {
     let order
 
     beforeEach(() => {
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       blockOrder = {
         id: 'fakeId',
         marketName: 'BTC/LTC',
@@ -972,6 +996,13 @@ describe('BlockOrderWorker', () => {
         id: 'anotherId'
       }
       OrderStateMachine.create.resolves(order)
+    })
+
+    it('throws if one of the engines is missing', () => {
+      blockOrder.marketName = 'BTC/XYZ'
+      blockOrder.counterSymbol = 'XYZ'
+
+      return expect(worker._placeOrder(blockOrder, '100')).to.eventually.be.rejectedWith('No engine available')
     })
 
     it('creates an OrderStateMachine', async () => {
@@ -1023,10 +1054,10 @@ describe('BlockOrderWorker', () => {
       expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match({ relayer }))
     })
 
-    it('provides the engine to the OrderStateMachine', async () => {
+    it('provides the engines to the OrderStateMachine', async () => {
       await worker._placeOrder(blockOrder, '100')
 
-      expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match({ engine }))
+      expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match({ engines }))
     })
 
     it('provides a handler for onRejection', async () => {
@@ -1064,7 +1095,7 @@ describe('BlockOrderWorker', () => {
       secondBlockOrder = { marketName: 'ABC/XYZ' }
       getRecords = sinon.stub().resolves([firstBlockOrder, secondBlockOrder])
       BlockOrderWorker.__set__('getRecords', getRecords)
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engine })
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
     })
 
     it('retrieves all block orders from the store', async () => {

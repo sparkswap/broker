@@ -9,7 +9,7 @@ describe('OrderStateMachine', () => {
   let store
   let logger
   let relayer
-  let engine
+  let engines
 
   beforeEach(() => {
     Order = sinon.stub()
@@ -29,38 +29,40 @@ describe('OrderStateMachine', () => {
         createOrder: sinon.stub()
       }
     }
-    engine = {
-      getPaymentChannelNetworkAddress: sinon.stub()
-    }
+
+    engines = new Map([
+      ['BTC', { getPaymentChannelNetworkAddress: sinon.stub() }],
+      ['LTC', { getPaymentChannelNetworkAddress: sinon.stub() }]
+    ])
   })
 
   describe('new', () => {
     it('exposes the store', () => {
-      const osm = new OrderStateMachine({ store, logger, relayer, engine })
+      const osm = new OrderStateMachine({ store, logger, relayer, engines })
 
       expect(osm).to.have.property('store', store)
     })
 
     it('exposes the logger', () => {
-      const osm = new OrderStateMachine({ store, logger, relayer, engine })
+      const osm = new OrderStateMachine({ store, logger, relayer, engines })
 
       expect(osm).to.have.property('logger', logger)
     })
 
     it('exposes the relayer', () => {
-      const osm = new OrderStateMachine({ store, logger, relayer, engine })
+      const osm = new OrderStateMachine({ store, logger, relayer, engines })
 
       expect(osm).to.have.property('relayer', relayer)
     })
 
-    it('exposes the engine', () => {
-      const osm = new OrderStateMachine({ store, logger, relayer, engine })
+    it('exposes the engines', () => {
+      const osm = new OrderStateMachine({ store, logger, relayer, engines })
 
-      expect(osm).to.have.property('engine', engine)
+      expect(osm).to.have.property('engines', engines)
     })
 
     it('does not save a copy in the store', () => {
-      new OrderStateMachine({ store, logger, relayer, engine }) // eslint-disable-line
+      new OrderStateMachine({ store, logger, relayer, engines }) // eslint-disable-line
       return expect(store.put).to.not.have.been.called
     })
   })
@@ -69,7 +71,7 @@ describe('OrderStateMachine', () => {
     let osm
 
     beforeEach(() => {
-      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.goto('created')
     })
 
@@ -132,7 +134,7 @@ describe('OrderStateMachine', () => {
     let key
 
     beforeEach(() => {
-      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.order = {
         valueObject: { my: 'order' }
       }
@@ -206,6 +208,7 @@ describe('OrderStateMachine', () => {
       }
       Order.prototype.key = fakeKey
       Order.prototype.valueObject = fakeValueObject
+      Order.prototype.inboundSymbol = 'BTC'
       setCreatedParams = sinon.stub()
       Order.prototype.setCreatedParams = setCreatedParams
       createOrderResponse = {
@@ -214,12 +217,12 @@ describe('OrderStateMachine', () => {
         depositPaymentRequest: 'lnbcas09fas09df8'
       }
       relayer.makerService.createOrder.resolves(createOrderResponse)
-      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
       blockOrderId = 'blockid'
       params = {
         side: 'BID',
-        baseSymbol: 'ABC',
-        counterSymbol: 'XYZ',
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
         baseAmount: '100000',
         counterAmount: '1000'
       }
@@ -240,17 +243,22 @@ describe('OrderStateMachine', () => {
       expect(Order).to.have.been.calledWith(blockOrderId, sinon.match(params))
     })
 
-    it('creates a makerAddress for the order', async () => {
+    xit('creates an ownerId for the order')
+
+    it('gets the makerAddress for the order', async () => {
       const fakeAddress = 'bolt:mykey'
-      engine.getPaymentChannelNetworkAddress.resolves(fakeAddress)
+      engines.get('BTC').getPaymentChannelNetworkAddress.resolves(fakeAddress)
 
       await osm.create(blockOrderId, params)
 
-      expect(engine.getPaymentChannelNetworkAddress).to.have.been.calledOnce()
-      expect(Order).to.have.been.calledWith(sinon.match.any, sinon.match({ makerAddress: fakeAddress }))
+      expect(engines.get('BTC').getPaymentChannelNetworkAddress).to.have.been.calledOnce()
+      expect(osm.order.makerAddress).to.be.equal(fakeAddress)
     })
 
-    xit('creates an ownerId for the order')
+    it('throws if no engine exists for the inbound symbol', () => {
+      Order.prototype.inboundSymbol = 'XYZ'
+      return expect(osm.create(blockOrderId, params)).to.eventually.be.rejectedWith('No engine available')
+    })
 
     it('creates an order on the relayer', async () => {
       const fakeParams = {
@@ -336,6 +344,7 @@ describe('OrderStateMachine', () => {
     let feePaymentRequest
     let depositPaymentRequest
     let orderId
+    let outboundSymbol
 
     beforeEach(async () => {
       invoice = '1234'
@@ -348,19 +357,25 @@ describe('OrderStateMachine', () => {
       feePaymentRequest = 'fee'
       depositPaymentRequest = 'deposit'
       orderId = '1234'
+      outboundSymbol = 'BTC'
 
-      fakeOrder = { feePaymentRequest, depositPaymentRequest, orderId }
-      engine = { payInvoice: payInvoiceStub, createRefundInvoice: createRefundInvoiceStub }
+      fakeOrder = { feePaymentRequest, depositPaymentRequest, orderId, outboundSymbol }
+      engines = new Map([['BTC', { payInvoice: payInvoiceStub, createRefundInvoice: createRefundInvoiceStub }]])
       relayer = {
         makerService: {
           placeOrder: placeOrderStub
         }
       }
 
-      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.order = fakeOrder
 
       await osm.goto('created')
+    })
+
+    it('throws if no engine is available', () => {
+      osm.order.outboundSymbol = 'ABC'
+      return expect(osm.place()).to.eventually.be.rejectedWith('No engine available')
     })
 
     it('pays a fee invoice', async () => {
@@ -463,6 +478,7 @@ describe('OrderStateMachine', () => {
     let inboundAmount
     let outboundSymbol
     let outboundAmount
+    let engine
 
     beforeEach(async () => {
       executeOrderStub = sinon.stub().resolves()
@@ -482,15 +498,10 @@ describe('OrderStateMachine', () => {
         outboundSymbol,
         outboundAmount,
         paramsForPrepareSwap: {
+          orderId,
           swapHash,
-          inbound: {
-            symbol: inboundSymbol,
-            amount: inboundAmount
-          },
-          outbound: {
-            symbol: outboundSymbol,
-            amount: outboundAmount
-          }
+          symbol: inboundSymbol,
+          amount: inboundAmount
         }
       }
       engine = { prepareSwap: prepareSwapStub }
@@ -500,7 +511,9 @@ describe('OrderStateMachine', () => {
         }
       }
 
-      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      let engines = new Map([ [inboundSymbol, engine] ])
+
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.onEnterPlaced = sinon.stub()
       osm.order = fakeOrder
 
@@ -511,10 +524,7 @@ describe('OrderStateMachine', () => {
       await osm.execute()
 
       expect(prepareSwapStub).to.have.been.calledOnce()
-
-      const inbound = { amount: inboundAmount, symbol: inboundSymbol }
-      const outbound = { amount: outboundAmount, symbol: outboundSymbol }
-      expect(prepareSwapStub).to.have.been.calledWith(swapHash, inbound, outbound)
+      expect(prepareSwapStub).to.have.been.calledWith(orderId, swapHash, inboundAmount)
     })
 
     it('executes the order on the relayer', async () => {
@@ -529,7 +539,7 @@ describe('OrderStateMachine', () => {
     let osm
 
     beforeEach(() => {
-      osm = new OrderStateMachine({ store, logger, relayer, engine })
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
     })
 
     it('moves the state to the given state', async () => {
@@ -551,7 +561,7 @@ describe('OrderStateMachine', () => {
 
     beforeEach(async () => {
       onRejection = sinon.stub()
-      osm = new OrderStateMachine({ store, logger, relayer, engine, onRejection })
+      osm = new OrderStateMachine({ store, logger, relayer, engines, onRejection })
       await osm.goto('created')
       osm.order = {
         key: 'fakeKey',
@@ -609,8 +619,8 @@ describe('OrderStateMachine', () => {
       blockOrderId = 'blockid'
       params = {
         side: 'BID',
-        baseSymbol: 'ABC',
-        counterSymbol: 'XYZ',
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
         baseAmount: '100000',
         counterAmount: '1000'
       }
@@ -620,6 +630,7 @@ describe('OrderStateMachine', () => {
       }
       Order.prototype.key = fakeKey
       Order.prototype.valueObject = fakeValueObject
+      Order.prototype.inboundSymbol = 'BTC'
       setCreatedParams = sinon.stub()
       Order.prototype.setCreatedParams = setCreatedParams
       createOrderResponse = {
@@ -631,14 +642,14 @@ describe('OrderStateMachine', () => {
     })
 
     it('initializes a state machine', async () => {
-      const osm = await OrderStateMachine.create({ store, logger, relayer, engine }, blockOrderId, params)
+      const osm = await OrderStateMachine.create({ store, logger, relayer, engines }, blockOrderId, params)
 
       expect(osm).to.be.instanceOf(OrderStateMachine)
       expect(osm).to.have.property('store', store)
     })
 
     it('runs a create transition on the state machine', async () => {
-      const osm = await OrderStateMachine.create({ store, logger, relayer, engine }, blockOrderId, params)
+      const osm = await OrderStateMachine.create({ store, logger, relayer, engines }, blockOrderId, params)
 
       expect(osm.state).to.be.equal('created')
       expect(store.put).to.have.been.calledOnce()
@@ -744,14 +755,14 @@ describe('OrderStateMachine', () => {
     })
 
     it('initializes a state machine', async () => {
-      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engine }, { key, value })
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(osm).to.be.instanceOf(OrderStateMachine)
       expect(osm).to.have.property('store', store)
     })
 
     it('moves to the correct state', async () => {
-      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engine }, { key, value })
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(osm.state).to.be.equal(state)
     })
@@ -759,7 +770,7 @@ describe('OrderStateMachine', () => {
     it('contains the old history', async () => {
       history.push('created')
       value = JSON.stringify(valueObject)
-      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engine }, { key, value })
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(osm.history).to.be.an('array')
       expect(osm.history).to.have.lengthOf(1)
@@ -767,7 +778,7 @@ describe('OrderStateMachine', () => {
     })
 
     it('does not include the re-inflating in history', async () => {
-      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engine }, { key, value })
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(osm.history).to.be.an('array')
       expect(osm.history).to.have.lengthOf(0)
@@ -777,7 +788,7 @@ describe('OrderStateMachine', () => {
       valueObject.error = 'fakeError'
       value = JSON.stringify(valueObject)
 
-      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engine }, { key, value })
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(osm.error).to.be.an('error')
       expect(osm.error.message).to.be.eql('fakeError')
@@ -787,7 +798,7 @@ describe('OrderStateMachine', () => {
       const myObject = 'fakeObject'
       Order.fromObject.returns(myObject)
 
-      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engine }, { key, value })
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(Order.fromObject).to.have.been.calledOnce()
       expect(Order.fromObject).to.have.been.calledWith(key, sinon.match({ my: 'object' }))

@@ -167,8 +167,9 @@ describe('broker daemon', () => {
       expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ relayer: sinon.match.instanceOf(RelayerClient) }))
     })
 
-    it('provides the engine to the BlockOrderWorker', () => {
-      expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ engine: sinon.match.instanceOf(LndEngine) }))
+    it('provides the engines to the BlockOrderWorker', () => {
+      expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ engines: sinon.match.instanceOf(Map) }))
+      expect(BlockOrderWorker.args[0][0].engines.values().next().value).to.be.an.instanceOf(LndEngine)
     })
 
     it('provides the orderbooks to the BlockOrderWorker', () => {

@@ -12,14 +12,14 @@ const { Big, getRecords, SublevelIndex } = require('../utils')
 class BlockOrderWorker extends EventEmitter {
   /**
    * Create a new BlockOrderWorker instance
-   * @param  {Map} options.orderbooks         Collection of all active Orderbooks
-   * @param  {sublevel} options.store         Sublevel in which to store block orders and child orders
-   * @param  {Object} options.logger
-   * @param  {RelayerClient} options.relayer
-   * @param  {Engine} options.engine
+   * @param  {Map<String, Orderbook>} options.orderbooks Collection of all active Orderbooks
+   * @param  {sublevel}               options.store      Sublevel in which to store block orders and child orders
+   * @param  {Object}                 options.logger
+   * @param  {RelayerClient}          options.relayer
+   * @param  {Map<String, Engine>}    options.engines    Collection of all available engines
    * @return {BlockOrderWorker}
    */
-  constructor ({ orderbooks, store, logger, relayer, engine }) {
+  constructor ({ orderbooks, store, logger, relayer, engines }) {
     super()
     this.orderbooks = orderbooks
     this.store = store
@@ -27,7 +27,7 @@ class BlockOrderWorker extends EventEmitter {
     this.fillsStore = store.sublevel('fills')
     this.logger = logger
     this.relayer = relayer
-    this.engine = engine
+    this.engines = engines
 
     const filterOrdersWithHash = (key, value) => !!Order.fromStorage(key, value).swapHash
     const getHashFromOrder = (key, value) => Order.fromStorage(key, value).swapHash
@@ -77,6 +77,14 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`${marketName} is not being tracked as a market. Configure kbd to track ${marketName} using the MARKETS environment variable.`)
     }
 
+    if (!this.engines.has(orderbook.baseSymbol)) {
+      throw new Error(`No engine available for ${orderbook.baseSymbol}.`)
+    }
+
+    if (!this.engines.has(orderbook.counterSymbol)) {
+      throw new Error(`No engine available for ${orderbook.counterSymbol}.`)
+    }
+
     const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
@@ -110,15 +118,15 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
 
-    const { relayer, engine, logger } = this
+    const { logger } = this
     const openOrders = await OrderStateMachine.getAll(
-      { store: this.ordersStore, relayer, engine, logger },
+      { store: this.ordersStore, logger },
       // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
       // its prefix range.
       Order.rangeForBlockOrder(blockOrder.id)
     )
     const fills = await FillStateMachine.getAll(
-      { store: this.fillsStore, relayer, engine, logger },
+      { store: this.fillsStore, logger },
       // limit the fills we retrieve to those that belong to this blockOrder, i.e. those that are in
       // its prefix range.
       Fill.rangeForBlockOrder(blockOrder.id)
@@ -312,15 +320,23 @@ class BlockOrderWorker extends EventEmitter {
     const { baseSymbol, counterSymbol, side, counterAmount } = blockOrder
 
     // state machine params
-    const { relayer, engine, logger } = this
+    const { relayer, engines, logger } = this
     const store = this.ordersStore
+
+    if (!engines.has(baseSymbol)) {
+      throw new Error(`No engine available for ${baseSymbol}`)
+    }
+
+    if (!engines.has(counterSymbol)) {
+      throw new Error(`No engine available for ${counterSymbol}`)
+    }
 
     this.logger.info('Creating order for BlockOrder', { blockOrderId: blockOrder.id })
 
     const order = await OrderStateMachine.create(
       {
         relayer,
-        engine,
+        engines,
         logger,
         store,
         onRejection: (err) => {
@@ -348,8 +364,17 @@ class BlockOrderWorker extends EventEmitter {
     let currentDepth = Big('0')
 
     // state machine params
-    const { relayer, engine, logger } = this
+    const { relayer, engines, logger } = this
     const store = this.fillsStore
+
+    const { baseSymbol, counterSymbol } = blockOrder
+    if (!engines.has(baseSymbol)) {
+      throw new Error(`No engine available for ${baseSymbol}`)
+    }
+
+    if (!engines.has(counterSymbol)) {
+      throw new Error(`No engine available for ${counterSymbol}`)
+    }
 
     const promisedFills = orders.map((order, index) => {
       const depthRemaining = targetDepth.minus(currentDepth)
@@ -368,7 +393,7 @@ class BlockOrderWorker extends EventEmitter {
       return FillStateMachine.create(
         {
           relayer,
-          engine,
+          engines,
           logger,
           store,
           onRejection: (err) => {
