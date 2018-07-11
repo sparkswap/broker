@@ -19,22 +19,32 @@
 
 set -e -u
 
-SYMBOL=${SYMBOL:-BTC}
+SYMBOL=${1:-}
+
+if [[ -z "$SYMBOL" ]]; then
+    echo "Must provide a SYMBOL to the fund script" 1>&2
+    echo "Example: `npm run fund btc`"
+    echo ""
+    echo ""
+    exit 1
+fi
+
 RELAYER_DIR=${RELAYER_DIR:-../relayer}
 
 # TODO: differentiate between lnd and other engines
 echo "Grabbing engine public key from broker"
 
 CONFIG=$(docker-compose exec -T kbd bash -c './broker-cli/bin/kcli config')
-DESTINATION_PUB_KEY=$(node ./scripts/parse-broker-response.js pubkey $CONFIG)
+
+WALLET_ADDRESS=$(docker-compose exec -T kbd bash -c './broker-cli/bin/kcli wallet new-deposit-address')
 
 # Restart the btcd container w/ the mining-address for our account
-echo "Running funding script on the relayer w/ wallet addr"
+echo "Running funding script on the relayer w/ public key: $WALLET_ADDRESS"
 
-(cd $RELAYER_DIR && ADDR="$DESTINATION_PUB_KEY" SYMBOL=BTC bash ./scripts/fund-simnet-wallet.sh)
+(cd $RELAYER_DIR && ADDR=$WALLET_ADDRESS SYMBOL=$SYMBOL bash ./scripts/fund-simnet-wallet.sh)
 
-echo "Waiting 10 seconds for blocks to be confirmed"
-sleep 10
+echo "Waiting 15 seconds for blocks to be confirmed"
+sleep 15
 
 echo "Checking wallet balance"
 ./broker-cli/bin/kcli wallet balance
