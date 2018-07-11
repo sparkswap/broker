@@ -56,7 +56,7 @@ To instruct the router how to forward the request, routing entries must contain:
 - the amount of currency to forward
 - the currency to forward (symbol)
 
-Each routing entry should be used only once, so once it has been used, it should also store the preimage so that it can return the preimage for subsequent requests using the same payment hash.
+Routing entries are not written to the by Interchain Router once they are created. Any state related to preimage retrieval should be stored by the engines on either end.
 
 ### Requesting preimages
 
