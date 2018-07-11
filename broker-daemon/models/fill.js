@@ -103,16 +103,13 @@ class Fill {
    * @return {Object} Object of parameters an engine expects
    */
   get paramsForSwap () {
-    const { makerAddress, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount } = this
+    const { makerAddress, swapHash, outboundSymbol, outboundAmount } = this
 
-    if (![ makerAddress, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount ].every(param => !!param)) {
-      throw new Error('makerAddress, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount are required params for execution')
+    if (![ makerAddress, swapHash, outboundSymbol, outboundAmount ].every(param => !!param)) {
+      throw new Error('makerAddress, swapHash, outboundSymbol, outboundAmount are required params for execution')
     }
 
-    const inbound = { symbol: inboundSymbol, amount: inboundAmount }
-    const outbound = { symbol: outboundSymbol, amount: outboundAmount }
-
-    return { makerAddress, swapHash, inbound, outbound }
+    return { makerAddress, swapHash, symbol: outboundSymbol, amount: outboundAmount }
   }
 
   /**
