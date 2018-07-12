@@ -6,7 +6,7 @@
 
 This repo contains source for the following products:
 
-- KCLI - CLI for Kinesis Daemon (this is in its own container OR can be used directly from `./bin/klci` from inside the kbd container)
+- KCLI - CLI for Kinesis Daemon (this is in its own container OR can be used directly from `./broker-cli/bin/klci` from inside the kbd container)
 - KBD - Kinesis Broker Daemon - handle interactions between LND and the Kinesis Exchange (Relayer)
 
 ### Before you begin
@@ -21,8 +21,6 @@ It is also recommended that you install a [Standard](https://standardjs.com/) pl
 Additonally, you must have ssh/private access to the lnd-engine repo: https://github.com/kinesis-exchange/lnd-engine.
 
 ### Getting Started
-
-Run the following commands in order:
 
 1. `npm run build` - This command will install local dependencies, install proto files and build all broker containers
 2. `npm run build-images` - builds the kbd image to be used by docker-compose
@@ -50,9 +48,7 @@ Additionally, you can access a specific version of kbd by setting the --rpc-addr
 
 #### Funding a wallet on SIMNET
 
-Using the `deposit` command on KCLI, we've created a script `setup/fund-simnet-wallet.local.sh` that generates BTC for a broker-daemon wallet
-
-Use the following command to generate $$$: `npm run fund`
+Use the command `npm run fund <currency>` to find a broker's wallet on simnet (development only)
 
 ### Authentication between Daemon and LND
 
@@ -82,17 +78,15 @@ The following steps will get your broker/relayer projects to a state where you c
 4. In the broker directory, build the broker image w/ `npm run build-images`
 5. In the relayer directory, build the project w/ `npm run build`
 6. In the relayer directory, Start all containers w/ `docker-compose up -d`
-7. In the relayer directory, fund the relayer w/ `npm run fund`
+7. In the relayer directory, fund the relayer w/ `npm run fund <currency>`
     - This command may fail with a weird js error due to the relayer still initializing. If the command fails, just rerun it.
+    - Make sure to fund the relayer on all applicable currencies
 8. In the broker directory, build the project with `npm run build`
-10. In the broker directory, fund the broker w/ `npm run fund`
-    - **NOTE: (this command expects that the relayer is at `../relayer`)**
-11. In the broker, commit a balance to the relayer by running `./bin/kcli wallet commit-balance BTC`
+9. In the broker directory, run `docker-compose up -d` to start all the containers
+10. In the broker directory, fund the broker w/ `npm run fund <currency>`
+    - **NOTE: (this command expects that the relayer is at `../relayer`)** however you can set your own w/ RELAYER_DIR=<your relayer dir>
+11. Once you have verified the broker has a balance (after a few blocks have been mined, commit a balance to the relayer by running `./broker-cli/bin/kcli wallet commit-balance BTC`
+    - NOTE: Make sure you have the correct rpc-address set for the kcli
 12. If successful, a channel from the `broker -> relayer` is now in a pending state!
-13. In the relayer directory, re-create relayer/lnd so that it can catch up to the blocks we have just generated (`docker-compose up -d --force-recreate`)
-14. In the broker directory, re-create the broker/lnd for the same thing ^^ (`docker-compose up -d --force-recreate`)
-**IMPORTANT: ** If you down your containers and remove the volumes, you will need to run all of these steps again.
 
-Additionally, you can check the status of the channel by running the following command in the relayer directory `docker-compose exec relayer bash -c 'node ./test-client-scripts/test-lnd.js'`
-
-**NOTE**: If the channel does not open after a few minutes, you need to rerun steps 9/10. For some reason, on simnet, because of the way we fund our wallets, BTCD has a problem with handling so many block confirmations at the same time.
+**IMPORTANT: ** If you down your containers and remove the volumes, you will need to backtrack and refund certain parts of the stack. Use the directions above for reference.
