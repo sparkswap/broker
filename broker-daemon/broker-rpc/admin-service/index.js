@@ -1,5 +1,5 @@
 const { GrpcUnaryMethod } = require('grpc-methods')
-const { loadProto } = require('../utils')
+const { loadProto } = require('../../utils')
 
 const healthCheck = require('./health-check')
 const getDaemonConfig = require('./get-daemon-config')

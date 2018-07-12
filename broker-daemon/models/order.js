@@ -1,27 +1,50 @@
 const { Big } = require('../utils')
 
 /**
+ * Delimiter for the block order id and order when storing orders
+ * @type {String}
+ * @constant
+ */
+const DELIMITER = ':'
+
+/**
+ * Lower bound for leveldb ranged queries
+ * @type {String}
+ * @constant
+ */
+const LOWER_BOUND = '\x00'
+
+/**
+ * Upper bound for leveldb ranged queries
+ * @type {String}
+ * @constant
+ */
+const UPPER_BOUND = '\uffff'
+
+/**
  * @class Order that we create on the Relayer
  */
 class Order {
   /**
    * Create a new order representation
+   * @param  {String} blockOrderId          Id of the block order that this order belongs to
    * @param  {String} options.baseSymbol    Currency symbol for the base currency in the market, e.g. BTC
    * @param  {String} options.counterSymbol Currency symbol for the counter or quote currency in the market, e.g. LTC
    * @param  {String} options.side          Side of the transaction that the order is on, either BID or ASK
    * @param  {String} options.baseAmount    Amount, represented as an integer in the base currency's smallest unit, to be transacted
    * @param  {String} options.counterAmount Amount, represented as an integer in the counter currency's smallest unit, to be transacted
    * @param  {String} options.ownerId
-   * @param  {String} options.payTo         Identifier on the payment channel network for the maker. e.g. for the lightning network: `ln:{node public key}`
+   * @param  {String} options.makerAddress  Identifier on the payment channel network for the maker. e.g. for the lightning network: `bolt:{node public key}`
    * @return {Order}                        Order instance
    */
-  constructor ({ baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo }) {
+  constructor (blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, makerAddress }) {
+    this.blockOrderId = blockOrderId
     this.baseSymbol = baseSymbol
     this.counterSymbol = counterSymbol
     this.baseAmount = baseAmount
     this.counterAmount = counterAmount
     this.ownerId = ownerId
-    this.payTo = payTo
+    this.makerAddress = makerAddress
 
     if (!Order.SIDES[side]) {
       throw new Error(`${side} is not a valid order side.`)
@@ -46,10 +69,12 @@ class Order {
    * Add parameters to the order from it being filled on the Relayer
    * @param {String} options.swapHash   Base64 string of the swap hash being used for the fill
    * @param {String} options.fillAmount Int64 String of the amount, in base currency's base units, of the fill
+   * @param {String} options.takerAddress String of payment channel network address of the taker
    */
-  setFilledParams ({ swapHash, fillAmount }) {
+  setFilledParams ({ swapHash, fillAmount, takerAddress }) {
     this.swapHash = swapHash
     this.fillAmount = fillAmount
+    this.takerAddress = takerAddress
   }
 
   /**
@@ -89,9 +114,9 @@ class Order {
    * @return {Object} Object of parameters the relayer expects
    */
   get paramsForCreate () {
-    const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo } = this
+    const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, makerAddress } = this
 
-    return { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo }
+    return { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, makerAddress }
   }
 
   /**
@@ -99,16 +124,13 @@ class Order {
    * @return {Object} Object of parameters the engine expects
    */
   get paramsForPrepareSwap () {
-    const { swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount } = this
+    const { orderId, swapHash, inboundSymbol, inboundAmount } = this
 
-    if (![ swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount ].every(param => !!param)) {
-      throw new Error('orderId, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount are required to prepare a swap.')
+    if (![ orderId, swapHash, inboundSymbol, inboundAmount ].every(param => !!param)) {
+      throw new Error('orderId, swapHash, inboundSymbol, inboundAmount are required to prepare a swap.')
     }
 
-    const outbound = { symbol: outboundSymbol, amount: outboundAmount }
-    const inbound = { symbol: inboundSymbol, amount: inboundAmount }
-
-    return { swapHash, inbound, outbound }
+    return { orderId, swapHash, symbol: inboundSymbol, amount: inboundAmount }
   }
 
   /**
@@ -125,10 +147,16 @@ class Order {
 
   /**
    * Get the unique key that this object can be stored with
-   * @return {String} Unique key for storage. In the case of an order, its Relayer-assigned orderId
+   * It is prefixed by the blockOrderId so that it can be retrieved easily
+   * @return {String} Unique key for storage. In the case of an order, it is a combination of the blockOrderId and Relayer-assigned orderId
    */
   get key () {
-    return this.orderId
+    // if either part of our key is undefined we return undefined so as not to create
+    // a record with a bad key (e.g. no orderId or no blockOrderId)
+    if (!this.orderId || !this.blockOrderId) {
+      return undefined
+    }
+    return `${this.blockOrderId}${DELIMITER}${this.orderId}`
   }
 
   /**
@@ -151,11 +179,12 @@ class Order {
       baseAmount,
       counterAmount,
       ownerId,
-      payTo,
+      makerAddress,
       feePaymentRequest,
       depositPaymentRequest,
       swapHash,
-      fillAmount
+      fillAmount,
+      takerAddress
     } = this
 
     return {
@@ -165,44 +194,61 @@ class Order {
       baseAmount,
       counterAmount,
       ownerId,
-      payTo,
+      makerAddress,
       feePaymentRequest,
       depositPaymentRequest,
       swapHash,
-      fillAmount
+      fillAmount,
+      takerAddress
     }
   }
 
   /**
    * Create an instance of an order from a stored copy
    * @param  {String} key   Unique key for the order, i.e. its `orderId`
-   * @param  {String} value Stringified representation of the order
+   * @param  {String} orderStateMachineRecord Stringified representation of the order state machine record
    * @return {Order}        Inflated order object
    */
-  static fromStorage (key, value) {
-    return this.fromObject(key, JSON.parse(value))
+  static fromStorage (key, orderStateMachineRecord) {
+    return this.fromObject(key, JSON.parse(orderStateMachineRecord).order)
   }
 
   /**
    * Create an instance of an order from an object representation
-   * @param  {String} key         Unique key for the order, i.e. its `orderId`
+   * @param  {String} key         Unique key for the order, i.e. its `blockOrderId` and `orderId`
    * @param  {Object} valueObject Plain object representation of the order
    * @return {Order}              Inflated order object
    */
   static fromObject (key, valueObject) {
-    const orderId = key
+    // keys are the unique id for the object (orderId) prefixed by the object they belong to (blockOrderId)
+    // and are separated by the delimiter (:)
+    const [ blockOrderId, orderId ] = key.split(DELIMITER)
 
-    const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo, ...otherParams } = valueObject
+    const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, makerAddress, ...otherParams } = valueObject
 
     // instantiate with the correct set of params
-    const order = new this({ baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, payTo })
+    const order = new this(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId, makerAddress })
 
-    const { feePaymentRequest, depositPaymentRequest, swapHash, fillAmount } = otherParams
+    const { feePaymentRequest, depositPaymentRequest, swapHash, fillAmount, takerAddress } = otherParams
 
     // add any (white-listed) leftover params into the object
-    Object.assign(order, { orderId, feePaymentRequest, depositPaymentRequest, swapHash, fillAmount })
+    Object.assign(order, { orderId, feePaymentRequest, depositPaymentRequest, swapHash, fillAmount, takerAddress })
 
     return order
+  }
+
+  /**
+   * Create a set of options that can be passed to a LevelUP `createReadStream` call
+   * that limits the set to orders that belong to the given blockOrderid.
+   * This works because all orders are prefixed with their blockOrderId and the Delimiter.
+   * @param  {String} Id of of the block order to create a range for
+   * @return {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
+   */
+  static rangeForBlockOrder (blockOrderId) {
+    return {
+      gte: `${blockOrderId}${DELIMITER}${LOWER_BOUND}`,
+      lte: `${blockOrderId}${DELIMITER}${UPPER_BOUND}`
+    }
   }
 }
 

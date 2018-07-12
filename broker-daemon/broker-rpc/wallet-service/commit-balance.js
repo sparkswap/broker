@@ -1,19 +1,5 @@
 const { PublicError } = require('grpc-methods')
-const { Big, convertBalance } = require('../utils')
-/**
- * @constant
- * @type {String}
- * @default
- */
-const EXCHANGE_LND_HOST = process.env.EXCHANGE_LND_HOST
-
-/**
- * @constant
- * @type {String}
- * @default
- */
-const LND_EXTERNAL_ADDRESS = process.env.LND_EXTERNAL_ADDRESS
-
+const { Big, convertBalance } = require('../../utils')
 /**
  * @constant
  * @type {Long}
@@ -58,10 +44,10 @@ const SUPPORTED_SYMBOLS = Object.freeze({
  * @return {responses.EmptyResponse}
  */
 async function commitBalance ({ params, relayer, logger, engine }, { EmptyResponse }) {
-  const { publicKey: relayerPubKey } = await relayer.paymentNetworkService.getPublicKey({})
   const { balance, symbol } = params
+  const { address } = await relayer.paymentChannelNetworkService.getAddress({symbol})
 
-  logger.info(`Attempting to create channel with ${EXCHANGE_LND_HOST} on ${symbol} with ${balance}`)
+  logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balance}`)
 
   // TODO: Validate that the amount is above the minimum channel balance
   // TODO: Choose the correct engine depending on the market
@@ -77,9 +63,9 @@ async function commitBalance ({ params, relayer, logger, engine }, { EmptyRespon
     throw new PublicError(`Unsupported symbol for committing a balance: ${symbol}`)
   }
 
-  await engine.createChannel(EXCHANGE_LND_HOST, relayerPubKey, balance, symbol)
+  await engine.createChannel(address, balance, symbol)
 
-  const publicKey = await engine.getPublicKey({})
+  const paymentChannelNetworkAddress = await engine.getPaymentChannelNetworkAddress()
 
   let symbolForRelayer
   let convertedBalance
@@ -92,7 +78,7 @@ async function commitBalance ({ params, relayer, logger, engine }, { EmptyRespon
     symbolForRelayer = SUPPORTED_SYMBOLS.LTC
     convertedBalance = convertBalance(Big(balance), SUPPORTED_SYMBOLS.BTC, SUPPORTED_SYMBOLS.LTC)
   }
-  await relayer.paymentNetworkService.createChannel({publicKey, host: LND_EXTERNAL_ADDRESS, balance: convertedBalance.toString(), symbol: symbolForRelayer})
+  await relayer.paymentChannelNetworkService.createChannel({address: paymentChannelNetworkAddress, balance: convertedBalance.toString(), symbol: symbolForRelayer})
 
   return new EmptyResponse({})
 }

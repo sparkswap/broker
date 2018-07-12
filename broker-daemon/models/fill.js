@@ -2,11 +2,33 @@ const Order = require('./order')
 const { Big } = require('../utils')
 
 /**
+ * Delimiter for the block order id and fill id when storing fills
+ * @type {String}
+ * @constant
+ */
+const DELIMITER = ':'
+
+/**
+ * Lower bound for leveldb ranged queries
+ * @type {String}
+ * @constant
+ */
+const LOWER_BOUND = '\x00'
+
+/**
+ * Upper bound for leveldb ranged queries
+ * @type {String}
+ * @constant
+ */
+const UPPER_BOUND = '\uffff'
+
+/**
  * @class Fill that we create on the Relayer
  */
 class Fill {
   /**
    * Create a fill for an existing order
+   * @param  {String} blockOrderId        Id of the block order this fill is associated with
    * @param  {String} order.orderId       Unique ID assigned by the relayer to identify an order
    * @param  {String} order.baseSymbol    Currency symbol for the base currency in the market, e.g. BTC
    * @param  {String} order.counterSymbol Currency symbol for the counter or quote currency in the market, e.g. LTC
@@ -14,10 +36,12 @@ class Fill {
    * @param  {String} order.baseAmount    Amount, represented as an integer in the base currency's smallest unit, to be transacted
    * @param  {String} order.counterAmount Amount, represented as an integer in the counter currency's smallest unit, to be transacted
    * @param  {String} fill.fillAmount     Amount, represented as an integer in the base currency's smallets unit, that the order is filled with
-   * @param  {String} fill.takerPayTo     address for the taker
+   * @param  {String} fill.takerAddress   address for the taker
    * @return {Fill}                       Fill instance
    */
-  constructor ({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerPayTo }) {
+  constructor (blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerAddress }) {
+    this.blockOrderId = blockOrderId
+
     this.order = {
       orderId,
       baseSymbol,
@@ -33,7 +57,7 @@ class Fill {
     this.order.side = side
 
     this.fillAmount = fillAmount
-    this.takerPayTo = takerPayTo
+    this.takerAddress = takerAddress
   }
 
   /**
@@ -58,10 +82,10 @@ class Fill {
 
   /**
    * Set params from execution on an order
-   * @param {String} options.payTo Address of the counterparty for the swap
+   * @param {String} options.makerAddress Address of the counterparty for the swap
    */
-  setExecuteParams ({ payTo }) {
-    this.payTo = payTo
+  setExecuteParams ({ makerAddress }) {
+    this.makerAddress = makerAddress
   }
 
   /**
@@ -69,9 +93,9 @@ class Fill {
    * @return {Object} Object of parameters the relayer expects
    */
   get paramsForCreate () {
-    const { fillAmount, swapHash, takerPayTo, order: { orderId } } = this
+    const { fillAmount, swapHash, takerAddress, order: { orderId } } = this
 
-    return { fillAmount, orderId, swapHash, takerPayTo }
+    return { fillAmount, orderId, swapHash, takerAddress }
   }
 
   /**
@@ -79,17 +103,13 @@ class Fill {
    * @return {Object} Object of parameters an engine expects
    */
   get paramsForSwap () {
-    const { payTo, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount } = this
+    const { makerAddress, swapHash, outboundSymbol, outboundAmount } = this
 
-    if (![ payTo, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount ].every(param => !!param)) {
-      throw new Error('payTo, swapHash, inboundSymbol, inboundAmount, outboundSymbol, outboundAmount are required params for execution')
+    if (![ makerAddress, swapHash, outboundSymbol, outboundAmount ].every(param => !!param)) {
+      throw new Error('makerAddress, swapHash, outboundSymbol, outboundAmount are required params for execution')
     }
 
-    const counterpartyPubKey = payTo.split(':')[1]
-    const inbound = { symbol: inboundSymbol, amount: inboundAmount }
-    const outbound = { symbol: outboundSymbol, amount: outboundAmount }
-
-    return { counterpartyPubKey, swapHash, inbound, outbound }
+    return { makerAddress, swapHash, symbol: outboundSymbol, amount: outboundAmount }
   }
 
   /**
@@ -159,10 +179,16 @@ class Fill {
 
   /**
    * Get the unique key that this object can be stored with
-   * @return {String} Unique key for storage. In the case of an order, its Relayer-assigned orderId
+   * It is prefixed by the blockOrderId so that it can be retrieved easily
+   * @return {String} Unique key for storage. In the case of a fill it is a combination of the blockOrderId and Relayer-assigned fillId
    */
   get key () {
-    return this.fillId
+    // if either part of our key is undefined we return undefined so as not to create
+    // a record with a bad key (e.g. no fillId or no blockOrderId)
+    if (!this.fillId || !this.blockOrderId) {
+      return undefined
+    }
+    return `${this.blockOrderId}${DELIMITER}${this.fillId}`
   }
 
   /**
@@ -191,8 +217,8 @@ class Fill {
       swapHash,
       feePaymentRequest,
       depositPaymentRequest,
-      payTo,
-      takerPayTo
+      makerAddress,
+      takerAddress
     } = this
 
     return {
@@ -208,41 +234,57 @@ class Fill {
       swapHash,
       feePaymentRequest,
       depositPaymentRequest,
-      payTo,
-      takerPayTo
+      makerAddress,
+      takerAddress
     }
   }
 
   /**
-   * Create an instance of an order from a stored copy
-   * @param  {String} key   Unique key for the order, i.e. its `orderId`
-   * @param  {String} value Stringified representation of the order
-   * @return {Order}        Inflated order object
+   * Create an instance of an fill object from a stored copy
+   * @param  {String} key   Unique key for the order, i.e. its `fillId`
+   * @param  {String} fillStateMachineRecord Stringified representation of the order
+   * @return {Object} Inflated fill object
    */
-  static fromStorage (key, value) {
-    return this.fromObject(key, JSON.parse(value))
+  static fromStorage (key, fillStateMachineRecord) {
+    return this.fromObject(key, JSON.parse(fillStateMachineRecord).fill)
   }
 
   /**
    * Create an instance of an fill from an object representation
-   * @param  {String} key         Unique key for the fill, i.e. its `fillId`
+   * @param  {String} key         Unique key for the fill, i.e. its `blockOrderId` and `fillId`
    * @param  {Object} valueObject Plain object representation of the fill
    * @return {Fill}              Inflated fill object
    */
   static fromObject (key, valueObject) {
-    const fillId = key
+    // keys are the unique id for the object (orderId) prefixed by the object they belong to (blockOrderId)
+    // and are separated by the delimiter (:)
+    const [ blockOrderId, fillId ] = key.split(DELIMITER)
 
-    const { order: { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, fillAmount, takerPayTo, ...otherParams } = valueObject
+    const { order: { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, fillAmount, takerAddress, ...otherParams } = valueObject
 
     // instantiate with the correct set of params
-    const fill = new this({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerPayTo })
+    const fill = new this(blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerAddress })
 
-    const { swapHash, feePaymentRequest, depositPaymentRequest, payTo } = otherParams
+    const { swapHash, feePaymentRequest, depositPaymentRequest, makerAddress } = otherParams
 
     // add any (white-listed) leftover params into the object
-    Object.assign(fill, { fillId, swapHash, feePaymentRequest, depositPaymentRequest, payTo })
+    Object.assign(fill, { fillId, swapHash, feePaymentRequest, depositPaymentRequest, makerAddress })
 
     return fill
+  }
+
+  /**
+   * Create a set of options that can be passed to a LevelUP `createReadStream` call
+   * that limits the set to fills that belong to the given blockOrderId.
+   * This works because all fills are prefixed with their blockOrderId and the Delimiter.
+   * @param  {String} Id of of the block order to create a range for
+   * @return {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
+   */
+  static rangeForBlockOrder (blockOrderId) {
+    return {
+      gte: `${blockOrderId}${DELIMITER}${LOWER_BOUND}`,
+      lte: `${blockOrderId}${DELIMITER}${UPPER_BOUND}`
+    }
   }
 }
 

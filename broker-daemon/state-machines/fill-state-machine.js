@@ -106,15 +106,15 @@ const FillStateMachine = StateMachine.factory({
    * This function is effectively a constructor for the state machine
    * So we pass it all the objects we'll need later.
    *
-   * @param  {sublevel}      options.store       Sublevel partition for storing this fill in
-   * @param  {Object}        options.logger
-   * @param  {RelayerClient} options.relayer
-   * @param  {Engine}        options.engine
-   * @param  {Function}      options.onRejection A function to handle rejections of the fill
-   * @return {Object}                            Data to attach to the state machine
+   * @param  {sublevel}            options.store       Sublevel partition for storing this fill in
+   * @param  {Object}              options.logger
+   * @param  {RelayerClient}       options.relayer
+   * @param  {Map<String, Engine>} options.engines     Collection of all avialable engines
+   * @param  {Function}            options.onRejection A function to handle rejections of the fill
+   * @return {Object}                                  Data to attach to the state machine
    */
-  data: function ({ store, logger, relayer, engine, onRejection = function () {} }) {
-    return { store, logger, relayer, engine, onRejection, fill: {} }
+  data: function ({ store, logger, relayer, engines, onRejection = function () {} }) {
+    return { store, logger, relayer, engines, onRejection, fill: {} }
   },
   methods: {
     /**
@@ -124,6 +124,7 @@ const FillStateMachine = StateMachine.factory({
      * on the Relayer fails.
      *
      * @param  {Object} lifecycle           Lifecycle object passed by javascript-state-machine
+     * @param  {String} blockOrderid        Id of the block order that this fill belongs to
      * @param  {String} order.orderId       Relayer-assigned unique ID for the order being filled
      * @param  {String} order.side          Side of the market the order is on (i.e. BID or ASK)
      * @param  {String} order.baseSymbol    Base symbol (e.g. BTC)
@@ -133,14 +134,18 @@ const FillStateMachine = StateMachine.factory({
      * @param  {String} fill.fillAmount     Amount of base currency (in base units) of the order to fill
      * @return {void}
      */
-    onBeforeCreate: async function (lifecycle, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
-      const takerPayTo = `ln:${await this.engine.getPublicKey()}`
-      this.fill = new Fill({ orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerPayTo })
+    onBeforeCreate: async function (lifecycle, blockOrderId, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
+      this.fill = new Fill(blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount })
 
-      const { inboundAmount } = this.fill
+      const { inboundAmount, inboundSymbol } = this.fill
 
-      // TODO: when we support more than one chain, we will need to use `inboundSymbol` to choose the right engine
-      const swapHash = await this.engine.createSwapHash(this.fill.order.orderId, inboundAmount)
+      const inboundEngine = this.engines.get(inboundSymbol)
+      if (!inboundEngine) {
+        throw new Error(`No engine avialable for ${inboundSymbol}`)
+      }
+      this.fill.takerAddress = await inboundEngine.getPaymentChannelNetworkAddress()
+
+      const swapHash = await inboundEngine.createSwapHash(this.fill.order.orderId, inboundAmount)
       this.fill.setSwapHash(swapHash)
 
       const { fillId, feePaymentRequest, depositPaymentRequest } = await this.relayer.takerService.createFill(this.fill.paramsForCreate)
@@ -176,18 +181,23 @@ const FillStateMachine = StateMachine.factory({
      * @return {Promise}          romise that rejects if filling on the relayer fails
      */
     onBeforeFillOrder: async function (lifecycle) {
-      const { feePaymentRequest, depositPaymentRequest, fillId } = this.fill
+      const { feePaymentRequest, depositPaymentRequest, fillId, outboundSymbol } = this.fill
 
       if (!feePaymentRequest) throw new Error('Cant pay invoices because fee invoice does not exist')
       if (!depositPaymentRequest) throw new Error('Cant pay invoices because deposit invoice does not exist')
 
       this.logger.debug(`Attempting to pay fees for fill: ${fillId}`)
 
+      const outboundEngine = this.engines.get(outboundSymbol)
+      if (!outboundEngine) {
+        throw new Error(`No engine avialable for ${outboundSymbol}`)
+      }
+
       const [feeRefundPaymentRequest, depositRefundPaymentRequest] = await Promise.all([
-        this.engine.createRefundInvoice(feePaymentRequest),
-        this.engine.createRefundInvoice(depositPaymentRequest),
-        this.engine.payInvoice(feePaymentRequest),
-        this.engine.payInvoice(depositPaymentRequest)
+        outboundEngine.createRefundInvoice(feePaymentRequest),
+        outboundEngine.createRefundInvoice(depositPaymentRequest),
+        outboundEngine.payInvoice(feePaymentRequest),
+        outboundEngine.payInvoice(depositPaymentRequest)
       ])
 
       this.logger.info('Received response for successful payment')
@@ -223,9 +233,9 @@ const FillStateMachine = StateMachine.factory({
         this.reject(e)
       })
 
-      call.on('data', ({ payTo }) => {
+      call.on('data', ({ makerAddress }) => {
         try {
-          this.fill.setExecuteParams({ payTo })
+          this.fill.setExecuteParams({ makerAddress })
 
           this.logger.info(`Fill ${fillId} is being executed`)
 
@@ -245,9 +255,13 @@ const FillStateMachine = StateMachine.factory({
      * @return {Promise}          Promise that rejects if execution fails
      */
     onBeforeExecute: async function (lifecycle) {
-      const { counterpartyPubKey, swapHash, inbound, outbound } = this.fill.paramsForSwap
+      const { makerAddress, swapHash, symbol, amount } = this.fill.paramsForSwap
+      const engine = this.engines.get(symbol)
+      if (!engine) {
+        throw new Error(`No engine available for ${symbol}`)
+      }
 
-      await this.engine.executeSwap(counterpartyPubKey, swapHash, inbound, outbound)
+      await engine.executeSwap(makerAddress, swapHash, amount)
     },
 
     /**
@@ -272,14 +286,15 @@ const FillStateMachine = StateMachine.factory({
 
 /**
  * Instantiate and create a fill
- * @param  {Object} initParams   Params to pass to the FillStateMachine constructor (also to the `data` function)
- * @param  {Object} orderParams  Params for the order to pass to the create method (also to the `onBeforeCreate` method)
- * @param  {Object} fillParams   Params for the fill to pass to the create method (also to the `onBeforeCreate` method)
+ * This method is a pure pass through to the state machine, so any parameter checking should happen in
+ * `data` and `onBeforeCreate`, respectively.
+ * @param  {Object} initParams      Params to pass to the FillStateMachine constructor (also to the `data` function)
+ * @param  {Object} ...createParams Params to pass to the `create` method (also to the `onBeforeCreate` method)
  * @return {Promise<FillStateMachine>}
  */
-FillStateMachine.create = async function (initParams, orderParams, fillParams) {
+FillStateMachine.create = async function (initParams, ...createParams) {
   const fsm = new FillStateMachine(initParams)
-  await fsm.tryTo('create', orderParams, fillParams)
+  await fsm.tryTo('create', ...createParams)
 
   return fsm
 }

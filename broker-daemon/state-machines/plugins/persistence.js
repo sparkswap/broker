@@ -234,16 +234,17 @@ class StateMachinePersistence extends StateMachinePlugin {
        * Retrieve and instantiate all state machines from a given store
        * @param  {StateMachinePersistence~Store} options[storeName] Store that contains the saved state machines
        * @param  {...Object}                     initParams         Other parameters to initialize the state machines with
+       * @param  {Object}                        readStreamOpts     Options to pass to createReadStream to filter the set
        * @return {Promise<Array<StateMachine>>}
        */
-      getAll: async function (initParams) {
+      getAll: async function (initParams, readStreamOpts = {}) {
         const store = initParams[plugin.storeName]
 
         if (!store || typeof store.createReadStream !== 'function') {
           throw new Error(`A store must be present at ${plugin.storeName} in order to use the persistence plugin`)
         }
 
-        return getRecords(store, (key, value) => this.fromStore(initParams, { key, value }))
+        return getRecords(store, (key, value) => this.fromStore(initParams, { key, value }), readStreamOpts)
       }
 
     }

@@ -1,5 +1,5 @@
 const createLiveStream = require('level-live-stream')
-const { MarketEventOrder } = require('../models')
+const { MarketEventOrder } = require('../../models')
 const neverResolve = new Promise(() => {})
 /**
  * Creates a stream with the exchange that watches for market events

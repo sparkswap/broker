@@ -1,7 +1,7 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
 const { PublicError } = require('grpc-methods')
-const { Big } = require('../utils')
+const { Big } = require('../../utils')
 const commitBalance = rewire(path.resolve(__dirname, 'commit-balance'))
 
 describe('commit-balance', () => {
@@ -10,23 +10,19 @@ describe('commit-balance', () => {
   let relayer
   let logger
   let engine
-  let publicKeyStub
-  let createChannelStub
-  let publicKey
+  let address
   let res
-  let envRevert
-  let getPublicKeyStub
-  let brokerPublicKey
   let createChannelRelayerStub
-  let addressRevert
   let convertBalanceStub
+  let createChannelStub
+  let getAddressStub
+  let relayerAddress
 
   beforeEach(() => {
     EmptyResponse = sinon.stub()
-    publicKey = '12345'
-    brokerPublicKey = 'asdf'
-    publicKeyStub = sinon.stub().resolves({ publicKey })
-    getPublicKeyStub = sinon.stub().resolves(brokerPublicKey)
+    address = 'asdf12345@localhost'
+    relayerAddress = 'qwerty@localhost'
+    getAddressStub = sinon.stub().resolves({ address })
     createChannelRelayerStub = sinon.stub().resolves({})
     convertBalanceStub = sinon.stub().returns(Big('100'))
     createChannelStub = sinon.stub()
@@ -36,21 +32,14 @@ describe('commit-balance', () => {
     }
     engine = {
       createChannel: createChannelStub,
-      getPublicKey: getPublicKeyStub
+      getPaymentChannelNetworkAddress: sinon.stub().resolves(relayerAddress)
     }
     params = {
       balance: 10000000,
       symbol: 'BTC'
     }
-    relayer = { paymentNetworkService: { getPublicKey: publicKeyStub, createChannel: createChannelRelayerStub } }
-    envRevert = commitBalance.__set__('EXCHANGE_LND_HOST', '127.0.0.1')
-    addressRevert = commitBalance.__set__('LND_EXTERNAL_ADDRESS', '127.0.0.2')
+    relayer = { paymentChannelNetworkService: { getAddress: getAddressStub, createChannel: createChannelRelayerStub } }
     commitBalance.__set__('convertBalance', convertBalanceStub)
-  })
-
-  afterEach(() => {
-    envRevert()
-    addressRevert()
   })
 
   describe('committing a balance to the exchange', () => {
@@ -58,17 +47,16 @@ describe('commit-balance', () => {
       res = await commitBalance({ params, relayer, logger, engine }, { EmptyResponse })
     })
 
-    it('receives a public key from the relayer', () => {
-      expect(publicKeyStub).to.have.been.calledWith({})
+    it('receives a payment channel network address from the relayer', () => {
+      expect(getAddressStub).to.have.been.calledWith({symbol: params.symbol})
     })
 
     it('creates a channel through an engine', () => {
-      const lndHost = commitBalance.__get__('EXCHANGE_LND_HOST')
-      expect(createChannelStub).to.have.been.calledWith(lndHost, publicKey, params.balance)
+      expect(engine.createChannel).to.have.been.calledWith(address, params.balance, params.symbol)
     })
 
-    it('retrieves the publicKey from the engine', () => {
-      expect(engine.getPublicKey).to.have.been.called()
+    it('retrieves the address from the engine', () => {
+      expect(engine.getPaymentChannelNetworkAddress).to.have.been.called()
     })
 
     it('converts the balance to the currency of the channel to open on the relayer', () => {
@@ -76,13 +64,11 @@ describe('commit-balance', () => {
     })
 
     it('makes a request to the relayer to create a channel', () => {
-      const lndExternalAddress = commitBalance.__get__('LND_EXTERNAL_ADDRESS')
-      expect(relayer.paymentNetworkService.createChannel).to.have.been.calledWith({
-        publicKey: brokerPublicKey,
-        host: lndExternalAddress,
+      expect(relayer.paymentChannelNetworkService.createChannel).to.have.been.calledWith(sinon.match({
+        address: relayerAddress,
         balance: '100',
         symbol: 'LTC'
-      })
+      }))
     })
 
     it('constructs a EmptyResponse', () => {

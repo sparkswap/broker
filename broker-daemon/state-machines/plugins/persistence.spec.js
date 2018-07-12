@@ -236,6 +236,14 @@ describe('StateMachinePersistence', () => {
       expect(store.createReadStream).to.have.been.calledOnce()
     })
 
+    it('passes readStream options to the store', async () => {
+      const opts = { gte: '0000' }
+      await Machine.getAll({ store }, opts)
+
+      expect(store.createReadStream).to.have.been.calledOnce()
+      expect(store.createReadStream).to.have.been.calledWith(opts)
+    })
+
     it('instantiates an Machine for each record', async () => {
       const machines = await Machine.getAll({ store })
 

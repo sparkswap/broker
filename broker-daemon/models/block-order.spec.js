@@ -294,7 +294,7 @@ describe('BlockOrder', () => {
               put: sinon.stub(),
               createReadStream: sinon.stub()
             }
-          }, { key: 'mykey',
+          }, { key: 'blockid:mykey',
             value: JSON.stringify({
               order: {
                 baseSymbol: 'BTC',
@@ -303,7 +303,7 @@ describe('BlockOrder', () => {
                 baseAmount: '1000',
                 counterAmount: '10000',
                 ownerId: 'fakeID',
-                payTo: 'ln:1231243fasdf',
+                makerAddress: 'bolt:1231243fasdf',
                 feePaymentRequest: 'lnbcasodifjoija',
                 depositPaymentRequest: 'lnbcaosdifjaosdfj'
               },
@@ -376,7 +376,7 @@ describe('BlockOrder', () => {
               put: sinon.stub(),
               createReadStream: sinon.stub()
             }
-          }, { key: 'mykey',
+          }, { key: 'blockid:mykey',
             value: JSON.stringify({
               fill: {
                 order: {

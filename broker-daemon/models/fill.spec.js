@@ -24,54 +24,63 @@ describe('Fill', () => {
 
     it('creates orders from a key and value', () => {
       const params = {
-        order: {
-          orderId: 'fakeID',
-          baseSymbol: 'BTC',
-          counterSymbol: 'LTC',
-          side: 'BID',
-          baseAmount: '10000',
-          counterAmount: '100000'
-        },
-        fillAmount: '9000',
-        swapHash: 'asdfasdf'
+        fill: {
+          order: {
+            orderId: 'fakeID',
+            baseSymbol: 'BTC',
+            counterSymbol: 'LTC',
+            side: 'BID',
+            baseAmount: '10000',
+            counterAmount: '100000'
+          },
+          fillAmount: '9000',
+          swapHash: 'asdfasdf'
+        }
       }
+      const blockOrderId = 'blockid'
       const fillId = 'myid'
+      const key = `${blockOrderId}:${fillId}`
 
-      const fill = Fill.fromStorage(fillId, JSON.stringify(params))
+      const fill = Fill.fromStorage(key, JSON.stringify(params))
 
+      expect(fill).to.have.property('blockOrderId', blockOrderId)
       expect(fill).to.have.property('fillId', fillId)
-      expect(fill).to.have.property('fillAmount', params.fillAmount)
-      expect(fill).to.have.property('swapHash', params.swapHash)
+      expect(fill).to.have.property('fillAmount', params.fill.fillAmount)
+      expect(fill).to.have.property('swapHash', params.fill.swapHash)
       expect(fill).to.have.property('order')
-      expect(fill.order).to.have.property('baseSymbol', params.order.baseSymbol)
-      expect(fill.order).to.have.property('counterSymbol', params.order.counterSymbol)
-      expect(fill.order).to.have.property('side', params.order.side)
-      expect(fill.order).to.have.property('baseAmount', params.order.baseAmount)
-      expect(fill.order).to.have.property('counterAmount', params.order.counterAmount)
+      expect(fill.order).to.have.property('baseSymbol', params.fill.order.baseSymbol)
+      expect(fill.order).to.have.property('counterSymbol', params.fill.order.counterSymbol)
+      expect(fill.order).to.have.property('side', params.fill.order.side)
+      expect(fill.order).to.have.property('baseAmount', params.fill.order.baseAmount)
+      expect(fill.order).to.have.property('counterAmount', params.fill.order.counterAmount)
     })
 
     it('assigns parameters from after fill creation to the fill object', () => {
       const params = {
-        order: {
-          orderId: 'fakeID',
-          baseSymbol: 'BTC',
-          counterSymbol: 'LTC',
-          side: 'BID',
-          baseAmount: '10000',
-          counterAmount: '100000'
-        },
-        fillAmount: '9000',
-        swapHash: 'asdfasdf',
-        feePaymentRequest: 'myrequest',
-        depositPaymentRequest: 'yourrequest'
+        fill: {
+          order: {
+            orderId: 'fakeID',
+            baseSymbol: 'BTC',
+            counterSymbol: 'LTC',
+            side: 'BID',
+            baseAmount: '10000',
+            counterAmount: '100000'
+          },
+          fillAmount: '9000',
+          swapHash: 'asdfasdf',
+          feePaymentRequest: 'myrequest',
+          depositPaymentRequest: 'yourrequest'
+        }
       }
+      const blockOrderId = 'blockid'
       const fillId = 'myid'
+      const key = `${blockOrderId}:${fillId}`
 
-      const fill = Fill.fromStorage(fillId, JSON.stringify(params))
+      const fill = Fill.fromStorage(key, JSON.stringify(params))
 
       expect(fill).to.have.property('fillId', fillId)
-      expect(fill).to.have.property('feePaymentRequest', params.feePaymentRequest)
-      expect(fill).to.have.property('depositPaymentRequest', params.depositPaymentRequest)
+      expect(fill).to.have.property('feePaymentRequest', params.fill.feePaymentRequest)
+      expect(fill).to.have.property('depositPaymentRequest', params.fill.depositPaymentRequest)
     })
   })
 
@@ -93,10 +102,13 @@ describe('Fill', () => {
         fillAmount: '9000',
         swapHash: 'asdfasdf'
       }
+      const blockOrderId = 'blockid'
       const fillId = 'myid'
+      const key = `${blockOrderId}:${fillId}`
 
-      const fill = Fill.fromObject(fillId, params)
+      const fill = Fill.fromObject(key, params)
 
+      expect(fill).to.have.property('blockOrderId', blockOrderId)
       expect(fill).to.have.property('fillId', fillId)
       expect(fill).to.have.property('fillAmount', params.fillAmount)
       expect(fill).to.have.property('swapHash', params.swapHash)
@@ -123,9 +135,11 @@ describe('Fill', () => {
         feePaymentRequest: 'myrequest',
         depositPaymentRequest: 'yourrequest'
       }
+      const blockOrderId = 'blockid'
       const fillId = 'myid'
+      const key = `${blockOrderId}:${fillId}`
 
-      const fill = Fill.fromObject(fillId, params)
+      const fill = Fill.fromObject(key, params)
 
       expect(fill).to.have.property('fillId', fillId)
       expect(fill).to.have.property('feePaymentRequest', params.feePaymentRequest)
@@ -133,8 +147,20 @@ describe('Fill', () => {
     })
   })
 
+  describe('::rangeForBlockOrder', () => {
+    it('creates a range for block orders', () => {
+      const blockOrderId = 'blockid'
+
+      expect(Fill.rangeForBlockOrder(blockOrderId)).to.be.eql({
+        gte: 'blockid:' + '\x00',
+        lte: 'blockid:' + '\uffff'
+      })
+    })
+  })
+
   describe('new', () => {
     it('creates an fill', () => {
+      const blockOrderId = 'blockid'
       const order = {
         orderId: 'fakeId',
         baseSymbol: 'BTC',
@@ -147,8 +173,9 @@ describe('Fill', () => {
         fillAmount: '9000'
       }
 
-      const fill = new Fill(order, params)
+      const fill = new Fill(blockOrderId, order, params)
 
+      expect(fill).to.have.property('blockOrderId', blockOrderId)
       expect(fill).to.have.property('fillAmount', params.fillAmount)
       expect(fill).to.have.property('order')
       expect(fill.order).to.have.property('orderId', order.orderId)
@@ -160,6 +187,7 @@ describe('Fill', () => {
     })
 
     it('throws if using an invalid side', () => {
+      const blockOrderId = 'blockid'
       const order = {
         orderId: '1asdf',
         baseSymbol: 'BTC',
@@ -174,7 +202,7 @@ describe('Fill', () => {
       }
 
       expect(() => {
-        new Fill(order, params) // eslint-disable-line
+        new Fill(blockOrderId, order, params) // eslint-disable-line
       }).to.throw()
     })
   })
@@ -183,8 +211,10 @@ describe('Fill', () => {
     let params
     let fill
     let order
+    let blockOrderId
 
     beforeEach(() => {
+      blockOrderId = 'blockid'
       order = {
         orderId: 'fakeId',
         baseSymbol: 'BTC',
@@ -195,10 +225,10 @@ describe('Fill', () => {
       }
       params = {
         fillAmount: '9000',
-        takerPayTo: 'ln:asdfasdf'
+        takerAddress: 'bolt:asdfasdf'
       }
 
-      fill = new Fill(order, params)
+      fill = new Fill(blockOrderId, order, params)
     })
 
     describe('inbound/outbound getters', () => {
@@ -234,7 +264,7 @@ describe('Fill', () => {
         const fakeId = 'fakeId'
         fill.fillId = fakeId
 
-        expect(fill).to.have.property('key', fakeId)
+        expect(fill).to.have.property('key', `${blockOrderId}:${fakeId}`)
       })
     })
 
@@ -250,7 +280,7 @@ describe('Fill', () => {
           feePaymentRequest: undefined,
           depositPaymentRequest: undefined,
           swapHash: undefined,
-          payTo: undefined
+          makerAddress: undefined
         }, params, { order })
         expect(fill).to.have.property('valueObject')
         expect(fill.valueObject).to.be.eql(valueObject)
@@ -280,7 +310,7 @@ describe('Fill', () => {
           orderId: order.orderId,
           swapHash: fakeSwapHash,
           fillAmount: params.fillAmount,
-          takerPayTo: 'ln:asdfasdf'
+          takerAddress: 'bolt:asdfasdf'
         })
       })
     })
@@ -290,21 +320,15 @@ describe('Fill', () => {
         const fakeSwapHash = 'hello'
         fill.setSwapHash(fakeSwapHash)
 
-        const fakePayTo = 'ln:asd0f9uasf09u'
-        fill.setExecuteParams({ payTo: fakePayTo })
+        const fakeMakerAddress = 'bolt:asd0f9uasf09u'
+        fill.setExecuteParams({ makerAddress: fakeMakerAddress })
 
         expect(fill).to.have.property('paramsForSwap')
         expect(fill.paramsForSwap).to.be.eql({
-          counterpartyPubKey: 'asd0f9uasf09u',
+          makerAddress: 'bolt:asd0f9uasf09u',
           swapHash: fakeSwapHash,
-          inbound: {
-            symbol: fill.inboundSymbol,
-            amount: fill.inboundAmount
-          },
-          outbound: {
-            symbol: fill.outboundSymbol,
-            amount: fill.outboundAmount
-          }
+          symbol: fill.outboundSymbol,
+          amount: fill.outboundAmount
         })
       })
     })
@@ -334,19 +358,19 @@ describe('Fill', () => {
 
     describe('#setExecuteParams', () => {
       let executeParams = {
-        payTo: 'ln:asoifjaosfij'
+        makerAddress: 'bolt:asoifjaosfij'
       }
 
       it('updates the object with the params from creating on the relayer', () => {
         fill.setExecuteParams(executeParams)
 
-        expect(fill).to.have.property('payTo', executeParams.payTo)
+        expect(fill).to.have.property('makerAddress', executeParams.makerAddress)
       })
 
       it('includes the updated params with the saved value', () => {
         fill.setExecuteParams(executeParams)
 
-        expect(fill.value).to.include(`"payTo":"${executeParams.payTo}"`)
+        expect(fill.value).to.include(`"makerAddress":"${executeParams.makerAddress}"`)
       })
     })
   })

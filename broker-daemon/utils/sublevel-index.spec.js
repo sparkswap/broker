@@ -84,6 +84,94 @@ describe('Index', () => {
       })
     })
 
+    describe('#range', () => {
+      beforeEach(async () => {
+        await index.ensureIndex()
+      })
+
+      const tests = {
+        'gt range': {
+          in: {
+            gt: '1000'
+          },
+          out: {
+            gt: '1000:' + '\x00'
+          }
+        },
+        'gte range': {
+          in: {
+            gte: 'abcde'
+          },
+          out: {
+            gte: 'abcde:' + '\x00'
+          }
+        },
+        'lt range': {
+          in: {
+            lt: '1000'
+          },
+          out: {
+            lt: '1000:' + '\uffff'
+          }
+        },
+        'lte range': {
+          in: {
+            lte: '1000'
+          },
+          out: {
+            lte: '1000:' + '\uffff'
+          }
+        },
+        'gt lt range': {
+          in: {
+            gt: '1000',
+            lt: '10000'
+          },
+          out: {
+            gt: '1000:' + '\x00',
+            lt: '10000:' + '\uffff'
+          }
+        },
+        'gt lte range': {
+          in: {
+            gt: '1000',
+            lte: '10000'
+          },
+          out: {
+            gt: '1000:' + '\x00',
+            lte: '10000:' + '\uffff'
+          }
+        },
+        'gte lt range': {
+          in: {
+            gte: '1000',
+            lt: '10000'
+          },
+          out: {
+            gte: '1000:' + '\x00',
+            lt: '10000:' + '\uffff'
+          }
+        },
+        'gte lte range': {
+          in: {
+            gte: '1000',
+            lte: '10000'
+          },
+          out: {
+            gte: '1000:' + '\x00',
+            lte: '10000:' + '\uffff'
+          }
+        }
+      }
+
+      for (var testName in tests) {
+        let test = tests[testName]
+        it(`creates a ${testName}`, () => {
+          expect(index.range(test.in)).to.be.eql(test.out)
+        })
+      }
+    })
+
     describe('#createReadStream', () => {
       beforeEach(async () => {
         await index.ensureIndex()
@@ -150,6 +238,13 @@ describe('Index', () => {
 
         expect(index._extractBaseKey(`${indexValue}:${baseKey}`)).to.be.eql(baseKey)
       })
+
+      it('extracts base keys that contain the delimiter', () => {
+        const baseKey = 'hello:world'
+        const indexValue = 'world'
+
+        expect(index._extractBaseKey(`${indexValue}:${baseKey}`)).to.be.eql(baseKey)
+      })
     })
 
     describe('#_createIndexKey', () => {
@@ -164,6 +259,28 @@ describe('Index', () => {
 
         expect(getValue).to.have.been.calledOnce()
         expect(getValue).to.have.been.calledWith(baseKey, baseValue)
+        expect(indexKey).to.be.eql(`${indexValue}:${baseKey}`)
+      })
+
+      it('throws if the index value contains the delimiter', () => {
+        const baseKey = 'hello'
+        const baseValue = '{"there": "world"}'
+        const indexValue = 'world:there'
+
+        getValue.returns(indexValue)
+
+        expect(() => index._createIndexKey(baseKey, baseValue)).to.throw()
+      })
+
+      it('constructs index keys in which the base key contains the delimiter', () => {
+        const baseKey = 'hello:world'
+        const baseValue = '{"there": "world"}'
+        const indexValue = 'world'
+
+        getValue.returns(indexValue)
+
+        const indexKey = index._createIndexKey(baseKey, baseValue)
+
         expect(indexKey).to.be.eql(`${indexValue}:${baseKey}`)
       })
     })
@@ -192,10 +309,11 @@ describe('Index', () => {
     describe('#_isMarkedForDeletion', () => {
       it('determines if the key is marked for deletion', () => {
         const baseKey = 'hello'
+        const indexKey = `world:${baseKey}`
 
         index._deleted[baseKey] = true
 
-        expect(index._isMarkedForDeletion(baseKey)).to.be.equal(true)
+        expect(index._isMarkedForDeletion(indexKey)).to.be.equal(true)
       })
     })
 

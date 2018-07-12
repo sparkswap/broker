@@ -13,7 +13,7 @@ const commands = require('../commands')
 
 const clientVersion = process.version.substring(1)
 
-if (compareVersions(clientVersion, currentVersion) !== 0) {
+if (compareVersions(clientVersion, currentVersion) < 0) {
   console.error(`Wrong node version, required version: ${currentVersion}, your version: ${clientVersion}`.red)
   process.exit(1)
 }
