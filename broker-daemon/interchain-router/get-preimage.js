@@ -42,25 +42,6 @@ async function getRoutingEntry (ordersByHash, swapHash) {
 }
 
 /**
- * Validate that the amount paid in to satisfy a swap actually satisfies the conditions
- * @param  {String} swapHash       Hash of the swap to validate
- * @param  {String} expectedSymbol Symbol we are expecting to be paid
- * @param  {String} actualSymbol   Symbol that the node paid us in
- * @param  {String} expectedAmount Int64 string Amount that we expect to be paid (in integer units)
- * @param  {String} actualAmount   Int64 string Amount that the node paid (in integer units)
- * @return {void}
- */
-function assertSufficientCurrency (swapHash, expectedSymbol, actualSymbol, expectedAmount, actualAmount) {
-  if (expectedSymbol !== actualSymbol) {
-    throw new Error(`Wrong currency paid in for ${swapHash}. Expected ${expectedSymbol}, found ${actualSymbol}`)
-  }
-
-  if (Big(expectedAmount).gt(actualAmount)) {
-    throw new Error(`Insufficient currency paid in for ${swapHash}. Expected ${expectedAmount}, found ${actualAmount}`)
-  }
-}
-
-/**
  * Calculate the time lock to extend along the second leg of the swap, and ensure
  * that there is sufficient time for our segment.
  * @param  {Engine} inboundEngine engine of the inbound node
@@ -106,12 +87,19 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
     timeLock,
     bestHeight
   } = params
+  const swapHash = paymentHash
 
-  const order = await getRoutingEntry(ordersByHash, paymentHash)
+  const order = await getRoutingEntry(ordersByHash, swapHash)
 
   const { inboundSymbol, inboundAmount, outboundSymbol, outboundAmount, takerAddress } = order
-
-  assertSufficientCurrency(paymentHash, inboundSymbol, symbol, inboundAmount, amount)
+  const [ expectedSymbol, actualSymbol, expectedAmount, actualAmount ] = [ inboundSymbol, symbol, inboundAmount, amount ]
+  
+  if (expectedSymbol !== actualSymbol) {
+    throw new Error(`Wrong currency paid in for ${swapHash}. Expected ${expectedSymbol}, found ${actualSymbol}`)
+  }
+  if (Big(expectedAmount).gt(actualAmount)) {
+    throw new Error(`Insufficient currency paid in for ${swapHash}. Expected ${expectedAmount}, found ${actualAmount}`)
+  }
 
   const inboundEngine = engines.get(inboundSymbol)
   if (!inboundEngine) {
@@ -125,9 +113,9 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
 
   const timeLockDeltaToExtend = calculateTimeLock(inboundEngine, timeLock, bestHeight)
 
-  logger.debug(`Sending payment to ${takerAddress} to translate swap ${paymentHash}`)
-  const paymentPreimage = await outboundEngine.translateSwap(takerAddress, paymentHash, outboundAmount, timeLockDeltaToExtend)
-  logger.debug(`Completed payment to ${takerAddress} for swap ${paymentHash}`)
+  logger.debug(`Sending payment to ${takerAddress} to translate swap ${swapHash}`)
+  const paymentPreimage = await outboundEngine.translateSwap(takerAddress, swapHash, outboundAmount, timeLockDeltaToExtend)
+  logger.debug(`Completed payment to ${takerAddress} for swap ${swapHash}`)
 
   // Note: we do NOT save the order here. The Interchain Router should treat orders as Read-only routing entries
   // Any state should be maintained by the engines themselves and the OrderStateMachine
