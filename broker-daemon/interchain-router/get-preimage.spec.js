@@ -27,12 +27,7 @@ describe('getPreimage', () => {
     preimage = 'as9fja9s8fh98qahwef9phs=='
 
     getRecords = sinon.stub().resolves([ order ])
-    fromStorageBound = 'fakebind'
-    Order = {
-      fromStorage: {
-        bind: sinon.stub().returns(fromStorageBound)
-      }
-    }
+    fromStorageBound = getPreimage.__get__('fromStorage')
 
     getPreimage.__set__('getRecords', getRecords)
     getPreimage.__set__('Order', Order)
