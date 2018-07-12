@@ -1,3 +1,5 @@
+
+// This is temporarily hardcoded until we have enough data to use our own interal exchange rates
 const MARKET_CONVERSION = {
   'BTC/LTC': 79.612
 }

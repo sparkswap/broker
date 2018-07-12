@@ -1,5 +1,6 @@
 const { PublicError } = require('grpc-methods')
 const { Big, convertBalance } = require('../../utils')
+const { currencies } = require('../../config')
 /**
  * @constant
  * @type {Long}
@@ -21,15 +22,10 @@ const MINIMUM_FUNDING_AMOUNT = 400000
  */
 const MAX_CHANNEL_BALANCE = 16777215
 
-/**
- * @constant
- * @type {Array<key, string>}
- * @default
- */
-const SUPPORTED_SYMBOLS = Object.freeze({
-  BTC: 'BTC',
-  LTC: 'LTC'
-})
+const SUPPORTED_SYMBOLS = currencies.reduce((obj, currency) => {
+  obj[currency.symbol] = currency.symbol
+  return obj
+}, {})
 
 /**
  * Grabs public lightning network information from relayer and opens a channel
