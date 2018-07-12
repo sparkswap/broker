@@ -190,22 +190,26 @@ module.exports = (program) => {
 
       // TODO: Figure out a way to handle subArguments that could be dynamic
       // for each command
-      const [symbol] = subArguments
+      let [symbol = ''] = subArguments
 
       switch (command) {
         case SUPPORTED_COMMANDS.BALANCE:
           return balance(args, opts, logger)
         case SUPPORTED_COMMANDS.NEW_DEPOSIT_ADDRESS:
+          symbol = symbol.toUpperCase()
+
           if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
-            throw new Error(`Provided symbol is not a valid currency for new deposit address creation: ${symbol}`)
+            throw new Error(`Provided symbol is not a valid currency for new deposit address creation`)
           }
 
           args.symbol = symbol
 
           return newDepositAddress(args, opts, logger)
         case SUPPORTED_COMMANDS.COMMIT_BALANCE:
+          symbol = symbol.toUpperCase()
+
           if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
-            throw new Error(`Provided symbol is not a valid currency for the exchange: ${symbol}`)
+            throw new Error(`Provided symbol is not a valid currency for the exchange`)
           }
 
           args.symbol = symbol
