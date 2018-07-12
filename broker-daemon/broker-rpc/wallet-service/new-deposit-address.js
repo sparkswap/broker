@@ -8,7 +8,7 @@ const { PublicError } = require('grpc-methods')
  * @param {Object<String>} request.params
  * @param {Array<Engine>} request.engines
  * @param {Object} responses
- * @param {grpc#NewDepositAddressResponse} responses.NewDepositAddressResponse
+ * @param {Function} responses.NewDepositAddressResponse constructor
  * @return {NewDepositAddressResponse}
  */
 async function newDepositAddress ({ logger, params, engines }, { NewDepositAddressResponse }) {
