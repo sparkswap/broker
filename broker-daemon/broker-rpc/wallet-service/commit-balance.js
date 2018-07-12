@@ -1,5 +1,5 @@
 const { PublicError } = require('grpc-methods')
-const { Big, convertBalance } = require('../../utils')
+const { convertBalance } = require('../../utils')
 const { currencies } = require('../../config')
 /**
  * @constant
@@ -54,7 +54,6 @@ async function commitBalance ({ params, relayer, logger, engine }, { EmptyRespon
     logger.error(`Balance from the client exceeds maximum balance allowed (${MAX_CHANNEL_BALANCE}).`, { balance })
     throw new PublicError(`Maxium balance of ${MAX_CHANNEL_BALANCE} exceeded for committing to the relayer. Please try again.`)
   }
-
   if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
     throw new PublicError(`Unsupported symbol for committing a balance: ${symbol}`)
   }
@@ -69,12 +68,12 @@ async function commitBalance ({ params, relayer, logger, engine }, { EmptyRespon
   // This is temporary until we have other markets
   if (symbol === SUPPORTED_SYMBOLS.LTC) {
     symbolForRelayer = SUPPORTED_SYMBOLS.BTC
-    convertedBalance = convertBalance(Big(balance), SUPPORTED_SYMBOLS.LTC, SUPPORTED_SYMBOLS.BTC)
+    convertedBalance = convertBalance(balance, SUPPORTED_SYMBOLS.LTC, SUPPORTED_SYMBOLS.BTC)
   } else {
     symbolForRelayer = SUPPORTED_SYMBOLS.LTC
-    convertedBalance = convertBalance(Big(balance), SUPPORTED_SYMBOLS.BTC, SUPPORTED_SYMBOLS.LTC)
+    convertedBalance = convertBalance(balance, SUPPORTED_SYMBOLS.BTC, SUPPORTED_SYMBOLS.LTC)
   }
-  await relayer.paymentChannelNetworkService.createChannel({address: paymentChannelNetworkAddress, balance: convertedBalance.toString(), symbol: symbolForRelayer})
+  await relayer.paymentChannelNetworkService.createChannel({address: paymentChannelNetworkAddress, balance: convertedBalance, symbol: symbolForRelayer})
 
   return new EmptyResponse({})
 }

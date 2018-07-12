@@ -1,7 +1,6 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
 const { PublicError } = require('grpc-methods')
-const { Big } = require('../../utils')
 const commitBalance = rewire(path.resolve(__dirname, 'commit-balance'))
 
 describe('commit-balance', () => {
@@ -24,7 +23,7 @@ describe('commit-balance', () => {
     relayerAddress = 'qwerty@localhost'
     getAddressStub = sinon.stub().resolves({ address })
     createChannelRelayerStub = sinon.stub().resolves({})
-    convertBalanceStub = sinon.stub().returns(Big('100'))
+    convertBalanceStub = sinon.stub().returns('100')
     createChannelStub = sinon.stub()
     logger = {
       info: sinon.stub(),
@@ -35,7 +34,7 @@ describe('commit-balance', () => {
       getPaymentChannelNetworkAddress: sinon.stub().resolves(relayerAddress)
     }
     params = {
-      balance: 10000000,
+      balance: '10000000',
       symbol: 'BTC'
     }
     relayer = { paymentChannelNetworkService: { getAddress: getAddressStub, createChannel: createChannelRelayerStub } }
@@ -60,7 +59,7 @@ describe('commit-balance', () => {
     })
 
     it('converts the balance to the currency of the channel to open on the relayer', () => {
-      expect(convertBalanceStub).to.have.been.calledWith(Big(10000000), 'BTC', 'LTC')
+      expect(convertBalanceStub).to.have.been.calledWith('10000000', 'BTC', 'LTC')
     })
 
     it('makes a request to the relayer to create a channel', () => {
@@ -82,7 +81,7 @@ describe('commit-balance', () => {
 
   describe('balance under minimum amount', () => {
     it('throws an error for an incorrect balance', () => {
-      params.balance = 100
+      params.balance = '100'
       return expect(
         commitBalance({ params, relayer, logger, engine }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError)
