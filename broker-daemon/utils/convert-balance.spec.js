@@ -5,23 +5,28 @@ const convertBalance = require('./convert-balance')
 
 describe('convertBalance', () => {
   let balance
-  let currency
-  let currencyToConvertTo
+  let firstCurrency
+  let secondCurrency
 
   beforeEach(() => {
     balance = Big(1)
-    currency = 'BTC'
-    currencyToConvertTo = 'LTC'
+    firstCurrency = 'BTC'
+    secondCurrency = 'LTC'
   })
 
-  it('returns the converted balance', () => {
-    const res = convertBalance(balance, currency, currencyToConvertTo)
+  it('returns the converted balance if the original balance is in the base currency', () => {
+    const res = convertBalance(balance, firstCurrency, secondCurrency)
     expect(res).to.eql(Big(79.612))
   })
 
+  it('returns the converted balance if the original balance is in the counter currency', () => {
+    const res = convertBalance(balance, secondCurrency, firstCurrency)
+    expect(res).to.eql(Big(0.012560920464251621))
+  })
+
   it('throws an error if the market conversion is not defined', () => {
-    currency = 'XYZ'
+    firstCurrency = 'XYZ'
     const error = `Market XYZ/LTC is not currently supported`
-    expect(() => convertBalance(balance, currency, currencyToConvertTo)).to.throw(error)
+    expect(() => convertBalance(balance, firstCurrency, secondCurrency)).to.throw(error)
   })
 })

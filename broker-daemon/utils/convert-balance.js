@@ -1,6 +1,5 @@
 const MARKET_CONVERSION = {
-  'BTC/LTC': 79.612,
-  'LTC/BTC': 0.01257
+  'BTC/LTC': 79.612
 }
 
 /**
@@ -12,10 +11,13 @@ const MARKET_CONVERSION = {
  */
 function convertBalance (balance, currency, currencyToConvertTo) {
   const market = `${currency}/${currencyToConvertTo}`
-  if (!MARKET_CONVERSION.hasOwnProperty(market)) {
-    throw Error(`Market ${market} is not currently supported`)
+  if (MARKET_CONVERSION.hasOwnProperty(`${currency}/${currencyToConvertTo}`)) {
+    return balance.times(MARKET_CONVERSION[`${currency}/${currencyToConvertTo}`])
+  } else if (MARKET_CONVERSION.hasOwnProperty(`${currencyToConvertTo}/${currency}`)) {
+    return balance.times(1 / MARKET_CONVERSION[`${currencyToConvertTo}/${currency}`])
   }
-  return balance.times(MARKET_CONVERSION[market])
+
+  throw Error(`Market ${market} is not currently supported`)
 }
 
 module.exports = convertBalance
