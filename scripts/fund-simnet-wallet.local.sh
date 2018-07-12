@@ -36,7 +36,7 @@ echo "Grabbing deposit address from broker"
 
 CONFIG=$(docker-compose exec -T kbd bash -c './broker-cli/bin/kcli config')
 
-WALLET_ADDRESS=$(docker-compose exec -T kbd bash -c './broker-cli/bin/kcli wallet new-deposit-address')
+WALLET_ADDRESS=$(docker-compose exec -T kbd bash -c "./broker-cli/bin/kcli wallet new-deposit-address $SYMBOL")
 
 # Restart the btcd container w/ the mining-address for our account
 echo "Running funding script on the relayer with wallet address: $WALLET_ADDRESS"
