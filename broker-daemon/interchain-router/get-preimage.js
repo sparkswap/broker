@@ -3,10 +3,13 @@ const { Order } = require('../models')
 
 /**
  * Default amount of time to deduct from the incoming HTLC to ensure we have enough timelock
+ * Amount of time, in seconds, to deduct from the incoming HTLC to ensure we have enough timelock
+ * for forwarding the swap.
+ * LND's default is 24 hours (144 Bitcoin blocks).
  * @type {Number}
  * @constant
  */
-const DEFAULT_TIMELOCK_DELTA = 144
+const DEFAULT_FWD_DELTA = 86400
 
 /**
  * Gets a preimage from another chain by making a payment if the
@@ -58,14 +61,22 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
     throw new Error(`Insufficient currency paid in for ${paymentHash}. Expected ${inboundAmount}, found ${amount}`)
   }
 
-  if (Big(bestHeight).gte(timeLock)) {
-    throw new Error(`Current block height (${bestHeight}) is too high for the extended timelock (${timeLock})`)
+  const timeLockDelta = Big(timeLock).minus(bestHeight)
+
+  if (timeLockDelta.lte(0)) {
+    throw new Error(`Current block height (${bestHeight}) is higher than the extended timelock (${timeLock})`)
   }
 
-  const timeLockDeltaToExtend = Big(timeLock).minus(bestHeight).minus(DEFAULT_TIMELOCK_DELTA)
+  const inboundEngine = engines.get(inboundSymbol)
+  if (!inboundEngine) {
+    throw new Error(`No engine available for ${inboundSymbol}`)
+  }
+
+  const timeLockDeltaInSeconds = timeLockDelta.times(inboundEngine.currencyConfig.secondsPerBlock)
+  const timeLockDeltaToExtend = timeLockDeltaInSeconds.minus(DEFAULT_FWD_DELTA)
 
   if (timeLockDeltaToExtend.lte(0)) {
-    throw new Error(`Not enough time lock extended for translating swap. Expected at least ${DEFAULT_TIMELOCK_DELTA}, got ${timeLockDeltaToExtend.toString()}`)
+    throw new Error(`Not enough time lock extended for translating swap. Expected at least ${DEFAULT_FWD_DELTA}, got ${timeLockDeltaInSeconds.toString()}`)
   }
 
   // TODO: check timelock against a grace period
@@ -73,13 +84,13 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
   // TODO: handle client cancellations and errors
   // TODO: ensure no other clients are requesting this right now (lock the order?)
 
-  const engine = engines.get(outboundSymbol)
-  if (!engine) {
+  const outboundEngine = engines.get(outboundSymbol)
+  if (!outboundEngine) {
     throw new Error(`No engine available for ${outboundSymbol}`)
   }
 
   logger.debug(`Sending payment to ${takerAddress} to translate swap ${paymentHash}`)
-  const paymentPreimage = await engine.translateSwap(takerAddress, paymentHash, outboundAmount, timeLockDeltaToExtend.toString())
+  const paymentPreimage = await outboundEngine.translateSwap(takerAddress, paymentHash, outboundAmount, timeLockDeltaToExtend.toString())
   logger.debug(`Completed payment to ${takerAddress} for swap ${paymentHash}`)
 
   // Note: we do NOT save the order here. The Interchain Router should treat orders as Read-only routing entries

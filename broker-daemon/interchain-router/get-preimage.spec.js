@@ -44,13 +44,18 @@ describe('getPreimage', () => {
       paymentHash: 'as09fdjasdf09ja0dsf==',
       amount: '1000000',
       symbol: 'BTC',
-      timeLock: '1000000',
-      bestHeight: '900000'
+      timeLock: '10000',
+      bestHeight: '9000'
     }
     send = sinon.stub()
     engines = new Map()
     engines.set('LTC', {
       translateSwap: sinon.stub().resolves(preimage)
+    })
+    engines.set('BTC', {
+      currencyConfig: {
+        secondsPerBlock: 600
+      }
     })
   })
 
@@ -95,13 +100,13 @@ describe('getPreimage', () => {
   })
 
   it('throws if the current block height is too high for the time lock', () => {
-    params.bestHeight = '1000000'
+    params.bestHeight = '10000'
 
-    return expect(getPreimage({ params, send, ordersByHash, engines })).to.eventually.be.rejectedWith('too high')
+    return expect(getPreimage({ params, send, ordersByHash, engines })).to.eventually.be.rejectedWith('is higher than')
   })
 
   it('throws if the current block height is not at least 144 less than the time lock', () => {
-    params.bestHeight = '999990'
+    params.bestHeight = '9990'
 
     return expect(getPreimage({ params, send, ordersByHash, engines })).to.eventually.be.rejectedWith('Not enough time')
   })
@@ -116,7 +121,7 @@ describe('getPreimage', () => {
     await getPreimage(({ params, send, ordersByHash, engines }))
 
     expect(engines.get('LTC').translateSwap).to.have.been.calledOnce()
-    expect(engines.get('LTC').translateSwap).to.have.been.calledWith(order.takerAddress, params.paymentHash, order.outboundAmount, '99856')
+    expect(engines.get('LTC').translateSwap).to.have.been.calledWith(order.takerAddress, params.paymentHash, order.outboundAmount, '513600')
   })
 
   it('returns the preimage to the requesting client', async () => {
