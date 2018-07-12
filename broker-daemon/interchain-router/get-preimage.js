@@ -3,16 +3,6 @@ const { Order } = require('../models')
 const fromStorage = Order.fromStorage.bind(Order)
 
 /**
- * Amount of time, in seconds, to deduct from the incoming HTLC to ensure we have enough timelock
- * for forwarding the swap. This is roughly equivalent to our forwarding policy for the first channel
- * on the new chain.
- * LND's default is 24 hours (144 Bitcoin blocks).
- * @type {Number}
- * @constant
- */
-const DEFAULT_FWD_DELTA = 86400
-
-/**
  * Get a routing entry (an order) for a specified swap hash
  * @param  {SublevelIndex} ordersByHash Orders for which the broker is the maker, indexed by their swap hash
  * @param  {String}        swapHash     swap hash of the order to retrieve
@@ -42,28 +32,20 @@ async function getRoutingEntry (ordersByHash, swapHash) {
 }
 
 /**
- * Calculate the time lock to extend along the second leg of the swap, and ensure
- * that there is sufficient time for our segment.
+ * Convert the time lock of the HTLC to a delta time lock expressed in seconds
  * @param  {Engine} inboundEngine engine of the inbound node
  * @param  {String} timeLock      time lock extended to the inbound node in blocks
  * @param  {String} bestHeight    current height of the inbound node's blockchain
- * @return {String} Time, in seconds, to extend along the entire second leg of the swap
+ * @return {String} Time, in seconds, of the extended time lock
  */
-function calculateTimeLock (inboundEngine, timeLock, bestHeight) {
+function timeLockDeltaInSeconds (inboundEngine, timeLock, bestHeight) {
   const timeLockDelta = Big(timeLock).minus(bestHeight)
 
   if (timeLockDelta.lte(0)) {
     throw new Error(`Current block height (${bestHeight}) is higher than the extended timelock (${timeLock})`)
   }
 
-  const timeLockDeltaInSeconds = timeLockDelta.times(inboundEngine.currencyConfig.secondsPerBlock)
-  const timeLockDeltaToExtend = timeLockDeltaInSeconds.minus(DEFAULT_FWD_DELTA)
-
-  if (timeLockDeltaToExtend.lte(0)) {
-    throw new Error(`Not enough time lock extended for translating swap. Expected at least ${DEFAULT_FWD_DELTA}, got ${timeLockDeltaInSeconds.toString()}`)
-  }
-
-  return timeLockDeltaToExtend.toString()
+  return timeLockDelta.times(inboundEngine.currencyConfig.secondsPerBlock).toString()
 }
 
 /**
@@ -93,7 +75,7 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
 
   const { inboundSymbol, inboundAmount, outboundSymbol, outboundAmount, takerAddress } = order
   const [ expectedSymbol, actualSymbol, expectedAmount, actualAmount ] = [ inboundSymbol, symbol, inboundAmount, amount ]
-  
+
   if (expectedSymbol !== actualSymbol) {
     throw new Error(`Wrong currency paid in for ${swapHash}. Expected ${expectedSymbol}, found ${actualSymbol}`)
   }
@@ -111,10 +93,10 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
     throw new Error(`No engine available for ${outboundSymbol}`)
   }
 
-  const timeLockDeltaToExtend = calculateTimeLock(inboundEngine, timeLock, bestHeight)
+  const timeLockDelta = timeLockDeltaInSeconds(inboundEngine, timeLock, bestHeight)
 
   logger.debug(`Sending payment to ${takerAddress} to translate swap ${swapHash}`)
-  const paymentPreimage = await outboundEngine.translateSwap(takerAddress, swapHash, outboundAmount, timeLockDeltaToExtend)
+  const paymentPreimage = await outboundEngine.translateSwap(takerAddress, swapHash, outboundAmount, timeLockDelta)
   logger.debug(`Completed payment to ${takerAddress} for swap ${swapHash}`)
 
   // Note: we do NOT save the order here. The Interchain Router should treat orders as Read-only routing entries

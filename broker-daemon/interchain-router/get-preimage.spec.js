@@ -100,12 +100,6 @@ describe('getPreimage', () => {
     return expect(getPreimage({ params, send, ordersByHash, engines })).to.eventually.be.rejectedWith('is higher than')
   })
 
-  it('throws if the current block height is not at least 144 less than the time lock', () => {
-    params.bestHeight = '9990'
-
-    return expect(getPreimage({ params, send, ordersByHash, engines })).to.eventually.be.rejectedWith('Not enough time')
-  })
-
   it('throws if the outbound engine is unavailable', () => {
     order.outboundSymbol = 'XYZ'
 
@@ -116,7 +110,7 @@ describe('getPreimage', () => {
     await getPreimage(({ params, send, ordersByHash, engines }))
 
     expect(engines.get('LTC').translateSwap).to.have.been.calledOnce()
-    expect(engines.get('LTC').translateSwap).to.have.been.calledWith(order.takerAddress, params.paymentHash, order.outboundAmount, '513600')
+    expect(engines.get('LTC').translateSwap).to.have.been.calledWith(order.takerAddress, params.paymentHash, order.outboundAmount, '600000')
   })
 
   it('returns the preimage to the requesting client', async () => {
