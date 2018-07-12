@@ -199,6 +199,11 @@ enum Symbol {
     LTC = 1;
 }
 
+message NewDepositAddressRequest {
+
+    Symbol symbol = 0;
+}
+
 message NewDepositAddressResponse {
 
     string address = 0;
@@ -224,7 +229,7 @@ message CommitBalanceRequest {
     Symbol symbol = 1;
 }
 service WalletService {
-    rpc NewDepositAddress (google.protobuf.Empty) returns (NewDepositAddressResponse);
+    rpc NewDepositAddress (NewDepositAddressRequest) returns (NewDepositAddressResponse);
     rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse);
     rpc CommitBalance (CommitBalanceRequest) returns (google.protobuf.Empty);
 }

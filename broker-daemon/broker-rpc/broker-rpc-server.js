@@ -27,9 +27,10 @@ class BrokerRPCServer {
    * @param  {Map<Orderbook>}   opts.orderbooks
    * @return {BrokerRPCServer}
    */
-  constructor ({ logger, engine, relayer, blockOrderWorker, orderbooks } = {}) {
+  constructor ({ logger, engines, engine, relayer, blockOrderWorker, orderbooks } = {}) {
     this.logger = logger
     this.engine = engine
+    this.engines = engines
     this.relayer = relayer
     this.blockOrderWorker = blockOrderWorker
     this.orderbooks = orderbooks
@@ -47,7 +48,7 @@ class BrokerRPCServer {
     this.orderBookService = new OrderBookService(this.protoPath, { logger, relayer, orderbooks })
     this.server.addService(this.orderBookService.definition, this.orderBookService.implementation)
 
-    this.walletService = new WalletService(this.protoPath, { logger, engine, relayer })
+    this.walletService = new WalletService(this.protoPath, { logger, engines, engine, relayer })
     this.server.addService(this.walletService.definition, this.walletService.implementation)
   }
 

@@ -102,11 +102,12 @@ async function balance (args, opts, logger) {
  * @return {Void}
  */
 async function newDepositAddress (args, opts, logger) {
+  const { symbol } = args
   const { rpcAddress = null } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { address } = await client.walletService.newDepositAddress({})
+    const { address } = await client.walletService.newDepositAddress({ symbol })
 
     logger.info(address)
   } catch (e) {
@@ -187,14 +188,22 @@ module.exports = (program) => {
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
 
+      // TODO: Figure out a way to handle subArguments that could be dynamic
+      // for each command
+      const [symbol] = subArguments
+
       switch (command) {
         case SUPPORTED_COMMANDS.BALANCE:
           return balance(args, opts, logger)
         case SUPPORTED_COMMANDS.NEW_DEPOSIT_ADDRESS:
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
+            throw new Error(`Provided symbol is not a valid currency for new deposit address creation: ${symbol}`)
+          }
+
+          args.symbol = symbol
+
           return newDepositAddress(args, opts, logger)
         case SUPPORTED_COMMANDS.COMMIT_BALANCE:
-          const [symbol] = subArguments
-
           if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
             throw new Error(`Provided symbol is not a valid currency for the exchange: ${symbol}`)
           }
@@ -206,6 +215,7 @@ module.exports = (program) => {
     })
     .command('wallet balance', 'Current daemon wallet balance')
     .command('wallet new-deposit-address', 'Generates a new wallet address for a daemon instance')
+    .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`)
     .command('wallet commit-balance')
     .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`)
 }
