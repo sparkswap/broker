@@ -13,6 +13,7 @@ describe('ExternalPreimageService', () => {
 
   let protoPath
   let logger
+  let engines
 
   let server
 
@@ -27,6 +28,7 @@ describe('ExternalPreimageService', () => {
       info: sinon.stub(),
       error: sinon.stub()
     }
+    engines = new Map()
 
     GrpcMethod = sinon.stub()
     fakeRegistered = sinon.stub()
@@ -42,7 +44,7 @@ describe('ExternalPreimageService', () => {
   })
 
   beforeEach(() => {
-    server = new ExternalPreimageService(protoPath, { logger })
+    server = new ExternalPreimageService(protoPath, { logger, engines })
   })
 
   it('assigns a proto path', () => {
@@ -106,6 +108,10 @@ describe('ExternalPreimageService', () => {
     describe('request options', () => {
       it('passes in the logger', () => {
         expect(callArgs[2]).to.have.property('logger', logger)
+      })
+
+      it('passes in the engines', () => {
+        expect(callArgs[2]).to.have.property('engines', engines)
       })
     })
   })

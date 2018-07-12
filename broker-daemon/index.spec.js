@@ -141,6 +141,11 @@ describe('broker daemon', () => {
       expect(interchainRouter).to.have.been.calledWith(sinon.match({ logger: logger }))
     })
 
+    it('provides the engines to the InterchainRouter', () => {
+      expect(interchainRouter).to.have.been.calledWith(sinon.match({ engines: sinon.match.instanceOf(Map) }))
+      expect(interchainRouter.args[0][0].engines.values().next().value).to.be.an.instanceOf(LndEngine)
+    })
+
     it('provides the ordersByHash to the InterchainRouter', () => {
       expect(interchainRouter).to.have.been.calledWith(sinon.match({ ordersByHash: brokerDaemon.blockOrderWorker.ordersByHash }))
     })

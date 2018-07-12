@@ -1,21 +1,67 @@
 const { getRecords, Big } = require('../utils')
 const { Order } = require('../models')
+const fromStorage = Order.fromStorage.bind(Order)
+
+/**
+ * Get a routing entry (an order) for a specified swap hash
+ * @param  {SublevelIndex} ordersByHash Orders for which the broker is the maker, indexed by their swap hash
+ * @param  {String}        swapHash     swap hash of the order to retrieve
+ * @return {Order}
+ */
+async function getRoutingEntry (ordersByHash, swapHash) {
+  const range = {
+    gte: swapHash,
+    lte: swapHash
+  }
+
+  // We are assuming that only one order has this swap hash. Any more and we have an error of internal
+  // consistency. Any less and we don't actually know about this swap.
+  const orders = await getRecords(ordersByHash, fromStorage, ordersByHash.range(range))
+
+  if (orders.length === 0) {
+    throw new Error(`No routing entry available for ${swapHash}`)
+  }
+
+  if (orders.length > 1) {
+    throw new Error(`Too many routing entries (${orders.length}) for ${swapHash}, only expected one.`)
+  }
+
+  const [ order ] = orders
+
+  return order
+}
+
+/**
+ * Convert the time lock of the HTLC to a delta time lock expressed in seconds
+ * @param  {Engine} inboundEngine engine of the inbound node
+ * @param  {String} timeLock      time lock extended to the inbound node in blocks
+ * @param  {String} bestHeight    current height of the inbound node's blockchain
+ * @return {String} Time, in seconds, of the extended time lock
+ */
+function timeLockDeltaInSeconds (inboundEngine, timeLock, bestHeight) {
+  const timeLockDelta = Big(timeLock).minus(bestHeight)
+
+  if (timeLockDelta.lte(0)) {
+    throw new Error(`Current block height (${bestHeight}) is higher than the extended timelock (${timeLock})`)
+  }
+
+  return timeLockDelta.times(inboundEngine.currencyConfig.secondsPerBlock).toString()
+}
 
 /**
  * Gets a preimage from another chain by making a payment if the
  * inbound preimage meets its criteria.
  *
- * CURRENTLY UNIMPLEMENTED
- *
- * @param  {Object}        request.params   Parameters of the request
- * @param  {Function}      request.send     Send responses back to the client
- * @param  {Function}      request.onCancel Handle cancellations of the stream by the client
- * @param  {Function}      request.onError  Handle errors in the stream with the client
- * @param  {SublevelIndex} request.ordersByHash Orders for which the broker is the maker, indexed by their swap hash
- * @param  {Object}        request.logger
- * @return {String}        base64 encoded string of the preimage
+ * @param  {Object}             request.params   Parameters of the request
+ * @param  {Function}           request.send     Send responses back to the client
+ * @param  {Function}           request.onCancel Handle cancellations of the stream by the client
+ * @param  {Function}           request.onError  Handle errors in the stream with the client
+ * @param  {SublevelIndex}      request.ordersByHash Orders for which the broker is the maker, indexed by their swap hash
+ * @param  {Map<String, Engine} request.engines All available engines
+ * @param  {Object}             request.logger
+ * @todo handle client cancellations and errors and general failures during transition
  */
-async function getPreimage ({ params, send, onCancel, onError, ordersByHash, logger = console }) {
+async function getPreimage ({ params, send, onCancel, onError, ordersByHash, engines, logger = console }) {
   const {
     paymentHash,
     symbol,
@@ -23,53 +69,40 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, log
     timeLock,
     bestHeight
   } = params
+  const swapHash = paymentHash
 
-  const range = {
-    gte: paymentHash,
-    lte: paymentHash
+  const order = await getRoutingEntry(ordersByHash, swapHash)
+
+  const { inboundSymbol, inboundAmount, outboundSymbol, outboundAmount, takerAddress } = order
+  const [ expectedSymbol, actualSymbol, expectedAmount, actualAmount ] = [ inboundSymbol, symbol, inboundAmount, amount ]
+
+  if (expectedSymbol !== actualSymbol) {
+    throw new Error(`Wrong currency paid in for ${swapHash}. Expected ${expectedSymbol}, found ${actualSymbol}`)
+  }
+  if (Big(expectedAmount).gt(actualAmount)) {
+    throw new Error(`Insufficient currency paid in for ${swapHash}. Expected ${expectedAmount}, found ${actualAmount}`)
   }
 
-  // We are assuming that only one order has this swap hash. Any more and we have an error of internal
-  // consistency. Any less and we don't actually know about this swap.
-  const orders = await getRecords(ordersByHash, Order.fromStorage.bind(Order), ordersByHash.range(range))
-
-  if (orders.length === 0) {
-    throw new Error(`No routing entry available for ${paymentHash}`)
+  const inboundEngine = engines.get(inboundSymbol)
+  if (!inboundEngine) {
+    throw new Error(`No engine available for ${inboundSymbol}`)
   }
 
-  if (orders.length > 1) {
-    throw new Error(`Too many routing entries (${orders.length}) for ${paymentHash}, only expected one.`)
+  const outboundEngine = engines.get(outboundSymbol)
+  if (!outboundEngine) {
+    throw new Error(`No engine available for ${outboundSymbol}`)
   }
 
-  const [ order ] = orders
+  const timeLockDelta = timeLockDeltaInSeconds(inboundEngine, timeLock, bestHeight)
 
-  // If we already have the preimage, we should return it immediately - no need to retrieve it from the other
-  // network.
-  if (order.swapPreimage) {
-    send({
-      paymentPreimage: order.swapPreimage
-    })
-    return
-  }
+  logger.debug(`Sending payment to ${takerAddress} to translate swap ${swapHash}`)
+  const paymentPreimage = await outboundEngine.translateSwap(takerAddress, swapHash, outboundAmount, timeLockDelta)
+  logger.debug(`Completed payment to ${takerAddress} for swap ${swapHash}`)
 
-  if (order.inboundSymbol !== symbol) {
-    throw new Error(`Wrong currency paid in for ${paymentHash}. Expected ${order.inboundSymbol}, found ${symbol}`)
-  }
+  // Note: we do NOT save the order here. The Interchain Router should treat orders as Read-only routing entries
+  // Any state should be maintained by the engines themselves and the OrderStateMachine
 
-  if (Big(order.inboundAmount).gt(amount)) {
-    throw new Error(`Insufficient currency paid in for ${paymentHash}. Expected ${order.inboundAmount}, found ${amount}`)
-  }
-
-  if (Big(bestHeight).gte(timeLock)) {
-    throw new Error(`Current block height (${bestHeight}) is too high for the extended timelock (${timeLock})`)
-  }
-
-  // TODO: check timelock against a grace period
-  // TODO: ensure timelock is sufficient for downstream payment
-  // TODO: handle client cancellations and errors
-
-  logger.error('UNIMPLEMENTED: Made a call to unimplemented getPreimage method')
-  send({})
+  send({ paymentPreimage })
 }
 
 module.exports = getPreimage
