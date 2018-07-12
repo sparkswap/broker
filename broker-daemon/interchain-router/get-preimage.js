@@ -3,9 +3,9 @@ const { Order } = require('../models')
 const fromStorage = Order.fromStorage.bind(Order)
 
 /**
- * Default amount of time to deduct from the incoming HTLC to ensure we have enough timelock
  * Amount of time, in seconds, to deduct from the incoming HTLC to ensure we have enough timelock
- * for forwarding the swap.
+ * for forwarding the swap. This is roughly equivalent to our forwarding policy for the first channel
+ * on the new chain.
  * LND's default is 24 hours (144 Bitcoin blocks).
  * @type {Number}
  * @constant
