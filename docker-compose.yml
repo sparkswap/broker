@@ -69,7 +69,9 @@ services:
       - DEBUG=info
       - RPC_LISTEN=0.0.0.0:10009
       - LISTEN=0.0.0.0:10113
-      - EXTERNAL_ADDRESS=0.0.0.0:10113
+      # This address is for development only. You must change this to a
+      # tld to use in a production setting
+      - EXTERNAL_ADDRESS=docker.for.mac.host.internal:10113
       - REST_LISTEN=0.0.0.0:8101
       - DATA_DIR=/data
       - LOG_DIR=/data
@@ -130,7 +132,7 @@ services:
       - LISTEN=0.0.0.0:10114
       # This address is for development only. You must change this to a
       # tld to use in a production setting
-      - EXTERNAL_ADDRESS=0.0.0.0:10114
+      - EXTERNAL_ADDRESS=docker.for.mac.host.internal:10114
       - REST_LISTEN=0.0.0.0:8101
       - DATA_DIR=/data
       - LOG_DIR=/data

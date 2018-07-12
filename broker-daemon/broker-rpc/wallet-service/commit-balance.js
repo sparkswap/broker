@@ -1,5 +1,6 @@
 const { PublicError } = require('grpc-methods')
-
+const { convertBalance } = require('../../utils')
+const { currencies } = require('../../config')
 /**
  * @constant
  * @type {Long}
@@ -21,15 +22,10 @@ const MINIMUM_FUNDING_AMOUNT = 400000
  */
 const MAX_CHANNEL_BALANCE = 16777215
 
-/**
- * @constant
- * @type {Array<key, string>}
- * @default
- */
-const SUPPORTED_SYMBOLS = Object.freeze({
-  BTC: 'BTC',
-  LTC: 'LTC'
-})
+const SUPPORTED_SYMBOLS = currencies.reduce((obj, currency) => {
+  obj[currency.symbol] = currency.symbol
+  return obj
+}, {})
 
 /**
  * Grabs public lightning network information from relayer and opens a channel
@@ -58,12 +54,26 @@ async function commitBalance ({ params, relayer, logger, engine }, { EmptyRespon
     logger.error(`Balance from the client exceeds maximum balance allowed (${MAX_CHANNEL_BALANCE}).`, { balance })
     throw new PublicError(`Maxium balance of ${MAX_CHANNEL_BALANCE} exceeded for committing to the relayer. Please try again.`)
   }
-
   if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
     throw new PublicError(`Unsupported symbol for committing a balance: ${symbol}`)
   }
 
   await engine.createChannel(address, balance, symbol)
+
+  const paymentChannelNetworkAddress = await engine.getPaymentChannelNetworkAddress()
+
+  let symbolForRelayer
+  let convertedBalance
+
+  // This is temporary until we have other markets
+  if (symbol === SUPPORTED_SYMBOLS.LTC) {
+    symbolForRelayer = SUPPORTED_SYMBOLS.BTC
+    convertedBalance = convertBalance(balance, SUPPORTED_SYMBOLS.LTC, SUPPORTED_SYMBOLS.BTC)
+  } else {
+    symbolForRelayer = SUPPORTED_SYMBOLS.LTC
+    convertedBalance = convertBalance(balance, SUPPORTED_SYMBOLS.BTC, SUPPORTED_SYMBOLS.LTC)
+  }
+  await relayer.paymentChannelNetworkService.createChannel({address: paymentChannelNetworkAddress, balance: convertedBalance, symbol: symbolForRelayer})
 
   return new EmptyResponse({})
 }
