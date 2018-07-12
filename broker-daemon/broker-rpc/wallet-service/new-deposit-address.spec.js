@@ -13,7 +13,9 @@ describe('new-deposit-address', () => {
   let responseStub
 
   before(() => {
-    logger = sinon.stub()
+    logger = {
+      error: sinon.stub()
+    }
     params = {
       symbol: 'BTC'
     }
@@ -43,7 +45,7 @@ describe('new-deposit-address', () => {
     const badParams = {symbol: 'BAD'}
 
     it('throws an error', () => {
-      expect(async () => newDepositAddress({ logger, engines, badParams }, { NewDepositAddressResponse: responseStub })).to.be.throw('Could not find engine')
+      return expect(newDepositAddress({ logger, engines, params: badParams }, { NewDepositAddressResponse: responseStub })).to.eventually.be.rejectedWith('Unable to generate address')
     })
   })
 })

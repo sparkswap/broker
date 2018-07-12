@@ -8,6 +8,7 @@ describe('WalletService', () => {
   let loadProtoStub
   let logger
   let engine
+  let engines
   let relayer
   let unaryMethodStub
   let responseStub
@@ -32,6 +33,7 @@ describe('WalletService', () => {
     })
     logger = sinon.stub()
     engine = sinon.stub()
+    engines = sinon.stub()
     relayer = sinon.stub()
     newDepositAddress = sinon.spy()
     balanceSpy = sinon.spy()
@@ -46,7 +48,7 @@ describe('WalletService', () => {
     WalletService.__set__('getBalances', balanceSpy)
     WalletService.__set__('commitBalance', commitBalanceSpy)
 
-    wallet = new WalletService(protoPath, { logger, engine, relayer })
+    wallet = new WalletService(protoPath, { logger, engines, engine, relayer })
   })
 
   it('sets a protoPath', () => expect(wallet.protoPath).to.eql(protoPath))
@@ -64,7 +66,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         newDepositAddress,
         expectedMessageId,
-        { logger, engine },
+        { logger, engines },
         { NewDepositAddressResponse: responseStub }
       )
     })
