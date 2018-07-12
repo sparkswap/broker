@@ -30,7 +30,7 @@ class RelayerClient {
     this.takerService = caller(this.address, this.proto.TakerService)
     this.healthService = caller(this.address, this.proto.HealthService)
     this.orderbookService = caller(this.address, this.proto.OrderBookService)
-    this.paymentNetworkService = caller(this.address, this.proto.PaymentNetworkService)
+    this.paymentChannelNetworkService = caller(this.address, this.proto.PaymentChannelNetworkService)
   }
 
   /**

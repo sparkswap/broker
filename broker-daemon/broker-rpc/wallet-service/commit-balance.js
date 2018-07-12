@@ -2,13 +2,6 @@ const { PublicError } = require('grpc-methods')
 
 /**
  * @constant
- * @type {String}
- * @default
- */
-const EXCHANGE_LND_HOST = process.env.EXCHANGE_LND_HOST
-
-/**
- * @constant
  * @type {Long}
  * @default
  */
@@ -51,10 +44,10 @@ const SUPPORTED_SYMBOLS = Object.freeze({
  * @return {responses.EmptyResponse}
  */
 async function commitBalance ({ params, relayer, logger, engine }, { EmptyResponse }) {
-  const { publicKey: relayerPubKey } = await relayer.paymentNetworkService.getPublicKey({})
   const { balance, symbol } = params
+  const { address } = await relayer.paymentChannelNetworkService.getAddress({symbol})
 
-  logger.info(`Attempting to create channel with ${EXCHANGE_LND_HOST} on ${symbol} with ${balance}`)
+  logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balance}`)
 
   // TODO: Validate that the amount is above the minimum channel balance
   // TODO: Choose the correct engine depending on the market
@@ -70,7 +63,7 @@ async function commitBalance ({ params, relayer, logger, engine }, { EmptyRespon
     throw new PublicError(`Unsupported symbol for committing a balance: ${symbol}`)
   }
 
-  await engine.createChannel(EXCHANGE_LND_HOST, relayerPubKey, balance, symbol)
+  await engine.createChannel(address, balance, symbol)
 
   return new EmptyResponse({})
 }

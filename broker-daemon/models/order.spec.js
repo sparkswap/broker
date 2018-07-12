@@ -297,19 +297,15 @@ describe('Order', () => {
     describe('get paramsForPrepareSwap', () => {
       it('defines a getter for params required to prepare a swap in an engine', () => {
         const swapHash = 'asoifdjaofj02309832'
-        Object.assign(order, { swapHash })
+        const fakeId = 'myid'
+        Object.assign(order, { swapHash, orderId: fakeId })
 
         expect(order).to.have.property('paramsForPrepareSwap')
         expect(order.paramsForPrepareSwap).to.be.eql({
+          orderId: fakeId,
           swapHash: swapHash,
-          inbound: {
-            symbol: params.baseSymbol,
-            amount: params.baseAmount
-          },
-          outbound: {
-            symbol: params.counterSymbol,
-            amount: params.counterAmount
-          }
+          symbol: params.baseSymbol,
+          amount: params.baseAmount
         })
       })
 
