@@ -3,14 +3,12 @@
     {
       "name": "Bitcoin",
       "symbol": "BTC",
-      "quantumsPerCommon": "100000000",
-      "secondsPerBlock": 600
+      "quantumsPerCommon": "100000000"
     },
     {
       "name": "Litecoin",
       "symbol": "LTC",
-      "quantumsPerCommon": "100000000",
-      "secondsPerBlock": 150
+      "quantumsPerCommon": "100000000"
     }
   ]
 }
