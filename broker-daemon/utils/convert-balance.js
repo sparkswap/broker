@@ -10,7 +10,7 @@ const MARKET_CONVERSION = {
  * @param {String} balance to convert
  * @param {String} currency the currency that the balance is in
  * @param {String} currencyToConvertTo the currency to convert to
- * @return {String} balance in the counter currency
+ * @return {String} balance in the currencyToConvertTo
  */
 function convertBalance (balance, currency, currencyToConvertTo) {
   let multiplier
