@@ -215,6 +215,7 @@ module.exports = (program) => {
     })
     .command('wallet balance', 'Current daemon wallet balance')
     .command('wallet new-deposit-address', 'Generates a new wallet address for a daemon instance')
+    .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`)
     .command('wallet commit-balance')
     .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`)
 }

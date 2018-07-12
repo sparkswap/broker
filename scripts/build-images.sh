@@ -17,4 +17,4 @@ GITHUB_KEY_PATH=${GITHUB_PRIVATE_KEY_PATH:-~/.ssh/id_rsa}
 
 # NOTE: The names specified with `-t` directly map to the service names in
 # the applicable services docker-compose file
-docker build -t kinesis_kbd ./docker/kbd/ --build-arg SSH_PRIVATE_KEY="$(cat $GITHUB_KEY_PATH)"
+docker build -t kinesis_kbd ./docker/kbd/ --build-arg SSH_PRIVATE_KEY="$(cat $GITHUB_KEY_PATH)" --no-cache

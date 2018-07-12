@@ -71,9 +71,6 @@ program
     }
 
     const marketNames = (markets || '').split(',').filter(m => m)
-
-    console.log('rpcAddress', rpcAddress)
-
     const brokerDaemon = new BrokerDaemon(rpcAddress, interchainRouterAddress, relayerHost, dataDir, marketNames, engines)
     brokerDaemon.initialize()
     return brokerDaemon

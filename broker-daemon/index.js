@@ -107,6 +107,7 @@ class BrokerDaemon {
 
     this.rpcServer = new BrokerRPCServer({
       logger: this.logger,
+      engines: this.engines,
       engine: this.engine,
       relayer: this.relayer,
       orderbooks: this.orderbooks,

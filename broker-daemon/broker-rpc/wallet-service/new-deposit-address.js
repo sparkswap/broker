@@ -12,10 +12,7 @@ const { PublicError } = require('grpc-methods')
  */
 async function newDepositAddress ({ logger, params, engines }, { NewDepositAddressResponse }) {
   const { symbol } = params
-  console.log(symbol)
   const engine = engines.get(symbol)
-
-  console.log(engine)
 
   if (!engine) {
     logger.error(`Could not find engine: ${symbol}`)
