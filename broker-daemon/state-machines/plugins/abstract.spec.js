@@ -138,6 +138,16 @@ describe('StateMachineAbstractPlugin', () => {
       expect(Machine.prototype.onEnterState).to.have.been.calledOnce()
       expect(onEnterState).to.not.be.equal(Machine.prototype.onEnterState)
     })
+
+    // This is not so much desired behavior as a demonstration of the behavior
+    it('calls the instance-defined event before the lifecycle', () => {
+      Machine.prototype.onEnterState = sinon.stub()
+      const machine = new Machine()
+
+      machine.step()
+
+      expect(Machine.prototype.onEnterState).to.have.been.calledBefore(onEnterState)
+    })
   })
 
   describe('.transitions', () => {

@@ -106,7 +106,14 @@ const OrderStateMachine = StateMachine.factory({
      * execute transition: prepare the swap for execution, and tell the relayer
      * @type {Object}
      */
-    { name: 'execute', from: 'placed', to: 'executing' }
+    { name: 'execute', from: 'placed', to: 'executing' },
+
+    /**
+     * complete transition: monitor the payment channel network for settlement,
+     * and provide the preimage to the Relayer to get our deposit back.
+     * @type {Object}
+     */
+    { name: 'complete', from: 'executing', to: 'completed' }
   ],
   /**
    * Instantiate the data on the state machine
@@ -257,9 +264,63 @@ const OrderStateMachine = StateMachine.factory({
         throw new Error(`No engine available for ${symbol}`)
       }
       await engine.prepareSwap(orderId, swapHash, amount)
-      return this.relayer.makerService.executeOrder({ orderId })
+      await this.relayer.makerService.executeOrder({ orderId })
     },
 
+    /**
+     * Trigger settle after execution
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {void}
+     */
+    onAfterExecute: function (lifecycle) {
+      this.triggerComplete()
+    },
+
+    /**
+     * Trigger settle if we are re-hydrating state into the executing state
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {void}
+     */
+    onAfterGoto: function (lifecycle) {
+      if (lifecycle.to === 'executing') {
+        this.triggerComplete()
+      }
+    },
+    /**
+     * As soon as we are done with our part of execution, listen to the Payment Channel Network for settlements.
+     * This method should be called after the execution transition AND after a goto transition back to the
+     * execution state to enable re-hydrating state machines to continue to monitor the network. We do this rather
+     * than `onEnterState` to avoid moving to a new state prior to saving the current state (which happens in
+     * `onEnterState` as part of the persistence plugin.)
+     * @return {void}
+     */
+    triggerComplete: function () {
+      // you can't start a transition while in another one,
+      // so we `nextTick` our way out of the current transition
+      // @see {@link https://github.com/jakesgordon/javascript-state-machine/issues/143}
+      process.nextTick(() => this.tryTo('complete'))
+    },
+
+    /**
+     * Monitor the Payment Channel Network for settlements, and return the preimage
+     * to the Relayer so we can reimbursed for our deposit.
+     * We perform the settlement monitoring and order completion in the same action
+     * since settlement monitoring can be repeated with no issue.
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {Promise}
+     */
+    onBeforeComplete: async function (lifecycle) {
+      const { swapHash, symbol } = this.order.paramsForGetPreimage
+      const engine = this.engines.get(symbol)
+      if (!engine) {
+        throw new Error(`No engine available for ${symbol}`)
+      }
+      const swapPreimage = await engine.getSettledSwapPreimage(swapHash)
+      this.order.setSettledParams({ swapPreimage })
+
+      const { orderId } = this.order.paramsForComplete
+      return this.relayer.makerService.completeOrder({ orderId, swapPreimage })
+    },
     /**
      * Log errors from rejection
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine

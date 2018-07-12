@@ -314,6 +314,23 @@ describe('Order', () => {
       })
     })
 
+    describe('get paramsForGetPreimage', () => {
+      it('defines a getter for params required to prepare a swap in an engine', () => {
+        const swapHash = 'asoifdjaofj02309832'
+        Object.assign(order, { swapHash })
+
+        expect(order).to.have.property('paramsForGetPreimage')
+        expect(order.paramsForGetPreimage).to.be.eql({
+          swapHash: swapHash,
+          symbol: params.baseSymbol
+        })
+      })
+
+      it('throws an error if a param is missing', () => {
+        expect(() => order.paramsForGetPreimage).to.throw()
+      })
+    })
+
     describe('#setCreatedParams', () => {
       let createdParams = {
         orderId: 'myid',

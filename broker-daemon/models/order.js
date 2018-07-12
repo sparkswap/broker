@@ -78,6 +78,14 @@ class Order {
   }
 
   /**
+   * Add parameters to the order from it being settled on the Payment Channel Network
+   * @param {String} options.swapPreimage Base64 string of the preimage associated with the swap hash
+   */
+  setSettledParams ({ swapPreimage }) {
+    this.swapPreimage = swapPreimage
+  }
+
+  /**
    * Get the symbol of the currency we will receive inbound if the order is completed
    * @return {String} Currency symbol
    */
@@ -131,6 +139,26 @@ class Order {
     }
 
     return { orderId, swapHash, symbol: inboundSymbol, amount: inboundAmount }
+  }
+
+  get paramsForGetPreimage () {
+    const { swapHash, inboundSymbol } = this
+
+    if (![ swapHash, inboundSymbol ].every(param => !!param)) {
+      throw new Error('swapHash, inboundSymbol are required to get a swap preimage.')
+    }
+
+    return { swapHash, symbol: inboundSymbol }
+  }
+
+  get paramsForComplete () {
+    const { swapPreimage, orderId } = this
+
+    if (![ swapPreimage, orderId ].every(param => !!param)) {
+      throw new Error('swapPreimage, orderId are required to get a swap preimage.')
+    }
+
+    return { swapPreimage, orderId }
   }
 
   /**
