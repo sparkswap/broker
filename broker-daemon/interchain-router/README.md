@@ -56,7 +56,7 @@ To instruct the router how to forward the request, routing entries must contain:
 - the amount of currency to forward
 - the currency to forward (symbol)
 
-Routing entries are not written to the by Interchain Router once they are created. Any state related to preimage retrieval should be stored by the engines on either end.
+Routing entries are not written to the data store by Interchain Router once they are created. Any state related to preimage retrieval should be stored by the engines on either end.
 
 ### Requesting preimages
 
