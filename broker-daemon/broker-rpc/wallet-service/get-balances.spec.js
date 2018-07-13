@@ -7,30 +7,32 @@ describe('get-balance', () => {
   let balanceResponseStub
   let logger
   let walletBalanceStub
-  let expectedBalance
   let engine
-  let channelBalancesStub
-  let channelBalances
+  let engines
+  let totalChannelBalanceStub
+  let engineType
+  let expectedTotalBalance
+  let expectedChannelBalance
 
   beforeEach(() => {
     logger = sinon.stub()
-    expectedBalance = 1000
-    channelBalances = [
-      { symbol: 'BTC', value: '100' }
-    ]
-    walletBalanceStub = sinon.stub().returns(expectedBalance)
+    expectedTotalBalance = 1000
+    expectedChannelBalance = 100
+    walletBalanceStub = sinon.stub().returns(expectedTotalBalance)
+    totalChannelBalanceStub = sinon.stub().returns(expectedChannelBalance)
     balanceResponseStub = sinon.stub()
-    channelBalancesStub = sinon.stub().returns(channelBalances)
 
     engine = {
       getTotalBalance: walletBalanceStub,
-      getChannelBalances: channelBalancesStub
+      getTotalChannelBalance: totalChannelBalanceStub
     }
+    engineType = 'BTC'
+    engines = new Map([[engineType, engine]])
     logger = { info: sinon.stub() }
   })
 
   beforeEach(async () => {
-    await getBalances({ logger, engine }, { GetBalancesResponse: balanceResponseStub })
+    await getBalances({ logger, engines }, { GetBalancesResponse: balanceResponseStub })
   })
 
   it('calls an engine.getTotalBalance', () => {
@@ -38,15 +40,12 @@ describe('get-balance', () => {
   })
 
   it('calls an engine for channel balances', () => {
-    expect(channelBalancesStub).to.have.been.called()
+    expect(totalChannelBalanceStub).to.have.been.called()
   })
 
   it('constructs a BalanceResponse', () => {
     expect(balanceResponseStub).to.have.been.calledWith(
-      sinon.match({
-        totalBalance: expectedBalance,
-        committedBalances: channelBalances
-      })
+      sinon.match({})
     )
   })
 })
