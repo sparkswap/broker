@@ -16,11 +16,13 @@ describe('cli wallet', () => {
     let rpcAddress
     let addressStub
     let daemonStub
+    let symbol
 
     const newDepositAddress = program.__get__('newDepositAddress')
 
     beforeEach(() => {
-      args = {}
+      symbol = 'BTC'
+      args = { symbol }
       rpcAddress = 'test:1337'
       opts = { rpcAddress }
       logger = { info: sinon.stub(), error: sinon.stub() }
@@ -36,7 +38,7 @@ describe('cli wallet', () => {
 
     it('calls broker daemon for a new deposit address', () => {
       expect(daemonStub).to.have.been.calledWith(rpcAddress)
-      expect(addressStub).to.have.been.calledOnce()
+      expect(addressStub).to.have.been.calledWith({ symbol })
     })
   })
 
@@ -44,30 +46,78 @@ describe('cli wallet', () => {
     let daemonStub
     let walletBalanceStub
     let rpcAddress
+    let symbol
     let args
     let opts
     let logger
+    let balances
+    let ltcBalance
+    let btcBalance
+    let tableStub
+    let tablePushStub
 
     const balance = program.__get__('balance')
 
     beforeEach(() => {
-      args = {}
+      symbol = 'BTC'
+      args = { symbol }
       rpcAddress = 'test:1337'
       opts = { rpcAddress }
       logger = { info: sinon.stub(), error: sinon.stub() }
+      btcBalance = { symbol, totalBalance: 10000, totalChannelBalance: 2000 }
+      ltcBalance = { symbol: 'LTC', totalBalance: 200, totalChannelBalance: 200 }
+      balances = [btcBalance, ltcBalance]
 
-      walletBalanceStub = sinon.stub()
+      walletBalanceStub = sinon.stub().returns({ balances })
+      tablePushStub = sinon.stub()
+      tableStub = sinon.stub()
+      tableStub.prototype.push = tablePushStub
       daemonStub = sinon.stub()
       daemonStub.prototype.walletService = { getBalances: walletBalanceStub }
 
       program.__set__('BrokerDaemonClient', daemonStub)
+      program.__set__('Table', tableStub)
+    })
 
-      balance(args, opts, logger)
+    beforeEach(async () => {
+      await balance(args, opts, logger)
     })
 
     it('calls broker daemon for a wallet balance', () => {
       expect(daemonStub).to.have.been.calledWith(rpcAddress)
       expect(walletBalanceStub).to.have.been.calledOnce()
+    })
+
+    it('adds a correct balance for BTC', () => {
+      const expectedResult = ['BTC', '0.0000200000000000', '0.0000800000000000']
+      const result = tablePushStub.args[0][0]
+
+      // Since the text in the result contains colors (non-TTY) we have to use
+      // an includes matcher instead of importing the color lib for testing.
+      //
+      // TODO: If this becomes an issue in the future, we can omit the code and cast
+      //       a color on the string
+      result.forEach((r, i) => {
+        expect(r).to.include(expectedResult[i])
+      })
+    })
+
+    it('adds a correct balance for LTC', () => {
+      const expectedResult = ['LTC', '0.0000020000000000', '0.0000000000000000']
+      const result = tablePushStub.args[1][0]
+
+      // Since the text in the result contains colors (non-TTY) we have to use
+      // an includes matcher instead of importing the color lib for testing.
+      //
+      // TODO: If this becomes an issue in the future, we can omit the code and cast
+      //       a color on the string
+      result.forEach((r, i) => {
+        expect(r).to.include(expectedResult[i])
+      })
+    })
+
+    it('adds balances to the cli table', () => {
+      expect(tablePushStub).to.have.been.calledTwice()
     })
   })
 
@@ -78,8 +128,7 @@ describe('cli wallet', () => {
     let rpcAddress
     let symbol
     let walletBalanceStub
-    let totalBalance
-    let committedBalance
+    let balances
     let daemonStub
     let commitBalanceStub
     let askQuestionStub
@@ -90,12 +139,10 @@ describe('cli wallet', () => {
       symbol = 'BTC'
       args = { symbol }
       rpcAddress = 'test:1337'
-      totalBalance = 10000
-      committedBalance = 100
-      walletBalanceStub = sinon.stub().returns({
-        totalBalance: totalBalance,
-        committedBalances: [{ symbol: 'BTC', value: committedBalance }]
-      })
+      balances = [
+        { symbol: 'BTC', totalBalance: 100, totalChannelBalance: 10 }
+      ]
+      walletBalanceStub = sinon.stub().returns({ balances })
       commitBalanceStub = sinon.stub()
       askQuestionStub = sinon.stub().returns('Y')
       opts = { rpcAddress }
@@ -121,7 +168,8 @@ describe('cli wallet', () => {
     })
 
     it('calls the daemon to commit a balance to the relayer', () => {
-      const uncommittedBalance = totalBalance - committedBalance
+      const { totalBalance, totalChannelBalance } = balances[0]
+      const uncommittedBalance = totalBalance - totalChannelBalance
       expect(commitBalanceStub).to.have.been.calledWith(sinon.match({ balance: uncommittedBalance.toString(), symbol }))
     })
 

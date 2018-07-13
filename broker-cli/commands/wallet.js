@@ -71,7 +71,7 @@ async function balance (args, opts, logger) {
         [
           symbol,
           Big(totalChannelBalance).div(divideBy).toFixed(16).green,
-          Big(uncommittedBalance).div(divideBy).toFixed(16)
+          uncommittedBalance.div(divideBy).toFixed(16)
         ]
       )
     })
