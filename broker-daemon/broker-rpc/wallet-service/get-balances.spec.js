@@ -3,49 +3,89 @@ const { expect, rewire, sinon } = require('test/test-helper')
 
 const getBalances = rewire(path.resolve(__dirname, 'get-balances'))
 
-describe('get-balance', () => {
-  let balanceResponseStub
-  let logger
-  let walletBalanceStub
-  let engine
-  let engines
-  let totalChannelBalanceStub
-  let engineType
-  let expectedTotalBalance
-  let expectedChannelBalance
+describe('get-balances', () => {
+  describe('getBalances', () => {
+    let logger
+    let engineStub
+    let engines
+    let GetBalancesResponse
+    let balancesStub
+    let revert
 
-  beforeEach(() => {
-    logger = sinon.stub()
-    expectedTotalBalance = 1000
-    expectedChannelBalance = 100
-    walletBalanceStub = sinon.stub().returns(expectedTotalBalance)
-    totalChannelBalanceStub = sinon.stub().returns(expectedChannelBalance)
-    balanceResponseStub = sinon.stub()
+    beforeEach(() => {
+      logger = {
+        info: sinon.stub()
+      }
+      engineStub = sinon.stub()
+      engines = [ engineStub ]
+      balancesStub = sinon.stub().resolves(engineStub)
+      GetBalancesResponse = sinon.stub()
 
-    engine = {
-      getTotalBalance: walletBalanceStub,
-      getTotalChannelBalance: totalChannelBalanceStub
-    }
-    engineType = 'BTC'
-    engines = new Map([[engineType, engine]])
-    logger = { info: sinon.stub() }
+      revert = getBalances.__set__('getEngineBalances', balancesStub)
+    })
+
+    beforeEach(async () => {
+      await getBalances({ logger, engines }, { GetBalancesResponse })
+    })
+
+    afterEach(() => {
+      revert()
+    })
+
+    it('gets the balances from a particular engine', () => {
+      expect(balancesStub).to.have.been.calledOnce()
+      expect(balancesStub).to.have.been.calledWith(engineStub)
+    })
+
+    it('returns all channel balances for the broker daemon', () => {
+      expect(GetBalancesResponse).to.have.been.calledWith({ balances: [engineStub] })
+    })
   })
 
-  beforeEach(async () => {
-    await getBalances({ logger, engines }, { GetBalancesResponse: balanceResponseStub })
-  })
+  describe('getEngineBalances', () => {
+    let totalBalance
+    let totalBalanceStub
+    let totalChannelBalance
+    let totalChannelBalanceStub
+    let engineStub
+    let symbol
+    let engine
+    let getEngineBalances
+    let res
 
-  it('calls an engine.getTotalBalance', () => {
-    expect(walletBalanceStub).to.have.been.called()
-  })
+    beforeEach(() => {
+      symbol = 'BTC'
+      totalBalance = 1000000
+      totalChannelBalance = 10000
+      totalBalanceStub = sinon.stub().resolves(totalBalance)
+      totalChannelBalanceStub = sinon.stub().resolves(totalChannelBalance)
+      engineStub = {
+        getTotalBalance: totalBalanceStub,
+        getTotalChannelBalance: totalChannelBalanceStub
+      }
+      engine = [symbol, engineStub]
 
-  it('calls an engine for channel balances', () => {
-    expect(totalChannelBalanceStub).to.have.been.called()
-  })
+      getEngineBalances = getBalances.__get__('getEngineBalances')
+    })
 
-  it('constructs a BalanceResponse', () => {
-    expect(balanceResponseStub).to.have.been.calledWith(
-      sinon.match({})
-    )
+    beforeEach(async () => {
+      res = await getEngineBalances(engine)
+    })
+
+    it('gets the total balance of an engine', () => {
+      expect(totalBalanceStub).to.have.been.calledOnce()
+    })
+
+    it('gets the total channel balance of an engine', () => {
+      expect(totalChannelBalanceStub).to.have.been.calledOnce()
+    })
+
+    it('returns balances for an engine', () => {
+      expect(res).to.eql({
+        symbol,
+        totalBalance,
+        totalChannelBalance
+      })
+    })
   })
 })
