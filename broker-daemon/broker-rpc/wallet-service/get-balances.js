@@ -28,7 +28,7 @@ async function getEngineBalances ([symbol, engine]) {
  * @param {Logger} request.logger
  * @param {Object} responses
  * @param {function} responses.GetBalanceResponse
- * @return {GetBalanaceResponse}
+ * @return {GetBalanceResponse}
  */
 async function getBalances ({ logger, engines }, { GetBalancesResponse }) {
   logger.info(`Checking wallet balances for ${engines.size} engines`)
