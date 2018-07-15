@@ -26,12 +26,15 @@ async function healthCheck (args, opts, logger) {
     // TODO: If `engineStatus` or `relayerStatus` is undefined, then we will not see
     // a status
     const res = {
-      engineStatus,
+      engines: engineStatus.reduce((acc, { symbol, status }) => {
+        acc[symbol] = status
+        return acc
+      }, {}),
       relayerStatus,
       daemonStatus: STATUS_CODES.OK
     }
 
-    logger.info(`HealthCheck: ${JSON.stringify(res)}`)
+    logger.info(`HealthCheck: ${JSON.stringify(res, null, '  ')}`)
   } catch (e) {
     logger.error(e)
   }

@@ -1,8 +1,14 @@
 syntax = "proto3";
 
+message EngineStatus {
+
+    string symbol = 0;
+    string status = 1;
+}
+
 message HealthCheckResponse {
 
-    string engine_status = 0;
+    repeated EngineStatus engine_status = 0;
     string relayer_status = 1;
 }
 

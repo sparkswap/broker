@@ -39,7 +39,7 @@ class BrokerRPCServer {
 
     this.server = new grpc.Server()
 
-    this.adminService = new AdminService(this.protoPath, { logger, relayer, engine })
+    this.adminService = new AdminService(this.protoPath, { logger, relayer, engine, engines })
     this.server.addService(this.adminService.definition, this.adminService.implementation)
 
     this.orderService = new OrderService(this.protoPath, { logger, blockOrderWorker })

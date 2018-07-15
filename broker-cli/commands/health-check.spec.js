@@ -27,7 +27,13 @@ describe('healthCheck', () => {
     opts = { rpcAddress }
     infoSpy = sinon.spy()
     errorSpy = sinon.spy()
-    healthCheckStub = sinon.stub().returns({ engineStatus: 'OK', relayerStatus: 'OK' })
+    healthCheckStub = sinon.stub().returns({
+      engineStatus: [
+        { symbol: 'BTC', status: 'OK' },
+        { symbol: 'LTC', status: 'OK' }
+      ],
+      relayerStatus: 'OK'
+    })
 
     brokerStub = sinon.stub()
     brokerStub.prototype.adminService = { healthCheck: healthCheckStub }

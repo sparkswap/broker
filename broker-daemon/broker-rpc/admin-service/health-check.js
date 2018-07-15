@@ -49,9 +49,15 @@ async function getRelayerStatus (relayer) {
  * @param {function} responses.HealthCheckResponse - constructor for HealthCheckResponse messages
  * @return {responses.HealthCheckResponse}
  */
-async function healthCheck ({ relayer, logger, engine }, { HealthCheckResponse }) {
-  const engineStatus = await getEngineStatus(engine)
-  logger.debug(`Received status from engine`, { engineStatus })
+async function healthCheck ({ relayer, logger, engines }, { HealthCheckResponse }) {
+  const engineStatus = []
+
+  for (var [symbol, engine] of engines) {
+    var status = await getEngineStatus(engine)
+    logger.debug(`Received status from ${symbol} engine`, { status })
+    engineStatus.push({ symbol, status })
+  }
+
   const relayerStatus = await getRelayerStatus(relayer)
   logger.debug(`Received status from relayer`, { relayerStatus })
   return new HealthCheckResponse({ engineStatus, relayerStatus })
