@@ -55,10 +55,7 @@ async function balance (args, opts, logger) {
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const {
-      totalBalance,
-      committedBalances = []
-    } = await client.walletService.getBalances({})
+    const { balances } = await client.walletService.getBalances({})
 
     const balancesTable = new Table({
       head: ['', 'Committed', 'Uncommitted'],
@@ -66,18 +63,15 @@ async function balance (args, opts, logger) {
       style: { head: ['gray'] }
     })
 
-    const totalCommittedBalance = committedBalances.reduce((acc, { value }) => Big(value).plus(acc), 0)
-
-    committedBalances.forEach(({ symbol, value }) => {
+    balances.forEach(({ symbol, totalBalance, totalChannelBalance }) => {
       const divideBy = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
-      const committedBalance = value
-      const uncommittedBalance = symbol === DEFAULT_CURRENCY_SYMBOL ? Big(totalBalance).minus(totalCommittedBalance) : 0
+      const uncommittedBalance = Big(totalBalance).minus(totalChannelBalance)
 
       balancesTable.push(
         [
           symbol,
-          Big(committedBalance).div(divideBy).toFixed(16).green,
-          Big(uncommittedBalance).div(divideBy).toFixed(16)
+          Big(totalChannelBalance).div(divideBy).toFixed(16).green,
+          uncommittedBalance.div(divideBy).toFixed(16)
         ]
       )
     })
@@ -139,13 +133,11 @@ async function commitBalance (args, opts, logger) {
   try {
     const client = new BrokerDaemonClient(rpcAddress)
 
-    const {
-      totalBalance,
-      committedBalances = []
-    } = await client.walletService.getBalances({})
+    const { balances } = await client.walletService.getBalances({})
+    const { totalBalance, totalChannelBalance } = balances.find(({ symbol: s }) => s === symbol)
 
-    const totalCommittedBalance = committedBalances.reduce((acc, { value }) => Big(value).plus(acc), 0)
-    const totalUncommittedBalance = Big(totalBalance).minus(totalCommittedBalance)
+    // need to grab uncommitted balance here
+    const totalUncommittedBalance = Big(totalBalance).minus(totalChannelBalance)
 
     if (totalUncommittedBalance.eq(0)) {
       return logger.info('Your current uncommitted balance is 0, please add funds to your daemon')

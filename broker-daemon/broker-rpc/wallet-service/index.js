@@ -38,7 +38,7 @@ class WalletService {
 
     this.implementation = {
       newDepositAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engines }, { NewDepositAddressResponse }).register(),
-      getBalances: new GrpcUnaryMethod(getBalances, this.messageId('getBalances'), { logger, engine }, { GetBalancesResponse }).register(),
+      getBalances: new GrpcUnaryMethod(getBalances, this.messageId('getBalances'), { logger, engines }, { GetBalancesResponse }).register(),
       commitBalance: new GrpcUnaryMethod(commitBalance, this.messageId('commitBalance'), { logger, engine, relayer }, { EmptyResponse }).register()
     }
   }

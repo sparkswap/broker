@@ -15,16 +15,14 @@ message NewDepositAddressResponse {
   string address = 0;
 }
 
-message CommittedBalance {
-  Symbol symbol = 0;
-  int64 value = 1;
+message Balance {
+  string symbol = 0;
+  int64 totalBalance = 1;
+  int64 totalChannelBalance = 2;
 }
 
 message GetBalancesResponse {
-  int64 total_balance = 0;
-  int64 total_uncommitted_balance = 1;
-  int64 total_committed_balance = 2;
-  repeated CommittedBalance committed_balances = 3;
+  repeated Balance balances = 3;
 }
 
 message CommitBalanceRequest {

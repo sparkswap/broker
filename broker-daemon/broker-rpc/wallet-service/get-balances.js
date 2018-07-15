@@ -1,30 +1,43 @@
 /**
+ * Grabs the total balance and total channel balance from a specified engine
+ *
+ * @param {Array<symbol, engine>} Kinesis Engine
+ * @return {Array} res
+ * @return {String} res.symbol
+ * @return {Object} res.engine
+ */
+async function getEngineBalances ([symbol, engine]) {
+  const [totalBalance, totalChannelBalance] = await Promise.all([
+    engine.getTotalBalance(),
+    engine.getTotalChannelBalance()
+  ])
+
+  return {
+    symbol,
+    totalBalance,
+    totalChannelBalance
+  }
+}
+
+/**
  * Grabs the daemons lnd wallet balance
  *
  * @function
  * @param {GrpcUnaryMethod~request} request - request object
- * @param {RelayerClient} request.engine
+ * @param {Map} request.engines
+ * @param {Logger} request.logger
  * @param {Object} responses
  * @param {function} responses.GetBalanceResponse
- * @return {responses.GetBalanaceResponse}
+ * @return {GetBalanceResponse}
  */
-async function getBalances ({ logger, engine }, { GetBalancesResponse }) {
-  const [
-    totalBalance,
-    channelBalances
-  ] = await Promise.all([
-    engine.getTotalBalance(),
-    engine.getChannelBalances()
-  ])
+async function getBalances ({ logger, engines }, { GetBalancesResponse }) {
+  logger.info(`Checking wallet balances for ${engines.size} engines`)
 
-  logger.info(`Received wallet balance: ${totalBalance}`)
+  // We convert the engines map to an array and run totalBalance commands
+  // against each configuration
+  const engineBalances = await Promise.all(Array.from(engines).map(getEngineBalances))
 
-  const committedBalances = channelBalances.map(({ symbol, value }) => ({ symbol, value: value.toString() }))
-
-  return new GetBalancesResponse({
-    totalBalance,
-    committedBalances
-  })
+  return new GetBalancesResponse({ balances: engineBalances })
 }
 
 module.exports = getBalances

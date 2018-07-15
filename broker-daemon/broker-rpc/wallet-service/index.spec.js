@@ -77,7 +77,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         balanceSpy,
         expectedMessageId,
-        { logger, engine },
+        { logger, engines },
         { GetBalancesResponse: responseStub }
       )
     })
