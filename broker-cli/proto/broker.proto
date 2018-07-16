@@ -2,14 +2,14 @@ syntax = "proto3";
 
 message EngineStatus {
 
-    string symbol = 0;
-    string status = 1;
+    string symbol = 1;
+    string status = 2;
 }
 
 message HealthCheckResponse {
 
-    repeated EngineStatus engine_status = 0;
-    string relayer_status = 1;
+    repeated EngineStatus engine_status = 1;
+    string relayer_status = 2;
 }
 service AdminService {
     rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
@@ -41,27 +41,27 @@ message CreateBlockOrderRequest {
 
     oneof price_restriction {
 
-        bool is_market_order = 3;
-        string limit_price = 4;
+        bool is_market_order = 4;
+        string limit_price = 5;
     }
 
-    string market = 0;
-    Side side = 1;
-    string amount = 2;
-    TimeInForce time_in_force = 5;
+    string market = 1;
+    Side side = 2;
+    string amount = 3;
+    TimeInForce time_in_force = 6;
 }
 
 message CreateBlockOrderResponse {
 
-    string block_order_id = 0;
+    string block_order_id = 1;
 }
 
 message Order {
 
-    string order_id = 0;
-    OrderStatus order_status = 1;
-    string amount = 2;
-    string price = 3;
+    string order_id = 1;
+    OrderStatus order_status = 2;
+    string amount = 3;
+    string price = 4;
 
     enum OrderStatus {
 
@@ -76,11 +76,11 @@ message Order {
 
 message Fill {
 
-    string order_id = 0;
-    string fill_id = 1;
-    FillStatus fill_status = 2;
-    string amount = 3;
-    string price = 4;
+    string order_id = 1;
+    string fill_id = 2;
+    FillStatus fill_status = 3;
+    string amount = 4;
+    string price = 5;
 
     enum FillStatus {
 
@@ -100,10 +100,10 @@ message BlockOrder {
         string limit_price = 14;
     }
 
-    string block_order_id = 0;
-    string market = 1;
-    Side side = 2;
-    string amount = 3;
+    string block_order_id = 1;
+    string market = 2;
+    Side side = 3;
+    string amount = 4;
     TimeInForce time_in_force = 5;
     BlockOrderStatus status = 6;
 
@@ -118,7 +118,7 @@ message BlockOrder {
 
 message GetBlockOrderRequest {
 
-    string block_order_id = 0;
+    string block_order_id = 1;
 }
 
 message GetBlockOrderResponse {
@@ -129,7 +129,7 @@ message GetBlockOrderResponse {
         string limit_price = 14;
     }
 
-    BlockOrder.BlockOrderStatus status = 0;
+    BlockOrder.BlockOrderStatus status = 1;
     string market = 10;
     Side side = 11;
     string amount = 12;
@@ -141,7 +141,7 @@ message GetBlockOrderResponse {
 
 message CancelBlockOrderRequest {
 
-    string block_order_id = 0;
+    string block_order_id = 1;
 }
 
 message GetBlockOrdersResponse {
@@ -151,7 +151,7 @@ message GetBlockOrdersResponse {
 
 message GetBlockOrdersRequest {
 
-    string market = 0;
+    string market = 1;
 }
 service OrderService {
     rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse);
@@ -162,27 +162,27 @@ service OrderService {
 
 message WatchMarketRequest {
 
-    string market = 0;
+    string market = 1;
 }
 
 message WatchMarketResponse {
 
-    EventType type = 0;
-    MarketEvent market_event = 1;
+    EventType type = 1;
+    MarketEvent market_event = 2;
 
     enum EventType {
 
-        ADD = 1;
-        DELETE = 2;
+        ADD = 0;
+        DELETE = 1;
     }
 }
 
 message MarketEvent {
 
-    string order_id = 0;
-    string amount = 1;
-    string price = 2;
-    Side side = 3;
+    string order_id = 1;
+    string amount = 2;
+    string price = 3;
+    Side side = 4;
 }
 service OrderBookService {
     rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
@@ -196,30 +196,30 @@ enum Symbol {
 
 message NewDepositAddressRequest {
 
-    Symbol symbol = 0;
+    Symbol symbol = 1;
 }
 
 message NewDepositAddressResponse {
 
-    string address = 0;
+    string address = 1;
 }
 
 message Balance {
 
-    string symbol = 0;
-    int64 total_balance = 1;
-    int64 total_channel_balance = 2;
+    string symbol = 1;
+    int64 total_balance = 2;
+    int64 total_channel_balance = 3;
 }
 
 message GetBalancesResponse {
 
-    repeated Balance balances = 3;
+    repeated Balance balances = 1;
 }
 
 message CommitBalanceRequest {
 
-    int64 balance = 0;
     Symbol symbol = 1;
+    int64 balance = 2;
 }
 service WalletService {
     rpc NewDepositAddress (NewDepositAddressRequest) returns (NewDepositAddressResponse);
