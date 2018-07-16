@@ -22,10 +22,7 @@ set -e -u
 SYMBOL=${1:-}
 
 if [[ -z "$SYMBOL" ]]; then
-    echo "Must provide a SYMBOL to the fund script" 1>&2
-    echo "Example: `npm run fund btc`"
-    echo ""
-    echo ""
+    echo "Must provide SYMBOL to the fund script. Example: 'npm run fund btc'"
     exit 1
 fi
 
@@ -43,8 +40,8 @@ echo "Running funding script on the relayer with wallet address: $WALLET_ADDRESS
 
 (cd $RELAYER_DIR && ADDR=$WALLET_ADDRESS SYMBOL=$SYMBOL bash ./scripts/fund-simnet-wallet.sh)
 
-echo "Waiting 15 seconds for blocks to be confirmed"
-sleep 15
+echo "Waiting 10 seconds for blocks to be confirmed"
+sleep 10
 
 echo "Checking wallet balance"
 ./broker-cli/bin/kcli wallet balance
