@@ -315,6 +315,10 @@ const OrderStateMachine = StateMachine.factory({
       if (!engine) {
         throw new Error(`No engine available for ${symbol}`)
       }
+
+      // The below is potentially a very long-running operation, since the settlement
+      // of the swap itself is highly variable.
+      // TODO: restart monitoring when coming back from an offline state.
       const swapPreimage = await engine.getSettledSwapPreimage(swapHash)
       this.order.setSettledParams({ swapPreimage })
 
