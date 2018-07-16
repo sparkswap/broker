@@ -78,6 +78,14 @@ class Order {
   }
 
   /**
+   * Add parameters to the order from it being settled on the Payment Channel Network
+   * @param {String} options.swapPreimage Base64 string of the preimage associated with the swap hash
+   */
+  setSettledParams ({ swapPreimage }) {
+    this.swapPreimage = swapPreimage
+  }
+
+  /**
    * Get the symbol of the currency we will receive inbound if the order is completed
    * @return {String} Currency symbol
    */
@@ -126,11 +134,46 @@ class Order {
   get paramsForPrepareSwap () {
     const { orderId, swapHash, inboundSymbol, inboundAmount } = this
 
-    if (![ orderId, swapHash, inboundSymbol, inboundAmount ].every(param => !!param)) {
-      throw new Error('orderId, swapHash, inboundSymbol, inboundAmount are required to prepare a swap.')
+    if (!orderId) {
+      throw new Error(`paramsForGetPreimage: orderId is missing.`)
+    }
+    if (!swapHash) {
+      throw new Error(`paramsForGetPreimage: swapHash is missing.`)
+    }
+    if (!inboundSymbol) {
+      throw new Error(`paramsForGetPreimage: inboundSymbol is missing.`)
+    }
+    if (!inboundAmount) {
+      throw new Error(`paramsForGetPreimage: inboundAmount is missing.`)
     }
 
     return { orderId, swapHash, symbol: inboundSymbol, amount: inboundAmount }
+  }
+
+  get paramsForGetPreimage () {
+    const { swapHash, inboundSymbol } = this
+
+    if (!swapHash) {
+      throw new Error(`paramsForGetPreimage: swapHash is missing.`)
+    }
+    if (!inboundSymbol) {
+      throw new Error(`paramsForGetPreimage: inboundSymbol is missing.`)
+    }
+
+    return { swapHash, symbol: inboundSymbol }
+  }
+
+  get paramsForComplete () {
+    const { swapPreimage, orderId } = this
+
+    if (!swapPreimage) {
+      throw new Error(`paramsForGetPreimage: swapPreimage is missing.`)
+    }
+    if (!orderId) {
+      throw new Error(`paramsForGetPreimage: orderId is missing.`)
+    }
+
+    return { swapPreimage, orderId }
   }
 
   /**
