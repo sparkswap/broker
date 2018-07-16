@@ -8,7 +8,6 @@
 const buyCommand = require('./buy')
 const sellCommand = require('./sell')
 const orderbookCommand = require('./orderbook')
-const configCommand = require('./config')
 const healthCheckCommand = require('./health-check')
 const walletCommand = require('./wallet')
 const orderCommand = require('./order')
@@ -16,7 +15,6 @@ const orderCommand = require('./order')
 module.exports = {
   buyCommand,
   sellCommand,
-  configCommand,
   orderbookCommand,
   healthCheckCommand,
   walletCommand,

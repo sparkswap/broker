@@ -3,7 +3,6 @@ const { expect } = require('test/test-helper')
 const {
   buyCommand,
   sellCommand,
-  configCommand,
   orderbookCommand,
   healthCheckCommand,
   walletCommand,
@@ -19,11 +18,6 @@ describe('broker index', () => {
   it('defines sellCommand', () => {
     expect(sellCommand).to.not.be.null()
     expect(sellCommand).to.not.be.undefined()
-  })
-
-  it('defines configCommand', () => {
-    expect(configCommand).to.not.be.null()
-    expect(configCommand).to.not.be.undefined()
   })
 
   it('defines orderbookCommnad', () => {
