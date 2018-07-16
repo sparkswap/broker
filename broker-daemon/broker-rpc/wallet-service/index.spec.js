@@ -7,7 +7,6 @@ describe('WalletService', () => {
   let protoPath
   let loadProtoStub
   let logger
-  let engine
   let engines
   let relayer
   let unaryMethodStub
@@ -32,7 +31,6 @@ describe('WalletService', () => {
       }
     })
     logger = sinon.stub()
-    engine = sinon.stub()
     engines = sinon.stub()
     relayer = sinon.stub()
     newDepositAddress = sinon.spy()
@@ -48,12 +46,12 @@ describe('WalletService', () => {
     WalletService.__set__('getBalances', balanceSpy)
     WalletService.__set__('commitBalance', commitBalanceSpy)
 
-    wallet = new WalletService(protoPath, { logger, engines, engine, relayer })
+    wallet = new WalletService(protoPath, { logger, engines, relayer })
   })
 
   it('sets a protoPath', () => expect(wallet.protoPath).to.eql(protoPath))
   it('sets a logger', () => expect(wallet.logger).to.eql(logger))
-  it('sets an engine', () => expect(wallet.engine).to.eql(engine))
+  it('sets engines', () => expect(wallet.engines).to.eql(engines))
 
   it('loads a proto file', () => {
     expect(loadProtoStub).to.have.been.calledWith(protoPath)
@@ -88,7 +86,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         commitBalanceSpy,
         expectedMessageId,
-        { logger, engine, relayer },
+        { logger, engines, relayer },
         { EmptyResponse: responseStub }
       )
     })

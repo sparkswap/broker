@@ -168,12 +168,12 @@ describe('BrokerRPCServer', () => {
 
     it('creates a wallet service', () => {
       const logger = 'mylogger'
-      const engine = 'myengine'
+      const engines = 'myengines'
 
-      const server = new BrokerRPCServer({ logger, engine })
+      const server = new BrokerRPCServer({ logger, engines })
 
       expect(WalletService).to.have.been.calledOnce()
-      expect(WalletService).to.have.been.calledWith(protoPath, sinon.match({ logger, engine }))
+      expect(WalletService).to.have.been.calledWith(protoPath, sinon.match({ logger, engines }))
       expect(WalletService).to.have.been.calledWithNew()
       expect(server).to.have.property('walletService')
       expect(server.walletService).to.be.equal(walletService)

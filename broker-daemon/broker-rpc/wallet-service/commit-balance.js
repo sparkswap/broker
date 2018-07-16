@@ -34,14 +34,21 @@ const SUPPORTED_SYMBOLS = currencies.reduce((obj, currency) => {
  * @param {Object} request.params
  * @param {RelayerClient} request.relayer
  * @param {Logger} request.logger
- * @param {Engine} request.engine
+ * @param {Engine} request.engines
  * @param {Object} responses
  * @param {function} responses.EmptyResponse
  * @return {responses.EmptyResponse}
  */
-async function commitBalance ({ params, relayer, logger, engine }, { EmptyResponse }) {
+async function commitBalance ({ params, relayer, logger, engines }, { EmptyResponse }) {
   const { balance, symbol } = params
   const { address } = await relayer.paymentChannelNetworkService.getAddress({symbol})
+
+  const engine = engines.get(symbol)
+
+  if (!engine) {
+    logger.error(`Could not find engine: ${symbol}`)
+    throw new PublicError(`Unable to generate address for symbol: ${symbol}`)
+  }
 
   logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balance}`)
 
@@ -54,11 +61,8 @@ async function commitBalance ({ params, relayer, logger, engine }, { EmptyRespon
     logger.error(`Balance from the client exceeds maximum balance allowed (${MAX_CHANNEL_BALANCE}).`, { balance })
     throw new PublicError(`Maxium balance of ${MAX_CHANNEL_BALANCE} exceeded for committing to the relayer. Please try again.`)
   }
-  if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
-    throw new PublicError(`Unsupported symbol for committing a balance: ${symbol}`)
-  }
 
-  await engine.createChannel(address, balance, symbol)
+  await engine.createChannel(address, balance)
 
   const paymentChannelNetworkAddress = await engine.getPaymentChannelNetworkAddress()
 
