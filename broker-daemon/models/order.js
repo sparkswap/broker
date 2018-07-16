@@ -134,8 +134,17 @@ class Order {
   get paramsForPrepareSwap () {
     const { orderId, swapHash, inboundSymbol, inboundAmount } = this
 
-    if (![ orderId, swapHash, inboundSymbol, inboundAmount ].every(param => !!param)) {
-      throw new Error('orderId, swapHash, inboundSymbol, inboundAmount are required to prepare a swap.')
+    if (!orderId) {
+      throw new Error(`paramsForGetPreimage: orderId is missing.`)
+    }
+    if (!swapHash) {
+      throw new Error(`paramsForGetPreimage: swapHash is missing.`)
+    }
+    if (!inboundSymbol) {
+      throw new Error(`paramsForGetPreimage: inboundSymbol is missing.`)
+    }
+    if (!inboundAmount) {
+      throw new Error(`paramsForGetPreimage: inboundAmount is missing.`)
     }
 
     return { orderId, swapHash, symbol: inboundSymbol, amount: inboundAmount }
@@ -144,8 +153,11 @@ class Order {
   get paramsForGetPreimage () {
     const { swapHash, inboundSymbol } = this
 
-    if (![ swapHash, inboundSymbol ].every(param => !!param)) {
-      throw new Error('swapHash, inboundSymbol are required to get a swap preimage.')
+    if (!swapHash) {
+      throw new Error(`paramsForGetPreimage: swapHash is missing.`)
+    }
+    if (!inboundSymbol) {
+      throw new Error(`paramsForGetPreimage: inboundSymbol is missing.`)
     }
 
     return { swapHash, symbol: inboundSymbol }
@@ -154,8 +166,11 @@ class Order {
   get paramsForComplete () {
     const { swapPreimage, orderId } = this
 
-    if (![ swapPreimage, orderId ].every(param => !!param)) {
-      throw new Error('swapPreimage, orderId are required to get a swap preimage.')
+    if (!swapPreimage) {
+      throw new Error(`paramsForGetPreimage: swapPreimage is missing.`)
+    }
+    if (!orderId) {
+      throw new Error(`paramsForGetPreimage: orderId is missing.`)
     }
 
     return { swapPreimage, orderId }
