@@ -5,19 +5,8 @@ message HealthCheckResponse {
     string engine_status = 0;
     string relayer_status = 1;
 }
-
-message GetDaemonConfigResponse {
-
-    string relayer_rpc_host = 0;
-    string relayer_lnd_host = 1;
-    string daemon_rpc_host = 2;
-    string daemon_lnd_host = 3;
-    string daemon_public_key = 5;
-    string daemon_default_markets = 6;
-}
 service AdminService {
     rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
-    rpc GetDaemonConfig (google.protobuf.Empty) returns (GetDaemonConfigResponse);
 }
 
 message google {
