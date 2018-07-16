@@ -67,39 +67,22 @@ message CreateBlockOrderResponse {
     string block_order_id = 0;
 }
 
-enum BlockOrderStatus {
-
-    ACTIVE = 0;
-    CANCELLED = 1;
-    COMPLETED = 2;
-    FAILED = 3;
-}
-
-enum OrderStatus {
-
-    CREATED = 0;
-    PLACED = 1;
-    FILLED = 2;
-    EXECUTED = 3;
-    COMPLETED = 4;
-    REJECTED = 5;
-}
-
 message Order {
 
     string order_id = 0;
     OrderStatus order_status = 1;
     string amount = 2;
     string price = 3;
-}
 
-enum FillStatus {
+    enum OrderStatus {
 
-    CREATED = 0;
-    FILLED = 1;
-    EXECUTED = 2;
-    COMPLETED = 3;
-    REJECTED = 4;
+        CREATED = 0;
+        PLACED = 1;
+        FILLED = 2;
+        EXECUTED = 3;
+        COMPLETED = 4;
+        REJECTED = 5;
+    }
 }
 
 message Fill {
@@ -109,6 +92,15 @@ message Fill {
     FillStatus fill_status = 2;
     string amount = 3;
     string price = 4;
+
+    enum FillStatus {
+
+        CREATED = 0;
+        FILLED = 1;
+        EXECUTED = 2;
+        COMPLETED = 3;
+        REJECTED = 4;
+    }
 }
 
 message BlockOrder {
@@ -125,6 +117,14 @@ message BlockOrder {
     string amount = 3;
     TimeInForce time_in_force = 5;
     BlockOrderStatus status = 6;
+
+    enum BlockOrderStatus {
+
+        ACTIVE = 0;
+        CANCELLED = 1;
+        COMPLETED = 2;
+        FAILED = 3;
+    }
 }
 
 message GetBlockOrderRequest {
@@ -140,7 +140,7 @@ message GetBlockOrderResponse {
         string limit_price = 14;
     }
 
-    BlockOrderStatus status = 0;
+    BlockOrder.BlockOrderStatus status = 0;
     string market = 10;
     Side side = 11;
     string amount = 12;
