@@ -516,6 +516,7 @@ describe('OrderStateMachine', () => {
       osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.onEnterPlaced = sinon.stub()
       osm.order = fakeOrder
+      osm.tryTo = sinon.stub()
 
       await osm.goto('placed')
     })
@@ -533,6 +534,88 @@ describe('OrderStateMachine', () => {
       expect(relayer.makerService.executeOrder).to.have.been.calledOnce()
       expect(relayer.makerService.executeOrder).to.have.been.calledWith({ orderId })
     })
+
+    it('completes the order after preparing to execute', async () => {
+      await osm.execute()
+      await delay(5)
+
+      expect(osm.tryTo).to.have.been.calledOnce()
+      expect(osm.tryTo).to.have.been.calledWith('complete')
+    })
+  })
+
+  describe('#complete', () => {
+    let fakeOrder
+    let osm
+    let completeOrderStub
+    let getSettledSwapPreimageStub
+    let setSettledParams
+    let preimage
+    let orderId
+    let swapHash
+    let inboundSymbol
+    let engine
+
+    beforeEach(async () => {
+      preimage = 'as90fdha9s8hf0a8sfhd=='
+      completeOrderStub = sinon.stub().resolves({})
+      getSettledSwapPreimageStub = sinon.stub().resolves(preimage)
+      orderId = '1234'
+      swapHash = '0q9wudf09asdf'
+      inboundSymbol = 'LTC'
+
+      setSettledParams = sinon.stub()
+
+      fakeOrder = {
+        orderId,
+        swapHash,
+        inboundSymbol,
+        paramsForGetPreimage: {
+          swapHash,
+          symbol: inboundSymbol
+        },
+        paramsForComplete: {
+          swapPreimage: preimage,
+          orderId: orderId
+        },
+        setSettledParams
+      }
+      engine = { getSettledSwapPreimage: getSettledSwapPreimageStub }
+      relayer = {
+        makerService: {
+          completeOrder: completeOrderStub
+        }
+      }
+
+      let engines = new Map([ [inboundSymbol, engine] ])
+
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
+      osm.order = fakeOrder
+      osm.tryTo = sinon.stub()
+
+      await osm.goto('executing')
+    })
+
+    it('gets the preimage from the engine', async () => {
+      await osm.complete()
+
+      expect(getSettledSwapPreimageStub).to.have.been.calledOnce()
+      expect(getSettledSwapPreimageStub).to.have.been.calledWith(swapHash)
+    })
+
+    it('puts the preimage on the order', async () => {
+      await osm.complete()
+
+      expect(setSettledParams).to.have.been.calledOnce()
+      expect(setSettledParams).to.have.been.calledWith({ swapPreimage: preimage })
+    })
+
+    it('completes the order on the relayer', async () => {
+      await osm.complete()
+
+      expect(completeOrderStub).to.have.been.calledOnce()
+      expect(completeOrderStub).to.have.been.calledWith({ orderId, swapPreimage: preimage })
+    })
   })
 
   describe('#goto', () => {
@@ -540,6 +623,7 @@ describe('OrderStateMachine', () => {
 
     beforeEach(() => {
       osm = new OrderStateMachine({ store, logger, relayer, engines })
+      osm.tryTo = sinon.stub()
     })
 
     it('moves the state to the given state', async () => {
@@ -552,6 +636,14 @@ describe('OrderStateMachine', () => {
       await osm.goto('created')
 
       return expect(store.put).to.not.have.been.called
+    })
+
+    it('completes the order if in an executing state', async () => {
+      await osm.goto('executing')
+      await delay(5)
+
+      expect(osm.tryTo).to.have.been.calledOnce()
+      expect(osm.tryTo).to.have.been.calledWith('complete')
     })
   })
 
