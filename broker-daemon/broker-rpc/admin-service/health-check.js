@@ -45,6 +45,7 @@ async function getRelayerStatus (relayer) {
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
  * @param {Object} request.logger
+ * @param {Map<String, Engine>} requst.engines - all available Payment Channel Network engines in the Broker
  * @param {Object} responses
  * @param {function} responses.HealthCheckResponse - constructor for HealthCheckResponse messages
  * @return {responses.HealthCheckResponse}
