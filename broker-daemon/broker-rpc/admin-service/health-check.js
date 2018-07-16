@@ -51,13 +51,11 @@ async function getRelayerStatus (relayer) {
  * @return {responses.HealthCheckResponse}
  */
 async function healthCheck ({ relayer, logger, engines }, { HealthCheckResponse }) {
-  const engineStatus = []
-
-  for (var [symbol, engine] of engines) {
+  const engineStatus = await Promise.all(Array.from(engines).map(async ([symbol, engine]) => {
     var status = await getEngineStatus(engine)
     logger.debug(`Received status from ${symbol} engine`, { status })
-    engineStatus.push({ symbol, status })
-  }
+    return { symbol, status }
+  }))
 
   const relayerStatus = await getRelayerStatus(relayer)
   logger.debug(`Received status from relayer`, { relayerStatus })
