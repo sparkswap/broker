@@ -45,13 +45,18 @@ async function getRelayerStatus (relayer) {
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
  * @param {Object} request.logger
+ * @param {Map<String, Engine>} requst.engines - all available Payment Channel Network engines in the Broker
  * @param {Object} responses
  * @param {function} responses.HealthCheckResponse - constructor for HealthCheckResponse messages
  * @return {responses.HealthCheckResponse}
  */
-async function healthCheck ({ relayer, logger, engine }, { HealthCheckResponse }) {
-  const engineStatus = await getEngineStatus(engine)
-  logger.debug(`Received status from engine`, { engineStatus })
+async function healthCheck ({ relayer, logger, engines }, { HealthCheckResponse }) {
+  const engineStatus = await Promise.all(Array.from(engines).map(async ([symbol, engine]) => {
+    var status = await getEngineStatus(engine)
+    logger.debug(`Received status from ${symbol} engine`, { status })
+    return { symbol, status }
+  }))
+
   const relayerStatus = await getRelayerStatus(relayer)
   logger.debug(`Received status from relayer`, { relayerStatus })
   return new HealthCheckResponse({ engineStatus, relayerStatus })

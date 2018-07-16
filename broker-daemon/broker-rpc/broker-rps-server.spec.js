@@ -16,6 +16,8 @@ describe('BrokerRPCServer', () => {
   let walletService
   let pathResolve
   let protoPath
+  let engine
+  let engines
 
   beforeEach(() => {
     adminService = {
@@ -53,6 +55,9 @@ describe('BrokerRPCServer', () => {
     BrokerRPCServer.__set__('grpc', {
       Server: rpcServer
     })
+
+    engine = sinon.stub()
+    engines = new Map()
 
     protoPath = 'mypath'
     pathResolve = sinon.stub().returns(protoPath)
@@ -107,10 +112,10 @@ describe('BrokerRPCServer', () => {
       const logger = 'mylogger'
       const relayer = 'myrelayer'
 
-      const server = new BrokerRPCServer({ logger, relayer })
+      const server = new BrokerRPCServer({ logger, relayer, engine, engines })
 
       expect(AdminService).to.have.been.calledOnce()
-      expect(AdminService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer }))
+      expect(AdminService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer, engine, engines }))
       expect(AdminService).to.have.been.calledWithNew()
       expect(server).to.have.property('adminService')
       expect(server.adminService).to.be.equal(adminService)

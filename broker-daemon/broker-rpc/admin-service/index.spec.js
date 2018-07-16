@@ -17,6 +17,7 @@ describe('AdminService', () => {
 
   let relayer
   let engine
+  let engines
 
   let server
 
@@ -35,6 +36,7 @@ describe('AdminService', () => {
 
     relayer = sinon.stub()
     engine = sinon.stub()
+    engines = new Map()
 
     GrpcMethod = sinon.stub()
     fakeRegistered = sinon.stub()
@@ -50,7 +52,7 @@ describe('AdminService', () => {
   })
 
   beforeEach(() => {
-    server = new AdminService(protoPath, { logger, relayer, engine })
+    server = new AdminService(protoPath, { logger, relayer, engine, engines })
   })
 
   it('assigns a proto path', () => {
@@ -127,9 +129,9 @@ describe('AdminService', () => {
         expect(callArgs[2].relayer).to.be.equal(relayer)
       })
 
-      it('passes in an engine', () => {
-        expect(callArgs[2]).to.have.property('engine')
-        expect(callArgs[2].engine).to.be.equal(engine)
+      it('passes in the engines', () => {
+        expect(callArgs[2]).to.have.property('engines')
+        expect(callArgs[2].engines).to.be.equal(engines)
       })
     })
 

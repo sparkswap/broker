@@ -5,7 +5,7 @@ const healthCheck = require('./health-check')
 const getDaemonConfig = require('./get-daemon-config')
 
 class AdminService {
-  constructor (protoPath, { logger, relayer, engine }) {
+  constructor (protoPath, { logger, relayer, engine, engines }) {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
     this.logger = logger
@@ -19,7 +19,7 @@ class AdminService {
     } = this.proto
 
     this.implementation = {
-      healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer, engine }, { HealthCheckResponse }).register(),
+      healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer, engines }, { HealthCheckResponse }).register(),
       getDaemonConfig: new GrpcUnaryMethod(getDaemonConfig, this.messageId('getDaemonConfig'), { logger, engine }, { GetDaemonConfigResponse }).register()
     }
   }
