@@ -34,7 +34,7 @@ describe('get-daemon-config', () => {
 
     revert = getDaemonConfig.__set__('process', {
       env: {
-        EXCHANGE_RPC_HOST: rpcHost,
+        RELAYER_RPC_HOST: rpcHost,
         EXCHANGE_LND_HOST: lndHost,
         MARKETS: markets,
         EXTERNAL_ADDRESS: daemonExternal,

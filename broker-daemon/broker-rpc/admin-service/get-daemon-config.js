@@ -13,7 +13,7 @@ async function getDaemonConfig ({ logger, engine }, { GetDaemonConfigResponse })
 
   const {
     MARKETS: daemonDefaultMarkets,
-    EXCHANGE_RPC_HOST: relayerRpcHost,
+    RELAYER_RPC_HOST: relayerRpcHost,
     EXCHANGE_LND_HOST: relayerLndHost,
     LND_EXTERNAL_ADDRESS: daemonLndHost,
     EXTERNAL_ADDRESS: daemonRpcHost
