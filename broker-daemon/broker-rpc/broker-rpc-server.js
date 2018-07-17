@@ -39,7 +39,7 @@ class BrokerRPCServer {
 
     this.server = new grpc.Server()
 
-    this.adminService = new AdminService(this.protoPath, { logger, relayer, engine })
+    this.adminService = new AdminService(this.protoPath, { logger, relayer, engine, engines })
     this.server.addService(this.adminService.definition, this.adminService.implementation)
 
     this.orderService = new OrderService(this.protoPath, { logger, blockOrderWorker })
@@ -48,7 +48,7 @@ class BrokerRPCServer {
     this.orderBookService = new OrderBookService(this.protoPath, { logger, relayer, orderbooks })
     this.server.addService(this.orderBookService.definition, this.orderBookService.implementation)
 
-    this.walletService = new WalletService(this.protoPath, { logger, engines, engine, relayer })
+    this.walletService = new WalletService(this.protoPath, { logger, engines, relayer })
     this.server.addService(this.walletService.definition, this.walletService.implementation)
   }
 

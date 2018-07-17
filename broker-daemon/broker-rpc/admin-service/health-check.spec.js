@@ -17,11 +17,15 @@ describe('health-check', () => {
     let statusOK
     let result
     let engineStub
+    let engines
     let reverts = []
 
     beforeEach(() => {
       relayerStub = sinon.stub()
+      engines = new Map()
       engineStub = sinon.stub()
+      engines.set('BTC', engineStub)
+      engines.set('LTC', engineStub)
       loggerStub = {
         info: sinon.stub(),
         debug: sinon.stub()
@@ -37,7 +41,7 @@ describe('health-check', () => {
     })
 
     beforeEach(async () => {
-      result = await healthCheck({ relayer: relayerStub, logger: loggerStub, engine: engineStub }, { HealthCheckResponse })
+      result = await healthCheck({ relayer: relayerStub, logger: loggerStub, engines: engines }, { HealthCheckResponse })
     })
 
     afterEach(() => {
@@ -45,7 +49,7 @@ describe('health-check', () => {
     })
 
     it('calls getEngineStatus to retrieve engine health status', () => {
-      expect(engineStatusStub).to.have.been.calledOnce()
+      expect(engineStatusStub).to.have.been.calledTwice()
       expect(engineStatusStub).to.have.been.calledWith(engineStub)
     })
 
@@ -57,7 +61,7 @@ describe('health-check', () => {
     it('returns status values', async () => {
       expect(result).to.be.an.instanceOf(HealthCheckResponse)
       expect(HealthCheckResponse).to.have.been.calledOnce()
-      expect(HealthCheckResponse).to.have.been.calledWith(sinon.match({ engineStatus: statusOK, relayerStatus: statusOK }))
+      expect(HealthCheckResponse).to.have.been.calledWith(sinon.match({ engineStatus: [ { symbol: 'BTC', status: statusOK }, { symbol: 'LTC', status: statusOK } ], relayerStatus: statusOK }))
     })
   })
 
