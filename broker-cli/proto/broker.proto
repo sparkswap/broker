@@ -5,166 +5,426 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
+/**
+ * Side is one of the two sides of any market.
+ */
 enum Side {
+  // A BID is the buy side of a market.
   BID = 0;
+  // An ASK is the sell side of a market.
   ASK = 1;
 }
 
-message EngineStatus {
-  string symbol = 1;
-  string status = 2;
-}
-
+/**
+ * HealthCheckResponse provides information on the health of a BrokerDaemon.
+ */
 message HealthCheckResponse {
+  // The status of every engine available on the BrokerDaemon.
   repeated EngineStatus engine_status = 1;
+  // The status of the relayer this BrokerDaemon is connected to, either `'OK'` or the error message returned when connecting to it.
   string relayer_status = 2;
+
+  /**
+   * EngineStatus provides the status of an engine for a currency.
+   */
+  message EngineStatus {
+    // The common symbol that the engine is responsible for, e.g. `BTC` or `LTC`
+    string symbol = 1;
+    // The status of the engine, either `'OK'` or the error message returned when accessing it.
+    string status = 2;
+  }
 }
 
+/**
+ * The AdminService performs administrative tasks on the BrokerDaemon.
+ *
+ * ```javascript
+ * const grpc = require('grpc')
+ * const caller = require('grpc-caller')
+ * const PROTO_OPTIONS = {
+ *   convertFieldsToCamelCase: true,
+ *   binaryAsBase64: true,
+ *   longsAsStrings: true,
+ *   enumsAsStrings: true
+ * }
+ * const brokerProto = grpc.load('/path/to/broker.proto', 'proto', PROTO_OPTIONS)
+ * const address = 'localhost:27492'
+ * const adminService = caller(address, brokerProto.AdminService)
+ * ```
+ */
 service AdminService {
+  /**
+   * The HealthCheck returns a status of all of the components of the BrokerDaemon.
+   *
+   * ```javascript
+   * const { engineStatus, relayerStatus } = await adminService.healthCheck({})
+   * console.log({ engineStatus, relayerStatus })
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```json
+   * {
+   *   "engineStatus": [
+   *     {
+   *       "symbol": "BTC",
+   *       "status": "OK"
+   *     },
+   *     {
+   *       "symbol": "LTC",
+   *       "status": "OK"
+   *     },
+   *   ],
+   *   "relayerStatus": "OK"
+   * }
+   * ```
+   */
   rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
 }
 
+/**
+ * The time restriction for an order given by the user to the Broker.
+ * It is important to note that this time in force only controls the Broker's actions and does not correspond to a time-in-force on the underlying network.
+ */
 enum TimeInForce {
-  GTC = 0;
-  FOK = 1;
-  IOC = 2;
+  GTC = 0; // Good-til-cancelled, an order that remains in force until cancelled by the user
+  FOK = 1; // Fill-or-kill, an order that can be completely filled or will not be executed
+  IOC = 2; // Immediate-or-cancel, an order that will have as much filled immediately as possible with the remainder cancelled
 }
 
+/**
+ * Parameters to create a block order on the Broker.
+ */
 message CreateBlockOrderRequest {
+  // The market to place the block order in, e.g. `'BTC/LTC'`. Markets are always expressed as the combination of two common symbols, separated by a `/`.
   string market = 1;
+  // Side of the market that the user wishes to take.
   Side side = 2;
-  /**
-   * Amounts are expressed in common units for a currency (e.g. BTC) and therefore support decimals
-   * Protobuf does not support a decimal type, so we represent it as a string
-   */
+  // Amount, in common units for a currency (e.g. bitcoins for BTC) that is the size of the order. This field supports decimal representation of units but uses a string since protobuf lacks a decimal type (e.g. `'0.16'`)
   string amount = 3;
   oneof price_restriction {
+    // Whether this order should be executed as a market order, i.e. at the best available price in the market. It is important to note that there is no concept of a Market Order in the underlying network. Instead, the Broker will simulate Market Order behavior by filling all orders in the market until the order is completely filled.
     bool is_market_order = 4;
-    /**
-     * Prices are decimals but are represented as strings since Protobuf does not support a decimal type
-     */
+    // Price at which this order should executed, represented as a decimal string due to lack of Protobuf decimal support (e.g. `'1.05'`).
     string limit_price = 5;
   }
 
+  // Time restriction for this block order.
   TimeInForce time_in_force = 6;
 }
 
+/**
+ * Response from the broker after creating a block order.
+ */
 message CreateBlockOrderResponse {
+  // The unique ID of the block order assigned by the broker. This is used to retrieve information about the order and to cancel it.
   string block_order_id = 1;
 }
 
+/**
+ * An order on the underlying Kinesis Network.
+ */
 message Order {
+
+  /**
+   * Status of an order on the underlying Kinesis Network.
+   */
   enum OrderStatus {
+    // The order has been created on the Relayer.
     CREATED = 0;
+    // The order has been placed and communicated to other marker participants.
     PLACED = 1;
+    // The order has been filled by another market participant.
     FILLED = 2;
+    // The swap has been executed on the Payment Channel Networks
     EXECUTED = 3;
+    // The swap preimage has been returned to the Relayer.
     COMPLETED = 4;
+    // The order has encountered a failure.
     REJECTED = 5;
   }
 
+  // Unique ID assigned by the Relayer for this order.
   string order_id = 1;
+  // Status of the order on the Kinesis Network.
   OrderStatus order_status = 2;
-  /**
-   * Amounts are expressed in common units for a currency (e.g. BTC) and therefore support decimals
-   * Protobuf does not support a decimal type, so we represent it as a string
-   */
+  // Amount of the order expressed in a decimal string of common units for a currency (e.g. bitcoins for BTC).
   string amount = 3;
-  /**
-   * Prices are decimals but are represented as strings since Protobuf does not support a decimal type
-   */
+  // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the underlying Kinesis Network have prices.
   string price = 4;
 }
 
+/**
+ * A fill of an order on the underlying Kinesis Network.
+ */
 message Fill {
+
+  /**
+   * Status of the fill on the underlying Kinesis Network.
+   */
   enum FillStatus {
+    // The fill has been created on the Relayer.
     CREATED = 0;
+    // The fill has been accepted as the fill for the given order.
     FILLED = 1;
+    // The swap has been executed on the Payment Channel Networks.
     EXECUTED = 2;
+    // The preimage has been returned to the Relayer by the Maker.
     COMPLETED = 3;
+    // The fill has encountered a failure.
     REJECTED = 4;
   }
+  // The Relayer-assigned unique ID of the order that this fill is for.
   string order_id = 1;
+  // The Relayer-assignded unique ID for this fill.
   string fill_id = 2;
+  // Status of the fill on the Kinesis Network.
   FillStatus fill_status = 3;
-  /**
-   * Amounts are expressed in common units for a currency (e.g. BTC) and therefore support decimals
-   * Protobuf does not support a decimal type, so we represent it as a string
-   */
+  // Amount of the order to fill, expressed in a decimal string of common units for a currency (e.g. bitcoins for BTC). This can be any amount greater than zero and less than or equal to the amount in the order.
   string amount = 4;
+  // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the underlying Kinesis Network have prices.
   string price = 5;
 }
 
+/**
+ * An order placed by a user on a Broker.
+ * These are called Block Orders because they are for (relatively) large blocks that get broken up into individual Orders and Fills on the Kinesis Network.
+ */
 message BlockOrder {
+
+  /**
+   * Status of the block order on the Broker.
+   */
   enum BlockOrderStatus {
+    // The block order is still being worked by the Broker.
     ACTIVE = 0;
+    // The block order was cancelled by the user.
     CANCELLED = 1;
+    // The block order has successfully completed execution.
     COMPLETED = 2;
+    // The block order has failed at some point and is no longer attempting execution.
     FAILED = 3;
   }
+
+  // The unique ID for the block order assigned by the Broker.
   string block_order_id = 1;
+  // The market that the block order is for, e.g. `'BTC/LTC'`. Markets are always expressed as the combination of two common symbols, separated by a `/`.
   string market = 2;
+  // The side of the market that the block order is taking.
   Side side = 3;
-  /**
-   * Amounts are expressed in common units for a currency (e.g. BTC) and therefore support decimals
-   * Protobuf does not support a decimal type, so we represent it as a string
-   */
+  // Amount, in common units for a currency (e.g. bitcoins for BTC) that is the size of the order. This field supports decimal representation of units but uses a string since protobuf lacks a decimal type (e.g. `'0.16'`)
   string amount = 4;
   oneof price_restriction {
+    // Whether this block order is/was executed as a market order, i.e. at the best available price in the market. It is important to note that there is no concept of a Market Order in the underlying network. Instead, the Broker will simulate Market Order behavior by filling all orders in the market until the order is completely filled.
     bool is_market_order = 13;
-    /**
-     * Prices are decimals but are represented as strings since Protobuf does not support a decimal type
-     */
+    // Price at which this order should executed, represented as a decimal string due to lack of Protobuf decimal support (e.g. `'1.05'`).
     string limit_price = 14;
   }
+
+  // Time restriction for this block order.
   TimeInForce time_in_force = 5;
+  // Current status of the block order.
   BlockOrderStatus status = 6;
 }
 
+/**
+ * Parameters to retrieve a previously placed block order.
+ */
 message GetBlockOrderRequest {
+  // ID for the block order assigned by the Broker.
   string block_order_id = 1;
 }
 
+/**
+ * Representation of a retrieved block order.
+ */
 message GetBlockOrderResponse {
+  // Status of the block order.
   BlockOrder.BlockOrderStatus status = 1;
 
+  // The market that the block order is for, e.g. `'BTC/LTC'`. Markets are always expressed as the combination of two common symbols, separated by a `/`.
   string market = 10;
+  // The side of the market that the block order is taking.
   Side side = 11;
-  /**
-   * Amounts are expressed in common units for a currency (e.g. BTC) and therefore support decimals
-   * Protobuf does not support a decimal type, so we represent it as a string
-   */
+  // Amount, in common units for a currency (e.g. bitcoins for BTC) that is the size of the order. This field supports decimal representation of units but uses a string since protobuf lacks a decimal type (e.g. `'0.16'`)
   string amount = 12;
   oneof price_restriction {
+    // Whether this block order is/was executed as a market order, i.e. at the best available price in the market. It is important to note that there is no concept of a Market Order in the underlying network. Instead, the Broker will simulate Market Order behavior by filling all orders in the market until the order is completely filled.
     bool is_market_order = 13;
-    /**
-     * Prices are decimals but are represented as strings since Protobuf does not support a decimal type
-     */
+    // Price at which this order should executed, represented as a decimal string due to lack of Protobuf decimal support (e.g. `'1.05'`).
     string limit_price = 14;
   }
+  // Time restriction for this block order.
   TimeInForce time_in_force = 15;
 
+  // Amount of the block order that has been filled, in common units for a currency (e.g. bitcoins for BTC) represented as a decimal string (e.g. `'0.10'`)
   string fill_amount = 20;
+  // All orders on the underlying Kinesis Network that were placed by the Broker in support of this block order.
   repeated Order open_orders = 21;
+  // All fills of orders on the underlying Kinesis Network that were undertaken by the Broker in support of this block order.
   repeated Fill fills = 22;
 }
 
+
+/**
+ * Request to cancel a previously created block order.
+ */
 message CancelBlockOrderRequest {
+  // Unique ID for the block order as assigned by the Broker.
   string block_order_id = 1;
 }
 
+/**
+ * All block orders in a given market.
+ */
 message GetBlockOrdersResponse {
+  // A list of all block orders in the market.
   repeated BlockOrder block_orders = 1;
 }
 
+/**
+ * Request to retrieve all block orders in a given market.
+ */
 message GetBlockOrdersRequest {
+  // Market for which to retrieve block orders, expressed as a string separating two common symbols with a '/', e.g. `'BTC/LTC'`
   string market = 1;
 }
 
+/**
+ * The OrderService manages all trading activity on the Broker.
+ * It is the primary way that users interact with the Broker on a day-to-day basis.
+ * 
+ * The OrderService deals primarily with block orders, which are instructions given to the Broker by the end-user and are executed by the Broker on the Kinesis Network.
+ * Brokers "work" block orders by breaking them into individual actions on the Kinesis Network, namely placing limit orders and filling other participants' limit orders.
+ * This separation between block orders worked by the Broker and the underlying orders on the Kinesis Network allows users to get access to the features of orders they are accustomed to (e.g. market orders) without placing additional trust in the Relayer or exposing themselves to front-running.
+ *
+ * ```javascript
+ * const grpc = require('grpc')
+ * const caller = require('grpc-caller')
+ * const PROTO_OPTIONS = {
+ *   convertFieldsToCamelCase: true,
+ *   binaryAsBase64: true,
+ *   longsAsStrings: true,
+ *   enumsAsStrings: true
+ * }
+ * const brokerProto = grpc.load('/path/to/broker.proto', 'proto', PROTO_OPTIONS)
+ * const address = 'localhost:27492'
+ * const orderService = caller(address, brokerProto.OrderService)
+ * ```
+ */
 service OrderService {
+  /**
+   * CreateBlockOrder creates new block orders on the Broker. This is the only way to initiate a trade on the broker.
+   * Creating a block order returns a block order ID immediately, but that is not necessarily an indication that the block order has been successfully executed.
+   * The user should check on the block order's status after it is created to understand if it has been completed.
+   *
+   * > Placing a market order:
+   * 
+   * ```javascript
+   * const { blockOrderId } = await orderService.createBlockOrder({
+   *  market: 'BTC/LTC', // trading BTC and LTC
+   *  side: 'BID', // Place a buy order
+   *  amount: '0.0001', // 0.0001 BTC being traded
+   *  isMarketOrder: true, // use the best available price
+   *  timeInForce: 'GTC' // execute this order until I cancel it
+   * })
+   * console.log({ blockOrderId })
+   * ```
+   *
+   * > The above command will create a market block order on the Broker and will print:
+   *
+   * ```json
+   * { "blockOrderId": "" }
+   * ```
+   *
+   * > Placing a limit order:
+   * 
+   * ```javascript
+   * const { blockOrderId } = await orderService.createBlockOrder({
+   *  market: 'BTC/LTC', // trading BTC and LTC
+   *  side: 'BID', // Place a buy order
+   *  amount: '0.0001', // 0.0001 BTC being traded
+   *  limitPrice: '1.1', // at a price no worse than 1.1 LTC per BTC
+   *  timeInForce: 'GTC' // execute this order until I cancel it
+   * })
+   * console.log({ blockOrderId })
+   * ```
+   *
+   * > The above command will create a limit block order on the Broker and will print:
+   *
+   * ```json
+   * { "blockOrderId": "" }
+   * ```
+   */
   rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse);
+  /**
+   * GetBlockOrder returns information on a previously placed block order. It should be used to check on the status of placed block orders.
+   *
+   * ```javascript
+   * const blockOrder = await orderService.getBlockOrder({ blockOrderId: '' })
+   * console.log(blockOrder)
+   * ```
+   *
+   * > The above command will retrieve the block order on the Broker and will print:
+   *
+   * ```json
+   * {
+   *   "status": "",
+   *   "market": "BTC/LTC",
+   *   "side": "BID",
+   *   "amount": "0.0001",
+   *   "isMarketOrder": true,
+   *   "timeInForce": "GTC",
+   *   "open_orders": [],
+   *   "fills": []
+   * }
+   * ```
+   */
   rpc GetBlockOrder (GetBlockOrderRequest) returns (GetBlockOrderResponse);
+  /**
+   * CancelBlockOrder cancels a previously placed block order.
+   * If the block order is already completed, or consists only of orders that are already being filled (either by this Broker or a counterparty), this will have no effect, as the Broker is bound to complete those orders or else lose their deposit.
+   * If the block order is partially executed, the cancel will affect only future actions, the Broker will not attempt to roll back trades that have already been made.
+   *
+   * ```javascript
+   * await orderService.getBlockOrder({ blockOrderId: '' })
+   * ```
+   *
+   * > The above command will cancel the block order, but has no output.
+   */
   rpc CancelBlockOrder (CancelBlockOrderRequest) returns (google.protobuf.Empty);
+  /**
+   * GetBlockOrders returns information on all of the block orders placed in a single market, like `BTC/LTC`.
+   * It does not include complete information, such as the underlying orders and fills on the Kinesis Network, or the amount of the order that has been filled. For that, use [GetBlockOrder](#getblockorder).
+   *
+   * ```javascript
+   * const blockOrders = await orderService.getBlockOrders({ market: 'BTC/LTC' })
+   * console.log(blockOrders)
+   * ```
+   *
+   * > The above command will retrieve the block orders on the Broker and will print:
+   *
+   * ```json
+   * [
+   *   {
+   *     "status": "",
+   *     "market": "BTC/LTC",
+   *     "side": "BID",
+   *     "amount": "0.0001",
+   *     "isMarketOrder": true,
+   *     "timeInForce": "GTC"
+   *   },
+   *   {
+   *     "status": "",
+   *     "market": "BTC/LTC",
+   *     "side": "BID",
+   *     "amount": "0.0001",
+   *     "limitPrice": "1.1",
+   *     "timeInForce": "GTC"
+   *   }
+   * ]
+   * ```
+   */
   rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse);
 }
 
