@@ -428,29 +428,108 @@ service OrderService {
   rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse);
 }
 
+/**
+ * Request for updates in a given market.
+ */
 message WatchMarketRequest {
+  // Market to retrieve updates for, e.g. `'BTC/LTC'`.
   string market = 1;
 }
 
+/**
+ * An update to the watched market.
+ */
 message WatchMarketResponse {
 
+  // Type of event this update is.
   EventType type = 1;
+  // The market update
   MarketEvent market_event = 2;
 
+  /**
+   * Types of events, used to distinguish between adding orders to a market and removing them.
+   */
   enum EventType {
+      // Add an event to a market, typically due to an order being placed.
       ADD = 0;
+      // Remove an event from the market, typically due to an order being cancelled or filled.
       DELETE = 1;
   }
 }
 
+/**
+ * Market events are events that change the orderbook for a given market. The are a combination of orders, fills, and cancels.
+ */
 message MarketEvent {
-  string orderId = 1;
+  // The Relayer-assigned ID of the underlying order 
+  string order_id = 1;
+  // Amount of the order expressed in a decimal string of common units for a currency (e.g. bitcoins for BTC).
   string amount = 2;
+  // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the underlying Kinesis Network have prices.
   string price = 3;
+  // Side that the order is taking
   Side side = 4;
 }
 
+/**
+ * The OrderBookService is intended to update users on network activity and provide an up to date orderbook for the user.
+ *
+ * It is the counterpoint to the [OrderService](#orderservice) in that it is read-only and deals with the wider network,
+ * never touching the Block Orders that the user creates and cancels.
+ * 
+ * ```javascript
+ * const grpc = require('grpc')
+ * const caller = require('grpc-caller')
+ * const PROTO_OPTIONS = {
+ *   convertFieldsToCamelCase: true,
+ *   binaryAsBase64: true,
+ *   longsAsStrings: true,
+ *   enumsAsStrings: true
+ * }
+ * const brokerProto = grpc.load('/path/to/broker.proto', 'proto', PROTO_OPTIONS)
+ * const address = 'localhost:27492'
+ * const orderBookService = caller(address, brokerProto.OrderBookService)
+ * ```
+ */
 service OrderBookService {
+  /**
+   * WatchMarket opens a stream from the Broker with updates as to the current state of the orderbook.
+   * Those updates come in the form of `ADD`s and `DELETE`s, so by updating a UI with those changes, the user can see the current state of the orderbook.
+   * > Below is a simple example of a console-based UI for an orderbook:
+   *
+   * ```javascript
+   * const call = orderBookService.watchMarket(request)
+   * const orders = new Map()
+   * call.on('data', (order) => {
+   *   const { orderId, side, price, amount } = order.marketEvent
+   *   const { type } = order
+   *   if (type === EVENT_TYPES.DELETE) {
+   *     orders.delete(orderId)
+   *   } else {
+   *     orders.set(orderId, { price, amount })
+   *   }
+   *   console.clear()
+   *   console.log(Array.from(orders.values()).sort(function (a, b) { return parseFloat(a) - parseFloat(b) }))
+   * })
+   * ```
+   *
+   * > After an update, the UI would show something like this:
+   *
+   * ```json
+   * [
+   *   {
+   *     "side": "ASK",
+   *     "price": "1.1",
+   *     "amount": "0.0001"
+   *   },
+   *   {
+   *     "side": "ASK",
+   *     "price": "1.0",
+   *     "amount": "0.0001"
+   *   }
+   * ]
+   * ```
+   */
   rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
 }
 
