@@ -1,8 +1,9 @@
 const { Big } = require('./big')
 
 // This is temporarily hardcoded until we have enough data to use our own interal exchange rates
+// TODO fix this conversion once we figure out the problem with LTC max channel balance
 const MARKET_CONVERSION = {
-  'BTC/LTC': 79.612
+  'BTC/LTC': 1
 }
 
 /**

@@ -160,8 +160,6 @@ async function commitBalance (args, opts, logger) {
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    logger.info(`Operation will take roughly 3 minutes. Please DO NOT exit while operation runs: ${new Date()}`)
-
     await client.walletService.commitBalance({ balance: maxSupportedBalance.toString(), symbol })
 
     logger.info('Successfully added broker daemon to the kinesis exchange!')

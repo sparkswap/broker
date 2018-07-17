@@ -16,6 +16,7 @@ describe('commit-balance', () => {
   let createChannelStub
   let getAddressStub
   let relayerAddress
+  let engines
 
   beforeEach(() => {
     EmptyResponse = sinon.stub()
@@ -33,6 +34,7 @@ describe('commit-balance', () => {
       createChannel: createChannelStub,
       getPaymentChannelNetworkAddress: sinon.stub().resolves(relayerAddress)
     }
+    engines = new Map([['BTC', engine]])
     params = {
       balance: '10000000',
       symbol: 'BTC'
@@ -43,7 +45,7 @@ describe('commit-balance', () => {
 
   describe('committing a balance to the exchange', () => {
     beforeEach(async () => {
-      res = await commitBalance({ params, relayer, logger, engine }, { EmptyResponse })
+      res = await commitBalance({ params, relayer, logger, engines }, { EmptyResponse })
     })
 
     it('receives a payment channel network address from the relayer', () => {
@@ -51,7 +53,7 @@ describe('commit-balance', () => {
     })
 
     it('creates a channel through an engine', () => {
-      expect(engine.createChannel).to.have.been.calledWith(address, params.balance, params.symbol)
+      expect(engine.createChannel).to.have.been.calledWith(address, params.balance)
     })
 
     it('retrieves the address from the engine', () => {
@@ -83,7 +85,7 @@ describe('commit-balance', () => {
     it('throws an error for an incorrect balance', () => {
       params.balance = '100'
       return expect(
-        commitBalance({ params, relayer, logger, engine }, { EmptyResponse })
+        commitBalance({ params, relayer, logger, engines }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError)
     })
   })
@@ -94,8 +96,17 @@ describe('commit-balance', () => {
     it('throws an error for an incorrect balance', () => {
       params.balance = maxBalance + 1
       return expect(
-        commitBalance({ params, relayer, logger, engine }, { EmptyResponse })
+        commitBalance({ params, relayer, logger, engines }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError)
+    })
+  })
+
+  describe('invalid engine type', () => {
+    const badParams = {symbol: 'BAD'}
+    const errorMessage = `No engine is configured for symbol: ${badParams.symbol}`
+
+    it('throws an error', () => {
+      return expect(commitBalance({ params: badParams, relayer, logger, engines }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
     })
   })
 })

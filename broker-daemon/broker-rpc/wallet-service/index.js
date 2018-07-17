@@ -15,16 +15,15 @@ class WalletService {
    * @param {Object} options
    * @param {Logger} options.logger
    * @param {RelayerClient} options.relayer
-   * @param {LndEngine} options.engine
+   * @param {Map<String, LndEngine>} options.engines
    */
-  constructor (protoPath, { logger, engines, engine, relayer }) {
+  constructor (protoPath, { logger, engines, relayer }) {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
     this.logger = logger
-    this.engine = engine
-
     this.definition = this.proto.WalletService.service
     this.serviceName = 'WalletService'
+    this.engines = engines
 
     const {
       NewDepositAddressResponse,
@@ -39,7 +38,7 @@ class WalletService {
     this.implementation = {
       newDepositAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engines }, { NewDepositAddressResponse }).register(),
       getBalances: new GrpcUnaryMethod(getBalances, this.messageId('getBalances'), { logger, engines }, { GetBalancesResponse }).register(),
-      commitBalance: new GrpcUnaryMethod(commitBalance, this.messageId('commitBalance'), { logger, engine, relayer }, { EmptyResponse }).register()
+      commitBalance: new GrpcUnaryMethod(commitBalance, this.messageId('commitBalance'), { logger, engines, relayer }, { EmptyResponse }).register()
     }
   }
 
