@@ -20,7 +20,50 @@ message HealthCheckResponse {
   string relayer_status = 2;
 }
 
+/**
+ * The AdminService performs administrative tasks on the BrokerDaemon.
+ *
+ * ```javascript
+ * const grpc = require('grpc')
+ * const caller = require('grpc-caller')
+ * const PROTO_OPTIONS = {
+ *   convertFieldsToCamelCase: true,
+ *   binaryAsBase64: true,
+ *   longsAsStrings: true,
+ *   enumsAsStrings: true
+ * }
+ * const brokerProto = grpc.load('/path/to/broker.proto', 'proto', PROTO_OPTIONS)
+ * const address = 'localhost:27492'
+ * const adminService = caller(address, brokerProto.AdminService)
+ * ```
+ */
 service AdminService {
+  /**
+   * The HealthCheck returns a status of all of the components of the BrokerDaemon.
+   *
+   * ```javascript
+   * const { engineStatus, relayerStatus } = await adminService.healthCheck({})
+   * console.log({ engineStatus, relayerStatus })
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```json
+   * {
+   *   "engineStatus": [
+   *     {
+   *       "symbol": "BTC",
+   *       "status": "OK"
+   *     },
+   *     {
+   *       "symbol": "LTC",
+   *       "status": "OK"
+   *     },
+   *   ],
+   *   "relayerStatus": "OK"
+   * }
+   * ```
+   */
   rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
 }
 
