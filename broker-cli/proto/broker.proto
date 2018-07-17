@@ -1,5 +1,44 @@
 /**
- * This is the API documentation for the Broker Daemon RPC Server.
+ * This is the API definition for the Broker Daemon RPC Server.
+ *
+ * The Broker (or Broker Daemon) is an open source piece of software that allows anyone to
+ * operate a node that keeps control of the private keys to their cryptocurrency (like Bitcoin and Litecoin)
+ * and participate in the [Kinesis Network](http://kinesis.network) to trade those currencies.
+ *
+ * The Broker runs as a daemon on a machine you control, and you direct it to take action through the RPC Server.
+ * The Broker is responsible for translating typical trading behavior (e.g. market buys) into actions on the Kinesis Network (e.g. a BTC/LTC swap on the Lightning Network).
+ *
+ * The Broker exposes a [gRPC service](http://grpc.io) which has support for [client libraries in many languages](https://grpc.io/about/#osp).
+ *
+ * The easiest way to interact with the Broker is through the [Broker CLI](https://github.com/kinesis-exchange/broker-cli).
+ * 
+ * For more information on the Broker, see:
+ * 
+ *  - [Installing the BrokerDaemon](https://github.com/kinesis-exchange/broker)
+ *  - [Broker CLI](https://github.com/kinesis-exchange/broker-cli)
+ *  - [BrokerDaemon GitHub repository](https://github.com/kinesis-exchange/broker)
+ *
+ * For more information on the Kinesis Network as a whole, see:
+ * 
+ *  - [Kinesis Network Homepage](https://kinesis.network)
+ *  - [Kinesis Network Documentation](https://kinesis.network/docs)
+ *  - [Kinesis Network Chat](https://kinesis.network/chat)
+ *
+ * > Setting up to use the examples:
+ *
+ * ```javascript
+ * // This documentation makes use of the grpc and grpc-caller libraries on npm.
+ * // The remainder of the docs assumes this setup step.
+ * const grpc = require('grpc')
+ * const caller = require('grpc-caller')
+ * const PROTO_OPTIONS = {
+ *   convertFieldsToCamelCase: true,
+ *   binaryAsBase64: true,
+ *   longsAsStrings: true,
+ *   enumsAsStrings: true
+ * }
+ * const brokerProto = grpc.load('/path/to/broker.proto', 'proto', PROTO_OPTIONS)
+ * ```
  */
 syntax = "proto3";
 
@@ -39,15 +78,6 @@ message HealthCheckResponse {
  * The AdminService performs administrative tasks on the BrokerDaemon.
  *
  * ```javascript
- * const grpc = require('grpc')
- * const caller = require('grpc-caller')
- * const PROTO_OPTIONS = {
- *   convertFieldsToCamelCase: true,
- *   binaryAsBase64: true,
- *   longsAsStrings: true,
- *   enumsAsStrings: true
- * }
- * const brokerProto = grpc.load('/path/to/broker.proto', 'proto', PROTO_OPTIONS)
  * const address = 'localhost:27492'
  * const adminService = caller(address, brokerProto.AdminService)
  * ```
@@ -299,15 +329,6 @@ message GetBlockOrdersRequest {
  * This separation between block orders worked by the Broker and the underlying orders on the Kinesis Network allows users to get access to the features of orders they are accustomed to (e.g. market orders) without placing additional trust in the Relayer or exposing themselves to front-running.
  *
  * ```javascript
- * const grpc = require('grpc')
- * const caller = require('grpc-caller')
- * const PROTO_OPTIONS = {
- *   convertFieldsToCamelCase: true,
- *   binaryAsBase64: true,
- *   longsAsStrings: true,
- *   enumsAsStrings: true
- * }
- * const brokerProto = grpc.load('/path/to/broker.proto', 'proto', PROTO_OPTIONS)
  * const address = 'localhost:27492'
  * const orderService = caller(address, brokerProto.OrderService)
  * ```
@@ -478,15 +499,6 @@ message MarketEvent {
  * never touching the Block Orders that the user creates and cancels.
  * 
  * ```javascript
- * const grpc = require('grpc')
- * const caller = require('grpc-caller')
- * const PROTO_OPTIONS = {
- *   convertFieldsToCamelCase: true,
- *   binaryAsBase64: true,
- *   longsAsStrings: true,
- *   enumsAsStrings: true
- * }
- * const brokerProto = grpc.load('/path/to/broker.proto', 'proto', PROTO_OPTIONS)
  * const address = 'localhost:27492'
  * const orderBookService = caller(address, brokerProto.OrderBookService)
  * ```
@@ -595,15 +607,6 @@ message CommitBalanceRequest {
  * It is used primarily during set up (e.g. making deposits) of a Broker.
  * 
  * ```javascript
- * const grpc = require('grpc')
- * const caller = require('grpc-caller')
- * const PROTO_OPTIONS = {
- *   convertFieldsToCamelCase: true,
- *   binaryAsBase64: true,
- *   longsAsStrings: true,
- *   enumsAsStrings: true
- * }
- * const brokerProto = grpc.load('/path/to/broker.proto', 'proto', PROTO_OPTIONS)
  * const address = 'localhost:27492'
  * const walletService = caller(address, brokerProto.WalletService)
  * ```
