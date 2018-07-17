@@ -21,18 +21,15 @@ RUN apt-get update && \
   apt-get upgrade -y && \
   apt-get install git
 
-WORKDIR /home/app
 
 #############################################
 # Broker installation steps
 #############################################
-ARG BROKER_COMMIT_SHA
-RUN : "${BROKER_COMMIT_SHA:?BROKER_COMMIT_SHA Build argument needs to be set.}"
+COPY . /home/app
 
-RUN git clone git@github.com:kinesis-exchange/broker.git . \
-&&  git checkout ${BROKER_COMMIT_SHA} \
-&&  npm install --quiet \
-&&  npm run broker-proto
+WORKDIR /home/app
+
+RUN npm install --quiet
 
 #############################################
 # lnd-engine installation steps
