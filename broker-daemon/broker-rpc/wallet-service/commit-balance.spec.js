@@ -103,9 +103,10 @@ describe('commit-balance', () => {
 
   describe('invalid engine type', () => {
     const badParams = {symbol: 'BAD'}
+    const errorMessage = `No engine is configured for symbol: ${badParams.symbol}`
 
     it('throws an error', () => {
-      return expect(commitBalance({ params: badParams, relayer, logger, engines }, { EmptyResponse })).to.eventually.be.rejectedWith('Unable to generate address')
+      return expect(commitBalance({ params: badParams, relayer, logger, engines }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
     })
   })
 })

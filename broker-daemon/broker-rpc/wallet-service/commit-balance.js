@@ -47,7 +47,7 @@ async function commitBalance ({ params, relayer, logger, engines }, { EmptyRespo
 
   if (!engine) {
     logger.error(`Could not find engine: ${symbol}`)
-    throw new PublicError(`Unable to generate address for symbol: ${symbol}`)
+    throw new PublicError(`No engine is configured for symbol: ${symbol}`)
   }
 
   logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balance}`)

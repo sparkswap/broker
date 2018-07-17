@@ -8,19 +8,19 @@ describe('convertBalance', () => {
   let secondCurrency
 
   beforeEach(() => {
-    balance = '1'
+    balance = '10'
     firstCurrency = 'BTC'
     secondCurrency = 'LTC'
   })
 
   it('returns the converted balance if the original balance is in the base currency', () => {
     const res = convertBalance(balance, firstCurrency, secondCurrency)
-    expect(res).to.eql('79.612')
+    expect(res).to.eql('10')
   })
 
   it('returns the converted balance if the original balance is in the counter currency', () => {
     const res = convertBalance(balance, secondCurrency, firstCurrency)
-    expect(res).to.eql('0.012560920464251621')
+    expect(res).to.eql('10')
   })
 
   it('throws an error if the market conversion is not defined', () => {

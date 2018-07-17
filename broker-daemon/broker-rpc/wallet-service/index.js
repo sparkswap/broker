@@ -15,7 +15,7 @@ class WalletService {
    * @param {Object} options
    * @param {Logger} options.logger
    * @param {RelayerClient} options.relayer
-   * @param {LndEngine} options.engines
+   * @param {Map<String, LndEngine>} options.engines
    */
   constructor (protoPath, { logger, engines, relayer }) {
     this.protoPath = protoPath
