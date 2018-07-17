@@ -92,8 +92,6 @@ class BrokerDaemon {
     this.engines = new Map(Object.entries(engines || {}).map(([ symbol, engineConfig ]) => {
       return [ symbol, createEngineFromConfig(symbol, engines[symbol], { logger: this.logger }) ]
     }))
-    // REMOVE THIS WHEN WE IMPLEMENT ENGINE ID: temporary mapping to not break the broker
-    this.engine = this.engines.values().next().value
 
     this.orderbooks = new Map()
 
@@ -108,7 +106,6 @@ class BrokerDaemon {
     this.rpcServer = new BrokerRPCServer({
       logger: this.logger,
       engines: this.engines,
-      engine: this.engine,
       relayer: this.relayer,
       orderbooks: this.orderbooks,
       blockOrderWorker: this.blockOrderWorker

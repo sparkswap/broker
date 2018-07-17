@@ -20,16 +20,15 @@ const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
  */
 class BrokerRPCServer {
   /**
-   * @param  {Logger}           opts.logger
-   * @param  {Engine}           opts.engine
-   * @param  {RelayerClient}    opts.relayer
-   * @param  {BlockOrderWorker} opts.blockOrderWorker
-   * @param  {Map<Orderbook>}   opts.orderbooks
+   * @param  {Logger}              opts.logger
+   * @param  {Map<String, Engine>} opts.engines
+   * @param  {RelayerClient}       opts.relayer
+   * @param  {BlockOrderWorker}    opts.blockOrderWorker
+   * @param  {Map<Orderbook>}      opts.orderbooks
    * @return {BrokerRPCServer}
    */
-  constructor ({ logger, engines, engine, relayer, blockOrderWorker, orderbooks } = {}) {
+  constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks } = {}) {
     this.logger = logger
-    this.engine = engine
     this.engines = engines
     this.relayer = relayer
     this.blockOrderWorker = blockOrderWorker
@@ -39,7 +38,7 @@ class BrokerRPCServer {
 
     this.server = new grpc.Server()
 
-    this.adminService = new AdminService(this.protoPath, { logger, relayer, engine, engines })
+    this.adminService = new AdminService(this.protoPath, { logger, relayer, engines })
     this.server.addService(this.adminService.definition, this.adminService.implementation)
 
     this.orderService = new OrderService(this.protoPath, { logger, blockOrderWorker })

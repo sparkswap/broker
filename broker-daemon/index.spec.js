@@ -124,11 +124,6 @@ describe('broker daemon', () => {
       expect(LndEngine).to.have.been.calledOnce()
       expect(LndEngine).to.have.been.calledWith(engines.BTC.lndRpc, 'BTC', { logger, tlsCertPath: engines.BTC.lndTls, macaroonPath: engines.BTC.lndMacaroon })
     })
-
-    it('TEMPORARILY aliases the first engine', () => {
-      expect(brokerDaemon).to.have.property('engine')
-      expect(brokerDaemon.engine).to.be.equal(brokerDaemon.engines.get('BTC'))
-    })
   })
 
   describe('InterchainRouter', () => {
