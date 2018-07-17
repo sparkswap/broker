@@ -9,8 +9,7 @@ echo ""
 echo "Reinstalling dependencies"
 npm i
 
-echo "Building broker proto files"
-rm -rf ./broker-daemon/proto/broker.proto
+echo "Checking broker.proto file for issues"
 npm run broker-proto
 
 echo "Downloading relayer proto files"
