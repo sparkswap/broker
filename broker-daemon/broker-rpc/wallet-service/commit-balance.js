@@ -43,11 +43,20 @@ async function commitBalance ({ params, relayer, logger, engines }, { EmptyRespo
   const { balance, symbol } = params
   const { address } = await relayer.paymentChannelNetworkService.getAddress({symbol})
 
+  // This is temporary until we have other markets
+  const inverseSymbol = (symbol === SUPPORTED_SYMBOLS.LTC) ? SUPPORTED_SYMBOLS.BTC : SUPPORTED_SYMBOLS.LTC
+
   const engine = engines.get(symbol)
+  const inverseEngine = engines.get(inverseSymbol)
 
   if (!engine) {
     logger.error(`Could not find engine: ${symbol}`)
     throw new PublicError(`No engine is configured for symbol: ${symbol}`)
+  }
+
+  if (!inverseEngine) {
+    logger.error(`Could not find inverse engine: ${inverseSymbol}`)
+    throw new PublicError(`No engine is configured for symbol: ${inverseSymbol}`)
   }
 
   logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balance}`)
@@ -64,30 +73,10 @@ async function commitBalance ({ params, relayer, logger, engines }, { EmptyRespo
 
   await engine.createChannel(address, balance)
 
-  let symbolForRelayer
-  let convertedBalance
-  let counterSymbol
+  const convertedBalance = convertBalance(balance, symbol, inverseSymbol)
+  const paymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
 
-  // This is temporary until we have other markets
-  if (symbol === SUPPORTED_SYMBOLS.LTC) {
-    symbolForRelayer = SUPPORTED_SYMBOLS.BTC
-    convertedBalance = convertBalance(balance, SUPPORTED_SYMBOLS.LTC, SUPPORTED_SYMBOLS.BTC)
-    counterSymbol = SUPPORTED_SYMBOLS.BTC
-  } else {
-    symbolForRelayer = SUPPORTED_SYMBOLS.LTC
-    convertedBalance = convertBalance(balance, SUPPORTED_SYMBOLS.BTC, SUPPORTED_SYMBOLS.LTC)
-    counterSymbol = SUPPORTED_SYMBOLS.LTC
-  }
-
-  const counterEngine = engines.get(counterSymbol)
-
-  if (!counterEngine) {
-    logger.error(`Could not find engine: ${counterSymbol}`)
-    throw new PublicError(`No engine is configured for symbol: ${counterSymbol}`)
-  }
-
-  const paymentChannelNetworkAddress = await counterEngine.getPaymentChannelNetworkAddress()
-  await relayer.paymentChannelNetworkService.createChannel({address: paymentChannelNetworkAddress, balance: convertedBalance, symbol: symbolForRelayer})
+  await relayer.paymentChannelNetworkService.createChannel({address: paymentChannelNetworkAddress, balance: convertedBalance, symbol: inverseSymbol})
 
   return new EmptyResponse({})
 }
