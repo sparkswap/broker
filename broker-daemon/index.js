@@ -84,7 +84,14 @@ class BrokerDaemon {
    * @param  {Object}  engines                 Configuration for all the engines to instantiate
    * @return {BrokerDaemon}
    */
-  constructor (idKeyPath, rpcAddress, interchainRouterAddress, relayerRpcHost, dataDir, marketNames, engines) {
+  constructor (idKeyPath = {}, rpcAddress, interchainRouterAddress, relayerRpcHost, dataDir, marketNames, engines) {
+    if (!idKeyPath.privKeyPath) {
+      throw new Error(`Private Key path is required to create a BrokerDaemon`)
+    }
+    if (!idKeyPath.pubKeyPath) {
+      throw new Error(`Public Key path is required to create a BrokerDaemon`)
+    }
+
     this.rpcAddress = rpcAddress || DEFAULT_RPC_ADDRESS
     this.dataDir = dataDir || DEFAULT_DATA_DIR
     this.marketNames = marketNames || []
