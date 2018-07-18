@@ -6,6 +6,8 @@ const { Big } = require('./big')
  * @default
  */
 const MARKET_CONVERSION = {
+  // This is a fixed rate/constraint that is hardcoded in LND
+  // see: https://github.com/lightningnetwork/lnd/blob/b0288d46773ac6d45e5dc4d5e6a80dd3034d0b9f/chainregistry.go#L51
   'BTC/LTC': 60
 }
 
