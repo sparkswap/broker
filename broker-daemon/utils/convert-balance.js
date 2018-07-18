@@ -12,6 +12,11 @@ const MARKET_CONVERSION = {
 }
 
 /**
+ * Given a balance and currency conversion symbols, we return a converted balance.
+ *
+ * NOTE: We round all balances down to avoid returning a balance too large for
+ *       channel opening.
+ *
  * @function
  * @param {String} balance - int64 balance in the `currency` smallest unit e.g. satoshis
  * @param {String} currency - currency symbol
@@ -22,14 +27,16 @@ function convertBalance (balance, currency, currencyToConvertTo) {
   let multiplier
 
   if (MARKET_CONVERSION.hasOwnProperty(`${currency}/${currencyToConvertTo}`)) {
-    multiplier = MARKET_CONVERSION[`${currency}/${currencyToConvertTo}`]
+    multiplier = Big(MARKET_CONVERSION[`${currency}/${currencyToConvertTo}`])
   } else if (MARKET_CONVERSION.hasOwnProperty(`${currencyToConvertTo}/${currency}`)) {
-    multiplier = 1 / MARKET_CONVERSION[`${currencyToConvertTo}/${currency}`]
+    multiplier = Big(1).div(MARKET_CONVERSION[`${currencyToConvertTo}/${currency}`])
   } else {
     throw Error(`Market ${currency}/${currencyToConvertTo} is not currently supported`)
   }
 
-  return Big(balance).times(multiplier).toString()
+  // We round down to avoid requesting a channel that is too large on the
+  // relayer, however the remainder should only ever be one satoshi
+  return Big(balance).times(multiplier).round(0, 0).toString()
 }
 
 module.exports = convertBalance
