@@ -24,9 +24,7 @@ function convertBalance (balance, currency, currencyToConvertTo) {
   if (MARKET_CONVERSION.hasOwnProperty(`${currency}/${currencyToConvertTo}`)) {
     multiplier = MARKET_CONVERSION[`${currency}/${currencyToConvertTo}`]
   } else if (MARKET_CONVERSION.hasOwnProperty(`${currencyToConvertTo}/${currency}`)) {
-    // We round down to avoid requesting a channel that is too large on the
-    // relayer, however the remainder should only ever be one satoshi
-    multiplier = Math.floor(1 / MARKET_CONVERSION[`${currencyToConvertTo}/${currency}`])
+    multiplier = 1 / MARKET_CONVERSION[`${currencyToConvertTo}/${currency}`]
   } else {
     throw Error(`Market ${currency}/${currencyToConvertTo} is not currently supported`)
   }
