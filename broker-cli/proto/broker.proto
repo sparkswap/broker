@@ -4,10 +4,15 @@
 syntax = "proto3";
 
 // import "google/protobuf/empty.proto";
-// normally we would us the above import statement, but the node.js grpc
-// library doesn't work well with it
-// Instead, we define our own Empty message that is equivalent
-message Empty {}
+// normally we would us the above import statement, but the node.js grpc doesn't import
+// the standard types and so it throws an error message saying that it can't find google/protobuf.empty.proto
+// Instead, we define our own Empty message that is equivalent.
+message google {
+    message protobuf {
+        message Empty {
+        }
+    }
+}
 
 enum Side {
   BID = 0;
@@ -68,7 +73,7 @@ service AdminService {
    * }
    * ```
    */
-  rpc HealthCheck (Empty) returns (HealthCheckResponse);
+  rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
 }
 
 enum TimeInForce {
@@ -211,7 +216,7 @@ message GetBlockOrdersRequest {
 service OrderService {
   rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse);
   rpc GetBlockOrder (GetBlockOrderRequest) returns (GetBlockOrderResponse);
-  rpc CancelBlockOrder (CancelBlockOrderRequest) returns (Empty);
+  rpc CancelBlockOrder (CancelBlockOrderRequest) returns (google.protobuf.Empty);
   rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse);
 }
 
@@ -271,6 +276,6 @@ message CommitBalanceRequest {
 
 service WalletService {
   rpc NewDepositAddress (NewDepositAddressRequest) returns (NewDepositAddressResponse);
-  rpc GetBalances (Empty) returns (GetBalancesResponse);
-  rpc CommitBalance (CommitBalanceRequest) returns (Empty);
+  rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse);
+  rpc CommitBalance (CommitBalanceRequest) returns (google.protobuf.Empty);
 }
