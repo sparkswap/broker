@@ -30,7 +30,6 @@
  * // This documentation makes use of the grpc and grpc-caller libraries on npm.
  * // The remainder of the docs assumes this setup step.
  * const grpc = require('grpc')
- * const caller = require('grpc-caller')
  * const PROTO_OPTIONS = {
  *   convertFieldsToCamelCase: true,
  *   binaryAsBase64: true,
@@ -88,7 +87,7 @@ message HealthCheckResponse {
  *
  * ```javascript
  * const address = 'localhost:27492'
- * const adminService = caller(address, brokerProto.AdminService)
+ * const adminService = new brokerProto.AdminService(address, grpc.credentials.createInsecure())
  * ```
  */
 service AdminService {
@@ -96,8 +95,11 @@ service AdminService {
    * The HealthCheck returns a status of all of the components of the BrokerDaemon.
    *
    * ```javascript
-   * const { engineStatus, relayerStatus } = await adminService.healthCheck({})
-   * console.log({ engineStatus, relayerStatus })
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * adminService.healthCheck({}, { deadline }, (err, { engineStatus, relayerStatus }) => {
+   *   if (err) return console.error(err)
+   *   console.log({ engineStatus, relayerStatus })
+   * })
    * ```
    *
    * > The above command will print:
@@ -339,7 +341,7 @@ message GetBlockOrdersRequest {
  *
  * ```javascript
  * const address = 'localhost:27492'
- * const orderService = caller(address, brokerProto.OrderService)
+ * const orderService = new brokerProto.OrderService(address, grpc.credentials.createInsecure())
  * ```
  */
 service OrderService {
@@ -351,14 +353,21 @@ service OrderService {
    * > Placing a market order:
    * 
    * ```javascript
-   * const { blockOrderId } = await orderService.createBlockOrder({
-   *  market: 'BTC/LTC', // trading BTC and LTC
-   *  side: 'BID', // Place a buy order
-   *  amount: '0.0001', // 0.0001 BTC being traded
-   *  isMarketOrder: true, // use the best available price
-   *  timeInForce: 'GTC' // execute this order until I cancel it
-   * })
-   * console.log({ blockOrderId })
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * orderService.createBlockOrder(
+   *   {
+   *     market: 'BTC/LTC', // trading BTC and LTC
+   *     side: 'BID', // Place a buy order
+   *     amount: '0.0001', // 0.0001 BTC being traded
+   *     isMarketOrder: true, // use the best available price
+   *     timeInForce: 'GTC' // execute this order until I cancel it
+   *   },
+   *   { deadline },
+   *   (err, { blockOrderId }) => {
+   *     if (err) return console.error(err)
+   *     console.log({ blockOrderId })
+   *   }
+   * )
    * ```
    *
    * > The above command will create a market block order on the Broker and will print:
@@ -370,14 +379,21 @@ service OrderService {
    * > Placing a limit order:
    * 
    * ```javascript
-   * const { blockOrderId } = await orderService.createBlockOrder({
-   *  market: 'BTC/LTC', // trading BTC and LTC
-   *  side: 'BID', // Place a buy order
-   *  amount: '0.0001', // 0.0001 BTC being traded
-   *  limitPrice: '1.1', // at a price no worse than 1.1 LTC per BTC
-   *  timeInForce: 'GTC' // execute this order until I cancel it
-   * })
-   * console.log({ blockOrderId })
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * orderService.createBlockOrder(
+   *   {
+   *     market: 'BTC/LTC', // trading BTC and LTC
+   *     side: 'BID', // Place a buy order
+   *     amount: '0.0001', // 0.0001 BTC being traded
+   *     limitPrice: '1.1', // at a price no worse than 1.1 LTC per BTC
+   *     timeInForce: 'GTC' // execute this order until I cancel it
+   *   },
+   *   { deadline },
+   *   (err, { blockOrderId }) => {
+   *     if (err) return console.error(err)
+   *     console.log({ blockOrderId })
+   *   }
+   * )
    * ```
    *
    * > The above command will create a limit block order on the Broker and will print:
@@ -391,8 +407,11 @@ service OrderService {
    * GetBlockOrder returns information on a previously placed block order. It should be used to check on the status of placed block orders.
    *
    * ```javascript
-   * const blockOrder = await orderService.getBlockOrder({ blockOrderId: '' })
-   * console.log(blockOrder)
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * const blockOrder = orderService.getBlockOrder({ blockOrderId: '' }, { deadline }, (err, blockOrder) => {
+   *   if (err) return console.error(err)
+   *   console.log(blockOrder)
+   * })
    * ```
    *
    * > The above command will retrieve the block order on the Broker and will print:
@@ -417,7 +436,10 @@ service OrderService {
    * If the block order is partially executed, the cancel will affect only future actions, the Broker will not attempt to roll back trades that have already been made.
    *
    * ```javascript
-   * await orderService.getBlockOrder({ blockOrderId: '' })
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * orderService.getBlockOrder({ blockOrderId: '' }, { deadline }, (err) => {
+   *   if (err) return console.error(err)
+   * })
    * ```
    *
    * > The above command will cancel the block order, but has no output.
@@ -428,8 +450,11 @@ service OrderService {
    * It does not include complete information, such as the underlying orders and fills on the Kinesis Network, or the amount of the order that has been filled. For that, use [GetBlockOrder](#getblockorder).
    *
    * ```javascript
-   * const blockOrders = await orderService.getBlockOrders({ market: 'BTC/LTC' })
-   * console.log(blockOrders)
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * orderService.getBlockOrders({ market: 'BTC/LTC' }, { deadline }, (err, { blockOrders }) => {
+   *   if (err) return console.error(err)
+   *   console.log(blockOrders)
+   * })
    * ```
    *
    * > The above command will retrieve the block orders on the Broker and will print:
@@ -509,7 +534,7 @@ message MarketEvent {
  * 
  * ```javascript
  * const address = 'localhost:27492'
- * const orderBookService = caller(address, brokerProto.OrderBookService)
+ * const orderBookService = new brokerProto.OrderBookService(address, grpc.credentials.createInsecure())
  * ```
  */
 service OrderBookService {
@@ -521,9 +546,9 @@ service OrderBookService {
    * ```javascript
    * const call = orderBookService.watchMarket(request)
    * const orders = new Map()
-   * call.on('data', (order) => {
-   *   const { orderId, side, price, amount } = order.marketEvent
-   *   const { type } = order
+   * call.on('data', (update) => {
+   *   const { orderId, side, price, amount } = update.marketEvent
+   *   const { type } = update
    *   if (type === EVENT_TYPES.DELETE) {
    *     orders.delete(orderId)
    *   } else {
@@ -617,7 +642,7 @@ message CommitBalanceRequest {
  * 
  * ```javascript
  * const address = 'localhost:27492'
- * const walletService = caller(address, brokerProto.WalletService)
+ * const walletService = new brokerProto.WalletService(address, grpc.credentials.createInsecure())
  * ```
  */
 service WalletService {
@@ -644,8 +669,11 @@ service WalletService {
    * To get the balance available to be committed, i.e. not in channels, subtract the `totalChannelBalance` from the `totalWalletBalance`. 
    *
    * ```javascript
-   * const balances = await walletService.getBalances({})
-   * console.log(balances)
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * walletService.getBalances({}, { deadline }, (err, { balances }) => {
+   *   if (err) return console.error(err)
+   *   console.log(balances)
+   * })
    * ```
    *
    * > The above command will print:
@@ -678,14 +706,21 @@ service WalletService {
    * > The below command has no output, but will throw an error if one is encountered.
    * 
    * ```javascript
-   * await walletService.commitBalance({
-   *   // we are committing LTC to a channel.
-   *   // The Broker will request a BTC channel be opened back to itself.
-   *   symbol: 'LTC', 
-   *   // The amount (in Satoshis) to commit to the channel.
-   *   // The Broker will request a BTC channel of size 16700000 / 60 be opened back to itself.
-   *   balance: '16700000'
-   * })
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * walletService.commitBalance(
+   *   {
+   *     // we are committing LTC to a channel.
+   *     // The Broker will request a BTC channel be opened back to itself.
+   *     symbol: 'LTC', 
+   *     // The amount (in Satoshis) to commit to the channel.
+   *     // The Broker will request a BTC channel of size 16700000 / 60 be opened back to itself.
+   *     balance: '16700000'
+   *   },
+   *   { deadline },
+   *   (err) => {
+   *     if (err) return console.error(err)
+   *   }
+   * )
    * ```
    */
   rpc CommitBalance (CommitBalanceRequest) returns (google.protobuf.Empty);
