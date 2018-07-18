@@ -8,7 +8,8 @@ describe('commit-balance', () => {
   let params
   let relayer
   let logger
-  let engine
+  let btcEngine
+  let ltcEngine
   let address
   let res
   let createChannelRelayerStub
@@ -30,16 +31,26 @@ describe('commit-balance', () => {
       info: sinon.stub(),
       error: sinon.stub()
     }
-    engine = {
-      createChannel: createChannelStub,
+    btcEngine = {
+      createChannel: createChannelStub
+    }
+    ltcEngine = {
       getPaymentChannelNetworkAddress: sinon.stub().resolves(relayerAddress)
     }
-    engines = new Map([['BTC', engine]])
+    engines = new Map([
+      ['BTC', btcEngine],
+      ['LTC', ltcEngine]
+    ])
     params = {
       balance: '10000000',
       symbol: 'BTC'
     }
-    relayer = { paymentChannelNetworkService: { getAddress: getAddressStub, createChannel: createChannelRelayerStub } }
+    relayer = {
+      paymentChannelNetworkService: {
+        getAddress: getAddressStub,
+        createChannel: createChannelRelayerStub
+      }
+    }
     commitBalance.__set__('convertBalance', convertBalanceStub)
   })
 
@@ -52,12 +63,12 @@ describe('commit-balance', () => {
       expect(getAddressStub).to.have.been.calledWith({symbol: params.symbol})
     })
 
-    it('creates a channel through an engine', () => {
-      expect(engine.createChannel).to.have.been.calledWith(address, params.balance)
+    it('creates a channel through an btc engine', () => {
+      expect(btcEngine.createChannel).to.have.been.calledWith(address, params.balance)
     })
 
-    it('retrieves the address from the engine', () => {
-      expect(engine.getPaymentChannelNetworkAddress).to.have.been.called()
+    it('retrieves the address from an inverse engine', () => {
+      expect(ltcEngine.getPaymentChannelNetworkAddress).to.have.been.called()
     })
 
     it('converts the balance to the currency of the channel to open on the relayer', () => {
@@ -81,12 +92,27 @@ describe('commit-balance', () => {
     })
   })
 
+  describe('invalid engine types', () => {
+    it('throws an error if engine does not exist for symbol', () => {
+      const badParams = {symbol: 'BAD'}
+      const errorMessage = `No engine is configured for symbol: ${badParams.symbol}`
+      return expect(commitBalance({ params: badParams, relayer, logger, engines }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
+    })
+
+    it('throws an error if inverse engine is not found', () => {
+      const badEngines = new Map([['BTC', btcEngine]])
+      return expect(
+        commitBalance({ params, relayer, logger, engines: badEngines }, { EmptyResponse })
+      ).to.be.rejectedWith(PublicError, 'No engine is configured for symbol')
+    })
+  })
+
   describe('balance under minimum amount', () => {
     it('throws an error for an incorrect balance', () => {
       params.balance = '100'
       return expect(
         commitBalance({ params, relayer, logger, engines }, { EmptyResponse })
-      ).to.be.rejectedWith(PublicError)
+      ).to.be.rejectedWith(PublicError, 'Minimum balance of')
     })
   })
 
@@ -98,15 +124,6 @@ describe('commit-balance', () => {
       return expect(
         commitBalance({ params, relayer, logger, engines }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError)
-    })
-  })
-
-  describe('invalid engine type', () => {
-    const badParams = {symbol: 'BAD'}
-    const errorMessage = `No engine is configured for symbol: ${badParams.symbol}`
-
-    it('throws an error', () => {
-      return expect(commitBalance({ params: badParams, relayer, logger, engines }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
     })
   })
 })
