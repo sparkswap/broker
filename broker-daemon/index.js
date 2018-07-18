@@ -69,15 +69,22 @@ function createEngineFromConfig (symbol, engineConfig, { logger }) {
  */
 class BrokerDaemon {
   /**
-   * @param  {String} rpcAddress              Host and port where the user-facing RPC server should listen
-   * @param  {String} interchainRouterAddress Host and port where the interchain router should listen
-   * @param  {String} relayerRpcHost          Host and port for the Relayer RPC
-   * @param  {String} dataDir                 Relative path to a directory where application data should be stored
-   * @param  {Array}  marketNames             List of market names (e.g. 'BTC/LTC') to support
-   * @param  {Object} engines                 Configuration for all the engines to instantiate
+   * @typedef {Object} KeyPath
+   * @property {String} privKeyPath Path to a private key
+   * @property {String} pubKeyPath  Path to the public key corresponding to the private key
+   */
+
+  /**
+   * @param  {KeyPath} idKeyPath               Path to public and private key for the broker's identity
+   * @param  {String}  rpcAddress              Host and port where the user-facing RPC server should listen
+   * @param  {String}  interchainRouterAddress Host and port where the interchain router should listen
+   * @param  {String}  relayerRpcHost          Host and port for the Relayer RPC
+   * @param  {String}  dataDir                 Relative path to a directory where application data should be stored
+   * @param  {Array}   marketNames             List of market names (e.g. 'BTC/LTC') to support
+   * @param  {Object}  engines                 Configuration for all the engines to instantiate
    * @return {BrokerDaemon}
    */
-  constructor (rpcAddress, interchainRouterAddress, relayerRpcHost, dataDir, marketNames, engines) {
+  constructor (idKeyPath, rpcAddress, interchainRouterAddress, relayerRpcHost, dataDir, marketNames, engines) {
     this.rpcAddress = rpcAddress || DEFAULT_RPC_ADDRESS
     this.dataDir = dataDir || DEFAULT_DATA_DIR
     this.marketNames = marketNames || []
