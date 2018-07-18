@@ -1,12 +1,8 @@
 {
   "name": "broker-cli",
   "version": "0.1.0-alpha-preview",
-  "description": "",
+  "description": "Broker CLI utility to interact with the Broker Daemon on the Kinesis Exchange",
   "main": "./bin/kcli",
-  "config": {
-    "daemon": "kbd",
-    "default_currency_symbol": "BTC"
-  },
   "scripts": {
     "format": "standard --fix",
     "pretest": "npm run format; exit 0",

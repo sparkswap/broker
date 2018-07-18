@@ -156,7 +156,6 @@ describe('cli wallet', () => {
 
       program.__set__('BrokerDaemonClient', daemonStub)
       program.__set__('askQuestion', askQuestionStub)
-      program.__set__('DEFAULT_CURRENCY_SYMBOL', symbol)
     })
 
     beforeEach(async () => {
