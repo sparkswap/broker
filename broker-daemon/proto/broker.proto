@@ -3,7 +3,11 @@
  */
 syntax = "proto3";
 
-import "google/protobuf/empty.proto";
+// import "google/protobuf/empty.proto";
+// normally we would us the above import statement, but the node.js grpc
+// library doesn't work well with it
+// Instead, we define our own Empty message that is equivalent
+message Empty {}
 
 enum Side {
   BID = 0;
@@ -64,7 +68,7 @@ service AdminService {
    * }
    * ```
    */
-  rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
+  rpc HealthCheck (Empty) returns (HealthCheckResponse);
 }
 
 enum TimeInForce {
@@ -207,7 +211,7 @@ message GetBlockOrdersRequest {
 service OrderService {
   rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse);
   rpc GetBlockOrder (GetBlockOrderRequest) returns (GetBlockOrderResponse);
-  rpc CancelBlockOrder (CancelBlockOrderRequest) returns (google.protobuf.Empty);
+  rpc CancelBlockOrder (CancelBlockOrderRequest) returns (Empty);
   rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse);
 }
 
@@ -267,6 +271,6 @@ message CommitBalanceRequest {
 
 service WalletService {
   rpc NewDepositAddress (NewDepositAddressRequest) returns (NewDepositAddressResponse);
-  rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse);
-  rpc CommitBalance (CommitBalanceRequest) returns (google.protobuf.Empty);
+  rpc GetBalances (Empty) returns (GetBalancesResponse);
+  rpc CommitBalance (CommitBalanceRequest) returns (Empty);
 }
