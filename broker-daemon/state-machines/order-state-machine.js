@@ -200,6 +200,7 @@ const OrderStateMachine = StateMachine.factory({
       this.logger.debug(`Attempting to pay fees for order: ${orderId}`)
 
       const outboundEngine = this.engines.get(outboundSymbol)
+
       if (!outboundEngine) {
         throw new Error(`No engine available for ${outboundSymbol}`)
       }

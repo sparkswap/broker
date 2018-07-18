@@ -5,8 +5,7 @@
   "main": "index.js",
   "config": {
     "project_name": "broker",
-    "daemon": "kbd",
-    "default_currency_symbol": "BTC"
+    "daemon": "kbd"
   },
   "scripts": {
     "prebuild": "bash ./scripts/prebuild.sh",
