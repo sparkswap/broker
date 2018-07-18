@@ -28,7 +28,11 @@ class WalletService {
     const {
       NewDepositAddressResponse,
       GetBalancesResponse,
-      Empty: EmptyResponse
+      google: {
+        protobuf: {
+          Empty: EmptyResponse
+        }
+      }
     } = this.proto
 
     this.implementation = {
