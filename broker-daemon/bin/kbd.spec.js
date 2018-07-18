@@ -37,6 +37,22 @@ describe('kbd', () => {
     expect(BrokerDaemon.prototype.initialize).to.have.been.calledOnce()
   })
 
+  it('provides the identity private/public key paths', () => {
+    const idKeyPath = {
+      privKeyPath: '/path/to/priv/key',
+      pubKeyPath: '/path/pub/key'
+    }
+
+    argv.push('--id-privkey-path')
+    argv.push(idKeyPath.privKeyPath)
+    argv.push('--id-pubkey-path')
+    argv.push(idKeyPath.pubKeyPath)
+
+    kbd(argv)
+
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match(idKeyPath))
+  })
+
   it('provides an rpc address', () => {
     const rpcAddress = '0.0.0.0:9876'
     argv.push('--rpc-address')
@@ -44,7 +60,7 @@ describe('kbd', () => {
 
     kbd(argv)
 
-    expect(BrokerDaemon).to.have.been.calledWith(rpcAddress)
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, rpcAddress)
   })
 
   xit('defaults the rpc address to the env variable')
@@ -56,7 +72,7 @@ describe('kbd', () => {
 
     kbd(argv)
 
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, interchainRouterAddress)
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, interchainRouterAddress)
   })
 
   xit('defaults the interchain router address to the env variable')
@@ -68,7 +84,7 @@ describe('kbd', () => {
 
     kbd(argv)
 
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, dataDir)
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match.any, dataDir)
   })
 
   xit('defaults the data dir to the env variable')
@@ -80,7 +96,7 @@ describe('kbd', () => {
 
     kbd(argv)
 
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, relayerHost)
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, relayerHost)
   })
 
   xit('defaults the relayer host to the env variable')
@@ -92,7 +108,7 @@ describe('kbd', () => {
 
     kbd(argv)
 
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match.any, markets.split(','))
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match.any, sinon.match.any, markets.split(','))
   })
 
   xit('defaults the markets to the env variable')
@@ -104,7 +120,7 @@ describe('kbd', () => {
 
     kbd(argv)
 
-    const engines = BrokerDaemon.args[0][5]
+    const engines = BrokerDaemon.args[0][6]
     expect(engines.LTC).to.have.property('type', ltcEngineType)
   })
 
@@ -120,7 +136,7 @@ describe('kbd', () => {
 
     kbd(argv)
 
-    const engines = BrokerDaemon.args[0][5]
+    const engines = BrokerDaemon.args[0][6]
     expect(engines.LTC).to.have.property('lndRpc', ltcLndRpc)
   })
 
@@ -136,7 +152,7 @@ describe('kbd', () => {
 
     kbd(argv)
 
-    const engines = BrokerDaemon.args[0][5]
+    const engines = BrokerDaemon.args[0][6]
     expect(engines.LTC).to.have.property('lndTls', ltcLndTls)
   })
 
@@ -152,7 +168,7 @@ describe('kbd', () => {
 
     kbd(argv)
 
-    const engines = BrokerDaemon.args[0][5]
+    const engines = BrokerDaemon.args[0][6]
     expect(engines.LTC).to.have.property('lndMacaroon', ltcLndMacaroon)
   })
 

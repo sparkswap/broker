@@ -56,11 +56,27 @@ RUN git clone git@github.com:kinesis-exchange/relayer-proto.git ./proto \
 &&  (cd ./proto && git checkout ${RELAYER_PROTO_COMMIT_SHA}) \
 &&  rm -rf ./proto/.git
 
+#############################################
+# Keypair Generation for use with Relayer
+#############################################
+RUN mkdir "/secure"
+ARG ID_PRIV_KEY='/secure/broker-identity.private.pem'
+ARG ID_PUB_KEY='/secure/broker-identity.public.pem'
+RUN openssl ecparam -name prime256v1 -genkey -noout -out ${ID_PRIV_KEY}
+RUN openssl ec -in ${ID_PRIV_KEY} -pubout -out ${ID_PUB_KEY}
+
 # Start a new, final image to reduce size.
 FROM node:8 as final
 
 RUN mkdir "/secure"
 
+# Copy keys to the final image
+ARG ID_PRIV_KEY='/secure/broker-identity.private.pem'
+ARG ID_PUB_KEY='/secure/broker-identity.public.pem'
+COPY --from=builder ${ID_PRIV_KEY} /secure/
+COPY --from=builder ${ID_PUB_KEY} /secure/
+
+# Copy the application
 COPY --from=builder /home/app /home/app
 
 WORKDIR /home/app

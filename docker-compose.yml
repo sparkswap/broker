@@ -24,6 +24,8 @@ services:
       - RPC_ADDRESS=0.0.0.0:27492
       - INTERCHAIN_ROUTER_ADDRESS=0.0.0.0:40369
       - DATA_DIR=/data
+      - ID_PRIV_KEY=/secure/broker-identity.private.pem
+      - ID_PUB_KEY=/secure/broker-identity.public.pem
       - BTC_ENGINE_TYPE=LND
       - BTC_LND_RPC_HOST=lnd_btc:10009
       - BTC_LND_TLS_CERT=/shared/lnd-engine-tls-btc.cert

@@ -20,8 +20,13 @@ describe('broker daemon', () => {
   let interchainRouterListenSpy
   let CONFIG
   let engines
+  let idKeyPath
 
   beforeEach(() => {
+    idKeyPath = {
+      privKeyPath: '/path/to/priv/key',
+      pubKeyPath: '/path/to/pub/key'
+    }
     level = sinon.stub().returns('fake-level')
     store = {
       sublevel: sinon.stub().returns('fake-sublevel')
@@ -91,7 +96,12 @@ describe('broker daemon', () => {
       }
     }
 
-    brokerDaemon = new BrokerDaemon(null, null, null, null, null, engines)
+    brokerDaemon = new BrokerDaemon(idKeyPath, null, null, null, null, null, engines)
+  })
+
+  it('throws if the key paths are not defined', () => {
+    expect(() => new BrokerDaemon()).to.throw('Private Key path is required')
+    expect(() => new BrokerDaemon({ privKeyPath: 'somepath' })).to.throw('Public Key path is required')
   })
 
   it('creates a relayer client', () => {
@@ -117,7 +127,7 @@ describe('broker daemon', () => {
     it('throws for unrecognized engine types', () => {
       engines.BTC.type = 'LIT'
 
-      expect(() => new BrokerDaemon(null, null, null, null, null, engines)).to.throw('Unknown engine type') // eslint-disable-line
+      expect(() => new BrokerDaemon(idKeyPath, null, null, null, null, null, engines)).to.throw('Unknown engine type') // eslint-disable-line
     })
 
     it('provides lnd parameters to lnd engine', () => {
@@ -323,7 +333,7 @@ describe('broker daemon', () => {
 
     it('initializes markets', async () => {
       const marketNames = [ 'BTC/LTC', 'ABC/XYZ' ]
-      brokerDaemon = new BrokerDaemon(null, null, null, null, marketNames)
+      brokerDaemon = new BrokerDaemon(idKeyPath, null, null, null, null, marketNames)
       brokerDaemon.initializeMarkets = sinon.stub().resolves()
 
       await brokerDaemon.initialize()
@@ -352,7 +362,7 @@ describe('broker daemon', () => {
 
     it('sets an RPC address from parameters', async () => {
       let customRpcAddress = '127.0.0.1'
-      brokerDaemon = new BrokerDaemon(customRpcAddress)
+      brokerDaemon = new BrokerDaemon(idKeyPath, customRpcAddress)
       expect(brokerDaemon.rpcAddress).to.be.eql(customRpcAddress)
     })
   })
@@ -370,7 +380,7 @@ describe('broker daemon', () => {
 
     it('sets an RPC address from parameters', async () => {
       let customIRAddress = '127.0.0.1'
-      brokerDaemon = new BrokerDaemon(null, customIRAddress)
+      brokerDaemon = new BrokerDaemon(idKeyPath, null, customIRAddress)
       expect(brokerDaemon.interchainRouterAddress).to.be.eql(customIRAddress)
     })
   })
