@@ -99,6 +99,11 @@ describe('broker daemon', () => {
     brokerDaemon = new BrokerDaemon(idKeyPath, null, null, null, null, null, engines)
   })
 
+  it('throws if the key paths are not defined', () => {
+    expect(() => new BrokerDaemon()).to.throw('Private Key path is required')
+    expect(() => new BrokerDaemon({ privKeyPath: 'somepath' })).to.throw('Public Key path is required')
+  })
+
   it('creates a relayer client', () => {
     expect(RelayerClient).to.have.been.calledOnce()
     expect(RelayerClient).to.have.been.calledWithNew()
