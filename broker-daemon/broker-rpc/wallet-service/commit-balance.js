@@ -64,19 +64,29 @@ async function commitBalance ({ params, relayer, logger, engines }, { EmptyRespo
 
   await engine.createChannel(address, balance)
 
-  const paymentChannelNetworkAddress = await engine.getPaymentChannelNetworkAddress()
-
   let symbolForRelayer
   let convertedBalance
+  let counterSymbol
 
   // This is temporary until we have other markets
   if (symbol === SUPPORTED_SYMBOLS.LTC) {
     symbolForRelayer = SUPPORTED_SYMBOLS.BTC
     convertedBalance = convertBalance(balance, SUPPORTED_SYMBOLS.LTC, SUPPORTED_SYMBOLS.BTC)
+    counterSymbol = SUPPORTED_SYMBOLS.BTC
   } else {
     symbolForRelayer = SUPPORTED_SYMBOLS.LTC
     convertedBalance = convertBalance(balance, SUPPORTED_SYMBOLS.BTC, SUPPORTED_SYMBOLS.LTC)
+    counterSymbol = SUPPORTED_SYMBOLS.LTC
   }
+
+  const counterEngine = engines.get(counterSymbol)
+
+  if (!counterEngine) {
+    logger.error(`Could not find engine: ${counterSymbol}`)
+    throw new PublicError(`No engine is configured for symbol: ${counterSymbol}`)
+  }
+
+  const paymentChannelNetworkAddress = await counterEngine.getPaymentChannelNetworkAddress()
   await relayer.paymentChannelNetworkService.createChannel({address: paymentChannelNetworkAddress, balance: convertedBalance, symbol: symbolForRelayer})
 
   return new EmptyResponse({})
