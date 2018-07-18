@@ -247,12 +247,17 @@ describe('OrderStateMachine', () => {
 
     it('gets the makerAddress for the order', async () => {
       const fakeAddress = 'bolt:mykey'
+      const otherFakeAddress = 'bolt:mykey'
+
       engines.get('BTC').getPaymentChannelNetworkAddress.resolves(fakeAddress)
+      engines.get('LTC').getPaymentChannelNetworkAddress.resolves(otherFakeAddress)
 
       await osm.create(blockOrderId, params)
 
       expect(engines.get('BTC').getPaymentChannelNetworkAddress).to.have.been.calledOnce()
-      expect(osm.order.makerAddress).to.be.equal(fakeAddress)
+      expect(engines.get('LTC').getPaymentChannelNetworkAddress).to.have.been.calledOnce()
+      expect(osm.order.makerBaseAddress).to.be.equal(fakeAddress)
+      expect(osm.order.makerCounterAddress).to.be.equal(otherFakeAddress)
     })
 
     it('throws if no engine exists for the inbound symbol', () => {

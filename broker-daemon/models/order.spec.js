@@ -38,7 +38,8 @@ describe('Order', () => {
           baseAmount: '10000',
           counterAmount: '100000',
           ownerId: 'fakeID',
-          makerAddress: 'bolt:123019230jasofdij'
+          makerBaseAddress: 'bolt:123019230jasofdij',
+          makerCounterAddress: 'bolt:65433455asdfasdf'
         }
       }
       const blockOrderId = 'blockid'
@@ -55,7 +56,8 @@ describe('Order', () => {
       expect(order).to.have.property('baseAmount', params.order.baseAmount)
       expect(order).to.have.property('counterAmount', params.order.counterAmount)
       expect(order).to.have.property('ownerId', params.order.ownerId)
-      expect(order).to.have.property('makerAddress', params.order.makerAddress)
+      expect(order).to.have.property('makerBaseAddress', params.order.makerBaseAddress)
+      expect(order).to.have.property('makerCounterAddress', params.order.makerCounterAddress)
     })
 
     it('assigns parameters from after order creation to the order object', () => {
@@ -67,7 +69,8 @@ describe('Order', () => {
           baseAmount: '10000',
           counterAmount: '100000',
           ownerId: 'fakeID',
-          makerAddress: 'bolt:123019230jasofdij',
+          makerBaseAddress: 'bolt:123019230jasofdij',
+          makerCounterAddress: 'bolt:65433455asdfasdf',
           feePaymentRequest: 'myrequest',
           depositPaymentRequest: 'yourrequest'
         }
@@ -98,7 +101,8 @@ describe('Order', () => {
         baseAmount: '10000',
         counterAmount: '100000',
         ownerId: 'fakeID',
-        makerAddress: 'bolt:123019230jasofdij'
+        makerBaseAddress: 'bolt:123019230jasofdij',
+        makerCounterAddress: 'bolt:65433455asdfasdf'
       }
       const blockOrderId = 'blockid'
       const orderId = 'myid'
@@ -114,7 +118,8 @@ describe('Order', () => {
       expect(order).to.have.property('baseAmount', params.baseAmount)
       expect(order).to.have.property('counterAmount', params.counterAmount)
       expect(order).to.have.property('ownerId', params.ownerId)
-      expect(order).to.have.property('makerAddress', params.makerAddress)
+      expect(order).to.have.property('makerBaseAddress', params.makerBaseAddress)
+      expect(order).to.have.property('makerCounterAddress', params.makerCounterAddress)
     })
 
     it('assigns parameters from after order creation to the order object', () => {
@@ -125,7 +130,8 @@ describe('Order', () => {
         baseAmount: '10000',
         counterAmount: '100000',
         ownerId: 'fakeID',
-        makerAddress: 'bolt:123019230jasofdij',
+        makerBaseAddress: 'bolt:123019230jasofdij',
+        makerCounterAddress: 'bolt:65433455asdfasdf',
         feePaymentRequest: 'myrequest',
         depositPaymentRequest: 'yourrequest'
       }
@@ -163,7 +169,8 @@ describe('Order', () => {
         baseAmount: '10000',
         counterAmount: '100000',
         ownerId: 'fakeID',
-        makerAddress: 'bolt:123019230jasofdij'
+        makerBaseAddress: 'bolt:123019230jasofdij',
+        makerCounterAddress: 'bolt:65433455asdfasdf'
       }
 
       const order = new Order(blockOrderId, params)
@@ -174,7 +181,8 @@ describe('Order', () => {
       expect(order).to.have.property('baseAmount', params.baseAmount)
       expect(order).to.have.property('counterAmount', params.counterAmount)
       expect(order).to.have.property('ownerId', params.ownerId)
-      expect(order).to.have.property('makerAddress', params.makerAddress)
+      expect(order).to.have.property('makerBaseAddress', params.makerBaseAddress)
+      expect(order).to.have.property('makerCounterAddress', params.makerCounterAddress)
     })
 
     it('creates an ask', () => {
@@ -186,7 +194,8 @@ describe('Order', () => {
         baseAmount: '10000',
         counterAmount: '100000',
         ownerId: 'fakeID',
-        makerAddress: 'bolt:123019230jasofdij'
+        makerBaseAddress: 'bolt:123019230jasofdij',
+        makerCounterAddress: 'bolt:65433455asdfasdf'
       }
 
       const order = new Order(blockOrderId, params)
@@ -203,7 +212,8 @@ describe('Order', () => {
         baseAmount: '10000',
         counterAmount: '100000',
         ownerId: 'fakeID',
-        makerAddress: 'bolt:123019230jasofdij'
+        makerBaseAddress: 'bolt:123019230jasofdij',
+        makerCounterAddress: 'bolt:65433455asdfasdf'
       }
 
       expect(() => {
@@ -226,7 +236,8 @@ describe('Order', () => {
         baseAmount: '10000',
         counterAmount: '100000',
         ownerId: 'fakeID',
-        makerAddress: 'bolt:123019230jasofdij'
+        makerBaseAddress: 'bolt:123019230jasofdij',
+        makerCounterAddress: 'bolt:65433455asdfasdf'
       }
 
       order = new Order(blockOrderId, params)
@@ -289,7 +300,8 @@ describe('Order', () => {
           baseAmount: params.baseAmount,
           counterAmount: params.counterAmount,
           ownerId: params.ownerId,
-          makerAddress: params.makerAddress
+          makerBaseAddress: params.makerBaseAddress,
+          makerCounterAddress: params.makerCounterAddress
         })
       })
     })
