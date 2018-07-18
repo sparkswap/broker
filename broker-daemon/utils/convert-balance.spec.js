@@ -2,7 +2,7 @@ const { expect } = require('test/test-helper')
 
 const convertBalance = require('./convert-balance')
 
-describe('convertBalance', () => {
+describe.only('convertBalance', () => {
   let balance
   let firstCurrency
   let secondCurrency
@@ -15,12 +15,12 @@ describe('convertBalance', () => {
 
   it('returns the converted balance if the original balance is in the base currency', () => {
     const res = convertBalance(balance, firstCurrency, secondCurrency)
-    expect(res).to.eql('10')
+    expect(res).to.eql('600')
   })
 
   it('returns the converted balance if the original balance is in the counter currency', () => {
     const res = convertBalance(balance, secondCurrency, firstCurrency)
-    expect(res).to.eql('10')
+    expect(res).to.eql('0.16666666666666')
   })
 
   it('throws an error if the market conversion is not defined', () => {
