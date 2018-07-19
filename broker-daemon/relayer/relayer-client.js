@@ -60,7 +60,7 @@ class RelayerClient {
     this.makerService = caller(this.address, this.proto.MakerService, this.credentials)
     this.takerService = caller(this.address, this.proto.TakerService, this.credentials)
     this.healthService = caller(this.address, this.proto.HealthService)
-    this.orderbookService = caller(this.address, this.proto.OrderBookService, this.credentials)
+    this.orderbookService = caller(this.address, this.proto.OrderBookService)
     this.paymentChannelNetworkService = caller(this.address, this.proto.PaymentChannelNetworkService)
   }
 

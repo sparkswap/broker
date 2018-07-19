@@ -181,13 +181,16 @@ describe('RelayerClient', () => {
 
     describe('services', () => {
       let relayer
+      let fakeCreds
 
       beforeEach(() => {
+        fakeCreds = 'somecreds'
+        combineChannelCredentialsStub.returns(fakeCreds)
         relayer = new RelayerClient(idKeyPath, { host: relayerHost })
       })
 
-      it('creates an makerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, MakerService))
-      it('creates an takerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, TakerService))
+      it('creates an makerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, MakerService, fakeCreds))
+      it('creates an takerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, TakerService, fakeCreds))
       it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(relayer.address, OrderBookService))
       it('creates an healthService', () => expect(callerStub).to.have.been.calledWith(relayer.address, HealthService))
     })
