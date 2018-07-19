@@ -10,6 +10,7 @@ describe('RelayerClient', () => {
   let readFileSync
   let pathResolve
   let Identity
+  let identitySignRequest
   let MarketEvent
   let loadProto
   let proto
@@ -33,8 +34,11 @@ describe('RelayerClient', () => {
   }
 
   beforeEach(() => {
+    identitySignRequest = sinon.stub()
     Identity = {
-      load: sinon.stub()
+      load: sinon.stub().returns({
+        signRequest: identitySignRequest
+      })
     }
     RelayerClient.__set__('Identity', Identity)
 
@@ -125,6 +129,54 @@ describe('RelayerClient', () => {
       expect(Identity.load).to.have.been.calledOnce()
       expect(Identity.load).to.have.been.calledWith(idKeyPath.privKeyPath, idKeyPath.pubKeyPath)
       expect(relayer).to.have.property('identity', fakeId)
+    })
+
+    it('creates ssl credentials', () => {
+      const fakePath = '/path/to/root.pem'
+      const fakeCert = 'fakeydo'
+      readFileSync.returns(fakeCert)
+
+      // eslint-disable-next-line
+      new RelayerClient(idKeyPath, { host: relayerHost, certPath: fakePath })
+
+      expect(readFileSync).to.have.been.calledOnce()
+      expect(readFileSync).to.have.been.calledWith(fakePath)
+      expect(createSslStub).to.have.been.calledOnce()
+      expect(createSslStub).to.have.been.calledWith(fakeCert)
+    })
+
+    it('creates call credentials using the custom signer', () => {
+      // eslint-disable-next-line
+      new RelayerClient(idKeyPath, { host: relayerHost })
+
+      const generator = createFromMetadataGeneratorStub.args[0][0]
+
+      const fakeMeta = 'fakemetadata'
+      const fakeUrl = 'someurl'
+      const fakeCallback = sinon.stub()
+      identitySignRequest.returns(fakeMeta)
+
+      generator({ service_url: fakeUrl }, fakeCallback)
+
+      expect(identitySignRequest).to.have.been.calledOnce()
+      expect(identitySignRequest).to.have.been.calledWith(fakeUrl)
+      expect(fakeCallback).to.have.been.calledOnce()
+      expect(fakeCallback).to.have.been.calledWith(null, fakeMeta)
+    })
+
+    it('combines ssl and custom call credentials', () => {
+      const fakeCallCreds = 'myfake'
+      const fakeSslCreds = 'yourfake'
+      const fakeCombined = 'ourfake'
+      createSslStub.returns(fakeSslCreds)
+      createFromMetadataGeneratorStub.returns(fakeCallCreds)
+      combineChannelCredentialsStub.returns(fakeCombined)
+
+      const relayer = new RelayerClient(idKeyPath, { host: relayerHost })
+
+      expect(combineChannelCredentialsStub).to.have.been.calledOnce()
+      expect(combineChannelCredentialsStub).to.have.been.calledWith(fakeSslCreds, fakeCallCreds)
+      expect(relayer).to.have.property('credentials', fakeCombined)
     })
 
     describe('services', () => {

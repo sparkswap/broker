@@ -40,7 +40,6 @@ class RelayerClient {
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
     this.identity = Identity.load(privKeyPath, pubKeyPath)
 
-    // credentials need to be both by channel and by call. Until we implement SSL, we use an insecure channel.
     const channelCredentials = credentials.createSsl(readFileSync(certPath))
     // `service_url` in the line below is defined by the grpc lib, so we need to tell eslint to ignore snake case
     // eslint-disable-next-line
@@ -52,8 +51,6 @@ class RelayerClient {
       } catch (e) {
         return callback(e)
       }
-
-      console.log(metadata.getMap())
 
       callback(null, metadata)
     })
