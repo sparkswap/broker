@@ -96,7 +96,7 @@ describe('broker daemon', () => {
       }
     }
 
-    brokerDaemon = new BrokerDaemon(idKeyPath, null, null, null, null, null, engines)
+    brokerDaemon = new BrokerDaemon(idKeyPath, null, null, {}, null, null, engines)
   })
 
   it('throws if the key paths are not defined', () => {
@@ -107,7 +107,8 @@ describe('broker daemon', () => {
   it('creates a relayer client', () => {
     expect(RelayerClient).to.have.been.calledOnce()
     expect(RelayerClient).to.have.been.calledWithNew()
-    expect(RelayerClient).to.have.been.calledWith(idKeyPath, brokerDaemon.relayerRpcHost)
+    brokerDaemon = new BrokerDaemon(idKeyPath, null, null, { relayerCertPath: '/fake/path', relayerRpcHost: 'fakehost' })
+    expect(RelayerClient).to.have.been.calledWith(idKeyPath, { certPath: '/fake/path', host: 'fakehost' })
     expect(brokerDaemon).to.have.property('relayer')
     expect(brokerDaemon.relayer).to.be.instanceOf(RelayerClient)
   })
@@ -127,7 +128,7 @@ describe('broker daemon', () => {
     it('throws for unrecognized engine types', () => {
       engines.BTC.type = 'LIT'
 
-      expect(() => new BrokerDaemon(idKeyPath, null, null, null, null, null, engines)).to.throw('Unknown engine type') // eslint-disable-line
+      expect(() => new BrokerDaemon(idKeyPath, null, null, {}, null, null, engines)).to.throw('Unknown engine type') // eslint-disable-line
     })
 
     it('provides lnd parameters to lnd engine', () => {
@@ -333,7 +334,7 @@ describe('broker daemon', () => {
 
     it('initializes markets', async () => {
       const marketNames = [ 'BTC/LTC', 'ABC/XYZ' ]
-      brokerDaemon = new BrokerDaemon(idKeyPath, null, null, null, null, marketNames)
+      brokerDaemon = new BrokerDaemon(idKeyPath, null, null, {}, null, marketNames)
       brokerDaemon.initializeMarkets = sinon.stub().resolves()
 
       await brokerDaemon.initialize()

@@ -17,6 +17,7 @@ const {
   RPC_ADDRESS,
   DATA_DIR,
   RELAYER_RPC_HOST,
+  RELAYER_CERT_PATH,
   MARKETS,
   INTERCHAIN_ROUTER_ADDRESS,
   ID_PRIV_KEY,
@@ -33,6 +34,7 @@ program
   .option('--id-pubkey-path <path>', 'Location of the public key for the broker\'s identity', validations.isFormattedPath, ID_PUB_KEY)
   .option('--markets <markets>', 'Comma-separated market names to track on startup', validations.areValidMarketNames, MARKETS)
   .option('--relayer-host', 'The host address for the Kinesis Relayer', validations.isHost, RELAYER_RPC_HOST)
+  .option('--relayer-cert-path', 'Location of the root certificate for the Kinesis Relayer', validations.isFormattedPath, RELAYER_CERT_PATH)
 
 for (let currency of currencies) {
   let lowerSymbol = currency.symbol.toLowerCase()
@@ -58,6 +60,7 @@ program
       markets,
       interchainRouterAddress,
       relayerHost,
+      relayerCertPath,
       idPrivkeyPath,
       idPubkeyPath
     } = opts
@@ -77,7 +80,7 @@ program
     }
 
     const marketNames = (markets || '').split(',').filter(m => m)
-    const brokerDaemon = new BrokerDaemon({ privKeyPath: idPrivkeyPath, pubKeyPath: idPubkeyPath }, rpcAddress, interchainRouterAddress, relayerHost, dataDir, marketNames, engines)
+    const brokerDaemon = new BrokerDaemon({ privKeyPath: idPrivkeyPath, pubKeyPath: idPubkeyPath }, rpcAddress, interchainRouterAddress, { relayerRpcHost: relayerHost, relayerCertPath }, dataDir, marketNames, engines)
     brokerDaemon.initialize()
     return brokerDaemon
   })

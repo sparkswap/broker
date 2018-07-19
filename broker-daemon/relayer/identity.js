@@ -93,10 +93,11 @@ Identity.load = function (privKeyPath, pubKeyPath) {
 }
 
 function pubKeyToBase64 (fileContents) {
-  if (!fileContents.startsWith(PUB_KEY_MARKERS.START) || !fileContents.endsWith(PUB_KEY_MARKERS.END)) {
+  const strippedContents = fileContents.replace(/\r?\n|\r/g, '')
+  if (!strippedContents.startsWith(PUB_KEY_MARKERS.START) || !strippedContents.endsWith(PUB_KEY_MARKERS.END)) {
     throw new Error('Public Key should be in PEM printable format')
   }
-  return fileContents.substring(PUB_KEY_MARKERS.START.length, fileContents.length - PUB_KEY_MARKERS.END.length).replace(/\r?\n|\r/g, '')
+  return strippedContents.substring(PUB_KEY_MARKERS.START.length, strippedContents.length - PUB_KEY_MARKERS.END.length)
 }
 
 module.exports = Identity

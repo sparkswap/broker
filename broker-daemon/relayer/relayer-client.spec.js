@@ -4,7 +4,10 @@ const { sinon, rewire, delay, expect } = require('test/test-helper')
 const RelayerClient = rewire(path.resolve('broker-daemon', 'relayer', 'relayer-client'))
 
 describe('RelayerClient', () => {
-  let grpcCredentialsInsecure
+  let createSslStub
+  let createFromMetadataGeneratorStub
+  let combineChannelCredentialsStub
+  let readFileSync
   let pathResolve
   let Identity
   let MarketEvent
@@ -47,6 +50,9 @@ describe('RelayerClient', () => {
     pathResolve = sinon.stub()
     RelayerClient.__set__('path', { resolve: pathResolve })
 
+    readFileSync = sinon.stub()
+    RelayerClient.__set__('readFileSync', readFileSync)
+
     proto = {
       MakerService,
       TakerService,
@@ -70,12 +76,14 @@ describe('RelayerClient', () => {
     }
     RelayerClient.__set__('console', fakeConsole)
 
-    grpcCredentialsInsecure = sinon.stub()
+    createSslStub = sinon.stub()
+    createFromMetadataGeneratorStub = sinon.stub()
+    combineChannelCredentialsStub = sinon.stub()
 
-    RelayerClient.__set__('grpc', {
-      credentials: {
-        createInsecure: grpcCredentialsInsecure
-      }
+    RelayerClient.__set__('credentials', {
+      createSsl: createSslStub,
+      createFromMetadataGenerator: createFromMetadataGeneratorStub,
+      combineChannelCredentials: combineChannelCredentialsStub
     })
   })
 
@@ -89,7 +97,7 @@ describe('RelayerClient', () => {
     })
 
     it('defaults the logger to the console', () => {
-      const relayer = new RelayerClient(idKeyPath, relayerHost)
+      const relayer = new RelayerClient(idKeyPath, { host: relayerHost })
 
       expect(relayer).to.have.property('logger')
       expect(relayer.logger).to.be.equal(fakeConsole)
@@ -98,7 +106,7 @@ describe('RelayerClient', () => {
     it('loads the proto', () => {
       const fakePath = 'mypath'
       pathResolve.returns(fakePath)
-      const relayer = new RelayerClient(idKeyPath, relayerHost)
+      const relayer = new RelayerClient(idKeyPath, { host: relayerHost })
 
       expect(pathResolve).to.have.been.calledOnce()
       expect(pathResolve).to.have.been.calledWith('./proto/relayer.proto')
@@ -112,7 +120,7 @@ describe('RelayerClient', () => {
       const fakeId = 'myid'
       Identity.load.returns(fakeId)
 
-      const relayer = new RelayerClient(idKeyPath, relayerHost)
+      const relayer = new RelayerClient(idKeyPath, { host: relayerHost })
 
       expect(Identity.load).to.have.been.calledOnce()
       expect(Identity.load).to.have.been.calledWith(idKeyPath.privKeyPath, idKeyPath.pubKeyPath)
@@ -123,7 +131,7 @@ describe('RelayerClient', () => {
       let relayer
 
       beforeEach(() => {
-        relayer = new RelayerClient(idKeyPath, relayerHost)
+        relayer = new RelayerClient(idKeyPath, { host: relayerHost })
       })
 
       it('creates an makerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, MakerService))
@@ -148,7 +156,7 @@ describe('RelayerClient', () => {
       watchMarket = sinon.stub().returns(stream)
 
       callerStub.withArgs(sinon.match.any, OrderBookService).returns({ watchMarket })
-      relayer = new RelayerClient(idKeyPath, relayerHost)
+      relayer = new RelayerClient(idKeyPath, { host: relayerHost })
       store = {
         put: sinon.stub()
       }

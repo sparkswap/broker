@@ -89,17 +89,29 @@ describe('kbd', () => {
 
   xit('defaults the data dir to the env variable')
 
-  it('provides an relayer host', () => {
+  it('provides a relayer host', () => {
     const relayerHost = 'example.com:9876'
     argv.push('--relayer-host')
     argv.push(relayerHost)
 
     kbd(argv)
 
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, relayerHost)
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match({ relayerRpcHost: relayerHost }))
   })
 
   xit('defaults the relayer host to the env variable')
+
+  it('provides a relayer cert path', () => {
+    const relayerCertPath = '/path/to/relayer/root.pem'
+    argv.push('--relayer-cert-path')
+    argv.push(relayerCertPath)
+
+    kbd(argv)
+
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match({ relayerCertPath }))
+  })
+
+  xit('defaults the relayer cert path to the env variable')
 
   it('provides the markets', () => {
     const markets = 'BTC/LTC,ABC/XYZ'
