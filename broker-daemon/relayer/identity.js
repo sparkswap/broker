@@ -35,6 +35,20 @@ class Identity {
   }
 
   /**
+   * Create metadata for a grpc request with this identity attached to it.
+   * Specifically, attaches the public key to every request so that we
+   * can authorize ourselves later.
+   *
+   * @return {grpc.Metadata}
+   */
+  identify () {
+    const metadata = new Metadata()
+    metadata.set('pubkey', this.pubKeyBase64)
+
+    return metadata
+  }
+
+  /**
    * Sign data with this identity's private key
    * @param  {String} data to sign
    * @return {String} Base64 encoded signature of the data

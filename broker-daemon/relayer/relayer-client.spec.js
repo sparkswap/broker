@@ -10,7 +10,7 @@ describe('RelayerClient', () => {
   let readFileSync
   let pathResolve
   let Identity
-  let identitySignRequest
+  let identityIdentify
   let MarketEvent
   let loadProto
   let proto
@@ -34,10 +34,10 @@ describe('RelayerClient', () => {
   }
 
   beforeEach(() => {
-    identitySignRequest = sinon.stub()
+    identityIdentify = sinon.stub()
     Identity = {
       load: sinon.stub().returns({
-        signRequest: identitySignRequest
+        identify: identityIdentify
       })
     }
     RelayerClient.__set__('Identity', Identity)
@@ -154,12 +154,12 @@ describe('RelayerClient', () => {
       const fakeMeta = 'fakemetadata'
       const fakeUrl = 'someurl'
       const fakeCallback = sinon.stub()
-      identitySignRequest.returns(fakeMeta)
+      identityIdentify.returns(fakeMeta)
 
       generator({ service_url: fakeUrl }, fakeCallback)
 
-      expect(identitySignRequest).to.have.been.calledOnce()
-      expect(identitySignRequest).to.have.been.calledWith(fakeUrl)
+      expect(identityIdentify).to.have.been.calledOnce()
+      expect(identityIdentify).to.have.been.calledWithExactly()
       expect(fakeCallback).to.have.been.calledOnce()
       expect(fakeCallback).to.have.been.calledWith(null, fakeMeta)
     })
@@ -191,8 +191,8 @@ describe('RelayerClient', () => {
 
       it('creates an makerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, MakerService, fakeCreds))
       it('creates an takerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, TakerService, fakeCreds))
-      it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(relayer.address, OrderBookService))
-      it('creates an healthService', () => expect(callerStub).to.have.been.calledWith(relayer.address, HealthService))
+      it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(relayer.address, OrderBookService, fakeCreds))
+      it('creates an healthService', () => expect(callerStub).to.have.been.calledWith(relayer.address, HealthService, fakeCreds))
     })
   })
 

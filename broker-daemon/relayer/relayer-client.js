@@ -44,24 +44,16 @@ class RelayerClient {
     // `service_url` in the line below is defined by the grpc lib, so we need to tell eslint to ignore snake case
     // eslint-disable-next-line
     const callCredentials = credentials.createFromMetadataGenerator(({ service_url }, callback) => {
-      let metadata
-
-      try {
-        metadata = this.identity.signRequest(service_url)
-      } catch (e) {
-        return callback(e)
-      }
-
-      callback(null, metadata)
+      callback(null, this.identity.identify())
     })
     this.credentials = credentials.combineChannelCredentials(channelCredentials, callCredentials)
 
     // TODO: we will need to add auth for daemon for a non-local address
     this.makerService = caller(this.address, this.proto.MakerService, this.credentials)
     this.takerService = caller(this.address, this.proto.TakerService, this.credentials)
-    this.healthService = caller(this.address, this.proto.HealthService)
-    this.orderbookService = caller(this.address, this.proto.OrderBookService)
-    this.paymentChannelNetworkService = caller(this.address, this.proto.PaymentChannelNetworkService)
+    this.healthService = caller(this.address, this.proto.HealthService, this.credentials)
+    this.orderbookService = caller(this.address, this.proto.OrderBookService, this.credentials)
+    this.paymentChannelNetworkService = caller(this.address, this.proto.PaymentChannelNetworkService, this.credentials)
   }
 
   /**
