@@ -1,9 +1,10 @@
 const path = require('path')
+const crypto = require('crypto')
 const { sinon, rewire, expect } = require('test/test-helper')
 
 const Identity = rewire(path.resolve(__dirname, 'identity'))
 
-describe.only('Identity', () => {
+describe('Identity', () => {
   let readFileSync
   let privKeyPath
   let pubKeyPath
@@ -59,6 +60,8 @@ describe.only('Identity', () => {
   describe('#sign', () => {
     let identity
     let privKey
+    let pubKey
+    let data
 
     beforeEach(() => {
       identity = new Identity()
@@ -69,18 +72,28 @@ describe.only('Identity', () => {
                 'MHcCAQEEIFtvZnDK9mgU3HugwAAFfWyO3Vk4mcWIi1XEHl6g2ec5oAoGCCqGSM49' + '\n' +
                 'AwEHoUQDQgAEWOrLBCKQBQkiMJaIV5A05HqWFmR2GR5j8B19bxx7Th3/zmm7mZ8l' + '\n' +
                 'NyseTr1YO7BwN7jKEbMe8Agx5LLCd/IP/A==' + '\n' +
-                '-----END EC PRIVATE KEY-----'
-      identity.privKey = Buffer.from(privKey, 'utf8')
+                '-----END EC PRIVATE KEY-----' + '\n'
+      pubKey = '-----BEGIN PUBLIC KEY-----' + '\n' +
+               'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWOrLBCKQBQkiMJaIV5A05HqWFmR2' + '\n' +
+               'GR5j8B19bxx7Th3/zmm7mZ8lNyseTr1YO7BwN7jKEbMe8Agx5LLCd/IP/A==' + '\n' +
+               '-----END PUBLIC KEY-----' + '\n'
+      identity.privKey = privKey
+      data = 'MEYCIQDrfR7C9dqPELf0JvYGmw9S6bcEw/VBFtZzs2X3P7y7lQIhAKjCwcGTVwv1bDeya2NAbIihDTtggN18XaM7yhFZdrf1'
     })
 
     it('throws if there is no privKey', () => {
       identity.privKey = undefined
 
-      expect(() => identity.sign('blah')).to.throw('Cannot create a signature without a private key.')
+      expect(() => identity.sign(data)).to.throw('Cannot create a signature without a private key.')
     })
 
     it('creates a signature from a string', () => {
-      expect(identity.sign('blah')).to.be.eql('MEUCIAObz04dVAibxmTo67+X9GFlrfNQ+o81G1ZAUW0hlgReAiEA9J3hiPEWcap7INP0WItBOOGljjBn+KFm9tmdttTg/VI=')
+      const signature = identity.sign(data)
+      expect(signature).to.be.a('string')
+
+      const verify = crypto.createVerify('sha256')
+      verify.update(Buffer.from(data, 'base64'))
+      expect(verify.verify(pubKey, signature, 'base64')).to.be.eql(true)
     })
   })
 

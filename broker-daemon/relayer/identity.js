@@ -24,8 +24,8 @@ class Identity {
     if (!this.pubKeyPath) {
       throw new Error('Public Key path is required to load a Relayer Identity')
     }
-    this.privKey = readFileSync(this.privKeyPath)
-    this.pubKey = readFileSync(this.pubKeyPath)
+    this.privKey = readFileSync(this.privKeyPath, 'utf8')
+    this.pubKey = readFileSync(this.pubKeyPath, 'utf8')
   }
 
   /**
@@ -34,7 +34,7 @@ class Identity {
    * @return {String} Base64 encoded signature of the data
    */
   sign (data) {
-    if (!this.privKey) {
+    if (typeof this.privKey !== 'string' || !this.privKey) {
       throw new Error('Cannot create a signature without a private key.')
     }
     const sign = crypto.createSign('sha256')
