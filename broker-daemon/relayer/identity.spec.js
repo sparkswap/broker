@@ -1,13 +1,15 @@
 const path = require('path')
 const crypto = require('crypto')
-const { sinon, rewire, expect } = require('test/test-helper')
+const { sinon, rewire, expect, timekeeper } = require('test/test-helper')
 
 const Identity = rewire(path.resolve(__dirname, 'identity'))
 
 describe('Identity', () => {
   let readFileSync
+  let Metadata
   let privKeyPath
   let pubKeyPath
+  let randomBytes
 
   beforeEach(() => {
     readFileSync = sinon.stub()
@@ -15,6 +17,13 @@ describe('Identity', () => {
     pubKeyPath = '/path/to/pub'
 
     Identity.__set__('readFileSync', readFileSync)
+
+    Metadata = sinon.stub()
+    Metadata.prototype.set = sinon.stub()
+    Identity.__set__('Metadata', Metadata)
+
+    randomBytes = sinon.stub()
+    Identity.__set__('randomBytes', randomBytes)
   })
 
   describe('#constructor', () => {
@@ -36,7 +45,10 @@ describe('Identity', () => {
   describe('#loadSync', () => {
     let identity
     let fakePrivKey = 'private'
-    let fakePubKey = 'public'
+    let fakePubKey = '-----BEGIN PUBLIC KEY-----' + '\n' +
+                     'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWOrLBCKQBQkiMJaIV5A05HqWFmR2' + '\n' +
+                     'GR5j8B19bxx7Th3/zmm7mZ8lNyseTr1YO7BwN7jKEbMe8Agx5LLCd/IP/A==' + '\n' +
+                     '-----END PUBLIC KEY-----'
 
     beforeEach(() => {
       readFileSync.withArgs(privKeyPath).returns(fakePrivKey)
@@ -57,11 +69,10 @@ describe('Identity', () => {
     })
   })
 
-  describe('#sign', () => {
+  describe('signing', () => {
     let identity
     let privKey
     let pubKey
-    let data
 
     beforeEach(() => {
       identity = new Identity()
@@ -72,32 +83,94 @@ describe('Identity', () => {
                 'MHcCAQEEIFtvZnDK9mgU3HugwAAFfWyO3Vk4mcWIi1XEHl6g2ec5oAoGCCqGSM49' + '\n' +
                 'AwEHoUQDQgAEWOrLBCKQBQkiMJaIV5A05HqWFmR2GR5j8B19bxx7Th3/zmm7mZ8l' + '\n' +
                 'NyseTr1YO7BwN7jKEbMe8Agx5LLCd/IP/A==' + '\n' +
-                '-----END EC PRIVATE KEY-----' + '\n'
+                '-----END EC PRIVATE KEY-----'
       pubKey = '-----BEGIN PUBLIC KEY-----' + '\n' +
                'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWOrLBCKQBQkiMJaIV5A05HqWFmR2' + '\n' +
                'GR5j8B19bxx7Th3/zmm7mZ8lNyseTr1YO7BwN7jKEbMe8Agx5LLCd/IP/A==' + '\n' +
-               '-----END PUBLIC KEY-----' + '\n'
+               '-----END PUBLIC KEY-----'
       identity.privKey = privKey
-      data = 'MEYCIQDrfR7C9dqPELf0JvYGmw9S6bcEw/VBFtZzs2X3P7y7lQIhAKjCwcGTVwv1bDeya2NAbIihDTtggN18XaM7yhFZdrf1'
+      identity.pubKey = pubKey
+      identity.pubKeyBase64 = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWOrLBCKQBQkiMJaIV5A05HqWFmR2GR5j8B19bxx7Th3/zmm7mZ8lNyseTr1YO7BwN7jKEbMe8Agx5LLCd/IP/A=='
     })
 
-    it('throws if there is no privKey', () => {
-      identity.privKey = undefined
+    describe('#sign', () => {
+      let data
 
-      expect(() => identity.sign(data)).to.throw('Cannot create a signature without a private key.')
+      beforeEach(() => {
+        data = 'MEYCIQDrfR7C9dqPELf0JvYGmw9S6bcEw/VBFtZzs2X3P7y7lQIhAKjCwcGTVwv1bDeya2NAbIihDTtggN18XaM7yhFZdrf1'
+      })
+
+      it('throws if there is no privKey', () => {
+        identity.privKey = undefined
+
+        expect(() => identity.sign(data)).to.throw('Cannot create a signature without a private key.')
+      })
+
+      it('creates a signature from a string', () => {
+        const signature = identity.sign(data)
+        expect(signature).to.be.a('string')
+
+        const verify = crypto.createVerify('sha256')
+        verify.update(data)
+        expect(verify.verify(pubKey, signature, 'base64')).to.be.eql(true)
+      })
     })
 
-    it('creates a signature from a string', () => {
-      const signature = identity.sign(data)
-      expect(signature).to.be.a('string')
+    describe('#signRequest', () => {
+      let url
+      let metadata
+      let fakeRandom = Buffer.from('fake')
+      let fakeSign = 'signature'
+      let timeNow
 
-      const verify = crypto.createVerify('sha256')
-      verify.update(Buffer.from(data, 'base64'))
-      expect(verify.verify(pubKey, signature, 'base64')).to.be.eql(true)
+      beforeEach(() => {
+        url = 'someurl'
+        randomBytes.returns(fakeRandom)
+        identity.sign = sinon.stub().returns(fakeSign)
+        timeNow = new Date()
+        timekeeper.freeze(timeNow)
+
+        metadata = identity.signRequest(url)
+      })
+
+      afterEach(() => {
+        timekeeper.reset()
+      })
+
+      it('creates metadata', () => {
+        expect(metadata).to.be.instanceOf(Metadata)
+      })
+
+      it('adds the pub key to the metadata', () => {
+        expect(Metadata.prototype.set).to.have.been.calledWith('pubkey', 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWOrLBCKQBQkiMJaIV5A05HqWFmR2GR5j8B19bxx7Th3/zmm7mZ8lNyseTr1YO7BwN7jKEbMe8Agx5LLCd/IP/A==')
+      })
+
+      it('adds a random nonce to the metadata', () => {
+        expect(randomBytes).to.have.been.calledOnce()
+        expect(randomBytes).to.have.been.calledWith(32)
+        expect(Metadata.prototype.set).to.have.been.calledWith('nonce', fakeRandom.toString('base64'))
+      })
+
+      it('adds a timestamp to the metadata', () => {
+        expect(Metadata.prototype.set).to.have.been.calledWith('timestamp', timeNow.getTime().toString())
+      })
+
+      it('signs the payload', () => {
+        expect(identity.sign).to.have.been.calledOnce()
+        expect(identity.sign).to.have.been.calledWith(`${timeNow.getTime().toString()},${fakeRandom.toString('base64')},${url}`)
+      })
+
+      it('adds the signature to the payload', () => {
+        expect(Metadata.prototype.set).to.have.been.calledWith('signature', fakeSign)
+      })
     })
   })
 
   describe('.load', () => {
+    beforeEach(() => {
+      Identity.prototype.loadSync = sinon.stub()
+    })
+
     it('creates a new identity instance', () => {
       const identity = Identity.load(privKeyPath, pubKeyPath)
       expect(identity).to.be.instanceOf(Identity)
@@ -106,7 +179,6 @@ describe('Identity', () => {
     })
 
     it('loads the identity from disk', () => {
-      Identity.prototype.loadSync = sinon.stub()
       Identity.load(privKeyPath, pubKeyPath)
       expect(Identity.prototype.loadSync).to.have.been.calledOnce()
     })
