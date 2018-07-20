@@ -14,20 +14,54 @@ This repo contains source for the following products:
 1. Install nvm - `brew install nvm` or your favorite package manager
 2. Install the current LTS node and npm version - `nvm install --lts --latest-npm`
 3. Install [docker](https://docs.docker.com/install/)
-4. Set up a local [Relayer](https://github.com/kinesis-exchange/relayer)
 
-It is also recommended that you install a [Standard](https://standardjs.com/) plugin for your editor. We currently follow StandardJS formatting.
+### The Quick n' Dirty way
 
-Additonally, you must have ssh/private access to the lnd-engine repo: https://github.com/kinesis-exchange/lnd-engine.
+```
+# Create a sparkswap dir to hold your broker daemon and the engine you want to use
+mkdir -p ./sparkswap
 
-### Getting Started
+# Download the broker daemon source code
+git clone git@github.com:kinesis-exchange/broker.git ./sparkswap/broker
 
-1. `npm run build` - This command will install local dependencies, install proto files and build all broker containers
-2. `npm run build-images` - builds the kbd image to be used by docker-compose
-2a. Make sure that you have ran `npm run build-images` on the lnd-engine before trying to start all containers for the broker
-3. `docker-compose up -d` - starts all the containers
+# Download an engine's source code
+git clone git@github.com:kinesis-exchange/lnd-engine.git ./sparkswap/lnd-engine
 
-### Workflow
+# Build the broker daemon's docker images
+(cd ./sparkswap/broker && npm run build-images)
+
+# Build your engines docker images
+(cd ./sparkswap/lnd-engine && npm run build-images)
+
+# Lets get into the broker directory to start using the code
+cd ./sparkswap/broker
+
+# Build proto files and grab information needed to start KBD
+npm run build
+
+# IMPORTANT:
+# We will now need to add a valid RELAYER_RPC_HOST into the `docker-compose` file of the broker.
+# This can be done by navigating to `<your_broker_directory>/docker-compose.yml` and editing
+# the RELAYER_RPC_HOST under the `kbd` service
+#
+# Valid addresses for Relayer:
+# simnet: simnet-relayer.sparkswap.com:28492
+# testnet: testnet-relayer.sparkswap.com:28492
+#
+# For availability, please check dev.sparkswap.com
+#
+
+# Start our docker stack
+docker-compose up -d
+
+# Install depedencies for the kcli
+(cd ./broker-cli/ && npm i)
+
+# We are now ready to use kcli w/ our daemon
+./broker-cli/bin/kcli wallet balance
+```
+
+If you will be developing against kbd (or any sparkswap repository), it is required to run the code through [Standard](https://standardjs.com/). StandardJS plugins can be downloaded for your favorite editor. The KBD/KCLI codebase follows StandardJS formatting.
 
 #### Using the CLI
 
@@ -43,18 +77,26 @@ Additionally, you can access a specific version of kbd by setting the --rpc-addr
 
 #### Running tests
 
-- `npm test` will run all tests
+- `npm test` will run all tests on your local machine
 - `npm run coverage` will run tests w/ code coverage
 
-#### Funding a wallet on SIMNET
+#### Funding a wallet
 
-Use the command `npm run fund <currency>` to find a broker's wallet on simnet (development only)
+....
 
 ### Authentication between Daemon and LND
 
 TLS certs and Macaroons are shared through the `/shared` directory located at the root of the `kbd` container. The `/shared` volume is created in the lnd-engine and is shared through the broker project through the use of `-p` on the startup commands located in package.json.
 
+The `/shared` directory will be a common pattern for all engines of the daemon.
+
 ## Product Notes
+
+### Engines
+
+The broker daemon (KBD) has a concept of an `Engine`. An Engine can be defined as a single implementation/multiple currency interface for all markets. An example of different engines would include LND-Engine and Eclair-Engine.
+
+The default engine for KBD is [LND-Engine](https://github.com/kinesis-exchange/lnd-engine). This is reflected in the code and the defaults set in `docker-compose.yml`. Currently, we only support BOLT spec implementations at this time.
 
 ### Orders and Block Orders
 
@@ -67,26 +109,3 @@ This structure allows the end user to submit specific desires (e.g. market price
 The overall flow looks something like this:
 
 `buy (kcli) -> BlockOrder (kbd) -> Order (kbd) -> Order (relayer)`
-
-### Development Steps for Relayer/Broker channels
-
-The following steps will get your broker/relayer projects to a state where you can successfully buy/sell orders.
-
-1. If this is your first time running the new code, down all of your containers (relayer/broker)
-2. In the lnd-engine directory, run `npm run build-images`
-3. In the relayer directory, build the relayer image w/ `npm run build-images`
-4. In the broker directory, build the broker image w/ `npm run build-images`
-5. In the relayer directory, build the project w/ `npm run build`
-6. In the relayer directory, Start all containers w/ `docker-compose up -d`
-7. In the relayer directory, fund the relayer w/ `npm run fund <currency>`
-    - This command may fail with a weird js error due to the relayer still initializing. If the command fails, just rerun it.
-    - Make sure to fund the relayer on all applicable currencies
-8. In the broker directory, build the project with `npm run build`
-9. In the broker directory, run `docker-compose up -d` to start all the containers
-10. In the broker directory, fund the broker w/ `npm run fund <currency>`
-    - **NOTE: (this command expects that the relayer is at `../relayer`)** however you can set your own w/ RELAYER_DIR=<your relayer dir>
-11. Once you have verified the broker has a balance (after a few blocks have been mined, commit a balance to the relayer by running `./broker-cli/bin/kcli wallet commit-balance BTC`
-    - NOTE: Make sure you have the correct rpc-address set for the kcli
-12. If successful, a channel from the `broker -> relayer` is now in a pending state!
-
-**IMPORTANT: ** If you down your containers and remove the volumes, you will need to backtrack and refund certain parts of the stack. Use the directions above for reference.
