@@ -7,6 +7,7 @@ const Identity = require('./identity')
 
 const { MarketEvent } = require('../models')
 const { loadProto } = require('../utils')
+const { ENABLE_SSL } = process.env
 
 /**
  * @constant
@@ -40,15 +41,19 @@ class RelayerClient {
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
     this.identity = Identity.load(privKeyPath, pubKeyPath)
 
-    const channelCredentials = credentials.createSsl(readFileSync(certPath))
-    // `service_url` in the line below is defined by the grpc lib, so we need to tell eslint to ignore snake case
-    // eslint-disable-next-line
-    const callCredentials = credentials.createFromMetadataGenerator(({ service_url }, callback) => {
-      callback(null, this.identity.identify())
-    })
-    this.credentials = credentials.combineChannelCredentials(channelCredentials, callCredentials)
+    if (ENABLE_SSL) {
+      const channelCredentials = credentials.createSsl(readFileSync(certPath))
+      // `service_url` in the line below is defined by the grpc lib, so we need to tell eslint to ignore snake case
+      // eslint-disable-next-line
+      const callCredentials = credentials.createFromMetadataGenerator(({ service_url }, callback) => {
+        callback(null, this.identity.identify())
+      })
+      this.credentials = credentials.combineChannelCredentials(channelCredentials, callCredentials)
+    } else {
+      this.logger.info('WARNING: SSL is not enabled and no credentials will be passed to the Relayer. This is only suitable for use in development.')
+      this.credentials = credentials.createInsecure()
+    }
 
-    // TODO: we will need to add auth for daemon for a non-local address
     this.makerService = caller(this.address, this.proto.MakerService, this.credentials)
     this.takerService = caller(this.address, this.proto.TakerService, this.credentials)
     this.healthService = caller(this.address, this.proto.HealthService, this.credentials)

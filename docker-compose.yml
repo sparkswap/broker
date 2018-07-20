@@ -20,6 +20,7 @@ services:
     environment:
       # - GRPC_VERBOSITY=INFO
       # - GRPC_TRACE=all
+      - ENABLE_SSL=true
       - NODE_PATH=.
       - RPC_ADDRESS=0.0.0.0:27492
       - INTERCHAIN_ROUTER_ADDRESS=0.0.0.0:40369
