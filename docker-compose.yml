@@ -20,7 +20,6 @@ services:
     environment:
       # - GRPC_VERBOSITY=INFO
       # - GRPC_TRACE=all
-      - ENABLE_SSL=true
       - NODE_PATH=.
       - RPC_ADDRESS=0.0.0.0:27492
       - INTERCHAIN_ROUTER_ADDRESS=0.0.0.0:40369
@@ -40,6 +39,9 @@ services:
       # This is a temporary workaround for preventing the use of external networks
       # for the relayer. In a testnet/mainnet setting, this will be a public IP.
       - RELAYER_RPC_HOST=docker.for.mac.host.internal:28492
+      - ENABLE_SSL=true
+      - RELAYER_CERT_HOST=docker.for.mac.host.internal:8080
+      - RELAYER_CERT_PATH=/secure/relayer-root.pem
       - MARKETS=BTC/LTC
     ports:
       - '27492:27492'
