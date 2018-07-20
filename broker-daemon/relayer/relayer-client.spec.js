@@ -32,6 +32,7 @@ describe('RelayerClient', () => {
     privKeyPath: '/path/to/priv',
     pubKeyPath: '/path/to/pub'
   }
+  let ENABLE_SSL = true
 
   beforeEach(() => {
     identityIdentify = sinon.stub()
@@ -89,6 +90,8 @@ describe('RelayerClient', () => {
       createFromMetadataGenerator: createFromMetadataGeneratorStub,
       combineChannelCredentials: combineChannelCredentialsStub
     })
+
+    RelayerClient.__set__('ENABLE_SSL', ENABLE_SSL)
   })
 
   describe('new', () => {
