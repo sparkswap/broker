@@ -27,6 +27,9 @@ describe('FillStateMachine', () => {
     relayer = {
       takerService: {
         createFill: sinon.stub().resolves()
+      },
+      identity: {
+        authorize: sinon.stub()
       }
     }
     engines = new Map()
@@ -348,6 +351,9 @@ describe('FillStateMachine', () => {
         takerService: {
           fillOrder: fillOrderStub,
           subscribeExecute: subscribeExecuteStub
+        },
+        identity: {
+          authorize: sinon.stub()
         }
       }
 
@@ -377,12 +383,22 @@ describe('FillStateMachine', () => {
       expect(createRefundInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
     })
 
+    it('authorizes the request', async () => {
+      await fsm.fillOrder()
+
+      expect(relayer.identity.authorize).to.have.been.calledWith(fillId)
+    })
+
     it('fills an order on the relayer', async () => {
+      const fakeAuth = 'fake auth'
+      relayer.identity.authorize.returns(fakeAuth)
+
       await fsm.fillOrder()
       expect(fillOrderStub).to.have.been.calledWith({
         feeRefundPaymentRequest: invoice,
         depositRefundPaymentRequest: invoice,
-        fillId
+        fillId,
+        authorization: fakeAuth
       })
     })
 
@@ -402,10 +418,19 @@ describe('FillStateMachine', () => {
       expect(subscribeExecuteStub).to.not.have.been.called()
     })
 
+    it('authorizes the request', async () => {
+      await fsm.fillOrder()
+      expect(relayer.identity.authorize).to.have.been.calledTwice()
+      expect(relayer.identity.authorize).to.have.been.calledWith(fillId)
+    })
+
     it('subscribes to fills on the relayer', async () => {
+      const fakeAuth = 'my auth'
+      relayer.identity.authorize.onCall(1).returns(fakeAuth)
+
       await fsm.fillOrder()
       expect(subscribeExecuteStub).to.have.been.calledOnce()
-      expect(subscribeExecuteStub).to.have.been.calledWith(sinon.match({ fillId }))
+      expect(subscribeExecuteStub).to.have.been.calledWith(sinon.match({ fillId, authorization: fakeAuth }))
     })
 
     it('rejects on error from the relayer subscribe fill hook', async () => {
@@ -476,6 +501,9 @@ describe('FillStateMachine', () => {
           subscribeExecute: sinon.stub().returns({
             on: sinon.stub()
           })
+        },
+        identity: {
+          authorize: sinon.stub()
         }
       }
 

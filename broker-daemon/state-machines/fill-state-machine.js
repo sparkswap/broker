@@ -209,7 +209,9 @@ const FillStateMachine = StateMachine.factory({
 
       this.logger.info(`Successfully paid fees for fill: ${fillId}`)
 
-      await this.relayer.takerService.fillOrder({ fillId, feeRefundPaymentRequest, depositRefundPaymentRequest })
+      const authorization = this.relayer.identity.authorize(fillId)
+      this.logger.debug(`Generated authorization for ${fillId}`, authorization)
+      await this.relayer.takerService.fillOrder({ fillId, feeRefundPaymentRequest, depositRefundPaymentRequest, authorization })
 
       this.logger.info(`Filled order ${fillId} on the relayer`)
     },
@@ -225,9 +227,10 @@ const FillStateMachine = StateMachine.factory({
       const { fillId } = this.fill
       this.logger.info(`In filled state, attempting to listen for executions on fill ${fillId}`)
 
+      const authorization = this.relayer.identity.authorize(fillId)
+      this.logger.debug(`Generated authorization for ${fillId}`, authorization)
       // NOTE: this method should NOT reject a promise, as that may prevent the state of the fill from saving
-
-      const call = this.relayer.takerService.subscribeExecute({ fillId })
+      const call = this.relayer.takerService.subscribeExecute({ fillId, authorization })
 
       call.on('error', (e) => {
         this.reject(e)
