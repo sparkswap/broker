@@ -96,37 +96,6 @@ class Identity {
       signature
     }
   }
-
-  /**
-   * Sign a request using the timestamp, nonce, and url of the request
-   *
-   * Specifically, the signature is of the following payload:
-   *  - timestamp of the request, in seconds. A timestamp within +/- 60 seconds of the Relayer's time should be accepted.
-   *  - A random nonce of 32 bytes, represented in base64. This nonce should not be repeated, but the Relayer may not reject duplicate nonces older than 24 hours.
-   *  - url of the service (not sure what this is...)
-   *
-   * This payload is joined by commas (','), and signed using the public key of the broker.
-   *
-   * Each of these data elements is then added to the metadata, with the exception of the url, and with the addition of the public key and the signature.
-   *
-   * The request can then be validated by the Relayer as being genuine from the owner of the public key.
-   * @param  {String}
-   * @return {grpc.Metadata}
-   */
-  signRequest (url) {
-    const timestamp = Date.now().toString()
-    const nonce = randomBytes(32).toString('base64')
-    const payload = [ timestamp, nonce, url ].join(',')
-    const signature = this.sign(payload)
-    const metadata = new Metadata()
-
-    metadata.set('timestamp', timestamp)
-    metadata.set('nonce', nonce)
-    metadata.set('pubkey', this.pubKeyBase64)
-    metadata.set('signature', signature)
-
-    return metadata
-  }
 }
 
 /**

@@ -178,55 +178,6 @@ describe('Identity', () => {
         expect(auth).to.have.property('signature', fakeSign)
       })
     })
-
-    describe.skip('#signRequest', () => {
-      let url
-      let metadata
-      let fakeRandom = Buffer.from('fake')
-      let fakeSign = 'signature'
-      let timeNow
-
-      beforeEach(() => {
-        url = 'someurl'
-        randomBytes.returns(fakeRandom)
-        identity.sign = sinon.stub().returns(fakeSign)
-        timeNow = new Date()
-        timekeeper.freeze(timeNow)
-
-        metadata = identity.signRequest(url)
-      })
-
-      afterEach(() => {
-        timekeeper.reset()
-      })
-
-      it('creates metadata', () => {
-        expect(metadata).to.be.instanceOf(Metadata)
-      })
-
-      it('adds the pub key to the metadata', () => {
-        expect(Metadata.prototype.set).to.have.been.calledWith('pubkey', 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWOrLBCKQBQkiMJaIV5A05HqWFmR2GR5j8B19bxx7Th3/zmm7mZ8lNyseTr1YO7BwN7jKEbMe8Agx5LLCd/IP/A==')
-      })
-
-      it('adds a random nonce to the metadata', () => {
-        expect(randomBytes).to.have.been.calledOnce()
-        expect(randomBytes).to.have.been.calledWith(32)
-        expect(Metadata.prototype.set).to.have.been.calledWith('nonce', fakeRandom.toString('base64'))
-      })
-
-      it('adds a timestamp to the metadata', () => {
-        expect(Metadata.prototype.set).to.have.been.calledWith('timestamp', timeNow.getTime().toString())
-      })
-
-      it('signs the payload', () => {
-        expect(identity.sign).to.have.been.calledOnce()
-        expect(identity.sign).to.have.been.calledWith(`${timeNow.getTime().toString()},${fakeRandom.toString('base64')},${url}`)
-      })
-
-      it('adds the signature to the payload', () => {
-        expect(Metadata.prototype.set).to.have.been.calledWith('signature', fakeSign)
-      })
-    })
   })
 
   describe('.load', () => {
