@@ -7,7 +7,7 @@ const Identity = require('./identity')
 
 const { MarketEvent } = require('../models')
 const { loadProto } = require('../utils')
-const { ENABLE_SSL } = process.env
+const { DISABLE_AUTH } = process.env
 
 /**
  * @constant
@@ -15,6 +15,19 @@ const { ENABLE_SSL } = process.env
  * @default
  */
 const RELAYER_PROTO_PATH = './proto/relayer.proto'
+
+/**
+ * Insecure stub of Identity to be used when auth is disabled
+ * @return {Object}
+ */
+function insecureIdentity () {
+  return {
+    authorize (id) {
+      this.logger.warn(`Not signing authorization for access to ${id}: DISABLE_AUTH is set`)
+      return {}
+    }
+  }
+}
 
 /**
  * Interface for daemon to interact with a Kinesis Relayer
@@ -39,9 +52,9 @@ class RelayerClient {
     this.logger = logger || console
     this.address = host
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
-    this.identity = Identity.load(privKeyPath, pubKeyPath)
 
-    if (ENABLE_SSL) {
+    if (!DISABLE_AUTH) {
+      this.identity = Identity.load(privKeyPath, pubKeyPath)
       const channelCredentials = credentials.createSsl(readFileSync(certPath))
       // `service_url` in the line below is defined by the grpc lib, so we need to tell eslint to ignore snake case
       // eslint-disable-next-line
@@ -50,7 +63,8 @@ class RelayerClient {
       })
       this.credentials = credentials.combineChannelCredentials(channelCredentials, callCredentials)
     } else {
-      this.logger.info('WARNING: SSL is not enabled and no credentials will be passed to the Relayer. This is only suitable for use in development.')
+      this.logger.warn('WARNING: SSL is not enabled and no credentials will be passed to the Relayer. This is only suitable for use in development.')
+      this.identity = insecureIdentity()
       this.credentials = credentials.createInsecure()
     }
 
