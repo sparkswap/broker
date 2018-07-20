@@ -220,8 +220,10 @@ const OrderStateMachine = StateMachine.factory({
 
       this.logger.info(`Successfully paid fees for order: ${orderId}`)
 
+      const authorization = this.relayer.identity.authorize(orderId)
+      this.logger.debug(`Generated authorization for ${orderId}`, authorization)
       // NOTE: this method should NOT reject a promise, as that may prevent the state of the order from saving
-      const call = this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest })
+      const call = this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest, authorization })
 
       call.on('error', (e) => {
         this.reject(e)
@@ -264,7 +266,10 @@ const OrderStateMachine = StateMachine.factory({
         throw new Error(`No engine available for ${symbol}`)
       }
       await engine.prepareSwap(orderId, swapHash, amount)
-      await this.relayer.makerService.executeOrder({ orderId })
+
+      const authorization = this.relayer.identity.authorize(orderId)
+      this.logger.debug(`Generated authorization for ${orderId}`, authorization)
+      await this.relayer.makerService.executeOrder({ orderId, authorization })
     },
 
     /**
@@ -323,7 +328,9 @@ const OrderStateMachine = StateMachine.factory({
       this.order.setSettledParams({ swapPreimage })
 
       const { orderId } = this.order.paramsForComplete
-      return this.relayer.makerService.completeOrder({ orderId, swapPreimage })
+      const authorization = this.relayer.identity.authorize(orderId)
+      this.logger.debug(`Generated authorization for ${orderId}`, authorization)
+      return this.relayer.makerService.completeOrder({ orderId, swapPreimage, authorization })
     },
     /**
      * Log errors from rejection

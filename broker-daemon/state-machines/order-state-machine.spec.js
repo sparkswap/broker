@@ -27,6 +27,9 @@ describe('OrderStateMachine', () => {
     relayer = {
       makerService: {
         createOrder: sinon.stub()
+      },
+      identity: {
+        authorize: sinon.stub()
       }
     }
 
@@ -364,6 +367,9 @@ describe('OrderStateMachine', () => {
       relayer = {
         makerService: {
           placeOrder: placeOrderStub
+        },
+        identity: {
+          authorize: sinon.stub()
         }
       }
 
@@ -398,12 +404,20 @@ describe('OrderStateMachine', () => {
       expect(createRefundInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
     })
 
+    it('creates an authorization for the order', async () => {
+      await osm.place()
+      expect(relayer.identity.authorize).to.have.been.calledWith(orderId)
+    })
+
     it('places an order on the relayer', async () => {
+      const fakeAuth = 'fake auth'
+      relayer.identity.authorize.returns(fakeAuth)
       await osm.place()
       expect(placeOrderStub).to.have.been.calledWith(sinon.match({
         feeRefundPaymentRequest: invoice,
         depositRefundPaymentRequest: invoice,
-        orderId
+        orderId,
+        authorization: fakeAuth
       }))
     })
 
@@ -508,6 +522,9 @@ describe('OrderStateMachine', () => {
       relayer = {
         makerService: {
           executeOrder: executeOrderStub
+        },
+        identity: {
+          authorize: sinon.stub()
         }
       }
 
@@ -528,11 +545,20 @@ describe('OrderStateMachine', () => {
       expect(prepareSwapStub).to.have.been.calledWith(orderId, swapHash, inboundAmount)
     })
 
+    it('authorizes the request', async () => {
+      await osm.execute()
+
+      expect(relayer.identity.authorize).to.have.been.calledOnce()
+      expect(relayer.identity.authorize).to.have.been.calledWith(orderId)
+    })
+
     it('executes the order on the relayer', async () => {
+      const fakeAuth = 'fake auth'
+      relayer.identity.authorize.returns(fakeAuth)
       await osm.execute()
 
       expect(relayer.makerService.executeOrder).to.have.been.calledOnce()
-      expect(relayer.makerService.executeOrder).to.have.been.calledWith({ orderId })
+      expect(relayer.makerService.executeOrder).to.have.been.calledWith({ orderId, authorization: fakeAuth })
     })
 
     it('completes the order after preparing to execute', async () => {
@@ -584,6 +610,9 @@ describe('OrderStateMachine', () => {
       relayer = {
         makerService: {
           completeOrder: completeOrderStub
+        },
+        identity: {
+          authorize: sinon.stub()
         }
       }
 
@@ -610,11 +639,20 @@ describe('OrderStateMachine', () => {
       expect(setSettledParams).to.have.been.calledWith({ swapPreimage: preimage })
     })
 
+    it('authorizes the request', async () => {
+      await osm.complete()
+
+      expect(relayer.identity.authorize).to.have.been.calledOnce()
+      expect(relayer.identity.authorize).to.have.been.calledWith(orderId)
+    })
+
     it('completes the order on the relayer', async () => {
+      const fakeAuth = 'fake auth'
+      relayer.identity.authorize.returns(fakeAuth)
       await osm.complete()
 
       expect(completeOrderStub).to.have.been.calledOnce()
-      expect(completeOrderStub).to.have.been.calledWith({ orderId, swapPreimage: preimage })
+      expect(completeOrderStub).to.have.been.calledWith({ orderId, swapPreimage: preimage, authorization: fakeAuth })
     })
   })
 
