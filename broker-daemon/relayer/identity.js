@@ -63,6 +63,41 @@ class Identity {
   }
 
   /**
+   * @typedef {Object} Authorization
+   * @property {String} timestamp Int64 string of the current unix timestamp in seconds
+   * @property {String} nonce base64 string of 32 random bytes
+   * @property {String} signature base64 string of the signature that authorizes it
+   */
+
+  /**
+   * Authorize a request to act on a given object by signing its id
+   *
+   * Specifically, the signature is of the following payload:
+   *  - timestamp of the request, in seconds. A timestamp within +/- 60 seconds of the Relayer's time should be accepted.
+   *  - A random nonce of 32 bytes, represented in base64. This nonce should not be repeated, but the Relayer may not reject duplicate nonces older than 24 hours.
+   *  - Id of the object to authorize access to
+   *
+   * This payload is joined by commas (','), and signed using the public key of the broker.
+   *
+   * The request can then be validated by the Relayer as being genuine from the owner of the public key.
+   * @param  {String} id - id to authorize a request for
+   * @return {Authorization}
+   */
+  authorize (id) {
+    // Timestamp in seconds
+    const timestamp = Math.round(Date.now() / 1000).toString()
+    const nonce = randomBytes(32).toString('base64')
+    const payload = [ timestamp, nonce, id ].join(',')
+    const signature = this.sign(payload)
+
+    return {
+      timestamp,
+      nonce,
+      signature
+    }
+  }
+
+  /**
    * Sign a request using the timestamp, nonce, and url of the request
    *
    * Specifically, the signature is of the following payload:

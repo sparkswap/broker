@@ -136,6 +136,49 @@ describe('Identity', () => {
       })
     })
 
+    describe('#authorize', () => {
+      let id
+      let auth
+      let fakeRandom = Buffer.from('fake')
+      let fakeSign = 'signature'
+      let timestamp
+      let timeInSeconds
+
+      beforeEach(() => {
+        id = 'someid'
+        randomBytes.returns(fakeRandom)
+        identity.sign = sinon.stub().returns(fakeSign)
+        timestamp = 1532045654571
+        timeInSeconds = 1532045655
+        timekeeper.freeze(new Date(timestamp))
+
+        auth = identity.authorize(id)
+      })
+
+      afterEach(() => {
+        timekeeper.reset()
+      })
+
+      it('adds a random nonce to the auth', () => {
+        expect(randomBytes).to.have.been.calledOnce()
+        expect(randomBytes).to.have.been.calledWith(32)
+        expect(auth).to.have.property('nonce', fakeRandom.toString('base64'))
+      })
+
+      it('adds a timestamp to the auth', () => {
+        expect(auth).to.have.property('timestamp', timeInSeconds.toString())
+      })
+
+      it('signs the payload', () => {
+        expect(identity.sign).to.have.been.calledOnce()
+        expect(identity.sign).to.have.been.calledWith(`${timeInSeconds.toString()},${fakeRandom.toString('base64')},${id}`)
+      })
+
+      it('adds the signature to the auth', () => {
+        expect(auth).to.have.property('signature', fakeSign)
+      })
+    })
+
     describe.skip('#signRequest', () => {
       let url
       let metadata
