@@ -6,11 +6,12 @@
 
 This repo contains source for the following products:
 
-- KCLI - CLI for Kinesis Daemon (this is in its own container OR can be used directly from `./broker-cli/bin/klci` from inside the kbd container)
-- KBD - Kinesis Broker Daemon - handle interactions between LND and the Kinesis Exchange (Relayer)
+- [KCLI (CLI for Kinesis Daemon)](./broker-cli)
+    - User interface for KBD
+- [KBD (Kinesis Broker Daemon)](./broker-daemon)
+    - Daemon that handles interactions between the user's lightning nodes and the Kinesis Exchange
 
-Documentation for KCLI can be found [here](./broker-cli)
-Documentation for KBD can be found [here](./broker-daemon)
+Documentation can be found in each directories `README.md` at [./broker-cli](./broker-cli) or [./broker-daemon](./broker-daemon) respectively.
 
 ### Before you begin
 
