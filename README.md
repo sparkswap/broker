@@ -9,6 +9,9 @@ This repo contains source for the following products:
 - KCLI - CLI for Kinesis Daemon (this is in its own container OR can be used directly from `./broker-cli/bin/klci` from inside the kbd container)
 - KBD - Kinesis Broker Daemon - handle interactions between LND and the Kinesis Exchange (Relayer)
 
+Documentation for KCLI can be found [here](./broker-cli)
+Documentation for KBD can be found [here](./broker-daemon)
+
 ### Before you begin
 
 1. Install nvm - `brew install nvm` or your favorite package manager
