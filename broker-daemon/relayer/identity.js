@@ -21,6 +21,8 @@ class Identity {
   /**
    * Load the identity (private and public key) from disk
    * @return {void}
+   * @throws {Error} If Private key path is not defined
+   * @throws {Error} If Public key path is not defined
    */
   loadSync () {
     if (!this.privKeyPath) {
@@ -52,6 +54,7 @@ class Identity {
    * Sign data with this identity's private key
    * @param  {String} data to sign
    * @return {String} Base64 encoded signature of the data
+   * @throws {Error} If private key is not loaded
    */
   sign (data) {
     if (typeof this.privKey !== 'string' || !this.privKey) {

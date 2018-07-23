@@ -127,7 +127,7 @@ describe('RelayerClient', () => {
       const fakeId = 'myid'
       Identity.load.returns(fakeId)
 
-      const relayer = new RelayerClient(idKeyPath, { host: relayerHost })
+      const relayer = new RelayerClient(idKeyPath, relayerHost)
 
       expect(Identity.load).to.have.been.calledOnce()
       expect(Identity.load).to.have.been.calledWith(idKeyPath.privKeyPath, idKeyPath.pubKeyPath)

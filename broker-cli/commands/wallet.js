@@ -8,9 +8,6 @@ require('colors')
 const BrokerDaemonClient = require('../broker-daemon-client')
 const { ENUMS, validations, askQuestion, Big } = require('../utils')
 const { currencies: currencyConfig } = require('../configuration')
-const {
-  config: { default_currency_symbol: DEFAULT_CURRENCY_SYMBOL }
-} = require('../package.json')
 
 /**
  * @constant
@@ -125,10 +122,6 @@ async function newDepositAddress (args, opts, logger) {
 async function commitBalance (args, opts, logger) {
   const { symbol } = args
   const { rpcAddress = null } = opts
-
-  if (DEFAULT_CURRENCY_SYMBOL !== symbol) {
-    return logger.info('Please switch the daemon to another supported currency.')
-  }
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
