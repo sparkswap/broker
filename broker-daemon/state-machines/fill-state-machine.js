@@ -158,7 +158,6 @@ const FillStateMachine = StateMachine.factory({
       this.fill.takerCounterAddress = await counterEngine.getPaymentChannelNetworkAddress()
 
       const swapHash = await inboundEngine.createSwapHash(this.fill.order.orderId, inboundAmount)
-      console.log('SWAPHAHS', swapHash)
       this.fill.setSwapHash(swapHash)
 
       const { fillId, feePaymentRequest, depositPaymentRequest } = await this.relayer.takerService.createFill(this.fill.paramsForCreate)

@@ -10,6 +10,7 @@ describe('OrderStateMachine', () => {
   let logger
   let relayer
   let engines
+  let getPaymentChannelNetworkAddressStub
 
   beforeEach(() => {
     Order = sinon.stub()
@@ -29,10 +30,10 @@ describe('OrderStateMachine', () => {
         createOrder: sinon.stub()
       }
     }
-
+    getPaymentChannelNetworkAddressStub = sinon.stub().resolves('bolt:adsfsdf')
     engines = new Map([
-      ['BTC', { getPaymentChannelNetworkAddress: sinon.stub() }],
-      ['LTC', { getPaymentChannelNetworkAddress: sinon.stub() }]
+      ['BTC', { getPaymentChannelNetworkAddress: getPaymentChannelNetworkAddressStub }],
+      ['LTC', { getPaymentChannelNetworkAddress: getPaymentChannelNetworkAddressStub }]
     ])
   })
 
@@ -208,7 +209,9 @@ describe('OrderStateMachine', () => {
       }
       Order.prototype.key = fakeKey
       Order.prototype.valueObject = fakeValueObject
-      Order.prototype.inboundSymbol = 'BTC'
+      Order.prototype.baseSymbol = 'BTC'
+      Order.prototype.counterSymbol = 'BTC'
+
       setCreatedParams = sinon.stub()
       Order.prototype.setCreatedParams = setCreatedParams
       createOrderResponse = {
@@ -246,22 +249,15 @@ describe('OrderStateMachine', () => {
     xit('creates an ownerId for the order')
 
     it('gets the makerAddress for the order', async () => {
-      const fakeAddress = 'bolt:mykey'
-      const otherFakeAddress = 'bolt:mykey'
-
-      engines.get('BTC').getPaymentChannelNetworkAddress.resolves(fakeAddress)
-      engines.get('LTC').getPaymentChannelNetworkAddress.resolves(otherFakeAddress)
-
       await osm.create(blockOrderId, params)
 
-      expect(engines.get('BTC').getPaymentChannelNetworkAddress).to.have.been.calledOnce()
-      expect(engines.get('LTC').getPaymentChannelNetworkAddress).to.have.been.calledOnce()
-      expect(osm.order.makerBaseAddress).to.be.equal(fakeAddress)
-      expect(osm.order.makerCounterAddress).to.be.equal(otherFakeAddress)
+      expect(getPaymentChannelNetworkAddressStub).to.have.been.calledTwice()
+      expect(osm.order.makerBaseAddress).to.be.equal('bolt:adsfsdf')
+      expect(osm.order.makerCounterAddress).to.be.equal('bolt:adsfsdf')
     })
 
     it('throws if no engine exists for the inbound symbol', () => {
-      Order.prototype.inboundSymbol = 'XYZ'
+      Order.prototype.baseSymbol = 'XYZ'
       return expect(osm.create(blockOrderId, params)).to.eventually.be.rejectedWith('No engine available')
     })
 
@@ -725,9 +721,10 @@ describe('OrderStateMachine', () => {
       fakeValueObject = {
         my: 'object'
       }
+      Order.prototype.baseSymbol = 'BTC'
+      Order.prototype.counterSymbol = 'LTC'
       Order.prototype.key = fakeKey
       Order.prototype.valueObject = fakeValueObject
-      Order.prototype.inboundSymbol = 'BTC'
       setCreatedParams = sinon.stub()
       Order.prototype.setCreatedParams = setCreatedParams
       createOrderResponse = {
