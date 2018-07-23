@@ -147,9 +147,7 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onBeforeCreate: async function (lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
-      const ownerId = 'TODO: create real owner ids'
-
-      this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, ownerId })
+      this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount })
       // TODO: figure out a way to cache the maker address instead of making a request
       const inboundEngine = this.engines.get(this.order.inboundSymbol)
       if (!inboundEngine) {

@@ -246,8 +246,6 @@ describe('OrderStateMachine', () => {
       expect(Order).to.have.been.calledWith(blockOrderId, sinon.match(params))
     })
 
-    xit('creates an ownerId for the order')
-
     it('gets the makerAddress for the order', async () => {
       const fakeAddress = 'bolt:mykey'
       engines.get('BTC').getPaymentChannelNetworkAddress.resolves(fakeAddress)
