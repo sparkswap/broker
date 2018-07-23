@@ -39,7 +39,8 @@ services:
       # This is a temporary workaround for preventing the use of external networks
       # for the relayer. In a testnet/mainnet setting, this will be a public IP.
       - RELAYER_RPC_HOST=docker.for.mac.host.internal:28492
-      - DISABLE_AUTH=true
+      # Only disable auth during dev
+      # - DISABLE_AUTH=true
       - RELAYER_CERT_HOST=docker.for.mac.host.internal:8080
       - RELAYER_CERT_PATH=/secure/relayer-root.pem
       - MARKETS=BTC/LTC
