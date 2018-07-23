@@ -1,6 +1,8 @@
 const path = require('path')
 const caller = require('grpc-caller')
 
+const Identity = require('./identity')
+
 const { MarketEvent } = require('../models')
 const { loadProto } = require('../utils')
 
@@ -18,12 +20,21 @@ const RELAYER_PROTO_PATH = './proto/relayer.proto'
  */
 class RelayerClient {
   /**
-   * @param {Logger} logger
+   * @typedef {Object} KeyPath
+   * @property {String} privKeyPath Path to a private key
+   * @property {String} pubKeyPath  Path to the public key corresponding to the private key
    */
-  constructor (host = 'localhost:28492', logger) {
+
+  /**
+   * @param {KeyPath} idKeyPath Path to public and private key for the broker's identity
+   * @param {String}  host      Hostname and port of the Relayer RPC server
+   * @param {Logger}  logger
+   */
+  constructor ({ privKeyPath, pubKeyPath }, host = 'localhost:28492', logger) {
     this.logger = logger || console
     this.address = host
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
+    this.identity = Identity.load(privKeyPath, pubKeyPath)
 
     // TODO: we will need to add auth for daemon for a non-local address
     this.makerService = caller(this.address, this.proto.MakerService)

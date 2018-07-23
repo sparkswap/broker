@@ -107,7 +107,7 @@ describe('broker daemon', () => {
   it('creates a relayer client', () => {
     expect(RelayerClient).to.have.been.calledOnce()
     expect(RelayerClient).to.have.been.calledWithNew()
-    expect(RelayerClient).to.have.been.calledWith(brokerDaemon.relayerRpcHost)
+    expect(RelayerClient).to.have.been.calledWith(idKeyPath, brokerDaemon.relayerRpcHost)
     expect(brokerDaemon).to.have.property('relayer')
     expect(brokerDaemon.relayer).to.be.instanceOf(RelayerClient)
   })

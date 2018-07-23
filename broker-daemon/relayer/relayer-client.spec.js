@@ -6,6 +6,7 @@ const RelayerClient = rewire(path.resolve('broker-daemon', 'relayer', 'relayer-c
 describe('RelayerClient', () => {
   let grpcCredentialsInsecure
   let pathResolve
+  let Identity
   let MarketEvent
   let loadProto
   let proto
@@ -23,8 +24,17 @@ describe('RelayerClient', () => {
   let callerStub
 
   let relayerHost = 'localhost:1337'
+  let idKeyPath = {
+    privKeyPath: '/path/to/priv',
+    pubKeyPath: '/path/to/pub'
+  }
 
   beforeEach(() => {
+    Identity = {
+      load: sinon.stub()
+    }
+    RelayerClient.__set__('Identity', Identity)
+
     MarketEvent = sinon.stub()
     RelayerClient.__set__('MarketEvent', MarketEvent)
 
@@ -72,14 +82,14 @@ describe('RelayerClient', () => {
   describe('new', () => {
     it('assigns a logger', () => {
       const logger = {}
-      const relayer = new RelayerClient(relayerHost, logger)
+      const relayer = new RelayerClient(idKeyPath, relayerHost, logger)
 
       expect(relayer).to.have.property('logger')
       expect(relayer.logger).to.be.equal(logger)
     })
 
     it('defaults the logger to the console', () => {
-      const relayer = new RelayerClient(relayerHost)
+      const relayer = new RelayerClient(idKeyPath, relayerHost)
 
       expect(relayer).to.have.property('logger')
       expect(relayer.logger).to.be.equal(fakeConsole)
@@ -88,7 +98,7 @@ describe('RelayerClient', () => {
     it('loads the proto', () => {
       const fakePath = 'mypath'
       pathResolve.returns(fakePath)
-      const relayer = new RelayerClient(relayerHost)
+      const relayer = new RelayerClient(idKeyPath, relayerHost)
 
       expect(pathResolve).to.have.been.calledOnce()
       expect(pathResolve).to.have.been.calledWith('./proto/relayer.proto')
@@ -98,11 +108,22 @@ describe('RelayerClient', () => {
       expect(relayer.proto).to.be.equal(proto)
     })
 
+    it('loads the identity', () => {
+      const fakeId = 'myid'
+      Identity.load.returns(fakeId)
+
+      const relayer = new RelayerClient(idKeyPath, relayerHost)
+
+      expect(Identity.load).to.have.been.calledOnce()
+      expect(Identity.load).to.have.been.calledWith(idKeyPath.privKeyPath, idKeyPath.pubKeyPath)
+      expect(relayer).to.have.property('identity', fakeId)
+    })
+
     describe('services', () => {
       let relayer
 
       beforeEach(() => {
-        relayer = new RelayerClient(relayerHost)
+        relayer = new RelayerClient(idKeyPath, relayerHost)
       })
 
       it('creates an makerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, MakerService))
@@ -127,7 +148,7 @@ describe('RelayerClient', () => {
       watchMarket = sinon.stub().returns(stream)
 
       callerStub.withArgs(sinon.match.any, OrderBookService).returns({ watchMarket })
-      relayer = new RelayerClient(relayerHost)
+      relayer = new RelayerClient(idKeyPath, relayerHost)
       store = {
         put: sinon.stub()
       }
