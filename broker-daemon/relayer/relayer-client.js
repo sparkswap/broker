@@ -52,7 +52,6 @@ class RelayerClient {
     this.logger = logger || console
     this.address = host
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
-    this.identity = Identity.load(privKeyPath, pubKeyPath)
 
     if (!DISABLE_AUTH) {
       this.identity = Identity.load(privKeyPath, pubKeyPath)
