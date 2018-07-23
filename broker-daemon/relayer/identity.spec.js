@@ -1,6 +1,6 @@
 const path = require('path')
 const crypto = require('crypto')
-const { sinon, rewire, expect, timekeeper } = require('test/test-helper')
+const { sinon, rewire, expect } = require('test/test-helper')
 
 const Identity = rewire(path.resolve(__dirname, 'identity'))
 
@@ -10,6 +10,7 @@ describe('Identity', () => {
   let privKeyPath
   let pubKeyPath
   let randomBytes
+  let nowInSeconds
 
   beforeEach(() => {
     readFileSync = sinon.stub()
@@ -24,6 +25,9 @@ describe('Identity', () => {
 
     randomBytes = sinon.stub()
     Identity.__set__('randomBytes', randomBytes)
+
+    nowInSeconds = sinon.stub()
+    Identity.__set__('nowInSeconds', nowInSeconds)
   })
 
   describe('#constructor', () => {
@@ -123,10 +127,6 @@ describe('Identity', () => {
         metadata = identity.identify()
       })
 
-      afterEach(() => {
-        timekeeper.reset()
-      })
-
       it('creates metadata', () => {
         expect(metadata).to.be.instanceOf(Metadata)
       })
@@ -141,22 +141,16 @@ describe('Identity', () => {
       let auth
       let fakeRandom = Buffer.from('fake')
       let fakeSign = 'signature'
-      let timestamp
       let timeInSeconds
 
       beforeEach(() => {
         id = 'someid'
         randomBytes.returns(fakeRandom)
         identity.sign = sinon.stub().returns(fakeSign)
-        timestamp = 1532045654571
         timeInSeconds = 1532045655
-        timekeeper.freeze(new Date(timestamp))
+        nowInSeconds.returns(timeInSeconds)
 
         auth = identity.authorize(id)
-      })
-
-      afterEach(() => {
-        timekeeper.reset()
       })
 
       it('adds a random nonce to the auth', () => {

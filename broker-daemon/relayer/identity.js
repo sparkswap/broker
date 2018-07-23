@@ -1,6 +1,7 @@
 const { readFileSync } = require('fs')
 const { randomBytes, createSign } = require('crypto')
 const { Metadata } = require('grpc')
+const { nowInSeconds } = require('../utils')
 const PUB_KEY_MARKERS = {
   START: '-----BEGIN PUBLIC KEY-----',
   END: '-----END PUBLIC KEY-----'
@@ -90,8 +91,7 @@ class Identity {
    * @return {Authorization}
    */
   authorize (id) {
-    // Timestamp in seconds
-    const timestamp = Math.round(Date.now() / 1000).toString()
+    const timestamp = nowInSeconds().toString()
     const nonce = randomBytes(32).toString('base64')
     const payload = [ timestamp, nonce, id ].join(',')
     const signature = this.sign(payload)
