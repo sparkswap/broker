@@ -41,7 +41,10 @@ class Identity {
    * Specifically, attaches the public key to every request so that we
    * can authorize ourselves later.
    *
-   * @return {grpc.Metadata}
+   * The public key is in PEM format without newlines and without anchor lines.
+   * In other words, it is ANSI.1 DER in Base64.
+   *
+   * @return {grpc.Metadata} Metadata object iwth a `pubkey` key containing the pem-encoded public key of the broker
    */
   identify () {
     const metadata = new Metadata()
