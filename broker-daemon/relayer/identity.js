@@ -113,6 +113,11 @@ Identity.load = function (privKeyPath, pubKeyPath) {
   return id
 }
 
+/**
+ * Strip the PEM file banners and newlines, returning just the PEM-encoded contents of a public key file
+ * @param  {String} fileContents - string of a PEM file
+ * @return {String} Pem-encoded public key without newlines or banners
+ */
 function pubKeyToBase64 (fileContents) {
   const strippedContents = fileContents.replace(/\r?\n|\r/g, '')
   if (!strippedContents.startsWith(PUB_KEY_MARKERS.START) || !strippedContents.endsWith(PUB_KEY_MARKERS.END)) {
