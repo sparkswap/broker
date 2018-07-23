@@ -1,5 +1,11 @@
 const { readFileSync } = require('fs')
-const crypto = require('crypto')
+const { randomBytes, createSign } = require('crypto')
+const { Metadata } = require('grpc')
+const { nowInSeconds } = require('../utils')
+const PUB_KEY_MARKERS = {
+  START: '-----BEGIN PUBLIC KEY-----',
+  END: '-----END PUBLIC KEY-----'
+}
 
 class Identity {
   /**
@@ -28,11 +34,29 @@ class Identity {
     }
     this.privKey = readFileSync(this.privKeyPath, 'utf8')
     this.pubKey = readFileSync(this.pubKeyPath, 'utf8')
+    this.pubKeyBase64 = pubKeyToBase64(this.pubKey)
+  }
+
+  /**
+   * Create metadata for a grpc request with this identity attached to it.
+   * Specifically, attaches the public key to every request so that we
+   * can authorize ourselves later.
+   *
+   * The public key is in PEM format without newlines and without anchor lines.
+   * In other words, it is ANSI.1 DER in Base64.
+   *
+   * @return {grpc.Metadata} Metadata object iwth a `pubkey` key containing the pem-encoded public key of the broker
+   */
+  identify () {
+    const metadata = new Metadata()
+    metadata.set('pubkey', this.pubKeyBase64)
+
+    return metadata
   }
 
   /**
    * Sign data with this identity's private key
-   * @param  {String} Base64 encoded data to sign
+   * @param  {String} data to sign
    * @return {String} Base64 encoded signature of the data
    * @throws {Error} If private key is not loaded
    */
@@ -40,9 +64,43 @@ class Identity {
     if (typeof this.privKey !== 'string' || !this.privKey) {
       throw new Error('Cannot create a signature without a private key.')
     }
-    const sign = crypto.createSign('sha256')
-    sign.update(Buffer.from(data, 'base64'))
+    const sign = createSign('sha256')
+    sign.update(data)
     return sign.sign(this.privKey, 'base64')
+  }
+
+  /**
+   * @typedef {Object} Authorization
+   * @property {String} timestamp Int64 string of the current unix timestamp in seconds
+   * @property {String} nonce base64 string of 32 random bytes
+   * @property {String} signature base64 string of the signature that authorizes it
+   */
+
+  /**
+   * Authorize a request to act on a given object by signing its id
+   *
+   * Specifically, the signature is of the following payload:
+   *  - timestamp of the request, in seconds. A timestamp within +/- 60 seconds of the Relayer's time should be accepted.
+   *  - A random nonce of 32 bytes, represented in base64. This nonce should not be repeated, but the Relayer may not reject duplicate nonces older than 24 hours.
+   *  - Id of the object to authorize access to
+   *
+   * This payload is joined by commas (','), and signed using the public key of the broker.
+   *
+   * The request can then be validated by the Relayer as being genuine from the owner of the public key.
+   * @param  {String} id - id to authorize a request for
+   * @return {Authorization}
+   */
+  authorize (id) {
+    const timestamp = nowInSeconds().toString()
+    const nonce = randomBytes(32).toString('base64')
+    const payload = [ timestamp, nonce, id ].join(',')
+    const signature = this.sign(payload)
+
+    return {
+      timestamp,
+      nonce,
+      signature
+    }
   }
 }
 
@@ -56,6 +114,19 @@ Identity.load = function (privKeyPath, pubKeyPath) {
   const id = new this(privKeyPath, pubKeyPath)
   id.loadSync()
   return id
+}
+
+/**
+ * Strip the PEM file banners and newlines, returning just the PEM-encoded contents of a public key file
+ * @param  {String} fileContents - string of a PEM file
+ * @return {String} Pem-encoded public key without newlines or banners
+ */
+function pubKeyToBase64 (fileContents) {
+  const strippedContents = fileContents.replace(/\r?\n|\r/g, '')
+  if (!strippedContents.startsWith(PUB_KEY_MARKERS.START) || !strippedContents.endsWith(PUB_KEY_MARKERS.END)) {
+    throw new Error('Public Key should be in PEM printable format')
+  }
+  return strippedContents.substring(PUB_KEY_MARKERS.START.length, strippedContents.length - PUB_KEY_MARKERS.END.length)
 }
 
 module.exports = Identity

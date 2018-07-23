@@ -17,10 +17,12 @@ const {
   RPC_ADDRESS,
   DATA_DIR,
   RELAYER_RPC_HOST,
+  RELAYER_CERT_PATH,
   MARKETS,
   INTERCHAIN_ROUTER_ADDRESS,
   ID_PRIV_KEY,
-  ID_PUB_KEY
+  ID_PUB_KEY,
+  DISABLE_AUTH
 } = process.env
 
 // TODO: Add validations to ./bin/kbd when they become available
@@ -29,10 +31,12 @@ program
   .option('--rpc-address <server>', 'Add a host/port to listen for daemon RPC connections', validations.isHost, RPC_ADDRESS)
   .option('--interchain-router-address <server>', 'Add a host/port to listen for interchain router RPC connections', validations.isHost, INTERCHAIN_ROUTER_ADDRESS)
   .option('--data-dir <path>', 'Location to store kinesis data', validations.isFormattedPath, DATA_DIR)
+  .option('--disable-relayer-auth', 'Disable SSL and message signing (DEV ONLY)', program.BOOL, DISABLE_AUTH)
   .option('--id-privkey-path <path>', 'Location of private key for the broker\'s identity', validations.isFormattedPath, ID_PRIV_KEY)
   .option('--id-pubkey-path <path>', 'Location of the public key for the broker\'s identity', validations.isFormattedPath, ID_PUB_KEY)
   .option('--markets <markets>', 'Comma-separated market names to track on startup', validations.areValidMarketNames, MARKETS)
-  .option('--relayer-host', 'The host address for the Kinesis Relayer', validations.isHost, RELAYER_RPC_HOST)
+  .option('--relayer-host <server>', 'The host address for the Kinesis Relayer', validations.isHost, RELAYER_RPC_HOST)
+  .option('--relayer-cert-path <path>', 'Location of the root certificate for the Kinesis Relayer', validations.isFormattedPath, RELAYER_CERT_PATH)
 
 for (let currency of currencies) {
   let lowerSymbol = currency.symbol.toLowerCase()
@@ -58,8 +62,10 @@ program
       markets,
       interchainRouterAddress,
       relayerHost,
+      relayerCertPath,
       idPrivkeyPath,
-      idPubkeyPath
+      idPubkeyPath,
+      disableRelayerAuth
     } = opts
 
     const engines = {}
@@ -77,7 +83,7 @@ program
     }
 
     const marketNames = (markets || '').split(',').filter(m => m)
-    const brokerDaemon = new BrokerDaemon({ privKeyPath: idPrivkeyPath, pubKeyPath: idPubkeyPath }, rpcAddress, interchainRouterAddress, relayerHost, dataDir, marketNames, engines)
+    const brokerDaemon = new BrokerDaemon({ privKeyPath: idPrivkeyPath, pubKeyPath: idPubkeyPath }, rpcAddress, interchainRouterAddress, { relayerRpcHost: relayerHost, relayerCertPath, disableRelayerAuth }, dataDir, marketNames, engines)
     brokerDaemon.initialize()
     return brokerDaemon
   })
