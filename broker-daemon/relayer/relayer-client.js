@@ -7,7 +7,6 @@ const Identity = require('./identity')
 
 const { MarketEvent } = require('../models')
 const { loadProto } = require('../utils')
-const { DISABLE_AUTH } = process.env
 
 /**
  * @constant
@@ -48,12 +47,16 @@ class RelayerClient {
    * @param {String}  relayerOpts.certPath Absolute path to the root certificate for the Relayer
    * @param {Logger}  logger
    */
-  constructor ({ privKeyPath, pubKeyPath }, { certPath, host = 'localhost:28492' }, logger) {
+  constructor ({ privKeyPath, pubKeyPath }, { certPath, host = 'localhost:28492', disableAuth = false }, logger) {
     this.logger = logger || console
     this.address = host
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
 
-    if (!DISABLE_AUTH) {
+    if (disableAuth) {
+      this.logger.warn('WARNING: SSL is not enabled and no credentials will be passed to the Relayer. This is only suitable for use in development.')
+      this.identity = insecureIdentity()
+      this.credentials = credentials.createInsecure()
+    } else {
       this.identity = Identity.load(privKeyPath, pubKeyPath)
       const channelCredentials = credentials.createSsl(readFileSync(certPath))
       // `service_url` in the line below is defined by the grpc lib, so we need to tell eslint to ignore snake case
@@ -62,10 +65,6 @@ class RelayerClient {
         callback(null, this.identity.identify())
       })
       this.credentials = credentials.combineChannelCredentials(channelCredentials, callCredentials)
-    } else {
-      this.logger.warn('WARNING: SSL is not enabled and no credentials will be passed to the Relayer. This is only suitable for use in development.')
-      this.identity = insecureIdentity()
-      this.credentials = credentials.createInsecure()
     }
 
     this.makerService = caller(this.address, this.proto.MakerService, this.credentials)

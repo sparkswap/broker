@@ -113,6 +113,22 @@ describe('kbd', () => {
 
   xit('defaults the relayer cert path to the env variable')
 
+  it('provides a flag for relayer auth', () => {
+    argv.push('--disable-relayer-auth')
+
+    kbd(argv)
+
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match({ disableRelayerAuth: true }))
+  })
+
+  it('disables relayer auth unless the flag is provided', () => {
+    kbd(argv)
+
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match({ disableRelayerAuth: undefined }))
+  })
+
+  xit('defaults relayer auth to the env variable')
+
   it('provides the markets', () => {
     const markets = 'BTC/LTC,ABC/XYZ'
     argv.push('--markets')

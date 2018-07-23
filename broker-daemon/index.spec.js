@@ -108,9 +108,14 @@ describe('broker daemon', () => {
     expect(RelayerClient).to.have.been.calledOnce()
     expect(RelayerClient).to.have.been.calledWithNew()
     brokerDaemon = new BrokerDaemon(idKeyPath, null, null, { relayerCertPath: '/fake/path', relayerRpcHost: 'fakehost' })
-    expect(RelayerClient).to.have.been.calledWith(idKeyPath, { certPath: '/fake/path', host: 'fakehost' })
+    expect(RelayerClient).to.have.been.calledWith(idKeyPath, { certPath: '/fake/path', host: 'fakehost', disableAuth: false })
     expect(brokerDaemon).to.have.property('relayer')
     expect(brokerDaemon.relayer).to.be.instanceOf(RelayerClient)
+  })
+
+  it('disables relayer client auth', () => {
+    brokerDaemon = new BrokerDaemon(idKeyPath, null, null, { relayerCertPath: '/fake/path', relayerRpcHost: 'fakehost', disableRelayerAuth: true })
+    expect(RelayerClient).to.have.been.calledWith(idKeyPath, { certPath: '/fake/path', host: 'fakehost', disableAuth: true })
   })
 
   it('creates an empty orderbooks map', () => {
