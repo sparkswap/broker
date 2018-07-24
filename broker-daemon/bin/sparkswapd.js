@@ -7,12 +7,12 @@ const program = require('caporal')
 const BrokerDaemon = require('../')
 const { currencies } = require('../config')
 
-// TODO: Change this path to be KBD specific
+// TODO: Change this path to be sparkswapd specific
 const { validations } = require('../../broker-cli/utils')
 
 const { version: CLI_VERSION } = require('../../package.json')
 
-// KBD Specific ENV variables
+// sparkswapd Specific ENV variables
 const {
   RPC_ADDRESS,
   DATA_DIR,
@@ -25,7 +25,7 @@ const {
   DISABLE_AUTH
 } = process.env
 
-// TODO: Add validations to ./bin/kbd when they become available
+// TODO: Add validations to ./bin/sparkswapd when they become available
 program
   .version(CLI_VERSION)
   .option('--rpc-address <server>', 'Add a host/port to listen for daemon RPC connections', validations.isHost, RPC_ADDRESS)

@@ -1,15 +1,15 @@
 version: '2.4'
 
 services:
-  kbd:
-    image: sparkswap_kbd:latest
+  sparkswapd:
+    image: sparkswap_sparkswapd:latest
     depends_on:
       - lnd_btc
       - lnd_ltc
     volumes:
       - './broker-daemon:/home/app/broker-daemon/'
       # TODO: This can be removed once utils are moved to a shared repo or into
-      # the broker-daemon itself. broker-daemon relies on these utils for ./broker-daemon/bin/kbd
+      # the broker-daemon itself. broker-daemon relies on these utils for ./broker-daemon/bin/sparkswapd
       - './broker-cli:/home/app/broker-cli/'
       - './proto:/home/app/proto/'
       - '/home/app/node_modules'
@@ -49,7 +49,7 @@ services:
     networks:
       - broker
     working_dir: '/home/app'
-    entrypoint: bash -c 'npm run start-kbd'
+    entrypoint: bash -c 'npm run start-sparkswapd'
 
   lnd_btc:
     image: sparkswap_lnd_btc:latest

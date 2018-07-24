@@ -5,7 +5,7 @@
   "main": "index.js",
   "config": {
     "project_name": "broker",
-    "daemon": "kbd"
+    "daemon": "sparkswapd"
   },
   "scripts": {
     "prebuild": "bash ./scripts/prebuild.sh",
@@ -18,12 +18,12 @@
     "test": "NODE_PATH=. mocha 'broker-cli/**/*.spec.js' 'broker-daemon/**/*.spec.js'",
     "coverage": "nyc npm test",
     "ci-test": "bash ./scripts/ci-test.sh",
-    "start-kbd": "pm2-docker pm2.json --watch",
+    "start-sparkswapd": "pm2-docker pm2.json --watch",
     "fund": "bash ./scripts/fund-simnet-wallet.local.sh",
     "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp ./broker-daemon/proto/broker.proto ./broker-cli/proto/broker.proto"
   },
   "bin": {
-    "kbd": "./broker-daemon/bin/kbd",
+    "sparkswapd": "./broker-daemon/bin/sparkswapd",
     "kcli": "./broker-cli/bin/kcli"
   },
   "standard": {

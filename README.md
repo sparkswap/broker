@@ -7,8 +7,8 @@
 This repo contains source for the following products:
 
 - [KCLI (CLI for SparkSwap Broker Daemon)](./broker-cli)
-    - User interface for KBD
-- [KBD (SparkSwap Broker Daemon)](./broker-daemon)
+    - User interface for sparkswapd
+- [sparkswapd (SparkSwap Broker Daemon)](./broker-daemon)
     - Daemon that handles interactions between the user's lightning nodes and the SparkSwap Relayer
 
 Documentation can be found in each directories `README.md` at [./broker-cli](./broker-cli) or [./broker-daemon](./broker-daemon) respectively.
@@ -40,13 +40,13 @@ git clone git@github.com:sparkswap/lnd-engine.git ./sparkswap/lnd-engine
 # Lets get into the broker directory to start using the code
 cd ./sparkswap/broker
 
-# Build proto files and grab information needed to start KBD
+# Build proto files and grab information needed to start sparkswapd
 npm run build
 
 # IMPORTANT:
 # We will now need to add a valid RELAYER_RPC_HOST into the `docker-compose` file of the broker.
 # This can be done by navigating to `<your_broker_directory>/docker-compose.yml` and editing
-# the RELAYER_RPC_HOST under the `kbd` service
+# the RELAYER_RPC_HOST under the `sparkswapd` service
 #
 # Valid addresses for Relayer:
 # simnet: simnet-relayer.sparkswap.com:28492
@@ -65,7 +65,7 @@ docker-compose up -d
 ./broker-cli/bin/kcli wallet balance
 ```
 
-If you will be developing against kbd (or any sparkswap repository), it is required to run the code through [Standard](https://standardjs.com/). StandardJS plugins can be downloaded for your favorite editor. The KBD/KCLI codebase follows StandardJS formatting.
+If you will be developing against sparkswapd (or any sparkswap repository), it is required to run the code through [Standard](https://standardjs.com/). StandardJS plugins can be downloaded for your favorite editor. The sparkswapd/KCLI codebase follows StandardJS formatting.
 
 #### Using the CLI
 
@@ -77,7 +77,7 @@ You can view default configuration for kcli in `./broker-cli/.kcli.default.js`.
 Current configuration is limited to:
 - Default Daemon RPC address
 
-Additionally, you can access a specific version of kbd by setting the --rpc-address on any kcli command.
+Additionally, you can access a specific version of sparkswapd by setting the --rpc-address on any kcli command.
 
 #### Running tests
 
@@ -90,7 +90,7 @@ Additionally, you can access a specific version of kbd by setting the --rpc-addr
 
 ### Authentication between Daemon and LND
 
-TLS certs and Macaroons are shared through the `/shared` directory located at the root of the `kbd` container. The `/shared` volume is created in the lnd-engine and is shared through the broker project through the use of `-p` on the startup commands located in package.json.
+TLS certs and Macaroons are shared through the `/shared` directory located at the root of the `sparkswapd` container. The `/shared` volume is created in the lnd-engine and is shared through the broker project through the use of `-p` on the startup commands located in package.json.
 
 The `/shared` directory will be a common pattern for all engines of the daemon.
 
@@ -98,9 +98,9 @@ The `/shared` directory will be a common pattern for all engines of the daemon.
 
 ### Engines
 
-The broker daemon (KBD) has a concept of an `Engine`. An Engine can be defined as a single implementation/multiple currency interface for all markets. An example of different engines would include LND-Engine and Eclair-Engine.
+The broker daemon (sparkswapd) has a concept of an `Engine`. An Engine can be defined as a single implementation/multiple currency interface for all markets. An example of different engines would include LND-Engine and Eclair-Engine.
 
-The default engine for KBD is [LND-Engine](https://github.com/sparkswap/lnd-engine). This is reflected in the code and the defaults set in `docker-compose.yml`. Currently, we only support BOLT spec implementations at this time.
+The default engine for sparkswapd is [LND-Engine](https://github.com/sparkswap/lnd-engine). This is reflected in the code and the defaults set in `docker-compose.yml`. Currently, we only support BOLT spec implementations at this time.
 
 ### Orders and Block Orders
 
@@ -112,4 +112,4 @@ This structure allows the end user to submit specific desires (e.g. market price
 
 The overall flow looks something like this:
 
-`buy (kcli) -> BlockOrder (kbd) -> Order (kbd) -> Order (relayer)`
+`buy (kcli) -> BlockOrder (sparkswapd) -> Order (sparkswapd) -> Order (relayer)`

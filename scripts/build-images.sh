@@ -49,7 +49,7 @@ LND_ENGINE_COMMIT_SHA=${LND_ENGINE_COMMIT_SHA:-$CURRENT_LND_ENGINE_COMMIT_SHA}
 
 # NOTE: The names specified with `-t` directly map to the service names in
 # the applicable services docker-compose file
-docker build -t sparkswap_kbd -f ./docker/kbd/Dockerfile ./  \
+docker build -t sparkswap_sparkswapd -f ./docker/sparkswapd/Dockerfile ./  \
   --build-arg SSH_PRIVATE_KEY="$(cat $GITHUB_KEY_PATH)" \
   --build-arg RELAYER_PROTO_COMMIT_SHA=$RELAYER_PROTO_COMMIT_SHA \
   --build-arg LND_ENGINE_COMMIT_SHA=$LND_ENGINE_COMMIT_SHA
