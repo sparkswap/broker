@@ -2,6 +2,6 @@
 
 set -e
 
-git clone git@github.com:kinesis-exchange/lnd-engine.git ./node_modules/lnd-engine
+git clone git@github.com:sparkswap/lnd-engine.git ./node_modules/lnd-engine
 npm run format
 npm test
