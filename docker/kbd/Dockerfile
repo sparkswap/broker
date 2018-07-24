@@ -80,3 +80,8 @@ COPY --from=builder ${ID_PUB_KEY} /secure/
 COPY --from=builder /home/app /home/app
 
 WORKDIR /home/app
+
+# We create the node_modules volume here because we declare it inside of `docker-compose`
+# and want the image to be able to modify the contents while ignoring the host's
+# node_modules (due to bind-mount w/ the host)
+VOLUME ["/home/app/node_modules"]
