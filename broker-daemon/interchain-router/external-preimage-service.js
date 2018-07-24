@@ -18,7 +18,7 @@ class ExternalPreimageService {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
 
-    this.definition = this.proto.ExternalPreimageService.service
+    this.definition = this.proto.extpreimage.ExternalPreimageService.service
     this.serviceName = 'ExternalPreimageService'
 
     this.implementation = {
