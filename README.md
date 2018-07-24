@@ -2,7 +2,7 @@
 
 <img src="https://kines.is/logo.png" alt="Kinesis Exchange" width="550">
 
-[![CircleCI](https://circleci.com/gh/kinesis-exchange/broker.svg?style=svg&circle-token=11fe800209ce8a6839b3c071f8f61ee8a345b026)](https://circleci.com/gh/kinesis-exchange/broker)
+[![CircleCI](https://circleci.com/gh/kinesis-exchange/broker.svg?style=svg&circle-token=11fe800209ce8a6839b3c071f8f61ee8a345b026)](https://circleci.com/gh/sparkswap/broker)
 
 This repo contains source for the following products:
 
@@ -26,10 +26,10 @@ Documentation can be found in each directories `README.md` at [./broker-cli](./b
 mkdir -p ./sparkswap
 
 # Download the broker daemon source code
-git clone git@github.com:kinesis-exchange/broker.git ./sparkswap/broker
+git clone git@github.com:sparkswap/broker.git ./sparkswap/broker
 
 # Download an engine's source code
-git clone git@github.com:kinesis-exchange/lnd-engine.git ./sparkswap/lnd-engine
+git clone git@github.com:sparkswap/lnd-engine.git ./sparkswap/lnd-engine
 
 # Build the broker daemon's docker images
 (cd ./sparkswap/broker && npm run build-images)
@@ -100,7 +100,7 @@ The `/shared` directory will be a common pattern for all engines of the daemon.
 
 The broker daemon (KBD) has a concept of an `Engine`. An Engine can be defined as a single implementation/multiple currency interface for all markets. An example of different engines would include LND-Engine and Eclair-Engine.
 
-The default engine for KBD is [LND-Engine](https://github.com/kinesis-exchange/lnd-engine). This is reflected in the code and the defaults set in `docker-compose.yml`. Currently, we only support BOLT spec implementations at this time.
+The default engine for KBD is [LND-Engine](https://github.com/sparkswap/lnd-engine). This is reflected in the code and the defaults set in `docker-compose.yml`. Currently, we only support BOLT spec implementations at this time.
 
 ### Orders and Block Orders
 
