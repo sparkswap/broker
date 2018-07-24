@@ -8,11 +8,11 @@ Design Overview
 
 Let's consider two Payment Channel Networks, NetA and NetX, each of which support a single currency, ABC and XYZ, respectively.
 
-Our participants are Marcus, who holds ABC on NetA, and Theresa, who holds XYZ on NetX. Both have the appropriate channels opened to the Relayer. Marcus is our Maker, setting the price on Kinesis that he wants to trade at. Theresa is our Taker, taking an available price that is posted on Kinesis.
+Our participants are Marcus, who holds ABC on NetA, and Theresa, who holds XYZ on NetX. Both have the appropriate channels opened to the Relayer. Marcus is our Maker, setting the price on SparkSwap that he wants to trade at. Theresa is our Taker, taking an available price that is posted on SparkSwap.
 
-Marcus places on order on the Kinesis Relayer, offering to swap 10 ABC for 100 XYZ.
+Marcus places on order on the SparkSwap Relayer, offering to swap 10 ABC for 100 XYZ.
 
-Theresa sees Marcus's order and wants to fill it on the Kinesis Relayer.
+Theresa sees Marcus's order and wants to fill it on the SparkSwap Relayer.
 
 1. Theresa creates an invoice on her NetA node for 10 ABC.
 2. Theresa sends the swap hash associated with the NetA invoice she created in #1 to the Relayer while filling the order.
