@@ -62,9 +62,9 @@ function createUI (market, asks, bids) {
   const ui = []
 
   let leftHeader = `Market: ${market.toUpperCase()}`
-  let rightHeader = '☍ Kinesis Broker'
+  let rightHeader = 'Ϟ SparkSwap Broker'
   let rightSubHeader = `v${BROKER_VERSION}`
-  let rightSubSubHeader = 'http://kinesis.network'
+  let rightSubSubHeader = 'http://sparkswap.com'
 
   ui.push('')
   ui.push(' ' + leftHeader.bold.white + Array(windowWidth - 1 - leftHeader.length - rightHeader.length).join(' ') + rightHeader.bold.cyan)

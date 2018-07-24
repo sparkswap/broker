@@ -19,14 +19,14 @@ if (compareVersions(clientVersion, currentVersion) < 0) {
 }
 
 /**
- * Kinesis Broker CLI
+ * SparkSwap Broker CLI
  *
- * @author kinesis
+ * @author SparkSwap
  */
 program
   .logger(console)
   .version(CLI_VERSION)
-  .description(`☍ Kinesis Broker CLI - http://kinesis.network`)
+  .description(`Ϟ SparkSwap Broker CLI - http://sparkswap.com`)
 
 /**
  * Initialize Commands

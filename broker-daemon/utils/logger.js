@@ -8,7 +8,7 @@
  * If we're not in production then log to the `console` with the format
  * `${info.level}: ${info.message} JSON.stringify({ ...rest }) `
  *
- * @author kinesis
+ * @author SparkSwap
  */
 
 const winston = require('winston')

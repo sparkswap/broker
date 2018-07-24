@@ -31,7 +31,7 @@ function insecureIdentity () {
 /**
  * Interface for daemon to interact with a Kinesis Relayer
  *
- * @author kinesis
+ * @author SparkSwap
  */
 class RelayerClient {
   /**
