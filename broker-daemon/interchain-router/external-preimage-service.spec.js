@@ -20,8 +20,10 @@ describe('ExternalPreimageService', () => {
   beforeEach(() => {
     protoPath = 'fakePath'
     proto = {
-      ExternalPreimageService: {
-        service: 'fakeService'
+      extpreimage: {
+        ExternalPreimageService: {
+          service: 'fakeService'
+        }
       }
     }
     logger = {
@@ -64,7 +66,7 @@ describe('ExternalPreimageService', () => {
 
   it('assigns the definition', () => {
     expect(server).to.have.property('definition')
-    expect(server.definition).to.be.equal(proto.ExternalPreimageService.service)
+    expect(server.definition).to.be.equal(proto.extpreimage.ExternalPreimageService.service)
   })
 
   it('creates a name', () => {
