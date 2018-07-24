@@ -232,6 +232,13 @@ const FillStateMachine = StateMachine.factory({
       // NOTE: this method should NOT reject a promise, as that may prevent the state of the fill from saving
       const call = this.relayer.takerService.subscribeExecute({ fillId, authorization })
 
+      // Stop listening to further events from the stream
+      const finish = () => {
+        call.removeListener('error', errHandler)
+        call.removeListener('end', endHandler)
+        call.removeListener('data', dataHandler)
+      }
+
       const errHandler = (e) => {
         this.reject(e)
         finish()
@@ -252,13 +259,6 @@ const FillStateMachine = StateMachine.factory({
           this.reject(e)
         }
         finish()
-      }
-
-      // Stop listening to further events from the stream
-      const finish = () => {
-        call.removeListener('error', errHandler)
-        call.removeListener('end', endHandler)
-        call.removeListener('data', dataHandler)
       }
 
       // Set listeners on the call
