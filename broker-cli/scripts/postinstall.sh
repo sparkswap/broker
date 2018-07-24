@@ -1,6 +1,6 @@
 #!/bin/sh
 
-echo "Successfully installed ☍ Kinesis Broker CLI (kcli)!"
+echo "Successfully installed Ϟ SparkSwap Broker CLI (kcli)!"
 echo ""
 echo "To set up your custom configuration for kcli, copy 'sample-.kcli.js' to your home directory as '.kcli.js'."
 echo ""
