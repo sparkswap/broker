@@ -11,7 +11,7 @@
 
 module.exports = {
   /**
-   * Address of the host for the Broker Daemon GRPC Server
+   * Address of the host for the Broker Daemon gRPC Server
    * @type {String}
    * @default 'localhost:27492'
    */
