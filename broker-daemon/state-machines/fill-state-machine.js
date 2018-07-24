@@ -232,11 +232,16 @@ const FillStateMachine = StateMachine.factory({
       // NOTE: this method should NOT reject a promise, as that may prevent the state of the fill from saving
       const call = this.relayer.takerService.subscribeExecute({ fillId, authorization })
 
-      call.on('error', (e) => {
+      const errHandler = (e) => {
         this.reject(e)
-      })
-
-      call.on('data', ({ makerAddress }) => {
+        finish()
+      }
+      const endHandler = () => {
+        const err = new Error(`SubscribeExecute stream for ${fillId} ended early by Relayer`)
+        this.reject(err)
+        finish()
+      }
+      const dataHandler = ({ makerAddress }) => {
         try {
           this.fill.setExecuteParams({ makerAddress })
 
@@ -246,7 +251,20 @@ const FillStateMachine = StateMachine.factory({
         } catch (e) {
           this.reject(e)
         }
-      })
+        finish()
+      }
+
+      // Stop listening to further events from the stream
+      const finish = () => {
+        call.removeListener('error', errHandler)
+        call.removeListener('end', endHandler)
+        call.removeListener('data', dataHandler)
+      }
+
+      // Set listeners on the call
+      call.on('error', errHandler)
+      call.on('end', endHandler)
+      call.on('data', dataHandler)
     },
 
     /**

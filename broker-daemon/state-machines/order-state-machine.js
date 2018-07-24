@@ -223,11 +223,16 @@ const OrderStateMachine = StateMachine.factory({
       // NOTE: this method should NOT reject a promise, as that may prevent the state of the order from saving
       const call = this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest, authorization })
 
-      call.on('error', (e) => {
+      const errHandler = (e) => {
         this.reject(e)
-      })
-
-      call.on('data', ({ orderStatus, fill }) => {
+        finish()
+      }
+      const endHandler = () => {
+        const err = new Error(`PlaceOrder stream for ${orderId} ended early by Relayer`)
+        this.reject(err)
+        finish()
+      }
+      const dataHandler = ({ orderStatus, fill }) => {
         try {
           // the Relayer will send a single data message containing the order's state as cancelled and close
           // the stream if the order has been cancelled. We should handle that and cancel the order locally.
@@ -246,7 +251,20 @@ const OrderStateMachine = StateMachine.factory({
         } catch (e) {
           this.reject(e)
         }
-      })
+        finish()
+      }
+
+      // Stop listening to further events from the stream
+      const finish = () => {
+        call.removeListener('error', errHandler)
+        call.removeListener('end', endHandler)
+        call.removeListener('data', dataHandler)
+      }
+
+      // Set listeners on the call
+      call.on('error', errHandler)
+      call.on('end', endHandler)
+      call.on('data', dataHandler)
     },
 
     /**
