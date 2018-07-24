@@ -1,9 +1,9 @@
 ![Kinesis](./images/logo-black.png?raw=true)
 
-`kcli` - Kinesis Broker Command Line Interface
+`kcli` - SparkSwap Broker Command Line Interface
 ==============================================
 
-`kcli` is the standalone command line interface for the Kinesis Broker Daemon, and is a simple client for its gRPC-based API.
+`kcli` is the standalone command line interface for the SparkSwap Broker Daemon, and is a simple client for its gRPC-based API.
 
 Installation & Usage
 --------------------
@@ -15,7 +15,7 @@ Installation & Usage
     2. Install the current LTS node and npm version - `nvm install --lts --latest-npm`
 
 ### Install `kcli`
-Run `npm install -g https://github.com/kinesis-exchange/broker-cli.git`
+Run `npm install -g https://github.com/sparkswap/broker-cli.git`
 
 This installs `kcli` globally, so you may need to give it additional permissions.
 
@@ -81,6 +81,6 @@ Notes
 ### Orders and Block Orders
 When interacting with the Broker Daemon as a user and submitting `buy` and `sell` orders, you are creating what we refer to as "Block Orders". These block orders can have different price restrictions (limit price, market price) and time restrictions (good-til-cancelled; fill-or-kill, immediate-or-cancel are forthcoming).
 
-These block orders are then "worked" by the broker, meaning split up into individual actions on the Kinesis Network. Specifically, those actions are placing new limit orders and filling other brokers' limit orders.
+These block orders are then "worked" by the broker, meaning split up into individual actions on the SparkSwap Relayer. Specifically, those actions are placing new limit orders and filling other brokers' limit orders.
 
 This structure allows the end user to submit specific desires (e.g. market price, immediate-or-cancel) without relying on the Relayer to honor it -- instead the broker is responsible for interpreting and acting on user instructions.
