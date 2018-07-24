@@ -81,7 +81,9 @@ COPY --from=builder /home/app /home/app
 
 WORKDIR /home/app
 
-# We create the node_modules volume here because we declare it inside of `docker-compose`
-# and want the image to be able to modify the contents while ignoring the host's
-# node_modules (due to bind-mount w/ the host)
+# We declare node_modules volume here so that it can copy the contents of the
+# `node_modules` folder from the builder image's npm install. Since we mount
+# node_modules as a volume in the associated `docker-compose.yml` file,
+# if we don't declare it here, docker will always use the first creation of the
+# node_modules volume and may have old dependencies as a result.
 VOLUME ["/home/app/node_modules"]
