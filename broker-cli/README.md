@@ -35,7 +35,7 @@ cp -n ./sample-.kcli.js ~/.kcli.js
 Once installed, in the correct location, you can edit the file to include your custom configuration.
 
 Currently, supported custom configuration includes:
-- RPC address of the Kinesis Broker Daemon you are controlling
+- RPC address of the SparkSwap Broker Daemon you are controlling
 
 You can view default configuration for `kcli` in [`./.kcli.default.js`](./.kcli.default.js).
 

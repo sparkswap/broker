@@ -2,14 +2,14 @@
 
 <img src="https://kines.is/logo.png" alt="Kinesis Exchange" width="550">
 
-[![CircleCI](https://circleci.com/gh/kinesis-exchange/broker.svg?style=svg&circle-token=11fe800209ce8a6839b3c071f8f61ee8a345b026)](https://circleci.com/gh/sparkswap/broker)
+[![CircleCI](https://circleci.com/gh/sparkswap/broker.svg?style=svg&circle-token=11fe800209ce8a6839b3c071f8f61ee8a345b026)](https://circleci.com/gh/sparkswap/broker)
 
 This repo contains source for the following products:
 
-- [KCLI (CLI for Kinesis Daemon)](./broker-cli)
+- [KCLI (CLI for SparkSwap Broker Daemon)](./broker-cli)
     - User interface for KBD
-- [KBD (Kinesis Broker Daemon)](./broker-daemon)
-    - Daemon that handles interactions between the user's lightning nodes and the Kinesis Exchange
+- [KBD (SparkSwap Broker Daemon)](./broker-daemon)
+    - Daemon that handles interactions between the user's lightning nodes and the SparkSwap Relayer
 
 Documentation can be found in each directories `README.md` at [./broker-cli](./broker-cli) or [./broker-daemon](./broker-daemon) respectively.
 
@@ -106,7 +106,7 @@ The default engine for KBD is [LND-Engine](https://github.com/sparkswap/lnd-engi
 
 When interacting with the Broker Daemon as a user and submitting `buy` and `sell` orders, you are creating what we refer to as "Block Orders". These block orders can have different price restrictions (limit price, market price) and time restrictions (good-til-cancelled, fill-or-kill, immediate-or-cancel).
 
-These block orders are then "worked" by the broker, meaning split up into individual actions on the Kinesis Network. Specifically, those actions are placing new limit orders and filling other brokers' limit orders.
+These block orders are then "worked" by the broker, meaning split up into individual actions on the SparkSwap Relayer. Specifically, those actions are placing new limit orders and filling other brokers' limit orders.
 
 This structure allows the end user to submit specific desires (e.g. market price, immediate-or-cancel) without relying on the Relayer to honor it -- instead the broker is responsible for interpreting and acting on user instructions.
 

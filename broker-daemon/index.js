@@ -23,7 +23,7 @@ const DEFAULT_RPC_ADDRESS = '0.0.0.0:27492'
  * @constant
  * @type {String}
  */
-const DEFAULT_DATA_DIR = '~/.kinesis/data'
+const DEFAULT_DATA_DIR = '~/.sparkswap/data'
 
 /**
  * Default host and port for the InterchainRouter to listen on
@@ -63,7 +63,7 @@ function createEngineFromConfig (symbol, engineConfig, { logger }) {
 }
 
 /**
- * @class BrokerDaemon is a collection of services to allow a user to run a broker on the Kinesis Network.
+ * @class BrokerDaemon is a collection of services to allow a user to run a broker on the SparkSwap Network.
  * It exposes a user-facing RPC server, an interchain router, watches markets on the relayer, and works
  * block orders in the background.
  */

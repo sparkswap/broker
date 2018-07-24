@@ -1,7 +1,7 @@
 {
   "name": "broker-cli",
   "version": "0.1.0-alpha-preview",
-  "description": "Broker CLI utility to interact with the Broker Daemon on the Kinesis Exchange",
+  "description": "Broker CLI utility to interact with the SparkSwap Broker Daemon",
   "main": "./bin/kcli",
   "scripts": {
     "format": "standard --fix",
