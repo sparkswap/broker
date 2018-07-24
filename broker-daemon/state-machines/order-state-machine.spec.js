@@ -352,7 +352,8 @@ describe('OrderStateMachine', () => {
       payInvoiceStub = sinon.stub()
       createRefundInvoiceStub = sinon.stub().returns(invoice)
       placeOrderStreamStub = {
-        on: sinon.stub()
+        on: sinon.stub(),
+        removeListener: sinon.stub()
       }
       placeOrderStub = sinon.stub().returns(placeOrderStreamStub)
       feePaymentRequest = 'fee'
@@ -442,6 +443,20 @@ describe('OrderStateMachine', () => {
       expect(osm.reject.args[0][0]).to.have.property('message', 'fake error')
     })
 
+    it('rejects when the relayer stream closes early', async () => {
+      osm.reject = sinon.stub()
+      placeOrderStreamStub.on.withArgs('end').callsArgAsync(1)
+
+      await osm.place()
+
+      await delay(10)
+
+      expect(osm.reject).to.have.been.calledOnce()
+      expect(osm.reject.args[0][0]).to.be.instanceOf(Error)
+      expect(osm.reject.args[0][0]).to.have.property('message')
+      expect(osm.reject.args[0][0].message).to.contain('ended early')
+    })
+
     it('cancels the order when the order is in a cancelled state', async () => {
       osm.tryTo = sinon.stub()
       placeOrderStreamStub.on.withArgs('data').callsArgWithAsync(1, { orderStatus: 'CANCELLED' })
@@ -476,6 +491,48 @@ describe('OrderStateMachine', () => {
 
       expect(osm.tryTo).to.have.been.calledOnce()
       expect(osm.tryTo).to.have.been.calledWith('execute')
+    })
+
+    it('tears down listeners on error', async () => {
+      osm.reject = sinon.stub()
+      placeOrderStreamStub.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
+
+      await osm.place()
+
+      await delay(10)
+
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledThrice()
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('error')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('end')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('data')
+    })
+
+    it('tears down listeners on early close', async () => {
+      osm.reject = sinon.stub()
+      placeOrderStreamStub.on.withArgs('end').callsArgAsync(1)
+
+      await osm.place()
+
+      await delay(10)
+
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledThrice()
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('error')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('end')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('data')
+    })
+
+    it('tears down listeners on complete', async () => {
+      osm.reject = sinon.stub()
+      placeOrderStreamStub.on.withArgs('data').callsArgWithAsync(1, {})
+
+      await osm.place()
+
+      await delay(10)
+
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledThrice()
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('error')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('end')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('data')
     })
   })
 
