@@ -141,9 +141,21 @@ const FillStateMachine = StateMachine.factory({
 
       const inboundEngine = this.engines.get(inboundSymbol)
       if (!inboundEngine) {
-        throw new Error(`No engine avialable for ${inboundSymbol}`)
+        throw new Error(`No engine avialable for ${inboundEngine}`)
       }
-      this.fill.takerAddress = await inboundEngine.getPaymentChannelNetworkAddress()
+
+      const baseEngine = this.engines.get(baseSymbol)
+      if (!baseEngine) {
+        throw new Error(`No engine avialable for ${baseEngine}`)
+      }
+
+      const counterEngine = this.engines.get(counterSymbol)
+      if (!counterEngine) {
+        throw new Error(`No engine avialable for ${counterEngine}`)
+      }
+
+      this.fill.takerBaseAddress = await baseEngine.getPaymentChannelNetworkAddress()
+      this.fill.takerCounterAddress = await counterEngine.getPaymentChannelNetworkAddress()
 
       const swapHash = await inboundEngine.createSwapHash(this.fill.order.orderId, inboundAmount)
       this.fill.setSwapHash(swapHash)
