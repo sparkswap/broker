@@ -2,7 +2,7 @@ version: '2.4'
 
 services:
   kbd:
-    image: kinesis_kbd:latest
+    image: sparkswap_kbd:latest
     depends_on:
       - lnd_btc
       - lnd_ltc
@@ -52,7 +52,7 @@ services:
     entrypoint: bash -c 'npm run start-kbd'
 
   lnd_btc:
-    image: kinesis_lnd_btc:latest
+    image: sparkswap_lnd_btc:latest
     depends_on:
       - btcd
     ports:
@@ -93,7 +93,7 @@ services:
   # certs for the shared nodes (certs are created on image build)
   #
   btcd:
-    image: kinesis_btcd:latest
+    image: sparkswap_btcd:latest
     volumes:
       - shared:/shared
       - bitcoin:/data
@@ -112,7 +112,7 @@ services:
     entrypoint: ["./start-btcd.sh"]
 
   lnd_ltc:
-    image: kinesis_lnd_ltc:latest
+    image: sparkswap_lnd_ltc:latest
     ports:
       - '10114:10114'
     depends_on:
@@ -153,7 +153,7 @@ services:
   # certs for the shared nodes (certs are created on image build)
   #
   ltcd:
-    image: kinesis_ltcd:latest
+    image: sparkswap_ltcd:latest
     volumes:
       - shared:/shared
       - litecoin:/data
