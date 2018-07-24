@@ -36,10 +36,11 @@ class Fill {
    * @param  {String} order.baseAmount    Amount, represented as an integer in the base currency's smallest unit, to be transacted
    * @param  {String} order.counterAmount Amount, represented as an integer in the counter currency's smallest unit, to be transacted
    * @param  {String} fill.fillAmount     Amount, represented as an integer in the base currency's smallets unit, that the order is filled with
-   * @param  {String} fill.takerAddress   address for the taker
+   * @param  {String} fill.takerBaseAddress   address for the taker base symbol
+   * @param  {String} fill.takerCounterAddress   address for the taker counter symbol
    * @return {Fill}                       Fill instance
    */
-  constructor (blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerAddress }) {
+  constructor (blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerBaseAddress, takerCounterAddress }) {
     this.blockOrderId = blockOrderId
 
     this.order = {
@@ -57,7 +58,8 @@ class Fill {
     this.order.side = side
 
     this.fillAmount = fillAmount
-    this.takerAddress = takerAddress
+    this.takerBaseAddress = takerBaseAddress
+    this.takerCounterAddress = takerCounterAddress
   }
 
   /**
@@ -93,9 +95,9 @@ class Fill {
    * @return {Object} Object of parameters the relayer expects
    */
   get paramsForCreate () {
-    const { fillAmount, swapHash, takerAddress, order: { orderId } } = this
+    const { fillAmount, swapHash, takerBaseAddress, takerCounterAddress, order: { orderId } } = this
 
-    return { fillAmount, orderId, swapHash, takerAddress }
+    return { fillAmount, orderId, swapHash, takerBaseAddress, takerCounterAddress }
   }
 
   /**
@@ -218,7 +220,8 @@ class Fill {
       feePaymentRequest,
       depositPaymentRequest,
       makerAddress,
-      takerAddress
+      takerBaseAddress,
+      takerCounterAddress
     } = this
 
     return {
@@ -235,7 +238,8 @@ class Fill {
       feePaymentRequest,
       depositPaymentRequest,
       makerAddress,
-      takerAddress
+      takerBaseAddress,
+      takerCounterAddress
     }
   }
 
@@ -260,10 +264,10 @@ class Fill {
     // and are separated by the delimiter (:)
     const [ blockOrderId, fillId ] = key.split(DELIMITER)
 
-    const { order: { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, fillAmount, takerAddress, ...otherParams } = valueObject
+    const { order: { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, fillAmount, takerBaseAddress, takerCounterAddress, ...otherParams } = valueObject
 
     // instantiate with the correct set of params
-    const fill = new this(blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerAddress })
+    const fill = new this(blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerBaseAddress, takerCounterAddress })
 
     const { swapHash, feePaymentRequest, depositPaymentRequest, makerAddress } = otherParams
 
