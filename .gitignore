@@ -69,5 +69,5 @@ proto/relayer.proto
 
 # lnd-engine docker files
 docker/
-!docker/kbd
+!docker/sparkswapd
 !docker/kcli
