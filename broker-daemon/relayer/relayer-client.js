@@ -1,5 +1,9 @@
 const path = require('path')
+const { readFileSync } = require('fs')
+const { credentials } = require('grpc')
 const caller = require('grpc-caller')
+
+const Identity = require('./identity')
 
 const { MarketEvent } = require('../models')
 const { loadProto } = require('../utils')
@@ -12,25 +16,62 @@ const { loadProto } = require('../utils')
 const RELAYER_PROTO_PATH = './proto/relayer.proto'
 
 /**
+ * Insecure stub of Identity to be used when auth is disabled
+ * @return {Object}
+ */
+function insecureIdentity () {
+  return {
+    authorize (id) {
+      this.logger.warn(`Not signing authorization for access to ${id}: DISABLE_AUTH is set`)
+      return {}
+    }
+  }
+}
+
+/**
  * Interface for daemon to interact with a Kinesis Relayer
  *
  * @author kinesis
  */
 class RelayerClient {
   /**
-   * @param {Logger} logger
+   * @typedef {Object} KeyPath
+   * @property {String} privKeyPath Path to a private key
+   * @property {String} pubKeyPath  Path to the public key corresponding to the private key
    */
-  constructor (host = 'localhost:28492', logger) {
+
+  /**
+   * @param {KeyPath} idKeyPath            Path to public and private key for the broker's identity
+   * @param {Object}  relayerOpts
+   * @param {String}  relayerOpts.host     Hostname and port of the Relayer RPC server
+   * @param {String}  relayerOpts.certPath Absolute path to the root certificate for the Relayer
+   * @param {Logger}  logger
+   */
+  constructor ({ privKeyPath, pubKeyPath }, { certPath, host = 'localhost:28492', disableAuth = false }, logger) {
     this.logger = logger || console
     this.address = host
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
 
-    // TODO: we will need to add auth for daemon for a non-local address
-    this.makerService = caller(this.address, this.proto.MakerService)
-    this.takerService = caller(this.address, this.proto.TakerService)
-    this.healthService = caller(this.address, this.proto.HealthService)
-    this.orderbookService = caller(this.address, this.proto.OrderBookService)
-    this.paymentChannelNetworkService = caller(this.address, this.proto.PaymentChannelNetworkService)
+    if (disableAuth) {
+      this.logger.warn('WARNING: SSL is not enabled and no credentials will be passed to the Relayer. This is only suitable for use in development.')
+      this.identity = insecureIdentity()
+      this.credentials = credentials.createInsecure()
+    } else {
+      this.identity = Identity.load(privKeyPath, pubKeyPath)
+      const channelCredentials = credentials.createSsl(readFileSync(certPath))
+      // `service_url` in the line below is defined by the grpc lib, so we need to tell eslint to ignore snake case
+      // eslint-disable-next-line
+      const callCredentials = credentials.createFromMetadataGenerator(({ service_url }, callback) => {
+        callback(null, this.identity.identify())
+      })
+      this.credentials = credentials.combineChannelCredentials(channelCredentials, callCredentials)
+    }
+
+    this.makerService = caller(this.address, this.proto.MakerService, this.credentials)
+    this.takerService = caller(this.address, this.proto.TakerService, this.credentials)
+    this.healthService = caller(this.address, this.proto.HealthService, this.credentials)
+    this.orderbookService = caller(this.address, this.proto.OrderBookService, this.credentials)
+    this.paymentChannelNetworkService = caller(this.address, this.proto.PaymentChannelNetworkService, this.credentials)
   }
 
   /**

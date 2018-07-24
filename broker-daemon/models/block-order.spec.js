@@ -302,7 +302,6 @@ describe('BlockOrder', () => {
                 side: 'BID',
                 baseAmount: '1000',
                 counterAmount: '10000',
-                ownerId: 'fakeID',
                 makerAddress: 'bolt:1231243fasdf',
                 feePaymentRequest: 'lnbcasodifjoija',
                 depositPaymentRequest: 'lnbcaosdifjaosdfj'

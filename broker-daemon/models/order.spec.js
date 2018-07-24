@@ -37,7 +37,6 @@ describe('Order', () => {
           side: 'BID',
           baseAmount: '10000',
           counterAmount: '100000',
-          ownerId: 'fakeID',
           makerBaseAddress: 'bolt:123019230jasofdij',
           makerCounterAddress: 'bolt:65433455asdfasdf'
         }
@@ -55,7 +54,6 @@ describe('Order', () => {
       expect(order).to.have.property('side', params.order.side)
       expect(order).to.have.property('baseAmount', params.order.baseAmount)
       expect(order).to.have.property('counterAmount', params.order.counterAmount)
-      expect(order).to.have.property('ownerId', params.order.ownerId)
       expect(order).to.have.property('makerBaseAddress', params.order.makerBaseAddress)
       expect(order).to.have.property('makerCounterAddress', params.order.makerCounterAddress)
     })
@@ -68,7 +66,6 @@ describe('Order', () => {
           side: 'BID',
           baseAmount: '10000',
           counterAmount: '100000',
-          ownerId: 'fakeID',
           makerBaseAddress: 'bolt:123019230jasofdij',
           makerCounterAddress: 'bolt:65433455asdfasdf',
           feePaymentRequest: 'myrequest',
@@ -100,7 +97,6 @@ describe('Order', () => {
         side: 'BID',
         baseAmount: '10000',
         counterAmount: '100000',
-        ownerId: 'fakeID',
         makerBaseAddress: 'bolt:123019230jasofdij',
         makerCounterAddress: 'bolt:65433455asdfasdf'
       }
@@ -117,7 +113,6 @@ describe('Order', () => {
       expect(order).to.have.property('side', params.side)
       expect(order).to.have.property('baseAmount', params.baseAmount)
       expect(order).to.have.property('counterAmount', params.counterAmount)
-      expect(order).to.have.property('ownerId', params.ownerId)
       expect(order).to.have.property('makerBaseAddress', params.makerBaseAddress)
       expect(order).to.have.property('makerCounterAddress', params.makerCounterAddress)
     })
@@ -129,7 +124,6 @@ describe('Order', () => {
         side: 'BID',
         baseAmount: '10000',
         counterAmount: '100000',
-        ownerId: 'fakeID',
         makerBaseAddress: 'bolt:123019230jasofdij',
         makerCounterAddress: 'bolt:65433455asdfasdf',
         feePaymentRequest: 'myrequest',
@@ -168,7 +162,6 @@ describe('Order', () => {
         side: 'BID',
         baseAmount: '10000',
         counterAmount: '100000',
-        ownerId: 'fakeID',
         makerBaseAddress: 'bolt:123019230jasofdij',
         makerCounterAddress: 'bolt:65433455asdfasdf'
       }
@@ -180,7 +173,6 @@ describe('Order', () => {
       expect(order).to.have.property('side', params.side)
       expect(order).to.have.property('baseAmount', params.baseAmount)
       expect(order).to.have.property('counterAmount', params.counterAmount)
-      expect(order).to.have.property('ownerId', params.ownerId)
       expect(order).to.have.property('makerBaseAddress', params.makerBaseAddress)
       expect(order).to.have.property('makerCounterAddress', params.makerCounterAddress)
     })
@@ -193,7 +185,6 @@ describe('Order', () => {
         side: 'ASK',
         baseAmount: '10000',
         counterAmount: '100000',
-        ownerId: 'fakeID',
         makerBaseAddress: 'bolt:123019230jasofdij',
         makerCounterAddress: 'bolt:65433455asdfasdf'
       }
@@ -211,7 +202,6 @@ describe('Order', () => {
         side: 'BLERGH',
         baseAmount: '10000',
         counterAmount: '100000',
-        ownerId: 'fakeID',
         makerBaseAddress: 'bolt:123019230jasofdij',
         makerCounterAddress: 'bolt:65433455asdfasdf'
       }
@@ -235,7 +225,6 @@ describe('Order', () => {
         side: 'BID',
         baseAmount: '10000',
         counterAmount: '100000',
-        ownerId: 'fakeID',
         makerBaseAddress: 'bolt:123019230jasofdij',
         makerCounterAddress: 'bolt:65433455asdfasdf'
       }
@@ -299,7 +288,6 @@ describe('Order', () => {
           side: params.side,
           baseAmount: params.baseAmount,
           counterAmount: params.counterAmount,
-          ownerId: params.ownerId,
           makerBaseAddress: params.makerBaseAddress,
           makerCounterAddress: params.makerCounterAddress
         })

@@ -27,6 +27,9 @@ describe('FillStateMachine', () => {
     relayer = {
       takerService: {
         createFill: sinon.stub().resolves()
+      },
+      identity: {
+        authorize: sinon.stub()
       }
     }
     engines = new Map()
@@ -334,7 +337,8 @@ describe('FillStateMachine', () => {
       createRefundInvoiceStub = sinon.stub().returns(invoice)
       fillOrderStub = sinon.stub()
       subscribeExecuteStream = {
-        on: sinon.stub()
+        on: sinon.stub(),
+        removeListener: sinon.stub()
       }
       subscribeExecuteStub = sinon.stub().returns(subscribeExecuteStream)
       feePaymentRequest = 'fee'
@@ -348,6 +352,9 @@ describe('FillStateMachine', () => {
         takerService: {
           fillOrder: fillOrderStub,
           subscribeExecute: subscribeExecuteStub
+        },
+        identity: {
+          authorize: sinon.stub()
         }
       }
 
@@ -377,12 +384,22 @@ describe('FillStateMachine', () => {
       expect(createRefundInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
     })
 
+    it('authorizes the request', async () => {
+      await fsm.fillOrder()
+
+      expect(relayer.identity.authorize).to.have.been.calledWith(fillId)
+    })
+
     it('fills an order on the relayer', async () => {
+      const fakeAuth = 'fake auth'
+      relayer.identity.authorize.returns(fakeAuth)
+
       await fsm.fillOrder()
       expect(fillOrderStub).to.have.been.calledWith({
         feeRefundPaymentRequest: invoice,
         depositRefundPaymentRequest: invoice,
-        fillId
+        fillId,
+        authorization: fakeAuth
       })
     })
 
@@ -402,10 +419,19 @@ describe('FillStateMachine', () => {
       expect(subscribeExecuteStub).to.not.have.been.called()
     })
 
+    it('authorizes the request', async () => {
+      await fsm.fillOrder()
+      expect(relayer.identity.authorize).to.have.been.calledTwice()
+      expect(relayer.identity.authorize).to.have.been.calledWith(fillId)
+    })
+
     it('subscribes to fills on the relayer', async () => {
+      const fakeAuth = 'my auth'
+      relayer.identity.authorize.onCall(1).returns(fakeAuth)
+
       await fsm.fillOrder()
       expect(subscribeExecuteStub).to.have.been.calledOnce()
-      expect(subscribeExecuteStub).to.have.been.calledWith(sinon.match({ fillId }))
+      expect(subscribeExecuteStub).to.have.been.calledWith(sinon.match({ fillId, authorization: fakeAuth }))
     })
 
     it('rejects on error from the relayer subscribe fill hook', async () => {
@@ -419,6 +445,20 @@ describe('FillStateMachine', () => {
       expect(fsm.reject).to.have.been.calledOnce()
       expect(fsm.reject.args[0][0]).to.be.instanceOf(Error)
       expect(fsm.reject.args[0][0]).to.have.property('message', 'fake error')
+    })
+
+    it('rejects when the relayer stream closes early', async () => {
+      fsm.reject = sinon.stub()
+      subscribeExecuteStream.on.withArgs('end').callsArgAsync(1)
+
+      await fsm.fillOrder()
+
+      await delay(10)
+
+      expect(fsm.reject).to.have.been.calledOnce()
+      expect(fsm.reject.args[0][0]).to.be.instanceOf(Error)
+      expect(fsm.reject.args[0][0]).to.have.property('message')
+      expect(fsm.reject.args[0][0].message).to.contain('ended early')
     })
 
     it('sets execute params on the fill when it is executed', async () => {
@@ -443,6 +483,48 @@ describe('FillStateMachine', () => {
 
       expect(fsm.tryTo).to.have.been.calledOnce()
       expect(fsm.tryTo).to.have.been.calledWith('execute')
+    })
+
+    it('tears down listeners on error', async () => {
+      fsm.reject = sinon.stub()
+      subscribeExecuteStream.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
+
+      await fsm.fillOrder()
+
+      await delay(10)
+
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledThrice()
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('error')
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('end')
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('data')
+    })
+
+    it('tears down listeners on early close', async () => {
+      fsm.reject = sinon.stub()
+      subscribeExecuteStream.on.withArgs('end').callsArgAsync(1)
+
+      await fsm.fillOrder()
+
+      await delay(10)
+
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledThrice()
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('error')
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('end')
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('data')
+    })
+
+    it('tears down listeners on complete', async () => {
+      fsm.reject = sinon.stub()
+      subscribeExecuteStream.on.withArgs('data').callsArgWithAsync(1, {})
+
+      await fsm.fillOrder()
+
+      await delay(10)
+
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledThrice()
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('error')
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('end')
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('data')
     })
   })
 
@@ -476,6 +558,9 @@ describe('FillStateMachine', () => {
           subscribeExecute: sinon.stub().returns({
             on: sinon.stub()
           })
+        },
+        identity: {
+          authorize: sinon.stub()
         }
       }
 

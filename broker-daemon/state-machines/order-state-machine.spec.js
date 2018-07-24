@@ -28,6 +28,9 @@ describe('OrderStateMachine', () => {
     relayer = {
       makerService: {
         createOrder: sinon.stub()
+      },
+      identity: {
+        authorize: sinon.stub()
       }
     }
     getPaymentChannelNetworkAddressStub = sinon.stub().resolves('bolt:adsfsdf')
@@ -246,8 +249,6 @@ describe('OrderStateMachine', () => {
       expect(Order).to.have.been.calledWith(blockOrderId, sinon.match(params))
     })
 
-    xit('creates an ownerId for the order')
-
     it('gets the makerAddress for the order', async () => {
       await osm.create(blockOrderId, params)
 
@@ -352,7 +353,8 @@ describe('OrderStateMachine', () => {
       payInvoiceStub = sinon.stub()
       createRefundInvoiceStub = sinon.stub().returns(invoice)
       placeOrderStreamStub = {
-        on: sinon.stub()
+        on: sinon.stub(),
+        removeListener: sinon.stub()
       }
       placeOrderStub = sinon.stub().returns(placeOrderStreamStub)
       feePaymentRequest = 'fee'
@@ -365,6 +367,9 @@ describe('OrderStateMachine', () => {
       relayer = {
         makerService: {
           placeOrder: placeOrderStub
+        },
+        identity: {
+          authorize: sinon.stub()
         }
       }
 
@@ -399,12 +404,20 @@ describe('OrderStateMachine', () => {
       expect(createRefundInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
     })
 
+    it('creates an authorization for the order', async () => {
+      await osm.place()
+      expect(relayer.identity.authorize).to.have.been.calledWith(orderId)
+    })
+
     it('places an order on the relayer', async () => {
+      const fakeAuth = 'fake auth'
+      relayer.identity.authorize.returns(fakeAuth)
       await osm.place()
       expect(placeOrderStub).to.have.been.calledWith(sinon.match({
         feeRefundPaymentRequest: invoice,
         depositRefundPaymentRequest: invoice,
-        orderId
+        orderId,
+        authorization: fakeAuth
       }))
     })
 
@@ -429,6 +442,20 @@ describe('OrderStateMachine', () => {
       expect(osm.reject).to.have.been.calledOnce()
       expect(osm.reject.args[0][0]).to.be.instanceOf(Error)
       expect(osm.reject.args[0][0]).to.have.property('message', 'fake error')
+    })
+
+    it('rejects when the relayer stream closes early', async () => {
+      osm.reject = sinon.stub()
+      placeOrderStreamStub.on.withArgs('end').callsArgAsync(1)
+
+      await osm.place()
+
+      await delay(10)
+
+      expect(osm.reject).to.have.been.calledOnce()
+      expect(osm.reject.args[0][0]).to.be.instanceOf(Error)
+      expect(osm.reject.args[0][0]).to.have.property('message')
+      expect(osm.reject.args[0][0].message).to.contain('ended early')
     })
 
     it('cancels the order when the order is in a cancelled state', async () => {
@@ -465,6 +492,48 @@ describe('OrderStateMachine', () => {
 
       expect(osm.tryTo).to.have.been.calledOnce()
       expect(osm.tryTo).to.have.been.calledWith('execute')
+    })
+
+    it('tears down listeners on error', async () => {
+      osm.reject = sinon.stub()
+      placeOrderStreamStub.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
+
+      await osm.place()
+
+      await delay(10)
+
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledThrice()
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('error')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('end')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('data')
+    })
+
+    it('tears down listeners on early close', async () => {
+      osm.reject = sinon.stub()
+      placeOrderStreamStub.on.withArgs('end').callsArgAsync(1)
+
+      await osm.place()
+
+      await delay(10)
+
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledThrice()
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('error')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('end')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('data')
+    })
+
+    it('tears down listeners on complete', async () => {
+      osm.reject = sinon.stub()
+      placeOrderStreamStub.on.withArgs('data').callsArgWithAsync(1, {})
+
+      await osm.place()
+
+      await delay(10)
+
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledThrice()
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('error')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('end')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('data')
     })
   })
 
@@ -509,6 +578,9 @@ describe('OrderStateMachine', () => {
       relayer = {
         makerService: {
           executeOrder: executeOrderStub
+        },
+        identity: {
+          authorize: sinon.stub()
         }
       }
 
@@ -529,11 +601,20 @@ describe('OrderStateMachine', () => {
       expect(prepareSwapStub).to.have.been.calledWith(orderId, swapHash, inboundAmount)
     })
 
+    it('authorizes the request', async () => {
+      await osm.execute()
+
+      expect(relayer.identity.authorize).to.have.been.calledOnce()
+      expect(relayer.identity.authorize).to.have.been.calledWith(orderId)
+    })
+
     it('executes the order on the relayer', async () => {
+      const fakeAuth = 'fake auth'
+      relayer.identity.authorize.returns(fakeAuth)
       await osm.execute()
 
       expect(relayer.makerService.executeOrder).to.have.been.calledOnce()
-      expect(relayer.makerService.executeOrder).to.have.been.calledWith({ orderId })
+      expect(relayer.makerService.executeOrder).to.have.been.calledWith({ orderId, authorization: fakeAuth })
     })
 
     it('completes the order after preparing to execute', async () => {
@@ -585,6 +666,9 @@ describe('OrderStateMachine', () => {
       relayer = {
         makerService: {
           completeOrder: completeOrderStub
+        },
+        identity: {
+          authorize: sinon.stub()
         }
       }
 
@@ -611,11 +695,20 @@ describe('OrderStateMachine', () => {
       expect(setSettledParams).to.have.been.calledWith({ swapPreimage: preimage })
     })
 
+    it('authorizes the request', async () => {
+      await osm.complete()
+
+      expect(relayer.identity.authorize).to.have.been.calledOnce()
+      expect(relayer.identity.authorize).to.have.been.calledWith(orderId)
+    })
+
     it('completes the order on the relayer', async () => {
+      const fakeAuth = 'fake auth'
+      relayer.identity.authorize.returns(fakeAuth)
       await osm.complete()
 
       expect(completeOrderStub).to.have.been.calledOnce()
-      expect(completeOrderStub).to.have.been.calledWith({ orderId, swapPreimage: preimage })
+      expect(completeOrderStub).to.have.been.calledWith({ orderId, swapPreimage: preimage, authorization: fakeAuth })
     })
   })
 

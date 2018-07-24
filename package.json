@@ -1,12 +1,11 @@
 {
   "name": "broker",
   "version": "0.1.0-alpha-preview",
-  "description": "",
+  "description": "Broker software to interact with the Kinesis Exchange",
   "main": "index.js",
   "config": {
     "project_name": "broker",
-    "daemon": "kbd",
-    "default_currency_symbol": "BTC"
+    "daemon": "kbd"
   },
   "scripts": {
     "prebuild": "bash ./scripts/prebuild.sh",
@@ -18,8 +17,6 @@
     "pretest": "npm run format; exit 0",
     "test": "NODE_PATH=. mocha 'broker-cli/**/*.spec.js' 'broker-daemon/**/*.spec.js'",
     "coverage": "nyc npm test",
-    "docker-coverage": "docker-compose exec $npm_package_config_daemon npm run coverage",
-    "docker-test": "docker-compose exec $npm_package_config_daemon npm test",
     "ci-test": "bash ./scripts/ci-test.sh",
     "start-kbd": "pm2-docker pm2.json --watch",
     "fund": "bash ./scripts/fund-simnet-wallet.local.sh",
@@ -55,7 +52,7 @@
     "generate-safe-id": "1.0.2",
     "grpc": "1.11.3",
     "grpc-caller": "0.5.0",
-    "grpc-methods": "github:kinesis-exchange/grpc-methods",
+    "grpc-methods": "github:kinesis-exchange/grpc-methods#v0.6.1",
     "javascript-state-machine": "3.0.1",
     "level": "3.0.1",
     "level-live-stream": "1.4.12",

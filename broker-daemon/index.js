@@ -69,22 +69,18 @@ function createEngineFromConfig (symbol, engineConfig, { logger }) {
  */
 class BrokerDaemon {
   /**
-   * @typedef {Object} KeyPath
-   * @property {String} privKeyPath Path to a private key
-   * @property {String} pubKeyPath  Path to the public key corresponding to the private key
-   */
-
-  /**
-   * @param  {KeyPath} idKeyPath               Path to public and private key for the broker's identity
-   * @param  {String}  rpcAddress              Host and port where the user-facing RPC server should listen
-   * @param  {String}  interchainRouterAddress Host and port where the interchain router should listen
-   * @param  {String}  relayerRpcHost          Host and port for the Relayer RPC
-   * @param  {String}  dataDir                 Relative path to a directory where application data should be stored
-   * @param  {Array}   marketNames             List of market names (e.g. 'BTC/LTC') to support
-   * @param  {Object}  engines                 Configuration for all the engines to instantiate
+   * @param  {RelayerClient~KeyPath} idKeyPath                            Path to public and private key for the broker's identity
+   * @param  {String}                rpcAddress                           Host and port where the user-facing RPC server should listen
+   * @param  {String}                interchainRouterAddress              Host and port where the interchain router should listen
+   * @param  {String}                relayOpts.relayerRpcHost             Host and port for the Relayer RPC
+   * @param  {String}                relayOpts.certPath                   Absolute path to the root certificate for the relayer
+   * @param  {Boolean}               [relayOpts.disableRelayerAuth=false] Disable SSL encryption and message signing in communications with the Relayer. DEVELOPMENT ONLY.
+   * @param  {String}                dataDir                              Relative path to a directory where application data should be stored
+   * @param  {Array}                 marketNames                          List of market names (e.g. 'BTC/LTC') to support
+   * @param  {Object}                engines                              Configuration for all the engines to instantiate
    * @return {BrokerDaemon}
    */
-  constructor (idKeyPath = {}, rpcAddress, interchainRouterAddress, relayerRpcHost, dataDir, marketNames, engines) {
+  constructor (idKeyPath = {}, rpcAddress, interchainRouterAddress, { relayerCertPath, relayerRpcHost, disableRelayerAuth = false } = {}, dataDir, marketNames, engines) {
     if (!idKeyPath.privKeyPath) {
       throw new Error(`Private Key path is required to create a BrokerDaemon`)
     }
@@ -97,11 +93,12 @@ class BrokerDaemon {
     this.marketNames = marketNames || []
     this.interchainRouterAddress = interchainRouterAddress || DEFAULT_INTERCHAIN_ROUTER_ADDRESS
     this.relayerRpcHost = relayerRpcHost || DEFAULT_RELAYER_HOST
+    this.relayerCertPath = relayerCertPath
 
     this.logger = logger
     this.store = sublevel(level(this.dataDir))
     this.eventHandler = new EventEmitter()
-    this.relayer = new RelayerClient(this.relayerRpcHost, this.logger)
+    this.relayer = new RelayerClient(idKeyPath, { host: this.relayerRpcHost, certPath: this.relayerCertPath, disableAuth: disableRelayerAuth }, this.logger)
 
     this.engines = new Map(Object.entries(engines || {}).map(([ symbol, engineConfig ]) => {
       return [ symbol, createEngineFromConfig(symbol, engines[symbol], { logger: this.logger }) ]
