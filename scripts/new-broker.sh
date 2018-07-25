@@ -1,15 +1,24 @@
-BROKER_DIR=$HOME/workspace/broker
-WORDING_DIR=$PWD
+########################################################
+# "New Broker Setup" script.
+#
+# This script contains code to setup a new broker by copying docker-compose
+# files and providing information to allow multiple brokers on the same local
+# development environment
+#
+# PARAMS:
+#   - BROKER_DIR (defaults to $HOME/workspace/broker)
+#
+########################################################
 
-echo "Copying broker"
+set -e -u
+
+BROKER_DIR=${BROKER_DIR:-$HOME/workspace/broker}
+
+echo "Copying broker from $BROKER_DIR"
 
 (
   cd $BROKER_DIR &&
   cd ../ &&
   mkdir broker2/
   cp -r $BROKER_DIR/* ./broker2/
-
-  echo "Updating port numbers"
-  sed -i '' 's/27492/27494/' ./broker2/docker-compose.yml
-  sed -i '' 's/10112/10114/' ./broker2/docker-compose.yml
 )
