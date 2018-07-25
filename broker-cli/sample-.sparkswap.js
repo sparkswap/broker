@@ -1,11 +1,11 @@
 /**
- * KCLI User configuration
+ * SparkSwap CLI User configuration
  *
  * In order to edit this file, first move it to your home directory
- * and rename it to '.kcli.js'
+ * and rename it to '.sparkswap.js'
  *
  * On *nix in bash, you can do this by running:
- * `cp -n "$(dirname $(which kcli))/../lib/node_modules/broker-cli/sample-.kcli.js" ~/.kcli.js`
+ * `cp -n "$(dirname $(which sparkswap))/../lib/node_modules/broker-cli/sample-.sparkswap.js" ~/.sparkswap.js`
  *
  */
 

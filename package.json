@@ -24,7 +24,7 @@
   },
   "bin": {
     "sparkswapd": "./broker-daemon/bin/sparkswapd",
-    "kcli": "./broker-cli/bin/kcli"
+    "sparkswap": "./broker-cli/bin/sparkswap"
   },
   "standard": {
     "env": [

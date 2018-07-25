@@ -5,7 +5,7 @@ const { validations } = require('../../utils')
  */
 
 /**
- * Supported commands for `kcli order`
+ * Supported commands for `sparkswap order`
  *
  * @constant
  * @type {Object<key, String>}

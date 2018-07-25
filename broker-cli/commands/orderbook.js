@@ -95,9 +95,9 @@ function createUI (market, asks, bids) {
 }
 
 /**
- * kcli orderbook
+ * sparkswap orderbook
  *
- * ex: `kcli orderbook --market 'BTC/LTC'
+ * ex: `sparkswap orderbook --market 'BTC/LTC'
  *
  * @param {Object} args
  * @param {Object} opts

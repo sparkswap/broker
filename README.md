@@ -58,26 +58,26 @@ npm run build
 # Start our docker stack
 docker-compose up -d
 
-# Install depedencies for the kcli
+# Install depedencies for the SparkSwap CLI
 (cd ./broker-cli/ && npm i)
 
-# We are now ready to use kcli w/ our daemon
-./broker-cli/bin/kcli wallet balance
+# We are now ready to use `sparkswap` w/ our daemon
+./broker-cli/bin/sparkswap wallet balance
 ```
 
 If you will be developing against sparkswapd (or any sparkswap repository), it is required to run the code through [Standard](https://standardjs.com/). StandardJS plugins can be downloaded for your favorite editor. The sparkswapd/KCLI codebase follows StandardJS formatting.
 
 #### Using the CLI
 
-You can run `./broker-cli/bin/kcli -h` to view all available commands.
+You can run `./broker-cli/bin/sparkswap -h` to view all available commands.
 
-To set your user configuration, copy `./broker-cli/sample-.kcli.js` to `~/.kcli.js` and edit the file.
-You can view default configuration for kcli in `./broker-cli/.kcli.default.js`.
+To set your user configuration, copy `./broker-cli/sample-.sparkswap.js` to `~/.sparkswap.js` and edit the file.
+You can view default configuration for `sparkswap` in `./broker-cli/.sparkswap.default.js`.
 
 Current configuration is limited to:
 - Default Daemon RPC address
 
-Additionally, you can access a specific version of sparkswapd by setting the --rpc-address on any kcli command.
+Additionally, you can access a specific version of sparkswapd by setting the `--rpc-address` on any `sparkswap` command.
 
 #### Running tests
 
@@ -112,4 +112,4 @@ This structure allows the end user to submit specific desires (e.g. market price
 
 The overall flow looks something like this:
 
-`buy (kcli) -> BlockOrder (sparkswapd) -> Order (sparkswapd) -> Order (relayer)`
+`buy (sparkswap) -> BlockOrder (sparkswapd) -> Order (sparkswapd) -> Order (relayer)`

@@ -2,7 +2,7 @@
   "name": "broker-cli",
   "version": "0.1.0-alpha-preview",
   "description": "Broker CLI utility to interact with the SparkSwap Broker Daemon",
-  "main": "./bin/kcli",
+  "main": "./bin/sparkswap",
   "scripts": {
     "format": "standard --fix",
     "pretest": "npm run format; exit 0",
@@ -12,7 +12,7 @@
     "postinstall": "sh scripts/postinstall.sh"
   },
   "bin": {
-    "kcli": "./bin/kcli"
+    "sparkswap": "./bin/sparkswap"
   },
   "standard": {
     "env": [

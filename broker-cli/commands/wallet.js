@@ -24,7 +24,7 @@ const ACCEPTED_ANSWERS = Object.freeze(['y', 'yes'])
 const SUPPORTED_SYMBOLS = Object.freeze(['BTC', 'LTC'])
 
 /**
- * Supported commands for `kcli wallet`
+ * Supported commands for `sparkswap wallet`
  *
  * @constant
  * @type {Object<key, String>}
@@ -83,7 +83,7 @@ async function balance (args, opts, logger) {
 /**
  * new-deposit-address
  *
- * ex: `kcli wallet new-deposit-address`
+ * ex: `sparkswap wallet new-deposit-address`
  *
  * @function
  * @param {Object} args
@@ -109,7 +109,7 @@ async function newDepositAddress (args, opts, logger) {
 /**
  * commit-balance
  *
- * ex: `kcli wallet commit-balance`
+ * ex: `sparkswap wallet commit-balance`
  *
  * @function
  * @param {Object} args

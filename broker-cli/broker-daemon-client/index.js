@@ -17,8 +17,8 @@ class BrokerDaemonClient {
   constructor (address) {
     /**
      * Broker Daemon grpc host address
-     * If not set, defaults to the user settings at ~/.kcli.js
-     * or the installation settings at ../kcli.js
+     * If not set, defaults to the user settings at ~/.sparkswap.js
+     * or the installation settings at ../sparkswap.js
      * @type {String}
      */
     this.address = address || CONFIG.rpcAddress

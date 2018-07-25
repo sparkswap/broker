@@ -35,7 +35,7 @@ program
  * this may use a little more memory, it allows us to couple arguments/handlers in
  * the same file AND prevents us from cluttering the global scope when using caporal
  *
- * Please use `kcli --help` to see available commands
+ * Please use `sparkswap --help` to see available commands
  */
 Object.keys(commands).forEach((key) => commands[key](program))
 

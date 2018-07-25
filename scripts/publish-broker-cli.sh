@@ -3,7 +3,7 @@
 set -e
 
 echo ""
-echo "Building kcli for distribution."
+echo "Building sparkswap(1) for distribution."
 echo ""
 
 
