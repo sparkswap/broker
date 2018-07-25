@@ -6,9 +6,9 @@
 
 This repo contains source for the following products:
 
-- [KCLI (CLI for SparkSwap Broker Daemon)](./broker-cli)
+- [`sparkswap` (CLI for SparkSwap Broker Daemon)](./broker-cli)
     - User interface for sparkswapd
-- [sparkswapd (SparkSwap Broker Daemon)](./broker-daemon)
+- [`sparkswapd` (SparkSwap Broker Daemon)](./broker-daemon)
     - Daemon that handles interactions between the user's lightning nodes and the SparkSwap Relayer
 
 Documentation can be found in each directories `README.md` at [./broker-cli](./broker-cli) or [./broker-daemon](./broker-daemon) respectively.
@@ -65,7 +65,7 @@ docker-compose up -d
 ./broker-cli/bin/sparkswap wallet balance
 ```
 
-If you will be developing against sparkswapd (or any sparkswap repository), it is required to run the code through [Standard](https://standardjs.com/). StandardJS plugins can be downloaded for your favorite editor. The sparkswapd/KCLI codebase follows StandardJS formatting.
+If you will be developing against sparkswapd (or any SparkSwap repository), it is required to run the code through [Standard](https://standardjs.com/). StandardJS plugins can be downloaded for your favorite editor. The SparkSwap Broker and Broker CLI codebase follows StandardJS formatting.
 
 #### Using the CLI
 
