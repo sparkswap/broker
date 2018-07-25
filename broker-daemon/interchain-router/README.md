@@ -1,7 +1,3 @@
----
-title: Interchain Router
----
-
 Interchain Router
 =================
 
