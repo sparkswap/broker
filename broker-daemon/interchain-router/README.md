@@ -1,3 +1,7 @@
+---
+title: Interchain Router
+---
+
 Interchain Router
 =================
 
@@ -27,7 +31,7 @@ Theresa sees Marcus's order and wants to fill it on the Kinesis Relayer.
 11. When Marcus's payment to Theresa on NetA succeeds, his NetA node returns the preimage to his Interchain Router. His Interchain Router then returns the preimage to Marcus's NetX node.
 12. Now in posession of the preimage for the NetX payment, Marcus' NetX node settles the payment and retrieves the XYZ paid to him by Theresa.
 
-![Swap Diagram](./docs/Cross-chain_Preimage_Retrieval_Swap.png)
+![Swap Diagram](./images/Cross-chain_Preimage_Retrieval_Swap.png)
 
 Service Details
 ---------------
