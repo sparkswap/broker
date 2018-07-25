@@ -1,4 +1,5 @@
-# Kinesis Broker CLI + Daemon
+Kinesis Broker CLI + Daemon
+===========================
 
 <img src="https://kines.is/logo.png" alt="Kinesis Exchange" width="550">
 
