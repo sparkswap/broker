@@ -10,6 +10,7 @@ describe('InterchainRouter', () => {
   let logger
   let ordersByHash
   let router
+  let engines
   let PROTO_PATH = InterchainRouter.__get__('PROTO_PATH')
 
   beforeEach(() => {
@@ -38,13 +39,15 @@ describe('InterchainRouter', () => {
       createReadStream: sinon.stub()
     }
 
+    engines = sinon.stub()
+
     logger = {
       info: sinon.stub(),
       error: sinon.stub(),
       log: sinon.stub()
     }
 
-    router = new InterchainRouter({ ordersByHash, logger })
+    router = new InterchainRouter({ ordersByHash, logger, engines })
   })
 
   describe('#constructor', () => {
@@ -65,7 +68,7 @@ describe('InterchainRouter', () => {
     it('creates an ExternalPreimageService', () => {
       expect(ExternalPreimageService).to.have.been.calledOnce()
       expect(ExternalPreimageService).to.have.been.calledWithNew()
-      expect(ExternalPreimageService).to.have.been.calledWith(PROTO_PATH, { logger, ordersByHash })
+      expect(ExternalPreimageService).to.have.been.calledWith(PROTO_PATH, { logger, ordersByHash, engines })
       expect(router.externalPreimageService).to.be.instanceOf(ExternalPreimageService)
     })
 

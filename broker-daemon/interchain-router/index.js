@@ -21,11 +21,12 @@ class InterchainRouter {
    * @param  {Object}        logger
    * @return {InterchainRouter}
    */
-  constructor ({ ordersByHash, logger }) {
+  constructor ({ ordersByHash, logger, engines }) {
     this.ordersByHash = ordersByHash
     this.logger = logger
     this.server = new grpc.Server()
-    this.externalPreimageService = new ExternalPreimageService(PROTO_PATH, { ordersByHash, logger })
+    this.engines = engines
+    this.externalPreimageService = new ExternalPreimageService(PROTO_PATH, { ordersByHash, logger, engines })
     this.server.addService(this.externalPreimageService.definition, this.externalPreimageService.implementation)
   }
 
