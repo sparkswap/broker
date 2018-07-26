@@ -1,7 +1,7 @@
 {
   "name": "broker",
   "version": "0.1.0-alpha-preview",
-  "description": "Broker software to interact with the Kinesis Exchange",
+  "description": "Broker software to interact with the Sparkswap Relayer ",
   "main": "index.js",
   "config": {
     "project_name": "broker",

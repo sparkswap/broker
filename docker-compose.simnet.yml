@@ -99,7 +99,7 @@ services:
     entrypoint: ["./start-btcd.sh"]
 
   lnd_ltc:
-    image: kinesis_lnd_ltc:latest
+    image: sparkswap_lnd_ltc:latest
     ports:
       - '10114:10114'
     depends_on:
