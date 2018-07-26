@@ -49,8 +49,8 @@ Edit the `docker-compose.yml` file in your `broker` directory to have the approp
 
 | Network  | Host                                |
 |----------|-------------------------------------|
-| Simnet   | simnet-relayer.sparkswap.com:28492  |
-| Testnet  | testnet-relayer.sparkswap.com:28492 |
+| Simnet   | relayer.simnet.sparkswap.com:28492  |
+| Testnet  | relayer.testnet.sparkswap.com:28492 |
 
 For availability, please check [dev.sparkswap.com](http://dev.sparkswap.com)
 
