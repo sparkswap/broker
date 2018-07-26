@@ -1,0 +1,169 @@
+version: '2.4'
+
+services:
+  kbd:
+    image: kinesis_kbd:latest
+    depends_on:
+      - lnd_btc
+      - lnd_ltc
+    volumes:
+      - '/data'
+      # This is populated externally w/ an engine
+      - 'shared:/shared'
+    environment:
+      # - GRPC_VERBOSITY=INFO
+      # - GRPC_TRACE=all
+      - NODE_PATH=.
+      - RPC_ADDRESS=0.0.0.0:27492
+      - INTERCHAIN_ROUTER_ADDRESS=0.0.0.0:40369
+      - DATA_DIR=/data
+      - ID_PRIV_KEY=/secure/broker-identity.private.pem
+      - ID_PUB_KEY=/secure/broker-identity.public.pem
+      - BTC_ENGINE_TYPE=LND
+      - BTC_LND_RPC_HOST=lnd_btc:10009
+      - BTC_LND_TLS_CERT=/shared/lnd-engine-tls-btc.cert
+      - BTC_LND_MACAROON=/shared/lnd-engine-admin-btc.macaroon
+      - LTC_ENGINE_TYPE=LND
+      - LTC_LND_RPC_HOST=lnd_ltc:10009
+      - LTC_LND_TLS_CERT=/shared/lnd-engine-tls-ltc.cert
+      - LTC_LND_MACAROON=/shared/lnd-engine-admin-ltc.macaroon
+      - GRPC_SSL_CIPHER_SUITES=HIGH+ECDSA
+      # This address is specifically tied to the relayer network
+      # This is a temporary workaround for preventing the use of external networks
+      # for the relayer. In a testnet/mainnet setting, this will be a public IP.
+      - RELAYER_RPC_HOST=relayer.simnet.sparkswap.com:28492
+      - MARKETS=BTC/LTC
+    ports:
+      - '27492:27492'
+    networks:
+      - broker
+    working_dir: '/home/app'
+    entrypoint: bash -c 'npm run start-kbd'
+
+  lnd_btc:
+    image: kinesis_lnd_btc:latest
+    depends_on:
+      - btcd
+    ports:
+      - '10113:10113'
+    environment:
+      - RPC_USER=kuser
+      - RPC_PASS=kpass
+      - RPC_HOST=btcd:18556
+      - RPC_CERT_PATH=/shared/rpc-btc.cert
+      - ADMIN_MACAROON=/shared/lnd-engine-admin-btc.macaroon
+      - READ_ONLY_MACAROON=/shared/lnd-engine-readonly-btc.macaroon
+      - INVOICE_MACAROON=/shared/lnd-engine-invoice-btc.macaroon
+      - TLS_CERT_PATH=/shared/lnd-engine-tls-btc.cert
+      - TLS_KEY_PATH=/secure/lnd-engine-tls-btc.key
+      - NETWORK=simnet
+      - CHAIN=bitcoin
+      - DEBUG=info
+      - RPC_LISTEN=0.0.0.0:10009
+      - LISTEN=0.0.0.0:10113
+      - EXTERNAL_ADDRESS=0.0.0.0:10113
+      - REST_LISTEN=0.0.0.0:8101
+      - DATA_DIR=/data
+      - LOG_DIR=/data
+      - NODE=btcd
+    volumes:
+      - 'shared:/shared'
+      - 'lnd_btc:/data'
+    networks:
+      - broker
+    entrypoint: ["./start-lnd.sh"]
+
+  # This BTCD section is not used due to simnet only allowing one node to be active
+  # at a time. We use shared ltcd/btcd nodes from the relayer, for the dev environment.
+  #
+  # However, this node needs to be created so that we have access to the correct
+  # certs for the shared nodes (certs are created on image build)
+  #
+  btcd:
+    image: kinesis_btcd:latest
+    volumes:
+      - shared:/shared
+      - bitcoin:/data
+    environment:
+      - RPC_USER=kuser
+      - RPC_PASS=kpass
+      - NETWORK=simnet
+      - DEBUG=info
+      - DATA_DIR=/data
+      - LOG_DIR=/data
+      - RPC_KEY=/secure/rpc.key
+      - RPC_CERT=/shared/rpc-btc.cert
+      - RPC_LISTEN=0.0.0.0
+      - "MINING_ADDRESS=$MINING_ADDRESS"
+      - MAX_WEB_SOCKETS=100
+    entrypoint: ["./start-btcd.sh"]
+
+  lnd_ltc:
+    image: kinesis_lnd_ltc:latest
+    ports:
+      - '10114:10114'
+    depends_on:
+      - ltcd
+    environment:
+      - RPC_USER=kuser
+      - RPC_PASS=kpass
+      - RPC_HOST=ltcd:18666
+      - RPC_CERT_PATH=/shared/rpc-ltc.cert
+      - ADMIN_MACAROON=/shared/lnd-engine-admin-ltc.macaroon
+      - READ_ONLY_MACAROON=/shared/lnd-engine-readonly-ltc.macaroon
+      - INVOICE_MACAROON=/shared/lnd-engine-invoice-ltc.macaroon
+      - TLS_CERT_PATH=/shared/lnd-engine-tls-ltc.cert
+      - TLS_KEY_PATH=/secure/lnd-engine-tls-ltc.key
+      - NETWORK=simnet
+      - CHAIN=litecoin
+      - NODE=ltcd
+      - DEBUG=info
+      - RPC_LISTEN=0.0.0.0:10009
+      - LISTEN=0.0.0.0:10114
+      - EXTERNAL_ADDRESS=0.0.0.0:10114
+      - REST_LISTEN=0.0.0.0:8101
+      - DATA_DIR=/data
+      - LOG_DIR=/data
+    volumes:
+      - 'shared:/shared'
+      - 'lnd_ltc:/data'
+    networks:
+      - broker
+    entrypoint: ["./start-lnd.sh"]
+
+  # This LTCD section is not used due to simnet only allowing one node to be active
+  # at a time. We use shared ltcd/btcd nodes from the relayer, for the dev environment.
+  #
+  # However, this node needs to be created so that we have access to the correct
+  # certs for the shared nodes (certs are created on image build)
+  #
+  ltcd:
+    image: kinesis_ltcd:latest
+    volumes:
+      - shared:/shared
+      - litecoin:/data
+    environment:
+      - RPC_USER=kuser
+      - RPC_PASS=kpass
+      - NETWORK=simnet
+      - DEBUG=info
+      - DATA_DIR=/data
+      - LOG_DIR=/data
+      - RPC_KEY=/secure/rpc.key
+      - RPC_CERT=/shared/rpc-ltc.cert
+      - RPC_LISTEN=0.0.0.0
+      - MAX_WEB_SOCKETS=100
+      # This is set dynamically in the startup scripts
+      - "MINING_ADDRESS=$MINING_ADDRESS"
+    entrypoint: ["./start-ltcd.sh"]
+
+
+volumes:
+  shared:
+  lnd_btc:
+  lnd_ltc:
+  bitcoin:
+  litecoin:
+
+networks:
+  broker:
