@@ -1,4 +1,4 @@
-![Kinesis](./images/logo-black.png?raw=true)
+<img src="https://sparkswap.com/img/logo.svg" alt="sparkswap - sparkswap.com" width="400">
 
 `sparkswap` - SparkSwap Broker Command Line Interface
 ==============================================
