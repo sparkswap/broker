@@ -9,9 +9,14 @@ services:
     depends_on:
       - lnd_btc
       - lnd_ltc
+    environment:
+      - RELAYER_RPC_HOST=relayer.testnet.sparkswap.com:28492
+      - RELAYER_CERT_HOST=relayer.testnet.sparkswap.com:8080
+
   btcd:
     environment:
       - NETWORK=mainnet
+
   ltcd:
     environment:
       - NETWORK=mainnet
