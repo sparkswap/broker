@@ -1,8 +1,6 @@
 SparkSwap Broker CLI + Daemon
 ===========================
 
-<img src="https://kines.is/logo.png" alt="Kinesis Exchange" width="550">
-
 [![CircleCI](https://circleci.com/gh/sparkswap/broker.svg?style=svg&circle-token=11fe800209ce8a6839b3c071f8f61ee8a345b026)](https://circleci.com/gh/sparkswap/broker)
 
 This repo contains source for the following products:
