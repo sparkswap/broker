@@ -8,8 +8,7 @@
   "min_uptime": 5000,
   "watch": [
     "broker-daemon",
-    "proto",
-    "node_modules/lnd-engine"
+    "proto"
   ],
   "env": {
     "NODE_ENV": "development",
