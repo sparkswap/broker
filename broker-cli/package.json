@@ -1,8 +1,8 @@
 {
   "name": "broker-cli",
   "version": "0.1.0-alpha-preview",
-  "description": "Broker CLI utility to interact with the Broker Daemon on the Kinesis Exchange",
-  "main": "./bin/kcli",
+  "description": "Broker CLI utility to interact with the SparkSwap Broker Daemon",
+  "main": "./bin/sparkswap",
   "scripts": {
     "format": "standard --fix",
     "pretest": "npm run format; exit 0",
@@ -12,7 +12,7 @@
     "postinstall": "sh scripts/postinstall.sh"
   },
   "bin": {
-    "kcli": "./bin/kcli"
+    "sparkswap": "./bin/sparkswap"
   },
   "standard": {
     "env": [
@@ -22,14 +22,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kinesis-exchange/broker-cli.git"
+    "url": "git+https://github.com/sparkswap/broker-cli.git"
   },
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/kinesis-exchange/broker-cli/issues"
+    "url": "https://github.com/sparkswap/broker-cli/issues"
   },
-  "homepage": "https://github.com/kinesis-exchange/broker-cli#readme",
+  "homepage": "https://github.com/sparkswap/broker-cli#readme",
   "dependencies": {
     "big.js": "5.1.2",
     "caporal": "0.10.0",

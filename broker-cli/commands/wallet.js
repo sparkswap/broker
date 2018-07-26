@@ -24,7 +24,7 @@ const ACCEPTED_ANSWERS = Object.freeze(['y', 'yes'])
 const SUPPORTED_SYMBOLS = Object.freeze(['BTC', 'LTC'])
 
 /**
- * Supported commands for `kcli wallet`
+ * Supported commands for `sparkswap wallet`
  *
  * @constant
  * @type {Object<key, String>}
@@ -83,7 +83,7 @@ async function balance (args, opts, logger) {
 /**
  * new-deposit-address
  *
- * ex: `kcli wallet new-deposit-address`
+ * ex: `sparkswap wallet new-deposit-address`
  *
  * @function
  * @param {Object} args
@@ -109,7 +109,7 @@ async function newDepositAddress (args, opts, logger) {
 /**
  * commit-balance
  *
- * ex: `kcli wallet commit-balance`
+ * ex: `sparkswap wallet commit-balance`
  *
  * @function
  * @param {Object} args
@@ -149,13 +149,13 @@ async function commitBalance (args, opts, logger) {
     logger.info(`For your knowledge, the Maximum supported balance at this time is: ${Big(ENUMS.MAX_CHANNEL_BALANCE).div(divideBy)} ${symbol}`)
     logger.info(`Your current uncommitted wallet balance is: ${Big(totalUncommittedBalance).div(divideBy)} ${symbol}`)
 
-    const answer = await askQuestion(`Are you OK committing ${Big(maxSupportedBalance).div(divideBy)} ${symbol} to the kinesis exchange? (Y/N)`)
+    const answer = await askQuestion(`Are you OK committing ${Big(maxSupportedBalance).div(divideBy)} ${symbol} to SparkSwap? (Y/N)`)
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
     await client.walletService.commitBalance({ balance: maxSupportedBalance.toString(), symbol })
 
-    logger.info('Successfully added broker daemon to the kinesis exchange!')
+    logger.info('Successfully committed balance to SparkSwap Relayer!')
   } catch (e) {
     logger.error(e)
   }

@@ -2,7 +2,7 @@
  * Commands for Broker-CLI
  *
  * @module broker-cli/index
- * @author kinesis
+ * @author SparkSwap
  */
 
 const buyCommand = require('./buy')

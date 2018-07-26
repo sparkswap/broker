@@ -1,6 +1,6 @@
 FROM node:8 as builder
 
-LABEL maintainer="Danny Paz <kinesis.exchange>"
+LABEL maintainer="SparkSwap <dev@sparkswap.com>"
 
 # Install git for broker dependencies
 RUN apt-get update && \

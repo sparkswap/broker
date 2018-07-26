@@ -4,9 +4,9 @@ const { ENUMS, validations } = require('../utils')
 const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
 
 /**
- * kcli sell
+ * sparkswap sell
  *
- * ex: `kcli sell 100 --market 'BTC/LTC'
+ * ex: `sparkswap sell 100 --market 'BTC/LTC'
  *
  * @param {Object} args
  * @param {String} args.amount

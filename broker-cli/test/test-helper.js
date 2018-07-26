@@ -1,5 +1,5 @@
 /**
- * Kinesis test helper
+ * SparkSwap test helper
  *
  * NOTE: This file is specifically loaded before all tests so that we
  * can globally require some files.

@@ -5,7 +5,7 @@
   "main": "index.js",
   "config": {
     "project_name": "broker",
-    "daemon": "kbd"
+    "daemon": "sparkswapd"
   },
   "scripts": {
     "prebuild": "bash ./scripts/prebuild.sh",
@@ -18,13 +18,13 @@
     "test": "NODE_PATH=. mocha 'broker-cli/**/*.spec.js' 'broker-daemon/**/*.spec.js'",
     "coverage": "nyc npm test",
     "ci-test": "bash ./scripts/ci-test.sh",
-    "start-kbd": "pm2-docker pm2.json --watch",
+    "start-sparkswapd": "pm2-docker pm2.json --watch",
     "fund": "bash ./scripts/fund-simnet-wallet.local.sh",
     "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp ./broker-daemon/proto/broker.proto ./broker-cli/proto/broker.proto"
   },
   "bin": {
-    "kbd": "./broker-daemon/bin/kbd",
-    "kcli": "./broker-cli/bin/kcli"
+    "sparkswapd": "./broker-daemon/bin/sparkswapd",
+    "sparkswap": "./broker-cli/bin/sparkswap"
   },
   "standard": {
     "env": [
@@ -34,14 +34,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kinesis-exchange/broker.git"
+    "url": "git+https://github.com/sparkswap/broker.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/kinesis-exchange/broker/issues"
+    "url": "https://github.com/sparkswap/broker/issues"
   },
-  "homepage": "https://github.com/kinesis-exchange/broker#readme",
+  "homepage": "https://github.com/sparkswap/broker#readme",
   "dependencies": {
     "big-integer": "1.6.28",
     "big.js": "5.1.2",
@@ -52,7 +52,7 @@
     "generate-safe-id": "1.0.2",
     "grpc": "1.11.3",
     "grpc-caller": "0.5.0",
-    "grpc-methods": "github:kinesis-exchange/grpc-methods#v0.6.1",
+    "grpc-methods": "github:sparkswap/grpc-methods#v0.6.1",
     "javascript-state-machine": "3.0.1",
     "level": "3.0.1",
     "level-live-stream": "1.4.12",

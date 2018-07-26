@@ -5,7 +5,7 @@ const DAEMON_LND_HOST_DELIMITER = 'daemonLndHost:'
 const DAEMON_CHANNEL_POINT_DELIMITER = 'chanPoint:'
 
 /**
- * Given an array of data from a kcli command, parses the response
+ * Given an array of data from a `sparkswap` command, parses the response
  * to find a specified key
  *
  * @param {String} key
@@ -40,7 +40,7 @@ function getKeys (key, data) {
 }
 
 /**
- * Returns a public key from a kcli payload
+ * Returns a public key from a `sparkswap` payload
  *
  * @param {Array<string>} data
  * @return {String} daemonPublicKey
@@ -50,7 +50,7 @@ function getPublicKey (data) {
 }
 
 /**
- * Returns an lnd host ip from a kcli payload
+ * Returns an lnd host ip from a `sparkswap` payload
  *
  * @param {Array<string>} data
  * @return {String} daemonLndHost
