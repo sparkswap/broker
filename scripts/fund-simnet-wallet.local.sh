@@ -33,6 +33,11 @@ echo "Grabbing deposit address from broker"
 
 WALLET_ADDRESS=$(./broker-cli/bin/sparkswap wallet new-deposit-address $SYMBOL)
 
+if [ -z "$WALLET_ADDRESS" ]; then
+    echo "WALLET_ADDRESS came back empty from kcli. There is an issue with your broker"
+    exit 1
+fi
+
 # Restart the btcd container w/ the mining-address for our account
 echo "Running funding script on the relayer with wallet address: $WALLET_ADDRESS"
 
