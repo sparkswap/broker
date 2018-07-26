@@ -1,14 +1,14 @@
 Install the Broker Daemon
--------------------------
+=========================
 
-### Before you begin
+## Before you begin
 
 1. Install nvm - `brew install nvm` or your favorite package manager
 2. Install the current LTS node and npm version - `nvm install --lts --latest-npm`
 3. Install [docker](https://docs.docker.com/install/)
 4. Create a directory for `sparkswap` and navigate to it - `mkdir -p ./sparkswap && cd sparkswap`
 
-### Install an engine
+## Install an engine
 
 SparkSwap uses engines to interact with the various Payment Channel Networks used for swaps. The only currently released engine is the [LND-Engine](https://github.com/sparkswap/lnd-engine).
 
@@ -27,7 +27,7 @@ npm run build
 npm run build-images
 ```
 
-### Install the Broker Daemon
+## Install the Broker Daemon
 
 (in your `sparkswap` directory)
 
@@ -54,7 +54,7 @@ Edit the `docker-compose.yml` file in your `broker` directory to have the approp
 
 For availability, please check [dev.sparkswap.com](http://dev.sparkswap.com)
 
-### Start the Broker Daemon
+## Start the Broker Daemon
 
 From inside your broker directory, you can start all the related services with:
 ```
@@ -67,6 +67,6 @@ Check on the status of the broker and related services with:
 docker-compose logs -f
 ```
 
-### Using the CLI
+## Using the CLI
 
 Check out the [documentation for the CLI](https://sparkswap.com/docs/broker/cli) to see how to install and use it.
