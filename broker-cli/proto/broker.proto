@@ -614,7 +614,7 @@ message Balance {
   // Total balance of the wallets managed by this node in this currency, including balance in channels. This is currently in base units (e.g. Satoshi/Litoshis)
   int64 uncommitted_balance = 2;
   // Balance in the listed currency that is currently in channels. This is currently in base units (e.g. Satoshis/Litoshis)
-  int64 totalChannelBalance = 3;
+  int64 total_channel_balance = 3;
 }
 
 /**
