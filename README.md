@@ -14,57 +14,9 @@ This repo contains source for the following products:
 
 Documentation can be found in each directories `README.md` at [./broker-cli](./broker-cli) or [./broker-daemon](./broker-daemon) respectively.
 
-### Before you begin
+## Installation
 
-1. Install nvm - `brew install nvm` or your favorite package manager
-2. Install the current LTS node and npm version - `nvm install --lts --latest-npm`
-3. Install [docker](https://docs.docker.com/install/)
-
-### The Quick n' Dirty way
-
-```
-# Create a sparkswap dir to hold your broker daemon and the engine you want to use
-mkdir -p ./sparkswap
-
-# Download the broker daemon source code
-git clone git@github.com:sparkswap/broker.git ./sparkswap/broker
-
-# Download an engine's source code
-git clone git@github.com:sparkswap/lnd-engine.git ./sparkswap/lnd-engine
-
-# Build the broker daemon's docker images
-(cd ./sparkswap/broker && npm run build-images)
-
-# Build your engines docker images
-(cd ./sparkswap/lnd-engine && npm run build-images)
-
-# Lets get into the broker directory to start using the code
-cd ./sparkswap/broker
-
-# Build proto files and grab information needed to start sparkswapd
-npm run build
-
-# IMPORTANT:
-# We will now need to add a valid RELAYER_RPC_HOST into the `docker-compose` file of the broker.
-# This can be done by navigating to `<your_broker_directory>/docker-compose.yml` and editing
-# the RELAYER_RPC_HOST under the `sparkswapd` service
-#
-# Valid addresses for Relayer:
-# simnet: simnet-relayer.sparkswap.com:28492
-# testnet: testnet-relayer.sparkswap.com:28492
-#
-# For availability, please check dev.sparkswap.com
-#
-
-# Start our docker stack
-docker-compose up -d
-
-# Install depedencies for the SparkSwap CLI
-(cd ./broker-cli/ && npm i)
-
-# We are now ready to use `sparkswap` w/ our daemon
-./broker-cli/bin/sparkswap wallet balance
-```
+See the [installation instructions](./broker-daemon/INSTALL.md).
 
 If you will be developing against sparkswapd (or any SparkSwap repository), it is required to run the code through [Standard](https://standardjs.com/). StandardJS plugins can be downloaded for your favorite editor. The SparkSwap Broker and Broker CLI codebase follows StandardJS formatting.
 
