@@ -2,7 +2,7 @@ version: '2.4'
 
 services:
   kbd:
-    image: sparkswap_kbd:latest
+    image: sparkswap_sparkswapd:latest
     depends_on:
       - lnd_btc
       - lnd_ltc
