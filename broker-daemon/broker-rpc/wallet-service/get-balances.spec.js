@@ -43,8 +43,8 @@ describe('get-balances', () => {
   })
 
   describe('getEngineBalances', () => {
-    let totalBalance
-    let totalBalanceStub
+    let uncommittedBalance
+    let uncommittedBalanceStub
     let totalChannelBalance
     let totalChannelBalanceStub
     let engineStub
@@ -55,12 +55,12 @@ describe('get-balances', () => {
 
     beforeEach(() => {
       symbol = 'BTC'
-      totalBalance = 1000000
+      uncommittedBalance = 1000000
       totalChannelBalance = 10000
-      totalBalanceStub = sinon.stub().resolves(totalBalance)
+      uncommittedBalanceStub = sinon.stub().resolves(uncommittedBalance)
       totalChannelBalanceStub = sinon.stub().resolves(totalChannelBalance)
       engineStub = {
-        getTotalBalance: totalBalanceStub,
+        getTotalBalance: uncommittedBalanceStub,
         getTotalChannelBalance: totalChannelBalanceStub
       }
       engine = [symbol, engineStub]
@@ -73,7 +73,7 @@ describe('get-balances', () => {
     })
 
     it('gets the total balance of an engine', () => {
-      expect(totalBalanceStub).to.have.been.calledOnce()
+      expect(uncommittedBalanceStub).to.have.been.calledOnce()
     })
 
     it('gets the total channel balance of an engine', () => {
@@ -83,7 +83,7 @@ describe('get-balances', () => {
     it('returns balances for an engine', () => {
       expect(res).to.eql({
         symbol,
-        totalBalance,
+        uncommittedBalance,
         totalChannelBalance
       })
     })

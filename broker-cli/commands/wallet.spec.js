@@ -64,8 +64,8 @@ describe('cli wallet', () => {
       rpcAddress = 'test:1337'
       opts = { rpcAddress }
       logger = { info: sinon.stub(), error: sinon.stub() }
-      btcBalance = { symbol, totalBalance: 10000, totalChannelBalance: 2000 }
-      ltcBalance = { symbol: 'LTC', totalBalance: 200, totalChannelBalance: 200 }
+      btcBalance = { symbol, uncommittedBalance: 10000, totalChannelBalance: 2000 }
+      ltcBalance = { symbol: 'LTC', uncommittedBalance: 200, totalChannelBalance: 200 }
       balances = [btcBalance, ltcBalance]
 
       walletBalanceStub = sinon.stub().returns({ balances })
@@ -89,7 +89,7 @@ describe('cli wallet', () => {
     })
 
     it('adds a correct balance for BTC', () => {
-      const expectedResult = ['BTC', '0.0000200000000000', '0.0000800000000000']
+      const expectedResult = ['BTC', '0.0000200000000000', '0.000100000000000']
       const result = tablePushStub.args[0][0]
 
       // Since the text in the result contains colors (non-TTY) we have to use
@@ -103,7 +103,7 @@ describe('cli wallet', () => {
     })
 
     it('adds a correct balance for LTC', () => {
-      const expectedResult = ['LTC', '0.0000020000000000', '0.0000000000000000']
+      const expectedResult = ['LTC', '0.0000020000000000', '0.0000020000000000']
       const result = tablePushStub.args[1][0]
 
       // Since the text in the result contains colors (non-TTY) we have to use
@@ -140,7 +140,7 @@ describe('cli wallet', () => {
       args = { symbol }
       rpcAddress = 'test:1337'
       balances = [
-        { symbol: 'BTC', totalBalance: 100, totalChannelBalance: 10 }
+        { symbol: 'BTC', uncommittedBalance: 100, totalChannelBalance: 10 }
       ]
       walletBalanceStub = sinon.stub().returns({ balances })
       commitBalanceStub = sinon.stub()
@@ -167,8 +167,7 @@ describe('cli wallet', () => {
     })
 
     it('calls the daemon to commit a balance to the relayer', () => {
-      const { totalBalance, totalChannelBalance } = balances[0]
-      const uncommittedBalance = totalBalance - totalChannelBalance
+      const { uncommittedBalance } = balances[0]
       expect(commitBalanceStub).to.have.been.calledWith(sinon.match({ balance: uncommittedBalance.toString(), symbol }))
     })
 
