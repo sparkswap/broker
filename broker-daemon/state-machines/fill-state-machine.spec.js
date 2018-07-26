@@ -337,7 +337,8 @@ describe('FillStateMachine', () => {
       createRefundInvoiceStub = sinon.stub().returns(invoice)
       fillOrderStub = sinon.stub()
       subscribeExecuteStream = {
-        on: sinon.stub()
+        on: sinon.stub(),
+        removeListener: sinon.stub()
       }
       subscribeExecuteStub = sinon.stub().returns(subscribeExecuteStream)
       feePaymentRequest = 'fee'
@@ -446,6 +447,20 @@ describe('FillStateMachine', () => {
       expect(fsm.reject.args[0][0]).to.have.property('message', 'fake error')
     })
 
+    it('rejects when the relayer stream closes early', async () => {
+      fsm.reject = sinon.stub()
+      subscribeExecuteStream.on.withArgs('end').callsArgAsync(1)
+
+      await fsm.fillOrder()
+
+      await delay(10)
+
+      expect(fsm.reject).to.have.been.calledOnce()
+      expect(fsm.reject.args[0][0]).to.be.instanceOf(Error)
+      expect(fsm.reject.args[0][0]).to.have.property('message')
+      expect(fsm.reject.args[0][0].message).to.contain('ended early')
+    })
+
     it('sets execute params on the fill when it is executed', async () => {
       const makerAddress = 'bolt:asdfjas0d9f09aj'
       fsm.fill.setExecuteParams = sinon.stub()
@@ -468,6 +483,48 @@ describe('FillStateMachine', () => {
 
       expect(fsm.tryTo).to.have.been.calledOnce()
       expect(fsm.tryTo).to.have.been.calledWith('execute')
+    })
+
+    it('tears down listeners on error', async () => {
+      fsm.reject = sinon.stub()
+      subscribeExecuteStream.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
+
+      await fsm.fillOrder()
+
+      await delay(10)
+
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledThrice()
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('error')
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('end')
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('data')
+    })
+
+    it('tears down listeners on early close', async () => {
+      fsm.reject = sinon.stub()
+      subscribeExecuteStream.on.withArgs('end').callsArgAsync(1)
+
+      await fsm.fillOrder()
+
+      await delay(10)
+
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledThrice()
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('error')
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('end')
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('data')
+    })
+
+    it('tears down listeners on complete', async () => {
+      fsm.reject = sinon.stub()
+      subscribeExecuteStream.on.withArgs('data').callsArgWithAsync(1, {})
+
+      await fsm.fillOrder()
+
+      await delay(10)
+
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledThrice()
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('error')
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('end')
+      expect(subscribeExecuteStream.removeListener).to.have.been.calledWith('data')
     })
   })
 

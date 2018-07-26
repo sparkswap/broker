@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+
+const sparkswapd = require('./sparkswapd.js')
+sparkswapd(process.argv)

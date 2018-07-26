@@ -141,9 +141,21 @@ const FillStateMachine = StateMachine.factory({
 
       const inboundEngine = this.engines.get(inboundSymbol)
       if (!inboundEngine) {
-        throw new Error(`No engine avialable for ${inboundSymbol}`)
+        throw new Error(`No engine avialable for ${inboundEngine}`)
       }
-      this.fill.takerAddress = await inboundEngine.getPaymentChannelNetworkAddress()
+
+      const baseEngine = this.engines.get(baseSymbol)
+      if (!baseEngine) {
+        throw new Error(`No engine avialable for ${baseEngine}`)
+      }
+
+      const counterEngine = this.engines.get(counterSymbol)
+      if (!counterEngine) {
+        throw new Error(`No engine avialable for ${counterEngine}`)
+      }
+
+      this.fill.takerBaseAddress = await baseEngine.getPaymentChannelNetworkAddress()
+      this.fill.takerCounterAddress = await counterEngine.getPaymentChannelNetworkAddress()
 
       const swapHash = await inboundEngine.createSwapHash(this.fill.order.orderId, inboundAmount)
       this.fill.setSwapHash(swapHash)
@@ -232,11 +244,23 @@ const FillStateMachine = StateMachine.factory({
       // NOTE: this method should NOT reject a promise, as that may prevent the state of the fill from saving
       const call = this.relayer.takerService.subscribeExecute({ fillId, authorization })
 
-      call.on('error', (e) => {
-        this.reject(e)
-      })
+      // Stop listening to further events from the stream
+      const finish = () => {
+        call.removeListener('error', errHandler)
+        call.removeListener('end', endHandler)
+        call.removeListener('data', dataHandler)
+      }
 
-      call.on('data', ({ makerAddress }) => {
+      const errHandler = (e) => {
+        this.reject(e)
+        finish()
+      }
+      const endHandler = () => {
+        const err = new Error(`SubscribeExecute stream for ${fillId} ended early by Relayer`)
+        this.reject(err)
+        finish()
+      }
+      const dataHandler = ({ makerAddress }) => {
         try {
           this.fill.setExecuteParams({ makerAddress })
 
@@ -246,7 +270,13 @@ const FillStateMachine = StateMachine.factory({
         } catch (e) {
           this.reject(e)
         }
-      })
+        finish()
+      }
+
+      // Set listeners on the call
+      call.on('error', errHandler)
+      call.on('end', endHandler)
+      call.on('data', dataHandler)
     },
 
     /**

@@ -34,11 +34,11 @@ LND_ENGINE_BRANCH=${LND_ENGINE_BRANCH:-master}
 # become public.
 #
 # Example:
-# git://github.com/kinesis-exchange/lnd-engine (public)
-# git@github.com:kinesis-exchange/lnd-engine (private, designated by ampersand and colon)
+# git://github.com/sparkswap/lnd-engine (public)
+# git@github.com:sparkswap/lnd-engine (private, designated by ampersand and colon)
 #
-CURRENT_RELAYER_PROTO_COMMIT_SHA=`git ls-remote git://github.com/kinesis-exchange/relayer-proto | grep "refs/heads/$RELAYER_BRANCH$" | cut -f 1`
-CURRENT_LND_ENGINE_COMMIT_SHA=`git ls-remote git@github.com:kinesis-exchange/lnd-engine.git | grep "refs/heads/$LND_ENGINE_BRANCH$" | cut -f 1`
+CURRENT_RELAYER_PROTO_COMMIT_SHA=`git ls-remote git://github.com/sparkswap/relayer-proto | grep "refs/heads/$RELAYER_BRANCH$" | cut -f 1`
+CURRENT_LND_ENGINE_COMMIT_SHA=`git ls-remote git@github.com:sparkswap/lnd-engine.git | grep "refs/heads/$LND_ENGINE_BRANCH$" | cut -f 1`
 
 # If the user has specified a COMMIT_SHA to be used for image creation, then
 # we will use that, otherwise we will default to the master branch's commit sha
@@ -49,7 +49,7 @@ LND_ENGINE_COMMIT_SHA=${LND_ENGINE_COMMIT_SHA:-$CURRENT_LND_ENGINE_COMMIT_SHA}
 
 # NOTE: The names specified with `-t` directly map to the service names in
 # the applicable services docker-compose file
-docker build -t kinesis_kbd -f ./docker/kbd/Dockerfile ./  \
+docker build -t sparkswap_sparkswapd -f ./docker/sparkswapd/Dockerfile ./  \
   --build-arg SSH_PRIVATE_KEY="$(cat $GITHUB_KEY_PATH)" \
   --build-arg RELAYER_PROTO_COMMIT_SHA=$RELAYER_PROTO_COMMIT_SHA \
   --build-arg LND_ENGINE_COMMIT_SHA=$LND_ENGINE_COMMIT_SHA

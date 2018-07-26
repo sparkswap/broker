@@ -19,19 +19,19 @@ const RELAYER_PROTO_PATH = './proto/relayer.proto'
  * Insecure stub of Identity to be used when auth is disabled
  * @return {Object}
  */
-function insecureIdentity () {
+function insecureIdentity (logger = console) {
   return {
     authorize (id) {
-      this.logger.warn(`Not signing authorization for access to ${id}: DISABLE_AUTH is set`)
+      logger.warn(`Not signing authorization for access to ${id}: DISABLE_AUTH is set`)
       return {}
     }
   }
 }
 
 /**
- * Interface for daemon to interact with a Kinesis Relayer
+ * Interface for daemon to interact with a SparkSwap Relayer
  *
- * @author kinesis
+ * @author SparkSwap
  */
 class RelayerClient {
   /**
@@ -54,7 +54,7 @@ class RelayerClient {
 
     if (disableAuth) {
       this.logger.warn('WARNING: SSL is not enabled and no credentials will be passed to the Relayer. This is only suitable for use in development.')
-      this.identity = insecureIdentity()
+      this.identity = insecureIdentity(this.logger)
       this.credentials = credentials.createInsecure()
     } else {
       this.identity = Identity.load(privKeyPath, pubKeyPath)

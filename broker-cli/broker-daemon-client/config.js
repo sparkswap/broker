@@ -2,18 +2,18 @@ const path = require('path')
 const os = require('os')
 
 /**
- * Default configuration is in the root directory for KCLI
+ * Default configuration is in the root directory for the SparkSwap CLI
  * @type {Object}
  * @constant
  */
-const DEFAULT_CONFIG = require('../.kcli.default.js')
+const DEFAULT_CONFIG = require('../.sparkswap.default.js')
 
 try {
   /**
    * Attempt to load user-defined configuration in their home directory
    * @type {Object}
    */
-  var USER_CONFIG = require(path.resolve(os.homedir(), '.kcli.js'))
+  var USER_CONFIG = require(path.resolve(os.homedir(), '.sparkswap.js'))
 } catch (e) {
   USER_CONFIG = {}
 }

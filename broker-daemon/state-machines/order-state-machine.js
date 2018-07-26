@@ -149,11 +149,17 @@ const OrderStateMachine = StateMachine.factory({
     onBeforeCreate: async function (lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
       this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount })
       // TODO: figure out a way to cache the maker address instead of making a request
-      const inboundEngine = this.engines.get(this.order.inboundSymbol)
-      if (!inboundEngine) {
-        throw new Error(`No engine available for ${this.order.inboundSymbol}`)
+      const baseEngine = this.engines.get(this.order.baseSymbol)
+      if (!baseEngine) {
+        throw new Error(`No engine available for ${this.order.baseSymbol}`)
       }
-      this.order.makerAddress = await inboundEngine.getPaymentChannelNetworkAddress()
+
+      const counterEngine = this.engines.get(this.order.counterSymbol)
+      if (!counterEngine) {
+        throw new Error(`No engine available for ${this.order.counterSymbol}`)
+      }
+      this.order.makerBaseAddress = await baseEngine.getPaymentChannelNetworkAddress()
+      this.order.makerCounterAddress = await counterEngine.getPaymentChannelNetworkAddress()
 
       const { orderId, feePaymentRequest, depositPaymentRequest } = await this.relayer.makerService.createOrder(this.order.paramsForCreate)
       this.order.setCreatedParams({ orderId, feePaymentRequest, depositPaymentRequest })
@@ -223,11 +229,23 @@ const OrderStateMachine = StateMachine.factory({
       // NOTE: this method should NOT reject a promise, as that may prevent the state of the order from saving
       const call = this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest, authorization })
 
-      call.on('error', (e) => {
-        this.reject(e)
-      })
+      // Stop listening to further events from the stream
+      const finish = () => {
+        call.removeListener('error', errHandler)
+        call.removeListener('end', endHandler)
+        call.removeListener('data', dataHandler)
+      }
 
-      call.on('data', ({ orderStatus, fill }) => {
+      const errHandler = (e) => {
+        this.reject(e)
+        finish()
+      }
+      const endHandler = () => {
+        const err = new Error(`PlaceOrder stream for ${orderId} ended early by Relayer`)
+        this.reject(err)
+        finish()
+      }
+      const dataHandler = ({ orderStatus, fill }) => {
         try {
           // the Relayer will send a single data message containing the order's state as cancelled and close
           // the stream if the order has been cancelled. We should handle that and cancel the order locally.
@@ -246,7 +264,13 @@ const OrderStateMachine = StateMachine.factory({
         } catch (e) {
           this.reject(e)
         }
-      })
+        finish()
+      }
+
+      // Set listeners on the call
+      call.on('error', errHandler)
+      call.on('end', endHandler)
+      call.on('data', dataHandler)
     },
 
     /**

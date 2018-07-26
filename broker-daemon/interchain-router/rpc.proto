@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+package extpreimage;
+
 enum Symbol {
   BTC = 0;
   LTC = 1;

@@ -19,14 +19,14 @@ if (compareVersions(clientVersion, currentVersion) < 0) {
 }
 
 /**
- * Kinesis Broker CLI
+ * SparkSwap Broker CLI
  *
- * @author kinesis
+ * @author SparkSwap
  */
 program
   .logger(console)
   .version(CLI_VERSION)
-  .description(`☍ Kinesis Broker CLI - http://kinesis.network`)
+  .description(`Ϟ SparkSwap Broker CLI - http://sparkswap.com`)
 
 /**
  * Initialize Commands
@@ -35,7 +35,7 @@ program
  * this may use a little more memory, it allows us to couple arguments/handlers in
  * the same file AND prevents us from cluttering the global scope when using caporal
  *
- * Please use `kcli --help` to see available commands
+ * Please use `sparkswap --help` to see available commands
  */
 Object.keys(commands).forEach((key) => commands[key](program))
 

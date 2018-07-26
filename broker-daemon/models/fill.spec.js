@@ -225,7 +225,8 @@ describe('Fill', () => {
       }
       params = {
         fillAmount: '9000',
-        takerAddress: 'bolt:asdfasdf'
+        takerBaseAddress: 'bolt:asdfasdf',
+        takerCounterAddress: 'bolt:zxcvzxcv'
       }
 
       fill = new Fill(blockOrderId, order, params)
@@ -310,7 +311,8 @@ describe('Fill', () => {
           orderId: order.orderId,
           swapHash: fakeSwapHash,
           fillAmount: params.fillAmount,
-          takerAddress: 'bolt:asdfasdf'
+          takerBaseAddress: 'bolt:asdfasdf',
+          takerCounterAddress: 'bolt:zxcvzxcv'
         })
       })
     })

@@ -10,6 +10,7 @@ describe('OrderStateMachine', () => {
   let logger
   let relayer
   let engines
+  let getPaymentChannelNetworkAddressStub
 
   beforeEach(() => {
     Order = sinon.stub()
@@ -32,10 +33,10 @@ describe('OrderStateMachine', () => {
         authorize: sinon.stub()
       }
     }
-
+    getPaymentChannelNetworkAddressStub = sinon.stub().resolves('bolt:adsfsdf')
     engines = new Map([
-      ['BTC', { getPaymentChannelNetworkAddress: sinon.stub() }],
-      ['LTC', { getPaymentChannelNetworkAddress: sinon.stub() }]
+      ['BTC', { getPaymentChannelNetworkAddress: getPaymentChannelNetworkAddressStub }],
+      ['LTC', { getPaymentChannelNetworkAddress: getPaymentChannelNetworkAddressStub }]
     ])
   })
 
@@ -211,7 +212,9 @@ describe('OrderStateMachine', () => {
       }
       Order.prototype.key = fakeKey
       Order.prototype.valueObject = fakeValueObject
-      Order.prototype.inboundSymbol = 'BTC'
+      Order.prototype.baseSymbol = 'BTC'
+      Order.prototype.counterSymbol = 'BTC'
+
       setCreatedParams = sinon.stub()
       Order.prototype.setCreatedParams = setCreatedParams
       createOrderResponse = {
@@ -247,17 +250,15 @@ describe('OrderStateMachine', () => {
     })
 
     it('gets the makerAddress for the order', async () => {
-      const fakeAddress = 'bolt:mykey'
-      engines.get('BTC').getPaymentChannelNetworkAddress.resolves(fakeAddress)
-
       await osm.create(blockOrderId, params)
 
-      expect(engines.get('BTC').getPaymentChannelNetworkAddress).to.have.been.calledOnce()
-      expect(osm.order.makerAddress).to.be.equal(fakeAddress)
+      expect(getPaymentChannelNetworkAddressStub).to.have.been.calledTwice()
+      expect(osm.order.makerBaseAddress).to.be.equal('bolt:adsfsdf')
+      expect(osm.order.makerCounterAddress).to.be.equal('bolt:adsfsdf')
     })
 
     it('throws if no engine exists for the inbound symbol', () => {
-      Order.prototype.inboundSymbol = 'XYZ'
+      Order.prototype.baseSymbol = 'XYZ'
       return expect(osm.create(blockOrderId, params)).to.eventually.be.rejectedWith('No engine available')
     })
 
@@ -352,7 +353,8 @@ describe('OrderStateMachine', () => {
       payInvoiceStub = sinon.stub()
       createRefundInvoiceStub = sinon.stub().returns(invoice)
       placeOrderStreamStub = {
-        on: sinon.stub()
+        on: sinon.stub(),
+        removeListener: sinon.stub()
       }
       placeOrderStub = sinon.stub().returns(placeOrderStreamStub)
       feePaymentRequest = 'fee'
@@ -442,6 +444,20 @@ describe('OrderStateMachine', () => {
       expect(osm.reject.args[0][0]).to.have.property('message', 'fake error')
     })
 
+    it('rejects when the relayer stream closes early', async () => {
+      osm.reject = sinon.stub()
+      placeOrderStreamStub.on.withArgs('end').callsArgAsync(1)
+
+      await osm.place()
+
+      await delay(10)
+
+      expect(osm.reject).to.have.been.calledOnce()
+      expect(osm.reject.args[0][0]).to.be.instanceOf(Error)
+      expect(osm.reject.args[0][0]).to.have.property('message')
+      expect(osm.reject.args[0][0].message).to.contain('ended early')
+    })
+
     it('cancels the order when the order is in a cancelled state', async () => {
       osm.tryTo = sinon.stub()
       placeOrderStreamStub.on.withArgs('data').callsArgWithAsync(1, { orderStatus: 'CANCELLED' })
@@ -476,6 +492,48 @@ describe('OrderStateMachine', () => {
 
       expect(osm.tryTo).to.have.been.calledOnce()
       expect(osm.tryTo).to.have.been.calledWith('execute')
+    })
+
+    it('tears down listeners on error', async () => {
+      osm.reject = sinon.stub()
+      placeOrderStreamStub.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
+
+      await osm.place()
+
+      await delay(10)
+
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledThrice()
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('error')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('end')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('data')
+    })
+
+    it('tears down listeners on early close', async () => {
+      osm.reject = sinon.stub()
+      placeOrderStreamStub.on.withArgs('end').callsArgAsync(1)
+
+      await osm.place()
+
+      await delay(10)
+
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledThrice()
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('error')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('end')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('data')
+    })
+
+    it('tears down listeners on complete', async () => {
+      osm.reject = sinon.stub()
+      placeOrderStreamStub.on.withArgs('data').callsArgWithAsync(1, {})
+
+      await osm.place()
+
+      await delay(10)
+
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledThrice()
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('error')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('end')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('data')
     })
   })
 
@@ -756,9 +814,10 @@ describe('OrderStateMachine', () => {
       fakeValueObject = {
         my: 'object'
       }
+      Order.prototype.baseSymbol = 'BTC'
+      Order.prototype.counterSymbol = 'LTC'
       Order.prototype.key = fakeKey
       Order.prototype.valueObject = fakeValueObject
-      Order.prototype.inboundSymbol = 'BTC'
       setCreatedParams = sinon.stub()
       Order.prototype.setCreatedParams = setCreatedParams
       createOrderResponse = {
