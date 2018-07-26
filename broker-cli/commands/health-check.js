@@ -3,11 +3,11 @@ const { ENUMS, validations } = require('../utils')
 const { STATUS_CODES } = ENUMS
 
 /**
- * kcli healthcheck
+ * sparkswap healthcheck
  *
  * Tests the broker and engine connection for the cli
  *
- * ex: `kcli healthcheck`
+ * ex: `sparkswap healthcheck`
  *
  * @param {Object} args
  * @param {Object} opts

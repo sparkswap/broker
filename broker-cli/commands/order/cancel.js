@@ -1,9 +1,9 @@
 const BrokerDaemonClient = require('../../broker-daemon-client')
 
 /**
- * kcli order cancel
+ * sparkswap order cancel
  *
- * ex: `kcli order cancel Aar_w9XuTtUqeqeaac5liIMR-Lqf1dJfKZikTkhJ'
+ * ex: `sparkswap order cancel Aar_w9XuTtUqeqeaac5liIMR-Lqf1dJfKZikTkhJ'
  *
  * @param {Object} args
  * @param {String} args.blockOrderId

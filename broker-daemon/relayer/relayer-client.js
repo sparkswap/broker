@@ -29,9 +29,9 @@ function insecureIdentity (logger = console) {
 }
 
 /**
- * Interface for daemon to interact with a Kinesis Relayer
+ * Interface for daemon to interact with a SparkSwap Relayer
  *
- * @author kinesis
+ * @author SparkSwap
  */
 class RelayerClient {
   /**

@@ -1,9 +1,9 @@
 const path = require('path')
 const { sinon, rewire, expect } = require('test/test-helper')
 
-const kbd = rewire(path.resolve(__dirname, 'kbd.js'))
+const sparkswapd = rewire(path.resolve(__dirname, 'sparkswapd.js'))
 
-describe('kbd', () => {
+describe('sparkswapd', () => {
   let BrokerDaemon
   let argv
 
@@ -11,11 +11,11 @@ describe('kbd', () => {
     BrokerDaemon = sinon.stub()
     BrokerDaemon.prototype.initialize = sinon.stub()
 
-    kbd.__set__('BrokerDaemon', BrokerDaemon)
+    sparkswapd.__set__('BrokerDaemon', BrokerDaemon)
 
     argv = [
       'node',
-      './broker-daemon/bin/kbd'
+      './broker-daemon/bin/sparkswapd'
     ]
   })
 
@@ -25,14 +25,14 @@ describe('kbd', () => {
    */
 
   it('starts the BrokerDaemon', () => {
-    kbd(argv)
+    sparkswapd(argv)
 
     expect(BrokerDaemon).to.have.been.calledOnce()
     expect(BrokerDaemon).to.have.been.calledWithNew()
   })
 
   it('initializes the BrokerDaemon', () => {
-    kbd(argv)
+    sparkswapd(argv)
 
     expect(BrokerDaemon.prototype.initialize).to.have.been.calledOnce()
   })
@@ -48,7 +48,7 @@ describe('kbd', () => {
     argv.push('--id-pubkey-path')
     argv.push(idKeyPath.pubKeyPath)
 
-    kbd(argv)
+    sparkswapd(argv)
 
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match(idKeyPath))
   })
@@ -58,7 +58,7 @@ describe('kbd', () => {
     argv.push('--rpc-address')
     argv.push(rpcAddress)
 
-    kbd(argv)
+    sparkswapd(argv)
 
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, rpcAddress)
   })
@@ -70,7 +70,7 @@ describe('kbd', () => {
     argv.push('--interchain-router-address')
     argv.push(interchainRouterAddress)
 
-    kbd(argv)
+    sparkswapd(argv)
 
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, interchainRouterAddress)
   })
@@ -82,7 +82,7 @@ describe('kbd', () => {
     argv.push('--data-dir')
     argv.push(dataDir)
 
-    kbd(argv)
+    sparkswapd(argv)
 
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match.any, dataDir)
   })
@@ -94,7 +94,7 @@ describe('kbd', () => {
     argv.push('--relayer-host')
     argv.push(relayerHost)
 
-    kbd(argv)
+    sparkswapd(argv)
 
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match({ relayerRpcHost: relayerHost }))
   })
@@ -106,7 +106,7 @@ describe('kbd', () => {
     argv.push('--relayer-cert-path')
     argv.push(relayerCertPath)
 
-    kbd(argv)
+    sparkswapd(argv)
 
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match({ relayerCertPath }))
   })
@@ -116,13 +116,13 @@ describe('kbd', () => {
   it('provides a flag for relayer auth', () => {
     argv.push('--disable-relayer-auth')
 
-    kbd(argv)
+    sparkswapd(argv)
 
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match({ disableRelayerAuth: true }))
   })
 
   it('disables relayer auth unless the flag is provided', () => {
-    kbd(argv)
+    sparkswapd(argv)
 
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match({ disableRelayerAuth: undefined }))
   })
@@ -134,7 +134,7 @@ describe('kbd', () => {
     argv.push('--markets')
     argv.push(markets)
 
-    kbd(argv)
+    sparkswapd(argv)
 
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match.any, sinon.match.any, markets.split(','))
   })
@@ -146,7 +146,7 @@ describe('kbd', () => {
     argv.push('--ltc-engine-type')
     argv.push(ltcEngineType)
 
-    kbd(argv)
+    sparkswapd(argv)
 
     const engines = BrokerDaemon.args[0][6]
     expect(engines.LTC).to.have.property('type', ltcEngineType)
@@ -162,7 +162,7 @@ describe('kbd', () => {
     argv.push('--ltc-lnd-rpc')
     argv.push(ltcLndRpc)
 
-    kbd(argv)
+    sparkswapd(argv)
 
     const engines = BrokerDaemon.args[0][6]
     expect(engines.LTC).to.have.property('lndRpc', ltcLndRpc)
@@ -178,7 +178,7 @@ describe('kbd', () => {
     argv.push('--ltc-lnd-tls')
     argv.push(ltcLndTls)
 
-    kbd(argv)
+    sparkswapd(argv)
 
     const engines = BrokerDaemon.args[0][6]
     expect(engines.LTC).to.have.property('lndTls', ltcLndTls)
@@ -194,7 +194,7 @@ describe('kbd', () => {
     argv.push('--ltc-lnd-macaroon')
     argv.push(ltcLndMacaroon)
 
-    kbd(argv)
+    sparkswapd(argv)
 
     const engines = BrokerDaemon.args[0][6]
     expect(engines.LTC).to.have.property('lndMacaroon', ltcLndMacaroon)

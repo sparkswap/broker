@@ -1,7 +1,7 @@
 /**
  * Grabs the total balance and total channel balance from a specified engine
  *
- * @param {Array<symbol, engine>} Kinesis Engine
+ * @param {Array<symbol, engine>} SparkSwap Payment Channel Network Engine
  * @return {Array} res
  * @return {String} res.symbol
  * @return {Object} res.engine

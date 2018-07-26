@@ -4,10 +4,10 @@ const { ENUMS, validations } = require('../utils')
 const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
 
 /**
- * kcli buy
+ * sparkswap buy
  *
- * ex: `kcli buy 10 100 --market 'BTC/LTC'
- * ex: `kcli buy 10 100 --market 'BTC/LTC' --timeinforce GTC --rpc-address localhost:10009`
+ * ex: `sparkswap buy 10 100 --market 'BTC/LTC'
+ * ex: `sparkswap buy 10 100 --market 'BTC/LTC' --timeinforce GTC --rpc-address localhost:10009`
  *
  * @param {Object} args
  * @param {String} args.amount

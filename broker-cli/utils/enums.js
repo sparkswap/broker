@@ -2,7 +2,7 @@
  * Enums for the Broker-CLI
  *
  * @module broker-cli/utils/enums
- * @author kinesis
+ * @author SparkSwap
  */
 
 /**

@@ -3,26 +3,26 @@
  *
  * The Broker (or Broker Daemon) is an open source piece of software that allows anyone to
  * operate a node that keeps control of the private keys to their cryptocurrency (like Bitcoin and Litecoin)
- * and participate in the [Kinesis Network](http://kinesis.network) to trade those currencies.
+ * and use [SparkSwap](http://sparkswap.com) to trade those currencies.
  *
  * The Broker runs as a daemon on a machine you control, and you direct it to take action through the RPC Server.
- * The Broker is responsible for translating typical trading behavior (e.g. market buys) into actions on the Kinesis Network (e.g. a BTC/LTC swap on the Lightning Network).
+ * The Broker is responsible for translating typical trading behavior (e.g. market buys) into actions on the SparkSwap Relayer (e.g. a BTC/LTC swap on the Lightning Network).
  *
  * The Broker exposes a [gRPC service](http://grpc.io) which has support for [client libraries in many languages](https://grpc.io/about/#osp).
  *
- * The easiest way to interact with the Broker is through the [Broker CLI](https://github.com/kinesis-exchange/broker-cli).
+ * The easiest way to interact with the Broker is through the [Broker CLI](https://github.com/sparkswap/broker-cli).
  * 
  * For more information on the Broker, see:
  * 
- *  - [Installing the BrokerDaemon](https://github.com/kinesis-exchange/broker)
- *  - [Broker CLI](https://github.com/kinesis-exchange/broker-cli)
- *  - [BrokerDaemon GitHub repository](https://github.com/kinesis-exchange/broker)
+ *  - [Installing the BrokerDaemon](https://github.com/sparkswap/broker)
+ *  - [Broker CLI](https://github.com/sparkswap/broker-cli)
+ *  - [BrokerDaemon GitHub repository](https://github.com/sparkswap/broker)
  *
- * For more information on the Kinesis Network as a whole, see:
+ * For more information on SparkSwap as a whole, see:
  * 
- *  - [Kinesis Network Homepage](https://kinesis.network)
- *  - [Kinesis Network Documentation](https://kinesis.network/docs)
- *  - [Kinesis Network Chat](https://kinesis.network/chat)
+ *  - [SparkSwap Homepage](https://sparkswap.com)
+ *  - [SparkSwap Documentation](https://sparkswap.com/docs)
+ *  - [SparkSwap Chat](https://sparkswap.com/chat)
  *
  * > Setting up to use the examples:
  *
@@ -163,12 +163,12 @@ message CreateBlockOrderResponse {
 }
 
 /**
- * An order on the underlying Kinesis Network.
+ * An order on the SparkSwap Relayer.
  */
 message Order {
 
   /**
-   * Status of an order on the underlying Kinesis Network.
+   * Status of an order on the SparkSwap Relayer.
    */
   enum OrderStatus {
     // The order has been created on the Relayer.
@@ -187,21 +187,21 @@ message Order {
 
   // Unique ID assigned by the Relayer for this order.
   string order_id = 1;
-  // Status of the order on the Kinesis Network.
+  // Status of the order on the Relayer.
   OrderStatus order_status = 2;
   // Amount of the order expressed in a decimal string of common units for a currency (e.g. bitcoins for BTC).
   string amount = 3;
-  // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the underlying Kinesis Network have prices.
+  // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the SparkSwap Relayer have prices.
   string price = 4;
 }
 
 /**
- * A fill of an order on the underlying Kinesis Network.
+ * A fill of an order on the SparkSwap Relayer.
  */
 message Fill {
 
   /**
-   * Status of the fill on the underlying Kinesis Network.
+   * Status of the fill on the SparkSwap Relayer.
    */
   enum FillStatus {
     // The fill has been created on the Relayer.
@@ -219,17 +219,17 @@ message Fill {
   string order_id = 1;
   // The Relayer-assignded unique ID for this fill.
   string fill_id = 2;
-  // Status of the fill on the Kinesis Network.
+  // Status of the fill on the Relayer.
   FillStatus fill_status = 3;
   // Amount of the order to fill, expressed in a decimal string of common units for a currency (e.g. bitcoins for BTC). This can be any amount greater than zero and less than or equal to the amount in the order.
   string amount = 4;
-  // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the underlying Kinesis Network have prices.
+  // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the SparkSwap Relayer have prices.
   string price = 5;
 }
 
 /**
  * An order placed by a user on a Broker.
- * These are called Block Orders because they are for (relatively) large blocks that get broken up into individual Orders and Fills on the Kinesis Network.
+ * These are called Block Orders because they are for (relatively) large blocks that get broken up into individual Orders and Fills on the Relayer.
  */
 message BlockOrder {
 
@@ -300,9 +300,9 @@ message GetBlockOrderResponse {
 
   // Amount of the block order that has been filled, in common units for a currency (e.g. bitcoins for BTC) represented as a decimal string (e.g. `'0.10'`)
   string fill_amount = 20;
-  // All orders on the underlying Kinesis Network that were placed by the Broker in support of this block order.
+  // All orders on the SparkSwap Relayer that were placed by the Broker in support of this block order.
   repeated Order open_orders = 21;
-  // All fills of orders on the underlying Kinesis Network that were undertaken by the Broker in support of this block order.
+  // All fills of orders on the SparkSwap Relayer that were undertaken by the Broker in support of this block order.
   repeated Fill fills = 22;
 }
 
@@ -335,9 +335,9 @@ message GetBlockOrdersRequest {
  * The OrderService manages all trading activity on the Broker.
  * It is the primary way that users interact with the Broker on a day-to-day basis.
  * 
- * The OrderService deals primarily with block orders, which are instructions given to the Broker by the end-user and are executed by the Broker on the Kinesis Network.
- * Brokers "work" block orders by breaking them into individual actions on the Kinesis Network, namely placing limit orders and filling other participants' limit orders.
- * This separation between block orders worked by the Broker and the underlying orders on the Kinesis Network allows users to get access to the features of orders they are accustomed to (e.g. market orders) without placing additional trust in the Relayer or exposing themselves to front-running.
+ * The OrderService deals primarily with block orders, which are instructions given to the Broker by the end-user and are executed by the Broker on the SparkSwap Network.
+ * Brokers "work" block orders by breaking them into individual actions on the SparkSwap Relayer, namely placing limit orders and filling other participants' limit orders.
+ * This separation between block orders worked by the Broker and the underlying orders on the SparkSwap Relayer allows users to get access to the features of orders they are accustomed to (e.g. market orders) without placing additional trust in the Relayer or exposing themselves to front-running.
  *
  * ```javascript
  * const address = 'localhost:27492'
@@ -447,7 +447,7 @@ service OrderService {
   rpc CancelBlockOrder (CancelBlockOrderRequest) returns (google.protobuf.Empty);
   /**
    * GetBlockOrders returns information on all of the block orders placed in a single market, like `BTC/LTC`.
-   * It does not include complete information, such as the underlying orders and fills on the Kinesis Network, or the amount of the order that has been filled. For that, use [GetBlockOrder](#getblockorder).
+   * It does not include complete information, such as the underlying orders and fills on the SparkSwap Relayer, or the amount of the order that has been filled. For that, use [GetBlockOrder](#getblockorder).
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
@@ -520,7 +520,7 @@ message MarketEvent {
   string order_id = 1;
   // Amount of the order expressed in a decimal string of common units for a currency (e.g. bitcoins for BTC).
   string amount = 2;
-  // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the underlying Kinesis Network have prices.
+  // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the SparkSwap Relayer have prices.
   string price = 3;
   // Side that the order is taking
   Side side = 4;

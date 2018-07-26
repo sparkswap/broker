@@ -74,7 +74,7 @@ class BlockOrderWorker extends EventEmitter {
     const orderbook = this.orderbooks.get(marketName)
 
     if (!orderbook) {
-      throw new Error(`${marketName} is not being tracked as a market. Configure kbd to track ${marketName} using the MARKETS environment variable.`)
+      throw new Error(`${marketName} is not being tracked as a market. Configure sparkswapd to track ${marketName} using the MARKETS environment variable.`)
     }
 
     if (!this.engines.has(orderbook.baseSymbol)) {

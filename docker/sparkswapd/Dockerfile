@@ -1,6 +1,6 @@
 FROM node:8 as builder
 
-LABEL maintainer="Danny Paz <kinesis.exchange>"
+LABEL maintainer="SparkSwap <dev@sparkswap.com>"
 
 # Add ssh credentials on build to allow us to access private repos
 # inside of the docker container
@@ -40,7 +40,7 @@ RUN npm install --quiet
 ARG LND_ENGINE_COMMIT_SHA
 RUN : "${LND_ENGINE_COMMIT_SHA:?LND_ENGINE_COMMIT_SHA Build argument needs to be set.}"
 
-RUN git clone git@github.com:kinesis-exchange/lnd-engine.git ./node_modules/lnd-engine \
+RUN git clone git@github.com:sparkswap/lnd-engine.git ./node_modules/lnd-engine \
 && (cd ./node_modules/lnd-engine && git checkout ${LND_ENGINE_COMMIT_SHA}) \
 && (cd ./node_modules/lnd-engine && npm i --production) \
 # Remove git file or npm will complain when using any commands
@@ -52,7 +52,7 @@ RUN git clone git@github.com:kinesis-exchange/lnd-engine.git ./node_modules/lnd-
 ARG RELAYER_PROTO_COMMIT_SHA
 RUN : "${RELAYER_PROTO_COMMIT_SHA:?RELAYER_PROTO_COMMIT_SHA Build argument needs to be set.}"
 
-RUN git clone git@github.com:kinesis-exchange/relayer-proto.git ./proto \
+RUN git clone git@github.com:sparkswap/relayer-proto.git ./proto \
 &&  (cd ./proto && git checkout ${RELAYER_PROTO_COMMIT_SHA}) \
 &&  rm -rf ./proto/.git
 

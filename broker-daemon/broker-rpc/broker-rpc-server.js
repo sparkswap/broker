@@ -16,7 +16,7 @@ const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
 /**
  * @class User-facing gRPC server for controling the BrokerDaemon
  *
- * @author kinesis
+ * @author SparkSwap
  */
 class BrokerRPCServer {
   /**

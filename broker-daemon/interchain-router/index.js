@@ -12,7 +12,7 @@ const PROTO_PATH = path.resolve(__dirname, 'rpc.proto')
 /**
  * Interchain Router for retriving preimages from other payment channel networks
  *
- * @author kinesis
+ * @author SparkSwap
  */
 class InterchainRouter {
   /**

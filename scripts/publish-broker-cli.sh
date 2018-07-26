@@ -3,7 +3,7 @@
 set -e
 
 echo ""
-echo "Building kcli for distribution."
+echo "Building sparkswap(1) for distribution."
 echo ""
 
 
@@ -17,8 +17,8 @@ echo "Creating working directory 'broker-cli-temp' in $(pwd)"
 mkdir broker-cli-temp
 cd broker-cli-temp
 
-echo "Cloning master branch of existing repo at git@github.com:kinesis-exchange/broker.git"
-git clone -b master git@github.com:kinesis-exchange/broker.git .
+echo "Cloning master branch of existing repo at git@github.com:sparkswap/broker.git"
+git clone -b master git@github.com:sparkswap/broker.git .
 
 echo "Latest commit: $(git log --oneline -n 1)"
 
@@ -28,7 +28,7 @@ git filter-branch --prune-empty --subdirectory-filter broker-cli master
 echo "Updating remote origin"
 
 git remote rm origin
-git remote add origin git@github.com:kinesis-exchange/broker-cli.git
+git remote add origin git@github.com:sparkswap/broker-cli.git
 
 echo "Pushing to GitHub"
 git push origin master

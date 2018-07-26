@@ -34,9 +34,9 @@ function createUI (market, orders) {
 }
 
 /**
- * kcli order summary
+ * sparkswap order summary
  *
- * ex: `kcli order summary --market 'BTC/LTC'
+ * ex: `sparkswap order summary --market 'BTC/LTC'
  *
  * @param {Object} args
  * @param {Object} opts
