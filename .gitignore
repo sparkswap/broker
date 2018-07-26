@@ -64,5 +64,4 @@ typings/
 .DS_Store
 
 # Proto build files
-proto/relayer/
-proto/relayer.proto
+proto/*

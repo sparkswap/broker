@@ -17,7 +17,7 @@
     "pretest": "npm run format; exit 0",
     "test": "NODE_PATH=. mocha 'broker-cli/**/*.spec.js' 'broker-daemon/**/*.spec.js'",
     "coverage": "nyc npm test",
-    "ci-test": "bash ./scripts/ci-test.sh",
+    "ci-test": "npm run format && npm test",
     "start-sparkswapd": "pm2-docker pm2.json --watch",
     "fund": "bash ./scripts/fund-simnet-wallet.local.sh",
     "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp ./broker-daemon/proto/broker.proto ./broker-cli/proto/broker.proto"

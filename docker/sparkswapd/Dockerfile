@@ -21,11 +21,22 @@ RUN mkdir "/secure"
 RUN openssl ecparam -name prime256v1 -genkey -noout -out ${ID_PRIV_KEY}
 RUN openssl ec -in ${ID_PRIV_KEY} -pubout -out ${ID_PUB_KEY}
 
+########
+# Relayer proto file
+
 #############################################
 # Broker installation steps
 #############################################
 
 COPY . /home/app
+
+ARG RELAYER_PROTO_BRANCH
+ARG RELAYER_PROTO_COMMIT_SHA
+
+RUN mkdir -p /home/app/proto
+RUN git clone --branch ${RELAYER_PROTO_BRANCH} https://github.com/sparkswap/relayer-proto.git /home/app/proto \
+&&  (cd /home/app/proto && git checkout ${RELAYER_PROTO_COMMIT_SHA})
+
 
 # Start a new, final image to reduce size.
 FROM node:8 as final
@@ -38,9 +49,13 @@ COPY --from=builder /secure /secure
 # Copy the application
 COPY --from=builder /home/app /home/app
 
+# Copy relayer-proto files
+COPY --from=builder /home/app/proto /home/app/proto
+
 WORKDIR /home/app
 
-RUN npm run build
+RUN npm i --silent
+RUN npm run broker-proto
 
 # We declare node_modules volume here so that it can copy the contents of the
 # `node_modules` folder from the builder images npm install. Since we mount
