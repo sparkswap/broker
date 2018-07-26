@@ -38,7 +38,7 @@ services:
     networks:
       - broker
     working_dir: '/home/app'
-    entrypoint: bash -c 'npm run start-kbd'
+    entrypoint: bash -c 'npm run start-sparkswapd'
 
   lnd_btc:
     image: sparkswap_lnd_btc:latest
