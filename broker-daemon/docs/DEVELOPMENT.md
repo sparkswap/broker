@@ -17,7 +17,7 @@ Check out the [documentation for the CLI](https://sparkswap.com/docs/broker/cli)
 - `npm test` will run all tests on your local machine
 - `npm run coverage` will run tests w/ code coverage
 
-#### Funding a wallet
 
-To fund a wallet you need to get a deposit address and send BTC to that address. To get the deposit address, run:
-- `./broker-cli/bin/sparkswap wallet new-deposit-address BTC` which will output the deposit address
+#### Using Standard
+
+If you will be developing against sparkswapd (or any SparkSwap repository), it is required to run the code through [Standard](https://standardjs.com/). StandardJS plugins can be downloaded for your favorite editor. The SparkSwap Broker and Broker CLI codebase follows StandardJS formatting.

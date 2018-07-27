@@ -7,7 +7,6 @@ Install the Broker Daemon
 2. Install the current LTS node and npm version - `nvm install --lts --latest-npm`
 3. Install [docker](https://docs.docker.com/install/)
 4. Create a directory for `sparkswap` and navigate to it - `mkdir -p ./sparkswap && cd sparkswap`
-5. If you will be developing against sparkswapd (or any SparkSwap repository), it is required to run the code through [Standard](https://standardjs.com/). StandardJS plugins can be downloaded for your favorite editor. The SparkSwap Broker and Broker CLI codebase follows StandardJS formatting.
 
 ## Install an engine
 
@@ -67,3 +66,8 @@ Check on the status of the broker and related services with:
 ```
 docker-compose logs -f
 ```
+
+#### Funding a wallet
+
+To fund a wallet you need to get a deposit address and send BTC to that address. To get the deposit address, run:
+- `./broker-cli/bin/sparkswap wallet new-deposit-address BTC` which will output the deposit address

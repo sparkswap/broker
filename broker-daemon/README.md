@@ -1,7 +1,3 @@
-<img src="https://sparkswap.com/img/logo.svg" alt="sparkswap - sparkswap.com" width="400">
-
-[![CircleCI](https://circleci.com/gh/sparkswap/broker.svg?style=svg&circle-token=11fe800209ce8a6839b3c071f8f61ee8a345b026)](https://circleci.com/gh/sparkswap/broker)
-
 sparkswap Broker basic information
 ===========================
 
