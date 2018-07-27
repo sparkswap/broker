@@ -109,6 +109,8 @@ services:
     logging:
       options:
         max-size: 50m
+    networks:
+      - broker
     entrypoint: ["./start-btcd.sh"]
 
   lnd_ltc:
@@ -174,6 +176,8 @@ services:
     logging:
       options:
         max-size: 50m
+    networks:
+      - broker
     entrypoint: ["./start-ltcd.sh"]
 
 
