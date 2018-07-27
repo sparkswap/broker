@@ -56,19 +56,18 @@ async function balance (args, opts, logger) {
 
     const balancesTable = new Table({
       head: ['', 'Committed', 'Uncommitted'],
-      colWidths: [10, 45, 45],
+      colWidths: [10, 22, 22],
       style: { head: ['gray'] }
     })
 
-    balances.forEach(({ symbol, totalBalance, totalChannelBalance }) => {
+    balances.forEach(({ symbol, uncommittedBalance, totalChannelBalance }) => {
       const divideBy = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
-      const uncommittedBalance = Big(totalBalance).minus(totalChannelBalance)
 
       balancesTable.push(
         [
           symbol,
           Big(totalChannelBalance).div(divideBy).toFixed(16).green,
-          uncommittedBalance.div(divideBy).toFixed(16)
+          Big(uncommittedBalance).div(divideBy).toFixed(16)
         ]
       )
     })
@@ -127,18 +126,16 @@ async function commitBalance (args, opts, logger) {
     const client = new BrokerDaemonClient(rpcAddress)
 
     const { balances } = await client.walletService.getBalances({})
-    const { totalBalance, totalChannelBalance } = balances.find(({ symbol: s }) => s === symbol)
 
-    // need to grab uncommitted balance here
-    const totalUncommittedBalance = Big(totalBalance).minus(totalChannelBalance)
+    const { uncommittedBalance } = balances.find(({ symbol: s }) => s === symbol)
 
+    const totalUncommittedBalance = Big(uncommittedBalance)
     if (totalUncommittedBalance.eq(0)) {
       return logger.info('Your current uncommitted balance is 0, please add funds to your daemon')
     }
-
     // We try to take the `Math.min` total here between 2 Big numbers due to a
     // commit limit specified as MAX_CHANNEL_BALANCE
-    let maxSupportedBalance = totalUncommittedBalance
+    let maxSupportedBalance = uncommittedBalance
 
     if (totalUncommittedBalance.gt(ENUMS.MAX_CHANNEL_BALANCE)) {
       maxSupportedBalance = ENUMS.MAX_CHANNEL_BALANCE
@@ -147,7 +144,7 @@ async function commitBalance (args, opts, logger) {
     const divideBy = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
 
     logger.info(`For your knowledge, the Maximum supported balance at this time is: ${Big(ENUMS.MAX_CHANNEL_BALANCE).div(divideBy)} ${symbol}`)
-    logger.info(`Your current uncommitted wallet balance is: ${Big(totalUncommittedBalance).div(divideBy)} ${symbol}`)
+    logger.info(`Your current uncommitted wallet balance is: ${Big(uncommittedBalance).div(divideBy)} ${symbol}`)
 
     const answer = await askQuestion(`Are you OK committing ${Big(maxSupportedBalance).div(divideBy)} ${symbol} to SparkSwap? (Y/N)`)
 
