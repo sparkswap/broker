@@ -38,6 +38,11 @@
  * }
  * const brokerProto = grpc.load('/path/to/broker.proto', 'proto', PROTO_OPTIONS)
  * ```
+ *
+ * ```shell
+ * > npm install -g https://github.com/sparkswap/broker-cli
+ * > sparkswap -h
+ * ```
  */
 syntax = "proto3";
 
@@ -102,6 +107,10 @@ service AdminService {
    * })
    * ```
    *
+   * ```shell
+   * > sparkswap healthcheck
+   * ```
+   *
    * > The above command will print:
    *
    * ```json
@@ -117,6 +126,17 @@ service AdminService {
    *     },
    *   ],
    *   "relayerStatus": "OK"
+   * }
+   * ```
+   *
+   * ```shell
+   * HealthCheck: {
+   *   "engines": {
+   *     "BTC": "OK",
+   *     "LTC": "OK"
+   *   },
+   *   "relayerStatus": "OK",
+   *   "daemonStatus": "OK"
    * }
    * ```
    */
@@ -370,10 +390,18 @@ service OrderService {
    * )
    * ```
    *
+   * ```shell
+   * > sparkswap buy 0.0001 --market BTC/LTC
+   * ```
+   *
    * > The above command will create a market block order on the Broker and will print:
    *
    * ```json
-   * { "blockOrderId": "" }
+   * { "blockOrderId": "vQPeeYWTlpTPreJxE3My_mpTBiYwYPnTkd6aU2XX" }
+   * ```
+   *
+   * ```shell
+   * { blockOrderId: 'vQPeeYWTlpTPreJxE3My_mpTBiYwYPnTkd6aU2XX' }
    * ```
    *
    * > Placing a limit order:
@@ -396,11 +424,20 @@ service OrderService {
    * )
    * ```
    *
+   * ```shell
+   * > sparkswap buy 0.0001 1.1 --market BTC/LTC
+   * ```
+   *
    * > The above command will create a limit block order on the Broker and will print:
    *
    * ```json
-   * { "blockOrderId": "" }
+   * { "blockOrderId": "o2tSlSibkCsw6zi4-mpVuMogeLaz_GZuGqJlhWVs" }
    * ```
+   *
+   * ```shell
+   * { blockOrderId: 'o2tSlSibkCsw6zi4-mpVuMogeLaz_GZuGqJlhWVs' }
+   * ```
+   * 
    */
   rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse);
   /**
@@ -408,10 +445,14 @@ service OrderService {
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
-   * const blockOrder = orderService.getBlockOrder({ blockOrderId: '' }, { deadline }, (err, blockOrder) => {
+   * const blockOrder = orderService.getBlockOrder({ blockOrderId: 'vQPeeYWTlpTPreJxE3My_mpTBiYwYPnTkd6aU2XX' }, { deadline }, (err, blockOrder) => {
    *   if (err) return console.error(err)
    *   console.log(blockOrder)
    * })
+   * ```
+   *
+   * ```shell
+   * > sparkswap order status vQPeeYWTlpTPreJxE3My_mpTBiYwYPnTkd6aU2XX
    * ```
    *
    * > The above command will retrieve the block order on the Broker and will print:
@@ -428,6 +469,20 @@ service OrderService {
    *   "fills": []
    * }
    * ```
+   *
+   * ```shell
+   * { price_restriction: 'isMarketOrder',
+   *   status: 'ACTIVE',
+   *   market: 'BTC/LTC',
+   *   side: 'BID',
+   *   amount: '0.0001000000000000',
+   *   isMarketOrder: true,
+   *   limitPrice: '',
+   *   timeInForce: 'GTC',
+   *   fillAmount: '',
+   *   openOrders: [],
+   *   fills: [] }
+   * ```
    */
   rpc GetBlockOrder (GetBlockOrderRequest) returns (GetBlockOrderResponse);
   /**
@@ -437,9 +492,13 @@ service OrderService {
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
-   * orderService.getBlockOrder({ blockOrderId: '' }, { deadline }, (err) => {
+   * orderService.getBlockOrder({ blockOrderId: 'vQPeeYWTlpTPreJxE3My_mpTBiYwYPnTkd6aU2XX' }, { deadline }, (err) => {
    *   if (err) return console.error(err)
    * })
+   * ```
+   *
+   * ```shell
+   * > sparkswap order cancel vQPeeYWTlpTPreJxE3My_mpTBiYwYPnTkd6aU2XX
    * ```
    *
    * > The above command will cancel the block order, but has no output.
@@ -455,6 +514,10 @@ service OrderService {
    *   if (err) return console.error(err)
    *   console.log(blockOrders)
    * })
+   * ```
+   *
+   * ```shell
+   * > sparkswap order summary --market BTC/LTC
    * ```
    *
    * > The above command will retrieve the block orders on the Broker and will print:
@@ -478,6 +541,16 @@ service OrderService {
    *     "timeInForce": "GTC"
    *   }
    * ]
+   * ```
+   *
+   * ```shell
+   * ┌─────────────────────────────────────────────┬───────┬──────────────────┬──────────────────┬──────┬──────────┐
+   * │ Order ID                                    │ Side  │ Amount           │ Limit Price      │ Time │ Status   │
+   * ├─────────────────────────────────────────────┼───────┼──────────────────┼──────────────────┼──────┼──────────┤
+   * │ o2tSlSibkCsw6zi4-mpVuMogeLaz_GZuGqJlhWVs    │ BID   │ 0.0001000000000… │ 1.1000000000000… │ GTC  │ ACTIVE   │
+   * ├─────────────────────────────────────────────┼───────┼──────────────────┼──────────────────┼──────┼──────────┤
+   * │ vQPeeYWTlpTPreJxE3My_mpTBiYwYPnTkd6aU2XX    │ BID   │ 0.0001000000000… │ MARKET           │ GTC  │ ACTIVE   │
+   * └─────────────────────────────────────────────┴───────┴──────────────────┴──────────────────┴──────┴──────────┘
    * ```
    */
   rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse);
@@ -559,6 +632,10 @@ service OrderBookService {
    * })
    * ```
    *
+   * ```shell
+   * > sparkswap orderbook --market BTC/LTC
+   * ```
+   *
    * > After an update, the UI would show something like this:
    *
    * ```json
@@ -574,6 +651,25 @@ service OrderBookService {
    *     "amount": "0.0001"
    *   }
    * ]
+   * ```
+   *
+   * ```shell
+   * Market: BTC/LTC                                                                                                                            Ϟ SparkSwap Broker
+   *                                                                                                                                           v0.1.0-alpha-preview
+   *                                                                                                                                           http://sparkswap.com
+   * 
+   * ┌──────────────────────────────────────────────────────────────────────────────┬──────────────────────────────────────────────────────────────────────────────┐
+   * │ ASKS                                                                         │ BIDS                                                                         │
+   * ├──────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤
+   * │  Price                                Depth (BTC)                            │  Price                                Depth (BTC)                            │
+   * │                                                                              │   1.2970000000000000                   0.0001000000000000                    │
+   * │                                                                              │   1.2970000000000000                   0.0001000000000000                    │
+   * │                                                                              │   1.1930000000000000                   0.0001000000000000                    │
+   * │                                                                              │   1.1790000000000000                   0.0001300000000000                    │
+   * │                                                                              │   1.1680000000000000                   0.0002000000000000                    │
+   * │                                                                              │   1.1000000000000000                   0.0002000000000000                    │
+   * └──────────────────────────────────────────────────────────────────────────────┴──────────────────────────────────────────────────────────────────────────────┘
+   *
    * ```
    */
   rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
@@ -655,10 +751,18 @@ service WalletService {
    * console.log(address)
    * ```
    *
+   * ```shell
+   * > sparkswap wallet new-deposit-address BTC
+   * ```
+   *
    * > The above command will print:
    *
-   * ```shell
+   * ```javascript
    * > TODO
+   * ```
+   *
+   * ```shell
+   * sb1qsakedujs4exdq5dz2cpldcph6hlvf82l8mn8uk
    * ```
    */
   rpc NewDepositAddress (NewDepositAddressRequest) returns (NewDepositAddressResponse);
@@ -676,6 +780,10 @@ service WalletService {
    * })
    * ```
    *
+   * ```shell
+   * > sparkswap wallet balance
+   * ```
+   *
    * > The above command will print:
    *
    * ```json
@@ -691,6 +799,17 @@ service WalletService {
    *     "totalChannelBalance": "16700000"
    *   }
    * ]
+   * ```
+   *
+   * ```shell
+   * Wallet Balances
+   * ┌──────────┬─────────────────────────┬─────────────────────────┐
+   * │          │ Committed               │ Uncommitted             │
+   * ├──────────┼─────────────────────────┼─────────────────────────┤
+   * │ BTC      │ 0.1670000000000000      │ 9.8300000000000000      │
+   * ├──────────┼─────────────────────────┼─────────────────────────┤
+   * │ LTC      │ 0.1670000000000000      │ 9.8300000000000000      │
+   * └──────────┴─────────────────────────┴─────────────────────────┘
    * ```
    */
   rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse);
@@ -721,6 +840,10 @@ service WalletService {
    *     if (err) return console.error(err)
    *   }
    * )
+   * ```
+   *
+   * ```shell
+   * > sparkswap wallet commit-balance LTC
    * ```
    */
   rpc CommitBalance (CommitBalanceRequest) returns (google.protobuf.Empty);
