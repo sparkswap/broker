@@ -60,7 +60,7 @@ describe('get-balances', () => {
       uncommittedBalanceStub = sinon.stub().resolves(uncommittedBalance)
       totalChannelBalanceStub = sinon.stub().resolves(totalChannelBalance)
       engineStub = {
-        getTotalBalance: uncommittedBalanceStub,
+        getUncommittedBalance: uncommittedBalanceStub,
         getTotalChannelBalance: totalChannelBalanceStub
       }
       engine = [symbol, engineStub]

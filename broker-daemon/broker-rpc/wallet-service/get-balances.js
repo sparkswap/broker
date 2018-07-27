@@ -8,7 +8,7 @@
  */
 async function getEngineBalances ([symbol, engine]) {
   const [uncommittedBalance, totalChannelBalance] = await Promise.all([
-    engine.getTotalBalance(),
+    engine.getUncommittedBalance(),
     engine.getTotalChannelBalance()
   ])
 
