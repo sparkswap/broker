@@ -7,6 +7,7 @@ Install the Broker Daemon
 2. Install the current LTS node and npm version - `nvm install --lts --latest-npm`
 3. Install [docker](https://docs.docker.com/install/)
 4. Create a directory for `sparkswap` and navigate to it - `mkdir -p ./sparkswap && cd sparkswap`
+5. If you will be developing against sparkswapd (or any SparkSwap repository), it is required to run the code through [Standard](https://standardjs.com/). StandardJS plugins can be downloaded for your favorite editor. The SparkSwap Broker and Broker CLI codebase follows StandardJS formatting.
 
 ## Install an engine
 
@@ -49,8 +50,8 @@ Edit the `docker-compose.yml` file in your `broker` directory to have the approp
 
 | Network  | Host                                |
 |----------|-------------------------------------|
-| Simnet   | relayer.simnet.sparkswap.com:28492  |
-| Testnet  | relayer.testnet.sparkswap.com:28492 |
+| Simnet   | simnet-relayer.sparkswap.com:28492  |
+| Testnet  | testnet-relayer.sparkswap.com:28492 |
 
 For availability, please check [dev.sparkswap.com](http://dev.sparkswap.com)
 
@@ -66,7 +67,3 @@ Check on the status of the broker and related services with:
 ```
 docker-compose logs -f
 ```
-
-## Using the CLI
-
-Check out the [documentation for the CLI](https://sparkswap.com/docs/broker/cli) to see how to install and use it.

@@ -2,17 +2,19 @@
 
 [![CircleCI](https://circleci.com/gh/sparkswap/broker.svg?style=svg&circle-token=11fe800209ce8a6839b3c071f8f61ee8a345b026)](https://circleci.com/gh/sparkswap/broker)
 
-SparkSwap Broker CLI + Daemon
+sparkswap Broker basic information
 ===========================
 
-This repo contains source for the following products:
+The sparkswap broker is responsible for:
 
-- [`sparkswap` (CLI for SparkSwap Broker Daemon)](./broker-cli)
-    - User interface for sparkswapd
-- [`sparkswapd` (SparkSwap Broker Daemon)](./broker-daemon)
-    - Daemon that handles interactions between the user's lightning nodes and the SparkSwap Relayer
+1. Custodying user assets by managing wallets and private keys
+2. Interpreting user actions and converting them into network actions
+3. Interacting with the SparkSwap Relayer, including placing and filling orders
+4. Executing Payment Channel Network swaps to settle executed orders
 
-Documentation can be found in each directories `README.md` at [./broker-cli](./broker-cli) or [./broker-daemon](./broker-daemon) respectively.
+The broker interacts with sparkswap relayer to
+
+![Network Overview Diagram](/docs/images/NetworkOverview.png)
 
 ## Installation
 
