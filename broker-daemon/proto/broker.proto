@@ -11,15 +11,15 @@
  * The Broker exposes a [gRPC service](http://grpc.io) which has support for [client libraries in many languages](https://grpc.io/about/#osp).
  *
  * The easiest way to interact with the Broker is through the [Broker CLI](https://github.com/sparkswap/broker-cli).
- * 
+ *
  * For more information on the Broker, see:
- * 
+ *
  *  - [Installing the BrokerDaemon](https://github.com/sparkswap/broker)
  *  - [Broker CLI](https://github.com/sparkswap/broker-cli)
  *  - [BrokerDaemon GitHub repository](https://github.com/sparkswap/broker)
  *
  * For more information on SparkSwap as a whole, see:
- * 
+ *
  *  - [SparkSwap Homepage](https://sparkswap.com)
  *  - [SparkSwap Documentation](https://sparkswap.com/docs)
  *  - [SparkSwap Chat](https://sparkswap.com/chat)
@@ -334,7 +334,7 @@ message GetBlockOrdersRequest {
 /**
  * The OrderService manages all trading activity on the Broker.
  * It is the primary way that users interact with the Broker on a day-to-day basis.
- * 
+ *
  * The OrderService deals primarily with block orders, which are instructions given to the Broker by the end-user and are executed by the Broker on the SparkSwap Network.
  * Brokers "work" block orders by breaking them into individual actions on the SparkSwap Relayer, namely placing limit orders and filling other participants' limit orders.
  * This separation between block orders worked by the Broker and the underlying orders on the SparkSwap Relayer allows users to get access to the features of orders they are accustomed to (e.g. market orders) without placing additional trust in the Relayer or exposing themselves to front-running.
@@ -351,7 +351,7 @@ service OrderService {
    * The user should check on the block order's status after it is created to understand if it has been completed.
    *
    * > Placing a market order:
-   * 
+   *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
    * orderService.createBlockOrder(
@@ -377,7 +377,7 @@ service OrderService {
    * ```
    *
    * > Placing a limit order:
-   * 
+   *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
    * orderService.createBlockOrder(
@@ -516,7 +516,7 @@ message WatchMarketResponse {
  * Market events are events that change the orderbook for a given market. The are a combination of orders, fills, and cancels.
  */
 message MarketEvent {
-  // The Relayer-assigned ID of the underlying order 
+  // The Relayer-assigned ID of the underlying order
   string order_id = 1;
   // Amount of the order expressed in a decimal string of common units for a currency (e.g. bitcoins for BTC).
   string amount = 2;
@@ -531,7 +531,7 @@ message MarketEvent {
  *
  * It is the counterpoint to the [OrderService](#orderservice) in that it is read-only and deals with the wider network,
  * never touching the Block Orders that the user creates and cancels.
- * 
+ *
  * ```javascript
  * const address = 'localhost:27492'
  * const orderBookService = new brokerProto.OrderBookService(address, grpc.credentials.createInsecure())
@@ -612,9 +612,9 @@ message Balance {
   // Currency of the balance.
   string symbol = 1;
   // Total balance of the wallets managed by this node in this currency, including balance in channels. This is currently in base units (e.g. Satoshi/Litoshis)
-  int64 totalBalance = 2;
+  int64 uncommitted_balance = 2;
   // Balance in the listed currency that is currently in channels. This is currently in base units (e.g. Satoshis/Litoshis)
-  int64 totalChannelBalance = 3;
+  int64 total_channel_balance = 3;
 }
 
 /**
@@ -639,7 +639,7 @@ message CommitBalanceRequest {
  * The WalletService is for interacting with the wallets managed by the Broker on behalf of the user.
  *
  * It is used primarily during set up (e.g. making deposits) of a Broker.
- * 
+ *
  * ```javascript
  * const address = 'localhost:27492'
  * const walletService = new brokerProto.WalletService(address, grpc.credentials.createInsecure())
@@ -666,7 +666,7 @@ service WalletService {
    * GetBalances retrieves the balance in all currency in wallets managed by Payment Channel Network nodes for this Broker.
    *
    * Balances are divided into `totalBalance`, i.e. everything in the wallet, and `totalChannelBalance`, i.e. everything in channels opened by the Payment Channel Network nodes.
-   * To get the balance available to be committed, i.e. not in channels, subtract the `totalChannelBalance` from the `totalWalletBalance`. 
+   * To get the balance available to be committed, i.e. not in channels, subtract the `totalChannelBalance` from the `totalWalletBalance`.
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
@@ -704,14 +704,14 @@ service WalletService {
    * This also has the property of matching the conversion used in LND, so that when we run into things like the max channel size (in place while LND is in Beta), we can be consistent with LTC and BTC.
    *
    * > The below command has no output, but will throw an error if one is encountered.
-   * 
+   *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
    * walletService.commitBalance(
    *   {
    *     // we are committing LTC to a channel.
    *     // The Broker will request a BTC channel be opened back to itself.
-   *     symbol: 'LTC', 
+   *     symbol: 'LTC',
    *     // The amount (in Satoshis) to commit to the channel.
    *     // The Broker will request a BTC channel of size 16700000 / 60 be opened back to itself.
    *     balance: '16700000'
