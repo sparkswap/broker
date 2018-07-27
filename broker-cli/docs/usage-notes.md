@@ -8,4 +8,4 @@ These block orders are then "worked" by the broker, meaning split up into indivi
 
 This structure allows the end user to submit specific desires (e.g. market price, immediate-or-cancel) without relying on the Relayer to honor it -- instead the broker is responsible for interpreting and acting on user instructions.
 
-See [Brokers Perform Self-matching]((https://sparkswap.com/docs/network-concepts#brokers-perform-self-matching)) for more information.
+See [Brokers Perform Self-matching](https://sparkswap.com/docs/network-concepts#brokers-perform-self-matching) for more information.
