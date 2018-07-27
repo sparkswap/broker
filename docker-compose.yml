@@ -85,6 +85,10 @@ services:
       - 'lnd_btc:/data'
     networks:
       - broker
+    # This option is only available for docker 2
+    logging:
+      options:
+        max-size: 50m
     entrypoint: ["./start-lnd.sh"]
 
   # This BTCD section is not used due to simnet only allowing one node to be active
@@ -110,6 +114,10 @@ services:
       - RPC_LISTEN=0.0.0.0
       - "MINING_ADDRESS=$MINING_ADDRESS"
       - MAX_WEB_SOCKETS=100
+    # This option is only available for docker 2
+    logging:
+      options:
+        max-size: 50m
     entrypoint: ["./start-btcd.sh"]
 
   lnd_ltc:
@@ -146,6 +154,10 @@ services:
       - 'lnd_ltc:/data'
     networks:
       - broker
+    # This option is only available for docker 2
+    logging:
+      options:
+        max-size: 50m
     entrypoint: ["./start-lnd.sh"]
 
   # This LTCD section is not used due to simnet only allowing one node to be active
@@ -172,6 +184,10 @@ services:
       - MAX_WEB_SOCKETS=100
       # This is set dynamically in the startup scripts
       - "MINING_ADDRESS=$MINING_ADDRESS"
+    # This option is only available for docker 2
+    logging:
+      options:
+        max-size: 50m
     entrypoint: ["./start-ltcd.sh"]
 
 

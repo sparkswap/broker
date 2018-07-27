@@ -3,6 +3,7 @@ version: '2.4'
 services:
   kbd:
     image: sparkswap_sparkswapd:latest
+    working_dir: '/home/app'
     depends_on:
       - lnd_btc
       - lnd_ltc
@@ -41,7 +42,9 @@ services:
       - '27492:27492'
     networks:
       - broker
-    working_dir: '/home/app'
+    logging:
+      options:
+        max-size: 50m
     entrypoint: bash -c 'npm run start-sparkswapd'
 
   lnd_btc:
@@ -75,6 +78,9 @@ services:
       - 'lnd_btc:/data'
     networks:
       - broker
+    logging:
+      options:
+        max-size: 50m
     entrypoint: ["./start-lnd.sh"]
 
   # This BTCD section is not used due to simnet only allowing one node to be active
@@ -100,6 +106,9 @@ services:
       - RPC_LISTEN=0.0.0.0
       - "MINING_ADDRESS=$MINING_ADDRESS"
       - MAX_WEB_SOCKETS=100
+    logging:
+      options:
+        max-size: 50m
     entrypoint: ["./start-btcd.sh"]
 
   lnd_ltc:
@@ -133,6 +142,9 @@ services:
       - 'lnd_ltc:/data'
     networks:
       - broker
+    logging:
+      options:
+        max-size: 50m
     entrypoint: ["./start-lnd.sh"]
 
   # This LTCD section is not used due to simnet only allowing one node to be active
@@ -159,6 +171,9 @@ services:
       - MAX_WEB_SOCKETS=100
       # This is set dynamically in the startup scripts
       - "MINING_ADDRESS=$MINING_ADDRESS"
+    logging:
+      options:
+        max-size: 50m
     entrypoint: ["./start-ltcd.sh"]
 
 
