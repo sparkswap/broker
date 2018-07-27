@@ -769,7 +769,7 @@ service WalletService {
   /**
    * GetBalances retrieves the balance in all currency in wallets managed by Payment Channel Network nodes for this Broker.
    *
-   * Balances are divided into `totalBalance`, i.e. everything in the wallet, and `totalChannelBalance`, i.e. everything in channels opened by the Payment Channel Network nodes.
+   * Balances are divided into `uncommittedBalance`, i.e. everything not in a channel, and `totalChannelBalance`, i.e. everything in channels opened by the Payment Channel Network nodes.
    * To get the balance available to be committed, i.e. not in channels, subtract the `totalChannelBalance` from the `totalWalletBalance`.
    *
    * ```javascript
@@ -790,12 +790,12 @@ service WalletService {
    * [
    *   {
    *     "symbol": "BTC",
-   *     "totalBalance": "1000000000",
+   *     "uncommittedBalance": "1000000000",
    *     "totalChannelBalance": "16700000"
    *   },
    *   {
    *     "symbol": "LTC",
-   *     "totalBalance": "1000000000",
+   *     "uncommittedBalance": "1000000000",
    *     "totalChannelBalance": "16700000"
    *   }
    * ]
