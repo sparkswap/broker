@@ -113,7 +113,7 @@ service AdminService {
    *
    * > The above command will print:
    *
-   * ```json
+   * ```javascript
    * {
    *   "engineStatus": [
    *     {
@@ -396,7 +396,7 @@ service OrderService {
    *
    * > The above command will create a market block order on the Broker and will print:
    *
-   * ```json
+   * ```javascript
    * { "blockOrderId": "vQPeeYWTlpTPreJxE3My_mpTBiYwYPnTkd6aU2XX" }
    * ```
    *
@@ -430,7 +430,7 @@ service OrderService {
    *
    * > The above command will create a limit block order on the Broker and will print:
    *
-   * ```json
+   * ```javascript
    * { "blockOrderId": "o2tSlSibkCsw6zi4-mpVuMogeLaz_GZuGqJlhWVs" }
    * ```
    *
@@ -457,7 +457,7 @@ service OrderService {
    *
    * > The above command will retrieve the block order on the Broker and will print:
    *
-   * ```json
+   * ```javascript
    * {
    *   "status": "",
    *   "market": "BTC/LTC",
@@ -522,7 +522,7 @@ service OrderService {
    *
    * > The above command will retrieve the block orders on the Broker and will print:
    *
-   * ```json
+   * ```javascript
    * [
    *   {
    *     "status": "",
@@ -638,7 +638,7 @@ service OrderBookService {
    *
    * > After an update, the UI would show something like this:
    *
-   * ```json
+   * ```javascript
    * [
    *   {
    *     "side": "ASK",
@@ -786,7 +786,7 @@ service WalletService {
    *
    * > The above command will print:
    *
-   * ```json
+   * ```javascript
    * [
    *   {
    *     "symbol": "BTC",
