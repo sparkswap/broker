@@ -14,7 +14,8 @@ services:
       - './proto:/home/app/proto/'
       - '/home/app/node_modules'
       - './node_modules/lnd-engine:/home/app/node_modules/lnd-engine'
-      - '/data'
+      # block order and other sparkswap storage
+      - 'sparkswapd:/data'
       # This is populated externally w/ an engine
       - 'shared:/shared'
     environment:
@@ -181,6 +182,7 @@ volumes:
   lnd_ltc:
   bitcoin:
   litecoin:
+  sparkswapd:
 
 networks:
   broker:
