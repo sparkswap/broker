@@ -1,4 +1,4 @@
-Install the Broker Daemon
+Installation
 =========================
 
 ## Before you begin

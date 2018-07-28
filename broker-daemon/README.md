@@ -1,4 +1,4 @@
-sparkswap Broker basic information
+Basic Information
 ===========================
 
 The sparkswap broker is responsible for:
@@ -16,6 +16,6 @@ The following diagram shows the different parts of the broker and how the broker
 
 - The Block Order Worker is used to manage a users orders, splitting up user instructions into actions on the network, such as filling another users order or submitting their own.
 
-- The relayer client is used to access the sparkswap relayer, see [Interaction with the relayer](/docs/RELAYER.md) to learn more about the responsibilities of the relayer
+- The relayer client is used to access the sparkswap relayer, see [Interaction with the relayer](./docs/RELAYER.md) to learn more about the responsibilities of the relayer
 
-![Network Overview Diagram](/docs/images/NetworkOverview.png)
+![Network Overview Diagram](./docs/images/NetworkOverview.png)

@@ -1,4 +1,5 @@
-### Engines
+Engines
+========
 
 The broker daemon (sparkswapd) has a concept of an `Engine`. An Engine can be defined as a single implementation/multiple currency interface for all markets. An example of different engines would include LND-Engine and Eclair-Engine.
 

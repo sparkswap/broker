@@ -1,5 +1,5 @@
 
-Developing on the Broker Daemon
+Development
 =========================
 
 ### Authentication between Daemon and LND
