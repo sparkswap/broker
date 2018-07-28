@@ -10,9 +10,9 @@ The sparkswap Relayer, software run by the sparkswap team, is responsible for:
 
 The following diagram shows how the broker and relayer interact.
 
-![Network Overview Diagram](/docs/images/NetworkOverview.png)
+![Network Overview Diagram](./images/NetworkOverview.png)
 
 
-### Authentication between Broker Daemon and Relayer
+#### Authentication between Broker Daemon and Relayer
 
 ...
