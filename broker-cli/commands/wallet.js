@@ -119,7 +119,7 @@ async function newDepositAddress (args, opts, logger) {
  * @return {Void}
  */
 async function commitBalance (args, opts, logger) {
-  const { symbol } = args
+  const { symbol, amount } = args
   const { rpcAddress = null } = opts
 
   try {
@@ -130,10 +130,12 @@ async function commitBalance (args, opts, logger) {
     const { uncommittedBalance } = balances.find(({ symbol: s }) => s === symbol)
 
     const totalUncommittedBalance = Big(uncommittedBalance)
+
     if (totalUncommittedBalance.eq(0)) {
       return logger.info('Your current uncommitted balance is 0, please add funds to your daemon')
     }
-    // We try to take the `Math.min` total here between 2 Big numbers due to a
+
+    // We try to take the lowest total here between 2 Big numbers due to a
     // commit limit specified as MAX_CHANNEL_BALANCE
     let maxSupportedBalance = uncommittedBalance
 
@@ -141,18 +143,29 @@ async function commitBalance (args, opts, logger) {
       maxSupportedBalance = ENUMS.MAX_CHANNEL_BALANCE
     }
 
+    // We use this for normalization of the amount from satoshis to a decimal
+    // value
     const divideBy = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
+
+    // Amount is specified in currency instead of satoshis
+    if (amount) {
+      maxSupportedBalance = (amount * divideBy)
+    }
 
     logger.info(`For your knowledge, the Maximum supported balance at this time is: ${Big(ENUMS.MAX_CHANNEL_BALANCE).div(divideBy)} ${symbol}`)
     logger.info(`Your current uncommitted wallet balance is: ${Big(uncommittedBalance).div(divideBy)} ${symbol}`)
 
-    const answer = await askQuestion(`Are you OK committing ${Big(maxSupportedBalance).div(divideBy)} ${symbol} to SparkSwap? (Y/N)`)
+    const answer = await askQuestion(`Are you OK committing ${Big(maxSupportedBalance).div(divideBy)} ${symbol} to sparkswap? (Y/N)`)
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
+    if (Big(maxSupportedBalance).gte(uncommittedBalance)) {
+      throw new Error(`Amount specified is larger than your current uncommitted balance of ${Big(uncommittedBalance).div(divideBy)} ${symbol}`)
+    }
+
     await client.walletService.commitBalance({ balance: maxSupportedBalance.toString(), symbol })
 
-    logger.info('Successfully committed balance to SparkSwap Relayer!')
+    logger.info('Successfully committed balance to sparkswap Relayer!')
   } catch (e) {
     logger.error(e)
   }
@@ -170,7 +183,7 @@ module.exports = (program) => {
 
       // TODO: Figure out a way to handle subArguments that could be dynamic
       // for each command
-      let [symbol = ''] = subArguments
+      let [symbol = '', amount] = subArguments
 
       switch (command) {
         case SUPPORTED_COMMANDS.BALANCE:
@@ -193,6 +206,7 @@ module.exports = (program) => {
           }
 
           args.symbol = symbol
+          args.amount = amount
 
           return commitBalance(args, opts, logger)
       }
@@ -202,4 +216,5 @@ module.exports = (program) => {
     .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`)
     .command('wallet commit-balance')
     .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`)
+    .argument('[amount]', 'Amount of currency to commit to the relayer', validations.isDecimal)
 }
