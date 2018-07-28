@@ -1,4 +1,4 @@
-Install the Broker Daemon
+Installation
 =========================
 
 ## Before you begin
@@ -67,6 +67,7 @@ Check on the status of the broker and related services with:
 docker-compose logs -f
 ```
 
-## Using the CLI
+#### Funding a wallet
 
-Check out the [documentation for the CLI](https://sparkswap.com/docs/broker/cli) to see how to install and use it.
+To fund a wallet you need to get a deposit address and send BTC to that address. To get the deposit address, run:
+- `./broker-cli/bin/sparkswap wallet new-deposit-address BTC` which will output the deposit address
