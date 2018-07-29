@@ -1,14 +1,14 @@
 version: '2.4'
 
 services:
-  kbd:
+  sparkswapd:
     image: sparkswap_sparkswapd:latest
-    working_dir: '/home/app'
     depends_on:
       - lnd_btc
       - lnd_ltc
     volumes:
-      - '/data'
+      # block order and other sparkswap storage
+      - 'sparkswapd:/data'
       # This is populated externally w/ an engine
       - 'shared:/shared'
     environment:
@@ -33,11 +33,11 @@ services:
       # This is a temporary workaround for preventing the use of external networks
       # for the relayer. In a testnet/mainnet setting, this will be a public IP.
       - RELAYER_RPC_HOST=relayer.simnet.sparkswap.com:28492
-      # Only disable auth during dev
-      # - DISABLE_AUTH=true
       - RELAYER_CERT_HOST=relayer.simnet.sparkswap.com:8080
       - RELAYER_CERT_PATH=/secure/relayer-root.pem
       - MARKETS=BTC/LTC
+      # Only disable auth during dev
+      # - DISABLE_AUTH=true
     ports:
       - '27492:27492'
     networks:
