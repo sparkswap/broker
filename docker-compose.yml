@@ -12,8 +12,6 @@ services:
       # the broker-daemon itself. broker-daemon relies on these utils for ./broker-daemon/bin/sparkswapd
       - './broker-cli:/home/app/broker-cli/'
       - './proto:/home/app/proto/'
-      - '/home/app/node_modules'
-      - './node_modules/lnd-engine:/home/app/node_modules/lnd-engine'
       - '/data'
       # This is populated externally w/ an engine
       - 'shared:/shared'
