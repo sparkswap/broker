@@ -12,7 +12,8 @@ services:
       # the broker-daemon itself. broker-daemon relies on these utils for ./broker-daemon/bin/sparkswapd
       - './broker-cli:/home/app/broker-cli/'
       - './proto:/home/app/proto/'
-      - '/data'
+      # block order and other sparkswap storage
+      - 'sparkswapd:/data'
       # This is populated externally w/ an engine
       - 'shared:/shared'
     environment:
@@ -195,6 +196,7 @@ volumes:
   lnd_ltc:
   bitcoin:
   litecoin:
+  sparkswapd:
 
 networks:
   broker:
