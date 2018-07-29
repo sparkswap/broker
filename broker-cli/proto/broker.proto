@@ -113,7 +113,7 @@ service AdminService {
    *
    * > The above command will print:
    *
-   * ```json
+   * ```javascript
    * {
    *   "engineStatus": [
    *     {
@@ -396,7 +396,7 @@ service OrderService {
    *
    * > The above command will create a market block order on the Broker and will print:
    *
-   * ```json
+   * ```javascript
    * { "blockOrderId": "vQPeeYWTlpTPreJxE3My_mpTBiYwYPnTkd6aU2XX" }
    * ```
    *
@@ -430,7 +430,7 @@ service OrderService {
    *
    * > The above command will create a limit block order on the Broker and will print:
    *
-   * ```json
+   * ```javascript
    * { "blockOrderId": "o2tSlSibkCsw6zi4-mpVuMogeLaz_GZuGqJlhWVs" }
    * ```
    *
@@ -457,7 +457,7 @@ service OrderService {
    *
    * > The above command will retrieve the block order on the Broker and will print:
    *
-   * ```json
+   * ```javascript
    * {
    *   "status": "",
    *   "market": "BTC/LTC",
@@ -522,7 +522,7 @@ service OrderService {
    *
    * > The above command will retrieve the block orders on the Broker and will print:
    *
-   * ```json
+   * ```javascript
    * [
    *   {
    *     "status": "",
@@ -638,7 +638,7 @@ service OrderBookService {
    *
    * > After an update, the UI would show something like this:
    *
-   * ```json
+   * ```javascript
    * [
    *   {
    *     "side": "ASK",
@@ -769,7 +769,7 @@ service WalletService {
   /**
    * GetBalances retrieves the balance in all currency in wallets managed by Payment Channel Network nodes for this Broker.
    *
-   * Balances are divided into `totalBalance`, i.e. everything in the wallet, and `totalChannelBalance`, i.e. everything in channels opened by the Payment Channel Network nodes.
+   * Balances are divided into `uncommittedBalance`, i.e. everything not in a channel, and `totalChannelBalance`, i.e. everything in channels opened by the Payment Channel Network nodes.
    * To get the balance available to be committed, i.e. not in channels, subtract the `totalChannelBalance` from the `totalWalletBalance`.
    *
    * ```javascript
@@ -786,16 +786,16 @@ service WalletService {
    *
    * > The above command will print:
    *
-   * ```json
+   * ```javascript
    * [
    *   {
    *     "symbol": "BTC",
-   *     "totalBalance": "1000000000",
+   *     "uncommittedBalance": "1000000000",
    *     "totalChannelBalance": "16700000"
    *   },
    *   {
    *     "symbol": "LTC",
-   *     "totalBalance": "1000000000",
+   *     "uncommittedBalance": "1000000000",
    *     "totalChannelBalance": "16700000"
    *   }
    * ]
