@@ -1,4 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+################################################
+# sparkswapd initialization script
+#
+# IMPORTANT: This file is only for use inside of the sparkswapd docker container
+#            as `/secure` is a volume inside of the container
+################################################
 
 set -e
 

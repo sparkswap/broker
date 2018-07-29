@@ -1,0 +1,38 @@
+############################################################
+# Broker docker-compose test stack
+############################################################
+
+version: '2.4'
+
+services:
+  kbd:
+    depends_on:
+      - lnd_btc
+      - lnd_ltc
+    environment:
+      - RELAYER_RPC_HOST=relayer.testnet.sparkswap.com:28492
+      - RELAYER_CERT_HOST=relayer.testnet.sparkswap.com:8080
+
+  btcd:
+    environment:
+      - NETWORK=testnet
+
+  ltcd:
+    environment:
+      - NETWORK=testnet
+
+  lnd_btc:
+    depends_on:
+      - btcd
+    environment:
+      - EXTERNAL_ADDRESS=0.0.0.0:10113
+      - NETWORK=testnet
+      - RPC_HOST=btcd:18334
+
+  lnd_ltc:
+    depends_on:
+      - ltcd
+    environment:
+      - EXTERNAL_ADDRESS=0.0.0.0:10114
+      - NETWORK=testnet
+      - RPC_HOST=ltcd:19334

@@ -7,11 +7,6 @@ services:
       - lnd_btc
       - lnd_ltc
     volumes:
-      - './broker-daemon:/home/app/broker-daemon/'
-      # TODO: This can be removed once utils are moved to a shared repo or into
-      # the broker-daemon itself. broker-daemon relies on these utils for ./broker-daemon/bin/sparkswapd
-      - './broker-cli:/home/app/broker-cli/'
-      - './proto:/home/app/proto/'
       # block order and other sparkswap storage
       - 'sparkswapd:/data'
       # This is populated externally w/ an engine
@@ -37,17 +32,19 @@ services:
       # This address is specifically tied to the relayer network
       # This is a temporary workaround for preventing the use of external networks
       # for the relayer. In a testnet/mainnet setting, this will be a public IP.
-      - RELAYER_RPC_HOST=docker.for.mac.host.internal:28492
-      # Only disable auth during dev
-      # - DISABLE_AUTH=true
-      - RELAYER_CERT_HOST=docker.for.mac.host.internal:8080
+      - RELAYER_RPC_HOST=relayer.simnet.sparkswap.com:28492
+      - RELAYER_CERT_HOST=relayer.simnet.sparkswap.com:8080
       - RELAYER_CERT_PATH=/secure/relayer-root.pem
       - MARKETS=BTC/LTC
+      # Only disable auth during dev
+      # - DISABLE_AUTH=true
     ports:
       - '27492:27492'
     networks:
       - broker
-    working_dir: '/home/app'
+    logging:
+      options:
+        max-size: 50m
     entrypoint: bash -c 'npm run start-sparkswapd'
 
   lnd_btc:
@@ -59,7 +56,7 @@ services:
     environment:
       - RPC_USER=kuser
       - RPC_PASS=kpass
-      - RPC_HOST=docker.for.mac.host.internal:18556
+      - RPC_HOST=btcd:18556
       - RPC_CERT_PATH=/shared/rpc-btc.cert
       - ADMIN_MACAROON=/shared/lnd-engine-admin-btc.macaroon
       - READ_ONLY_MACAROON=/shared/lnd-engine-readonly-btc.macaroon
@@ -71,10 +68,7 @@ services:
       - DEBUG=info
       - RPC_LISTEN=0.0.0.0:10009
       - LISTEN=0.0.0.0:10113
-      # This address is for development only. You must change this to a
-      # tld to use in a production setting
-      - EXTERNAL_ADDRESS=docker.for.mac.host.internal:10113
-      - EXTPREIMAGE_HOST=kbd:40369
+      - EXTERNAL_ADDRESS=0.0.0.0:10113
       - REST_LISTEN=0.0.0.0:8101
       - DATA_DIR=/data
       - LOG_DIR=/data
@@ -84,7 +78,6 @@ services:
       - 'lnd_btc:/data'
     networks:
       - broker
-    # This option is only available for docker 2
     logging:
       options:
         max-size: 50m
@@ -113,12 +106,11 @@ services:
       - RPC_LISTEN=0.0.0.0
       - "MINING_ADDRESS=$MINING_ADDRESS"
       - MAX_WEB_SOCKETS=100
-    network:
-      - broker
-    # This option is only available for docker 2
     logging:
       options:
         max-size: 50m
+    networks:
+      - broker
     entrypoint: ["./start-btcd.sh"]
 
   lnd_ltc:
@@ -130,7 +122,7 @@ services:
     environment:
       - RPC_USER=kuser
       - RPC_PASS=kpass
-      - RPC_HOST=docker.for.mac.host.internal:18666
+      - RPC_HOST=ltcd:18666
       - RPC_CERT_PATH=/shared/rpc-ltc.cert
       - ADMIN_MACAROON=/shared/lnd-engine-admin-ltc.macaroon
       - READ_ONLY_MACAROON=/shared/lnd-engine-readonly-ltc.macaroon
@@ -143,10 +135,7 @@ services:
       - DEBUG=info
       - RPC_LISTEN=0.0.0.0:10009
       - LISTEN=0.0.0.0:10114
-      # This address is for development only. You must change this to a
-      # tld to use in a production setting
-      - EXTERNAL_ADDRESS=docker.for.mac.host.internal:10114
-      - EXTPREIMAGE_HOST=kbd:40369
+      - EXTERNAL_ADDRESS=0.0.0.0:10114
       - REST_LISTEN=0.0.0.0:8101
       - DATA_DIR=/data
       - LOG_DIR=/data
@@ -155,7 +144,6 @@ services:
       - 'lnd_ltc:/data'
     networks:
       - broker
-    # This option is only available for docker 2
     logging:
       options:
         max-size: 50m
@@ -185,12 +173,11 @@ services:
       - MAX_WEB_SOCKETS=100
       # This is set dynamically in the startup scripts
       - "MINING_ADDRESS=$MINING_ADDRESS"
-    network:
-      - broker
-    # This option is only available for docker 2
     logging:
       options:
         max-size: 50m
+    networks:
+      - broker
     entrypoint: ["./start-ltcd.sh"]
 
 
@@ -200,7 +187,6 @@ volumes:
   lnd_ltc:
   bitcoin:
   litecoin:
-  sparkswapd:
 
 networks:
   broker:

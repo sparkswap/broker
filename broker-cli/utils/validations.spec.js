@@ -80,7 +80,7 @@ describe('Validations', () => {
 
   describe('isHost', () => {
     it('returns a valid container name host', () => {
-      const validHost = 'kinesis:10009'
+      const validHost = 'sparkswap:10009'
       expect(isHost(validHost)).to.eql(validHost)
     })
 
