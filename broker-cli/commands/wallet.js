@@ -139,6 +139,7 @@ async function commitBalance (args, opts, logger) {
     // commit limit specified as MAX_CHANNEL_BALANCE
     let maxSupportedBalance = uncommittedBalance
 
+    // TODO: Change the MAX_CHANNEL_BALANCE to be set per currency
     if (totalUncommittedBalance.gt(ENUMS.MAX_CHANNEL_BALANCE)) {
       maxSupportedBalance = ENUMS.MAX_CHANNEL_BALANCE
     }
@@ -159,7 +160,7 @@ async function commitBalance (args, opts, logger) {
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    if (Big(maxSupportedBalance).gte(uncommittedBalance)) {
+    if (Big(maxSupportedBalance).gt(uncommittedBalance)) {
       throw new Error(`Amount specified is larger than your current uncommitted balance of ${Big(uncommittedBalance).div(divideBy)} ${symbol}`)
     }
 
@@ -183,7 +184,7 @@ module.exports = (program) => {
 
       // TODO: Figure out a way to handle subArguments that could be dynamic
       // for each command
-      let [symbol = '', amount] = subArguments
+      let [symbol = '', amount = ''] = subArguments
 
       switch (command) {
         case SUPPORTED_COMMANDS.BALANCE:

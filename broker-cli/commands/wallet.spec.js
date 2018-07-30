@@ -132,15 +132,17 @@ describe('cli wallet', () => {
     let daemonStub
     let commitBalanceStub
     let askQuestionStub
+    let amount
 
     const commitBalance = program.__get__('commitBalance')
 
     beforeEach(() => {
       symbol = 'BTC'
-      args = { symbol }
+      amount = null
+      args = { symbol, amount }
       rpcAddress = 'test:1337'
       balances = [
-        { symbol: 'BTC', uncommittedBalance: 100, totalChannelBalance: 10 }
+        { symbol: 'BTC', uncommittedBalance: 10000000, totalChannelBalance: 100 }
       ]
       walletBalanceStub = sinon.stub().returns({ balances })
       commitBalanceStub = sinon.stub()
