@@ -56,7 +56,13 @@ module.exports = (program) => {
     })
     .command(`order ${SUPPORTED_COMMANDS.STATUS}`, 'Get the status of a block order')
     .argument('<blockOrderId>', 'Block order to get status of.', validations.isBlockOrderId)
+    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .command(`order ${SUPPORTED_COMMANDS.CANCEL}`, 'Cancel a block order')
     .argument('<blockOrderId>', 'Block Order to cancel.', validations.isBlockOrderId)
+    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .command(`order ${SUPPORTED_COMMANDS.SUMMARY}`, 'View your orders.')
+    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
 }
