@@ -113,7 +113,7 @@ services:
       - RPC_LISTEN=0.0.0.0
       - "MINING_ADDRESS=$MINING_ADDRESS"
       - MAX_WEB_SOCKETS=100
-    network:
+    networks:
       - broker
     # This option is only available for docker 2
     logging:
@@ -185,7 +185,7 @@ services:
       - MAX_WEB_SOCKETS=100
       # This is set dynamically in the startup scripts
       - "MINING_ADDRESS=$MINING_ADDRESS"
-    network:
+    networks:
       - broker
     # This option is only available for docker 2
     logging:
