@@ -29,9 +29,6 @@ services:
       - LTC_LND_TLS_CERT=/shared/lnd-engine-tls-ltc.cert
       - LTC_LND_MACAROON=/shared/lnd-engine-admin-ltc.macaroon
       - GRPC_SSL_CIPHER_SUITES=HIGH+ECDSA
-      # This address is specifically tied to the relayer network
-      # This is a temporary workaround for preventing the use of external networks
-      # for the relayer. In a testnet/mainnet setting, this will be a public IP.
       - RELAYER_RPC_HOST=relayer.simnet.sparkswap.com:28492
       # Only disable auth during dev
       # - DISABLE_AUTH=true
