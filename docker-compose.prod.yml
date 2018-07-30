@@ -29,12 +29,9 @@ services:
       - LTC_LND_TLS_CERT=/shared/lnd-engine-tls-ltc.cert
       - LTC_LND_MACAROON=/shared/lnd-engine-admin-ltc.macaroon
       - GRPC_SSL_CIPHER_SUITES=HIGH+ECDSA
-      # This address is specifically tied to the relayer network
-      # This is a temporary workaround for preventing the use of external networks
-      # for the relayer. In a testnet/mainnet setting, this will be a public IP.
+      - RELAYER_RPC_HOST=relayer.simnet.sparkswap.com:28492
       # Only disable auth during dev
       # - DISABLE_AUTH=true
-      - RELAYER_RPC_HOST=relayer.simnet.sparkswap.com:28492
       - RELAYER_CERT_HOST=relayer.simnet.sparkswap.com:8080
       - RELAYER_CERT_PATH=/secure/relayer-root.pem
       - MARKETS=BTC/LTC
@@ -43,9 +40,6 @@ services:
     networks:
       - broker
     working_dir: '/home/app'
-    logging:
-      options:
-        max-size: 50m
     entrypoint: bash -c 'npm run start-sparkswapd'
 
   lnd_btc:
@@ -71,7 +65,7 @@ services:
       - LISTEN=0.0.0.0:10113
       # This address is for development only. You must change this to a
       # tld to use in a production setting
-      - EXTERNAL_ADDRESS=your.daemon.address:10113
+      - EXTERNAL_ADDRESS=your.external.address:10113
       - EXTPREIMAGE_HOST=sparkswapd:40369
       - REST_LISTEN=0.0.0.0:8101
       - DATA_DIR=/data
@@ -110,12 +104,12 @@ services:
       - RPC_CERT=/shared/rpc-btc.cert
       - RPC_LISTEN=0.0.0.0
       - "MINING_ADDRESS=$MINING_ADDRESS"
-      - MAX_WEB_SOCKETS=100
+    networks:
+      - broker
+    # This option is only available for docker 2
     logging:
       options:
         max-size: 50m
-    networks:
-      - broker
     entrypoint: ["./start-btcd.sh"]
 
   lnd_ltc:
@@ -140,11 +134,8 @@ services:
       - DEBUG=info
       - RPC_LISTEN=0.0.0.0:10009
       - LISTEN=0.0.0.0:10114
-      # This address is for development only. You must change this to a
-      # tld to use in a production setting
-      - EXTERNAL_ADDRESS=your.daemon.address:10114
+      - EXTERNAL_ADDRESS=your.external.address:10114
       - EXTPREIMAGE_HOST=sparkswapd:40369
-      - EXTERNAL_ADDRESS=0.0.0.0:10114
       - REST_LISTEN=0.0.0.0:8101
       - DATA_DIR=/data
       - LOG_DIR=/data
@@ -180,7 +171,6 @@ services:
       - RPC_KEY=/secure/rpc.key
       - RPC_CERT=/shared/rpc-ltc.cert
       - RPC_LISTEN=0.0.0.0
-      - MAX_WEB_SOCKETS=100
       # This is set dynamically in the startup scripts
       - "MINING_ADDRESS=$MINING_ADDRESS"
     networks:
@@ -198,6 +188,7 @@ volumes:
   lnd_ltc:
   bitcoin:
   litecoin:
+  sparkswapd:
 
 networks:
   broker:
