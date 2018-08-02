@@ -6,6 +6,7 @@ Installation
 1. Install nvm - `brew install nvm` or your favorite package manager
 2. Install the current LTS node and npm version - `nvm install --lts --latest-npm`
 3. Install [docker](https://docs.docker.com/install/)
+    - version requirements are `Docker Community Edition 18.03.0-ce 2018-03-26` or above
 4. Create a directory for `sparkswap` and navigate to it - `mkdir -p ./sparkswap && cd sparkswap`
 
 ## Install an engine
