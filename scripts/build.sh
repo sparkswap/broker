@@ -29,6 +29,7 @@ if [ -d ./proto ]; then
 fi
 
 git clone https://github.com/sparkswap/relayer-proto.git ./proto
+rm -rf ./proto/.git
 
 # If we want to build images with the command then we can use
 if [ "$ARG" != "no-docker" ]; then
