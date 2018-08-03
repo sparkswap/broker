@@ -437,7 +437,7 @@ service OrderService {
    * ```shell
    * { blockOrderId: 'o2tSlSibkCsw6zi4-mpVuMogeLaz_GZuGqJlhWVs' }
    * ```
-   * 
+   *
    */
   rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse);
   /**
@@ -657,7 +657,7 @@ service OrderBookService {
    * Market: BTC/LTC                                                                                                                            Ϟ SparkSwap Broker
    *                                                                                                                                           v0.1.0-alpha-preview
    *                                                                                                                                           http://sparkswap.com
-   * 
+   *
    * ┌──────────────────────────────────────────────────────────────────────────────┬──────────────────────────────────────────────────────────────────────────────┐
    * │ ASKS                                                                         │ BIDS                                                                         │
    * ├──────────────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────────────┤
@@ -711,6 +711,10 @@ message Balance {
   int64 uncommitted_balance = 2;
   // Balance in the listed currency that is currently in channels. This is currently in base units (e.g. Satoshis/Litoshis)
   int64 total_channel_balance = 3;
+  // Balance in the listed currency that is currently in pending channels. This is currently in base units (e.g. Satoshis/Litoshis)
+  int64 total_pending_channel_balance = 4;
+  // Balance in the listed currency that is currently in pending closing channels and unconfirmed wallet balance. This is currently in base units (e.g. Satoshis/Litoshis)
+  int64 uncommitted_pending_balance = 5;
 }
 
 /**
@@ -769,8 +773,9 @@ service WalletService {
   /**
    * GetBalances retrieves the balance in all currency in wallets managed by Payment Channel Network nodes for this Broker.
    *
-   * Balances are divided into `uncommittedBalance`, i.e. everything not in a channel, and `totalChannelBalance`, i.e. everything in channels opened by the Payment Channel Network nodes.
-   * To get the balance available to be committed, i.e. not in channels, subtract the `totalChannelBalance` from the `totalWalletBalance`.
+   * Balances are divided into `uncommittedBalance`, i.e. everything not in a channel, `totalChannelBalance` (i.e. everything in channels opened by the Payment Channel Network nodes),
+   * `totalPendingChannelBalance`, i.e. funds in channels that have finished the funding workflow and are waiting for confirmations for the funding txn, and
+   * `uncommittedPendingBalance`, i.e funds in channels that are pending closure or unconfirmed unspent outputs under control of the wallet.
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
@@ -791,12 +796,16 @@ service WalletService {
    *   {
    *     "symbol": "BTC",
    *     "uncommittedBalance": "1000000000",
-   *     "totalChannelBalance": "16700000"
+   *     "totalChannelBalance": "16700000",
+   *     "totalPendingChannelBalance": "10000",
+   *     "uncommittedPendingBalance": "00000"
    *   },
    *   {
    *     "symbol": "LTC",
    *     "uncommittedBalance": "1000000000",
-   *     "totalChannelBalance": "16700000"
+   *     "totalChannelBalance": "16700000",
+   *     "totalPendingChannelBalance": "20000",
+   *     "uncommittedPendingBalance": "00000"
    *   }
    * ]
    * ```

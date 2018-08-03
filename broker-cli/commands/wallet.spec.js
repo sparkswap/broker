@@ -64,8 +64,8 @@ describe('cli wallet', () => {
       rpcAddress = 'test:1337'
       opts = { rpcAddress }
       logger = { info: sinon.stub(), error: sinon.stub() }
-      btcBalance = { symbol, uncommittedBalance: 10000, totalChannelBalance: 2000 }
-      ltcBalance = { symbol: 'LTC', uncommittedBalance: 200, totalChannelBalance: 200 }
+      btcBalance = { symbol, uncommittedBalance: 10000, totalChannelBalance: 2000, totalPendingChannelBalance: 1000, uncommittedPendingBalance: 3000 }
+      ltcBalance = { symbol: 'LTC', uncommittedBalance: 200, totalChannelBalance: 200, totalPendingChannelBalance: 500, uncommittedPendingBalance: 100 }
       balances = [btcBalance, ltcBalance]
 
       walletBalanceStub = sinon.stub().returns({ balances })
@@ -91,7 +91,6 @@ describe('cli wallet', () => {
     it('adds a correct balance for BTC', () => {
       const expectedResult = ['BTC', '0.0000200000000000', '0.000100000000000']
       const result = tablePushStub.args[0][0]
-
       // Since the text in the result contains colors (non-TTY) we have to use
       // an includes matcher instead of importing the color lib for testing.
       //
