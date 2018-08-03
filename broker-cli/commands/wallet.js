@@ -75,7 +75,7 @@ async function balance (args, opts, logger) {
     logger.info('Wallet Balances'.bold.white)
     logger.info(balancesTable.toString())
   } catch (e) {
-    handleError(e, logger)
+    logger.error(handleError(e))
   }
 }
 
@@ -101,7 +101,7 @@ async function newDepositAddress (args, opts, logger) {
 
     logger.info(address)
   } catch (e) {
-    handleError(e, logger)
+    logger.error(handleError(e))
   }
 }
 
@@ -168,7 +168,7 @@ async function commitBalance (args, opts, logger) {
 
     logger.info('Successfully committed balance to sparkswap Relayer!')
   } catch (e) {
-    handleError(e, logger)
+    logger.error(handleError(e))
   }
 }
 

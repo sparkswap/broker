@@ -37,7 +37,7 @@ async function healthCheck (args, opts, logger) {
     logger.info(`HealthCheck: ${JSON.stringify(res, null, '  ')}`)
   } catch (e) {
     if (e.message === '14 UNAVAILABLE: Connect Failed') {
-      handleError(e, logger)
+      logger.error(handleError(e))
     }
   }
 };

@@ -44,7 +44,7 @@ async function sell (args, opts, logger) {
     // return the object from the broker.proto file
     logger.info(blockOrderResult)
   } catch (e) {
-    handleError(e, logger)
+    logger.error(handleError(e))
   }
 };
 

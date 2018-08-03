@@ -24,7 +24,7 @@ async function cancel (args, opts, logger) {
     await client.orderService.cancelBlockOrder(request)
     logger.info(`Cancelled ${blockOrderId}`)
   } catch (e) {
-    handleError(e, logger)
+    logger.error(handleError(e))
   }
 };
 

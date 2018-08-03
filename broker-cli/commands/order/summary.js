@@ -52,7 +52,7 @@ async function summary (args, opts, logger) {
     const orders = await brokerDaemonClient.orderService.getBlockOrders(request)
     createUI(market, orders.blockOrders)
   } catch (e) {
-    handleError(e, logger)
+    logger.error(handleError(e))
   }
 };
 
