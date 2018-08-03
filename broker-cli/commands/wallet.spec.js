@@ -42,6 +42,39 @@ describe('cli wallet', () => {
     })
   })
 
+  describe('publicKey', () => {
+    let args
+    let opts
+    let logger
+    let rpcAddress
+    let publicKeyStub
+    let daemonStub
+    let symbol
+
+    const publicKey = program.__get__('publicKey')
+
+    beforeEach(() => {
+      symbol = 'BTC'
+      args = { symbol }
+      rpcAddress = 'test:1337'
+      opts = { rpcAddress }
+      logger = { info: sinon.stub(), error: sinon.stub() }
+
+      publicKeyStub = sinon.stub()
+      daemonStub = sinon.stub()
+      daemonStub.prototype.walletService = { getPublicKey: publicKeyStub }
+
+      program.__set__('BrokerDaemonClient', daemonStub)
+
+      publicKey(args, opts, logger)
+    })
+
+    it('calls broker daemon for the pub key', () => {
+      expect(daemonStub).to.have.been.calledWith(rpcAddress)
+      expect(publicKeyStub).to.have.been.calledWith({ symbol })
+    })
+  })
+
   describe('balance', () => {
     let daemonStub
     let walletBalanceStub
