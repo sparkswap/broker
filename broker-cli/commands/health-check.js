@@ -1,5 +1,5 @@
 const BrokerDaemonClient = require('../broker-daemon-client')
-const { ENUMS, validations } = require('../utils')
+const { ENUMS, validations, handleError } = require('../utils')
 const { STATUS_CODES } = ENUMS
 
 /**
@@ -36,7 +36,9 @@ async function healthCheck (args, opts, logger) {
 
     logger.info(`HealthCheck: ${JSON.stringify(res, null, '  ')}`)
   } catch (e) {
-    logger.error(e)
+    if (e.message === '14 UNAVAILABLE: Connect Failed') {
+      logger.error(handleError(e))
+    }
   }
 };
 

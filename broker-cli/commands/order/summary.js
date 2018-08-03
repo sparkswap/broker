@@ -1,6 +1,6 @@
 const BrokerDaemonClient = require('../../broker-daemon-client')
 const Table = require('cli-table')
-const { ENUMS: { ORDER_TYPES } } = require('../../utils')
+const { ENUMS: { ORDER_TYPES }, handleError } = require('../../utils')
 require('colors')
 
 /**
@@ -52,7 +52,7 @@ async function summary (args, opts, logger) {
     const orders = await brokerDaemonClient.orderService.getBlockOrders(request)
     createUI(market, orders.blockOrders)
   } catch (e) {
-    logger.error(e)
+    logger.error(handleError(e))
   }
 };
 

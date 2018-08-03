@@ -2,7 +2,7 @@ const {
   version: BROKER_VERSION
 } = require('../package.json')
 const BrokerDaemonClient = require('../broker-daemon-client')
-const { validations, Big } = require('../utils')
+const { validations, Big, handleError } = require('../utils')
 const Table = require('cli-table')
 const size = require('window-size')
 require('colors')
@@ -150,8 +150,9 @@ async function orderbook (args, opts, logger) {
 
     call.on('cancelled', () => logger.info('Stream was cancelled by the server'))
     call.on('end', () => logger.info('End of stream'))
+    call.on('error', (e) => logger.error(handleError(e)))
   } catch (e) {
-    logger.error(e)
+    logger.error(handleError(e))
   }
 };
 

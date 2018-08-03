@@ -1,5 +1,5 @@
 const BrokerDaemonClient = require('../broker-daemon-client')
-const { ENUMS, validations } = require('../utils')
+const { ENUMS, validations, handleError } = require('../utils')
 
 const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
 
@@ -44,7 +44,7 @@ async function sell (args, opts, logger) {
     // return the object from the broker.proto file
     logger.info(blockOrderResult)
   } catch (e) {
-    logger.error(e)
+    logger.error(handleError(e))
   }
 };
 

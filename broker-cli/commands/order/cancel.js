@@ -1,4 +1,5 @@
 const BrokerDaemonClient = require('../../broker-daemon-client')
+const { handleError } = require('../../utils')
 
 /**
  * sparkswap order cancel
@@ -23,7 +24,7 @@ async function cancel (args, opts, logger) {
     await client.orderService.cancelBlockOrder(request)
     logger.info(`Cancelled ${blockOrderId}`)
   } catch (e) {
-    logger.error(e)
+    logger.error(handleError(e))
   }
 };
 
