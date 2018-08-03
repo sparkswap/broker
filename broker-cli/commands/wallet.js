@@ -34,7 +34,8 @@ const SUPPORTED_COMMANDS = Object.freeze({
   BALANCE: 'balance',
   NEW_DEPOSIT_ADDRESS: 'new-deposit-address',
   COMMIT_BALANCE: 'commit-balance',
-  NETWORK_ADDRESS: 'network-address'
+  NETWORK_ADDRESS: 'network-address',
+  NETWORK_STATUS: 'network-status'
 })
 
 /**
@@ -201,10 +202,62 @@ async function networkAddress (args, opts, logger) {
   }
 }
 
+
+/**
+ * network-status
+ *
+ * ex: `sparkswap wallet network-status`
+ *
+ * @function
+ * @param {Object} args
+ * @param {Object} opts
+ * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {Logger} logger
+ * @return {Void}
+ */
+async function networkStatus (args, opts, logger) {
+  const { rpcAddress = null } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+
+    // TODO: get status from broker
+    const markets = []
+
+    if (!markets.length) {
+      return logger.error('Error: No markets returned from BrokerDaemon'.red)
+    }
+
+    markets.forEach(({ name, baseSymbol, counterSymbol }) => {
+      const statusTable = new Table({
+        head: ['Symbol', 'Send', 'Receive'],
+        colWidths: [8, 24, 24],
+        style: { head: ['gray'] }
+      })
+
+      statusTable.push([
+        baseSymbol,
+        '', // Send capacity and status
+        '' // Receive capacity and status
+      ])
+      statusTable.push([
+        counterSymbol,
+        '', // Send capacity and status
+        '' // Receive capacity and status
+      ])
+
+      logger.info(` ${name.bold.white}`)
+      logger.info(statusTable.toString())
+    })
+  } catch (e) {
+    logger.error(e)
+  }
+}
+
 module.exports = (program) => {
   program
     .command('wallet', 'Commands to handle a wallet instance')
-    .help('Available Commands: balance, new-deposit-address, commit-balance, network-address')
+    .help('Available Commands: balance, new-deposit-address, commit-balance, network-address, network-status')
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
@@ -249,6 +302,8 @@ module.exports = (program) => {
           args.symbol = symbol
 
           return networkAddress(args, opts, logger)
+        case SUPPORTED_COMMANDS.NETWORK_STATUS:
+          return networkStatus(args, opts, logger)
       }
     })
     .command('wallet balance', 'Current daemon wallet balance')
@@ -259,4 +314,5 @@ module.exports = (program) => {
     .argument('[amount]', 'Amount of currency to commit to the relayer', validations.isDecimal)
     .command('wallet network-address', 'Payment Channel Network Public key for a given currency')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
+    .command('wallet network-status', 'Payment Channel Network status for trading in different markets')
 }
