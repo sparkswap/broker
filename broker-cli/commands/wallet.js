@@ -193,7 +193,7 @@ async function networkAddress (args, opts, logger) {
   try {
     const client = new BrokerDaemonClient(rpcAddress)
 
-    const { paymentChannelNetworkAddress } = await client.walletService.getPaymentChannelNetworkAddress({ symbol: symbol.toUpperCase() })
+    const { paymentChannelNetworkAddress } = await client.walletService.getPaymentChannelNetworkAddress({ symbol })
 
     logger.info(paymentChannelNetworkAddress)
   } catch (e) {
