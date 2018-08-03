@@ -34,7 +34,7 @@ const SUPPORTED_COMMANDS = Object.freeze({
   BALANCE: 'balance',
   NEW_DEPOSIT_ADDRESS: 'new-deposit-address',
   COMMIT_BALANCE: 'commit-balance',
-  PUBLIC_KEY: 'public-key'
+  NETWORK_ADDRESS: 'network-address'
 })
 
 /**
@@ -174,9 +174,9 @@ async function commitBalance (args, opts, logger) {
 }
 
 /**
- * public-key
+ * network-address
  *
- * ex: `sparkswap wallet public-key BTC`
+ * ex: `sparkswap wallet network-address BTC`
  *
  * @function
  * @param {Object} args
@@ -186,16 +186,16 @@ async function commitBalance (args, opts, logger) {
  * @param {Logger} logger
  * @return {Void}
  */
-async function publicKey (args, opts, logger) {
+async function networkAddress (args, opts, logger) {
   const { symbol } = args
   const { rpcAddress = null } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
 
-    const { publicKey } = await client.walletService.getPublicKey({ symbol: symbol.toUpperCase() })
+    const { paymentChannelNetworkAddress } = await client.walletService.getPaymentChannelNetworkAddress({ symbol: symbol.toUpperCase() })
 
-    logger.info(publicKey)
+    logger.info(paymentChannelNetworkAddress)
   } catch (e) {
     logger.error(e)
   }
@@ -204,7 +204,7 @@ async function publicKey (args, opts, logger) {
 module.exports = (program) => {
   program
     .command('wallet', 'Commands to handle a wallet instance')
-    .help('Available Commands: balance, new-deposit-address, commit-balance, public-key')
+    .help('Available Commands: balance, new-deposit-address, commit-balance, network-address')
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
@@ -239,7 +239,7 @@ module.exports = (program) => {
           args.amount = amount
 
           return commitBalance(args, opts, logger)
-        case SUPPORTED_COMMANDS.PUBLIC_KEY:
+        case SUPPORTED_COMMANDS.NETWORK_ADDRESS:
           symbol = symbol.toUpperCase()
 
           if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
@@ -248,7 +248,7 @@ module.exports = (program) => {
 
           args.symbol = symbol
 
-          return publicKey(args, opts, logger)
+          return networkAddress(args, opts, logger)
       }
     })
     .command('wallet balance', 'Current daemon wallet balance')
@@ -257,6 +257,6 @@ module.exports = (program) => {
     .command('wallet commit-balance')
     .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`)
     .argument('[amount]', 'Amount of currency to commit to the relayer', validations.isDecimal)
-    .command('wallet public-key', 'Payment Channel Network Public key for a given currency')
+    .command('wallet network-address', 'Payment Channel Network Public key for a given currency')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
 }

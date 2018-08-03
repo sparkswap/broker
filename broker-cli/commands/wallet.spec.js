@@ -42,16 +42,16 @@ describe('cli wallet', () => {
     })
   })
 
-  describe('publicKey', () => {
+  describe('networkAddress', () => {
     let args
     let opts
     let logger
     let rpcAddress
-    let publicKeyStub
+    let networkAddressStub
     let daemonStub
     let symbol
 
-    const publicKey = program.__get__('publicKey')
+    const networkAddress = program.__get__('networkAddress')
 
     beforeEach(() => {
       symbol = 'BTC'
@@ -60,18 +60,18 @@ describe('cli wallet', () => {
       opts = { rpcAddress }
       logger = { info: sinon.stub(), error: sinon.stub() }
 
-      publicKeyStub = sinon.stub()
+      networkAddressStub = sinon.stub()
       daemonStub = sinon.stub()
-      daemonStub.prototype.walletService = { getPublicKey: publicKeyStub }
+      daemonStub.prototype.walletService = { getPaymentChannelNetworkAddress: networkAddressStub }
 
       program.__set__('BrokerDaemonClient', daemonStub)
 
-      publicKey(args, opts, logger)
+      networkAddress(args, opts, logger)
     })
 
     it('calls broker daemon for the pub key', () => {
       expect(daemonStub).to.have.been.calledWith(rpcAddress)
-      expect(publicKeyStub).to.have.been.calledWith({ symbol })
+      expect(networkAddressStub).to.have.been.calledWith({ symbol })
     })
   })
 
