@@ -7,15 +7,19 @@
  * @return {Object} res.engine
  */
 async function getEngineBalances ([symbol, engine]) {
-  const [uncommittedBalance, totalChannelBalance] = await Promise.all([
+  const [uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance] = await Promise.all([
     engine.getUncommittedBalance(),
-    engine.getTotalChannelBalance()
+    engine.getTotalChannelBalance(),
+    engine.getTotalPendingChannelBalance(),
+    engine.getUncommittedPendingBalance()
   ])
 
   return {
     symbol,
     uncommittedBalance,
-    totalChannelBalance
+    totalChannelBalance,
+    totalPendingChannelBalance,
+    uncommittedPendingBalance
   }
 }
 
