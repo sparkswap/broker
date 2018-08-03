@@ -20,7 +20,10 @@
     "ci-test": "npm run format && npm test",
     "start-sparkswapd": "pm2-docker pm2.json --watch",
     "fund": "bash ./scripts/fund-simnet-wallet.local.sh",
-    "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp ./broker-daemon/proto/broker.proto ./broker-cli/proto/broker.proto"
+    "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp ./broker-daemon/proto/broker.proto ./broker-cli/proto/broker.proto",
+    "testnet": "bash ./scripts/testnet.sh",
+    "mainnet": "bash ./scripts/mainnet.sh",
+    "simnet": "bash ./scripts/simnet.sh"
   },
   "bin": {
     "sparkswapd": "./broker-daemon/bin/sparkswapd",
