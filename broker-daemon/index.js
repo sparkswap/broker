@@ -151,7 +151,11 @@ class BrokerDaemon {
         })(),
         ...Array.from(this.engines, async ([ symbol, engine ]) => {
           this.logger.info(`Validating engine configuration for ${symbol}`)
-          await engine.validateNodeConfig()
+          try {
+            await engine.validateNodeConfig()
+          } catch (e) {
+            throw new Error(`Engine for ${symbol} failed to validate: ${e.message || e.details}`)
+          }
           this.logger.info(`Validated engine configuration for ${symbol}`)
         })
       ])
@@ -163,7 +167,9 @@ class BrokerDaemon {
       this.logger.info(`Interchain Router server started: gRPC Server listening on ${this.interchainRouterAddress}`)
     } catch (e) {
       this.logger.error('BrokerDaemon failed to initialize', { error: e.toString() })
-      this.logger.error(e)
+      this.logger.error(e.toString(), e)
+      this.logger.info('BrokerDaemon shutting down...')
+      process.exit(1)
     }
   }
 
