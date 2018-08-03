@@ -878,11 +878,11 @@ service WalletService {
    * > The above command will print:
    *
    * ```javascript
-   * > "025f08036e00e38468f52d68bb83939995440b72730bfaae99ace5630630997623@relayer.testnet.sparkswap.com:10113"
+   * > "025f08036e00e38468f52d68bb83939995440b72730bfaae99ace5630630997623@your.daemon:10113"
    * ```
    *
    * ```shell
-   * 025f08036e00e38468f52d68bb83939995440b72730bfaae99ace5630630997623@relayer.testnet.sparkswap.com:10113
+   * 025f08036e00e38468f52d68bb83939995440b72730bfaae99ace5630630997623@your.daemon:10113
    * ```
    */
   rpc GetPaymentChannelNetworkAddress (GetPaymentChannelNetworkAddressRequest) returns (GetPaymentChannelNetworkAddressResponse);
