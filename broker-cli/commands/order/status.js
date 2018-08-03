@@ -1,4 +1,5 @@
 const BrokerDaemonClient = require('../../broker-daemon-client')
+const { handleError } = require('../../utils')
 
 /**
  * sparkswap order status
@@ -23,7 +24,7 @@ async function status (args, opts, logger) {
     const blockOrderResult = await client.orderService.getBlockOrder(request)
     logger.info(blockOrderResult)
   } catch (e) {
-    logger.error(e)
+    handleError(e, logger)
   }
 };
 

@@ -6,7 +6,7 @@
 const Table = require('cli-table')
 require('colors')
 const BrokerDaemonClient = require('../broker-daemon-client')
-const { ENUMS, validations, askQuestion, Big } = require('../utils')
+const { ENUMS, validations, askQuestion, Big, handleError } = require('../utils')
 const { currencies: currencyConfig } = require('../configuration')
 
 /**
@@ -75,7 +75,7 @@ async function balance (args, opts, logger) {
     logger.info('Wallet Balances'.bold.white)
     logger.info(balancesTable.toString())
   } catch (e) {
-    logger.error(e)
+    handleError(e, logger)
   }
 }
 
@@ -101,7 +101,7 @@ async function newDepositAddress (args, opts, logger) {
 
     logger.info(address)
   } catch (e) {
-    logger.error(e)
+    handleError(e, logger)
   }
 }
 
@@ -168,7 +168,7 @@ async function commitBalance (args, opts, logger) {
 
     logger.info('Successfully committed balance to sparkswap Relayer!')
   } catch (e) {
-    logger.error(e)
+    handleError(e, logger)
   }
 }
 
