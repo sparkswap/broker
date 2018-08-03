@@ -33,7 +33,8 @@ const SUPPORTED_SYMBOLS = Object.freeze(['BTC', 'LTC'])
 const SUPPORTED_COMMANDS = Object.freeze({
   BALANCE: 'balance',
   NEW_DEPOSIT_ADDRESS: 'new-deposit-address',
-  COMMIT_BALANCE: 'commit-balance'
+  COMMIT_BALANCE: 'commit-balance',
+  NETWORK_ADDRESS: 'network-address'
 })
 
 /**
@@ -172,10 +173,38 @@ async function commitBalance (args, opts, logger) {
   }
 }
 
+/**
+ * network-address
+ *
+ * ex: `sparkswap wallet network-address BTC`
+ *
+ * @function
+ * @param {Object} args
+ * @param {Object} args.symbol
+ * @param {Object} opts
+ * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {Logger} logger
+ * @return {Void}
+ */
+async function networkAddress (args, opts, logger) {
+  const { symbol } = args
+  const { rpcAddress = null } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+
+    const { paymentChannelNetworkAddress } = await client.walletService.getPaymentChannelNetworkAddress({ symbol })
+
+    logger.info(paymentChannelNetworkAddress)
+  } catch (e) {
+    logger.error(e)
+  }
+}
+
 module.exports = (program) => {
   program
     .command('wallet', 'Commands to handle a wallet instance')
-    .help('Available Commands: balance, new-deposit-address, commit-balance')
+    .help('Available Commands: balance, new-deposit-address, commit-balance, network-address')
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
@@ -210,6 +239,16 @@ module.exports = (program) => {
           args.amount = amount
 
           return commitBalance(args, opts, logger)
+        case SUPPORTED_COMMANDS.NETWORK_ADDRESS:
+          symbol = symbol.toUpperCase()
+
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
+            throw new Error(`Provided symbol is not a valid currency to retrieve a public key`)
+          }
+
+          args.symbol = symbol
+
+          return networkAddress(args, opts, logger)
       }
     })
     .command('wallet balance', 'Current daemon wallet balance')
@@ -218,4 +257,6 @@ module.exports = (program) => {
     .command('wallet commit-balance')
     .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`)
     .argument('[amount]', 'Amount of currency to commit to the relayer', validations.isDecimal)
+    .command('wallet network-address', 'Payment Channel Network Public key for a given currency')
+    .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
 }

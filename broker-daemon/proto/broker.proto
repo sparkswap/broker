@@ -732,6 +732,22 @@ message CommitBalanceRequest {
 }
 
 /**
+ * Get the payment channel network address for a given currency.
+ */
+message GetPaymentChannelNetworkAddressRequest {
+  // Currency for which to retrieve the address
+  Symbol symbol = 1;
+}
+
+/**
+ * Created deposit address for a given currency.
+ */
+message GetPaymentChannelNetworkAddressResponse {
+  // Network Address retrieved
+  string payment_channel_network_address = 1;
+}
+
+/**
  * The WalletService is for interacting with the wallets managed by the Broker on behalf of the user.
  *
  * It is used primarily during set up (e.g. making deposits) of a Broker.
@@ -847,4 +863,27 @@ service WalletService {
    * ```
    */
   rpc CommitBalance (CommitBalanceRequest) returns (google.protobuf.Empty);
+  /**
+   * GetPaymentChannelNetworkAddress retrieves the Payment Channel Network Address for the given currency.
+   *
+   * ```javascript
+   * const { paymentChannelNetworkAddress } = await walletService.getPaymentChannelNetworkAddress({ symbol: 'BTC' })
+   * console.log(paymentChannelNetworkAddress)
+   * ```
+   *
+   * ```shell
+   * > sparkswap wallet network-address BTC
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * > "025f08036e00e38468f52d68bb83939995440b72730bfaae99ace5630630997623@your.daemon:10113"
+   * ```
+   *
+   * ```shell
+   * 025f08036e00e38468f52d68bb83939995440b72730bfaae99ace5630630997623@your.daemon:10113
+   * ```
+   */
+  rpc GetPaymentChannelNetworkAddress (GetPaymentChannelNetworkAddressRequest) returns (GetPaymentChannelNetworkAddressResponse);
 }

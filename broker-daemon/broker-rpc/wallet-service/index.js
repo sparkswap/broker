@@ -4,6 +4,7 @@ const { loadProto } = require('../../utils')
 const newDepositAddress = require('./new-deposit-address')
 const getBalances = require('./get-balances')
 const commitBalance = require('./commit-balance')
+const getPaymentChannelNetworkAddress = require('./get-payment-channel-network-address')
 
 /**
  * WalletService provides interactions with an engine's crypto wallet
@@ -28,6 +29,7 @@ class WalletService {
     const {
       NewDepositAddressResponse,
       GetBalancesResponse,
+      GetPaymentChannelNetworkAddressResponse,
       google: {
         protobuf: {
           Empty: EmptyResponse
@@ -38,7 +40,8 @@ class WalletService {
     this.implementation = {
       newDepositAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engines }, { NewDepositAddressResponse }).register(),
       getBalances: new GrpcUnaryMethod(getBalances, this.messageId('getBalances'), { logger, engines }, { GetBalancesResponse }).register(),
-      commitBalance: new GrpcUnaryMethod(commitBalance, this.messageId('commitBalance'), { logger, engines, relayer }, { EmptyResponse }).register()
+      commitBalance: new GrpcUnaryMethod(commitBalance, this.messageId('commitBalance'), { logger, engines, relayer }, { EmptyResponse }).register(),
+      getPaymentChannelNetworkAddress: new GrpcUnaryMethod(getPaymentChannelNetworkAddress, this.messageId('getPaymentChannelNetworkAddress'), { logger, engines }, { GetPaymentChannelNetworkAddressResponse }).register()
     }
   }
 

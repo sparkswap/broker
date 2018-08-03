@@ -42,6 +42,39 @@ describe('cli wallet', () => {
     })
   })
 
+  describe('networkAddress', () => {
+    let args
+    let opts
+    let logger
+    let rpcAddress
+    let networkAddressStub
+    let daemonStub
+    let symbol
+
+    const networkAddress = program.__get__('networkAddress')
+
+    beforeEach(() => {
+      symbol = 'BTC'
+      args = { symbol }
+      rpcAddress = 'test:1337'
+      opts = { rpcAddress }
+      logger = { info: sinon.stub(), error: sinon.stub() }
+
+      networkAddressStub = sinon.stub()
+      daemonStub = sinon.stub()
+      daemonStub.prototype.walletService = { getPaymentChannelNetworkAddress: networkAddressStub }
+
+      program.__set__('BrokerDaemonClient', daemonStub)
+
+      networkAddress(args, opts, logger)
+    })
+
+    it('calls broker daemon for the pub key', () => {
+      expect(daemonStub).to.have.been.calledWith(rpcAddress)
+      expect(networkAddressStub).to.have.been.calledWith({ symbol })
+    })
+  })
+
   describe('balance', () => {
     let daemonStub
     let walletBalanceStub
