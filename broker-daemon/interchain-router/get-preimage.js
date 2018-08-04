@@ -117,7 +117,13 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
   }
 
   logger.debug(`Sending payment to ${takerAddress} to translate swap ${swapHash}`)
-  const paymentPreimage = await outboundEngine.translateSwap(takerAddress, swapHash, outboundAmount, timeLockDelta)
+  const { paymentPreimage, permanentError } = await outboundEngine.translateSwap(takerAddress, swapHash, outboundAmount, timeLockDelta)
+
+  if (permanentError) {
+    logger.error(permanentError)
+    return send({ permanentError })
+  }
+
   logger.debug(`Completed payment to ${takerAddress} for swap ${swapHash}`)
 
   // Note: we do NOT save the order here. The Interchain Router should treat orders as Read-only routing entries

@@ -13,6 +13,7 @@ describe('getPreimage', () => {
   let order
   let engines
   let preimage
+  let translateSwap
 
   beforeEach(() => {
     order = {
@@ -42,10 +43,14 @@ describe('getPreimage', () => {
       timeLock: '10000',
       bestHeight: '9000'
     }
+    translateSwap = sinon.stub()
+    translateSwap.resolves({
+      paymentPreimage: preimage
+    })
     send = sinon.stub()
     engines = new Map()
     engines.set('LTC', {
-      translateSwap: sinon.stub().resolves(preimage)
+      translateSwap
     })
     engines.set('BTC', {
       currencyConfig: {
@@ -128,6 +133,15 @@ describe('getPreimage', () => {
 
     expect(engines.get('LTC').translateSwap).to.have.been.calledOnce()
     expect(engines.get('LTC').translateSwap).to.have.been.calledWith(order.takerAddress, params.paymentHash, order.outboundAmount, '600000')
+  })
+
+  it('returns permanentError if the outbound engine returns one', async () => {
+    translateSwap.resolves({ permanentError: 'fake error' })
+
+    await getPreimage({ params, send, ordersByHash, engines })
+
+    expect(send).to.have.been.calledOnce()
+    expect(send).to.have.been.calledWith(sinon.match({ permanentError: 'fake error' }))
   })
 
   it('returns the preimage to the requesting client', async () => {
