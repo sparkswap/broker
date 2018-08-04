@@ -71,29 +71,50 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
   } = params
   const swapHash = paymentHash
 
-  const order = await getRoutingEntry(ordersByHash, swapHash)
+  let order
+
+  try {
+    order = await getRoutingEntry(ordersByHash, swapHash)
+  } catch (err) {
+    logger.error(err)
+    return send({ permanentError: err.message })
+  }
 
   const { inboundSymbol, inboundAmount, outboundSymbol, outboundAmount, takerAddress } = order
   const [ expectedSymbol, actualSymbol, expectedAmount, actualAmount ] = [ inboundSymbol, symbol, inboundAmount, amount ]
 
   if (expectedSymbol !== actualSymbol) {
-    throw new Error(`Wrong currency paid in for ${swapHash}. Expected ${expectedSymbol}, found ${actualSymbol}`)
+    const err = `Wrong currency paid in for ${swapHash}. Expected ${expectedSymbol}, found ${actualSymbol}`
+    logger.error(err)
+    return send({ permanentError: err })
   }
   if (Big(expectedAmount).gt(actualAmount)) {
-    throw new Error(`Insufficient currency paid in for ${swapHash}. Expected ${expectedAmount}, found ${actualAmount}`)
+    const err = `Insufficient currency paid in for ${swapHash}. Expected ${expectedAmount}, found ${actualAmount}`
+    logger.error(err)
+    return send({ permanentError: err })
   }
 
   const inboundEngine = engines.get(inboundSymbol)
   if (!inboundEngine) {
-    throw new Error(`No engine available for ${inboundSymbol}`)
+    const err = `No engine available for ${inboundSymbol}`
+    logger.error(err)
+    return send({ permanentError: err })
   }
 
   const outboundEngine = engines.get(outboundSymbol)
   if (!outboundEngine) {
-    throw new Error(`No engine available for ${outboundSymbol}`)
+    const err = `No engine available for ${outboundSymbol}`
+    logger.error(err)
+    return send({ permanentError: err })
   }
 
-  const timeLockDelta = timeLockDeltaInSeconds(inboundEngine, timeLock, bestHeight)
+  let timeLockDelta
+  try {
+    timeLockDelta = timeLockDeltaInSeconds(inboundEngine, timeLock, bestHeight)
+  } catch (err) {
+    logger.error(err)
+    return send({ permanentError: err.message })
+  }
 
   logger.debug(`Sending payment to ${takerAddress} to translate swap ${swapHash}`)
   const paymentPreimage = await outboundEngine.translateSwap(takerAddress, swapHash, outboundAmount, timeLockDelta)
