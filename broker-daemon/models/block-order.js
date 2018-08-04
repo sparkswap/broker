@@ -182,7 +182,7 @@ class BlockOrder {
     const baseAmountFactor = this.baseCurrencyConfig.quantumsPerCommon
     const counterAmountFactor = this.counterCurrencyConfig.quantumsPerCommon
 
-    const openOrders = this.openOrders.map(({ order, state }) => {
+    const openOrders = this.openOrders.map(({ order, state, error }) => {
       const baseCommonAmount = Big(order.baseAmount).div(baseAmountFactor)
       const counterCommonAmount = Big(order.counterAmount).div(counterAmountFactor)
 
@@ -190,11 +190,12 @@ class BlockOrder {
         orderId: order.orderId,
         amount: baseCommonAmount.toFixed(16),
         price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
-        orderStatus: state.toUpperCase()
+        orderStatus: state.toUpperCase(),
+        orderError: error.toString()
       }
     })
 
-    const fills = this.fills.map(({ fill, state }) => {
+    const fills = this.fills.map(({ fill, state, error }) => {
       const baseCommonAmount = Big(fill.fillAmount).div(baseAmountFactor)
       const counterCommonAmount = Big(fill.counterFillAmount).div(counterAmountFactor)
 
@@ -203,7 +204,8 @@ class BlockOrder {
         fillId: fill.fillId,
         amount: baseCommonAmount.toFixed(16),
         price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
-        fillStatus: state.toUpperCase()
+        fillStatus: state.toUpperCase(),
+        fillError: error.toString()
       }
     })
 
