@@ -57,19 +57,19 @@ async function balance (args, opts, logger) {
     const { balances } = await client.walletService.getBalances({})
 
     const balancesTable = new Table({
-      head: ['', 'Committed', 'Uncommitted'],
-      colWidths: [10, 22, 22],
+      head: ['', 'Committed (Pending)', 'Uncommitted (Pending)'],
+      colWidths: [10, 34, 34],
       style: { head: ['gray'] }
     })
 
-    balances.forEach(({ symbol, uncommittedBalance, totalChannelBalance }) => {
+    balances.forEach(({ symbol, uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance }) => {
       const divideBy = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
 
       balancesTable.push(
         [
           symbol,
-          Big(totalChannelBalance).div(divideBy).toFixed(16).green,
-          Big(uncommittedBalance).div(divideBy).toFixed(16)
+          `${Big(totalChannelBalance).div(divideBy).toFixed(16).green}` + ` (${Big(totalPendingChannelBalance).div(divideBy).toFixed(8)})`.grey,
+          Big(uncommittedBalance).div(divideBy).toFixed(16) + ` (${Big(uncommittedPendingBalance).div(divideBy).toFixed(8)})`.grey
         ]
       )
     })
