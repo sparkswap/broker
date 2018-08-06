@@ -17,6 +17,7 @@ describe('WalletService', () => {
   let getPaymentChannelNetworkAddress
   let balanceSpy
   let commitBalanceSpy
+  let getTradingCapacities
 
   before(() => {
     responseStub = sinon.stub()
@@ -30,13 +31,15 @@ describe('WalletService', () => {
         protobuf: {
           Empty: responseStub
         }
-      }
+      },
+      GetTradingCapacitiesResponse: responseStub
     })
     logger = sinon.stub()
     engines = sinon.stub()
     relayer = sinon.stub()
     newDepositAddress = sinon.spy()
     getPaymentChannelNetworkAddress = sinon.stub()
+    getTradingCapacities = sinon.stub()
     balanceSpy = sinon.spy()
     commitBalanceSpy = sinon.spy()
     unaryMethodStub = sinon.stub()
@@ -49,6 +52,7 @@ describe('WalletService', () => {
     WalletService.__set__('getBalances', balanceSpy)
     WalletService.__set__('commitBalance', commitBalanceSpy)
     WalletService.__set__('getPaymentChannelNetworkAddress', getPaymentChannelNetworkAddress)
+    WalletService.__set__('getTradingCapacities', getTradingCapacities)
 
     wallet = new WalletService(protoPath, { logger, engines, relayer })
   })
@@ -103,6 +107,17 @@ describe('WalletService', () => {
         expectedMessageId,
         { logger, engines },
         { GetPaymentChannelNetworkAddressResponse: responseStub }
+      )
+    })
+
+    it('creates a unary method for getPaymentChannelNetworkAddress', () => {
+      const expectedMessageId = '[WalletService:getTradingCapacities]'
+
+      expect(unaryMethodStub).to.have.been.calledWith(
+        getTradingCapacities,
+        expectedMessageId,
+        { logger, engines },
+        { GetTradingCapacitiesResponse: responseStub }
       )
     })
   })

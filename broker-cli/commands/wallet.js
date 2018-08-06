@@ -202,7 +202,6 @@ async function networkAddress (args, opts, logger) {
   }
 }
 
-
 /**
  * network-status
  *
@@ -216,41 +215,59 @@ async function networkAddress (args, opts, logger) {
  * @return {Void}
  */
 async function networkStatus (args, opts, logger) {
-  const { rpcAddress = null } = opts
+  const { market, rpcAddress = null } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
+    const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({market})
 
-    // TODO: get status from broker
-    const markets = []
-
-    if (!markets.length) {
-      return logger.error('Error: No markets returned from BrokerDaemon'.red)
-    }
-
-    markets.forEach(({ name, baseSymbol, counterSymbol }) => {
-      const statusTable = new Table({
-        head: ['Symbol', 'Send', 'Receive'],
-        colWidths: [8, 24, 24],
-        style: { head: ['gray'] }
-      })
-
-      statusTable.push([
-        baseSymbol,
-        '', // Send capacity and status
-        '' // Receive capacity and status
-      ])
-      statusTable.push([
-        counterSymbol,
-        '', // Send capacity and status
-        '' // Receive capacity and status
-      ])
-
-      logger.info(` ${name.bold.white}`)
-      logger.info(statusTable.toString())
+    const statusTable = new Table({
+      head: ['', baseSymbolCapacities.symbol, counterSymbolCapacities.symbol],
+      colWidths: [14, 24, 24],
+      style: { head: ['gray'] }
     })
+
+    statusTable.push(['Active ✅', '', ''])
+    statusTable.push(['  Send', formatBalance(baseSymbolCapacities.activeSendCapacity, 'active'), formatBalance(counterSymbolCapacities.activeSendCapacity, 'active')])
+    statusTable.push(['  Receive', formatBalance(baseSymbolCapacities.activeReceiveCapacity, 'active'), formatBalance(counterSymbolCapacities.activeReceiveCapacity, 'active')])
+
+    statusTable.push(['Pending ⏳', '', ''])
+    statusTable.push(['  Send', formatBalance(baseSymbolCapacities.pendingSendCapacity, 'pending'), formatBalance(counterSymbolCapacities.pendingSendCapacity, 'pending')])
+    statusTable.push(['  Receive', formatBalance(baseSymbolCapacities.pendingReceiveCapacity, 'pending'), formatBalance(counterSymbolCapacities.pendingReceiveCapacity, 'pending')])
+
+    statusTable.push(['Inactive ⚠️', '', ''])
+    statusTable.push(['  Send', formatBalance(baseSymbolCapacities.inactiveSendCapacity, 'inactive'), formatBalance(counterSymbolCapacities.inactiveSendCapacity, 'inactive')])
+    statusTable.push(['  Receive', formatBalance(baseSymbolCapacities.inactiveReceiveCapacity, 'inactive'), formatBalance(counterSymbolCapacities.inactiveReceiveCapacity, 'inactive')])
+
+    logger.info(` ${market.bold.white}`)
+    logger.info(statusTable.toString())
   } catch (e) {
     logger.error(e)
+  }
+}
+
+/**
+ * Formats the capacities to fixed numbers and colors them if they are greater
+ * than 0
+ *
+ * @function
+ * @param {string} balance
+ * @param {string} status
+ * @return {string} balance formatted with size and color
+ */
+function formatBalance (balance, status) {
+  const fixedBalance = Big(balance).toFixed(16)
+  if (Big(balance).gt(0)) {
+    switch (status) {
+      case 'active':
+        return fixedBalance.green
+      case 'pending':
+        return fixedBalance.yellow
+      case 'inactive':
+        return fixedBalance.red
+    }
+  } else {
+    return fixedBalance
   }
 }
 
@@ -261,6 +278,7 @@ module.exports = (program) => {
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
 
@@ -303,6 +321,8 @@ module.exports = (program) => {
 
           return networkAddress(args, opts, logger)
         case SUPPORTED_COMMANDS.NETWORK_STATUS:
+          const { market } = opts
+          opts.market = validations.isMarketName(market)
           return networkStatus(args, opts, logger)
       }
     })

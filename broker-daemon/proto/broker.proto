@@ -726,6 +726,37 @@ message GetBalancesResponse {
 }
 
 /**
+ * Balance in a currency in terms of what is committed in channels and total balance in wallets managed by this node.
+ */
+message Capacity {
+  // Currency of the balance.
+  string symbol = 1;
+  // Total balance of the wallets managed by this node in this currency, including balance in channels. This is currently in base units (e.g. Satoshi/Litoshis)
+  string active_send_capacity = 2;
+  // Balance in the listed currency that is currently in channels. This is currently in base units (e.g. Satoshis/Litoshis)
+  string active_receive_capacity = 3;
+  // Balance in the listed currency that is currently in pending channels. This is currently in base units (e.g. Satoshis/Litoshis)
+  string pending_send_capacity = 4;
+  // Balance in the listed currency that is currently in pending closing channels and unconfirmed wallet balance. This is currently in base units (e.g. Satoshis/Litoshis)
+  string pending_receive_capacity = 5;
+  string inactive_send_capacity = 6;
+  string inactive_receive_capacity = 7;
+}
+
+/**
+ * All balances for a Broker.
+ */
+message GetTradingCapacitiesResponse {
+  // Balances in all currencies available to this Broker.
+  Capacity baseSymbolCapacities = 1;
+  Capacity counterSymbolCapacities = 2;
+}
+
+message GetTradingCapacitiesRequest {
+  string market = 1;
+}
+
+/**
  * Request to commit an amount of a given currency.
  */
 message CommitBalanceRequest {
@@ -895,4 +926,6 @@ service WalletService {
    * ```
    */
   rpc GetPaymentChannelNetworkAddress (GetPaymentChannelNetworkAddressRequest) returns (GetPaymentChannelNetworkAddressResponse);
+  rpc GetTradingCapacities (GetTradingCapacitiesRequest) returns (GetTradingCapacitiesResponse);
+
 }
