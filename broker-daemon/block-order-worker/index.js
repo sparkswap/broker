@@ -185,9 +185,9 @@ class BlockOrderWorker extends EventEmitter {
         this.relayer.makerService.cancelOrder({ orderId, authorization })
       }))
     } catch (e) {
-      console.log('HERE')
-      console.log(e)
-      return this.failBlockOrder(blockOrderId, e)
+      this.logger.error('Failed to cancel all orders for block order: ', { blockOrderId })
+      this.failBlockOrder(blockOrderId, e)
+      throw e
     }
 
     this.logger.info(`Cancelled ${orders.length} underlying orders for ${blockOrder.id}`)
