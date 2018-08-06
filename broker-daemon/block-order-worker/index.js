@@ -178,8 +178,15 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info(`Found ${openOrders.length} orders in a state to be cancelled for Block order ${blockOrder.id}`)
 
     try {
-      await Promise.all(openOrders.map(({ order }) => this.relayer.makerService.cancelOrder({ orderId: order.orderId })))
+      await Promise.all(openOrders.map(({ order }) => {
+        const orderId = order.orderId
+        const authorization = this.relayer.identity.authorize(orderId)
+        this.logger.debug(`Generated authorization for ${orderId}`, authorization)
+        this.relayer.makerService.cancelOrder({ orderId, authorization })
+      }))
     } catch (e) {
+      console.log('HERE')
+      console.log(e)
       return this.failBlockOrder(blockOrderId, e)
     }
 

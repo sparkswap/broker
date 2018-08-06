@@ -530,6 +530,7 @@ describe('BlockOrderWorker', () => {
     let blockOrderValue = blockOrder
     let orders
     let getRecords
+    let identityStub
 
     beforeEach(() => {
       orders = [
@@ -549,11 +550,15 @@ describe('BlockOrderWorker', () => {
         value: blockOrderValue
       })
       getRecords = sinon.stub().resolves(orders)
+      identityStub = sinon.stub()
 
       BlockOrderWorker.__set__('getRecords', getRecords)
 
       relayer.makerService = {
         cancelOrder: sinon.stub().resolves()
+      }
+      relayer.identity = {
+        authorize: identityStub.returns('identity')
       }
 
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
@@ -664,6 +669,12 @@ describe('BlockOrderWorker', () => {
       store.get.callsArgWithAsync(1, err)
 
       return expect(worker.cancelBlockOrder('fakeId')).to.eventually.be.rejectedWith(BlockOrderNotFoundError)
+    })
+
+    it('authorizes the request', async () => {
+      const orderId = orders[0].order.orderId
+      await worker.cancelBlockOrder(orderId)
+      expect(relayer.identity.authorize).to.have.been.calledWith(orderId)
     })
   })
 
