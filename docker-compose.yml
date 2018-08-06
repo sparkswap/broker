@@ -1,3 +1,12 @@
+##########################################
+# sparkswap Broker-CLI and Broker-Daemon
+# https://sparkswap.com
+#
+# The broker and engines currently default to TestNet. To adjust settings, please
+# look at the associated `.env` files
+#
+##########################################
+
 version: '2.4'
 
 services:
@@ -34,15 +43,12 @@ services:
       - LTC_LND_TLS_CERT=/shared/lnd-engine-tls-ltc.cert
       - LTC_LND_MACAROON=/shared/lnd-engine-admin-ltc.macaroon
       - GRPC_SSL_CIPHER_SUITES=HIGH+ECDSA
-      # This address is specifically tied to the relayer network
-      # This is a temporary workaround for preventing the use of external networks
-      # for the relayer. In a testnet/mainnet setting, this will be a public IP.
-      - RELAYER_RPC_HOST=host.docker.internal:28492
-      # Only disable auth during dev
-      # - DISABLE_AUTH=true
-      - RELAYER_CERT_HOST=host.docker.internal:8080
-      - RELAYER_CERT_PATH=/secure/relayer-root.pem
       - MARKETS=BTC/LTC
+      # WARNING: only disable auth during dev
+      # - DISABLE_AUTH=true
+      - RELAYER_RPC_HOST=${RELAYER_RPC_HOST}
+      - RELAYER_CERT_HOST=${RELAYER_CERT_HOST}
+      - RELAYER_CERT_PATH=/secure/relayer-root.pem
     ports:
       - '27492:27492'
     networks:
@@ -57,54 +63,30 @@ services:
     ports:
       - '10113:10113'
     environment:
-      - RPC_USER=kuser
-      - RPC_PASS=kpass
-      - RPC_HOST=host.docker.internal:18556
-      - RPC_CERT_PATH=/shared/rpc-btc.cert
-      - ADMIN_MACAROON=/shared/lnd-engine-admin-btc.macaroon
-      - READ_ONLY_MACAROON=/shared/lnd-engine-readonly-btc.macaroon
-      - INVOICE_MACAROON=/shared/lnd-engine-invoice-btc.macaroon
-      - TLS_CERT_PATH=/shared/lnd-engine-tls-btc.cert
-      - TLS_KEY_PATH=/secure/lnd-engine-tls-btc.key
-      - NETWORK=simnet
-      - CHAIN=bitcoin
+      - RPC_USER=${BTC_RPC_USER}
+      - RPC_PASS=${BTC_RPC_PASS}
+      - NETWORK=${NETWORK}
       - DEBUG=info
-      - RPC_LISTEN=0.0.0.0:10009
-      - LISTEN=0.0.0.0:10113
-      # This address is for development only. You must change this to a
-      # tld to use in a production setting
-      - EXTERNAL_ADDRESS=host.docker.internal:10113
+      - EXTERNAL_ADDRESS="${EXTERNAL_BTC_ADDRESS}:10113"
       - EXTPREIMAGE_HOST=sparkswapd:40369
-      - REST_LISTEN=0.0.0.0:8101
-      - DATA_DIR=/data
-      - LOG_DIR=/data
-      - NODE=btcd
     volumes:
       - 'shared:/shared'
       - 'lnd_btc:/data'
     networks:
       - broker
-    # This option is only available for docker 2
     logging:
       options:
         max-size: 50m
-    entrypoint: ["./start-lnd.sh"]
 
-  # This BTCD section is not used due to simnet only allowing one node to be active
-  # at a time. We use shared ltcd/btcd nodes from the relayer, for the dev environment.
-  #
-  # However, this node needs to be created so that we have access to the correct
-  # certs for the shared nodes (certs are created on image build)
-  #
   btcd:
     image: sparkswap_btcd:latest
     volumes:
       - shared:/shared
       - bitcoin:/data
     environment:
-      - RPC_USER=kuser
-      - RPC_PASS=kpass
-      - NETWORK=simnet
+      - RPC_USER=${BTC_RPC_USER}
+      - RPC_PASS=${BTC_RPC_PASS}
+      - NETWORK=${NETWORK}
       - DEBUG=info
       - DATA_DIR=/data
       - LOG_DIR=/data
@@ -112,10 +94,8 @@ services:
       - RPC_CERT=/shared/rpc-btc.cert
       - RPC_LISTEN=0.0.0.0
       - "MINING_ADDRESS=$MINING_ADDRESS"
-      - MAX_WEB_SOCKETS=100
     networks:
       - broker
-    # This option is only available for docker 2
     logging:
       options:
         max-size: 50m
@@ -128,53 +108,29 @@ services:
     depends_on:
       - ltcd
     environment:
-      - RPC_USER=kuser
-      - RPC_PASS=kpass
-      - RPC_HOST=host.docker.internal:18666
-      - RPC_CERT_PATH=/shared/rpc-ltc.cert
-      - ADMIN_MACAROON=/shared/lnd-engine-admin-ltc.macaroon
-      - READ_ONLY_MACAROON=/shared/lnd-engine-readonly-ltc.macaroon
-      - INVOICE_MACAROON=/shared/lnd-engine-invoice-ltc.macaroon
-      - TLS_CERT_PATH=/shared/lnd-engine-tls-ltc.cert
-      - TLS_KEY_PATH=/secure/lnd-engine-tls-ltc.key
-      - NETWORK=simnet
-      - CHAIN=litecoin
-      - NODE=ltcd
-      - DEBUG=info
-      - RPC_LISTEN=0.0.0.0:10009
-      - LISTEN=0.0.0.0:10114
-      # This address is for development only. You must change this to a
-      # tld to use in a production setting
-      - EXTERNAL_ADDRESS=host.docker.internal:10114
+      - RPC_USER=${LTC_RPC_USER}
+      - RPC_PASS=%{LTC_RPC_PASS}
+      - NETWORK=${NETWORK}
+      - DEBUG=trace
+      - EXTERNAL_ADDRESS="${EXTERNAL_BTC_ADDRESS}:10114"
       - EXTPREIMAGE_HOST=sparkswapd:40369
-      - REST_LISTEN=0.0.0.0:8101
-      - DATA_DIR=/data
-      - LOG_DIR=/data
     volumes:
       - 'shared:/shared'
       - 'lnd_ltc:/data'
     networks:
       - broker
-    # This option is only available for docker 2
     logging:
       options:
         max-size: 50m
-    entrypoint: ["./start-lnd.sh"]
 
-  # This LTCD section is not used due to simnet only allowing one node to be active
-  # at a time. We use shared ltcd/btcd nodes from the relayer, for the dev environment.
-  #
-  # However, this node needs to be created so that we have access to the correct
-  # certs for the shared nodes (certs are created on image build)
-  #
   ltcd:
     image: sparkswap_ltcd:latest
     volumes:
       - shared:/shared
       - litecoin:/data
     environment:
-      - RPC_USER=kuser
-      - RPC_PASS=kpass
+      - RPC_USER=${LTC_RPC_USER}
+      - RPC_PASS=${LTC_RPC_PASS}
       - NETWORK=simnet
       - DEBUG=info
       - DATA_DIR=/data
@@ -182,12 +138,9 @@ services:
       - RPC_KEY=/secure/rpc.key
       - RPC_CERT=/shared/rpc-ltc.cert
       - RPC_LISTEN=0.0.0.0
-      - MAX_WEB_SOCKETS=100
-      # This is set dynamically in the startup scripts
       - "MINING_ADDRESS=$MINING_ADDRESS"
     networks:
       - broker
-    # This option is only available for docker 2
     logging:
       options:
         max-size: 50m
