@@ -726,31 +726,32 @@ message GetBalancesResponse {
 }
 
 /**
- * Balance in a currency in terms of what is committed in channels and total balance in wallets managed by this node.
+ * Local and remote balances in the listed currency in the active, pending and inactive channels.
  */
 message Capacity {
   // Currency of the balance.
   string symbol = 1;
-  // Total balance of the wallets managed by this node in this currency, including balance in channels. This is currently in base units (e.g. Satoshi/Litoshis)
+  // Total active amount a user can send in the currency. This is currently in base units (e.g. Satoshi/Litoshis)
   string active_send_capacity = 2;
-  // Balance in the listed currency that is currently in channels. This is currently in base units (e.g. Satoshis/Litoshis)
+  // Total active amount a user can receive in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
   string active_receive_capacity = 3;
-  // Balance in the listed currency that is currently in pending channels. This is currently in base units (e.g. Satoshis/Litoshis)
+  // Total pending amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
   string pending_send_capacity = 4;
-  // Balance in the listed currency that is currently in pending closing channels and unconfirmed wallet balance. This is currently in base units (e.g. Satoshis/Litoshis)
+  // Total pending amount a user can receive in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
   string pending_receive_capacity = 5;
+  // Total inactive amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
   string inactive_send_capacity = 6;
+  // Total inactive amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
   string inactive_receive_capacity = 7;
-
 }
 
 /**
- * All balances for a Broker.
+ * All trading capacities for a Broker.
  */
 message GetTradingCapacitiesResponse {
   // Balances in all currencies available to this Broker.
-  Capacity baseSymbolCapacities = 1;
-  Capacity counterSymbolCapacities = 2;
+  Capacity base_symbol_capacities = 1;
+  Capacity counter_symbol_capacities = 2;
 }
 
 message GetTradingCapacitiesRequest {
