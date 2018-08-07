@@ -940,12 +940,6 @@ service WalletService {
   /**
    * GetTradingCapacities retrieves the remote and local capacities from the base and counter engines active, pending and inactive channels.
    *
-   activeSendCapacity: Big(activeChannelCapacities.localBalance).div(divideBy).toString(),
-   activeReceiveCapacity: Big(activeChannelCapacities.remoteBalance).div(divideBy).toString(),
-   pendingSendCapacity: Big(pendingChannelCapacities.localBalance).div(divideBy).toString(),
-   pendingReceiveCapacity: Big(pendingChannelCapacities.remoteBalance).div(divideBy).toString(),
-   inactiveSendCapacity: Big(inactiveChannelCapacities.localBalance).div(divideBy).toString(),
-   inactiveReceiveCapacity
    * Capacities are divided into three categories, active, pending and inactive. Each of these categories are further broken down into
    * the categories local and remote. For example, the activeSendCapacity is the local capacity in active channels for that engine, where pendingReceiveCapacity
    * is the remote capacity in pending channels for that engine. The response from GetTradingCapacities is a baseSymbolCapacities and counterSymbolCapacities
