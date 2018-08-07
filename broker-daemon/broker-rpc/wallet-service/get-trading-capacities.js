@@ -27,18 +27,25 @@ async function getEngineTradingCapacities ([symbol, engine]) {
 }
 
 /**
- * Grabs the daemons lnd wallet balance
+ * Grabs the remote and local capacities from the requested engines active, pending and inactive channels
  *
  * @function
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Object} request.params
  * @param {Map} request.engines
  * @param {Logger} request.logger
+ * @param {Object} request.orderbooks - initialized orderbooks
  * @param {function} responses.GetTradingCapacitiesResponse
  * @return {GetTradingCapacitiesResponse}
  */
-async function getTradingCapacities ({ params, logger, engines }, { GetTradingCapacitiesResponse }) {
-  const [ baseSymbol, counterSymbol ] = params.market.split('/')
+async function getTradingCapacities ({ params, logger, engines, orderbooks }, { GetTradingCapacitiesResponse }) {
+  const { market } = params
+  const orderbook = orderbooks.get(market)
+
+  if (!orderbook) {
+    throw new Error(`${market} is not being tracked as a market.`)
+  }
+  const [ baseSymbol, counterSymbol ] = market.split('/')
 
   const baseEngine = engines.get(baseSymbol)
   if (!baseEngine) {
@@ -55,7 +62,6 @@ async function getTradingCapacities ({ params, logger, engines }, { GetTradingCa
     getEngineTradingCapacities([counterSymbol, counterEngine])
   ])
 
-  console.log(baseSymbolCapacities, counterSymbolCapacities)
   return new GetTradingCapacitiesResponse({ baseSymbolCapacities, counterSymbolCapacities })
 }
 

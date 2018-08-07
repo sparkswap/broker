@@ -211,6 +211,7 @@ async function networkAddress (args, opts, logger) {
  * @param {Object} args
  * @param {Object} opts
  * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {String} [opts.market] market name
  * @param {Logger} logger
  * @return {Void}
  */
@@ -265,10 +266,12 @@ function formatBalance (balance, status) {
         return fixedBalance.yellow
       case 'inactive':
         return fixedBalance.red
+      default:
+        return fixedBalance
     }
-  } else {
-    return fixedBalance
   }
+
+  return fixedBalance
 }
 
 module.exports = (program) => {
@@ -335,4 +338,5 @@ module.exports = (program) => {
     .command('wallet network-address', 'Payment Channel Network Public key for a given currency')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .command('wallet network-status', 'Payment Channel Network status for trading in different markets')
+    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
 }

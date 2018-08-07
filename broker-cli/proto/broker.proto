@@ -746,15 +746,20 @@ message Capacity {
 }
 
 /**
- * All trading capacities for a Broker.
+ * Trading capacities for the base and counter currencies for a given market.
  */
 message GetTradingCapacitiesResponse {
-  // Balances in all currencies available to this Broker.
+  // local and remote capacities in active, pending and inactive channels for the base currency
   Capacity base_symbol_capacities = 1;
+  // local and remote capacities in active, pending and inactive channels for the counter currency
   Capacity counter_symbol_capacities = 2;
 }
 
+/**
+ * Request to retrieve local and remote capacities in active, pending and inactive channels for a given market
+ */
 message GetTradingCapacitiesRequest {
+  // Name of the market to retrieve capacities for
   string market = 1;
 }
 
@@ -861,13 +866,13 @@ service WalletService {
    *
    * ```shell
    * Wallet Balances
-   * ┌──────────┬─────────────────────────┬─────────────────────────┐
-   * │          │ Committed               │ Uncommitted             │
-   * ├──────────┼─────────────────────────┼─────────────────────────┤
-   * │ BTC      │ 0.1670000000000000      │ 9.8300000000000000      │
-   * ├──────────┼─────────────────────────┼─────────────────────────┤
-   * │ LTC      │ 0.1670000000000000      │ 9.8300000000000000      │
-   * └──────────┴─────────────────────────┴─────────────────────────┘
+   * ┌──────────┬──────────────────────────────────┬──────────────────────────────────┐
+   * │          │ Committed (Pending)              │ Uncommitted (Pending)            │
+   * ├──────────┼──────────────────────────────────┼──────────────────────────────────┤
+   * │ BTC      │ 0.1676816500000000 (0.00000000)  │ 9.8321513500000000 (0.00000000)  │
+   * ├──────────┼──────────────────────────────────┼──────────────────────────────────┤
+   * │ LTC      │ 0.0000000000000000 (0.00000000)  │ 10.0000000000000000 (0.00000000) │
+   * └──────────┴──────────────────────────────────┴──────────────────────────────────┘
    * ```
    */
   rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse);
@@ -928,6 +933,78 @@ service WalletService {
    * ```
    */
   rpc GetPaymentChannelNetworkAddress (GetPaymentChannelNetworkAddressRequest) returns (GetPaymentChannelNetworkAddressResponse);
+  /**
+   * GetTradingCapacities retrieves the remote and local capacities from the base and counter engines active, pending and inactive channels.
+   *
+   activeSendCapacity: Big(activeChannelCapacities.localBalance).div(divideBy).toString(),
+   activeReceiveCapacity: Big(activeChannelCapacities.remoteBalance).div(divideBy).toString(),
+   pendingSendCapacity: Big(pendingChannelCapacities.localBalance).div(divideBy).toString(),
+   pendingReceiveCapacity: Big(pendingChannelCapacities.remoteBalance).div(divideBy).toString(),
+   inactiveSendCapacity: Big(inactiveChannelCapacities.localBalance).div(divideBy).toString(),
+   inactiveReceiveCapacity
+   * Capacities are divided into three categories, active, pending and inactive. Each of these categories are further broken down into
+   * the categories local and remote. For example, the activeSendCapacity is the local capacity in active channels for that engine, where pendingReceiveCapacity
+   * is the remote capacity in pending channels for that engine. The response from GetTradingCapacities is a baseSymbolCapacities and counterSymbolCapacities
+   * object where the respective capacities are grouped.
+   *
+   * ```javascript
+   * walletService.getTradingCapacities({market: 'BTC/LTC}, (err, { baseSymbolCapacities, counterSymbolCapacities }) => {
+   *   if (err) return console.error(err)
+   *   console.log(baseSymbolCapacities)
+   *   console.log(counterSymbolCapacities)
+   * })
+   * ```
+   *
+   * ```shell
+   * > sparkswap wallet network-status --market BTC/LTC
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * { "symbol": "BTC",
+   *   "activeSendCapacity": "0.16768165",
+   *   "activeReceiveCapacity": "0.0027057",
+   *   "pendingSendCapacity": "0",
+   *   "pendingReceiveCapacity": "0",
+   *   "inactiveSendCapacity": "0",
+   *   "inactiveReceiveCapacity": "0"
+   * },
+   * { "symbol": "LTC",
+   *   "activeSendCapacity": "0.16741015",
+   *   "activeReceiveCapacity": "10.065967",
+   *   "pendingSendCapacity": "0",
+   *   "pendingReceiveCapacity": "0",
+   *   "inactiveSendCapacity": "0",
+   *   "inactiveReceiveCapacity": "0"
+   * }
+   * ```
+   *
+   * ```shell
+   * BTC/LTC
+   * ┌──────────────┬────────────────────────┬────────────────────────┐
+   * │              │ BTC Capacity           │ LTC Capacity           │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │ Active       │                        │                        │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Buy BTC    │ 0.0027057000000000     │ 0.1674101500000000     │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Sell BTC   │ 0.1676816500000000     │ 10.0659670000000000    │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │ Pending      │                        │                        │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Buy BTC    │ 0.0000000000000000     │ 0.0000000000000000     │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Sell BTC   │ 0.0000000000000000     │ 0.0000000000000000     │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │ Inactive     │                        │                        │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Buy BTC    │ 0.0000000000000000     │ 0.0000000000000000     │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Sell BTC   │ 0.0000000000000000     │ 0.0000000000000000     │
+   * └──────────────┴────────────────────────┴────────────────────────┘
+   * ```
+   */
   rpc GetTradingCapacities (GetTradingCapacitiesRequest) returns (GetTradingCapacitiesResponse);
 
 }

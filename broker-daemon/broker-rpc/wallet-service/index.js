@@ -19,7 +19,7 @@ class WalletService {
    * @param {RelayerClient} options.relayer
    * @param {Map<String, LndEngine>} options.engines
    */
-  constructor (protoPath, { logger, engines, relayer }) {
+  constructor (protoPath, { logger, engines, relayer, orderbooks }) {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
     this.logger = logger
@@ -44,7 +44,7 @@ class WalletService {
       getBalances: new GrpcUnaryMethod(getBalances, this.messageId('getBalances'), { logger, engines }, { GetBalancesResponse }).register(),
       commitBalance: new GrpcUnaryMethod(commitBalance, this.messageId('commitBalance'), { logger, engines, relayer }, { EmptyResponse }).register(),
       getPaymentChannelNetworkAddress: new GrpcUnaryMethod(getPaymentChannelNetworkAddress, this.messageId('getPaymentChannelNetworkAddress'), { logger, engines }, { GetPaymentChannelNetworkAddressResponse }).register(),
-      getTradingCapacities: new GrpcUnaryMethod(getTradingCapacities, this.messageId('getTradingCapacities'), { logger, engines }, { GetTradingCapacitiesResponse }).register()
+      getTradingCapacities: new GrpcUnaryMethod(getTradingCapacities, this.messageId('getTradingCapacities'), { logger, engines, orderbooks }, { GetTradingCapacitiesResponse }).register()
     }
   }
 
