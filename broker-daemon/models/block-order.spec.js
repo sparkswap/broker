@@ -358,14 +358,6 @@ describe('BlockOrder', () => {
 
           expect(serialized.openOrders[0]).to.have.property('orderStatus', 'CREATED')
         })
-
-        it('returns an undefined value for orderError for a successful order', () => {
-          blockOrder.openOrders = [ osm ]
-
-          const serialized = blockOrder.serialize()
-
-          expect(serialized.openOrders[0]).to.have.property('orderError', undefined)
-        })
       })
 
       describe('fills', () => {
@@ -457,14 +449,6 @@ describe('BlockOrder', () => {
           const serialized = blockOrder.serialize()
 
           expect(serialized.fills[0]).to.have.property('fillStatus', 'CREATED')
-        })
-
-        it('returns an undefined value for fillError for a successful order', () => {
-          blockOrder.fills = [ fsm ]
-
-          const serialized = blockOrder.serialize()
-
-          expect(serialized.fills[0]).to.have.property('fillError', undefined)
         })
       })
     })

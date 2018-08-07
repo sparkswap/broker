@@ -16,7 +16,7 @@ echo "It's time to BUILD! All resistance is futile."
 echo ""
 
 echo "Reinstalling dependencies"
-npm install
+npm i
 
 echo "Checking broker.proto file for issues"
 npm run broker-proto
