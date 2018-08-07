@@ -213,7 +213,7 @@ describe('cli wallet', () => {
     })
 
     it('adds active header', () => {
-      const expectedResult = ['Active ✅', '', '']
+      const expectedResult = ['Active', '', '']
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
 
@@ -228,7 +228,7 @@ describe('cli wallet', () => {
     })
 
     it('adds pending header', () => {
-      const expectedResult = ['Pending ⏳', '', '']
+      const expectedResult = ['Pending', '', '']
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
 
@@ -243,7 +243,7 @@ describe('cli wallet', () => {
     })
 
     it('adds inactive header', () => {
-      const expectedResult = ['Inactive ⚠️', '', '']
+      const expectedResult = ['Inactive', '', '']
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
 
