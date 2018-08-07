@@ -222,22 +222,22 @@ async function networkStatus (args, opts, logger) {
     const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({market})
 
     const statusTable = new Table({
-      head: ['', baseSymbolCapacities.symbol, counterSymbolCapacities.symbol],
+      head: ['', `${baseSymbolCapacities.symbol.toUpperCase()} Capacity`, `${counterSymbolCapacities.symbol.toUpperCase()} Capacity`],
       colWidths: [14, 24, 24],
       style: { head: ['gray'] }
     })
 
     statusTable.push(['Active ✅', '', ''])
-    statusTable.push(['  Send', formatBalance(baseSymbolCapacities.activeSendCapacity, 'active'), formatBalance(counterSymbolCapacities.activeSendCapacity, 'active')])
-    statusTable.push(['  Receive', formatBalance(baseSymbolCapacities.activeReceiveCapacity, 'active'), formatBalance(counterSymbolCapacities.activeReceiveCapacity, 'active')])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.activeReceiveCapacity, 'active'), formatBalance(counterSymbolCapacities.activeSendCapacity, 'active')])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.activeSendCapacity, 'active'), formatBalance(counterSymbolCapacities.activeReceiveCapacity, 'active')])
 
     statusTable.push(['Pending ⏳', '', ''])
-    statusTable.push(['  Send', formatBalance(baseSymbolCapacities.pendingSendCapacity, 'pending'), formatBalance(counterSymbolCapacities.pendingSendCapacity, 'pending')])
-    statusTable.push(['  Receive', formatBalance(baseSymbolCapacities.pendingReceiveCapacity, 'pending'), formatBalance(counterSymbolCapacities.pendingReceiveCapacity, 'pending')])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingReceiveCapacity, 'pending'), formatBalance(counterSymbolCapacities.pendingSendCapacity, 'pending')])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingSendCapacity, 'pending'), formatBalance(counterSymbolCapacities.pendingReceiveCapacity, 'pending')])
 
     statusTable.push(['Inactive ⚠️', '', ''])
-    statusTable.push(['  Send', formatBalance(baseSymbolCapacities.inactiveSendCapacity, 'inactive'), formatBalance(counterSymbolCapacities.inactiveSendCapacity, 'inactive')])
-    statusTable.push(['  Receive', formatBalance(baseSymbolCapacities.inactiveReceiveCapacity, 'inactive'), formatBalance(counterSymbolCapacities.inactiveReceiveCapacity, 'inactive')])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveReceiveCapacity, 'inactive'), formatBalance(counterSymbolCapacities.inactiveSendCapacity, 'inactive')])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveSendCapacity, 'inactive'), formatBalance(counterSymbolCapacities.inactiveReceiveCapacity, 'inactive')])
 
     logger.info(` ${market.bold.white}`)
     logger.info(statusTable.toString())
