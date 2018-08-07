@@ -213,6 +213,8 @@ message Order {
   string amount = 3;
   // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the SparkSwap Relayer have prices.
   string price = 4;
+  // Any error messages related to the status of a REJECTED or FAILED order
+  string order_error = 6;
 }
 
 /**
@@ -245,6 +247,8 @@ message Fill {
   string amount = 4;
   // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the SparkSwap Relayer have prices.
   string price = 5;
+  // Any error messages related to the status of a REJECTED or FAILED fill
+  string fill_error = 6;
 }
 
 /**
