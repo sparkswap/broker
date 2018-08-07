@@ -4,7 +4,7 @@ const { expect, rewire, sinon, delay } = require('test/test-helper')
 
 const BlockOrderWorker = rewire(path.resolve(__dirname))
 
-describe.only('BlockOrderWorker', () => {
+describe('BlockOrderWorker', () => {
   let eventsOn
   let eventsEmit
   let safeid
