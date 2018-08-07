@@ -191,7 +191,7 @@ class BlockOrder {
         amount: baseCommonAmount.toFixed(16),
         price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
         orderStatus: state.toUpperCase(),
-        orderError: error ? error.toString() : null
+        orderError: error ? error.toString() : undefined
       }
     })
 
@@ -205,7 +205,7 @@ class BlockOrder {
         amount: baseCommonAmount.toFixed(16),
         price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
         fillStatus: state.toUpperCase(),
-        fillError: error ? error.toString() : null
+        fillError: error ? error.toString() : undefined
       }
     })
 
