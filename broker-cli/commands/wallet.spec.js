@@ -153,6 +153,131 @@ describe('cli wallet', () => {
     })
   })
 
+  describe('networkStatus', () => {
+    let daemonStub
+    let getTradingCapacitiesStub
+    let rpcAddress
+    let opts
+    let logger
+    let tableStub
+    let tablePushStub
+    let market
+    let baseSymbolCapacities
+    let counterSymbolCapacities
+
+    const networkStatus = program.__get__('networkStatus')
+    const formatBalance = program.__get__('formatBalance')
+
+    beforeEach(() => {
+      market = 'BTC/LTC'
+      rpcAddress = 'test:1337'
+      opts = { rpcAddress, market }
+      logger = { info: sinon.stub(), error: sinon.stub() }
+      baseSymbolCapacities = {
+        symbol: 'BTC',
+        activeReceiveCapacity: '0.00001',
+        activeSendCapacity: '0.000001',
+        inactiveReceiveCapacity: '0.00002',
+        inactiveSendCapacity: '0.000002',
+        pendingReceiveCapacity: '0.00001',
+        pendingSendCapacity: '0.000005'
+      }
+      counterSymbolCapacities = {
+        symbol: 'LTC',
+        activeReceiveCapacity: '0.00006',
+        activeSendCapacity: '0.000001',
+        inactiveReceiveCapacity: '0.00002',
+        inactiveSendCapacity: '0.000002',
+        pendingReceiveCapacity: '0.00001',
+        pendingSendCapacity: '0.000005'
+      }
+
+      getTradingCapacitiesStub = sinon.stub().returns({baseSymbolCapacities, counterSymbolCapacities})
+      tableStub = sinon.stub()
+      tablePushStub = sinon.stub()
+      tableStub.prototype.push = tablePushStub
+      daemonStub = sinon.stub()
+      daemonStub.prototype.walletService = { getTradingCapacities: getTradingCapacitiesStub }
+
+      program.__set__('BrokerDaemonClient', daemonStub)
+      program.__set__('Table', tableStub)
+    })
+
+    beforeEach(async () => {
+      await networkStatus({}, opts, logger)
+    })
+
+    it('calls broker daemon for the network status', () => {
+      expect(daemonStub).to.have.been.calledWith(rpcAddress)
+      expect(getTradingCapacitiesStub).to.have.been.calledOnce()
+    })
+
+    it('adds active header', () => {
+      const expectedResult = ['Active ✅', '', '']
+      expect(tablePushStub).to.have.been.calledWith(expectedResult)
+    })
+
+    it('adds a correct active capacities for buying the base', () => {
+      const expectedResult = ['  Buy BTC', formatBalance('0.00001', 'active'), formatBalance('0.000001', 'active')]
+      expect(tablePushStub).to.have.been.calledWith(expectedResult)
+    })
+
+    it('adds a correct active capacities for selling the base', () => {
+      const expectedResult = ['  Sell BTC', formatBalance('0.000001', 'active'), formatBalance('0.00006', 'active')]
+      expect(tablePushStub).to.have.been.calledWith(expectedResult)
+    })
+
+    it('adds pending header', () => {
+      const expectedResult = ['Pending ⏳', '', '']
+      expect(tablePushStub).to.have.been.calledWith(expectedResult)
+    })
+
+    it('adds correct pending capacities for buying the base', () => {
+      const expectedResult = ['  Buy BTC', formatBalance('0.00001', 'pending'), formatBalance('0.000005', 'pending')]
+      expect(tablePushStub).to.have.been.calledWith(expectedResult)
+    })
+
+    it('adds correct pending capacities for selling the base', () => {
+      const expectedResult = ['  Sell BTC', formatBalance('0.000005', 'pending'), formatBalance('0.00001', 'pending')]
+      expect(tablePushStub).to.have.been.calledWith(expectedResult)
+    })
+
+    it('adds inactive header', () => {
+      const expectedResult = ['Inactive ⚠️', '', '']
+      expect(tablePushStub).to.have.been.calledWith(expectedResult)
+    })
+
+    it('adds correct inactive capacities for buying the base', () => {
+      const expectedResult = ['  Buy BTC', formatBalance('0.00002', 'inactive'), formatBalance('0.000002', 'inactive')]
+      expect(tablePushStub).to.have.been.calledWith(expectedResult)
+    })
+
+    it('adds correct inactive capacities for selling the base', () => {
+      const expectedResult = ['  Sell BTC', formatBalance('0.000002', 'inactive'), formatBalance('0.00002', 'inactive')]
+      expect(tablePushStub).to.have.been.calledWith(expectedResult)
+    })
+  })
+
+  describe('formatBalance', () => {
+    const formatBalance = program.__get__('formatBalance')
+
+    it('does not color the balance if the balance is 0', () => {
+      expect(formatBalance('0', 'active')).to.eql('0.0000000000000000')
+    })
+
+    it('colors the balance green if the balance is greater than 0 and the status is active', () => {
+      expect(formatBalance('0.0002', 'active')).to.eql('0.0002000000000000'.green)
+    })
+
+    it('colors the balance yellow if the balance is greater than 0 and the status is pending', () => {
+      expect(formatBalance('0.00003', 'pending')).to.eql('0.0000300000000000'.yellow)
+    })
+
+    it('colors the balance red if the balance is greater than 0 and the status is inactive', () => {
+      expect(formatBalance('0.004', 'inactive')).to.eql('0.0040000000000000'.red)
+    })
+  })
+
   describe('commitBalance', () => {
     let args
     let opts
