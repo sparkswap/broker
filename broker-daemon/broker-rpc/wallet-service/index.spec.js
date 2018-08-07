@@ -18,6 +18,7 @@ describe('WalletService', () => {
   let balanceSpy
   let commitBalanceSpy
   let getTradingCapacities
+  let orderbooks
 
   before(() => {
     responseStub = sinon.stub()
@@ -37,6 +38,7 @@ describe('WalletService', () => {
     logger = sinon.stub()
     engines = sinon.stub()
     relayer = sinon.stub()
+    orderbooks = sinon.stub()
     newDepositAddress = sinon.spy()
     getPaymentChannelNetworkAddress = sinon.stub()
     getTradingCapacities = sinon.stub()
@@ -54,7 +56,7 @@ describe('WalletService', () => {
     WalletService.__set__('getPaymentChannelNetworkAddress', getPaymentChannelNetworkAddress)
     WalletService.__set__('getTradingCapacities', getTradingCapacities)
 
-    wallet = new WalletService(protoPath, { logger, engines, relayer })
+    wallet = new WalletService(protoPath, { logger, engines, relayer, orderbooks })
   })
 
   it('sets a protoPath', () => expect(wallet.protoPath).to.eql(protoPath))
@@ -116,7 +118,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         getTradingCapacities,
         expectedMessageId,
-        { logger, engines },
+        { logger, engines, orderbooks },
         { GetTradingCapacitiesResponse: responseStub }
       )
     })

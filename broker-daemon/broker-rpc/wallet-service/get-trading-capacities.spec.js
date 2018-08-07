@@ -12,12 +12,14 @@ describe('getTradingCapacities', () => {
   let getEngineTradingCapacitiesStub
   let revert
   let params
+  let orderbooks
 
   beforeEach(() => {
     logger = {
       info: sinon.stub()
     }
     params = { market: 'BTC/LTC' }
+    orderbooks = new Map([['BTC/LTC', { store: sinon.stub() }]])
     baseEngineStub = sinon.stub()
     counterEngineStub = sinon.stub()
     engines = new Map([['BTC', baseEngineStub], ['LTC', counterEngineStub]])
@@ -28,7 +30,7 @@ describe('getTradingCapacities', () => {
   })
 
   beforeEach(async () => {
-    await getTradingCapacities({ params, logger, engines }, { GetTradingCapacitiesResponse })
+    await getTradingCapacities({ params, logger, engines, orderbooks }, { GetTradingCapacitiesResponse })
   })
 
   afterEach(() => {
