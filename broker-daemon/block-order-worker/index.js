@@ -182,7 +182,7 @@ class BlockOrderWorker extends EventEmitter {
         const orderId = order.orderId
         const authorization = this.relayer.identity.authorize(orderId)
         this.logger.debug(`Generated authorization for ${orderId}`, authorization)
-        this.relayer.makerService.cancelOrder({ orderId, authorization })
+        return this.relayer.makerService.cancelOrder({ orderId, authorization })
       }))
     } catch (e) {
       this.logger.error('Failed to cancel all orders for block order: ', { blockOrderId })

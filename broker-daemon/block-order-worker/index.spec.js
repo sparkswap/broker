@@ -4,7 +4,7 @@ const { expect, rewire, sinon, delay } = require('test/test-helper')
 
 const BlockOrderWorker = rewire(path.resolve(__dirname))
 
-describe('BlockOrderWorker', () => {
+describe.only('BlockOrderWorker', () => {
   let eventsOn
   let eventsEmit
   let safeid
@@ -622,6 +622,25 @@ describe('BlockOrderWorker', () => {
 
       expect(relayer.makerService.cancelOrder).to.have.been.calledOnce()
       expect(relayer.makerService.cancelOrder).to.have.been.calledWith(sinon.match({ orderId: orders[0].order.orderId }))
+    })
+
+    it('fails the block order if relayer cancellation fails', async () => {
+      const fakeError = new Error('myerror')
+      const fakeId = 'myid'
+
+      worker.failBlockOrder = sinon.stub()
+      relayer.makerService.cancelOrder.rejects(fakeError)
+
+      try {
+        await worker.cancelBlockOrder(fakeId)
+      } catch (e) {
+        expect(e).to.be.eql(fakeError)
+        expect(worker.failBlockOrder).to.have.been.calledOnce()
+        expect(worker.failBlockOrder).to.have.been.calledWith(fakeId, fakeError)
+        return
+      }
+
+      throw new Error('Expected relayer cancellation to throw an error')
     })
 
     it('filters out orders not in a placed or created state', async () => {
