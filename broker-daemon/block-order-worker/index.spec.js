@@ -530,6 +530,7 @@ describe('BlockOrderWorker', () => {
     let blockOrderValue = blockOrder
     let orders
     let getRecords
+    let identityStub
 
     beforeEach(() => {
       orders = [
@@ -549,11 +550,15 @@ describe('BlockOrderWorker', () => {
         value: blockOrderValue
       })
       getRecords = sinon.stub().resolves(orders)
+      identityStub = sinon.stub()
 
       BlockOrderWorker.__set__('getRecords', getRecords)
 
       relayer.makerService = {
         cancelOrder: sinon.stub().resolves()
+      }
+      relayer.identity = {
+        authorize: identityStub.returns('identity')
       }
 
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
@@ -619,6 +624,25 @@ describe('BlockOrderWorker', () => {
       expect(relayer.makerService.cancelOrder).to.have.been.calledWith(sinon.match({ orderId: orders[0].order.orderId }))
     })
 
+    it('fails the block order if relayer cancellation fails', async () => {
+      const fakeError = new Error('myerror')
+      const fakeId = 'myid'
+
+      worker.failBlockOrder = sinon.stub()
+      relayer.makerService.cancelOrder.rejects(fakeError)
+
+      try {
+        await worker.cancelBlockOrder(fakeId)
+      } catch (e) {
+        expect(e).to.be.eql(fakeError)
+        expect(worker.failBlockOrder).to.have.been.calledOnce()
+        expect(worker.failBlockOrder).to.have.been.calledWith(fakeId, fakeError)
+        return
+      }
+
+      throw new Error('Expected relayer cancellation to throw an error')
+    })
+
     it('filters out orders not in a placed or created state', async () => {
       const fakeId = 'myid'
 
@@ -664,6 +688,12 @@ describe('BlockOrderWorker', () => {
       store.get.callsArgWithAsync(1, err)
 
       return expect(worker.cancelBlockOrder('fakeId')).to.eventually.be.rejectedWith(BlockOrderNotFoundError)
+    })
+
+    it('authorizes the request', async () => {
+      const orderId = orders[0].order.orderId
+      await worker.cancelBlockOrder(orderId)
+      expect(relayer.identity.authorize).to.have.been.calledWith(orderId)
     })
   })
 
