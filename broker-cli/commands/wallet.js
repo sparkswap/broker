@@ -34,7 +34,8 @@ const SUPPORTED_COMMANDS = Object.freeze({
   BALANCE: 'balance',
   NEW_DEPOSIT_ADDRESS: 'new-deposit-address',
   COMMIT_BALANCE: 'commit-balance',
-  NETWORK_ADDRESS: 'network-address'
+  NETWORK_ADDRESS: 'network-address',
+  NETWORK_STATUS: 'network-status'
 })
 
 /**
@@ -201,13 +202,86 @@ async function networkAddress (args, opts, logger) {
   }
 }
 
+/**
+ * network-status
+ *
+ * ex: `sparkswap wallet network-status`
+ *
+ * @function
+ * @param {Object} args
+ * @param {Object} opts
+ * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {String} [opts.market] market name
+ * @param {Logger} logger
+ * @return {Void}
+ */
+async function networkStatus (args, opts, logger) {
+  const { market, rpcAddress = null } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+    const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({market})
+
+    const statusTable = new Table({
+      head: ['', `${baseSymbolCapacities.symbol.toUpperCase()} Capacity`, `${counterSymbolCapacities.symbol.toUpperCase()} Capacity`],
+      colWidths: [14, 24, 24],
+      style: { head: ['gray'] }
+    })
+
+    statusTable.push(['Active', '', ''])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.activeReceiveCapacity, 'active'), formatBalance(counterSymbolCapacities.activeSendCapacity, 'active')])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.activeSendCapacity, 'active'), formatBalance(counterSymbolCapacities.activeReceiveCapacity, 'active')])
+
+    statusTable.push(['Pending', '', ''])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingReceiveCapacity, 'pending'), formatBalance(counterSymbolCapacities.pendingSendCapacity, 'pending')])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingSendCapacity, 'pending'), formatBalance(counterSymbolCapacities.pendingReceiveCapacity, 'pending')])
+
+    statusTable.push(['Inactive', '', ''])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveReceiveCapacity, 'inactive'), formatBalance(counterSymbolCapacities.inactiveSendCapacity, 'inactive')])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveSendCapacity, 'inactive'), formatBalance(counterSymbolCapacities.inactiveReceiveCapacity, 'inactive')])
+
+    logger.info(` ${market.bold.white}`)
+    logger.info(statusTable.toString())
+  } catch (e) {
+    logger.error(e)
+  }
+}
+
+/**
+ * Formats the capacities to fixed numbers and colors them if they are greater
+ * than 0
+ *
+ * @function
+ * @param {string} balance
+ * @param {string} status
+ * @return {string} balance formatted with size and color
+ */
+function formatBalance (balance, status) {
+  const fixedBalance = Big(balance).toFixed(16)
+  if (Big(balance).gt(0)) {
+    switch (status) {
+      case 'active':
+        return fixedBalance.green
+      case 'pending':
+        return fixedBalance.yellow
+      case 'inactive':
+        return fixedBalance.red
+      default:
+        return fixedBalance
+    }
+  }
+
+  return fixedBalance
+}
+
 module.exports = (program) => {
   program
     .command('wallet', 'Commands to handle a wallet instance')
-    .help('Available Commands: balance, new-deposit-address, commit-balance, network-address')
+    .help('Available Commands: balance, new-deposit-address, commit-balance, network-address, network-status')
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
 
@@ -249,6 +323,10 @@ module.exports = (program) => {
           args.symbol = symbol
 
           return networkAddress(args, opts, logger)
+        case SUPPORTED_COMMANDS.NETWORK_STATUS:
+          const { market } = opts
+          opts.market = validations.isMarketName(market)
+          return networkStatus(args, opts, logger)
       }
     })
     .command('wallet balance', 'Current daemon wallet balance')
@@ -259,4 +337,6 @@ module.exports = (program) => {
     .argument('[amount]', 'Amount of currency to commit to the relayer', validations.isDecimal)
     .command('wallet network-address', 'Payment Channel Network Public key for a given currency')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
+    .command('wallet network-status', 'Payment Channel Network status for trading in different markets')
+    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
 }
