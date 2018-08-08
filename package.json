@@ -19,11 +19,8 @@
     "coverage": "nyc npm test",
     "ci-test": "npm run format && npm test",
     "start-sparkswapd": "pm2-docker pm2.json --watch",
-    "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp ./broker-daemon/proto/broker.proto ./broker-cli/proto/broker.proto",
     "validate-config": "standard ~/.sparkswap.js",
-    "testnet": "bash ./scripts/testnet.sh",
-    "mainnet": "bash ./scripts/mainnet.sh",
-    "simnet": "bash ./scripts/simnet.sh"
+    "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp ./broker-daemon/proto/broker.proto ./broker-cli/proto/broker.proto"
   },
   "bin": {
     "sparkswapd": "./broker-daemon/bin/sparkswapd",
