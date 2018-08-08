@@ -15,25 +15,30 @@ const MISSING_FILE_MESSAGE = 'Cannot find module'
  */
 const DEFAULT_CONFIG = require('../.sparkswap.default.js')
 
-try {
-  /**
-   * Attempt to load user-defined configuration in their home directory
-   * @type {Object}
-   */
-  var USER_CONFIG = require(path.resolve(os.homedir(), '.sparkswap.js'))
-} catch (e) {
-  // We will only trigger an error if the `~/.sparkswap.js` configuration file
-  // exists on the user's machine. Otherwise we just silently set to a default
-  // configuration.
-  if (e.message && !e.message.includes(MISSING_FILE_MESSAGE)) {
-    console.warn('WARNING: Unable to read user configuration ~/.sparkswap.js. Using default configuration')
+/**
+ * A wrapper around path resolution for a user defined `.sparkswap.js` configuration
+ * file
+ *
+ * We attempt to load the file and set default configuration values. We will also
+ * warn the user if we have failed to parse their user config file.
+ *
+ * @return {Object} config
+ */
+function loadConfig () {
+  try {
+    var config = require(path.resolve(os.homedir(), '.sparkswap.js'))
+  } catch (e) {
+    // We will only trigger an error if the `~/.sparkswap.js` configuration file
+    // exists on the user's machine. Otherwise we just silently set to a default
+    // configuration.
+    if (e.message && !e.message.includes(MISSING_FILE_MESSAGE)) {
+      console.warn('WARNING: Unable to read user configuration ~/.sparkswap.js. Using default configuration')
+    }
+
+    config = {}
   }
 
-  USER_CONFIG = {}
+  return Object.assign({}, DEFAULT_CONFIG, config)
 }
 
-/**
- * Export a configuration object with user configuration taking precedence over defaults
- * @type {Object}
- */
-module.exports = Object.assign({}, DEFAULT_CONFIG, USER_CONFIG)
+module.exports = { loadConfig }

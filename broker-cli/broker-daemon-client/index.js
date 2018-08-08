@@ -1,6 +1,6 @@
 const path = require('path')
 const caller = require('grpc-caller')
-const CONFIG = require('./config')
+const { loadConfig } = require('./config')
 const { loadProto } = require('../utils')
 
 /**
@@ -15,13 +15,16 @@ class BrokerDaemonClient {
    * @param {String} address grpc host address
    */
   constructor (address) {
+    this.config = loadConfig()
+
     /**
      * Broker Daemon grpc host address
      * If not set, defaults to the user settings at ~/.sparkswap.js
      * or the installation settings at ../sparkswap.js
+     *
      * @type {String}
      */
-    this.address = address || CONFIG.rpcAddress
+    this.address = address || this.config.rpcAddress
     this.proto = loadProto(PROTO_PATH)
 
     // TODO: Change this to use npm instead of a relative path to the daemon
