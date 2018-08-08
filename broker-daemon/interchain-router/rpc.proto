@@ -25,6 +25,8 @@ message GetPreimageRequest {
 message GetPreimageResponse {
   // preimage for the requested payment
   bytes payment_preimage = 1;
+  // permanent error that should cancel the upstream HTLC
+  string permanent_error = 2;
 }
 
 service ExternalPreimageService {

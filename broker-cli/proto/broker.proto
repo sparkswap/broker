@@ -213,6 +213,8 @@ message Order {
   string amount = 3;
   // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the SparkSwap Relayer have prices.
   string price = 4;
+  // Any error messages related to the status of a REJECTED or FAILED order
+  string order_error = 6;
 }
 
 /**
@@ -245,6 +247,8 @@ message Fill {
   string amount = 4;
   // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the SparkSwap Relayer have prices.
   string price = 5;
+  // Any error messages related to the status of a REJECTED or FAILED fill
+  string fill_error = 6;
 }
 
 /**
@@ -726,6 +730,44 @@ message GetBalancesResponse {
 }
 
 /**
+ * Local and remote balances in the listed currency in the active, pending and inactive channels.
+ */
+message Capacity {
+  // Currency of the balance.
+  string symbol = 1;
+  // Total active amount a user can send in the currency. This is currently in base units (e.g. Satoshi/Litoshis)
+  string active_send_capacity = 2;
+  // Total active amount a user can receive in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
+  string active_receive_capacity = 3;
+  // Total pending amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
+  string pending_send_capacity = 4;
+  // Total pending amount a user can receive in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
+  string pending_receive_capacity = 5;
+  // Total inactive amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
+  string inactive_send_capacity = 6;
+  // Total inactive amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
+  string inactive_receive_capacity = 7;
+}
+
+/**
+ * Trading capacities for the base and counter currencies for a given market.
+ */
+message GetTradingCapacitiesResponse {
+  // local and remote capacities in active, pending and inactive channels for the base currency
+  Capacity base_symbol_capacities = 1;
+  // local and remote capacities in active, pending and inactive channels for the counter currency
+  Capacity counter_symbol_capacities = 2;
+}
+
+/**
+ * Request to retrieve local and remote capacities in active, pending and inactive channels for a given market
+ */
+message GetTradingCapacitiesRequest {
+  // Name of the market to retrieve capacities for
+  string market = 1;
+}
+
+/**
  * Request to commit an amount of a given currency.
  */
 message CommitBalanceRequest {
@@ -895,4 +937,72 @@ service WalletService {
    * ```
    */
   rpc GetPaymentChannelNetworkAddress (GetPaymentChannelNetworkAddressRequest) returns (GetPaymentChannelNetworkAddressResponse);
+  /**
+   * GetTradingCapacities retrieves the remote and local capacities from the base and counter engines active, pending and inactive channels.
+   *
+   * Capacities are divided into three categories, active, pending and inactive. Each of these categories are further broken down into
+   * the categories local and remote. For example, the activeSendCapacity is the local capacity in active channels for that engine, where pendingReceiveCapacity
+   * is the remote capacity in pending channels for that engine. The response from GetTradingCapacities is a baseSymbolCapacities and counterSymbolCapacities
+   * object where the respective capacities are grouped.
+   *
+   * ```javascript
+   * walletService.getTradingCapacities({market: 'BTC/LTC}, (err, { baseSymbolCapacities, counterSymbolCapacities }) => {
+   *   if (err) return console.error(err)
+   *   console.log(baseSymbolCapacities)
+   *   console.log(counterSymbolCapacities)
+   * })
+   * ```
+   *
+   * ```shell
+   * > sparkswap wallet network-status --market BTC/LTC
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * { "symbol": "BTC",
+   *   "activeSendCapacity": "0.16768165",
+   *   "activeReceiveCapacity": "0.0027057",
+   *   "pendingSendCapacity": "0",
+   *   "pendingReceiveCapacity": "0",
+   *   "inactiveSendCapacity": "0",
+   *   "inactiveReceiveCapacity": "0"
+   * },
+   * { "symbol": "LTC",
+   *   "activeSendCapacity": "0.16741015",
+   *   "activeReceiveCapacity": "10.065967",
+   *   "pendingSendCapacity": "0",
+   *   "pendingReceiveCapacity": "0",
+   *   "inactiveSendCapacity": "0",
+   *   "inactiveReceiveCapacity": "0"
+   * }
+   * ```
+   *
+   * ```shell
+   * BTC/LTC
+   * ┌──────────────┬────────────────────────┬────────────────────────┐
+   * │              │ BTC Capacity           │ LTC Capacity           │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │ Active       │                        │                        │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Buy BTC    │ 0.0027057000000000     │ 0.1674101500000000     │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Sell BTC   │ 0.1676816500000000     │ 10.0659670000000000    │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │ Pending      │                        │                        │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Buy BTC    │ 0.0000000000000000     │ 0.0000000000000000     │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Sell BTC   │ 0.0000000000000000     │ 0.0000000000000000     │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │ Inactive     │                        │                        │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Buy BTC    │ 0.0000000000000000     │ 0.0000000000000000     │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Sell BTC   │ 0.0000000000000000     │ 0.0000000000000000     │
+   * └──────────────┴────────────────────────┴────────────────────────┘
+   * ```
+   */
+  rpc GetTradingCapacities (GetTradingCapacitiesRequest) returns (GetTradingCapacitiesResponse);
+
 }
