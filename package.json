@@ -56,7 +56,7 @@
     "level": "3.0.1",
     "level-live-stream": "1.4.12",
     "level-sublevel": "6.6.1",
-    "lnd-engine": "sparkswap/lnd-engine",
+    "lnd-engine": "sparkswap/lnd-engine#6610f474bccafe6c7b100bdf1d3c6743738b46ba",
     "pm2": "2.10.3",
     "prettyjson": "1.2.1",
     "through2": "2.0.3",

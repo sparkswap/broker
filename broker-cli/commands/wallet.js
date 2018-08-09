@@ -35,7 +35,8 @@ const SUPPORTED_COMMANDS = Object.freeze({
   NEW_DEPOSIT_ADDRESS: 'new-deposit-address',
   COMMIT_BALANCE: 'commit-balance',
   NETWORK_ADDRESS: 'network-address',
-  NETWORK_STATUS: 'network-status'
+  NETWORK_STATUS: 'network-status',
+  RELEASE: 'release'
 })
 
 /**
@@ -274,16 +275,49 @@ function formatBalance (balance, status) {
   return fixedBalance
 }
 
+/**
+ * release
+ *
+ * ex: `sparkswap wallet release`
+ *
+ * @function
+ * @param {Object} args
+ * @param {Object} args.symbol
+ * @param {Object} opts
+ * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {String} [opts.market] market name, i.e BTC/LTC
+ * @param {Logger} logger
+ * @return {Void}
+ */
+async function release (args, opts, logger) {
+  const { rpcAddress = null, market } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+
+    const answer = await askQuestion(`Are you sure you want to close all channels you have open on the ${market} market? (Y/N)`)
+
+    if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
+
+    const { numBaseChannels, numCounterChannels } = await client.walletService.releaseChannels({market})
+    const [ baseSymbol, counterSymbol ] = market.split('/')
+    logger.info(`Successfully closed ${numBaseChannels} ${baseSymbol} channels and ${numCounterChannels} ${counterSymbol} channels!`)
+  } catch (e) {
+    logger.error(handleError(e))
+  }
+}
+
 module.exports = (program) => {
   program
     .command('wallet', 'Commands to handle a wallet instance')
-    .help('Available Commands: balance, new-deposit-address, commit-balance, network-address, network-status')
+    .help('Available Commands: balance, new-deposit-address, commit-balance, network-address, network-status, release')
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
+      const { market } = opts
 
       // TODO: Figure out a way to handle subArguments that could be dynamic
       // for each command
@@ -324,9 +358,11 @@ module.exports = (program) => {
 
           return networkAddress(args, opts, logger)
         case SUPPORTED_COMMANDS.NETWORK_STATUS:
-          const { market } = opts
           opts.market = validations.isMarketName(market)
           return networkStatus(args, opts, logger)
+        case SUPPORTED_COMMANDS.RELEASE:
+          opts.market = validations.isMarketName(market)
+          return release(args, opts, logger)
       }
     })
     .command('wallet balance', 'Current daemon wallet balance')
@@ -338,5 +374,7 @@ module.exports = (program) => {
     .command('wallet network-address', 'Payment Channel Network Public key for a given currency')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .command('wallet network-status', 'Payment Channel Network status for trading in different markets')
+    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
+    .command('wallet release', 'Closes channels open on the specified market')
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
 }

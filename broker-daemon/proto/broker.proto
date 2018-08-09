@@ -777,6 +777,17 @@ message CommitBalanceRequest {
   int64 balance = 2;
 }
 
+message ReleaseChannelsRequest {
+  // Currency of the balance to commit.
+  string market = 1;
+}
+
+message ReleaseChannelsResponse {
+  // Currency of the balance to commit.
+  int64 num_base_channels = 1;
+  int64 num_counter_channels = 2;
+}
+
 /**
  * Get the payment channel network address for a given currency.
  */
@@ -914,6 +925,7 @@ service WalletService {
    * ```
    */
   rpc CommitBalance (CommitBalanceRequest) returns (google.protobuf.Empty);
+  rpc ReleaseChannels (ReleaseChannelsRequest) returns (ReleaseChannelsResponse);
   /**
    * GetPaymentChannelNetworkAddress retrieves the Payment Channel Network Address for the given currency.
    *
