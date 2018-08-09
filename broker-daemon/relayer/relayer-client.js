@@ -6,7 +6,7 @@ const caller = require('grpc-caller')
 const Identity = require('./identity')
 
 const { MarketEvent } = require('../models')
-const { loadProto } = require('../utils')
+const { loadProto, migrateStore } = require('../utils')
 
 /**
  * @constant
@@ -97,6 +97,8 @@ class RelayerClient {
 
       try {
         const watcher = this.orderbookService.watchMarket(params)
+        // this flag tells us if we are the in the middle of migrating the db
+        let migrating = false
 
         watcher.on('end', () => {
           this.logger.info('Remote ended stream', params)
@@ -105,10 +107,23 @@ class RelayerClient {
         })
 
         watcher.on('data', async (response) => {
+          if (migrating) {
+            this.logger.info(`Waiting for migration to finish before acting on new response`)
+            await migrating
+          }
+
           this.logger.info(`response type is ${response.type}`)
           if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
             this.logger.info(`Resolving because response type is: ${response.type}`)
             return resolve()
+          }
+
+          if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.START_OF_EVENTS) {
+            this.logger.info(`Removing existing orderbook events because response type is: ${response.type}`)
+
+            // this deletes every event in the store
+            migrating = migrateStore(store, store, (key) => ({ type: 'del', key }))
+            return
           }
 
           if (![RESPONSE_TYPES.EXISTING_EVENT, RESPONSE_TYPES.NEW_EVENT].includes(RESPONSE_TYPES[response.type])) {
@@ -126,6 +141,7 @@ class RelayerClient {
           reject(err)
         })
       } catch (e) {
+        this.logger.error('Error encountered while setting up stream')
         return reject(e)
       }
     })
