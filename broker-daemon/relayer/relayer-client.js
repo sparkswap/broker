@@ -99,8 +99,11 @@ class RelayerClient {
 
       try {
         const watcher = this.orderbookService.watchMarket(params)
-        // this flag tells us if we are the in the middle of migrating the db
-        let migrating = false
+
+        // we set this value to be a promise when we are migrating the database.
+        // if we were to continue processing before deletion is finished, we could
+        // inadvertently delete new events added to the store.
+        let migrating
 
         watcher.on('end', () => {
           this.logger.error('Remote ended stream', params)
@@ -109,6 +112,7 @@ class RelayerClient {
         })
 
         watcher.on('data', async (response) => {
+          // migrating is falsey (undefined) by default
           if (migrating) {
             this.logger.debug(`Waiting for migration to finish before acting on new response`)
             await migrating
@@ -123,7 +127,8 @@ class RelayerClient {
           if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.START_OF_EVENTS) {
             this.logger.debug(`Removing existing orderbook events because response type is: ${response.type}`)
 
-            // this deletes every event in the store
+            // this deletes every event in the store, and makes `migrating` a promise
+            // that resolves when deletion is complete, allowing other events to be processed.
             migrating = migrateStore(store, store, (key) => { return { type: 'del', key } })
             return
           }
