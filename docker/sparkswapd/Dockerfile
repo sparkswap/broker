@@ -30,6 +30,12 @@ RUN openssl ec -in ${ID_PRIV_KEY} -pubout -out ${ID_PUB_KEY}
 
 COPY . /home/app
 
+# We remove the package-lock file here so that our github dependencies like lnd-engine
+# and grpc-methods can continue to update if they are unstable.
+#
+# TODO: Remove this line when lnd-engine is ready for versioning
+RUN rm -f package-lock.json
+
 ARG RELAYER_PROTO_BRANCH
 ARG RELAYER_PROTO_COMMIT_SHA
 
