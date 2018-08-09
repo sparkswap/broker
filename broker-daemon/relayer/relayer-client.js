@@ -7,6 +7,8 @@ const Identity = require('./identity')
 
 const { MarketEvent } = require('../models')
 const { loadProto, migrateStore } = require('../utils')
+const consoleLogger = console
+consoleLogger.debug = console.log.bind(console)
 
 /**
  * @constant
@@ -19,7 +21,7 @@ const RELAYER_PROTO_PATH = './proto/relayer.proto'
  * Insecure stub of Identity to be used when auth is disabled
  * @return {Object}
  */
-function insecureIdentity (logger = console) {
+function insecureIdentity (logger = consoleLogger) {
   return {
     authorize (id) {
       logger.warn(`Not signing authorization for access to ${id}: DISABLE_AUTH is set`)
@@ -47,8 +49,8 @@ class RelayerClient {
    * @param {String}  relayerOpts.certPath Absolute path to the root certificate for the Relayer
    * @param {Logger}  logger
    */
-  constructor ({ privKeyPath, pubKeyPath }, { certPath, host = 'localhost:28492', disableAuth = false }, logger) {
-    this.logger = logger || console
+  constructor ({ privKeyPath, pubKeyPath }, { certPath, host = 'localhost:28492', disableAuth = false }, logger = consoleLogger) {
+    this.logger = logger
     this.address = host
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
 
@@ -101,36 +103,36 @@ class RelayerClient {
         let migrating = false
 
         watcher.on('end', () => {
-          this.logger.info('Remote ended stream', params)
+          this.logger.error('Remote ended stream', params)
           // TODO: retry stream?
           throw new Error(`Remote relayer ended stream for ${baseSymbol}/${counterSymbol}`)
         })
 
         watcher.on('data', async (response) => {
           if (migrating) {
-            this.logger.info(`Waiting for migration to finish before acting on new response`)
+            this.logger.debug(`Waiting for migration to finish before acting on new response`)
             await migrating
           }
 
-          this.logger.info(`response type is ${response.type}`)
+          this.logger.debug(`response type is ${response.type}`)
           if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
-            this.logger.info(`Resolving because response type is: ${response.type}`)
+            this.logger.debug(`Resolving because response type is: ${response.type}`)
             return resolve()
           }
 
           if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.START_OF_EVENTS) {
-            this.logger.info(`Removing existing orderbook events because response type is: ${response.type}`)
+            this.logger.debug(`Removing existing orderbook events because response type is: ${response.type}`)
 
             // this deletes every event in the store
-            migrating = migrateStore(store, store, (key) => ({ type: 'del', key }))
+            migrating = migrateStore(store, store, (key) => { return { type: 'del', key } })
             return
           }
 
           if (![RESPONSE_TYPES.EXISTING_EVENT, RESPONSE_TYPES.NEW_EVENT].includes(RESPONSE_TYPES[response.type])) {
-            return this.logger.info(`Returning because response type is: ${response.type}`)
+            return this.logger.debug(`Returning because response type is: ${response.type}`)
           }
 
-          this.logger.info('Creating a market event', response.marketEvent)
+          this.logger.debug('Creating a market event', response.marketEvent)
           const { key, value } = new MarketEvent(response.marketEvent)
           store.put(key, value)
         })

@@ -3,7 +3,7 @@ const { sinon, rewire, delay, expect } = require('test/test-helper')
 
 const RelayerClient = rewire(path.resolve('broker-daemon', 'relayer', 'relayer-client'))
 
-describe.only('RelayerClient', () => {
+describe('RelayerClient', () => {
   let createSslStub
   let createFromMetadataGeneratorStub
   let combineChannelCredentialsStub
@@ -102,13 +102,6 @@ describe.only('RelayerClient', () => {
 
       expect(relayer).to.have.property('logger')
       expect(relayer.logger).to.be.equal(logger)
-    })
-
-    it('defaults the logger to the console', () => {
-      const relayer = new RelayerClient(idKeyPath, { host: relayerHost })
-
-      expect(relayer).to.have.property('logger')
-      expect(relayer.logger).to.be.equal(fakeConsole)
     })
 
     it('loads the proto', () => {
