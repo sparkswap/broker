@@ -1,14 +1,18 @@
 const { MarketEvent, MarketEventOrder } = require('../models')
 const AskIndex = require('./ask-index')
 const BidIndex = require('./bid-index')
+const OrderbookIndex = require('./orderbook-index')
 const { getRecords, Big } = require('../utils')
+const consoleLogger = console
+consoleLogger.debug = console.log.bind(console)
 
 class Orderbook {
-  constructor (marketName, relayer, store, logger = console) {
+  constructor (marketName, relayer, store, logger = consoleLogger) {
     this.marketName = marketName
     this.relayer = relayer
     this.eventStore = store.sublevel('events')
-    this.store = Orderbook.createStore(store, this.eventStore, marketName)
+    this.index = new OrderbookIndex(store, this.eventStore, this.marketName)
+    this.store = this.index.store
     this.logger = logger
   }
 
@@ -29,6 +33,8 @@ class Orderbook {
 
     await this.relayer.watchMarket(this.eventStore, params)
 
+    this.logger.debug(`Rebuilding indexes`)
+    await this.index.ensureIndex()
     this.askIndex = await (new AskIndex(this.store)).ensureIndex()
     this.bidIndex = await (new BidIndex(this.store)).ensureIndex()
 
@@ -126,31 +132,6 @@ class Orderbook {
     this.logger.info(`Found last update of ${timestamp}`)
 
     return timestamp
-  }
-
-  // should this be a static?
-  /**
-   * Creates a sublevel store that tracks an eventStore to create an orderbook
-   *
-   * @returns {sublevel} A store that contains the orderbook built from the event store
-   */
-  static createStore (baseStore, eventStore, marketName) {
-    const store = baseStore.sublevel('orderbook')
-
-    eventStore.pre((dbOperation, add) => {
-      if (dbOperation.type !== 'put') {
-        return
-      }
-      const event = MarketEvent.fromStorage(dbOperation.key, dbOperation.value)
-      const order = MarketEventOrder.fromEvent(event, marketName)
-      if (event.eventType === MarketEvent.TYPES.PLACED) {
-        add({ key: order.key, value: order.value, type: 'put', prefix: store })
-      } else {
-        add({ key: order.key, type: 'del', prefix: store })
-      }
-    })
-
-    return store
   }
 }
 
