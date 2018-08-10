@@ -16,10 +16,11 @@ services:
       - lnd_btc
       - lnd_ltc
     volumes:
-      # block order and other sparkswap storage
-      - 'sparkswapd:/data'
-      # This is populated externally w/ an engine
-      - 'shared:/shared'
+      - './broker-daemon:/home/app/broker-daemon/'
+      # TODO: This can be removed once utils are moved to a shared repo or into
+      # the broker-daemon itself. broker-daemon relies on these utils for ./broker-daemon/bin/sparkswapd
+      - './broker-cli:/home/app/broker-cli/'
+      - './proto:/home/app/proto/'
 
 volumes:
   shared:
