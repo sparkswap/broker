@@ -1,0 +1,26 @@
+##########################################
+#
+# sparkswap Broker-CLI and Broker-Daemon
+# https://sparkswap.com
+#
+# Production file to remove volume mounts from docker-compose
+#
+##########################################
+
+version: '2.4'
+
+services:
+  sparkswapd:
+    image: sparkswap_sparkswapd:latest
+    depends_on:
+      - lnd_btc
+      - lnd_ltc
+    volumes:
+      # block order and other sparkswap storage
+      - 'sparkswapd:/data'
+      # This is populated externally w/ an engine
+      - 'shared:/shared'
+
+volumes:
+  shared:
+  sparkswapd:
