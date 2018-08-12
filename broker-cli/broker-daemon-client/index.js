@@ -10,18 +10,38 @@ const { loadProto } = require('../utils')
  */
 const PROTO_PATH = path.resolve(__dirname, '..', 'proto', 'broker.proto')
 
+/**
+ * @constant
+ * @type {Number}
+ * @default
+ */
+const DEFAULT_RPC_PORT = 27492
+
 class BrokerDaemonClient {
   /**
    * @param {String} address grpc host address
    */
-  constructor (address) {
+  constructor (rpcAddress) {
     /**
      * Broker Daemon grpc host address
+     *
      * If not set, defaults to the user settings at ~/.sparkswap.js
      * or the installation settings at ../sparkswap.js
+     *
+     * Port defaults to DEFAULT_RPC_PORT if tld is passed in
+     *
+     * @see {DEFAULT_RPC_PORT}
      * @type {String}
      */
-    this.address = address || CONFIG.rpcAddress
+    this.address = rpcAddress || CONFIG.rpcAddress
+
+    const [host, port] = this.address.split(':')
+
+    // Set a default port if a TLD is used
+    if (!port) {
+      this.address = `${host}:${DEFAULT_RPC_PORT}`
+    }
+
     this.proto = loadProto(PROTO_PATH)
 
     // TODO: Change this to use npm instead of a relative path to the daemon
