@@ -31,6 +31,15 @@ fi
 git clone https://github.com/sparkswap/relayer-proto.git ./proto
 rm -rf ./proto/.git
 
+# If the build is local, then we will copy related files for dev usage
+# for a local SimNet network
+if [ "$ARG" == "local" ]; then
+  echo "Copying env simnet local file to .env"
+  cp ./.env-simnet-local-sample ./.env
+  echo "Copying dev file to 'docker-compose.override.yml'"
+  cp ./docker-compose.dev.yml ./docker-compose.override.yml
+fi
+
 # If we want to build images with the command then we can use
 if [ "$ARG" != "no-docker" ]; then
   echo "Building broker docker images"

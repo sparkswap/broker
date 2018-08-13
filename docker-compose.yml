@@ -21,11 +21,6 @@ services:
       - lnd_btc
       - lnd_ltc
     volumes:
-      - './broker-daemon:/home/app/broker-daemon/'
-      # TODO: This can be removed once utils are moved to a shared repo or into
-      # the broker-daemon itself. broker-daemon relies on these utils for ./broker-daemon/bin/sparkswapd
-      - './broker-cli:/home/app/broker-cli/'
-      - './proto:/home/app/proto/'
       # block order and other sparkswap storage
       - 'sparkswapd:/data'
       # This is populated externally w/ an engine
@@ -136,7 +131,7 @@ services:
     environment:
       - RPC_USER=${LTC_RPC_USER}
       - RPC_PASS=${LTC_RPC_PASS}
-      - NETWORK=simnet
+      - NETWORK=${NETWORK}
       - DEBUG=info
       - DATA_DIR=/data
       - LOG_DIR=/data

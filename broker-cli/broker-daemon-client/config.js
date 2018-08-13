@@ -28,9 +28,9 @@ function loadConfig () {
   try {
     var config = require(path.resolve(os.homedir(), '.sparkswap.js'))
   } catch (e) {
-    // We will only trigger an error if the `~/.sparkswap.js` configuration file
-    // exists on the user's machine. Otherwise we just silently set to a default
-    // configuration.
+    // We will warn the user only if the ~/.sparkswap.js configuration file exists
+    // but could not be read. We will set the config to the default regardless
+    // of the error.
     if (e.message && !e.message.includes(MISSING_FILE_MESSAGE)) {
       console.warn('WARNING: Unable to read user configuration ~/.sparkswap.js. Using default configuration')
     }

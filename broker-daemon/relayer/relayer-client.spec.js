@@ -22,7 +22,8 @@ describe('RelayerClient', () => {
   let ResponseType = {
     EXISTING_EVENT: 'EXISTING_EVENT',
     EXISTING_EVENTS_DONE: 'EXISTING_EVENTS_DONE',
-    NEW_EVENT: 'NEW_EVENT'
+    NEW_EVENT: 'NEW_EVENT',
+    START_OF_EVENTS: 'START_OF_EVENTS'
   }
   let fakeConsole
   let callerStub
@@ -101,13 +102,6 @@ describe('RelayerClient', () => {
 
       expect(relayer).to.have.property('logger')
       expect(relayer.logger).to.be.equal(logger)
-    })
-
-    it('defaults the logger to the console', () => {
-      const relayer = new RelayerClient(idKeyPath, { host: relayerHost })
-
-      expect(relayer).to.have.property('logger')
-      expect(relayer.logger).to.be.equal(fakeConsole)
     })
 
     it('loads the proto', () => {
@@ -205,6 +199,7 @@ describe('RelayerClient', () => {
     let params
     let watchMarket
     let stream
+    let migrateStore
 
     beforeEach(() => {
       stream = {
@@ -226,6 +221,10 @@ describe('RelayerClient', () => {
 
       MarketEvent.prototype.key = 'key'
       MarketEvent.prototype.value = 'value'
+
+      migrateStore = sinon.stub().resolves()
+
+      RelayerClient.__set__('migrateStore', migrateStore)
     })
 
     it('returns a promise', () => {
@@ -278,6 +277,54 @@ describe('RelayerClient', () => {
       })
 
       return relayer.watchMarket(store, params)
+    })
+
+    it('deletes the store when facing the start of events', async () => {
+      const fakeNew = { type: ResponseType.START_OF_EVENTS }
+      const fakeDone = { type: ResponseType.EXISTING_EVENTS_DONE }
+
+      stream.on.withArgs('data').callsFake(async (evt, fn) => {
+        await delay(10)
+        fn(fakeNew)
+        await delay(10)
+        fn(fakeDone)
+      })
+
+      await relayer.watchMarket(store, params)
+
+      expect(migrateStore).to.have.been.calledOnce()
+      expect(migrateStore).to.have.been.calledWith(store, store, sinon.match.func)
+
+      const migrator = migrateStore.args[0][2]
+
+      expect(migrator('hello')).to.be.eql({ type: 'del', key: 'hello' })
+    })
+
+    it('waits for migrating to be done before processing more events', async () => {
+      const fakeNew = { type: ResponseType.START_OF_EVENTS }
+      const fakeResponse = { type: ResponseType.EXISTING_EVENT, marketEvent: 'fakeEvent' }
+      const fakeDone = { type: ResponseType.EXISTING_EVENTS_DONE }
+
+      let callCount
+
+      migrateStore.callsFake(() => { return delay(15) })
+
+      stream.on.withArgs('data').callsFake(async (evt, fn) => {
+        await delay(10)
+        fn(fakeNew)
+        await delay(10)
+        fn(fakeResponse)
+        await delay(1)
+
+        callCount = store.put.callCount
+
+        fn(fakeDone)
+      })
+
+      await relayer.watchMarket(store, params)
+
+      expect(callCount).to.be.a('number')
+      expect(callCount).to.be.eql(0)
     })
 
     it('puts existing events into the store', async () => {
