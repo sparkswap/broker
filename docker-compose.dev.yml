@@ -21,6 +21,7 @@ services:
       # the broker-daemon itself. broker-daemon relies on these utils for ./broker-daemon/bin/sparkswapd
       - './broker-cli:/home/app/broker-cli/'
       - './proto:/home/app/proto/'
+      - './scripts:/home/app/scripts/'
 
 volumes:
   shared:
