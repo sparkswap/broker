@@ -50,15 +50,22 @@ describe('BrokerDaemonClient', () => {
     let address
 
     beforeEach(() => {
-      address = '172.0.0.1'
+      address = '172.0.0.1:27492'
     })
 
-    it('defaults to CONFIG is address is not passed in', () => {
+    it('defaults to CONFIG if an address is not passed in', () => {
       BrokerDaemonClient.__set__('CONFIG', {
         rpcAddress: address
       })
       broker = new BrokerDaemonClient()
       expect(broker.address).to.eql(address)
+    })
+
+    it('defaults the port number if no port number is specified', () => {
+      const providedHost = '127.1.1.5'
+      const defaultPort = BrokerDaemonClient.__get__('DEFAULT_RPC_PORT')
+      broker = new BrokerDaemonClient(providedHost)
+      expect(broker.address).to.eql(`${providedHost}:${defaultPort}`)
     })
 
     it('uses a provided address', () => {
