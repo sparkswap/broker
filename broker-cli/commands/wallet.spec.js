@@ -334,4 +334,55 @@ describe('cli wallet', () => {
       expect(askQuestionStub).to.have.been.called()
     })
   })
+
+  describe('release', () => {
+    let args
+    let opts
+    let logger
+    let rpcAddress
+    let market
+    let daemonStub
+    let releaseStub
+    let askQuestionStub
+
+    const release = program.__get__('release')
+
+    beforeEach(() => {
+      rpcAddress = 'test:1337'
+      market = 'BTC/LTC'
+      opts = { rpcAddress, market }
+      releaseStub = sinon.stub().resolves({})
+      askQuestionStub = sinon.stub().returns('Y')
+      logger = { info: sinon.stub(), error: sinon.stub() }
+
+      daemonStub = sinon.stub()
+      daemonStub.prototype.walletService = {
+        releaseChannels: releaseStub
+      }
+
+      program.__set__('BrokerDaemonClient', daemonStub)
+      program.__set__('askQuestion', askQuestionStub)
+    })
+
+    it('calls the daemon to release channels in the given market', async () => {
+      await release(args, opts, logger)
+      expect(releaseStub).to.have.been.calledWith({market})
+    })
+
+    it('asks the user if they are ok to release channels', async () => {
+      await release(args, opts, logger)
+      expect(askQuestionStub).to.have.been.called()
+    })
+
+    it('returns early if the user does not agree to release channels', async () => {
+      askQuestionStub.returns('N')
+      await release(args, opts, logger)
+      expect(releaseStub).to.not.have.been.called()
+    })
+
+    it('logs the number of channels closed', async () => {
+      await release(args, opts, logger)
+      expect(logger.info).to.have.been.called()
+    })
+  })
 })
