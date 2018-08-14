@@ -786,16 +786,6 @@ message ReleaseChannelsRequest {
 }
 
 /**
- * Number of channels closed on the base engine and counter engine for the market
- */
-message ReleaseChannelsResponse {
-  // Number of base channels closed
-  int64 num_base_channels = 1;
-  // Number of counter channels closed
-  int64 num_counter_channels = 2;
-}
-
-/**
  * Get the payment channel network address for a given currency.
  */
 message GetPaymentChannelNetworkAddressRequest {
@@ -935,15 +925,14 @@ service WalletService {
   /**
    * ReleaseChannels closes all the channels on the given market.
    * If you pass in `BTC/LTC` as the market to releaseChannels, closeChannels will be called on both the BTC and LTC engines. If channels were closed,
-   * the response will contain the number of channels closed on both the base and counter engine.
+   * there will an empty response unless an error is encountered.
    *
    *
-   * > The below command will output the number of closed channels if they exist, but will throw an error if one is encountered.
+   * > The below command has no output, but will throw an error if one is encountered.
    *
    * ```javascript
    * walletService.releaseChannels( { market: 'BTC/LTC' }, (err, { numChannels }) => {
    *   if (err) return console.error(err)
-   *   console.log(channels)
    * })
    * ```
    *
@@ -951,7 +940,7 @@ service WalletService {
    * > sparkswap wallet release --market BTC/LTC
    * ```
    */
-  rpc ReleaseChannels (ReleaseChannelsRequest) returns (ReleaseChannelsResponse);
+  rpc ReleaseChannels (ReleaseChannelsRequest) returns (google.protobuf.Empty);
   /**
    * GetPaymentChannelNetworkAddress retrieves the Payment Channel Network Address for the given currency.
    *

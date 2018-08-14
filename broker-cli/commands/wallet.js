@@ -299,9 +299,8 @@ async function release (args, opts, logger) {
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    const { numBaseChannels, numCounterChannels } = await client.walletService.releaseChannels({market})
-    const [ baseSymbol, counterSymbol ] = market.split('/')
-    logger.info(`Successfully closed ${numBaseChannels} ${baseSymbol} channels and ${numCounterChannels} ${counterSymbol} channels!`)
+    await client.walletService.releaseChannels({market})
+    logger.info(`Successfully closed channels on ${market} market!`)
   } catch (e) {
     logger.error(handleError(e))
   }

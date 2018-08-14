@@ -341,7 +341,6 @@ describe('cli wallet', () => {
     let logger
     let rpcAddress
     let market
-    let numChannels
     let daemonStub
     let releaseStub
     let askQuestionStub
@@ -352,8 +351,7 @@ describe('cli wallet', () => {
       rpcAddress = 'test:1337'
       market = 'BTC/LTC'
       opts = { rpcAddress, market }
-      numChannels = { numBaseChannels: 1, numCounterChannels: 2 }
-      releaseStub = sinon.stub().resolves(numChannels)
+      releaseStub = sinon.stub().resolves({})
       askQuestionStub = sinon.stub().returns('Y')
       logger = { info: sinon.stub(), error: sinon.stub() }
 
@@ -384,7 +382,7 @@ describe('cli wallet', () => {
 
     it('logs the number of channels closed', async () => {
       await release(args, opts, logger)
-      expect(logger.info).to.have.been.calledWith(`Successfully closed 1 BTC channels and 2 LTC channels!`)
+      expect(logger.info).to.have.been.called()
     })
   })
 })

@@ -12,7 +12,6 @@ describe('releaseChannels', () => {
   let orderbooks
   let baseEngineStub
   let counterEngineStub
-  let ReleaseChannelsResponse
 
   beforeEach(() => {
     logger = {
@@ -25,12 +24,11 @@ describe('releaseChannels', () => {
     baseEngineStub = { closeChannels: sinon.stub().resolves([{chan: 'channel'}]) }
     counterEngineStub = { closeChannels: sinon.stub().resolves([{chan: 'counterchannel'}, {chan: 'counterchannel'}]) }
     engines = new Map([['BTC', baseEngineStub], ['LTC', counterEngineStub]])
-    ReleaseChannelsResponse = sinon.stub()
   })
 
   describe('committing a balance to the exchange', () => {
     beforeEach(async () => {
-      res = await releaseChannels({ params, relayer, logger, engines, orderbooks }, { ReleaseChannelsResponse })
+      res = await releaseChannels({ params, relayer, logger, engines, orderbooks })
     })
 
     it('attempts to close channels on the base engine', () => {
@@ -41,12 +39,8 @@ describe('releaseChannels', () => {
       expect(counterEngineStub.closeChannels).to.have.been.called()
     })
 
-    it('constructs a ReleaseChannelsResponse', () => {
-      expect(ReleaseChannelsResponse).to.have.been.calledWith({numBaseChannels: 1, numCounterChannels: 2})
-    })
-
     it('returns a EmptyResponse', () => {
-      expect(res).to.be.eql(new ReleaseChannelsResponse({numBaseChannels: 1, numCounterChannels: 2}))
+      expect(res).to.be.eql({})
     })
   })
 
@@ -55,20 +49,20 @@ describe('releaseChannels', () => {
       orderbooks = new Map([['ABC/DXS', { store: sinon.stub() }]])
 
       const errorMessage = `${params.market} is not being tracked as a market.`
-      return expect(releaseChannels({ params, relayer, logger, engines, orderbooks }, { ReleaseChannelsResponse })).to.eventually.be.rejectedWith(errorMessage)
+      return expect(releaseChannels({ params, relayer, logger, engines, orderbooks })).to.eventually.be.rejectedWith(errorMessage)
     })
 
     it('throws an error if the base engine does not exist for symbol', () => {
       engines = new Map([['LTC', counterEngineStub]])
       return expect(
-        releaseChannels({ params, relayer, logger, engines, orderbooks }, { ReleaseChannelsResponse })
+        releaseChannels({ params, relayer, logger, engines, orderbooks })
       ).to.eventually.be.rejectedWith(PublicError, `No engine available for BTC`)
     })
 
     it('throws an error if the counter engine does not exist for symbol', () => {
       engines = new Map([['BTC', baseEngineStub]])
       return expect(
-        releaseChannels({ params, relayer, logger, engines, orderbooks }, { ReleaseChannelsResponse })
+        releaseChannels({ params, relayer, logger, engines, orderbooks })
       ).to.be.rejectedWith(PublicError, `No engine available for LTC`)
     })
   })

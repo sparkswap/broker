@@ -8,11 +8,11 @@ const { PublicError } = require('grpc-methods')
  * @param {RelayerClient} request.relayer
  * @param {Logger} request.logger
  * @param {Engine} request.engines
+ * @param {Map<Orderbook>} request.orderbooks
  * @param {Object} responses
- * @param {function} responses.EmptyResponse
- * @return {responses.EmptyResponse}
+ * @return {Object} empty object
  */
-async function releaseChannels ({ params, relayer, logger, engines, orderbooks }, { ReleaseChannelsResponse }) {
+async function releaseChannels ({ params, relayer, logger, engines, orderbooks }) {
   const { market } = params
   const orderbook = orderbooks.get(market)
 
@@ -37,7 +37,7 @@ async function releaseChannels ({ params, relayer, logger, engines, orderbooks }
   const counterChannels = await counterEngine.closeChannels()
   logger.info(`Closed ${counterSymbol} channels: ${counterChannels}`)
 
-  return new ReleaseChannelsResponse({numBaseChannels: channels.length, numCounterChannels: counterChannels.length})
+  return {}
 }
 
 module.exports = releaseChannels

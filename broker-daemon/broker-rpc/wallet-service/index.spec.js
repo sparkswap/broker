@@ -34,8 +34,7 @@ describe('WalletService', () => {
           Empty: responseStub
         }
       },
-      GetTradingCapacitiesResponse: responseStub,
-      ReleaseChannelsResponse: responseStub
+      GetTradingCapacitiesResponse: responseStub
     })
     logger = sinon.stub()
     engines = sinon.stub()
@@ -134,7 +133,7 @@ describe('WalletService', () => {
         releaseChannels,
         expectedMessageId,
         { logger, engines, orderbooks },
-        { ReleaseChannelsResponse: responseStub }
+        { EmptyResponse: responseStub }
       )
     })
   })

@@ -33,7 +33,6 @@ class WalletService {
       GetBalancesResponse,
       GetPaymentChannelNetworkAddressResponse,
       GetTradingCapacitiesResponse,
-      ReleaseChannelsResponse,
       google: {
         protobuf: {
           Empty: EmptyResponse
@@ -47,7 +46,7 @@ class WalletService {
       commitBalance: new GrpcUnaryMethod(commitBalance, this.messageId('commitBalance'), { logger, engines, relayer }, { EmptyResponse }).register(),
       getPaymentChannelNetworkAddress: new GrpcUnaryMethod(getPaymentChannelNetworkAddress, this.messageId('getPaymentChannelNetworkAddress'), { logger, engines }, { GetPaymentChannelNetworkAddressResponse }).register(),
       getTradingCapacities: new GrpcUnaryMethod(getTradingCapacities, this.messageId('getTradingCapacities'), { logger, engines, orderbooks }, { GetTradingCapacitiesResponse }).register(),
-      releaseChannels: new GrpcUnaryMethod(releaseChannels, this.messageId('releaseChannels'), { logger, engines, orderbooks }, { ReleaseChannelsResponse }).register()
+      releaseChannels: new GrpcUnaryMethod(releaseChannels, this.messageId('releaseChannels'), { logger, engines, orderbooks }, { EmptyResponse }).register()
     }
   }
 
