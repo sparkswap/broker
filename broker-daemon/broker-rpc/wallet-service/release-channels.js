@@ -32,10 +32,10 @@ async function releaseChannels ({ params, relayer, logger, engines, orderbooks }
   }
 
   const channels = await baseEngine.closeChannels()
-  logger.info(`Closed ${baseSymbol} channels: ${channels}`)
+  logger.info(`Closed ${baseSymbol} channels: ${JSON.stringify(channels)}`)
 
   const counterChannels = await counterEngine.closeChannels()
-  logger.info(`Closed ${counterSymbol} channels: ${counterChannels}`)
+  logger.info(`Closed ${counterSymbol} channels: ${JSON.stringify(counterChannels)}`)
 
   return {}
 }
