@@ -22,7 +22,8 @@ const {
   INTERCHAIN_ROUTER_ADDRESS,
   ID_PRIV_KEY,
   ID_PUB_KEY,
-  DISABLE_AUTH
+  DISABLE_AUTH,
+  DISABLE_RELAYER_AUTH
 } = process.env
 
 // TODO: Add validations to ./bin/sparkswapd when they become available
@@ -31,7 +32,10 @@ program
   .option('--rpc-address <server>', 'Add a host/port to listen for daemon RPC connections', validations.isHost, RPC_ADDRESS)
   .option('--interchain-router-address <server>', 'Add a host/port to listen for interchain router RPC connections', validations.isHost, INTERCHAIN_ROUTER_ADDRESS)
   .option('--data-dir <path>', 'Location to store SparkSwap data', validations.isFormattedPath, DATA_DIR)
-  .option('--disable-relayer-auth', 'Disable SSL and message signing (DEV ONLY)', program.BOOL, DISABLE_AUTH)
+  .option('--disable-auth', 'Disable SSL for the broker (DEV ONLY)', program.BOOL, DISABLE_AUTH)
+  .option('--rpc-privkey-path <path>', 'Location of private key for the broker\'s rpc', validations.isFormattedPath, ID_PRIV_KEY)
+  .option('--rpc-pubkey-path <path>', 'Location of the public key for the broker\'s rpc', validations.isFormattedPath, ID_PUB_KEY)
+  .option('--disable-relayer-auth', 'Disable SSL and message signing to the relayer (DEV ONLY)', program.BOOL, DISABLE_RELAYER_AUTH)
   .option('--id-privkey-path <path>', 'Location of private key for the broker\'s identity', validations.isFormattedPath, ID_PRIV_KEY)
   .option('--id-pubkey-path <path>', 'Location of the public key for the broker\'s identity', validations.isFormattedPath, ID_PUB_KEY)
   .option('--markets <markets>', 'Comma-separated market names to track on startup', validations.areValidMarketNames, MARKETS)
@@ -61,11 +65,14 @@ program
       dataDir,
       markets,
       interchainRouterAddress,
-      relayerHost,
+      relayerHost: relayerRpcHost,
       relayerCertPath,
-      idPrivkeyPath,
-      idPubkeyPath,
-      disableRelayerAuth
+      idPrivkeyPath: privIdKeyPath,
+      idPubkeyPath: pubIdKeyPath,
+      disableRelayerAuth,
+      disableAuth,
+      rpcPrivkeyPath: privRpcKeyPath,
+      rpcPubkeyPath: pubRpcKeyPath
     } = opts
 
     const engines = {}
@@ -83,9 +90,25 @@ program
     }
 
     const marketNames = (markets || '').split(',').filter(m => m)
-    const brokerDaemon = new BrokerDaemon({ privKeyPath: idPrivkeyPath, pubKeyPath: idPubkeyPath }, rpcAddress, interchainRouterAddress, { relayerRpcHost: relayerHost, relayerCertPath, disableRelayerAuth }, dataDir, marketNames, engines)
-    brokerDaemon.initialize()
-    return brokerDaemon
+
+    const brokerOptions = {
+      pubRpcKeyPath,
+      privRpcKeyPath,
+      privIdKeyPath,
+      pubIdKeyPath,
+      rpcAddress,
+      interchainRouterAddress,
+      dataDir,
+      marketNames,
+      engines,
+      disableAuth,
+      relayerOptions: {
+        relayerRpcHost,
+        relayerCertPath,
+        disableRelayerAuth
+      }
+    }
+    return new BrokerDaemon(brokerOptions).initialize()
   })
 
 module.exports = (argv) => program.parse(argv)

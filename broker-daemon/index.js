@@ -2,6 +2,8 @@ const level = require('level')
 const sublevel = require('level-sublevel')
 const EventEmitter = require('events')
 const LndEngine = require('lnd-engine')
+const grpc = require('grpc')
+const { readFileSync } = require('fs')
 
 const RelayerClient = require('./relayer')
 const Orderbook = require('./orderbook')
@@ -13,31 +15,48 @@ const CONFIG = require('./config')
 
 /**
  * Default host and port for the BrokerRPCServer to listen on
+ *
  * @constant
  * @type {String}
+ * @default
  */
 const DEFAULT_RPC_ADDRESS = '0.0.0.0:27492'
 
 /**
  * Default file path to store broker data
+ *
  * @constant
  * @type {String}
+ * @default
  */
 const DEFAULT_DATA_DIR = '~/.sparkswap/data'
 
 /**
  * Default host and port for the InterchainRouter to listen on
+ *
  * @constant
  * @type {String}
+ * @default
  */
 const DEFAULT_INTERCHAIN_ROUTER_ADDRESS = '0.0.0.0:40369'
 
 /**
  * Default host and port that the Relayer is set up on
+ *
  * @constant
  * @type {String}
+ * @default
  */
 const DEFAULT_RELAYER_HOST = 'localhost:28492'
+
+/**
+ * Whether we are starting this process in production based on the NODE_ENV
+ *
+ * @constant
+ * @type {Boolean}
+ * @default
+ */
+const IS_PRODUCTION = (process.env.NODE_ENV === 'production')
 
 /**
  * Create an instance of an engine from provided configuration
@@ -61,6 +80,35 @@ function createEngineFromConfig (symbol, engineConfig, { logger }) {
     throw new Error(`Unknown engine type of ${engineConfig.type} for ${symbol}`)
   }
 }
+/**
+ * Creates grpc server credentials
+ *
+ * @param {Boolean} [disableAuth=false] Whether to disable SSL
+ * @return {grpc.Credentials}
+ */
+function createCredentials () {
+  if (this.disableAuth) {
+    this.logger.warn('DISABLE_AUTH is set to TRUE. Connections to the relayer will be unencrypted and not checked for authorization. This is suitable only in development.')
+    return grpc.ServerCredentials.createInsecure()
+  }
+
+  if (IS_PRODUCTION) throw new Error(`Cannot disable authentication in production. Set DISABLE_AUTH to FALSE.`)
+
+  const key = readFileSync(this.privRpcKeyPath)
+  const cert = readFileSync(this.pubRpcKeyPath)
+
+  this.logger.debug(`Securing gRPC connections with SSL: key: ${this.privRpcKeyPath}, cert: ${this.pubRpcKeyPath}`)
+
+  return grpc.ServerCredentials.createSsl(
+    null, // no root cert needed for server credentials
+    [{
+      private_key: key,
+      // TODO: build a real cert chain instead of just using the root cert
+      cert_chain: cert
+    }],
+    false // checkClientCertificate: false (we don't use client certs)
+  )
+}
 
 /**
  * @class BrokerDaemon is a collection of services to allow a user to run a broker on the SparkSwap Network.
@@ -69,36 +117,44 @@ function createEngineFromConfig (symbol, engineConfig, { logger }) {
  */
 class BrokerDaemon {
   /**
-   * @param  {RelayerClient~KeyPath} idKeyPath                            Path to public and private key for the broker's identity
-   * @param  {String}                rpcAddress                           Host and port where the user-facing RPC server should listen
-   * @param  {String}                interchainRouterAddress              Host and port where the interchain router should listen
-   * @param  {String}                relayOpts.relayerRpcHost             Host and port for the Relayer RPC
-   * @param  {String}                relayOpts.certPath                   Absolute path to the root certificate for the relayer
-   * @param  {Boolean}               [relayOpts.disableRelayerAuth=false] Disable SSL encryption and message signing in communications with the Relayer. DEVELOPMENT ONLY.
-   * @param  {String}                dataDir                              Relative path to a directory where application data should be stored
-   * @param  {Array}                 marketNames                          List of market names (e.g. 'BTC/LTC') to support
-   * @param  {Object}                engines                              Configuration for all the engines to instantiate
+   * @param {Object} opts
+   * @param {String} opts.privKeyPath - Path to private key for broker's identity
+   * @param {String} opts.pubKeyPath - Path to public key for broker's identity
+   * @param {String} opts.rpcAddress - Host and port where the user-facing RPC server should listen
+   * @param {String} opts.interchainRouterAddress - Host and port where the interchain router should listen
+   * @param {String} opts.dataDir - Relative path to a directory where application data should be stored
+   * @param {Array}  opts.marketNames - List of market names (e.g. 'BTC/LTC') to support
+   * @param {Object} opts.engines - Configuration for all the engines to instantiate
+   * @param {String} [opts.disableAuth=false] - Disable SSL for the daemon
+   * @param {Object} relayerOptions
+   * @param {String} relayerOptions.relayerRpcHost - Host and port for the Relayer RPC
+   * @param {String} relayerOptions.certPath - Absolute path to the root certificate for the relayer
+   * @param {Boolean} [relayerOptions.disableRelayerAuth=false] - Disable SSL encryption and message signing in communications with the Relayer. DEVELOPMENT ONLY.
    * @return {BrokerDaemon}
    */
-  constructor (idKeyPath = {}, rpcAddress, interchainRouterAddress, { relayerCertPath, relayerRpcHost, disableRelayerAuth = false } = {}, dataDir, marketNames, engines) {
-    if (!idKeyPath.privKeyPath) {
-      throw new Error(`Private Key path is required to create a BrokerDaemon`)
-    }
-    if (!idKeyPath.pubKeyPath) {
-      throw new Error(`Public Key path is required to create a BrokerDaemon`)
-    }
+  constructor ({ privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, relayerOptions = {} }) {
+    if (!privIdKeyPath) throw new Error('Private Key path is required to create a BrokerDaemon')
+    if (!pubIdKeyPath) throw new Error('Public Key path is required to create a BrokerDaemon')
 
+    const { relayerRpcHost, relayerCertPath, disableRelayerAuth = false } = relayerOptions
+    this.privRpcKeyPath = privRpcKeyPath
+    this.pubRpcKeyPath = pubRpcKeyPath
+    this.idKeyPath = {
+      privKeyPath: privIdKeyPath,
+      pubKeyPath: pubIdKeyPath
+    }
     this.rpcAddress = rpcAddress || DEFAULT_RPC_ADDRESS
     this.dataDir = dataDir || DEFAULT_DATA_DIR
     this.marketNames = marketNames || []
     this.interchainRouterAddress = interchainRouterAddress || DEFAULT_INTERCHAIN_ROUTER_ADDRESS
+    this.disableAuth = disableAuth
     this.relayerRpcHost = relayerRpcHost || DEFAULT_RELAYER_HOST
     this.relayerCertPath = relayerCertPath
 
     this.logger = logger
     this.store = sublevel(level(this.dataDir))
     this.eventHandler = new EventEmitter()
-    this.relayer = new RelayerClient(idKeyPath, { host: this.relayerRpcHost, certPath: this.relayerCertPath, disableAuth: disableRelayerAuth }, this.logger)
+    this.relayer = new RelayerClient(this.idKeyPath, { host: this.relayerRpcHost, certPath: this.relayerCertPath, disableAuth: disableRelayerAuth }, this.logger)
 
     this.engines = new Map(Object.entries(engines || {}).map(([ symbol, engineConfig ]) => {
       return [ symbol, createEngineFromConfig(symbol, engines[symbol], { logger: this.logger }) ]
@@ -160,7 +216,8 @@ class BrokerDaemon {
         })
       ])
 
-      this.rpcServer.listen(this.rpcAddress)
+      const rpcCredentials = createCredentials.call(this, this.disableAuth)
+      this.rpcServer.listen(this.rpcAddress, rpcCredentials)
       this.logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
 
       this.interchainRouter.listen(this.interchainRouterAddress)

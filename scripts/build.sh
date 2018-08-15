@@ -4,10 +4,12 @@
 # Build script for sparkswapd
 #
 # Params:
-# - INCLUDE_DOCKER (optional, defaults to false)
+# - EXTERNAL_ADDRESS (optional, for hosted daemons)
 ################################################
 
 set -e -u
+
+EXTERNAL_ADDRESS=${EXTERNAL_ADDRESS:-}
 
 ARG=${1:-false}
 
@@ -43,5 +45,5 @@ fi
 # If we want to build images with the command then we can use
 if [ "$ARG" != "no-docker" ]; then
   echo "Building broker docker images"
-  npm run build-images
+  EXTERNAL_ADDRESS=$EXTERNAL_ADDRESS npm run build-images
 fi

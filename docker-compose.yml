@@ -46,7 +46,8 @@ services:
       - RELAYER_CERT_HOST=${RELAYER_CERT_HOST}
       - RELAYER_CERT_PATH=/secure/relayer-root.pem
       # WARNING: only disable auth during dev
-      # - DISABLE_AUTH=true
+      - DISABLE_AUTH=true
+      # - DISABLE_RELAYER_AUTH=true
     ports:
       - '27492:27492'
     networks:

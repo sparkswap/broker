@@ -4,8 +4,26 @@ LABEL maintainer="SparkSwap <dev@sparkswap.com>"
 
 # Install git for broker dependencies
 RUN apt-get update && \
-  apt-get upgrade -y && \
+  apt-get upgrade -y --no-install-recommends && \
   apt-get install git
+
+#############################################
+# Keypair Generation for SSL to the broker
+#
+# This step creates certs to allow a user to host a broker on a remote machine
+# and have connections to their daemon be secured through ssl
+#############################################
+
+ARG CERT_HOST
+RUN : "${CERT_HOST:?CERTHOST Build argument needs to be set.}"
+RUN mkdir -p '/secure'
+ARG TLS_KEY="/secure/broker-tls.key"
+ARG TLS_CERT="/secure/broker-tls.cert"
+ARG TLS_CSR="/secure/broker-csr.csr"
+RUN openssl ecparam -genkey -name prime256v1 -out ${TLS_KEY}
+RUN openssl req -new -sha256 -key ${TLS_KEY} -out ${TLS_CSR} -subj "/CN=${CERT_HOST}/O=sparkswap"
+RUN openssl req -x509 -sha256 -days 36500 -key ${TLS_KEY} -in ${TLS_CSR} -out ${TLS_CERT}
+RUN rm ${TLS_CSR}
 
 #############################################
 # Keypair Generation for Relayer
@@ -17,7 +35,6 @@ RUN apt-get update && \
 ARG ID_PRIV_KEY='/secure/broker-identity.private.pem'
 ARG ID_PUB_KEY='/secure/broker-identity.public.pem'
 
-RUN mkdir "/secure"
 RUN openssl ecparam -name prime256v1 -genkey -noout -out ${ID_PRIV_KEY}
 RUN openssl ec -in ${ID_PRIV_KEY} -pubout -out ${ID_PUB_KEY}
 
