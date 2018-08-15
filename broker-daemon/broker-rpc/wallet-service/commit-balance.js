@@ -1,5 +1,5 @@
 const { PublicError } = require('grpc-methods')
-const { convertBalance } = require('../../utils')
+const { convertBalance, Big } = require('../../utils')
 const { currencies } = require('../../config')
 /**
  * @constant
@@ -71,9 +71,19 @@ async function commitBalance ({ params, relayer, logger, engines }, { EmptyRespo
     throw new PublicError(`Maxium balance of ${MAX_CHANNEL_BALANCE} exceeded for committing to the relayer. Please try again.`)
   }
 
+  const {maxBalance: maxOutboundBalance} = await engine.getMaxChannel()
+  const {maxBalance: maxInboundBalance} = await inverseEngine.getMaxChannel({outbound: false})
+  const convertedBalance = convertBalance(balance, symbol, inverseSymbol)
+  if (maxOutboundBalance || maxInboundBalance) {
+    if ((maxOutboundBalance && Big(maxOutboundBalance).lte(balance)) || (maxInboundBalance && Big(maxInboundBalance).lte(convertedBalance))) {
+      throw new PublicError('You have another channel with a balance lower than what you want to open, release that channel and try again.')
+    } else {
+      throw new PublicError('You already have a channel with that balance or greater.')
+    }
+  }
+
   await engine.createChannel(address, balance)
 
-  const convertedBalance = convertBalance(balance, symbol, inverseSymbol)
   const paymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
 
   await relayer.paymentChannelNetworkService.createChannel({address: paymentChannelNetworkAddress, balance: convertedBalance, symbol: inverseSymbol})
