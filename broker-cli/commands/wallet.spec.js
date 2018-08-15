@@ -278,7 +278,7 @@ describe('cli wallet', () => {
     })
   })
 
-  describe('commitBalance', () => {
+  describe('commit', () => {
     let args
     let opts
     let logger
@@ -287,11 +287,11 @@ describe('cli wallet', () => {
     let walletBalanceStub
     let balances
     let daemonStub
-    let commitBalanceStub
+    let commitStub
     let askQuestionStub
     let amount
 
-    const commitBalance = program.__get__('commitBalance')
+    const commit = program.__get__('commit')
 
     beforeEach(() => {
       symbol = 'BTC'
@@ -302,7 +302,7 @@ describe('cli wallet', () => {
         { symbol: 'BTC', uncommittedBalance: 10000000, totalChannelBalance: 100 }
       ]
       walletBalanceStub = sinon.stub().returns({ balances })
-      commitBalanceStub = sinon.stub()
+      commitStub = sinon.stub()
       askQuestionStub = sinon.stub().returns('Y')
       opts = { rpcAddress }
       logger = { info: sinon.stub(), error: sinon.stub() }
@@ -310,7 +310,7 @@ describe('cli wallet', () => {
       daemonStub = sinon.stub()
       daemonStub.prototype.walletService = {
         getBalances: walletBalanceStub,
-        commitBalance: commitBalanceStub
+        commit: commitStub
       }
 
       program.__set__('BrokerDaemonClient', daemonStub)
@@ -318,7 +318,7 @@ describe('cli wallet', () => {
     })
 
     beforeEach(async () => {
-      await commitBalance(args, opts, logger)
+      await commit(args, opts, logger)
     })
 
     it('gets a balance from the daemon', () => {
@@ -327,7 +327,7 @@ describe('cli wallet', () => {
 
     it('calls the daemon to commit a balance to the relayer', () => {
       const { uncommittedBalance } = balances[0]
-      expect(commitBalanceStub).to.have.been.calledWith(sinon.match({ balance: uncommittedBalance.toString(), symbol }))
+      expect(commitStub).to.have.been.calledWith(sinon.match({ balance: uncommittedBalance.toString(), symbol }))
     })
 
     it('asks the user if they are ok to commit to a balance', () => {

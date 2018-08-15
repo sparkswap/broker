@@ -770,11 +770,13 @@ message GetTradingCapacitiesRequest {
 /**
  * Request to commit an amount of a given currency.
  */
-message CommitBalanceRequest {
+message CommitRequest {
   // Currency of the balance to commit.
   Symbol symbol = 1;
   // Amount of the currency to commit. This is currently in base units (e.g. Satoshis/Litoshis)
   int64 balance = 2;
+  // Amount of the currency to commit. This is currently in base units (e.g. Satoshis/Litoshis)
+  string market = 3;
 }
 
 /**
@@ -889,7 +891,7 @@ service WalletService {
    */
   rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse);
   /**
-   * CommitBalance opens a channel with the Relayer with the given amount of currency on the Broker's side, and requests that the Relayer open a channel to the Broker with the inverse currency of equivalent amount on the Relayer's side.
+   * Commit opens a channel with the Relayer with the given amount of currency on the Broker's side, and requests that the Relayer open a channel to the Broker with the inverse currency of equivalent amount on the Relayer's side.
    * This allows the Broker to trade in the market, since it has an outgoing channel and an incoming channel.
    *
    * For now, since we operate a single market, `BTC/LTC`, this "inverse currency" is selected automatically - if you commit LTC, the Broker will request a BTC channel from the Relayer.
@@ -901,7 +903,7 @@ service WalletService {
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
-   * walletService.commitBalance(
+   * walletService.commit(
    *   {
    *     // we are committing LTC to a channel.
    *     // The Broker will request a BTC channel be opened back to itself.
@@ -918,10 +920,10 @@ service WalletService {
    * ```
    *
    * ```shell
-   * > sparkswap wallet commit-balance LTC
+   * > sparkswap wallet commit LTC
    * ```
    */
-  rpc CommitBalance (CommitBalanceRequest) returns (google.protobuf.Empty);
+  rpc Commit (CommitRequest) returns (google.protobuf.Empty);
   /**
    * ReleaseChannels closes all the channels on the given market.
    * If you pass in `BTC/LTC` as the market to releaseChannels, closeChannels will be called on both the BTC and LTC engines. If channels were closed,

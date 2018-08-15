@@ -1,9 +1,9 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
 const { PublicError } = require('grpc-methods')
-const commitBalance = rewire(path.resolve(__dirname, 'commit-balance'))
+const commit = rewire(path.resolve(__dirname, 'commit'))
 
-describe('commit-balance', () => {
+describe('commit', () => {
   let EmptyResponse
   let params
   let relayer
@@ -51,12 +51,12 @@ describe('commit-balance', () => {
         createChannel: createChannelRelayerStub
       }
     }
-    commitBalance.__set__('convertBalance', convertBalanceStub)
+    commit.__set__('convertBalance', convertBalanceStub)
   })
 
   describe('committing a balance to the exchange', () => {
     beforeEach(async () => {
-      res = await commitBalance({ params, relayer, logger, engines }, { EmptyResponse })
+      res = await commit({ params, relayer, logger, engines }, { EmptyResponse })
     })
 
     it('receives a payment channel network address from the relayer', () => {
@@ -96,13 +96,13 @@ describe('commit-balance', () => {
     it('throws an error if engine does not exist for symbol', () => {
       const badParams = {symbol: 'BAD'}
       const errorMessage = `No engine is configured for symbol: ${badParams.symbol}`
-      return expect(commitBalance({ params: badParams, relayer, logger, engines }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
+      return expect(commit({ params: badParams, relayer, logger, engines }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
     })
 
     it('throws an error if inverse engine is not found', () => {
       const badEngines = new Map([['BTC', btcEngine]])
       return expect(
-        commitBalance({ params, relayer, logger, engines: badEngines }, { EmptyResponse })
+        commit({ params, relayer, logger, engines: badEngines }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError, 'No engine is configured for symbol')
     })
   })
@@ -111,18 +111,18 @@ describe('commit-balance', () => {
     it('throws an error for an incorrect balance', () => {
       params.balance = '100'
       return expect(
-        commitBalance({ params, relayer, logger, engines }, { EmptyResponse })
+        commit({ params, relayer, logger, engines }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError, 'Minimum balance of')
     })
   })
 
   describe('balance over allowed maximum value', () => {
-    let maxBalance = commitBalance.__get__('MAX_CHANNEL_BALANCE')
+    let maxBalance = commit.__get__('MAX_CHANNEL_BALANCE')
 
     it('throws an error for an incorrect balance', () => {
       params.balance = maxBalance + 1
       return expect(
-        commitBalance({ params, relayer, logger, engines }, { EmptyResponse })
+        commit({ params, relayer, logger, engines }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError)
     })
   })
