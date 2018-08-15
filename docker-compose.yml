@@ -45,9 +45,10 @@ services:
       - RELAYER_RPC_HOST=${RELAYER_RPC_HOST}
       - RELAYER_CERT_HOST=${RELAYER_CERT_HOST}
       - RELAYER_CERT_PATH=/secure/relayer-root.pem
-      # WARNING: only disable auth during dev
-      - DISABLE_AUTH=true
-      # - DISABLE_RELAYER_AUTH=true
+      # WARNING: Only disable broker SSL during development
+      - DISABLE_AUTH=false
+      - RPC_PRIV_KEY=/secure/broker-rpc-tls.key
+      - RPC_PUB_KEY=/secure/broker-rpc-tls.cert
     ports:
       - '27492:27492'
     networks:

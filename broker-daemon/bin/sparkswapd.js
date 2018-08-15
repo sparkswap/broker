@@ -23,7 +23,9 @@ const {
   ID_PRIV_KEY,
   ID_PUB_KEY,
   DISABLE_AUTH,
-  DISABLE_RELAYER_AUTH
+  DISABLE_RELAYER_AUTH,
+  RPC_PRIV_KEY,
+  RPC_PUB_KEY
 } = process.env
 
 // TODO: Add validations to ./bin/sparkswapd when they become available
@@ -33,8 +35,8 @@ program
   .option('--interchain-router-address <server>', 'Add a host/port to listen for interchain router RPC connections', validations.isHost, INTERCHAIN_ROUTER_ADDRESS)
   .option('--data-dir <path>', 'Location to store SparkSwap data', validations.isFormattedPath, DATA_DIR)
   .option('--disable-auth', 'Disable SSL for the broker (DEV ONLY)', program.BOOL, DISABLE_AUTH)
-  .option('--rpc-privkey-path <path>', 'Location of private key for the broker\'s rpc', validations.isFormattedPath, ID_PRIV_KEY)
-  .option('--rpc-pubkey-path <path>', 'Location of the public key for the broker\'s rpc', validations.isFormattedPath, ID_PUB_KEY)
+  .option('--rpc-privkey-path <path>', 'Location of private key for the broker\'s rpc', validations.isFormattedPath, RPC_PRIV_KEY)
+  .option('--rpc-pubkey-path <path>', 'Location of the public key for the broker\'s rpc', validations.isFormattedPath, RPC_PUB_KEY)
   .option('--disable-relayer-auth', 'Disable SSL and message signing to the relayer (DEV ONLY)', program.BOOL, DISABLE_RELAYER_AUTH)
   .option('--id-privkey-path <path>', 'Location of private key for the broker\'s identity', validations.isFormattedPath, ID_PRIV_KEY)
   .option('--id-pubkey-path <path>', 'Location of the public key for the broker\'s identity', validations.isFormattedPath, ID_PUB_KEY)

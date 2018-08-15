@@ -12,15 +12,16 @@ RUN apt-get update && \
 #
 # This step creates certs to allow a user to host a broker on a remote machine
 # and have connections to their daemon be secured through ssl
+#
 #############################################
 
 ARG CERT_HOST
 RUN : "${CERT_HOST:?CERTHOST Build argument needs to be set.}"
 RUN mkdir -p '/secure'
-ARG TLS_KEY="/secure/broker-tls.key"
-ARG TLS_CERT="/secure/broker-tls.cert"
-ARG TLS_CSR="/secure/broker-csr.csr"
-RUN openssl ecparam -genkey -name prime256v1 -out ${TLS_KEY}
+ARG TLS_KEY="/secure/broker-rpc-tls.key"
+ARG TLS_CERT="/secure/broker-rpc-tls.cert"
+ARG TLS_CSR="/secure/broker-rpc-csr.csr"
+RUN openssl ecparam -genkey -name prime256v1 -noout -out ${TLS_KEY}
 RUN openssl req -new -sha256 -key ${TLS_KEY} -out ${TLS_CSR} -subj "/CN=${CERT_HOST}/O=sparkswap"
 RUN openssl req -x509 -sha256 -days 36500 -key ${TLS_KEY} -in ${TLS_CSR} -out ${TLS_CERT}
 RUN rm ${TLS_CSR}
@@ -30,6 +31,10 @@ RUN rm ${TLS_CSR}
 #
 # This step creates certs to allow the broker to authenticate/auth for orders
 # on the relayer
+#
+# We use a "Secure key exchange algorithm" here because these keys are exchanged
+# via a non secure channel. (ECDH)
+#
 #############################################
 
 ARG ID_PRIV_KEY='/secure/broker-identity.private.pem'

@@ -40,6 +40,11 @@ if [ "$ARG" == "local" ]; then
   cp ./.env-simnet-local-sample ./.env
   echo "Copying dev file to 'docker-compose.override.yml'"
   cp ./docker-compose.dev.yml ./docker-compose.override.yml
+# If the build is not local AND the override exists for whatever reason,
+# we should delete the file to not mess w/ the build
+elif [ -f docker-compose.override.yml ]; then
+  echo "Deleting local docker-compose.override.yml file"
+  rm -f ./docker-compose.override.yml
 fi
 
 # If we want to build images with the command then we can use

@@ -2,8 +2,6 @@ const level = require('level')
 const sublevel = require('level-sublevel')
 const EventEmitter = require('events')
 const LndEngine = require('lnd-engine')
-const grpc = require('grpc')
-const { readFileSync } = require('fs')
 
 const RelayerClient = require('./relayer')
 const Orderbook = require('./orderbook')
@@ -50,15 +48,6 @@ const DEFAULT_INTERCHAIN_ROUTER_ADDRESS = '0.0.0.0:40369'
 const DEFAULT_RELAYER_HOST = 'localhost:28492'
 
 /**
- * Whether we are starting this process in production based on the NODE_ENV
- *
- * @constant
- * @type {Boolean}
- * @default
- */
-const IS_PRODUCTION = (process.env.NODE_ENV === 'production')
-
-/**
  * Create an instance of an engine from provided configuration
  * @param  {String} symbol         Symbol that this engine is responsible for
  * @param  {Object} engineConfig   Configuration object for this engine
@@ -79,35 +68,6 @@ function createEngineFromConfig (symbol, engineConfig, { logger }) {
   } else {
     throw new Error(`Unknown engine type of ${engineConfig.type} for ${symbol}`)
   }
-}
-/**
- * Creates grpc server credentials
- *
- * @param {Boolean} [disableAuth=false] Whether to disable SSL
- * @return {grpc.Credentials}
- */
-function createCredentials () {
-  if (this.disableAuth) {
-    this.logger.warn('DISABLE_AUTH is set to TRUE. Connections to the relayer will be unencrypted and not checked for authorization. This is suitable only in development.')
-    return grpc.ServerCredentials.createInsecure()
-  }
-
-  if (IS_PRODUCTION) throw new Error(`Cannot disable authentication in production. Set DISABLE_AUTH to FALSE.`)
-
-  const key = readFileSync(this.privRpcKeyPath)
-  const cert = readFileSync(this.pubRpcKeyPath)
-
-  this.logger.debug(`Securing gRPC connections with SSL: key: ${this.privRpcKeyPath}, cert: ${this.pubRpcKeyPath}`)
-
-  return grpc.ServerCredentials.createSsl(
-    null, // no root cert needed for server credentials
-    [{
-      private_key: key,
-      // TODO: build a real cert chain instead of just using the root cert
-      cert_chain: cert
-    }],
-    false // checkClientCertificate: false (we don't use client certs)
-  )
 }
 
 /**
@@ -137,8 +97,6 @@ class BrokerDaemon {
     if (!pubIdKeyPath) throw new Error('Public Key path is required to create a BrokerDaemon')
 
     const { relayerRpcHost, relayerCertPath, disableRelayerAuth = false } = relayerOptions
-    this.privRpcKeyPath = privRpcKeyPath
-    this.pubRpcKeyPath = pubRpcKeyPath
     this.idKeyPath = {
       privKeyPath: privIdKeyPath,
       pubKeyPath: pubIdKeyPath
@@ -175,7 +133,9 @@ class BrokerDaemon {
       engines: this.engines,
       relayer: this.relayer,
       orderbooks: this.orderbooks,
-      blockOrderWorker: this.blockOrderWorker
+      blockOrderWorker: this.blockOrderWorker,
+      privKeyPath: privRpcKeyPath,
+      pubKeyPath: pubRpcKeyPath
     })
 
     this.interchainRouter = new InterchainRouter({
@@ -216,8 +176,7 @@ class BrokerDaemon {
         })
       ])
 
-      const rpcCredentials = createCredentials.call(this, this.disableAuth)
-      this.rpcServer.listen(this.rpcAddress, rpcCredentials)
+      this.rpcServer.listen(this.rpcAddress)
       this.logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
 
       this.interchainRouter.listen(this.interchainRouterAddress)

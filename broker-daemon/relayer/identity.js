@@ -122,7 +122,12 @@ Identity.load = function (privKeyPath, pubKeyPath) {
  * @return {String} Pem-encoded public key without newlines or banners
  */
 function pubKeyToBase64 (fileContents) {
+  if (!fileContents) {
+    throw new Error('Public Key is empty. Check that you have specified the correct cert path')
+  }
+
   const strippedContents = fileContents.replace(/\r?\n|\r/g, '')
+
   if (!strippedContents.startsWith(PUB_KEY_MARKERS.START) || !strippedContents.endsWith(PUB_KEY_MARKERS.END)) {
     throw new Error('Public Key should be in PEM printable format')
   }
