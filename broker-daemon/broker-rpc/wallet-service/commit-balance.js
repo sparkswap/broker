@@ -84,19 +84,16 @@ async function commitBalance ({ params, relayer, logger, engines }, { EmptyRespo
     const insufficientOutboundBalance = maxOutboundBalance && Big(maxOutboundBalance).lt(balance)
     const insufficientInboundBalance = maxInboundBalance && Big(maxInboundBalance).lt(convertedBalance)
 
+    let errorMessage
     if (insufficientOutboundBalance) {
-      const errorMessage = 'You have another outbound channel open with a balance lower than desired, release that channel and try again.'
-      logger.error(errorMessage)
-      throw new PublicError(errorMessage)
+      errorMessage = 'You have another outbound channel open with a balance lower than desired, release that channel and try again.'
     } else if (insufficientInboundBalance) {
-      const errorMessage = 'You have another inbound channel open with a balance lower than desired, release that channel and try again.'
-      logger.error(errorMessage)
-      throw new PublicError(errorMessage)
+      errorMessage = 'You have another inbound channel open with a balance lower than desired, release that channel and try again.'
     } else {
-      const errorMessage = 'You already have a channel open with that balance or greater.'
-      logger.error(errorMessage)
-      throw new PublicError(errorMessage)
+      errorMessage = 'You already have a channel open with that balance or greater.'
     }
+    logger.error(`${errorMessage}, balance: ${balance}, maxOutboundBalance: ${maxOutboundBalance}, maxInboundBalance: ${maxInboundBalance}, inboundBalance: ${convertedBalance}`)
+    throw new PublicError(errorMessage)
   }
 
   await engine.createChannel(address, balance)
