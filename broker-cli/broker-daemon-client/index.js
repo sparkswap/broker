@@ -3,7 +3,7 @@ const grpc = require('grpc')
 const caller = require('grpc-caller')
 const { readFileSync } = require('fs')
 
-const CONFIG = require('./config')
+const { loadConfig } = require('./config')
 const { loadProto } = require('../utils')
 
 /**
@@ -20,11 +20,21 @@ const PROTO_PATH = path.resolve(__dirname, '..', 'proto', 'broker.proto')
  */
 const DEFAULT_RPC_PORT = 27492
 
+/**
+ * Root path from the current module used to resolve cert file paths
+ * @constant
+ * @type {String}
+ * @default
+ */
+const PROJECT_ROOT_DIR = '../'
+
 class BrokerDaemonClient {
   /**
-   * @param {String} address grpc host address
+   * @param {String} address - grpc host address
    */
   constructor (rpcAddress) {
+    this.config = loadConfig()
+
     /**
      * Broker Daemon grpc host address
      *
@@ -36,10 +46,9 @@ class BrokerDaemonClient {
      * @see {DEFAULT_RPC_PORT}
      * @type {String}
      */
-    this.address = rpcAddress || CONFIG.rpcAddress
-    this.certPath = CONFIG.rpcCert
-    this.disableSsl = CONFIG.disableSsl
-    this.cert = readFileSync(this.certPath)
+    this.address = rpcAddress || this.config.rpcAddress
+    this.certPath = this.config.rpcCert
+    this.disableSsl = this.config.disableSsl
 
     const [host, port] = this.address.split(':')
 
@@ -49,12 +58,20 @@ class BrokerDaemonClient {
     }
 
     this.proto = loadProto(PROTO_PATH)
-    this.sslCredentials = grpc.credentials.createSsl(readFileSync(this.certPath))
 
-    this.adminService = caller(this.address, this.proto.AdminService)
-    this.orderService = caller(this.address, this.proto.OrderService)
-    this.orderBookService = caller(this.address, this.proto.OrderBookService)
-    this.walletService = caller(this.address, this.proto.WalletService, 'WalletService', this.sslCredentials)
+    if (this.disableSsl) {
+      console.warn('disableSsl is set to true. The CLI will try to connect to the daemon without ssl')
+      this.credentials = grpc.credentials.createInsecure()
+    } else {
+      // Go back to the ./broker-cli/certs directory from the current directory
+      this.cert = readFileSync(path.join(__dirname, PROJECT_ROOT_DIR, this.certPath))
+      this.credentials = grpc.credentials.createSsl(this.cert)
+    }
+
+    this.adminService = caller(this.address, this.proto.AdminService, this.credentials)
+    this.orderService = caller(this.address, this.proto.OrderService, this.credentials)
+    this.orderBookService = caller(this.address, this.proto.OrderBookService, this.credentials)
+    this.walletService = caller(this.address, this.proto.WalletService, this.credentials)
   }
 }
 
