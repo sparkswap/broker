@@ -71,14 +71,31 @@ async function commitBalance ({ params, relayer, logger, engines }, { EmptyRespo
     throw new PublicError(`Maxium balance of ${MAX_CHANNEL_BALANCE} exceeded for committing to the relayer. Please try again.`)
   }
 
+  // Get the max balance for outbound and inbound channels to see if there are already channels with the balance open. If this is the
+  // case we do not need to go to the trouble of opening new channels
   const {maxBalance: maxOutboundBalance} = await engine.getMaxChannel()
   const {maxBalance: maxInboundBalance} = await inverseEngine.getMaxChannel({outbound: false})
   const convertedBalance = convertBalance(balance, symbol, inverseSymbol)
+
+  // If maxOutboundBalance or maxInboundBalance exist, we need to check if the balances are greater or less than the balance of the channel
+  // we are trying to open. If neither maxOutboundBalance nor maxInboundBalance exist, it means there are no channels open and we can safely
+  // attempt to create channels with the balance
   if (maxOutboundBalance || maxInboundBalance) {
-    if ((maxOutboundBalance && Big(maxOutboundBalance).lte(balance)) || (maxInboundBalance && Big(maxInboundBalance).lte(convertedBalance))) {
-      throw new PublicError('You have another channel with a balance lower than what you want to open, release that channel and try again.')
+    const insufficientOutboundBalance = maxOutboundBalance && Big(maxOutboundBalance).lt(balance)
+    const insufficientInboundBalance = maxInboundBalance && Big(maxInboundBalance).lt(convertedBalance)
+
+    if (insufficientOutboundBalance) {
+      const errorMessage = 'You have another outbound channel open with a balance lower than desired, release that channel and try again.'
+      logger.error(errorMessage)
+      throw new PublicError(errorMessage)
+    } else if (insufficientInboundBalance) {
+      const errorMessage = 'You have another inbound channel open with a balance lower than desired, release that channel and try again.'
+      logger.error(errorMessage)
+      throw new PublicError(errorMessage)
     } else {
-      throw new PublicError('You already have a channel with that balance or greater.')
+      const errorMessage = 'You already have a channel open with that balance or greater.'
+      logger.error(errorMessage)
+      throw new PublicError(errorMessage)
     }
   }
 
