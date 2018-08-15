@@ -1,6 +1,6 @@
 const path = require('path')
 const caller = require('grpc-caller')
-const CONFIG = require('./config')
+const { loadConfig } = require('./config')
 const { loadProto } = require('../utils')
 
 /**
@@ -19,9 +19,11 @@ const DEFAULT_RPC_PORT = 27492
 
 class BrokerDaemonClient {
   /**
-   * @param {String} address grpc host address
+   * @param {String} address - grpc host address
    */
   constructor (rpcAddress) {
+    this.config = loadConfig()
+
     /**
      * Broker Daemon grpc host address
      *
@@ -33,7 +35,7 @@ class BrokerDaemonClient {
      * @see {DEFAULT_RPC_PORT}
      * @type {String}
      */
-    this.address = rpcAddress || CONFIG.rpcAddress
+    this.address = rpcAddress || this.config.rpcAddress
 
     const [host, port] = this.address.split(':')
 
