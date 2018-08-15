@@ -140,7 +140,7 @@ describe('commit-balance', () => {
       getMaxInboundChannelStub.resolves({maxBalance: '300'})
       return expect(
         commitBalance({ params, relayer, logger, engines }, { EmptyResponse })
-      ).to.be.rejectedWith(PublicError, 'You already have a channel open with that balance or greater.')
+      ).to.be.rejectedWith(PublicError, `You already have a channel open with ${params.balance} or greater.`)
     })
 
     it('throws an error if the outbound channel does not have the desired amount', () => {

@@ -90,9 +90,9 @@ async function commitBalance ({ params, relayer, logger, engines }, { EmptyRespo
     } else if (insufficientInboundBalance) {
       errorMessage = 'You have another inbound channel open with a balance lower than desired, release that channel and try again.'
     } else {
-      errorMessage = 'You already have a channel open with that balance or greater.'
+      errorMessage = `You already have a channel open with ${balance} or greater.`
     }
-    logger.error(`${errorMessage}, balance: ${balance}, maxOutboundBalance: ${maxOutboundBalance}, maxInboundBalance: ${maxInboundBalance}, inboundBalance: ${convertedBalance}`)
+    logger.error(errorMessage, { balance, maxOutboundBalance, maxInboundBalance, inboundBalance: convertedBalance })
     throw new PublicError(errorMessage)
   }
 
