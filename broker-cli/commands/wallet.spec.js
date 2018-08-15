@@ -290,11 +290,13 @@ describe('cli wallet', () => {
     let commitStub
     let askQuestionStub
     let amount
+    let market
 
     const commit = program.__get__('commit')
 
     beforeEach(() => {
       symbol = 'BTC'
+      market = 'BTC/LTC'
       amount = null
       args = { symbol, amount }
       rpcAddress = 'test:1337'
@@ -304,7 +306,7 @@ describe('cli wallet', () => {
       walletBalanceStub = sinon.stub().returns({ balances })
       commitStub = sinon.stub()
       askQuestionStub = sinon.stub().returns('Y')
-      opts = { rpcAddress }
+      opts = { rpcAddress, market }
       logger = { info: sinon.stub(), error: sinon.stub() }
 
       daemonStub = sinon.stub()
@@ -327,7 +329,7 @@ describe('cli wallet', () => {
 
     it('calls the daemon to commit a balance to the relayer', () => {
       const { uncommittedBalance } = balances[0]
-      expect(commitStub).to.have.been.calledWith(sinon.match({ balance: uncommittedBalance.toString(), symbol }))
+      expect(commitStub).to.have.been.calledWith({ balance: uncommittedBalance.toString(), symbol, market })
     })
 
     it('asks the user if they are ok to commit to a balance', () => {

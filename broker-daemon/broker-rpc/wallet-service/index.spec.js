@@ -99,7 +99,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         commitSpy,
         expectedMessageId,
-        { logger, engines, relayer },
+        { logger, engines, relayer, orderbooks },
         { EmptyResponse: responseStub }
       )
     })

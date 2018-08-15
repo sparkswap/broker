@@ -118,6 +118,7 @@ async function newDepositAddress (args, opts, logger) {
  * @param {Object} args.symbol
  * @param {Object} opts
  * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {String} [opts.market] market to commit funds to
  * @param {Logger} logger
  * @return {Void}
  */
