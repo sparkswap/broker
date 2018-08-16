@@ -37,20 +37,34 @@ describe('sparkswapd', () => {
     expect(BrokerDaemon.prototype.initialize).to.have.been.calledOnce()
   })
 
-  it('provides the identity private/public key paths', () => {
-    const idKeyPath = {
-      privKeyPath: '/path/to/priv/key',
-      pubKeyPath: '/path/pub/key'
+  it('provides the daemon SSL private/public key paths', () => {
+    const rpcKeyPath = {
+      privRpcKeyPath: '/path/to/priv/key',
+      pubRpcKeyPath: '/path/pub/key'
     }
 
-    argv.push('--id-privkey-path')
-    argv.push(idKeyPath.privKeyPath)
-    argv.push('--id-pubkey-path')
-    argv.push(idKeyPath.pubKeyPath)
+    argv.push('--rpc-privkey-path')
+    argv.push(rpcKeyPath.privRpcKeyPath)
+    argv.push('--rpc-pubkey-path')
+    argv.push(rpcKeyPath.pubRpcKeyPath)
 
     sparkswapd(argv)
 
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match(idKeyPath))
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match(rpcKeyPath))
+  })
+
+  it('provides the identity private/public key paths', () => {
+    const privIdKeyPath = '/path/to/priv/key'
+    const pubIdKeyPath = '/path/pub/key'
+
+    argv.push('--id-privkey-path')
+    argv.push(privIdKeyPath)
+    argv.push('--id-pubkey-path')
+    argv.push(pubIdKeyPath)
+
+    sparkswapd(argv)
+
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ }))
   })
 
   it('provides an rpc address', () => {
@@ -60,7 +74,7 @@ describe('sparkswapd', () => {
 
     sparkswapd(argv)
 
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, rpcAddress)
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ rpcAddress }))
   })
 
   xit('defaults the rpc address to the env variable')
@@ -72,7 +86,7 @@ describe('sparkswapd', () => {
 
     sparkswapd(argv)
 
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, interchainRouterAddress)
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ interchainRouterAddress }))
   })
 
   xit('defaults the interchain router address to the env variable')
@@ -84,7 +98,7 @@ describe('sparkswapd', () => {
 
     sparkswapd(argv)
 
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match.any, dataDir)
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ dataDir }))
   })
 
   xit('defaults the data dir to the env variable')
@@ -96,7 +110,7 @@ describe('sparkswapd', () => {
 
     sparkswapd(argv)
 
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match({ relayerRpcHost: relayerHost }))
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ relayerOptions: { relayerRpcHost: relayerHost } }))
   })
 
   xit('defaults the relayer host to the env variable')
@@ -108,7 +122,7 @@ describe('sparkswapd', () => {
 
     sparkswapd(argv)
 
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match({ relayerCertPath }))
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ relayerOptions: { relayerCertPath } }))
   })
 
   xit('defaults the relayer cert path to the env variable')
@@ -118,13 +132,13 @@ describe('sparkswapd', () => {
 
     sparkswapd(argv)
 
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match({ disableRelayerAuth: true }))
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ relayerOptions: { disableRelayerAuth: true } }))
   })
 
   it('disables relayer auth unless the flag is provided', () => {
     sparkswapd(argv)
 
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match({ disableRelayerAuth: undefined }))
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ relayerOptions: { disableRelayerAuth: undefined } }))
   })
 
   xit('defaults relayer auth to the env variable')
@@ -136,7 +150,9 @@ describe('sparkswapd', () => {
 
     sparkswapd(argv)
 
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match.any, sinon.match.any, sinon.match.any, markets.split(','))
+    const marketNames = markets.split(',')
+
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ marketNames }))
   })
 
   xit('defaults the markets to the env variable')
@@ -148,7 +164,7 @@ describe('sparkswapd', () => {
 
     sparkswapd(argv)
 
-    const engines = BrokerDaemon.args[0][6]
+    const { engines } = BrokerDaemon.args[0][0]
     expect(engines.LTC).to.have.property('type', ltcEngineType)
   })
 
@@ -164,7 +180,7 @@ describe('sparkswapd', () => {
 
     sparkswapd(argv)
 
-    const engines = BrokerDaemon.args[0][6]
+    const { engines } = BrokerDaemon.args[0][0]
     expect(engines.LTC).to.have.property('lndRpc', ltcLndRpc)
   })
 
@@ -180,7 +196,7 @@ describe('sparkswapd', () => {
 
     sparkswapd(argv)
 
-    const engines = BrokerDaemon.args[0][6]
+    const { engines } = BrokerDaemon.args[0][0]
     expect(engines.LTC).to.have.property('lndTls', ltcLndTls)
   })
 
@@ -196,7 +212,7 @@ describe('sparkswapd', () => {
 
     sparkswapd(argv)
 
-    const engines = BrokerDaemon.args[0][6]
+    const { engines } = BrokerDaemon.args[0][0]
     expect(engines.LTC).to.have.property('lndMacaroon', ltcLndMacaroon)
   })
 

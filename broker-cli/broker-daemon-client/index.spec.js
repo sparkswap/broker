@@ -11,6 +11,10 @@ describe('BrokerDaemonClient', () => {
   let orderbookStub
   let walletStub
   let callerStub
+  let readFileSyncStub
+  let createInsecureStub
+  let createSslStub
+  let joinStub
 
   beforeEach(() => {
     callerStub = sinon.stub()
@@ -24,9 +28,21 @@ describe('BrokerDaemonClient', () => {
       OrderBookService: orderbookStub,
       WalletService: walletStub
     })
+    readFileSyncStub = sinon.stub().returns(true)
+    createInsecureStub = sinon.stub().returns(true)
+    createSslStub = sinon.stub().returns(true)
+    joinStub = sinon.stub().returns(true)
 
     BrokerDaemonClient.__set__('loadProto', protoStub)
     BrokerDaemonClient.__set__('caller', callerStub)
+    BrokerDaemonClient.__set__('readFileSync', readFileSyncStub)
+    BrokerDaemonClient.__set__('path', { join: joinStub })
+    BrokerDaemonClient.__set__('grpc', {
+      credentials: {
+        createInsecure: createInsecureStub,
+        createSsl: createSslStub
+      }
+    })
   })
 
   it('loads a proto file', () => {
