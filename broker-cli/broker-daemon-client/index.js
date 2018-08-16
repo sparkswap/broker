@@ -30,9 +30,9 @@ const PROJECT_ROOT_DIR = '../'
 
 class BrokerDaemonClient {
   /**
-   * @param {String} address - grpc host address
+   * @param {String} [rpcAddress=null] - grpc host address
    */
-  constructor (rpcAddress) {
+  constructor (rpcAddress = null) {
     this.config = loadConfig()
 
     /**
@@ -60,6 +60,7 @@ class BrokerDaemonClient {
     this.proto = loadProto(PROTO_PATH)
 
     if (this.disableSsl) {
+      // TODO: Eventually allow broker daemon client to use the cli's logger
       console.warn('disableSsl is set to true. The CLI will try to connect to the daemon without ssl')
       this.credentials = grpc.credentials.createInsecure()
     } else {

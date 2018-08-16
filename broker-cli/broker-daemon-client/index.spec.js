@@ -15,8 +15,19 @@ describe('BrokerDaemonClient', () => {
   let createInsecureStub
   let createSslStub
   let joinStub
+  let loadConfigStub
+  let address
+  let consoleStub
+  let certPath
+  let certFile
+  let credentialStub
 
   beforeEach(() => {
+    address = '172.0.0.1:27492'
+    certPath = '/my/cert/path.cert'
+    certFile = 'mycertfile'
+
+    credentialStub = sinon.stub()
     callerStub = sinon.stub()
     adminStub = sinon.stub()
     orderStub = sinon.stub()
@@ -28,11 +39,18 @@ describe('BrokerDaemonClient', () => {
       OrderBookService: orderbookStub,
       WalletService: walletStub
     })
-    readFileSyncStub = sinon.stub().returns(true)
+    readFileSyncStub = sinon.stub().returns(certFile)
     createInsecureStub = sinon.stub().returns(true)
-    createSslStub = sinon.stub().returns(true)
-    joinStub = sinon.stub().returns(true)
+    createSslStub = sinon.stub().returns(credentialStub)
+    joinStub = sinon.stub().returns(certPath)
+    loadConfigStub = sinon.stub().returns({
+      rpcAddress: address,
+      rpcCert: certPath
+    })
+    consoleStub = { warn: sinon.stub() }
 
+    BrokerDaemonClient.__set__('loadConfig', loadConfigStub)
+    BrokerDaemonClient.__set__('console', consoleStub)
     BrokerDaemonClient.__set__('loadProto', protoStub)
     BrokerDaemonClient.__set__('caller', callerStub)
     BrokerDaemonClient.__set__('readFileSync', readFileSyncStub)
@@ -51,28 +69,39 @@ describe('BrokerDaemonClient', () => {
     expect(protoStub).to.have.been.calledWith(protoPath)
   })
 
+  describe('ssl auth', () => {
+    let broker
+
+    it('creates insecure credentials if ssl is disabled', () => {
+      loadConfigStub.returns({ rpcAddress: address, disableSsl: true })
+      broker = new BrokerDaemonClient()
+      expect(createInsecureStub).to.have.been.calledOnce()
+      expect(broker.disableSsl).to.be.true()
+    })
+
+    it('reads a cert file', () => {
+      broker = new BrokerDaemonClient()
+      expect(readFileSyncStub).to.have.been.calledWith(certPath)
+    })
+
+    it('creates ssl credentials', () => {
+      broker = new BrokerDaemonClient()
+      expect(createSslStub).to.have.been.calledWith(certFile)
+    })
+  })
+
   describe('services', () => {
     beforeEach(() => {
       broker = new BrokerDaemonClient()
     })
 
-    it('creates an adminService', () => expect(callerStub).to.have.been.calledWith(broker.address, adminStub))
-    it('creates an orderService', () => expect(callerStub).to.have.been.calledWith(broker.address, orderStub))
-    it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(broker.address, orderbookStub))
-    it('creates an walletService', () => expect(callerStub).to.have.been.calledWith(broker.address, walletStub))
+    it('creates an adminService', () => expect(callerStub).to.have.been.calledWith(broker.address, adminStub, credentialStub))
+    it('creates an orderService', () => expect(callerStub).to.have.been.calledWith(broker.address, orderStub, credentialStub))
+    it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(broker.address, orderbookStub, credentialStub))
+    it('creates an walletService', () => expect(callerStub).to.have.been.calledWith(broker.address, walletStub, credentialStub))
   })
 
   describe('address', () => {
-    let address
-    let loadConfigStub
-
-    beforeEach(() => {
-      address = '172.0.0.1:27492'
-      loadConfigStub = sinon.stub().returns({ rpcAddress: address })
-
-      BrokerDaemonClient.__set__('loadConfig', loadConfigStub)
-    })
-
     it('defaults to CONFIG if an address is not passed in', () => {
       broker = new BrokerDaemonClient()
       expect(broker.address).to.eql(address)
