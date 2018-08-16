@@ -4,7 +4,15 @@ const { loadProto } = require('../../utils')
 const watchMarket = require('./watch-market')
 
 class OrderBookService {
-  constructor (protoPath, { logger, relayer, orderbooks }) {
+  /**
+   * @param {String} protoPath
+   * @param {Object} opts
+   * @param {Object} opts.logger
+   * @param {RelayerClient} opts.relayer
+   * @param {Map} opts.orderbooks
+   * @param {Function} opts.basicAuth
+   */
+  constructor (protoPath, { logger, relayer, orderbooks, basicAuth }) {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
     this.logger = logger
@@ -17,7 +25,7 @@ class OrderBookService {
     } = this.proto
 
     this.implementation = {
-      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks }, { WatchMarketResponse }).register()
+      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks }, { WatchMarketResponse }, basicAuth).register()
     }
   }
 
