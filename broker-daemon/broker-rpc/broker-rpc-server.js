@@ -70,7 +70,7 @@ class BrokerRPCServer {
    * @param {Boolean} [opts.disableAuth=false]
    * @return {BrokerRPCServer}
    */
-  constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, pubKeyPath, privKeyPath, disableAuth = false } = {}) {
+  constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, pubKeyPath, privKeyPath, disableAuth = false, rpcUser = null, rpcPass = null } = {}) {
     this.logger = logger
     this.engines = engines
     this.relayer = relayer
@@ -79,6 +79,8 @@ class BrokerRPCServer {
     this.pubKeyPath = pubKeyPath
     this.privKeyPath = privKeyPath
     this.disableAuth = disableAuth
+    this.rpcUser = rpcUser
+    this.rpcPass = rpcPass
 
     this.protoPath = path.resolve(BROKER_PROTO_PATH)
 
