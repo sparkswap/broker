@@ -21,6 +21,7 @@ describe('BrokerDaemonClient', () => {
   let certPath
   let certFile
   let credentialStub
+  let combineCredentialsStub
 
   beforeEach(() => {
     address = '172.0.0.1:27492'
@@ -40,14 +41,12 @@ describe('BrokerDaemonClient', () => {
       WalletService: walletStub
     })
     readFileSyncStub = sinon.stub().returns(certFile)
-    createInsecureStub = sinon.stub().returns(true)
+    createInsecureStub = sinon.stub().returns(credentialStub)
     createSslStub = sinon.stub().returns(credentialStub)
     joinStub = sinon.stub().returns(certPath)
-    loadConfigStub = sinon.stub().returns({
-      rpcAddress: address,
-      rpcCert: certPath
-    })
+    loadConfigStub = sinon.stub()
     consoleStub = { warn: sinon.stub() }
+    combineCredentialsStub = sinon.stub()
 
     BrokerDaemonClient.__set__('loadConfig', loadConfigStub)
     BrokerDaemonClient.__set__('console', consoleStub)
@@ -55,11 +54,22 @@ describe('BrokerDaemonClient', () => {
     BrokerDaemonClient.__set__('caller', callerStub)
     BrokerDaemonClient.__set__('readFileSync', readFileSyncStub)
     BrokerDaemonClient.__set__('path', { join: joinStub })
+    BrokerDaemonClient.__set__('generateSslCredentials', createSslStub)
+    BrokerDaemonClient.__set__('generateCallCredentials', createSslStub)
     BrokerDaemonClient.__set__('grpc', {
       credentials: {
         createInsecure: createInsecureStub,
-        createSsl: createSslStub
+        combineChannelCredentials: combineCredentialsStub
+
       }
+    })
+  })
+
+  beforeEach(() => {
+    loadConfigStub.returns({
+      rpcAddress: address,
+      rpcCert: certPath,
+      disableAuth: true
     })
   })
 
@@ -72,11 +82,21 @@ describe('BrokerDaemonClient', () => {
   describe('ssl auth', () => {
     let broker
 
+    beforeEach(() => {
+      loadConfigStub.returns({
+        rpcAddress: address,
+        rpcCert: certPath,
+        disableAuth: false,
+        username: 'sparkswap',
+        password: 'sparkswap'
+      })
+    })
+
     it('creates insecure credentials if ssl is disabled', () => {
-      loadConfigStub.returns({ rpcAddress: address, disableSsl: true })
+      loadConfigStub.returns({ rpcAddress: address, disableAuth: true })
       broker = new BrokerDaemonClient()
       expect(createInsecureStub).to.have.been.calledOnce()
-      expect(broker.disableSsl).to.be.true()
+      expect(broker.disableAuth).to.be.true()
     })
 
     it('reads a cert file', () => {
