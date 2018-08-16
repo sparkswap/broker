@@ -94,7 +94,9 @@ class Index {
    * @return {Readable}    Readable stream
    */
   createReadStream (opts) {
-    const stream = this._index.createReadStream(opts)
+    const optionsToUpdate = Object.assign({}, opts)
+    const updatedOptions = this.range(optionsToUpdate)
+    const stream = this._index.createReadStream(updatedOptions)
     // through2 - the lib used below - overrides function context to provide access to `this.push` to push
     // objects into the downstream stream. In order to get access to `#_isMarkedForDeletion`, we need to
     // reference the Index context in a local variable
