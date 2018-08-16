@@ -5,7 +5,7 @@
 # Builds a broker image from scratch
 #
 # Params:
-#   - EXTERNAL_ADDRESS (optional, external address of the broker)
+#   - EXTERNAL_ADDRESS (optional, defaults to localhost)
 #   - RELAYER_PROTO_BRANCH (defaults to master)
 #   - RELAYER_COMMIT_SHA (defaults to the master branch commit sha) (This overrides RELAYER_PROTO_BRANCH)
 #

@@ -9,6 +9,10 @@
 
 set -e -u
 
+# Setting this env is ONLY required for a hosted broker setup.
+#
+# This address is used during the build process so that certs can be generated
+# correctly for a hosted (remote) broker daemon.
 EXTERNAL_ADDRESS=${EXTERNAL_ADDRESS:-}
 
 ARG=${1:-false}

@@ -23,8 +23,9 @@ module.exports = {
   rpcCert: 'certs/broker-rpc-tls.cert',
 
   /**
-   * Configuration for SSL between the CLI and Daemon
+   * Configuration for SSL between the CLI and Daemon. This setting is only required
+   * if you will be hosting the daemon remotely
    * @type {Boolean}
    */
-  disableSsl: false
+  disableSsl: true
 }
