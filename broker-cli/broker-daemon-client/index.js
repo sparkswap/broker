@@ -29,13 +29,27 @@ const DEFAULT_RPC_PORT = 27492
 const PROJECT_ROOT_DIR = '../'
 
 /**
+ * @constant
+ * @type {String}
+ * @default
+ */
+const BASIC_AUTH_PREFIX = 'Basic'
+
+/**
+ * @constant
+ * @type {String}
+ * @default
+ */
+const BASIC_AUTH_DELIMITER = ':'
+
+/**
  * Creates a basic auth string from user/password credentials
  * @param {String} username
  * @param {String} password
  * @return {String} res - basic auth token
  */
 function credentialToBasicAuth (username, password) {
-  return `Basic ${username}:${password}`
+  return `${username}${BASIC_AUTH_DELIMITER}${password}`
 }
 
 /**
@@ -47,7 +61,7 @@ function credentialToBasicAuth (username, password) {
  */
 function generateBasicAuthMetaData (username, password) {
   const rawBasicAuth = credentialToBasicAuth(username, password)
-  const basicAuth = Buffer.from(rawBasicAuth).toString('base64')
+  const basicAuth = `${BASIC_AUTH_PREFIX} ${Buffer.from(rawBasicAuth).toString('base64')}`
   const metadata = new grpc.Metadata()
   metadata.set('Authorization', basicAuth)
   return metadata
@@ -96,8 +110,8 @@ class BrokerDaemonClient {
     this.address = rpcAddress || this.config.rpcAddress
     this.certPath = this.config.rpcCert
     this.disableAuth = this.config.disableAuth
-    this.username = this.config.username
-    this.password = this.config.password
+    this.username = this.config.rpcUser
+    this.password = this.config.rpcPass
 
     const [host, port] = this.address.split(':')
 
