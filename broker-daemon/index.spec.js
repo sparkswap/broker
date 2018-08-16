@@ -170,6 +170,10 @@ describe('broker daemon', () => {
       expect(brokerDaemon.orderbooks).to.be.eql(new Map())
     })
 
+    it('creates a broker rpc server', () => {
+      expect(rpcServer)
+    })
+
     describe('engines', () => {
       it('instantiates the engines', () => {
         expect(brokerDaemon).to.have.property('engines')

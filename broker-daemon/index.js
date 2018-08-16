@@ -135,7 +135,8 @@ class BrokerDaemon {
       orderbooks: this.orderbooks,
       blockOrderWorker: this.blockOrderWorker,
       privKeyPath: privRpcKeyPath,
-      pubKeyPath: pubRpcKeyPath
+      pubKeyPath: pubRpcKeyPath,
+      disableAuth
     })
 
     this.interchainRouter = new InterchainRouter({
