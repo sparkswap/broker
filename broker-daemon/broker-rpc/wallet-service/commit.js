@@ -1,6 +1,5 @@
 const { PublicError } = require('grpc-methods')
-const { convertBalance } = require('../../utils')
-const { currencies } = require('../../config')
+const { convertBalance, Big } = require('../../utils')
 /**
  * @constant
  * @type {Long}
@@ -22,11 +21,6 @@ const MINIMUM_FUNDING_AMOUNT = 400000
  */
 const MAX_CHANNEL_BALANCE = 16777215
 
-const SUPPORTED_SYMBOLS = currencies.reduce((obj, currency) => {
-  obj[currency.symbol] = currency.symbol
-  return obj
-}, {})
-
 /**
  * Grabs public lightning network information from relayer and opens a channel
  *
@@ -39,12 +33,18 @@ const SUPPORTED_SYMBOLS = currencies.reduce((obj, currency) => {
  * @param {function} responses.EmptyResponse
  * @return {responses.EmptyResponse}
  */
-async function commitBalance ({ params, relayer, logger, engines }, { EmptyResponse }) {
-  const { balance, symbol } = params
+async function commit ({ params, relayer, logger, engines, orderbooks }, { EmptyResponse }) {
+  const { balance, symbol, market } = params
+
+  const orderbook = orderbooks.get(market)
+
+  if (!orderbook) {
+    throw new Error(`${market} is not being tracked as a market.`)
+  }
   const { address } = await relayer.paymentChannelNetworkService.getAddress({symbol})
 
-  // This is temporary until we have other markets
-  const inverseSymbol = (symbol === SUPPORTED_SYMBOLS.LTC) ? SUPPORTED_SYMBOLS.BTC : SUPPORTED_SYMBOLS.LTC
+  const [ baseSymbol, counterSymbol ] = market.split('/')
+  const inverseSymbol = (symbol === baseSymbol) ? counterSymbol : baseSymbol
 
   const engine = engines.get(symbol)
   const inverseEngine = engines.get(inverseSymbol)
@@ -71,9 +71,33 @@ async function commitBalance ({ params, relayer, logger, engines }, { EmptyRespo
     throw new PublicError(`Maxium balance of ${MAX_CHANNEL_BALANCE} exceeded for committing to the relayer. Please try again.`)
   }
 
+  // Get the max balance for outbound and inbound channels to see if there are already channels with the balance open. If this is the
+  // case we do not need to go to the trouble of opening new channels
+  const {maxBalance: maxOutboundBalance} = await engine.getMaxChannel()
+  const {maxBalance: maxInboundBalance} = await inverseEngine.getMaxChannel({outbound: false})
+  const convertedBalance = convertBalance(balance, symbol, inverseSymbol)
+
+  // If maxOutboundBalance or maxInboundBalance exist, we need to check if the balances are greater or less than the balance of the channel
+  // we are trying to open. If neither maxOutboundBalance nor maxInboundBalance exist, it means there are no channels open and we can safely
+  // attempt to create channels with the balance
+  if (maxOutboundBalance || maxInboundBalance) {
+    const insufficientOutboundBalance = maxOutboundBalance && Big(maxOutboundBalance).lt(balance)
+    const insufficientInboundBalance = maxInboundBalance && Big(maxInboundBalance).lt(convertedBalance)
+
+    let errorMessage
+    if (insufficientOutboundBalance) {
+      errorMessage = 'You have another outbound channel open with a balance lower than desired, release that channel and try again.'
+    } else if (insufficientInboundBalance) {
+      errorMessage = 'You have another inbound channel open with a balance lower than desired, release that channel and try again.'
+    } else {
+      errorMessage = `You already have a channel open with ${balance} or greater.`
+    }
+    logger.error(errorMessage, { balance, maxOutboundBalance, maxInboundBalance, inboundBalance: convertedBalance })
+    throw new PublicError(errorMessage)
+  }
+
   await engine.createChannel(address, balance)
 
-  const convertedBalance = convertBalance(balance, symbol, inverseSymbol)
   const paymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
 
   await relayer.paymentChannelNetworkService.createChannel({address: paymentChannelNetworkAddress, balance: convertedBalance, symbol: inverseSymbol})
@@ -81,4 +105,4 @@ async function commitBalance ({ params, relayer, logger, engines }, { EmptyRespo
   return new EmptyResponse({})
 }
 
-module.exports = commitBalance
+module.exports = commit

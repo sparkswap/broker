@@ -33,7 +33,7 @@ const SUPPORTED_SYMBOLS = Object.freeze(['BTC', 'LTC'])
 const SUPPORTED_COMMANDS = Object.freeze({
   BALANCE: 'balance',
   NEW_DEPOSIT_ADDRESS: 'new-deposit-address',
-  COMMIT_BALANCE: 'commit-balance',
+  COMMIT: 'commit',
   NETWORK_ADDRESS: 'network-address',
   NETWORK_STATUS: 'network-status',
   RELEASE: 'release'
@@ -109,21 +109,22 @@ async function newDepositAddress (args, opts, logger) {
 }
 
 /**
- * commit-balance
+ * commit
  *
- * ex: `sparkswap wallet commit-balance`
+ * ex: `sparkswap wallet commit`
  *
  * @function
  * @param {Object} args
  * @param {Object} args.symbol
  * @param {Object} opts
  * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {String} [opts.market] market to commit funds to
  * @param {Logger} logger
  * @return {Void}
  */
-async function commitBalance (args, opts, logger) {
+async function commit (args, opts, logger) {
   const { symbol, amount } = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress = null, market } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -167,7 +168,7 @@ async function commitBalance (args, opts, logger) {
       throw new Error(`Amount specified is larger than your current uncommitted balance of ${Big(uncommittedBalance).div(divideBy)} ${symbol}`)
     }
 
-    await client.walletService.commitBalance({ balance: maxSupportedBalance.toString(), symbol })
+    await client.walletService.commit({ balance: maxSupportedBalance.toString(), symbol, market })
 
     logger.info('Successfully committed balance to sparkswap Relayer!')
   } catch (e) {
@@ -309,7 +310,7 @@ async function release (args, opts, logger) {
 module.exports = (program) => {
   program
     .command('wallet', 'Commands to handle a wallet instance')
-    .help('Available Commands: balance, new-deposit-address, commit-balance, network-address, network-status, release')
+    .help('Available Commands: balance, new-deposit-address, commit, network-address, network-status, release')
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
@@ -335,7 +336,7 @@ module.exports = (program) => {
           args.symbol = symbol
 
           return newDepositAddress(args, opts, logger)
-        case SUPPORTED_COMMANDS.COMMIT_BALANCE:
+        case SUPPORTED_COMMANDS.COMMIT:
           symbol = symbol.toUpperCase()
 
           if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
@@ -344,8 +345,9 @@ module.exports = (program) => {
 
           args.symbol = symbol
           args.amount = amount
+          opts.market = validations.isMarketName(market)
 
-          return commitBalance(args, opts, logger)
+          return commit(args, opts, logger)
         case SUPPORTED_COMMANDS.NETWORK_ADDRESS:
           symbol = symbol.toUpperCase()
 
@@ -367,9 +369,10 @@ module.exports = (program) => {
     .command('wallet balance', 'Current daemon wallet balance')
     .command('wallet new-deposit-address', 'Generates a new wallet address for a daemon instance')
     .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`)
-    .command('wallet commit-balance')
+    .command('wallet commit')
     .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`)
     .argument('[amount]', 'Amount of currency to commit to the relayer', validations.isDecimal)
+    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .command('wallet network-address', 'Payment Channel Network Public key for a given currency')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .command('wallet network-status', 'Payment Channel Network status for trading in different markets')
