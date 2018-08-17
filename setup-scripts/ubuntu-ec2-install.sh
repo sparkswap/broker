@@ -1,3 +1,20 @@
+########################################################
+# Sparkswap hosted broker setup for AWS EC2
+#
+# PARAMS:
+#   - EXTERNAL_ADDRESS ()
+########################################################
+set -ex
+
+EXTERNAL_ADDRESS=${EXTERNAL_ADDRESS:-}
+
+if [ -z "$EXTERNAL_ADDRESS" ]; then
+  echo "EXTERNAL_ADDRESS is required to install broker on a remote host"
+  exit 1
+fi
+
+echo "Installing Broker on: $EXTERNAL_ADDRESS"
+
 # Installing the broker
 mkdir -p ~/sparkswap && cd sparkswap
 
