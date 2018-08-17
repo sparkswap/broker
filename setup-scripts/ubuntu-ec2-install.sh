@@ -34,7 +34,7 @@ git clone git://github.com/sparkswap/lnd-engine.git
 # Download the source for a broker
 git clone git://github.com/sparkswap/broker.git
 cd broker
-npm run build
+EXTERNAL_ADDRESS=$EXTERNAL_ADDRESS npm run build
 cp .env-testnet-sample .env
 sed -i "s/sample.ip.address/$EXTERNAL_ADDRESS/" .env
 docker-compose up -d
