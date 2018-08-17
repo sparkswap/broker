@@ -1,6 +1,5 @@
 const { PublicError } = require('grpc-methods')
 const { convertBalance, Big } = require('../../utils')
-const { currencies } = require('../../config')
 /**
  * @constant
  * @type {Long}
@@ -22,11 +21,6 @@ const MINIMUM_FUNDING_AMOUNT = 400000
  */
 const MAX_CHANNEL_BALANCE = 16777215
 
-const SUPPORTED_SYMBOLS = currencies.reduce((obj, currency) => {
-  obj[currency.symbol] = currency.symbol
-  return obj
-}, {})
-
 /**
  * Grabs public lightning network information from relayer and opens a channel
  *
@@ -39,12 +33,18 @@ const SUPPORTED_SYMBOLS = currencies.reduce((obj, currency) => {
  * @param {function} responses.EmptyResponse
  * @return {responses.EmptyResponse}
  */
-async function commitBalance ({ params, relayer, logger, engines }, { EmptyResponse }) {
-  const { balance, symbol } = params
+async function commit ({ params, relayer, logger, engines, orderbooks }, { EmptyResponse }) {
+  const { balance, symbol, market } = params
+
+  const orderbook = orderbooks.get(market)
+
+  if (!orderbook) {
+    throw new Error(`${market} is not being tracked as a market.`)
+  }
   const { address } = await relayer.paymentChannelNetworkService.getAddress({symbol})
 
-  // This is temporary until we have other markets
-  const inverseSymbol = (symbol === SUPPORTED_SYMBOLS.LTC) ? SUPPORTED_SYMBOLS.BTC : SUPPORTED_SYMBOLS.LTC
+  const [ baseSymbol, counterSymbol ] = market.split('/')
+  const inverseSymbol = (symbol === baseSymbol) ? counterSymbol : baseSymbol
 
   const engine = engines.get(symbol)
   const inverseEngine = engines.get(inverseSymbol)
@@ -105,4 +105,4 @@ async function commitBalance ({ params, relayer, logger, engines }, { EmptyRespo
   return new EmptyResponse({})
 }
 
-module.exports = commitBalance
+module.exports = commit

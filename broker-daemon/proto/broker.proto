@@ -768,13 +768,15 @@ message GetTradingCapacitiesRequest {
 }
 
 /**
- * Request to commit an amount of a given currency.
+ * Request to commit an amount of a given currency on a given market.
  */
-message CommitBalanceRequest {
+message CommitRequest {
   // Currency of the balance to commit.
   Symbol symbol = 1;
   // Amount of the currency to commit. This is currently in base units (e.g. Satoshis/Litoshis)
   int64 balance = 2;
+  // Market to commit the amount in currency to. e.g. BTC/LTC
+  string market = 3;
 }
 
 /**
@@ -889,26 +891,27 @@ service WalletService {
    */
   rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse);
   /**
-   * CommitBalance opens a channel with the Relayer with the given amount of currency on the Broker's side, and requests that the Relayer open a channel to the Broker with the inverse currency of equivalent amount on the Relayer's side.
+   * Commit opens a channel with the Relayer with the given amount of currency on the Broker's side, and requests that the Relayer open a channel to the Broker with the inverse currency of equivalent amount on the Relayer's side.
    * This allows the Broker to trade in the market, since it has an outgoing channel and an incoming channel.
    *
-   * For now, since we operate a single market, `BTC/LTC`, this "inverse currency" is selected automatically - if you commit LTC, the Broker will request a BTC channel from the Relayer.
+   * The market parameter will determine the inverse currency, if you commit LTC to the BTC/LTC market, the Broker will request a BTC channel to be opened from the Relayer.
    *
-   * Additionally, since the Network is in testing stages, rather than relying on the Network's exchange rate between BTC and LTC to determine how large of a channel to open, we use a set rate of 60 LTC to 1 BTC.
+   * Since the Network is in testing stages, rather than relying on the Network's exchange rate between BTC and LTC to determine how large of a channel to open, we use a set rate of 60 LTC to 1 BTC.
    * This also has the property of matching the conversion used in LND, so that when we run into things like the max channel size (in place while LND is in Beta), we can be consistent with LTC and BTC.
    *
    * > The below command has no output, but will throw an error if one is encountered.
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
-   * walletService.commitBalance(
+   * walletService.commit(
    *   {
-   *     // we are committing LTC to a channel.
+   *     // we are committing LTC to a channel on the BTC/LTC market
    *     // The Broker will request a BTC channel be opened back to itself.
    *     symbol: 'LTC',
    *     // The amount (in Satoshis) to commit to the channel.
    *     // The Broker will request a BTC channel of size 16700000 / 60 be opened back to itself.
-   *     balance: '16700000'
+   *     balance: '16700000',
+   *     market: 'BTC/LTC'
    *   },
    *   { deadline },
    *   (err) => {
@@ -918,10 +921,10 @@ service WalletService {
    * ```
    *
    * ```shell
-   * > sparkswap wallet commit-balance LTC
+   * > sparkswap wallet commit LTC --market BTC/LTC
    * ```
    */
-  rpc CommitBalance (CommitBalanceRequest) returns (google.protobuf.Empty);
+  rpc Commit (CommitRequest) returns (google.protobuf.Empty);
   /**
    * ReleaseChannels closes all the channels on the given market.
    * If you pass in `BTC/LTC` as the market to releaseChannels, closeChannels will be called on both the BTC and LTC engines. If channels were closed,

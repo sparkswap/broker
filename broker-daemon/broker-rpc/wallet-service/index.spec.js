@@ -16,7 +16,7 @@ describe('WalletService', () => {
   let newDepositAddress
   let getPaymentChannelNetworkAddress
   let balanceSpy
-  let commitBalanceSpy
+  let commitSpy
   let getTradingCapacities
   let orderbooks
   let releaseChannels
@@ -45,7 +45,7 @@ describe('WalletService', () => {
     getTradingCapacities = sinon.stub()
     releaseChannels = sinon.stub()
     balanceSpy = sinon.spy()
-    commitBalanceSpy = sinon.spy()
+    commitSpy = sinon.spy()
     unaryMethodStub = sinon.stub()
     registerSpy = sinon.spy()
     unaryMethodStub.prototype.register = registerSpy
@@ -54,7 +54,7 @@ describe('WalletService', () => {
     WalletService.__set__('GrpcUnaryMethod', unaryMethodStub)
     WalletService.__set__('newDepositAddress', newDepositAddress)
     WalletService.__set__('getBalances', balanceSpy)
-    WalletService.__set__('commitBalance', commitBalanceSpy)
+    WalletService.__set__('commit', commitSpy)
     WalletService.__set__('getPaymentChannelNetworkAddress', getPaymentChannelNetworkAddress)
     WalletService.__set__('getTradingCapacities', getTradingCapacities)
     WalletService.__set__('releaseChannels', releaseChannels)
@@ -93,13 +93,13 @@ describe('WalletService', () => {
       )
     })
 
-    it('creates a unary method for commitBalance', () => {
-      const expectedMessageId = '[WalletService:commitBalance]'
+    it('creates a unary method for commit', () => {
+      const expectedMessageId = '[WalletService:commit]'
 
       expect(unaryMethodStub).to.have.been.calledWith(
-        commitBalanceSpy,
+        commitSpy,
         expectedMessageId,
-        { logger, engines, relayer },
+        { logger, engines, relayer, orderbooks },
         { EmptyResponse: responseStub }
       )
     })

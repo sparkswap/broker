@@ -1,9 +1,9 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
 const { PublicError } = require('grpc-methods')
-const commitBalance = rewire(path.resolve(__dirname, 'commit-balance'))
+const commit = rewire(path.resolve(__dirname, 'commit'))
 
-describe('commit-balance', () => {
+describe('commit', () => {
   let EmptyResponse
   let params
   let relayer
@@ -20,6 +20,7 @@ describe('commit-balance', () => {
   let engines
   let getMaxOutboundChannelStub
   let getMaxInboundChannelStub
+  let orderbooks
 
   beforeEach(() => {
     EmptyResponse = sinon.stub()
@@ -29,6 +30,7 @@ describe('commit-balance', () => {
     createChannelRelayerStub = sinon.stub().resolves({})
     convertBalanceStub = sinon.stub().returns('100')
     createChannelStub = sinon.stub()
+    orderbooks = new Map([['BTC/LTC', {}]])
     logger = {
       info: sinon.stub(),
       error: sinon.stub()
@@ -50,7 +52,8 @@ describe('commit-balance', () => {
     ])
     params = {
       balance: '10000000',
-      symbol: 'BTC'
+      symbol: 'BTC',
+      market: 'BTC/LTC'
     }
     relayer = {
       paymentChannelNetworkService: {
@@ -58,12 +61,12 @@ describe('commit-balance', () => {
         createChannel: createChannelRelayerStub
       }
     }
-    commitBalance.__set__('convertBalance', convertBalanceStub)
+    commit.__set__('convertBalance', convertBalanceStub)
   })
 
   describe('committing a balance to the exchange', () => {
     beforeEach(async () => {
-      res = await commitBalance({ params, relayer, logger, engines }, { EmptyResponse })
+      res = await commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
     })
 
     it('receives a payment channel network address from the relayer', () => {
@@ -83,11 +86,11 @@ describe('commit-balance', () => {
     })
 
     it('makes a request to the relayer to create a channel', () => {
-      expect(relayer.paymentChannelNetworkService.createChannel).to.have.been.calledWith(sinon.match({
+      expect(relayer.paymentChannelNetworkService.createChannel).to.have.been.calledWith({
         address: relayerAddress,
         balance: '100',
         symbol: 'LTC'
-      }))
+      })
     })
 
     it('constructs a EmptyResponse', () => {
@@ -99,17 +102,25 @@ describe('commit-balance', () => {
     })
   })
 
+  describe('invalid market', () => {
+    it('throws an error if engine does not exist for symbol', () => {
+      const badParams = {symbol: 'BTC', market: 'BTC/BAD'}
+      const errorMessage = `${badParams.market} is not being tracked as a market.`
+      return expect(commit({ params: badParams, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
+    })
+  })
+
   describe('invalid engine types', () => {
     it('throws an error if engine does not exist for symbol', () => {
-      const badParams = {symbol: 'BAD'}
+      const badParams = {symbol: 'BAD', market: 'BTC/LTC'}
       const errorMessage = `No engine is configured for symbol: ${badParams.symbol}`
-      return expect(commitBalance({ params: badParams, relayer, logger, engines }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
+      return expect(commit({ params: badParams, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
     })
 
     it('throws an error if inverse engine is not found', () => {
       const badEngines = new Map([['BTC', btcEngine]])
       return expect(
-        commitBalance({ params, relayer, logger, engines: badEngines }, { EmptyResponse })
+        commit({ params, relayer, logger, engines: badEngines, orderbooks }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError, 'No engine is configured for symbol')
     })
   })
@@ -118,18 +129,18 @@ describe('commit-balance', () => {
     it('throws an error for an incorrect balance', () => {
       params.balance = '100'
       return expect(
-        commitBalance({ params, relayer, logger, engines }, { EmptyResponse })
+        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError, 'Minimum balance of')
     })
   })
 
   describe('balance over allowed maximum value', () => {
-    let maxBalance = commitBalance.__get__('MAX_CHANNEL_BALANCE')
+    let maxBalance = commit.__get__('MAX_CHANNEL_BALANCE')
 
     it('throws an error for an incorrect balance', () => {
       params.balance = maxBalance + 1
       return expect(
-        commitBalance({ params, relayer, logger, engines }, { EmptyResponse })
+        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError)
     })
   })
@@ -139,7 +150,7 @@ describe('commit-balance', () => {
       getMaxOutboundChannelStub.resolves({maxBalance: '10000001'})
       getMaxInboundChannelStub.resolves({maxBalance: '300'})
       return expect(
-        commitBalance({ params, relayer, logger, engines }, { EmptyResponse })
+        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError, `You already have a channel open with ${params.balance} or greater.`)
     })
 
@@ -147,7 +158,7 @@ describe('commit-balance', () => {
       getMaxOutboundChannelStub.resolves({maxBalance: '1000'})
       getMaxInboundChannelStub.resolves({maxBalance: '300'})
       return expect(
-        commitBalance({ params, relayer, logger, engines }, { EmptyResponse })
+        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError, 'You have another outbound channel open with a balance lower than desired, release that channel and try again.')
     })
 
@@ -155,7 +166,7 @@ describe('commit-balance', () => {
       getMaxOutboundChannelStub.resolves({maxBalance: '100000001'})
       getMaxInboundChannelStub.resolves({maxBalance: '10'})
       return expect(
-        commitBalance({ params, relayer, logger, engines }, { EmptyResponse })
+        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError, 'You have another inbound channel open with a balance lower than desired, release that channel and try again.')
     })
   })
