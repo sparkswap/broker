@@ -48,15 +48,16 @@ describe('BrokerDaemonClient', () => {
 
   describe('address', () => {
     let address
+    let loadConfigStub
 
     beforeEach(() => {
       address = '172.0.0.1:27492'
+      loadConfigStub = sinon.stub().returns({ rpcAddress: address })
+
+      BrokerDaemonClient.__set__('loadConfig', loadConfigStub)
     })
 
     it('defaults to CONFIG if an address is not passed in', () => {
-      BrokerDaemonClient.__set__('CONFIG', {
-        rpcAddress: address
-      })
       broker = new BrokerDaemonClient()
       expect(broker.address).to.eql(address)
     })

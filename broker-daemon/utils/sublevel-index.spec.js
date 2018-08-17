@@ -190,6 +190,15 @@ describe('Index', () => {
         expect(indexStore.createReadStream).to.have.been.calledWith(opts)
       })
 
+      it('updates read stream range options before passing them to the underlying store', () => {
+        const options = { fake: 'opts', lte: '0.000001' }
+        const expectedOptions = { fake: 'opts', lte: '0.000001:\uffff' }
+
+        index.createReadStream(options)
+
+        expect(indexStore.createReadStream).to.have.been.calledWith(expectedOptions)
+      })
+
       it('returns the piped stream', () => {
         const piped = 'fake pipe'
         indexStoreStream.pipe.returns(piped)

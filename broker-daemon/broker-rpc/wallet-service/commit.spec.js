@@ -18,6 +18,8 @@ describe('commit', () => {
   let getAddressStub
   let relayerAddress
   let engines
+  let getMaxOutboundChannelStub
+  let getMaxInboundChannelStub
   let orderbooks
 
   beforeEach(() => {
@@ -33,11 +35,16 @@ describe('commit', () => {
       info: sinon.stub(),
       error: sinon.stub()
     }
+    getMaxOutboundChannelStub = sinon.stub().resolves({})
+    getMaxInboundChannelStub = sinon.stub().resolves({})
+
     btcEngine = {
-      createChannel: createChannelStub
+      createChannel: createChannelStub,
+      getMaxChannel: getMaxOutboundChannelStub
     }
     ltcEngine = {
-      getPaymentChannelNetworkAddress: sinon.stub().resolves(relayerAddress)
+      getPaymentChannelNetworkAddress: sinon.stub().resolves(relayerAddress),
+      getMaxChannel: getMaxInboundChannelStub
     }
     engines = new Map([
       ['BTC', btcEngine],
@@ -135,6 +142,32 @@ describe('commit', () => {
       return expect(
         commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError)
+    })
+  })
+
+  describe('checking channel balances', () => {
+    it('throws an error if there are already open inbound and outbound channels with the desired amount', () => {
+      getMaxOutboundChannelStub.resolves({maxBalance: '10000001'})
+      getMaxInboundChannelStub.resolves({maxBalance: '300'})
+      return expect(
+        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+      ).to.be.rejectedWith(PublicError, `You already have a channel open with ${params.balance} or greater.`)
+    })
+
+    it('throws an error if the outbound channel does not have the desired amount', () => {
+      getMaxOutboundChannelStub.resolves({maxBalance: '1000'})
+      getMaxInboundChannelStub.resolves({maxBalance: '300'})
+      return expect(
+        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+      ).to.be.rejectedWith(PublicError, 'You have another outbound channel open with a balance lower than desired, release that channel and try again.')
+    })
+
+    it('throws an error if the inbound channel does not have the desired amount', () => {
+      getMaxOutboundChannelStub.resolves({maxBalance: '100000001'})
+      getMaxInboundChannelStub.resolves({maxBalance: '10'})
+      return expect(
+        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+      ).to.be.rejectedWith(PublicError, 'You have another inbound channel open with a balance lower than desired, release that channel and try again.')
     })
   })
 })
