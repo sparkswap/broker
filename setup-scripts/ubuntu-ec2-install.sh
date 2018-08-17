@@ -1,8 +1,17 @@
 ########################################################
-# Sparkswap hosted broker setup for AWS EC2
+# Sparkswap hosted broker installation for an AWS Ubuntu 16.04 LTS EC2 instance
+#
+# After `ubuntu-ec2-setup.sh` has been ran on your current machine, we are now able
+# to install the broker.
+#
+# Requirements for this script to work include:
+# - Docker permissions for non-root user
+# - Docker
+# - Docker-compose
+# - NodeJS (nvm)
 #
 # PARAMS:
-#   - EXTERNAL_ADDRESS ()
+#   - EXTERNAL_ADDRESS (required, public IP of remote host)
 ########################################################
 set -ex
 
@@ -30,5 +39,5 @@ cp .env-testnet-sample .env
 sed -i "s/sample.ip.address/$EXTERNAL_ADDRESS/" .env
 docker-compose up -d
 
-# Install the CLI
+# Install the CLI for local use
 npm install -g ./broker-cli

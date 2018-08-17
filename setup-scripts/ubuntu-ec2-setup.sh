@@ -1,15 +1,18 @@
 ########################################################
-# Sparkswap hosted broker setup for AWS EC2
+# Sparkswap hosted broker setup for an AWS Ubuntu 16.04 LTS EC2 instance
 #
-# NOTE: These steps make heavy use of sudo, so make sure you have access
-#       before continuing.
+# These steps are intended to work with a newly created, default Ubuntu EC2 instance.
+#
+# EC2 Setup Steps:
+# 1. update system deps
+# 2. Add Docker CE repo to apt-get
+# 3. Install dev deps (nvm, pip, build tools, docker-compose)
+# 4. Add our current user to the docker group
+# 5. restart the session so permissions will take effect
+#
 ########################################################
 
-# In order to install the latest, stable Docker CE, we need to add the docker repository
-# to our ubuntu instance
-# These steps were taken directly from https://docs.docker.com/install/linux/docker-ce/ubuntu/#install-docker-ce
 #
-## START OF DOCKER STEPS
 sudo apt-get update
 sudo apt-get install \
     apt-transport-https \
