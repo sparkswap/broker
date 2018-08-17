@@ -45,7 +45,7 @@ describe('BrokerDaemonClient', () => {
     joinStub = sinon.stub().returns(certPath)
     loadConfigStub = sinon.stub().returns({
       rpcAddress: address,
-      rpcCert: certPath
+      rpcCertPath: certPath
     })
     consoleStub = { warn: sinon.stub() }
 

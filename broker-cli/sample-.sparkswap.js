@@ -20,7 +20,7 @@ module.exports = {
    * Default path of the Broker Daemons RPC Public Cert
    * @type {String}
    */
-  // rpcCert: 'certs/broker-rpc-tls.cert',
+  // rpcCertPath: 'certs/broker-rpc-tls.cert',
 
   /**
    * Configuration for SSL between the CLI and Daemon. This setting is only required

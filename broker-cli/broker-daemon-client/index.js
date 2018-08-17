@@ -47,7 +47,7 @@ class BrokerDaemonClient {
      * @type {String}
      */
     this.address = rpcAddress || this.config.rpcAddress
-    this.certPath = this.config.rpcCert
+    this.certPath = this.config.rpcCertPath
     this.disableSsl = this.config.disableSsl
 
     const [host, port] = this.address.split(':')
