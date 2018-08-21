@@ -16,8 +16,8 @@ describe('AdminService', () => {
   let logger
 
   let relayer
-  let engine
   let engines
+  let basicAuth
 
   let server
 
@@ -33,9 +33,9 @@ describe('AdminService', () => {
       info: sinon.stub(),
       error: sinon.stub()
     }
+    basicAuth = sinon.stub()
 
     relayer = sinon.stub()
-    engine = sinon.stub()
     engines = new Map()
 
     GrpcMethod = sinon.stub()
@@ -52,7 +52,7 @@ describe('AdminService', () => {
   })
 
   beforeEach(() => {
-    server = new AdminService(protoPath, { logger, relayer, engine, engines })
+    server = new AdminService(protoPath, { logger, relayer, engines, basicAuth })
   })
 
   it('assigns a proto path', () => {
@@ -137,6 +137,10 @@ describe('AdminService', () => {
 
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.eql({ HealthCheckResponse: proto.HealthCheckResponse })
+    })
+
+    it('passes in basicAuth', () => {
+      expect(callArgs[4]).to.be.eql(basicAuth)
     })
   })
 })
