@@ -20,6 +20,7 @@ describe('WalletService', () => {
   let getTradingCapacities
   let orderbooks
   let releaseChannels
+  let basicAuth
 
   before(() => {
     responseStub = sinon.stub()
@@ -36,6 +37,7 @@ describe('WalletService', () => {
       },
       GetTradingCapacitiesResponse: responseStub
     })
+    basicAuth = sinon.stub()
     logger = sinon.stub()
     engines = sinon.stub()
     relayer = sinon.stub()
@@ -59,7 +61,7 @@ describe('WalletService', () => {
     WalletService.__set__('getTradingCapacities', getTradingCapacities)
     WalletService.__set__('releaseChannels', releaseChannels)
 
-    wallet = new WalletService(protoPath, { logger, engines, relayer, orderbooks })
+    wallet = new WalletService(protoPath, { logger, engines, relayer, orderbooks, basicAuth })
   })
 
   it('sets a protoPath', () => expect(wallet.protoPath).to.eql(protoPath))
@@ -89,7 +91,8 @@ describe('WalletService', () => {
         balanceSpy,
         expectedMessageId,
         { logger, engines },
-        { GetBalancesResponse: responseStub }
+        { GetBalancesResponse: responseStub },
+        basicAuth
       )
     })
 
@@ -100,7 +103,8 @@ describe('WalletService', () => {
         commitSpy,
         expectedMessageId,
         { logger, engines, relayer, orderbooks },
-        { EmptyResponse: responseStub }
+        { EmptyResponse: responseStub },
+        basicAuth
       )
     })
 
@@ -111,7 +115,8 @@ describe('WalletService', () => {
         getPaymentChannelNetworkAddress,
         expectedMessageId,
         { logger, engines },
-        { GetPaymentChannelNetworkAddressResponse: responseStub }
+        { GetPaymentChannelNetworkAddressResponse: responseStub },
+        basicAuth
       )
     })
 
@@ -122,7 +127,8 @@ describe('WalletService', () => {
         getTradingCapacities,
         expectedMessageId,
         { logger, engines, orderbooks },
-        { GetTradingCapacitiesResponse: responseStub }
+        { GetTradingCapacitiesResponse: responseStub },
+        basicAuth
       )
     })
 
@@ -133,7 +139,8 @@ describe('WalletService', () => {
         releaseChannels,
         expectedMessageId,
         { logger, engines, orderbooks },
-        { EmptyResponse: responseStub }
+        { EmptyResponse: responseStub },
+        basicAuth
       )
     })
   })
