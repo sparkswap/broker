@@ -16,26 +16,32 @@ describe('broker daemon', () => {
   let LndEngine
   let logger
   let brokerDaemon
-  let rpcServerListenSpy
+  let rpcListenStub
   let interchainRouterListenSpy
   let CONFIG
   let engines
-  let idKeyPath
+  let privRpcKeyPath
+  let pubRpcKeyPath
+  let privIdKeyPath
+  let pubIdKeyPath
+  let rpcAddress
+  let interchainRouterAddress
+  let dataDir
+  let marketNames
+  let disableAuth
+  let relayerOptions
+  let brokerDaemonOptions
 
   beforeEach(() => {
-    idKeyPath = {
-      privKeyPath: '/path/to/priv/key',
-      pubKeyPath: '/path/to/pub/key'
-    }
     level = sinon.stub().returns('fake-level')
     store = {
       sublevel: sinon.stub().returns('fake-sublevel')
     }
     sublevel = sinon.stub().returns(store)
     RelayerClient = sinon.stub()
-    rpcServerListenSpy = sinon.spy()
+    rpcListenStub = sinon.stub()
     rpcServer = sinon.stub()
-    rpcServer.prototype.listen = rpcServerListenSpy
+    rpcServer.prototype.listen = rpcListenStub
     interchainRouterListenSpy = sinon.stub()
     interchainRouter = sinon.stub()
     interchainRouter.prototype.listen = interchainRouterListenSpy
@@ -87,124 +93,181 @@ describe('broker daemon', () => {
     BrokerDaemon.__set__('InterchainRouter', interchainRouter)
     BrokerDaemon.__set__('logger', logger)
 
+    privRpcKeyPath = '/my/private/rpc/key/path'
+    pubRpcKeyPath = '/my/public/rpc/key/path'
+    privIdKeyPath = '/my/private/id/key/path'
+    pubIdKeyPath = '/my/public/id/key/path'
+    rpcAddress = '0.0.0.0:27492'
+    interchainRouterAddress = '0.0.0.0:40369'
+    dataDir = '/datadir'
+    marketNames = [ 'BTC/LTC' ]
     engines = {
       BTC: {
         type: 'LND',
         lndRpc: 'localhost:1234',
         lndTls: '~/.lnd/my-cert',
         lndMacaroon: '~/.lnd/my-macaroon'
+      },
+      LTC: {
+        type: 'LND',
+        lndRpc: 'localhost:1234',
+        lndTls: '~/.lnd/my-cert',
+        lndMacaroon: '~/.lnd/my-macaroon'
       }
     }
+    disableAuth = false
+    relayerOptions = {
+      relayerCertPath: '/fake/path',
+      relayerRpcHost: 'fakehost',
+      disableRelayerAuth: false
+    }
 
-    brokerDaemon = new BrokerDaemon(idKeyPath, null, null, {}, null, null, engines)
+    brokerDaemonOptions = {
+      privRpcKeyPath,
+      pubRpcKeyPath,
+      privIdKeyPath,
+      pubIdKeyPath,
+      rpcAddress,
+      interchainRouterAddress,
+      dataDir,
+      marketNames,
+      engines,
+      disableAuth,
+      relayerOptions
+    }
   })
 
-  it('throws if the key paths are not defined', () => {
-    expect(() => new BrokerDaemon()).to.throw('Private Key path is required')
-    expect(() => new BrokerDaemon({ privKeyPath: 'somepath' })).to.throw('Public Key path is required')
+  it('throws if required keys are not defined', () => {
+    expect(() => new BrokerDaemon({})).to.throw()
   })
 
-  it('creates a relayer client', () => {
-    expect(RelayerClient).to.have.been.calledOnce()
-    expect(RelayerClient).to.have.been.calledWithNew()
-    brokerDaemon = new BrokerDaemon(idKeyPath, null, null, { relayerCertPath: '/fake/path', relayerRpcHost: 'fakehost' })
-    expect(RelayerClient).to.have.been.calledWith(idKeyPath, { certPath: '/fake/path', host: 'fakehost', disableAuth: false })
-    expect(brokerDaemon).to.have.property('relayer')
-    expect(brokerDaemon.relayer).to.be.instanceOf(RelayerClient)
+  it('throws if the public key path is null', () => {
+    expect(() => new BrokerDaemon({ privIdKeyPath: 'somepath' })).to.throw('Public Key path is required')
+  })
+
+  it('throws if the private key path is null', () => {
+    expect(() => new BrokerDaemon({ privIdKeyPath: null })).to.throw('Private Key path is required')
+  })
+
+  it('throws for unrecognized engine types', () => {
+    brokerDaemonOptions.engines.BTC.type = 'LIT'
+    expect(() => new BrokerDaemon(brokerDaemonOptions)).to.throw('Unknown engine type')
   })
 
   it('disables relayer client auth', () => {
-    brokerDaemon = new BrokerDaemon(idKeyPath, null, null, { relayerCertPath: '/fake/path', relayerRpcHost: 'fakehost', disableRelayerAuth: true })
-    expect(RelayerClient).to.have.been.calledWith(idKeyPath, { certPath: '/fake/path', host: 'fakehost', disableAuth: true })
+    brokerDaemonOptions.relayerOptions.disableRelayerAuth = true
+    brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+    expect(RelayerClient).to.have.been.calledWith(sinon.match.any, sinon.match({ disableAuth: true }), sinon.match.any)
   })
 
-  it('creates an empty orderbooks map', () => {
-    expect(brokerDaemon).to.have.property('orderbooks')
-    expect(brokerDaemon.orderbooks).to.be.eql(new Map())
-  })
-
-  describe('engines', () => {
-    it('instantiates the engines', () => {
-      expect(brokerDaemon).to.have.property('engines')
-      expect(brokerDaemon.engines).to.be.a('Map')
-      expect(brokerDaemon.engines.get('BTC')).to.be.an.instanceOf(LndEngine)
+  describe('daemon properties', () => {
+    beforeEach(() => {
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
     })
 
-    it('throws for unrecognized engine types', () => {
-      engines.BTC.type = 'LIT'
-
-      expect(() => new BrokerDaemon(idKeyPath, null, null, {}, null, null, engines)).to.throw('Unknown engine type') // eslint-disable-line
+    it('creates an empty orderbooks map', () => {
+      expect(brokerDaemon).to.have.property('orderbooks')
+      expect(brokerDaemon.orderbooks).to.be.eql(new Map())
     })
 
-    it('provides lnd parameters to lnd engine', () => {
-      expect(LndEngine).to.have.been.calledOnce()
-      expect(LndEngine).to.have.been.calledWith(engines.BTC.lndRpc, 'BTC', { logger, tlsCertPath: engines.BTC.lndTls, macaroonPath: engines.BTC.lndMacaroon })
-    })
-  })
-
-  describe('InterchainRouter', () => {
-    it('creates an InterchainRouter', () => {
-      expect(interchainRouter).to.have.been.calledOnce()
-      expect(interchainRouter).to.have.been.calledWithNew()
+    it('creates a broker rpc server', () => {
+      expect(rpcServer)
     })
 
-    it('provides the logger to the InterchainRouter', () => {
-      expect(interchainRouter).to.have.been.calledWith(sinon.match({ logger: logger }))
+    describe('engines', () => {
+      it('instantiates the engines', () => {
+        expect(brokerDaemon).to.have.property('engines')
+        expect(brokerDaemon.engines).to.be.a('Map')
+        expect(brokerDaemon.engines.get('BTC')).to.be.an.instanceOf(LndEngine)
+      })
+
+      it('provides lnd parameters to lnd engine', () => {
+        expect(LndEngine).to.have.been.calledTwice()
+        expect(LndEngine).to.have.been.calledWith(engines.BTC.lndRpc, 'BTC', { logger, tlsCertPath: engines.BTC.lndTls, macaroonPath: engines.BTC.lndMacaroon })
+        expect(LndEngine).to.have.been.calledWith(engines.BTC.lndRpc, 'LTC', { logger, tlsCertPath: engines.BTC.lndTls, macaroonPath: engines.BTC.lndMacaroon })
+      })
     })
 
-    it('provides the engines to the InterchainRouter', () => {
-      expect(interchainRouter).to.have.been.calledWith(sinon.match({ engines: sinon.match.instanceOf(Map) }))
-      expect(interchainRouter.args[0][0].engines.values().next().value).to.be.an.instanceOf(LndEngine)
+    describe('InterchainRouter', () => {
+      it('creates an InterchainRouter', () => {
+        expect(interchainRouter).to.have.been.calledOnce()
+        expect(interchainRouter).to.have.been.calledWithNew()
+      })
+
+      it('provides the logger to the InterchainRouter', () => {
+        expect(interchainRouter).to.have.been.calledWith(sinon.match({ logger: logger }))
+      })
+
+      it('provides the engines to the InterchainRouter', () => {
+        expect(interchainRouter).to.have.been.calledWith(sinon.match({ engines: sinon.match.instanceOf(Map) }))
+        expect(interchainRouter.args[0][0].engines.values().next().value).to.be.an.instanceOf(LndEngine)
+      })
+
+      it('provides the ordersByHash to the InterchainRouter', () => {
+        expect(interchainRouter).to.have.been.calledWith(sinon.match({ ordersByHash: brokerDaemon.blockOrderWorker.ordersByHash }))
+      })
+
+      it('assigns the InterchainRouter', () => {
+        expect(brokerDaemon).to.have.property('interchainRouter')
+        expect(brokerDaemon.interchainRouter).to.be.instanceOf(interchainRouter)
+      })
     })
 
-    it('provides the ordersByHash to the InterchainRouter', () => {
-      expect(interchainRouter).to.have.been.calledWith(sinon.match({ ordersByHash: brokerDaemon.blockOrderWorker.ordersByHash }))
+    describe('BlockOrderWorker', () => {
+      it('creates a BlockOrderWorker', () => {
+        expect(BlockOrderWorker).to.have.been.calledOnce()
+        expect(BlockOrderWorker).to.have.been.calledWithNew()
+      })
+
+      it('creates a sublevel for block orders', () => {
+        expect(store.sublevel).to.have.been.calledOnce()
+        expect(store.sublevel).to.have.been.calledWith('block-orders')
+        expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ store: 'fake-sublevel' }))
+      })
+
+      it('provides the relayer to the BlockOrderWorker', () => {
+        expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ relayer: sinon.match.instanceOf(RelayerClient) }))
+      })
+
+      it('provides the engines to the BlockOrderWorker', () => {
+        expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ engines: sinon.match.instanceOf(Map) }))
+        expect(BlockOrderWorker.args[0][0].engines.values().next().value).to.be.an.instanceOf(LndEngine)
+      })
+
+      it('provides the orderbooks to the BlockOrderWorker', () => {
+        expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ orderbooks: sinon.match.instanceOf(Map) }))
+      })
+
+      it('provides the logger to the BlockOrderWorker', () => {
+        expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ logger: logger }))
+      })
+
+      it('assigns the BlockOrderWorker', () => {
+        expect(brokerDaemon).to.have.property('blockOrderWorker')
+        expect(brokerDaemon.blockOrderWorker).to.be.instanceOf(BlockOrderWorker)
+      })
     })
 
-    it('assigns the InterchainRouter', () => {
-      expect(brokerDaemon).to.have.property('interchainRouter')
-      expect(brokerDaemon.interchainRouter).to.be.instanceOf(interchainRouter)
-    })
-  })
+    describe('RelayerClient', () => {
+      it('creates a relayer client', () => {
+        const relayerRpcHost = brokerDaemonOptions.relayerOptions.relayerRpcHost
+        const relayerCertPath = brokerDaemonOptions.relayerOptions.relayerCertPath
 
-  describe('BlockOrderWorker', () => {
-    it('creates a BlockOrderWorker', () => {
-      expect(BlockOrderWorker).to.have.been.calledOnce()
-      expect(BlockOrderWorker).to.have.been.calledWithNew()
-    })
+        expect(RelayerClient).to.have.been.calledWith(sinon.match.any, sinon.match({ host: relayerRpcHost, certPath: relayerCertPath }, sinon.match.any))
+        expect(RelayerClient).to.have.been.calledWithNew()
+      })
 
-    it('creates a sublevel for block orders', () => {
-      expect(store.sublevel).to.have.been.calledOnce()
-      expect(store.sublevel).to.have.been.calledWith('block-orders')
-      expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ store: 'fake-sublevel' }))
-    })
-
-    it('provides the relayer to the BlockOrderWorker', () => {
-      expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ relayer: sinon.match.instanceOf(RelayerClient) }))
-    })
-
-    it('provides the engines to the BlockOrderWorker', () => {
-      expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ engines: sinon.match.instanceOf(Map) }))
-      expect(BlockOrderWorker.args[0][0].engines.values().next().value).to.be.an.instanceOf(LndEngine)
-    })
-
-    it('provides the orderbooks to the BlockOrderWorker', () => {
-      expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ orderbooks: sinon.match.instanceOf(Map) }))
-    })
-
-    it('provides the logger to the BlockOrderWorker', () => {
-      expect(BlockOrderWorker).to.have.been.calledWith(sinon.match({ logger: logger }))
-    })
-
-    it('assigns the BlockOrderWorker', () => {
-      expect(brokerDaemon).to.have.property('blockOrderWorker')
-      expect(brokerDaemon.blockOrderWorker).to.be.instanceOf(BlockOrderWorker)
+      it('has a \'relayer\' property', () => {
+        expect(brokerDaemon).to.have.property('relayer')
+        expect(brokerDaemon.relayer).to.be.instanceOf(RelayerClient)
+      })
     })
   })
 
   describe('initializeMarket', () => {
     beforeEach(() => {
       Orderbook.prototype.initialize.resolves()
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
       brokerDaemon.engines = new Map([
         [ 'ABC', {} ],
         [ 'XYZ', {} ]
@@ -279,6 +342,7 @@ describe('broker daemon', () => {
   describe('#initializeMarkets', () => {
     beforeEach(() => {
       Orderbook.prototype.initialize.resolves()
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
       brokerDaemon.engines = new Map([
         [ 'ABC', {} ],
         [ 'BTC', {} ],
@@ -307,10 +371,14 @@ describe('broker daemon', () => {
   })
 
   describe('#initialize', () => {
+    beforeEach(() => {
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+    })
+
     it('starts a grpc server', async () => {
       await brokerDaemon.initialize()
-      expect(rpcServerListenSpy).to.have.been.calledOnce()
-      expect(rpcServerListenSpy).to.have.been.calledWith(brokerDaemon.rpcAddress)
+      expect(rpcListenStub).to.have.been.calledOnce()
+      expect(rpcListenStub).to.have.been.calledWith(rpcAddress)
     })
 
     it('starts the interchain router', async () => {
@@ -338,8 +406,6 @@ describe('broker daemon', () => {
     })
 
     it('initializes markets', async () => {
-      const marketNames = [ 'BTC/LTC', 'ABC/XYZ' ]
-      brokerDaemon = new BrokerDaemon(idKeyPath, null, null, {}, null, marketNames)
       brokerDaemon.initializeMarkets = sinon.stub().resolves()
 
       await brokerDaemon.initialize()
@@ -356,38 +422,44 @@ describe('broker daemon', () => {
   })
 
   describe('rpcAddress', () => {
-    let defaultAddress
-
-    beforeEach(() => {
-      defaultAddress = '0.0.0.0:27492'
-    })
-
     it('sets a default address if parameter is not set', async () => {
-      expect(brokerDaemon.rpcAddress).to.be.eql(defaultAddress)
+      const defaultRpcAddress = BrokerDaemon.__get__('DEFAULT_RPC_ADDRESS')
+      brokerDaemonOptions.rpcAddress = null
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      expect(brokerDaemon.rpcAddress).to.be.eql(defaultRpcAddress)
     })
 
     it('sets an RPC address from parameters', async () => {
-      let customRpcAddress = '127.0.0.1'
-      brokerDaemon = new BrokerDaemon(idKeyPath, customRpcAddress)
-      expect(brokerDaemon.rpcAddress).to.be.eql(customRpcAddress)
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      expect(brokerDaemon.rpcAddress).to.be.eql(rpcAddress)
     })
   })
 
   describe('interchainRouterAddress', () => {
-    let defaultAddress
-
-    beforeEach(() => {
-      defaultAddress = '0.0.0.0:40369'
-    })
-
     it('sets a default address if parameter is not set', async () => {
+      const defaultAddress = BrokerDaemon.__get__('DEFAULT_INTERCHAIN_ROUTER_ADDRESS')
+      brokerDaemonOptions.interchainRouterAddress = null
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
       expect(brokerDaemon.interchainRouterAddress).to.be.eql(defaultAddress)
     })
 
     it('sets an RPC address from parameters', async () => {
-      let customIRAddress = '127.0.0.1'
-      brokerDaemon = new BrokerDaemon(idKeyPath, null, customIRAddress)
-      expect(brokerDaemon.interchainRouterAddress).to.be.eql(customIRAddress)
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      expect(brokerDaemon.interchainRouterAddress).to.be.eql(interchainRouterAddress)
+    })
+  })
+
+  describe('dataDir', () => {
+    it('sets a default data directory if parameter is not set', async () => {
+      const defaultDir = BrokerDaemon.__get__('DEFAULT_DATA_DIR')
+      brokerDaemonOptions.dataDir = null
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      expect(brokerDaemon.dataDir).to.be.eql(defaultDir)
+    })
+
+    it('sets an RPC address from parameters', async () => {
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      expect(brokerDaemon.dataDir).to.be.eql(dataDir)
     })
   })
 })

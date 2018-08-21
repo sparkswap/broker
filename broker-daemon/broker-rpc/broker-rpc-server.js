@@ -1,5 +1,6 @@
 const grpc = require('grpc')
 const path = require('path')
+const { readFileSync } = require('fs')
 
 const AdminService = require('./admin-service')
 const OrderService = require('./order-service')
@@ -14,25 +15,70 @@ const WalletService = require('./wallet-service')
 const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
 
 /**
+ * Whether we are starting this process in production based on the NODE_ENV
+ *
+ * @constant
+ * @type {Boolean}
+ * @default
+ */
+const IS_PRODUCTION = (process.env.NODE_ENV === 'production')
+
+/**
+ * Creates grpc server credentials for the broker daemon
+ *
+ * @return {grpc.Credentials}
+ */
+function createCredentials () {
+  if (this.disableAuth) {
+    this.logger.warn('DISABLE_AUTH is set to TRUE. Connections to the broker will be unencrypted. This is suitable only in development.')
+    return grpc.ServerCredentials.createInsecure()
+  }
+
+  if (IS_PRODUCTION) throw new Error(`Cannot disable SSL in production. Set DISABLE_AUTH to FALSE.`)
+
+  const key = readFileSync(this.privKeyPath)
+  const cert = readFileSync(this.pubKeyPath)
+
+  this.logger.debug(`Securing gRPC connections with SSL: key: ${this.privKeyPath}, cert: ${this.pubKeyPath}`)
+
+  return grpc.ServerCredentials.createSsl(
+    null, // no root cert needed for server credentials
+    [{
+      private_key: key,
+      // TODO: build a real cert chain instead of just using the root cert
+      cert_chain: cert
+    }],
+    false // checkClientCertificate: false (we don't use client certs)
+  )
+}
+
+/**
  * @class User-facing gRPC server for controling the BrokerDaemon
  *
  * @author SparkSwap
  */
 class BrokerRPCServer {
   /**
-   * @param  {Logger}              opts.logger
-   * @param  {Map<String, Engine>} opts.engines
-   * @param  {RelayerClient}       opts.relayer
-   * @param  {BlockOrderWorker}    opts.blockOrderWorker
-   * @param  {Map<Orderbook>}      opts.orderbooks
+   * @param {Object} opts
+   * @param {Logger} opts.logger
+   * @param {Map<String, Engine>} opts.engines
+   * @param {RelayerClient} opts.relayer
+   * @param {BlockOrderWorker} opts.blockOrderWorker
+   * @param {Map<Orderbook>} opts.orderbooks
+   * @param {String} opts.privKeyPath - Path to private key for broker rpc
+   * @param {String} opts.pubKeyPath - Path to public key for broker rpc
+   * @param {Boolean} [opts.disableAuth=false]
    * @return {BrokerRPCServer}
    */
-  constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks } = {}) {
+  constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, pubKeyPath, privKeyPath, disableAuth = false } = {}) {
     this.logger = logger
     this.engines = engines
     this.relayer = relayer
     this.blockOrderWorker = blockOrderWorker
     this.orderbooks = orderbooks
+    this.pubKeyPath = pubKeyPath
+    this.privKeyPath = privKeyPath
+    this.disableAuth = disableAuth
 
     this.protoPath = path.resolve(BROKER_PROTO_PATH)
 
@@ -58,7 +104,8 @@ class BrokerRPCServer {
    * @returns {void}
    */
   listen (host) {
-    this.server.bind(host, grpc.ServerCredentials.createInsecure())
+    const rpcCredentials = createCredentials.apply(this)
+    this.server.bind(host, rpcCredentials)
     this.server.start()
   }
 }

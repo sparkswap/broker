@@ -22,6 +22,9 @@ services:
       - './broker-cli:/home/app/broker-cli/'
       - './proto:/home/app/proto/'
       - './scripts:/home/app/scripts/'
+    environment:
+      # WARNING: only disable Relayer SSL/AUTH during development
+      - DISABLE_RELAYER_AUTH=false
 
 volumes:
   shared:

@@ -13,7 +13,19 @@ module.exports = {
   /**
    * Address of the host for the Broker Daemon gRPC Server
    * @type {String}
-   * @default 'localhost:27492'
    */
-  rpcAddress: 'localhost:27492'
+  rpcAddress: 'localhost:27492',
+
+  /**
+   * Default path of the Broker Daemons RPC Public Cert
+   * @type {String}
+   */
+  rpcCertPath: 'certs/broker-rpc-tls.cert',
+
+  /**
+   * Configuration for SSL between the CLI and Daemon. This setting is only required
+   * if you will be hosting the daemon remotely
+   * @type {Boolean}
+   */
+  disableSsl: true
 }

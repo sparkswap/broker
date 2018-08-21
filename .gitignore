@@ -67,4 +67,4 @@ typings/
 proto/*
 
 # Override file which we use dynamically in relayer setup
-./docker-compose.override.yml
+docker-compose.override.yml
