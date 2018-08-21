@@ -14,6 +14,7 @@ describe('OrderBookService', () => {
 
   let protoPath
   let logger
+  let basicAuth
 
   let relayer
   let orderbooks
@@ -31,6 +32,7 @@ describe('OrderBookService', () => {
       info: sinon.stub(),
       error: sinon.stub()
     }
+    basicAuth = sinon.stub()
 
     relayer = sinon.stub()
 
@@ -50,7 +52,7 @@ describe('OrderBookService', () => {
   })
 
   beforeEach(() => {
-    server = new OrderBookService(protoPath, { logger, relayer, orderbooks })
+    server = new OrderBookService(protoPath, { logger, relayer, orderbooks, basicAuth })
   })
 
   it('assigns a proto path', () => {
@@ -135,6 +137,10 @@ describe('OrderBookService', () => {
 
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.eql({ WatchMarketResponse: proto.WatchMarketResponse })
+    })
+
+    it('passes in basicAuth', () => {
+      expect(callArgs[4]).to.be.eql(basicAuth)
     })
   })
 })
