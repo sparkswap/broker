@@ -3,7 +3,7 @@ const { loadProto } = require('../../utils')
 
 const newDepositAddress = require('./new-deposit-address')
 const getBalances = require('./get-balances')
-const commitBalance = require('./commit-balance')
+const commit = require('./commit')
 const getPaymentChannelNetworkAddress = require('./get-payment-channel-network-address')
 const getTradingCapacities = require('./get-trading-capacities')
 const releaseChannels = require('./release-channels')
@@ -44,7 +44,7 @@ class WalletService {
     this.implementation = {
       newDepositAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engines }, { NewDepositAddressResponse }, basicAuth).register(),
       getBalances: new GrpcUnaryMethod(getBalances, this.messageId('getBalances'), { logger, engines }, { GetBalancesResponse }, basicAuth).register(),
-      commitBalance: new GrpcUnaryMethod(commitBalance, this.messageId('commitBalance'), { logger, engines, relayer }, { EmptyResponse }, basicAuth).register(),
+      commit: new GrpcUnaryMethod(commit, this.messageId('commit'), { logger, engines, relayer, orderbooks }, { EmptyResponse }, basicAuth).register(),
       getPaymentChannelNetworkAddress: new GrpcUnaryMethod(getPaymentChannelNetworkAddress, this.messageId('getPaymentChannelNetworkAddress'), { logger, engines }, { GetPaymentChannelNetworkAddressResponse }, basicAuth).register(),
       getTradingCapacities: new GrpcUnaryMethod(getTradingCapacities, this.messageId('getTradingCapacities'), { logger, engines, orderbooks }, { GetTradingCapacitiesResponse }, basicAuth).register(),
       releaseChannels: new GrpcUnaryMethod(releaseChannels, this.messageId('releaseChannels'), { logger, engines, orderbooks }, { EmptyResponse }, basicAuth).register()

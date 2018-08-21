@@ -108,7 +108,7 @@ class BrokerDaemonClient {
      * @type {String}
      */
     this.address = rpcAddress || this.config.rpcAddress
-    this.certPath = this.config.rpcCert
+    this.certPath = this.config.rpcCertPath
     this.disableAuth = this.config.disableAuth
     this.username = this.config.rpcUser
     this.password = this.config.rpcPass
