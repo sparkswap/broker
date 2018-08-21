@@ -26,35 +26,6 @@ const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
 const IS_PRODUCTION = (process.env.NODE_ENV === 'production')
 
 /**
- * Creates grpc server credentials for the broker daemon
- *
- * @return {grpc.Credentials}
- */
-function createCredentials () {
-  if (this.disableAuth) {
-    this.logger.warn('DISABLE_AUTH is set to TRUE. Connections to the broker will be unencrypted. This is suitable only in development.')
-    return grpc.ServerCredentials.createInsecure()
-  }
-
-  if (IS_PRODUCTION) throw new Error(`Cannot disable SSL in production. Set DISABLE_AUTH to FALSE.`)
-
-  const key = readFileSync(this.privKeyPath)
-  const cert = readFileSync(this.pubKeyPath)
-
-  this.logger.debug(`Securing gRPC connections with SSL: key: ${this.privKeyPath}, cert: ${this.pubKeyPath}`)
-
-  return grpc.ServerCredentials.createSsl(
-    null, // no root cert needed for server credentials
-    [{
-      private_key: key,
-      // TODO: build a real cert chain instead of just using the root cert
-      cert_chain: cert
-    }],
-    false // checkClientCertificate: false (we don't use client certs)
-  )
-}
-
-/**
  * @class User-facing gRPC server for controling the BrokerDaemon
  *
  * @author SparkSwap
@@ -109,9 +80,40 @@ class BrokerRPCServer {
    * @returns {void}
    */
   listen (host) {
-    const rpcCredentials = createCredentials.apply(this)
+    const rpcCredentials = this.createCredentials()
     this.server.bind(host, rpcCredentials)
     this.server.start()
+  }
+
+  /**
+   * Creates grpc server credentials for the broker rpc server
+   *
+   * @return {grpc.Credentials}
+   */
+  createCredentials () {
+    if (IS_PRODUCTION && this.disableAuth) {
+      throw new Error(`Cannot disable SSL in production. Set DISABLE_AUTH to FALSE.`)
+    }
+
+    if (this.disableAuth) {
+      this.logger.warn('DISABLE_AUTH is set to TRUE. Connections to the broker will be unencrypted. This is suitable only in development.')
+      return grpc.ServerCredentials.createInsecure()
+    }
+
+    const key = readFileSync(this.privKeyPath)
+    const cert = readFileSync(this.pubKeyPath)
+
+    this.logger.debug(`Securing gRPC connections with SSL: key: ${this.privKeyPath}, cert: ${this.pubKeyPath}`)
+
+    return grpc.ServerCredentials.createSsl(
+      null, // no root cert needed for server credentials
+      [{
+        private_key: key,
+        // TODO: build a real cert chain instead of just using the root cert
+        cert_chain: cert
+      }],
+      false // checkClientCertificate: false (we don't use client certs)
+    )
   }
 }
 
