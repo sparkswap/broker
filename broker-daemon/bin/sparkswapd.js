@@ -66,6 +66,8 @@ for (let currency of currencies) {
 
 program
   .action((args, opts) => {
+    console.log('lol')
+    console.log(process.env)
     const {
       rpcAddress,
       dataDir,

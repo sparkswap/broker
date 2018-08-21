@@ -3,7 +3,7 @@ const { expect, sinon, rewire } = require('test/test-helper')
 
 const BrokerRPCServer = rewire(path.resolve(__dirname, 'broker-rpc-server'))
 
-describe.only('BrokerRPCServer', () => {
+describe('BrokerRPCServer', () => {
   let rpcServer
   let addService
   let AdminService
