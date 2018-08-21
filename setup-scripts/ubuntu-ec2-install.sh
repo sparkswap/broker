@@ -1,7 +1,7 @@
 ########################################################
 # Sparkswap hosted broker installation for an AWS Ubuntu 16.04 LTS EC2 instance
 #
-# After `ubuntu-ec2-setup.sh` has been ran on your current machine, we are now able
+# After `ubuntu-ec2-setup.sh` has been run on your current machine, we are now able
 # to install the broker.
 #
 # Requirements for this script to work include:

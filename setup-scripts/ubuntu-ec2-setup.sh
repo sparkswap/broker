@@ -44,7 +44,9 @@ curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | 
 # Install our node version which is 8.11.x
 nvm install 8.11 --latest-npm
 
-# We use pip to install the latest docker-compose instead of apt-get
+# We use pip as an alternative way to install the latest docker-compose instead
+# of apt-get/curl. Currently, apt-get is out-of-date and curl would require additional
+# steps to install AND upgrade the packages.
 pip install docker-compose
 
 # Now we need to add our current user to the docker group which will allow us to use
