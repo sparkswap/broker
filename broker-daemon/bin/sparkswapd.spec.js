@@ -7,7 +7,7 @@ const sparkswapd = rewire(path.resolve(__dirname, 'sparkswapd.js'))
  * IMPORTANT NOTE: We skip all of the environment variable (default) tests because
  * we bind to process.env before `rewire` has a chance to replace the values.
  */
-describe.only('sparkswapd', () => {
+describe('sparkswapd', () => {
   let BrokerDaemon
   let argv
 
