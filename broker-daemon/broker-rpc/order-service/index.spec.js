@@ -17,6 +17,7 @@ describe('OrderService', () => {
 
   let protoPath
   let logger
+  let basicAuth
 
   let blockOrderWorker
 
@@ -39,6 +40,7 @@ describe('OrderService', () => {
       info: sinon.stub(),
       error: sinon.stub()
     }
+    basicAuth = sinon.stub()
 
     blockOrderWorker = sinon.stub()
     GrpcMethod = sinon.stub()
@@ -64,7 +66,7 @@ describe('OrderService', () => {
   })
 
   beforeEach(() => {
-    server = new OrderService(protoPath, { logger, blockOrderWorker })
+    server = new OrderService(protoPath, { logger, blockOrderWorker, basicAuth })
   })
 
   it('assigns a proto path', () => {
@@ -149,6 +151,10 @@ describe('OrderService', () => {
       expect(callArgs[3]).to.be.an('object')
       expect(callArgs[3]).to.have.property('TimeInForce', proto.TimeInForce)
     })
+
+    it('passes in basicAuth', () => {
+      expect(callArgs[4]).to.be.eql(basicAuth)
+    })
   })
 
   describe('#getBlockOrder', () => {
@@ -192,6 +198,10 @@ describe('OrderService', () => {
       expect(callArgs[3]).to.be.an('object')
       expect(callArgs[3]).to.have.property('GetBlockOrderResponse', proto.GetBlockOrderResponse)
     })
+
+    it('passes in basicAuth', () => {
+      expect(callArgs[4]).to.be.eql(basicAuth)
+    })
   })
 
   describe('#cancelBlockOrder', () => {
@@ -229,6 +239,10 @@ describe('OrderService', () => {
       it('block order worker', () => {
         expect(callArgs[2]).to.have.property('blockOrderWorker', blockOrderWorker)
       })
+    })
+
+    it('passes in basicAuth', () => {
+      expect(callArgs[3]).to.be.eql(basicAuth)
     })
   })
 
@@ -272,6 +286,10 @@ describe('OrderService', () => {
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.an('object')
       expect(callArgs[3]).to.have.property('GetBlockOrdersResponse', proto.GetBlockOrdersResponse)
+    })
+
+    it('passes in basicAuth', () => {
+      expect(callArgs[4]).to.be.eql(basicAuth)
     })
   })
 })
