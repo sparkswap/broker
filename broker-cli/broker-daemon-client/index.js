@@ -6,7 +6,7 @@ const { readFileSync } = require('fs')
 const { loadConfig } = require('./config')
 const {
   loadProto,
-  generateBasicAuthCredentials
+  basicAuth
 } = require('../utils')
 
 /**
@@ -76,7 +76,7 @@ class BrokerDaemonClient {
       this.cert = readFileSync(path.join(__dirname, PROJECT_ROOT, this.certPath))
 
       const channelCredentials = grpc.credentials.createSsl(this.cert)
-      const callCredentials = generateBasicAuthCredentials(this.username, this.password)
+      const callCredentials = basicAuth.generateBasicAuthCredentials(this.username, this.password)
 
       this.credentials = grpc.credentials.combineChannelCredentials(channelCredentials, callCredentials)
     }
