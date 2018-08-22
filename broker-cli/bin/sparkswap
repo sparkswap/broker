@@ -18,6 +18,11 @@ if (compareVersions(clientVersion, currentVersion) < 0) {
   process.exit(1)
 }
 
+// Due to updated ECDSA generated cert on the broker, we need to let gprc know that
+// we need to use that cipher suite otherwise there will be a handhsake
+// error when we communicate with the broker rpc server.
+process.env.GRPC_SSL_CIPHER_SUITES = 'HIGH+ECDSA'
+
 /**
  * SparkSwap Broker CLI
  *

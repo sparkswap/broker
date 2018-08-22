@@ -4,10 +4,16 @@
 # Build script for sparkswapd
 #
 # Params:
-# - INCLUDE_DOCKER (optional, defaults to false)
+# - EXTERNAL_ADDRESS (optional, for hosted daemons)
 ################################################
 
 set -e -u
+
+# Setting this env is ONLY required for a hosted broker setup.
+#
+# This address is used during the build process so that certs can be generated
+# correctly for a hosted (remote) broker daemon.
+EXTERNAL_ADDRESS=${EXTERNAL_ADDRESS:-}
 
 ARG=${1:-false}
 
@@ -38,10 +44,15 @@ if [ "$ARG" == "local" ]; then
   cp ./.env-simnet-local-sample ./.env
   echo "Copying dev file to 'docker-compose.override.yml'"
   cp ./docker-compose.dev.yml ./docker-compose.override.yml
+# If the build is not local AND the override exists for whatever reason,
+# we should delete the file to not mess w/ the build
+elif [ -f docker-compose.override.yml ]; then
+  echo "Deleting local docker-compose.override.yml file"
+  rm -f ./docker-compose.override.yml
 fi
 
 # If we want to build images with the command then we can use
 if [ "$ARG" != "no-docker" ]; then
   echo "Building broker docker images"
-  npm run build-images
+  EXTERNAL_ADDRESS=$EXTERNAL_ADDRESS npm run build-images
 fi

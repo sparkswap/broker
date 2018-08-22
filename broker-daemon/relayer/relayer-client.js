@@ -24,7 +24,7 @@ const RELAYER_PROTO_PATH = './proto/relayer.proto'
 function insecureIdentity (logger = consoleLogger) {
   return {
     authorize (id) {
-      logger.warn(`Not signing authorization for access to ${id}: DISABLE_AUTH is set`)
+      logger.warn(`Not signing authorization for access to ${id}: DISABLE_RELAYER_AUTH is set to true`)
       return {}
     }
   }
