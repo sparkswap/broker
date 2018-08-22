@@ -60,7 +60,9 @@ describe('BrokerDaemonClient', () => {
     BrokerDaemonClient.__set__('caller', callerStub)
     BrokerDaemonClient.__set__('readFileSync', readFileSyncStub)
     BrokerDaemonClient.__set__('path', { join: joinStub })
-    BrokerDaemonClient.__set__('generateBasicAuthCredentials', generateAuthCredentialsStub)
+    BrokerDaemonClient.__set__('basicAuth', {
+      generateBasicAuthCredentials: generateAuthCredentialsStub
+    })
     BrokerDaemonClient.__set__('grpc', {
       credentials: {
         createInsecure: createInsecureStub,
