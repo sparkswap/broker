@@ -31,6 +31,8 @@ describe('broker daemon', () => {
   let disableAuth
   let relayerOptions
   let brokerDaemonOptions
+  let rpcUser
+  let rpcPass
 
   beforeEach(() => {
     level = sinon.stub().returns('fake-level')
@@ -133,6 +135,8 @@ describe('broker daemon', () => {
       marketNames,
       engines,
       disableAuth,
+      rpcUser,
+      rpcPass,
       relayerOptions
     }
   })
@@ -456,6 +460,19 @@ describe('broker daemon', () => {
     it('sets an RPC address from parameters', async () => {
       brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
       expect(brokerDaemon.dataDir).to.be.eql(dataDir)
+    })
+  })
+
+  describe.only('rpcUser', () => {
+    it('defaults to null', () => {
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      expect(brokerDaemon.rpcUser).to.be.null()
+    })
+
+    it('sets an RPC address from parameters', async () => {
+      brokerDaemonOptions.rpcUser = 'myuser'
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      expect(brokerDaemon.rpcUser).to.be.eql(rpcUser)
     })
   })
 })
