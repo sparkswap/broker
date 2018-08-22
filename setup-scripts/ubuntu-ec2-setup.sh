@@ -53,10 +53,12 @@ pip install docker-compose
 # docker without root permission
 sudo usermod -aG docker $USER
 
-echo "Your current user will not be logged out/in"
-echo "After this step is completed you are free to install the broker"
-echo "as normal on the machine"
-echo "For more info about remote brokers, see the docs:"
+echo "Your current user will be logged out/in to allow user permissions to be"
+echo "updated for the current user: $USER"
+echo ""
+echo "After this step is completed you can install the broker"
+echo "For more info about remote brokers, see the docs: https://sparkswap.com/docs/"
+echo ""
 
-# Relog to let the user take effect
+# Relog to let the user group take effect
 exec sudo su -l ubuntu
