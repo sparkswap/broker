@@ -62,3 +62,8 @@ typings/
 
 # Mac
 .DS_Store
+
+# Ignore everything in the certs/ directory except this file
+# We never want to inadvertantly check-in files to the certs/ directory
+certs/*
+!certs/README.md
