@@ -463,7 +463,7 @@ describe('broker daemon', () => {
     })
   })
 
-  describe.only('rpcUser', () => {
+  describe('rpcUser', () => {
     it('defaults to null', () => {
       brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
       expect(brokerDaemon.rpcUser).to.be.null()
@@ -472,7 +472,20 @@ describe('broker daemon', () => {
     it('sets an RPC address from parameters', async () => {
       brokerDaemonOptions.rpcUser = 'myuser'
       brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
-      expect(brokerDaemon.rpcUser).to.be.eql(rpcUser)
+      expect(brokerDaemon.rpcUser).to.be.eql('myuser')
+    })
+  })
+
+  describe('rpcPass', () => {
+    it('defaults to null', () => {
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      expect(brokerDaemon.rpcPass).to.be.null()
+    })
+
+    it('sets an RPC address from parameters', async () => {
+      brokerDaemonOptions.rpcPass = 'passwd'
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      expect(brokerDaemon.rpcPass).to.be.eql('passwd')
     })
   })
 })

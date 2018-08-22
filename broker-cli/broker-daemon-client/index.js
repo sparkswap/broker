@@ -4,21 +4,10 @@ const caller = require('grpc-caller')
 const { readFileSync } = require('fs')
 
 const { loadConfig } = require('./config')
-const { loadProto } = require('../utils')
-
-/**
- * @constant
- * @type {String}
- * @default
- */
-const PROTO_PATH = path.resolve(__dirname, '..', 'proto', 'broker.proto')
-
-/**
- * @constant
- * @type {Number}
- * @default
- */
-const DEFAULT_RPC_PORT = 27492
+const {
+  loadProto,
+  generateBasicAuthCredentials
+} = require('../utils')
 
 /**
  * Root path from the current module used to resolve cert file paths
@@ -26,68 +15,21 @@ const DEFAULT_RPC_PORT = 27492
  * @type {String}
  * @default
  */
-const PROJECT_ROOT_DIR = '../'
+const PROJECT_ROOT = '..'
 
 /**
  * @constant
  * @type {String}
  * @default
  */
-const BASIC_AUTH_PREFIX = 'Basic'
+const PROTO_PATH = path.resolve(__dirname, PROJECT_ROOT, 'proto', 'broker.proto')
 
 /**
  * @constant
- * @type {String}
+ * @type {Number}
  * @default
  */
-const BASIC_AUTH_DELIMITER = ':'
-
-/**
- * Creates a basic auth string from user/password credentials
- * @param {String} username
- * @param {String} password
- * @return {String} res - basic auth token
- */
-function credentialToBasicAuth (username, password) {
-  return `${username}${BASIC_AUTH_DELIMITER}${password}`
-}
-
-/**
- * Generates authorization metadata for a basic auth token
- *
- * @param {String} username
- * @param {String} password
- * @return {grpc.Metadata}
- */
-function generateBasicAuthMetaData (username, password) {
-  const rawBasicAuth = credentialToBasicAuth(username, password)
-  const basicAuth = `${BASIC_AUTH_PREFIX} ${Buffer.from(rawBasicAuth).toString('base64')}`
-  const metadata = new grpc.Metadata()
-  metadata.set('Authorization', basicAuth)
-  return metadata
-}
-
-/**
- * Generates call credentials for the broker daemon
- *
- * @return {grpc.credentials}
- */
-function generateCallCredentials (username, password) {
-  return grpc.credentials.createFromMetadataGenerator(({ _ }, callback) => {
-    const metadata = generateBasicAuthMetaData(username, password)
-    callback(null, metadata)
-  })
-}
-
-/**
- * Given a buffer containing a valid x509 cert key, we return grpc ssl credentials
- *
- * @param {Buffer} cert
- * @return {grpc.credentials}
- */
-function generateSslCredentials (cert) {
-  return grpc.credentials.createSsl(cert)
-}
+const DEFAULT_RPC_PORT = 27492
 
 class BrokerDaemonClient {
   /**
@@ -131,10 +73,10 @@ class BrokerDaemonClient {
       if (!this.password) throw new Error('No password is specified for authentication')
 
       // Go back to the ./broker-cli/certs directory from the current directory
-      this.cert = readFileSync(path.join(__dirname, PROJECT_ROOT_DIR, this.certPath))
+      this.cert = readFileSync(path.join(__dirname, PROJECT_ROOT, this.certPath))
 
-      const channelCredentials = generateSslCredentials(this.cert)
-      const callCredentials = generateCallCredentials(this.username, this.password)
+      const channelCredentials = grpc.credentials.createSsl(this.cert)
+      const callCredentials = generateBasicAuthCredentials(this.username, this.password)
 
       this.credentials = grpc.credentials.combineChannelCredentials(channelCredentials, callCredentials)
     }

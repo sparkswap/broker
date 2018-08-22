@@ -1,8 +1,7 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
 
-const loadProtoPath = path.resolve(__dirname, 'load-proto')
-const loadProto = rewire(loadProtoPath)
+const loadProto = rewire(path.resolve(__dirname, 'load-proto'))
 
 describe('loadGrpcProto', () => {
   let fs
