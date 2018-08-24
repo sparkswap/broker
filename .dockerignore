@@ -1,4 +1,5 @@
 .git
 node_modules
+broker-cli/node_modules
 proto/
 *.tar.gz
