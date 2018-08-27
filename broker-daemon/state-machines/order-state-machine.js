@@ -5,6 +5,7 @@ const StateMachinePersistence = require('./plugins/persistence')
 const StateMachineRejection = require('./plugins/rejection')
 const StateMachineLogging = require('./plugins/logging')
 const { Order } = require('../models')
+const BlockOrderWorker = require('../block-order-worker')
 
 /**
  * If Orders are saved in the database before they are created on the remote, they lack an ID
@@ -124,11 +125,10 @@ const OrderStateMachine = StateMachine.factory({
    * @param  {Object}              options.logger
    * @param  {RelayerClient}       options.relayer
    * @param  {Map<String, Engine>} options.engines     Map of all available engines
-   * @param  {Function}            options.onRejection A function to handle rejections of the order
    * @return {Object}                                  Data to attach to the state machine
    */
-  data: function ({ store, logger, relayer, engines, onRejection = function () {} }) {
-    return { store, logger, relayer, engines, onRejection, order: {} }
+  data: function ({ store, logger, relayer, engines, worker }) {
+    return { store, logger, relayer, engines, worker, order: {} }
   },
   methods: {
     /**
@@ -343,7 +343,7 @@ const OrderStateMachine = StateMachine.factory({
         throw new Error(`No engine available for ${symbol}`)
       }
 
-      // The below is potentially a very long-running operation, since the settlement
+      // The action below is a potentially very long-running operation, since the settlement
       // of the swap itself is highly variable.
       // TODO: restart monitoring when coming back from an offline state.
       const swapPreimage = await engine.getSettledSwapPreimage(swapHash)
@@ -354,6 +354,15 @@ const OrderStateMachine = StateMachine.factory({
       this.logger.debug(`Generated authorization for ${orderId}`, authorization)
       return this.relayer.makerService.completeOrder({ orderId, swapPreimage, authorization })
     },
+
+    /**
+     * Triggers `onCompletion` which will check the state of the blockorder and update
+     * all statuses accordingly
+     */
+    onAfterComplete: function () {
+      this.worker.emit(BlockOrderWorker.EVENTS.COMPLETE + this.order.blockOrderId, this.order.blockOrderId)
+    },
+
     /**
      * Log errors from rejection
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
@@ -366,11 +375,10 @@ const OrderStateMachine = StateMachine.factory({
 
     /**
      * Handle rejected state by calling a passed in handler
-     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @return {void}
      */
-    onAfterReject: async function (lifecycle) {
-      this.onRejection(this.error)
+    onAfterReject: async function () {
+      this.worker.emit(BlockOrderWorker.EVENTS.REJECTED + this.order.blockOrderId, this.order.blockOrderId, this.error)
     }
   }
 })

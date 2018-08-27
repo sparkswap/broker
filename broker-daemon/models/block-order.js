@@ -160,7 +160,15 @@ class BlockOrder {
    */
   fail () {
     this.status = BlockOrder.STATUSES.FAILED
+    return this
+  }
 
+  /**
+   * Move the block order to a completed status
+   * @return {BlockOrder} Modified block order instance
+   */
+  complete () {
+    this.status = BlockOrder.STATUSES.COMPLETED
     return this
   }
 
@@ -170,7 +178,6 @@ class BlockOrder {
    */
   cancel () {
     this.status = BlockOrder.STATUSES.CANCELLED
-
     return this
   }
 

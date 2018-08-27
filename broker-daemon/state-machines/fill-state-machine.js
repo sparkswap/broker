@@ -5,6 +5,7 @@ const StateMachinePersistence = require('./plugins/persistence')
 const StateMachineRejection = require('./plugins/rejection')
 const StateMachineLogging = require('./plugins/logging')
 const { Fill } = require('../models')
+const BlockOrderWorker = require('../block-order-worker')
 
 /**
  * If Fills are saved in the database before they are created on the remote, they lack an ID
@@ -111,10 +112,11 @@ const FillStateMachine = StateMachine.factory({
    * @param  {RelayerClient}       options.relayer
    * @param  {Map<String, Engine>} options.engines     Collection of all avialable engines
    * @param  {Function}            options.onRejection A function to handle rejections of the fill
+   * @param  {Function}            options.onCompletion A function to handle the completion of the fill
    * @return {Object}                                  Data to attach to the state machine
    */
-  data: function ({ store, logger, relayer, engines, onRejection = function () {} }) {
-    return { store, logger, relayer, engines, onRejection, fill: {} }
+  data: function ({ store, logger, relayer, engines, worker }) {
+    return { store, logger, relayer, engines, worker, fill: {} }
   },
   methods: {
     /**
@@ -298,6 +300,14 @@ const FillStateMachine = StateMachine.factory({
     },
 
     /**
+     * Triggers `onCompletion` which will check the state of the blockorder and update
+     * all statuses accordingly
+     */
+    onAfterExecute: function () {
+      this.worker.emit(BlockOrderWorker.EVENTS.COMPLETE + this.order.blockOrderId, this.order.blockOrderId)
+    },
+
+    /**
      * Log errors from rejection
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @param  {Error}  error     Error that caused the rejection
@@ -306,13 +316,14 @@ const FillStateMachine = StateMachine.factory({
     onBeforeReject: function (lifecycle, error) {
       this.logger.error(`Encountered error during transition, rejecting`, error)
     },
+
     /**
      * Handle rejected state by calling a passed in handler
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @return {void}
      */
-    onAfterReject: async function (lifecycle) {
-      this.onRejection(this.error)
+    onAfterReject: async function () {
+      this.worker.emit(BlockOrderWorker.EVENTS.REJECTED + this.order.blockOrderId, this.order.blockOrderId, this.error)
     }
   }
 })

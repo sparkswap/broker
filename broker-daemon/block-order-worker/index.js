@@ -12,6 +12,7 @@ const { Big, getRecords, SublevelIndex } = require('../utils')
 class BlockOrderWorker extends EventEmitter {
   /**
    * Create a new BlockOrderWorker instance
+   *
    * @param  {Map<String, Orderbook>} options.orderbooks Collection of all active Orderbooks
    * @param  {sublevel}               options.store      Sublevel in which to store block orders and child orders
    * @param  {Object}                 options.logger
@@ -21,6 +22,7 @@ class BlockOrderWorker extends EventEmitter {
    */
   constructor ({ orderbooks, store, logger, relayer, engines }) {
     super()
+
     this.orderbooks = orderbooks
     this.store = store
     this.ordersStore = store.sublevel('orders')
@@ -41,14 +43,47 @@ class BlockOrderWorker extends EventEmitter {
       // only index orders that have a swap hash defined
       filterOrdersWithHash
     )
+  }
 
-    this.on('BlockOrder:create', async (blockOrder) => {
-      try {
-        await this.workBlockOrder(blockOrder)
-      } catch (err) {
-        this.failBlockOrder(blockOrder.id, err)
+  async createEvent (blockOrder) {
+    try {
+      await this.workBlockOrder(blockOrder)
+    } catch (err) {
+      this.failBlockOrder(blockOrder.id, err)
+    }
+  }
+
+  /**
+   * Move a block order to a completed state if all orders have been completed
+   * @param {String} blockOrderId
+   */
+  async completeBlockOrder (blockOrderId) {
+    this.logger.info('Attempting to put block order in a completed state', { id: blockOrderId })
+
+    // TODO: move status to its own sublevel so it can be updated atomically
+    try {
+      var value = await promisify(this.store.get)(blockOrderId)
+    } catch (e) {
+      // TODO: throw here? what's the protocol?
+      if (e.notFound) {
+        this.logger.error('Attempted to move a block order to a completed state that does not exist', { id: blockOrderId })
+      } else {
+        this.logger.error('Error while retrieving block order to move it to a completed state', { id: blockOrderId, error: e.message })
+        throw e
       }
-    })
+    }
+
+    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+
+    // TODO: fail the remaining orders that are tied to this block order in the ordersStore?
+    blockOrder.complete()
+
+    await promisify(this.store.put)(blockOrder.key, blockOrder.value)
+
+    this.logger.info('Moved block order to completed state', { id: blockOrderId })
+
+    // TODO: This action is not handled yet
+    this.emit(this.EVENTS.COMPLETED, blockOrder)
   }
 
   /**
@@ -91,7 +126,11 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
 
-    this.emit('BlockOrder:create', blockOrder)
+    this.emit(this.EVENTS.CREATED, blockOrder)
+
+    // Lets register listener events by the current blockOrderId
+    this.once(this.EVENTS.COMPLETE + id, (blockOrderId) => this.completeBlockOrder(blockOrderId))
+    this.once(this.EVENTS.REJECTED + id, (blockOrderId, err) => this.failBlockOrder(blockOrderId, err))
 
     return id
   }
@@ -198,8 +237,6 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info('Moved block order to cancelled state', { id: blockOrder.id })
 
-    this.emit('BlockOrder:cancel', blockOrder)
-
     return blockOrder
   }
 
@@ -227,7 +264,6 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info('Moving block order to failed state', { id: blockOrderId })
 
     // TODO: move status to its own sublevel so it can be updated atomically
-
     try {
       var value = await promisify(this.store.get)(blockOrderId)
     } catch (e) {
@@ -248,8 +284,6 @@ class BlockOrderWorker extends EventEmitter {
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
     this.logger.info('Moved block order to failed state', { id: blockOrderId })
-
-    this.emit('BlockOrder:fail', blockOrder)
   }
 
   /**
@@ -346,9 +380,7 @@ class BlockOrderWorker extends EventEmitter {
         engines,
         logger,
         store,
-        onRejection: (err) => {
-          this.failBlockOrder(blockOrder.id, err)
-        }
+        worker: this
       },
       blockOrder.id,
       { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
@@ -383,7 +415,7 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No engine available for ${counterSymbol}`)
     }
 
-    const promisedFills = orders.map((order, index) => {
+    const promisedFills = orders.map((order) => {
       const depthRemaining = targetDepth.minus(currentDepth)
 
       // if we have already reached our target depth, create no further fills
@@ -403,10 +435,7 @@ class BlockOrderWorker extends EventEmitter {
           engines,
           logger,
           store,
-          onRejection: (err) => {
-            // TODO: continue working the order after individual fills fail
-            this.failBlockOrder(blockOrder.id, err)
-          }
+          worker: this
         },
         blockOrder.id,
         order,
@@ -418,5 +447,14 @@ class BlockOrderWorker extends EventEmitter {
     return Promise.all(promisedFills.filter(promise => promise))
   }
 }
+
+BlockOrderWorker.EVENTS = Object.freeze({
+  CREATED: 'block-order:created',
+  CANCEL: 'block-order:cancel',
+  COMPLETE: 'block-order:complete',
+  COMPLETED: 'block-order:completed',
+  FAIL: 'block-order:fail',
+  REJECTED: 'block-order:rejected'
+})
 
 module.exports = BlockOrderWorker

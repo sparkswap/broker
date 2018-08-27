@@ -671,15 +671,6 @@ describe('BlockOrderWorker', () => {
       expect(store.put).to.have.been.calledWith(blockOrderKey, blockOrderValue)
     })
 
-    it('emits a failed status event', async () => {
-      const fakeId = 'myid'
-      worker.emit = sinon.stub()
-      await worker.cancelBlockOrder(fakeId)
-
-      expect(worker.emit).to.have.been.calledOnce()
-      expect(worker.emit).to.have.been.calledWith('BlockOrder:cancel', sinon.match({ id: blockOrderId }))
-    })
-
     it('throws a not found error if no order exists', async () => {
       const BlockOrderNotFoundError = BlockOrderWorker.__get__('BlockOrderNotFoundError')
 
