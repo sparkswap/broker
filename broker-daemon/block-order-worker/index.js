@@ -83,7 +83,7 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info('Moved block order to completed state', { id: blockOrderId })
 
     // TODO: This action is not handled yet
-    this.emit(this.EVENTS.COMPLETED, blockOrder)
+    this.emit(BlockOrderWorker.EVENTS.COMPLETED, blockOrder)
   }
 
   /**
@@ -126,11 +126,16 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
 
-    this.emit(this.EVENTS.CREATED, blockOrder)
-
     // Lets register listener events by the current blockOrderId
-    this.once(this.EVENTS.COMPLETE + id, (blockOrderId) => this.completeBlockOrder(blockOrderId))
-    this.once(this.EVENTS.REJECTED + id, (blockOrderId, err) => this.failBlockOrder(blockOrderId, err))
+    this.once(BlockOrderWorker.EVENTS.COMPLETE + id, async (blockOrderId) => this.completeBlockOrder(blockOrderId))
+    this.once(BlockOrderWorker.EVENTS.REJECTED + id, async (blockOrderId, err) => this.failBlockOrder(blockOrderId, err))
+    this.on(BlockOrderWorker.EVENTS.CREATED + id, async (blockOrder) => {
+      console.log('here')
+      await this.createEvent(blockOrder)
+    })
+
+    // Start working the block order in another process
+    this.emit(BlockOrderWorker.EVENTS.CREATED + id, blockOrder)
 
     return id
   }

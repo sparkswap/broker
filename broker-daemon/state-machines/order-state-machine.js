@@ -360,7 +360,7 @@ const OrderStateMachine = StateMachine.factory({
      * all statuses accordingly
      */
     onAfterComplete: function () {
-      this.worker.emit(BlockOrderWorker.EVENTS.COMPLETE + this.order.blockOrderId, this.order.blockOrderId)
+      this.worker.emit('block-order:complete' + this.order.blockOrderId, this.order.blockOrderId)
     },
 
     /**
@@ -378,7 +378,7 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onAfterReject: async function () {
-      this.worker.emit(BlockOrderWorker.EVENTS.REJECTED + this.order.blockOrderId, this.order.blockOrderId, this.error)
+      this.worker.emit('block-order:rejected' + this.order.blockOrderId, this.order.blockOrderId, this.error)
     }
   }
 })
