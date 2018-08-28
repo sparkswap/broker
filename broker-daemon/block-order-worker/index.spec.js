@@ -241,6 +241,7 @@ describe('BlockOrderWorker', () => {
   describe('initialize', () => {
     let worker
     let ensureIndex
+
     beforeEach(() => {
       ensureIndex = sinon.stub().resolves()
       SublevelIndex.prototype.ensureIndex = ensureIndex
@@ -249,14 +250,7 @@ describe('BlockOrderWorker', () => {
 
     it('rebuilds the ordersByHash index', async () => {
       await worker.initialize()
-
       expect(ensureIndex).to.have.been.calledOnce()
-    })
-
-    it('waits for index rebuilding to complete', () => {
-      ensureIndex.rejects()
-
-      return expect(worker.initialize()).to.eventually.be.rejectedWith(Error)
     })
   })
 

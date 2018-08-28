@@ -45,12 +45,12 @@ class BlockOrderWorker extends EventEmitter {
     )
   }
 
-  async createEvent (blockOrder) {
-    try {
-      await this.workBlockOrder(blockOrder)
-    } catch (err) {
-      this.failBlockOrder(blockOrder.id, err)
-    }
+  /**
+   * Initialize the BlockOrderWorker by clearing and rebuilding the ordersByHash index
+   * @return {Promise}
+   */
+  async initialize () {
+    await this.ordersByHash.ensureIndex()
   }
 
   /**
@@ -87,15 +87,9 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
-   * Initialize the BlockOrderWorker by clearing and rebuilding the ordersByHash index
-   * @return {Promise}
-   */
-  async initialize () {
-    await this.ordersByHash.ensureIndex()
-  }
-
-  /**
-   * Create a new block order
+   * Creates a new block order and registers events for all orders under a block order
+   *
+   * @param {Object} options
    * @param  {String} options.marketName  Name of the market to creat the block order in (e.g. BTC/LTC)
    * @param  {String} options.side        Side of the market to take (e.g. BID or ASK)
    * @param  {String} options.amount      Amount of base currency (in base units) to transact
@@ -126,12 +120,11 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
 
-    // Lets register listener events by the current blockOrderId
+    // Register listener events by the current blockOrderId
     this.once(BlockOrderWorker.EVENTS.COMPLETE + id, async (blockOrderId) => this.completeBlockOrder(blockOrderId))
     this.once(BlockOrderWorker.EVENTS.REJECTED + id, async (blockOrderId, err) => this.failBlockOrder(blockOrderId, err))
     this.on(BlockOrderWorker.EVENTS.CREATED + id, async (blockOrder) => {
-      console.log('here')
-      await this.createEvent(blockOrder)
+      await this.workBlockOrder(blockOrder).catch(e => this.emit(BlockOrderWorker.EVENTS.REJECTED, blockOrder.id, e))
     })
 
     // Start working the block order in another process
@@ -148,10 +141,8 @@ class BlockOrderWorker extends EventEmitter {
   async getBlockOrder (blockOrderId) {
     this.logger.info('Getting block order', { id: blockOrderId })
 
-    let value
-
     try {
-      value = await promisify(this.store.get)(blockOrderId)
+      var value = await promisify(this.store.get)(blockOrderId)
     } catch (e) {
       if (e.notFound) {
         throw new BlockOrderNotFoundError(blockOrderId, e)
