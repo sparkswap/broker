@@ -4,7 +4,7 @@ const { expect, rewire, sinon, delay } = require('test/test-helper')
 
 const BlockOrderWorker = rewire(path.resolve(__dirname))
 
-describe('BlockOrderWorker', () => {
+describe.only('BlockOrderWorker', () => {
   let eventsOn
   let eventsEmit
   let safeid
@@ -1125,12 +1125,6 @@ describe('BlockOrderWorker', () => {
       const res = await worker.getBlockOrders(market)
 
       expect(res).to.eql([firstBlockOrder])
-    })
-  })
-
-  describe.only('EVENTS', () => {
-    it('should exist', () => {
-      expect(BlockOrderWorker.EVENTS).to.not.be.undefined()
     })
   })
 })

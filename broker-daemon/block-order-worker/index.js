@@ -89,8 +89,7 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info('Moved block order to completed state', { id: blockOrderId })
 
-    // TODO: This action is not handled yet
-    this.emit(BlockOrderWorker.EVENTS.COMPLETED, blockOrder)
+    this.emit(BlockOrderWorkerEvents.COMPLETED, blockOrder)
   }
 
   /**
@@ -130,6 +129,15 @@ class BlockOrderWorker extends EventEmitter {
     // Register listener events by the current blockOrderId
     this.once(BlockOrderWorkerEvents.COMPLETE + id, async (blockOrderId) => this.completeBlockOrder(blockOrderId))
     this.once(BlockOrderWorkerEvents.REJECTED + id, async (blockOrderId, err) => this.failBlockOrder(blockOrderId, err))
+
+    // Remove all listeners on completion of block order. This state can be reached
+    // by either a rejected or complete (all orders executed) block order.
+    this.once(BlockOrderWorkerEvents.COMPLETED + id, (id) => {
+      this.removeAllListeners(BlockOrderWorkerEvents.COMPLETE + id)
+      this.removeAllListeners(BlockOrderWorkerEvents.REJECTED + id)
+      this.removeAllListeners(BlockOrderWorkerEvents.CREATED + id)
+    })
+
     this.on(BlockOrderWorkerEvents.CREATED + id, async (blockOrder) => {
       await this.workBlockOrder(blockOrder).catch(e => this.emit(BlockOrderWorkerEvents.REJECTED, blockOrder.id, e))
     })
@@ -240,6 +248,8 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info('Moved block order to cancelled state', { id: blockOrder.id })
 
+    this.emit(BlockOrderWorkerEvents.COMPLETED, blockOrder)
+
     return blockOrder
   }
 
@@ -287,6 +297,8 @@ class BlockOrderWorker extends EventEmitter {
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
     this.logger.info('Moved block order to failed state', { id: blockOrderId })
+
+    this.emit(BlockOrderWorkerEvents.COMPLETED, blockOrder)
   }
 
   /**
