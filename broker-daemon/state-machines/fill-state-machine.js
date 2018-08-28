@@ -1,11 +1,13 @@
 const safeid = require('generate-safe-id')
-const StateMachine = require('./state-machine')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
+
+const { Fill } = require('../models')
+const { events: { BlockOrderWorkerEvents } } = require('../utils')
+
+const StateMachine = require('./state-machine')
 const StateMachinePersistence = require('./plugins/persistence')
 const StateMachineRejection = require('./plugins/rejection')
 const StateMachineLogging = require('./plugins/logging')
-const { Fill } = require('../models')
-const BlockOrderWorker = require('../block-order-worker')
 
 /**
  * If Fills are saved in the database before they are created on the remote, they lack an ID
@@ -304,7 +306,7 @@ const FillStateMachine = StateMachine.factory({
      * all statuses accordingly
      */
     onAfterExecute: function () {
-      this.worker.emit(BlockOrderWorker.EVENTS.COMPLETE + this.order.blockOrderId, this.order.blockOrderId)
+      this.worker.emit(BlockOrderWorkerEvents.COMPLETE + this.order.blockOrderId, this.order.blockOrderId)
     },
 
     /**
@@ -323,7 +325,7 @@ const FillStateMachine = StateMachine.factory({
      * @return {void}
      */
     onAfterReject: async function () {
-      this.worker.emit(BlockOrderWorker.EVENTS.REJECTED + this.order.blockOrderId, this.order.blockOrderId, this.error)
+      this.worker.emit(BlockOrderWorkerEvents.REJECTED + this.order.blockOrderId, this.order.blockOrderId, this.error)
     }
   }
 })

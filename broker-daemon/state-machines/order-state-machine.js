@@ -1,17 +1,20 @@
 const safeid = require('generate-safe-id')
-const StateMachine = require('./state-machine')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
+
+const { Order } = require('../models')
+const { events: { BlockOrderWorkerEvents } } = require('../utils')
+
+const StateMachine = require('./state-machine')
 const StateMachinePersistence = require('./plugins/persistence')
 const StateMachineRejection = require('./plugins/rejection')
 const StateMachineLogging = require('./plugins/logging')
-const { Order } = require('../models')
-const BlockOrderWorker = require('../block-order-worker')
 
 /**
  * If Orders are saved in the database before they are created on the remote, they lack an ID
  * This string indicates an order that does not have an assigned remote ID
- * @type {String}
+ *
  * @constant
+ * @type {String}
  * @default
  */
 const UNASSIGNED_PREFIX = 'NO_ASSIGNED_ID_'
@@ -121,6 +124,7 @@ const OrderStateMachine = StateMachine.factory({
    * This function is effectively a constructor for the state machine
    * So we pass it all the objects we'll need later.
    *
+   * @param  {Object} options
    * @param  {sublevel}            options.store       Sublevel partition for storing this order in
    * @param  {Object}              options.logger
    * @param  {RelayerClient}       options.relayer
@@ -139,6 +143,7 @@ const OrderStateMachine = StateMachine.factory({
      *
      * @param  {Object} lifecycle             Lifecycle object passed by javascript-state-machine
      * @param  {String} blockOrderid          Id of the block order that the order belongs to
+     * @param  {Object} options
      * @param  {String} options.side          Side of the market being taken (i.e. BID or ASK)
      * @param  {String} options.baseSymbol    Base symbol (e.g. BTC)
      * @param  {String} options.counterSymbol Counter symbol (e.g. LTC)
@@ -360,7 +365,7 @@ const OrderStateMachine = StateMachine.factory({
      * all statuses accordingly
      */
     onAfterComplete: function () {
-      this.worker.emit('block-order:complete' + this.order.blockOrderId, this.order.blockOrderId)
+      this.worker.emit(BlockOrderWorkerEvents.COMPLETE + this.order.blockOrderId, this.order.blockOrderId)
     },
 
     /**
@@ -378,7 +383,7 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onAfterReject: async function () {
-      this.worker.emit('block-order:rejected' + this.order.blockOrderId, this.order.blockOrderId, this.error)
+      this.worker.emit(BlockOrderWorkerEvents.REJECTED + this.order.blockOrderId, this.order.blockOrderId, this.error)
     }
   }
 })

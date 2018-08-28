@@ -1127,4 +1127,10 @@ describe('BlockOrderWorker', () => {
       expect(res).to.eql([firstBlockOrder])
     })
   })
+
+  describe.only('EVENTS', () => {
+    it('should exist', () => {
+      expect(BlockOrderWorker.EVENTS).to.not.be.undefined()
+    })
+  })
 })

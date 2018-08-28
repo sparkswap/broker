@@ -7,6 +7,7 @@ const migrateStore = require('./migrate-store')
 const SublevelIndex = require('./sublevel-index')
 const convertBalance = require('./convert-balance')
 const nowInSeconds = require('./now-in-seconds')
+const events = require('./events')
 
 module.exports = {
   getRecords,
@@ -17,5 +18,6 @@ module.exports = {
   migrateStore,
   SublevelIndex,
   convertBalance,
-  nowInSeconds
+  nowInSeconds,
+  events
 }

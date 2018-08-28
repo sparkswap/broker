@@ -1,10 +1,17 @@
 const EventEmitter = require('events')
 const { promisify } = require('util')
 const safeid = require('generate-safe-id')
+
 const { BlockOrder, Order, Fill } = require('../models')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
+const {
+  Big,
+  getRecords,
+  SublevelIndex,
+  events: { BlockOrderWorkerEvents }
+} = require('../utils')
+
 const { BlockOrderNotFoundError } = require('./errors')
-const { Big, getRecords, SublevelIndex } = require('../utils')
 
 /**
  * @class Create and work Block Orders
@@ -121,14 +128,14 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
 
     // Register listener events by the current blockOrderId
-    this.once(BlockOrderWorker.EVENTS.COMPLETE + id, async (blockOrderId) => this.completeBlockOrder(blockOrderId))
-    this.once(BlockOrderWorker.EVENTS.REJECTED + id, async (blockOrderId, err) => this.failBlockOrder(blockOrderId, err))
-    this.on(BlockOrderWorker.EVENTS.CREATED + id, async (blockOrder) => {
-      await this.workBlockOrder(blockOrder).catch(e => this.emit(BlockOrderWorker.EVENTS.REJECTED, blockOrder.id, e))
+    this.once(BlockOrderWorkerEvents.COMPLETE + id, async (blockOrderId) => this.completeBlockOrder(blockOrderId))
+    this.once(BlockOrderWorkerEvents.REJECTED + id, async (blockOrderId, err) => this.failBlockOrder(blockOrderId, err))
+    this.on(BlockOrderWorkerEvents.CREATED + id, async (blockOrder) => {
+      await this.workBlockOrder(blockOrder).catch(e => this.emit(BlockOrderWorkerEvents.REJECTED, blockOrder.id, e))
     })
 
     // Start working the block order in another process
-    this.emit(BlockOrderWorker.EVENTS.CREATED + id, blockOrder)
+    this.emit(BlockOrderWorkerEvents.CREATED + id, blockOrder)
 
     return id
   }
@@ -443,14 +450,5 @@ class BlockOrderWorker extends EventEmitter {
     return Promise.all(promisedFills.filter(promise => promise))
   }
 }
-
-BlockOrderWorker.EVENTS = Object.freeze({
-  CREATED: 'block-order:created',
-  CANCEL: 'block-order:cancel',
-  COMPLETE: 'block-order:complete',
-  COMPLETED: 'block-order:completed',
-  FAIL: 'block-order:fail',
-  REJECTED: 'block-order:rejected'
-})
 
 module.exports = BlockOrderWorker
