@@ -2,26 +2,26 @@ const path = require('path')
 const os = require('os')
 
 /**
- * @type {String}
- * @constant
- * @default
- */
-const MISSING_FILE_MESSAGE = 'Cannot find module'
-
-/**
  * Default configuration is in the root directory for the SparkSwap CLI
- * @type {Object}
  * @constant
+ * @type {Object}
  * @default
  */
 const DEFAULT_CONFIG = require('../.sparkswap.default.js')
 
 /**
- * @type {String}
  * @constant
+ * @type {String}
  * @default
  */
-const USER_CONFIG_FILE = '.sparkswap.js'
+const MISSING_FILE_MESSAGE = 'Cannot find module'
+
+/**
+ * @constant
+ * @type {String}
+ * @default
+ */
+const USER_CONFIG_FILEPATH = '.sparkswap.js'
 
 /**
  * A wrapper around path resolution for a user defined `.sparkswap.js` configuration
@@ -34,7 +34,7 @@ const USER_CONFIG_FILE = '.sparkswap.js'
  */
 function loadConfig () {
   try {
-    var config = require(path.resolve(os.homedir(), USER_CONFIG_FILE))
+    var config = require(path.resolve(os.homedir(), USER_CONFIG_FILEPATH))
   } catch (e) {
     // We will warn the user only if the ~/.sparkswap.js configuration file exists
     // but could not be read. We will set the config to the default regardless

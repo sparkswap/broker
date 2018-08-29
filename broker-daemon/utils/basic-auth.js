@@ -21,7 +21,7 @@ const BASIC_AUTH_DELIMITER = ':'
  * @return {Error} if the user is not authenticated
  */
 function verify ({ metadata, logger }) {
-  if (this.disableAuth === true) return true
+  if (this.disableAuth === true) return
 
   // Example basic auth token: 'Basic YWRtaW46cGFzc3dvcmQ='
   const { authorization: authToken } = metadata
@@ -35,12 +35,10 @@ function verify ({ metadata, logger }) {
 
   // rpcUser and rpcPass are bound to context where #verify is used due to the way
   // grpc-method handles the authorization middleware
-  if (username === this.rpcUser && password === this.rpcPass) {
-    return true
+  if (username !== this.rpcUser || password !== this.rpcPass) {
+    logger.debug('Basic Authentication has failed. Username/Password did not match')
+    throw new PublicError('Basic Authentication Failed, please check the clis user/pass credentials')
   }
-
-  logger.debug('Basic Authentication has failed. Username/Password did not match')
-  throw new PublicError('Basic Authentication Failed, please check the clis user/pass credentials')
 }
 
 module.exports = { verify }
