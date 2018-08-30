@@ -42,7 +42,7 @@ program
   .option('--id-pubkey-path <path>', 'Location of the public key for the broker\'s identity', validations.isFormattedPath, ID_PUB_KEY)
   .option('--markets <markets>', 'Comma-separated market names to track on startup', validations.areValidMarketNames, MARKETS)
   .option('--relayer-host <server>', 'The host address for the SparkSwap Relayer', validations.isHost, RELAYER_RPC_HOST)
-  .option('--relayer-cert-path <path>', 'Location of the root certificate for the SparkSwap Relayer', validations.isFormattedPath, RELAYER_CERT_PATH)
+  .option('--relayer-cert-path <path>', 'Location of the public certificate for the SparkSwap Relayer', validations.isFormattedPath, RELAYER_CERT_PATH)
 
 for (let currency of currencies) {
   let lowerSymbol = currency.symbol.toLowerCase()
@@ -61,7 +61,7 @@ for (let currency of currencies) {
 }
 
 program
-  .action((args, opts) => {
+  .action(async (args, opts) => {
     const {
       rpcAddress,
       dataDir,

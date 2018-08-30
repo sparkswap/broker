@@ -1,5 +1,6 @@
 const path = require('path')
-const { readFileSync } = require('fs')
+const http = require('http')
+const fs = require('fs')
 const { credentials } = require('grpc')
 const caller = require('grpc-caller')
 
@@ -45,14 +46,21 @@ class RelayerClient {
   /**
    * @param {KeyPath} idKeyPath            Path to public and private key for the broker's identity
    * @param {Object}  relayerOpts
-   * @param {String}  relayerOpts.host     Hostname and port of the Relayer RPC server
-   * @param {String}  relayerOpts.certPath Absolute path to the root certificate for the Relayer
+   * @param {String}  [relayerOpts.host=localhost:28492]     Hostname and port of the Relayer RPC server
+   * @param {String}  [relayerOpts.certPath=null] Absolute path to the public certificate for the Relayer
    * @param {Logger}  logger
    */
-  constructor ({ privKeyPath, pubKeyPath }, { certPath, host = 'localhost:28492', disableAuth = false }, logger = consoleLogger) {
+  constructor ({ privKeyPath, pubKeyPath }, { certPath = null, host = 'localhost:28492', disableAuth = false }, logger = consoleLogger) {
     this.logger = logger
     this.address = host
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
+
+    if (!certPath) {
+      const certUrl = `${host}/cert`
+      this.cert = this.getCertSync(certUrl)
+    } else {
+      this.cert = fs.readFileSync(certPath)
+    }
 
     if (disableAuth) {
       this.logger.warn('WARNING: SSL is not enabled and no credentials will be passed to the Relayer. This is only suitable for use in development.')
@@ -60,7 +68,7 @@ class RelayerClient {
       this.credentials = credentials.createInsecure()
     } else {
       this.identity = Identity.load(privKeyPath, pubKeyPath)
-      const channelCredentials = credentials.createSsl(readFileSync(certPath))
+      const channelCredentials = credentials.createSsl(this.cert)
       // `service_url` in the line below is defined by the grpc lib, so we need to tell eslint to ignore snake case
       // eslint-disable-next-line
       const callCredentials = credentials.createFromMetadataGenerator(({ service_url }, callback) => {
@@ -151,6 +159,31 @@ class RelayerClient {
         this.logger.error('Error encountered while setting up stream')
         return reject(e)
       }
+    })
+  }
+
+  /**
+   * Queries a url for a relayer public cert
+   *
+   * @param {String} url - cert url
+   * @returns {String} cert
+   */
+  async getCertSync (url) {
+    return new Promise((resolve, reject) => {
+      let cert = ''
+
+      const request = http.get(url, (res) => {
+        if (res.statusCode === 200) {
+          res.on('data', (data) => { cert += data })
+          res.on('end', () => resolve(cert))
+        }
+
+        // Add timeout for request
+        request.setTimeout(12000, function () {
+          request.abort()
+          reject(new Error('getCertSync timed out'))
+        })
+      })
     })
   }
 }

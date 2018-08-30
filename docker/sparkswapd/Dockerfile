@@ -52,6 +52,9 @@ RUN openssl ec -in ${ID_PRIV_KEY} -pubout -out ${ID_PUB_KEY}
 
 COPY . /home/app
 
+# Copy startup script here, used by PM2 to start the daemon
+COPY ./docker/sparkswapd/start-sparkswapd.sh ./start-sparkswapd.sh
+
 # We remove the package-lock file here so that our github dependencies like lnd-engine
 # and grpc-methods can continue to update if they are unstable.
 #

@@ -1,6 +1,6 @@
 {
   "name": "sparkswapd",
-  "script": "./scripts/start-sparkswapd.sh",
+  "script": "./start-sparkswapd.sh",
   "instances": "1",
   "max_restarts": 10,
   "exec_interpreter" : "bash",
