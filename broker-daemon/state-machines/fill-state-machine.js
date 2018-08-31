@@ -316,6 +316,7 @@ const FillStateMachine = StateMachine.factory({
      * @return {void}
      */
     onBeforeReject: function (lifecycle, error) {
+      console.log(error)
       this.logger.error(`Encountered error during transition, rejecting`, error)
     },
 

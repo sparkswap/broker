@@ -4,6 +4,7 @@ const { sinon, rewire, delay, expect } = require('test/test-helper')
 const RelayerClient = rewire(path.resolve('broker-daemon', 'relayer', 'relayer-client'))
 
 describe('RelayerClient', () => {
+  let logger
   let createSslStub
   let createFromMetadataGeneratorStub
   let combineChannelCredentialsStub
@@ -36,6 +37,11 @@ describe('RelayerClient', () => {
   let ENABLE_SSL = true
 
   beforeEach(() => {
+    logger = {
+      debug: sinon.stub(),
+      info: sinon.stub(),
+      error: sinon.stub()
+    }
     identityIdentify = sinon.stub()
     Identity = {
       load: sinon.stub().returns({
@@ -97,7 +103,6 @@ describe('RelayerClient', () => {
 
   describe('new', () => {
     it('assigns a logger', () => {
-      const logger = {}
       const relayer = new RelayerClient(idKeyPath, relayerHost, logger)
 
       expect(relayer).to.have.property('logger')
@@ -209,7 +214,7 @@ describe('RelayerClient', () => {
       watchMarket = sinon.stub().returns(stream)
 
       callerStub.withArgs(sinon.match.any, OrderBookService).returns({ watchMarket })
-      relayer = new RelayerClient(idKeyPath, { host: relayerHost })
+      relayer = new RelayerClient(idKeyPath, { host: relayerHost }, logger)
       store = {
         put: sinon.stub()
       }

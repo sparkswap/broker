@@ -143,6 +143,8 @@ class BlockOrderWorker extends EventEmitter {
     })
 
     // Start working the block order in another process
+    // TODO: Use an ID instead of the entire BlockOrder so that we can have multiple
+    // services handling events
     this.emit(BlockOrderWorkerEvents.CREATED + id, blockOrder)
 
     return id
@@ -248,7 +250,7 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info('Moved block order to cancelled state', { id: blockOrder.id })
 
-    this.emit(BlockOrderWorkerEvents.COMPLETED, blockOrder)
+    this.emit(BlockOrderWorkerEvents.COMPLETED, blockOrder.id)
 
     return blockOrder
   }
@@ -298,7 +300,7 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info('Moved block order to failed state', { id: blockOrderId })
 
-    this.emit(BlockOrderWorkerEvents.COMPLETED, blockOrder)
+    this.emit(BlockOrderWorkerEvents.COMPLETED, blockOrder.id)
   }
 
   /**

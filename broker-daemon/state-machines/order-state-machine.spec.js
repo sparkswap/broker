@@ -3,7 +3,7 @@ const { expect, rewire, sinon, delay } = require('test/test-helper')
 
 const OrderStateMachine = rewire(path.resolve(__dirname, 'order-state-machine'))
 
-describe.only('OrderStateMachine', () => {
+describe('OrderStateMachine', () => {
   let Order
 
   let store
