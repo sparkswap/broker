@@ -965,27 +965,6 @@ describe('BlockOrderWorker', () => {
 
       expect(FillStateMachine.create).to.have.been.calledWith(sinon.match({ engines }))
     })
-
-    it('provides a handler for onRejection', async () => {
-      await worker._fillOrders(blockOrder, orders, targetDepth)
-
-      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match({ onRejection: sinon.match.func }))
-    })
-
-    it('fails the block order if the order is rejected', async () => {
-      worker.failBlockOrder = sinon.stub()
-      await worker._fillOrders(blockOrder, orders, targetDepth)
-
-      const { onRejection } = FillStateMachine.create.args[0][0]
-
-      const err = new Error('fale')
-      onRejection(err)
-
-      await delay(10)
-
-      expect(worker.failBlockOrder).to.have.been.calledOnce()
-      expect(worker.failBlockOrder).to.have.been.calledWith(blockOrder.id, err)
-    })
   })
 
   describe('#_placeOrder', () => {
@@ -1073,27 +1052,6 @@ describe('BlockOrderWorker', () => {
       await worker._placeOrder(blockOrder, '100')
 
       expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match({ engines }))
-    })
-
-    it('provides a handler for onRejection', async () => {
-      await worker._placeOrder(blockOrder, '100')
-
-      expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match({ onRejection: sinon.match.func }))
-    })
-
-    it('fails the block order if the order is rejected', async () => {
-      worker.failBlockOrder = sinon.stub()
-      await worker._placeOrder(blockOrder, '100')
-
-      const { onRejection } = OrderStateMachine.create.args[0][0]
-
-      const err = new Error('fale')
-      onRejection(err)
-
-      await delay(10)
-
-      expect(worker.failBlockOrder).to.have.been.calledOnce()
-      expect(worker.failBlockOrder).to.have.been.calledWith(blockOrder.id, err)
     })
   })
 
