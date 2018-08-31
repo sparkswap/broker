@@ -5,7 +5,7 @@ const { PublicError } = require('grpc-methods')
 const basicAuth = rewire(path.resolve(__dirname, 'basic-auth'))
 const credentialGenerator = rewire(path.resolve(__dirname, '..', '..', 'broker-cli', 'utils', 'basic-auth'))
 
-describe.only('basicAuth', () => {
+describe('basicAuth', () => {
   describe('verify', () => {
     let logger
     let credentialsToBasicAuth
