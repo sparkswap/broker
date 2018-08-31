@@ -1036,3 +1036,33 @@ service WalletService {
   rpc GetTradingCapacities (GetTradingCapacitiesRequest) returns (GetTradingCapacitiesResponse);
 
 }
+
+/**
+ * Supported markets expose all relevant information about a market that is supported by sparkswap
+ */
+message SupportedMarket {
+  // unique id for the market
+  string id = 1;
+  // symbol of the market `BTC/LTC`
+  string symbol = 2;
+  // symbol of base currency
+  string base = 3;
+  // symbol of counter currency
+  string counter = 4;
+  // if the market is active or not
+  bool active = 5;
+  // number of digits for the balances in the market
+  int64 precision = 16;
+}
+
+/**
+ * Contains information about all supported markets on sparkswap
+ */
+message GetSupportedMarketsResponse {
+  // a list of all supported markets on sparkswap
+  repeated SupportedMarket supported_markets = 1;
+}
+
+service InfoService {
+  rpc getSupportedMarkets (google.protobuf.Empty) returns (GetSupportedMarketsResponse);
+}
