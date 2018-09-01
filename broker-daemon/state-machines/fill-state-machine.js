@@ -306,7 +306,7 @@ const FillStateMachine = StateMachine.factory({
      * all statuses accordingly
      */
     onAfterExecute: function () {
-      this.worker.emit(BlockOrderWorkerEvents.COMPLETE + this.order.blockOrderId, this.order.blockOrderId)
+      this.worker.emit(BlockOrderWorkerEvents.COMPLETE + this.fill.blockOrderId, this.fill.blockOrderId)
     },
 
     /**
@@ -316,7 +316,6 @@ const FillStateMachine = StateMachine.factory({
      * @return {void}
      */
     onBeforeReject: function (lifecycle, error) {
-      console.log(error)
       this.logger.error(`Encountered error during transition, rejecting`, error)
     },
 
@@ -326,7 +325,7 @@ const FillStateMachine = StateMachine.factory({
      * @return {void}
      */
     onAfterReject: async function () {
-      this.worker.emit(BlockOrderWorkerEvents.REJECTED + this.order.blockOrderId, this.order.blockOrderId, this.error)
+      this.worker.emit(BlockOrderWorkerEvents.REJECTED + this.fill.blockOrderId, this.fill.blockOrderId, this.error)
     }
   }
 })

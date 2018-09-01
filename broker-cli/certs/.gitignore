@@ -1,4 +1,5 @@
-# Ignore everything in this directory except this file
+# Ignore everything in this directory except this file and a README
 # We never want to inadvertantly check-in files to the certs/ directory
+*
 !.gitignore
 !README.md
