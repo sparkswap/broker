@@ -18,7 +18,7 @@ const BASIC_AUTH_DELIMITER = ':'
  * @return {Function}
  */
 function verifyBasicAuth (rpcUser, rpcPass, disableAuth = false) {
-  return ({ metadata, logger }) => {
+  return async ({ metadata, logger }) => {
     if (disableAuth === true) return
 
     // Example basic auth token: 'Basic YWRtaW46cGFzc3dvcmQ='

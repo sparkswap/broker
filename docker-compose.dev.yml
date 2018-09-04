@@ -19,7 +19,7 @@ services:
       - './broker-daemon:/home/app/broker-daemon/'
       # TODO: This can be removed once utils are moved to a shared repo or into
       # the broker-daemon itself. broker-daemon relies on these utils for ./broker-daemon/bin/sparkswapd
-      - './broker-cli:/home/app/broker-cli/'
+      - './broker-cli/utils:/home/app/broker-cli/utils'
       - './proto:/home/app/proto/'
       - './scripts:/home/app/scripts/'
     environment:
