@@ -7,7 +7,7 @@ const OrderService = require('./order-service')
 const OrderBookService = require('./orderbook-service')
 const WalletService = require('./wallet-service')
 
-const { basicAuth } = require('../utils')
+const { verifyBasicAuth } = require('../utils')
 
 /**
  * @constant
@@ -52,24 +52,22 @@ class BrokerRPCServer {
     this.pubKeyPath = pubKeyPath
     this.privKeyPath = privKeyPath
     this.disableAuth = disableAuth
-    this.rpcUser = rpcUser
-    this.rpcPass = rpcPass
-    this.auth = basicAuth.verify.bind(this)
+    this.auth = verifyBasicAuth(rpcUser, rpcPass, disableAuth)
 
     this.protoPath = path.resolve(BROKER_PROTO_PATH)
 
     this.server = new grpc.Server()
 
-    this.adminService = new AdminService(this.protoPath, { logger, relayer, engines, basicAuth: this.auth })
+    this.adminService = new AdminService(this.protoPath, { logger, relayer, engines, auth: this.auth })
     this.server.addService(this.adminService.definition, this.adminService.implementation)
 
-    this.orderService = new OrderService(this.protoPath, { logger, blockOrderWorker, basicAuth: this.auth })
+    this.orderService = new OrderService(this.protoPath, { logger, blockOrderWorker, auth: this.auth })
     this.server.addService(this.orderService.definition, this.orderService.implementation)
 
-    this.orderBookService = new OrderBookService(this.protoPath, { logger, relayer, orderbooks, basicAuth: this.auth })
+    this.orderBookService = new OrderBookService(this.protoPath, { logger, relayer, orderbooks, auth: this.auth })
     this.server.addService(this.orderBookService.definition, this.orderBookService.implementation)
 
-    this.walletService = new WalletService(this.protoPath, { logger, engines, relayer, orderbooks, basicAuth: this.auth })
+    this.walletService = new WalletService(this.protoPath, { logger, engines, relayer, orderbooks, auth: this.auth })
     this.server.addService(this.walletService.definition, this.walletService.implementation)
   }
 

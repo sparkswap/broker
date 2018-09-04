@@ -10,9 +10,9 @@ class OrderBookService {
    * @param {Object} opts.logger
    * @param {RelayerClient} opts.relayer
    * @param {Map} opts.orderbooks
-   * @param {Function} opts.basicAuth
+   * @param {Function} opts.auth
    */
-  constructor (protoPath, { logger, relayer, orderbooks, basicAuth }) {
+  constructor (protoPath, { logger, relayer, orderbooks, auth }) {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
     this.logger = logger
@@ -25,7 +25,7 @@ class OrderBookService {
     } = this.proto
 
     this.implementation = {
-      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks }, { WatchMarketResponse }, basicAuth).register()
+      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks, auth }, { WatchMarketResponse }).register()
     }
   }
 

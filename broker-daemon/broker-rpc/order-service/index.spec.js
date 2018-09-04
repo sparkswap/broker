@@ -17,7 +17,7 @@ describe('OrderService', () => {
 
   let protoPath
   let logger
-  let basicAuth
+  let auth
 
   let blockOrderWorker
 
@@ -40,7 +40,7 @@ describe('OrderService', () => {
       info: sinon.stub(),
       error: sinon.stub()
     }
-    basicAuth = sinon.stub()
+    auth = sinon.stub()
 
     blockOrderWorker = sinon.stub()
     GrpcMethod = sinon.stub()
@@ -66,7 +66,7 @@ describe('OrderService', () => {
   })
 
   beforeEach(() => {
-    server = new OrderService(protoPath, { logger, blockOrderWorker, basicAuth })
+    server = new OrderService(protoPath, { logger, blockOrderWorker, auth })
   })
 
   it('assigns a proto path', () => {
@@ -140,6 +140,10 @@ describe('OrderService', () => {
       it('block order worker', () => {
         expect(callArgs[2]).to.have.property('blockOrderWorker', blockOrderWorker)
       })
+
+      it('passes in auth', () => {
+        expect(callArgs[2]).to.have.property('auth', auth)
+      })
     })
 
     it('passes in the response', () => {
@@ -150,10 +154,6 @@ describe('OrderService', () => {
     it('passes in the enum', () => {
       expect(callArgs[3]).to.be.an('object')
       expect(callArgs[3]).to.have.property('TimeInForce', proto.TimeInForce)
-    })
-
-    it('passes in basicAuth', () => {
-      expect(callArgs[4]).to.be.eql(basicAuth)
     })
   })
 
@@ -192,15 +192,15 @@ describe('OrderService', () => {
       it('block order worker', () => {
         expect(callArgs[2]).to.have.property('blockOrderWorker', blockOrderWorker)
       })
+
+      it('passes in auth', () => {
+        expect(callArgs[2]).to.have.property('auth', auth)
+      })
     })
 
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.an('object')
       expect(callArgs[3]).to.have.property('GetBlockOrderResponse', proto.GetBlockOrderResponse)
-    })
-
-    it('passes in basicAuth', () => {
-      expect(callArgs[4]).to.be.eql(basicAuth)
     })
   })
 
@@ -239,10 +239,10 @@ describe('OrderService', () => {
       it('block order worker', () => {
         expect(callArgs[2]).to.have.property('blockOrderWorker', blockOrderWorker)
       })
-    })
 
-    it('passes in basicAuth', () => {
-      expect(callArgs[3]).to.be.eql(basicAuth)
+      it('passes in auth', () => {
+        expect(callArgs[2]).to.have.property('auth', auth)
+      })
     })
   })
 
@@ -281,15 +281,15 @@ describe('OrderService', () => {
       it('block order worker', () => {
         expect(callArgs[2]).to.have.property('blockOrderWorker', blockOrderWorker)
       })
+
+      it('passes in auth', () => {
+        expect(callArgs[2]).to.have.property('auth', auth)
+      })
     })
 
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.an('object')
       expect(callArgs[3]).to.have.property('GetBlockOrdersResponse', proto.GetBlockOrdersResponse)
-    })
-
-    it('passes in basicAuth', () => {
-      expect(callArgs[4]).to.be.eql(basicAuth)
     })
   })
 })

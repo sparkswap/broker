@@ -15,14 +15,14 @@ const {
  * @type {String}
  * @default
  */
-const PROJECT_ROOT = '..'
+const PROJECT_ROOT = path.resolve(__dirname, '..')
 
 /**
  * @constant
  * @type {String}
  * @default
  */
-const PROTO_PATH = path.resolve(__dirname, PROJECT_ROOT, 'proto', 'broker.proto')
+const PROTO_PATH = path.join(PROJECT_ROOT, 'proto', 'broker.proto')
 
 /**
  * @constant
@@ -73,7 +73,7 @@ class BrokerDaemonClient {
       if (!this.password) throw new Error('No password is specified for authentication')
 
       // Go back to the ./broker-cli/certs directory from the current directory
-      this.cert = readFileSync(path.join(__dirname, PROJECT_ROOT, this.certPath))
+      this.cert = readFileSync(path.join(PROJECT_ROOT, this.certPath))
 
       const channelCredentials = grpc.credentials.createSsl(this.cert)
       const callCredentials = basicAuth.generateBasicAuthCredentials(this.username, this.password)

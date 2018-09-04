@@ -12,9 +12,9 @@ class OrderService {
    * @param {Object} opts
    * @param {Object} opts.logger
    * @param {BlockOrderWorker} opts.blockOrderWorker
-   * @param {Function} opts.basicAuth
+   * @param {Function} opts.auth
    */
-  constructor (protoPath, { logger, blockOrderWorker, basicAuth }) {
+  constructor (protoPath, { logger, blockOrderWorker, auth }) {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
     this.logger = logger
@@ -30,10 +30,10 @@ class OrderService {
     } = this.proto
 
     this.implementation = {
-      createBlockOrder: new GrpcUnaryMethod(createBlockOrder, this.messageId('createBlockOrder'), { logger, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce }, basicAuth).register(),
-      getBlockOrder: new GrpcUnaryMethod(getBlockOrder, this.messageId('getBlockOrder'), { logger, blockOrderWorker }, { GetBlockOrderResponse }, basicAuth).register(),
-      cancelBlockOrder: new GrpcUnaryMethod(cancelBlockOrder, this.messageId('cancelBlockOrder'), { logger, blockOrderWorker }, basicAuth).register(),
-      getBlockOrders: new GrpcUnaryMethod(getBlockOrders, this.messageId('getBlockOrders'), { logger, blockOrderWorker }, { GetBlockOrdersResponse }, basicAuth).register()
+      createBlockOrder: new GrpcUnaryMethod(createBlockOrder, this.messageId('createBlockOrder'), { logger, blockOrderWorker, auth }, { CreateBlockOrderResponse, TimeInForce }).register(),
+      getBlockOrder: new GrpcUnaryMethod(getBlockOrder, this.messageId('getBlockOrder'), { logger, blockOrderWorker, auth }, { GetBlockOrderResponse }).register(),
+      cancelBlockOrder: new GrpcUnaryMethod(cancelBlockOrder, this.messageId('cancelBlockOrder'), { logger, blockOrderWorker, auth }).register(),
+      getBlockOrders: new GrpcUnaryMethod(getBlockOrders, this.messageId('getBlockOrders'), { logger, blockOrderWorker, auth }, { GetBlockOrdersResponse }).register()
     }
   }
 

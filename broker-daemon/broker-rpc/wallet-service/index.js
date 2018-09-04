@@ -19,9 +19,9 @@ class WalletService {
    * @param {Logger} options.logger
    * @param {RelayerClient} options.relayer
    * @param {Map<String, LndEngine>} options.engines
-   * @param {Function} options.basicAuth
+   * @param {Function} options.auth
    */
-  constructor (protoPath, { logger, engines, relayer, orderbooks, basicAuth }) {
+  constructor (protoPath, { logger, engines, relayer, orderbooks, auth }) {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
     this.logger = logger
@@ -42,12 +42,12 @@ class WalletService {
     } = this.proto
 
     this.implementation = {
-      newDepositAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engines }, { NewDepositAddressResponse }, basicAuth).register(),
-      getBalances: new GrpcUnaryMethod(getBalances, this.messageId('getBalances'), { logger, engines }, { GetBalancesResponse }, basicAuth).register(),
-      commit: new GrpcUnaryMethod(commit, this.messageId('commit'), { logger, engines, relayer, orderbooks }, { EmptyResponse }, basicAuth).register(),
-      getPaymentChannelNetworkAddress: new GrpcUnaryMethod(getPaymentChannelNetworkAddress, this.messageId('getPaymentChannelNetworkAddress'), { logger, engines }, { GetPaymentChannelNetworkAddressResponse }, basicAuth).register(),
-      getTradingCapacities: new GrpcUnaryMethod(getTradingCapacities, this.messageId('getTradingCapacities'), { logger, engines, orderbooks }, { GetTradingCapacitiesResponse }, basicAuth).register(),
-      releaseChannels: new GrpcUnaryMethod(releaseChannels, this.messageId('releaseChannels'), { logger, engines, orderbooks }, { EmptyResponse }, basicAuth).register()
+      newDepositAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engines, auth }, { NewDepositAddressResponse }).register(),
+      getBalances: new GrpcUnaryMethod(getBalances, this.messageId('getBalances'), { logger, engines, auth }, { GetBalancesResponse }).register(),
+      commit: new GrpcUnaryMethod(commit, this.messageId('commit'), { logger, engines, relayer, orderbooks, auth }, { EmptyResponse }).register(),
+      getPaymentChannelNetworkAddress: new GrpcUnaryMethod(getPaymentChannelNetworkAddress, this.messageId('getPaymentChannelNetworkAddress'), { logger, engines, auth }, { GetPaymentChannelNetworkAddressResponse }).register(),
+      getTradingCapacities: new GrpcUnaryMethod(getTradingCapacities, this.messageId('getTradingCapacities'), { logger, engines, orderbooks, auth }, { GetTradingCapacitiesResponse }).register(),
+      releaseChannels: new GrpcUnaryMethod(releaseChannels, this.messageId('releaseChannels'), { logger, engines, orderbooks, auth }, { EmptyResponse }).register()
     }
   }
 

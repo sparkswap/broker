@@ -17,7 +17,7 @@ describe('AdminService', () => {
 
   let relayer
   let engines
-  let basicAuth
+  let auth
 
   let server
 
@@ -33,7 +33,7 @@ describe('AdminService', () => {
       info: sinon.stub(),
       error: sinon.stub()
     }
-    basicAuth = sinon.stub()
+    auth = sinon.stub()
 
     relayer = sinon.stub()
     engines = new Map()
@@ -52,7 +52,7 @@ describe('AdminService', () => {
   })
 
   beforeEach(() => {
-    server = new AdminService(protoPath, { logger, relayer, engines, basicAuth })
+    server = new AdminService(protoPath, { logger, relayer, engines, auth })
   })
 
   it('assigns a proto path', () => {
@@ -120,27 +120,24 @@ describe('AdminService', () => {
 
     describe('request options', () => {
       it('passes in the logger', () => {
-        expect(callArgs[2]).to.have.property('logger')
-        expect(callArgs[2].logger).to.be.equal(logger)
+        expect(callArgs[2]).to.have.property('logger', logger)
       })
 
       it('passes in a relayer', () => {
-        expect(callArgs[2]).to.have.property('relayer')
-        expect(callArgs[2].relayer).to.be.equal(relayer)
+        expect(callArgs[2]).to.have.property('relayer', relayer)
       })
 
       it('passes in the engines', () => {
-        expect(callArgs[2]).to.have.property('engines')
-        expect(callArgs[2].engines).to.be.equal(engines)
+        expect(callArgs[2]).to.have.property('engines', engines)
+      })
+
+      it('passes in auth', () => {
+        expect(callArgs[2]).to.have.property('auth', auth)
       })
     })
 
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.eql({ HealthCheckResponse: proto.HealthCheckResponse })
-    })
-
-    it('passes in basicAuth', () => {
-      expect(callArgs[4]).to.be.eql(basicAuth)
     })
   })
 })

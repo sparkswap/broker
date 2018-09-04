@@ -14,7 +14,7 @@ describe('OrderBookService', () => {
 
   let protoPath
   let logger
-  let basicAuth
+  let auth
 
   let relayer
   let orderbooks
@@ -32,7 +32,7 @@ describe('OrderBookService', () => {
       info: sinon.stub(),
       error: sinon.stub()
     }
-    basicAuth = sinon.stub()
+    auth = sinon.stub()
 
     relayer = sinon.stub()
 
@@ -52,7 +52,7 @@ describe('OrderBookService', () => {
   })
 
   beforeEach(() => {
-    server = new OrderBookService(protoPath, { logger, relayer, orderbooks, basicAuth })
+    server = new OrderBookService(protoPath, { logger, relayer, orderbooks, auth })
   })
 
   it('assigns a proto path', () => {
@@ -120,27 +120,24 @@ describe('OrderBookService', () => {
 
     describe('request options', () => {
       it('passes in the logger', () => {
-        expect(callArgs[2]).to.have.property('logger')
-        expect(callArgs[2].logger).to.be.equal(logger)
+        expect(callArgs[2]).to.have.property('logger', logger)
       })
 
       it('relayer', () => {
-        expect(callArgs[2]).to.have.property('relayer')
-        expect(callArgs[2].relayer).to.be.equal(relayer)
+        expect(callArgs[2]).to.have.property('relayer', relayer)
       })
 
       it('passes in the orderbooks', () => {
-        expect(callArgs[2]).to.have.property('orderbooks')
-        expect(callArgs[2].orderbooks).to.be.equal(orderbooks)
+        expect(callArgs[2]).to.have.property('orderbooks', orderbooks)
+      })
+
+      it('passes in auth', () => {
+        expect(callArgs[2]).to.have.property('auth', auth)
       })
     })
 
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.eql({ WatchMarketResponse: proto.WatchMarketResponse })
-    })
-
-    it('passes in basicAuth', () => {
-      expect(callArgs[4]).to.be.eql(basicAuth)
     })
   })
 })
