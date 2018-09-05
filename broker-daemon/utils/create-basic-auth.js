@@ -17,7 +17,7 @@ const BASIC_AUTH_DELIMITER = ':'
  * @param {Boolean} [disableAuth=false]
  * @return {Function}
  */
-function verifyBasicAuth (rpcUser, rpcPass, disableAuth = false) {
+function createBasicAuth (rpcUser, rpcPass, disableAuth = false) {
   return async ({ metadata, logger }) => {
     if (disableAuth === true) return
 
@@ -41,4 +41,4 @@ function verifyBasicAuth (rpcUser, rpcPass, disableAuth = false) {
   }
 }
 
-module.exports = verifyBasicAuth
+module.exports = createBasicAuth

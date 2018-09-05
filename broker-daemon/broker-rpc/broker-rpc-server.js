@@ -7,7 +7,7 @@ const OrderService = require('./order-service')
 const OrderBookService = require('./orderbook-service')
 const WalletService = require('./wallet-service')
 
-const { verifyBasicAuth } = require('../utils')
+const { createBasicAuth } = require('../utils')
 
 /**
  * @constant
@@ -52,7 +52,7 @@ class BrokerRPCServer {
     this.pubKeyPath = pubKeyPath
     this.privKeyPath = privKeyPath
     this.disableAuth = disableAuth
-    this.auth = verifyBasicAuth(rpcUser, rpcPass, disableAuth)
+    this.auth = createBasicAuth(rpcUser, rpcPass, disableAuth)
 
     this.protoPath = path.resolve(BROKER_PROTO_PATH)
 
@@ -107,7 +107,6 @@ class BrokerRPCServer {
       null, // no root cert needed for server credentials
       [{
         private_key: key,
-        // TODO: build a real cert chain instead of just using the root cert
         cert_chain: cert
       }],
       false // checkClientCertificate: false (we don't use client certs)

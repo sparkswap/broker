@@ -19,8 +19,8 @@ describe('basicAuth', () => {
       const res = credentialsToBasicAuth(user, pass)
       // Format of the has is based off of RFC 7235
       // More info: https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication
-      const hash = Buffer.from(`${user}:${pass}`).toString('base64')
-      const expectedResult = `Basic ${hash}`
+      const encodedCreds = Buffer.from(`${user}:${pass}`).toString('base64')
+      const expectedResult = `Basic ${encodedCreds}`
       expect(res).to.be.eql(expectedResult)
     })
   })

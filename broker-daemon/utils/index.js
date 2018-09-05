@@ -7,7 +7,7 @@ const migrateStore = require('./migrate-store')
 const SublevelIndex = require('./sublevel-index')
 const convertBalance = require('./convert-balance')
 const nowInSeconds = require('./now-in-seconds')
-const verifyBasicAuth = require('./verify-basic-auth')
+const createBasicAuth = require('./create-basic-auth')
 
 module.exports = {
   getRecords,
@@ -19,5 +19,5 @@ module.exports = {
   SublevelIndex,
   convertBalance,
   nowInSeconds,
-  verifyBasicAuth
+  createBasicAuth
 }
