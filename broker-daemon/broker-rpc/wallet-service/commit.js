@@ -1,25 +1,14 @@
 const { PublicError } = require('grpc-methods')
+
 const { convertBalance, Big } = require('../../utils')
+const { currencies: currencyConfig } = require('../../config')
+
 /**
  * @constant
  * @type {Long}
  * @default
  */
 const MINIMUM_FUNDING_AMOUNT = 400000
-
-/**
- * This is the max allowed balance for a channel for LND while software is currently
- * in beta
- *
- * Maximum channel balance (no inclusive) is 2^32 or 16777216
- * More info: https://github.com/lightningnetwork/lnd/releases/tag/v0.3-alpha
- *
- * @todo make this engine agnostic (non-LND)
- * @constant
- * @type {Long}
- * @default
- */
-const MAX_CHANNEL_BALANCE = 16777215
 
 /**
  * Grabs public lightning network information from relayer and opens a channel
@@ -35,12 +24,18 @@ const MAX_CHANNEL_BALANCE = 16777215
  */
 async function commit ({ params, relayer, logger, engines, orderbooks }, { EmptyResponse }) {
   const { balance, symbol, market } = params
+  const currentCurrencyConfig = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol)
+
+  if (!currentCurrencyConfig) {
+    throw new Error(`Currency was not found when trying to commit to market: ${symbol}`)
+  }
 
   const orderbook = orderbooks.get(market)
 
   if (!orderbook) {
     throw new Error(`${market} is not being tracked as a market.`)
   }
+
   const { address } = await relayer.paymentChannelNetworkService.getAddress({symbol})
 
   const [ baseSymbol, counterSymbol ] = market.split('/')
@@ -61,14 +56,16 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
 
   logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balance}`)
 
+  const maxChannelBalance = currentCurrencyConfig.maxChannelBalance
+
   // TODO: Validate that the amount is above the minimum channel balance
   // TODO: Choose the correct engine depending on the market
   // TODO: Get correct fee amount from engine
   if (balance < MINIMUM_FUNDING_AMOUNT) {
     throw new PublicError(`Minimum balance of ${MINIMUM_FUNDING_AMOUNT} needed to commit to the relayer`)
-  } else if (balance > MAX_CHANNEL_BALANCE) {
-    logger.error(`Balance from the client exceeds maximum balance allowed (${MAX_CHANNEL_BALANCE}).`, { balance })
-    throw new PublicError(`Maxium balance of ${MAX_CHANNEL_BALANCE} exceeded for committing to the relayer. Please try again.`)
+  } else if (balance > maxChannelBalance) {
+    logger.error(`Balance from the client exceeds maximum balance allowed (${maxChannelBalance}).`, { balance })
+    throw new PublicError(`Maxium balance of ${maxChannelBalance} exceeded for committing to the relayer. Please try again.`)
   }
 
   // Get the max balance for outbound and inbound channels to see if there are already channels with the balance open. If this is the

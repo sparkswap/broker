@@ -3,7 +3,7 @@ const { expect, rewire, sinon } = require('test/test-helper')
 const { PublicError } = require('grpc-methods')
 const commit = rewire(path.resolve(__dirname, 'commit'))
 
-describe('commit', () => {
+describe.only('commit', () => {
   let EmptyResponse
   let params
   let relayer
@@ -21,6 +21,7 @@ describe('commit', () => {
   let getMaxOutboundChannelStub
   let getMaxInboundChannelStub
   let orderbooks
+  let currencyConfig
 
   beforeEach(() => {
     EmptyResponse = sinon.stub()
@@ -61,7 +62,15 @@ describe('commit', () => {
         createChannel: createChannelRelayerStub
       }
     }
+    currencyConfig = [{
+      name: 'Bitcoin',
+      symbol: 'BTC',
+      quantumsPerCommon: '100000000',
+      maxChannelBalance: '16777215'
+    }]
+
     commit.__set__('convertBalance', convertBalanceStub)
+    commit.__set__('currencyConfig', currencyConfig)
   })
 
   describe('committing a balance to the exchange', () => {
@@ -112,9 +121,20 @@ describe('commit', () => {
 
   describe('invalid engine types', () => {
     it('throws an error if engine does not exist for symbol', () => {
+      currencyConfig = {
+        currencies: [{
+          name: 'BadBitcoin',
+          symbol: 'BAD',
+          quantumsPerCommon: '100000000',
+          maxChannelBalance: '16777215'
+        }]
+      }
+
+      const revert = commit.__set__('currencyConfig', currencyConfig)
       const badParams = {symbol: 'BAD', market: 'BTC/LTC'}
       const errorMessage = `No engine is configured for symbol: ${badParams.symbol}`
-      return expect(commit({ params: badParams, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
+      expect(async () => commit({ params: badParams, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
+      revert()
     })
 
     it('throws an error if inverse engine is not found', () => {
@@ -135,7 +155,7 @@ describe('commit', () => {
   })
 
   describe('balance over allowed maximum value', () => {
-    let maxBalance = commit.__get__('MAX_CHANNEL_BALANCE')
+    let maxBalance = 0
 
     it('throws an error for an incorrect balance', () => {
       params.balance = maxBalance + 1

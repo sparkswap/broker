@@ -291,10 +291,12 @@ describe('cli wallet', () => {
     let askQuestionStub
     let amount
     let market
+    let errorStub
 
     const commit = program.__get__('commit')
 
     beforeEach(() => {
+      errorStub = sinon.stub()
       symbol = 'BTC'
       market = 'BTC/LTC'
       amount = null
@@ -307,7 +309,10 @@ describe('cli wallet', () => {
       commitStub = sinon.stub()
       askQuestionStub = sinon.stub().returns('Y')
       opts = { rpcAddress, market }
-      logger = { info: sinon.stub(), error: sinon.stub() }
+      logger = {
+        info: sinon.stub(),
+        error: errorStub
+      }
 
       daemonStub = sinon.stub()
       daemonStub.prototype.walletService = {
@@ -334,6 +339,14 @@ describe('cli wallet', () => {
 
     it('asks the user if they are ok to commit to a balance', () => {
       expect(askQuestionStub).to.have.been.called()
+    })
+
+    it('logs an error', async () => {
+      const badSymbol = 'bad'
+      await commit({ symbol: badSymbol }, opts, logger)
+      const expectedError = sinon.match.instanceOf(Error)
+        .and(sinon.match.has('message', `Currency is not supported by the CLI: ${badSymbol}`))
+      expect(errorStub).to.have.been.calledWith(sinon.match(expectedError))
     })
   })
 
