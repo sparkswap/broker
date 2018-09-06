@@ -65,7 +65,7 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     throw new PublicError(`Minimum balance of ${MINIMUM_FUNDING_AMOUNT} needed to commit to the relayer`)
   } else if (balance > maxChannelBalance) {
     logger.error(`Balance from the client exceeds maximum balance allowed (${maxChannelBalance}).`, { balance })
-    throw new PublicError(`Maxium balance of ${maxChannelBalance} exceeded for committing to the relayer. Please try again.`)
+    throw new PublicError(`Maximum balance of ${maxChannelBalance} exceeded for committing to the relayer. Please try again.`)
   }
 
   // Get the max balance for outbound and inbound channels to see if there are already channels with the balance open. If this is the

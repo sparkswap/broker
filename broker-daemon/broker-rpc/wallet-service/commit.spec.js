@@ -3,7 +3,7 @@ const { expect, rewire, sinon } = require('test/test-helper')
 const { PublicError } = require('grpc-methods')
 const commit = rewire(path.resolve(__dirname, 'commit'))
 
-describe.only('commit', () => {
+describe('commit', () => {
   let EmptyResponse
   let params
   let relayer
@@ -73,6 +73,27 @@ describe.only('commit', () => {
     commit.__set__('currencyConfig', currencyConfig)
   })
 
+  it('throws an error if engine does not exist for symbol', () => {
+    const badSymbol = 'bad'
+    const errorMessage = `Currency was not found when trying to commit to market: ${badSymbol}`
+    return expect(commit({ params: { symbol: badSymbol }, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
+  })
+
+  it('balance under minimum amount throws an error for an incorrect balance', () => {
+    params.balance = '100'
+    return expect(
+      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+    ).to.be.rejectedWith(PublicError, 'Minimum balance of')
+  })
+
+  it('balance over allowed maximum value throws an error for an incorrect balance', () => {
+    const maxBalance = currencyConfig[0].maxChannelBalance
+    params.balance = maxBalance + 1
+    return expect(
+      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+    ).to.be.rejectedWith(PublicError, 'Maximum balance')
+  })
+
   describe('committing a balance to the exchange', () => {
     beforeEach(async () => {
       res = await commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
@@ -121,20 +142,17 @@ describe.only('commit', () => {
 
   describe('invalid engine types', () => {
     it('throws an error if engine does not exist for symbol', () => {
-      currencyConfig = {
-        currencies: [{
-          name: 'BadBitcoin',
-          symbol: 'BAD',
-          quantumsPerCommon: '100000000',
-          maxChannelBalance: '16777215'
-        }]
-      }
+      currencyConfig = [{
+        name: 'BadBitcoin',
+        symbol: 'BAD',
+        quantumsPerCommon: '100000000',
+        maxChannelBalance: '16777215'
+      }]
 
-      const revert = commit.__set__('currencyConfig', currencyConfig)
+      commit.__set__('currencyConfig', currencyConfig)
       const badParams = {symbol: 'BAD', market: 'BTC/LTC'}
       const errorMessage = `No engine is configured for symbol: ${badParams.symbol}`
-      expect(async () => commit({ params: badParams, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
-      revert()
+      return expect(commit({ params: badParams, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
     })
 
     it('throws an error if inverse engine is not found', () => {
@@ -142,26 +160,6 @@ describe.only('commit', () => {
       return expect(
         commit({ params, relayer, logger, engines: badEngines, orderbooks }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError, 'No engine is configured for symbol')
-    })
-  })
-
-  describe('balance under minimum amount', () => {
-    it('throws an error for an incorrect balance', () => {
-      params.balance = '100'
-      return expect(
-        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-      ).to.be.rejectedWith(PublicError, 'Minimum balance of')
-    })
-  })
-
-  describe('balance over allowed maximum value', () => {
-    let maxBalance = 0
-
-    it('throws an error for an incorrect balance', () => {
-      params.balance = maxBalance + 1
-      return expect(
-        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-      ).to.be.rejectedWith(PublicError)
     })
   })
 
