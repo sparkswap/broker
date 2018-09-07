@@ -1052,7 +1052,7 @@ message SupportedMarket {
   // if the market is active or not
   bool active = 5;
   // number of digits for the balances in the market
-  int64 precision = 16;
+  int64 precision = 6;
 }
 
 /**
