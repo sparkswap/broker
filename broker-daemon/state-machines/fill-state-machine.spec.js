@@ -10,14 +10,8 @@ describe('FillStateMachine', () => {
   let logger
   let relayer
   let engines
-  let worker
-  let workerEmitStub
 
   beforeEach(() => {
-    workerEmitStub = sinon.stub()
-    worker = {
-      emit: workerEmitStub
-    }
     Fill = sinon.stub()
     FillStateMachine.__set__('Fill', Fill)
 
@@ -51,31 +45,31 @@ describe('FillStateMachine', () => {
 
   describe('new', () => {
     it('exposes the store', () => {
-      const fsm = new FillStateMachine({ store, logger, relayer, engines, worker })
+      const fsm = new FillStateMachine({ store, logger, relayer, engines })
 
       expect(fsm).to.have.property('store', store)
     })
 
     it('exposes the logger', () => {
-      const fsm = new FillStateMachine({ store, logger, relayer, engines, worker })
+      const fsm = new FillStateMachine({ store, logger, relayer, engines })
 
       expect(fsm).to.have.property('logger', logger)
     })
 
     it('exposes the relayer', () => {
-      const fsm = new FillStateMachine({ store, logger, relayer, engines, worker })
+      const fsm = new FillStateMachine({ store, logger, relayer, engines })
 
       expect(fsm).to.have.property('relayer', relayer)
     })
 
     it('exposes the engines', () => {
-      const fsm = new FillStateMachine({ store, logger, relayer, engines, worker })
+      const fsm = new FillStateMachine({ store, logger, relayer, engines })
 
       expect(fsm).to.have.property('engines', engines)
     })
 
     it('does not save a copy in the store', () => {
-      new FillStateMachine({ store, logger, relayer, engines, worker }) // eslint-disable-line
+      new FillStateMachine({ store, logger, relayer, engines }) // eslint-disable-line
       return expect(store.put).to.not.have.been.called
     })
   })
@@ -84,7 +78,7 @@ describe('FillStateMachine', () => {
     let fsm
 
     beforeEach(() => {
-      fsm = new FillStateMachine({ store, logger, relayer, engines, worker })
+      fsm = new FillStateMachine({ store, logger, relayer, engines })
       fsm.goto('created')
     })
 
@@ -104,7 +98,7 @@ describe('FillStateMachine', () => {
     let key
 
     beforeEach(() => {
-      fsm = new FillStateMachine({ store, logger, relayer, engines, worker })
+      fsm = new FillStateMachine({ store, logger, relayer, engines })
       fsm.fill = {
         valueObject: { my: 'fill' }
       }
@@ -166,7 +160,7 @@ describe('FillStateMachine', () => {
     let fsm
 
     beforeEach(() => {
-      fsm = new FillStateMachine({ store, logger, relayer, engines, worker })
+      fsm = new FillStateMachine({ store, logger, relayer, engines })
     })
 
     it('moves the state to the given state', async () => {
@@ -208,7 +202,7 @@ describe('FillStateMachine', () => {
       Fill.prototype.setCreatedParams = setCreatedParams
       Fill.prototype.setSwapHash = sinon.stub()
       relayer.takerService.createFill.resolves(createFillResponse)
-      fsm = new FillStateMachine({ store, logger, relayer, engines, worker })
+      fsm = new FillStateMachine({ store, logger, relayer, engines })
       blockOrderId = 'blockid'
       orderParams = {
         orderId: 'faklsadfjo',
@@ -364,7 +358,7 @@ describe('FillStateMachine', () => {
         }
       }
 
-      fsm = new FillStateMachine({ store, logger, relayer, engines, worker })
+      fsm = new FillStateMachine({ store, logger, relayer, engines })
       fsm.fill = fakeFill
 
       await fsm.goto('created')
@@ -542,10 +536,8 @@ describe('FillStateMachine', () => {
     let fakeMakerAddress
     let fakeOutboundAmount
     let fakeOutboundSymbol
-    let blockOrderId
 
     beforeEach(async () => {
-      blockOrderId = 1234
       executeSwapStub = sinon.stub().resolves()
       fakeSwapHash = 'afaosijf'
       fakeMakerAddress = 'bolt:afasdf980as98f'
@@ -553,7 +545,6 @@ describe('FillStateMachine', () => {
       fakeOutboundAmount = '900'
 
       fakeFill = {
-        blockOrderId,
         paramsForSwap: {
           swapHash: fakeSwapHash,
           symbol: fakeOutboundSymbol,
@@ -573,7 +564,7 @@ describe('FillStateMachine', () => {
         }
       }
 
-      fsm = new FillStateMachine({ store, logger, relayer, engines, worker })
+      fsm = new FillStateMachine({ store, logger, relayer, engines })
       fsm.fill = fakeFill
 
       await fsm.goto('filled')
@@ -591,28 +582,18 @@ describe('FillStateMachine', () => {
 
       return expect(fsm.execute()).to.eventually.be.rejectedWith('fake error')
     })
-
-    it('emits a COMPLETE event to the block order', async () => {
-      const { COMPLETE } = FillStateMachine.__get__('BlockOrderWorkerEvents')
-
-      await fsm.execute()
-
-      expect(workerEmitStub).to.have.been.calledOnce()
-      expect(workerEmitStub).to.have.been.calledWith(COMPLETE + blockOrderId, blockOrderId)
-    })
   })
 
   describe('#reject', () => {
     let fsm
-    let blockOrderId
+    let onRejection
 
     beforeEach(async () => {
-      blockOrderId = 1234
-      fsm = new FillStateMachine({ store, logger, relayer, engines, worker })
+      onRejection = sinon.stub()
+      fsm = new FillStateMachine({ store, logger, relayer, engines, onRejection })
       await fsm.goto('created')
       fsm.fill = {
         key: 'fakeKey',
-        blockOrderId,
         valueObject: { my: 'object' }
       }
     })
@@ -646,12 +627,12 @@ describe('FillStateMachine', () => {
       expect(store.put).to.have.been.calledWith(sinon.match(/^NO_ASSIGNED_ID_\S+$/))
     })
 
-    it('emits a rejection event to the block order', async () => {
-      const fakeError = new Error('my error')
-      const { REJECTED } = FillStateMachine.__get__('BlockOrderWorkerEvents')
-      await fsm.reject(fakeError)
+    it('calls an onRejection function', async () => {
+      const err = new Error('fake')
+      await fsm.reject(err)
 
-      expect(workerEmitStub).to.have.been.calledWith(REJECTED + blockOrderId, blockOrderId, fakeError)
+      expect(onRejection).to.have.been.calledOnce()
+      expect(onRejection).to.have.been.calledWith(err)
     })
   })
 
@@ -698,14 +679,14 @@ describe('FillStateMachine', () => {
     })
 
     it('initializes a state machine', async () => {
-      const fsm = await FillStateMachine.create({ store, logger, relayer, engines, worker }, blockOrderId, orderParams, fillParams)
+      const fsm = await FillStateMachine.create({ store, logger, relayer, engines }, blockOrderId, orderParams, fillParams)
 
       expect(fsm).to.be.instanceOf(FillStateMachine)
       expect(fsm).to.have.property('store', store)
     })
 
     it('runs a create transition on the state machine', async () => {
-      const fsm = await FillStateMachine.create({ store, logger, relayer, engines, worker }, blockOrderId, orderParams, fillParams)
+      const fsm = await FillStateMachine.create({ store, logger, relayer, engines }, blockOrderId, orderParams, fillParams)
 
       expect(fsm.state).to.be.equal('created')
       expect(store.put).to.have.been.calledOnce()
@@ -811,14 +792,14 @@ describe('FillStateMachine', () => {
     })
 
     it('initializes a state machine', async () => {
-      const fsm = await FillStateMachine.fromStore({ store, logger, relayer, engines, worker }, { key, value })
+      const fsm = await FillStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(fsm).to.be.instanceOf(FillStateMachine)
       expect(fsm).to.have.property('store', store)
     })
 
     it('moves to the correct state', async () => {
-      const fsm = await FillStateMachine.fromStore({ store, logger, relayer, engines, worker }, { key, value })
+      const fsm = await FillStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(fsm.state).to.be.equal(state)
     })
@@ -826,7 +807,7 @@ describe('FillStateMachine', () => {
     it('contains the old history', async () => {
       history.push('created')
       value = JSON.stringify(valueObject)
-      const fsm = await FillStateMachine.fromStore({ store, logger, relayer, engines, worker }, { key, value })
+      const fsm = await FillStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(fsm.history).to.be.an('array')
       expect(fsm.history).to.have.lengthOf(1)
@@ -834,7 +815,7 @@ describe('FillStateMachine', () => {
     })
 
     it('does not include the re-inflating in history', async () => {
-      const fsm = await FillStateMachine.fromStore({ store, logger, relayer, engines, worker }, { key, value })
+      const fsm = await FillStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(fsm.history).to.be.an('array')
       expect(fsm.history).to.have.lengthOf(0)
@@ -844,7 +825,7 @@ describe('FillStateMachine', () => {
       valueObject.error = 'fakeError'
       value = JSON.stringify(valueObject)
 
-      const fsm = await FillStateMachine.fromStore({ store, logger, relayer, engines, worker }, { key, value })
+      const fsm = await FillStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(fsm.error).to.be.an('error')
       expect(fsm.error.message).to.be.eql('fakeError')
@@ -854,7 +835,7 @@ describe('FillStateMachine', () => {
       const myObject = 'fakeObject'
       Fill.fromObject.returns(myObject)
 
-      const fsm = await FillStateMachine.fromStore({ store, logger, relayer, engines, worker }, { key, value })
+      const fsm = await FillStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(Fill.fromObject).to.have.been.calledOnce()
       expect(Fill.fromObject).to.have.been.calledWith(key, sinon.match({ my: 'object' }))

@@ -2,7 +2,6 @@ const safeid = require('generate-safe-id')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 
 const { Fill } = require('../models')
-const { events: { BlockOrderWorkerEvents } } = require('../utils')
 
 const StateMachine = require('./state-machine')
 const StateMachinePersistence = require('./plugins/persistence')
@@ -306,7 +305,7 @@ const FillStateMachine = StateMachine.factory({
      * all statuses accordingly
      */
     onAfterExecute: function () {
-      this.worker.emit(BlockOrderWorkerEvents.COMPLETE + this.fill.blockOrderId, this.fill.blockOrderId)
+      // EMIT EVENT
     },
 
     /**
@@ -325,7 +324,7 @@ const FillStateMachine = StateMachine.factory({
      * @return {void}
      */
     onAfterReject: async function () {
-      this.worker.emit(BlockOrderWorkerEvents.REJECTED + this.fill.blockOrderId, this.fill.blockOrderId, this.error)
+      // EMIT EVENT
     }
   }
 })

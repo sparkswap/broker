@@ -10,16 +10,12 @@ describe('OrderStateMachine', () => {
   let logger
   let relayer
   let engines
-  let worker
   let getPaymentChannelNetworkAddressStub
-  let emitStub
 
   beforeEach(() => {
     Order = sinon.stub()
     OrderStateMachine.__set__('Order', Order)
 
-    emitStub = sinon.stub()
-    worker = { emit: emitStub }
     store = {
       sublevel: sinon.stub(),
       put: sinon.stub().callsArgAsync(2)
@@ -46,31 +42,31 @@ describe('OrderStateMachine', () => {
 
   describe('new', () => {
     it('exposes the store', () => {
-      const osm = new OrderStateMachine({ store, logger, relayer, engines, worker })
+      const osm = new OrderStateMachine({ store, logger, relayer, engines })
 
       expect(osm).to.have.property('store', store)
     })
 
     it('exposes the logger', () => {
-      const osm = new OrderStateMachine({ store, logger, relayer, engines, worker })
+      const osm = new OrderStateMachine({ store, logger, relayer, engines })
 
       expect(osm).to.have.property('logger', logger)
     })
 
     it('exposes the relayer', () => {
-      const osm = new OrderStateMachine({ store, logger, relayer, engines, worker })
+      const osm = new OrderStateMachine({ store, logger, relayer, engines })
 
       expect(osm).to.have.property('relayer', relayer)
     })
 
     it('exposes the engines', () => {
-      const osm = new OrderStateMachine({ store, logger, relayer, engines, worker })
+      const osm = new OrderStateMachine({ store, logger, relayer, engines })
 
       expect(osm).to.have.property('engines', engines)
     })
 
     it('does not save a copy in the store', () => {
-      new OrderStateMachine({ store, logger, relayer, engines, worker }) // eslint-disable-line
+      new OrderStateMachine({ store, logger, relayer, engines }) // eslint-disable-line
       return expect(store.put).to.not.have.been.called
     })
   })
@@ -79,7 +75,7 @@ describe('OrderStateMachine', () => {
     let osm
 
     beforeEach(() => {
-      osm = new OrderStateMachine({ store, logger, relayer, engines, worker })
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.goto('created')
     })
 
@@ -142,7 +138,7 @@ describe('OrderStateMachine', () => {
     let key
 
     beforeEach(() => {
-      osm = new OrderStateMachine({ store, logger, relayer, engines, worker })
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.order = {
         valueObject: { my: 'order' }
       }
@@ -227,7 +223,7 @@ describe('OrderStateMachine', () => {
         depositPaymentRequest: 'lnbcas09fas09df8'
       }
       relayer.makerService.createOrder.resolves(createOrderResponse)
-      osm = new OrderStateMachine({ store, logger, relayer, engines, worker })
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
       blockOrderId = 'blockid'
       params = {
         side: 'BID',
@@ -377,7 +373,7 @@ describe('OrderStateMachine', () => {
         }
       }
 
-      osm = new OrderStateMachine({ store, logger, relayer, engines, worker })
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.order = fakeOrder
 
       await osm.goto('created')
@@ -590,7 +586,7 @@ describe('OrderStateMachine', () => {
 
       let engines = new Map([ [inboundSymbol, engine] ])
 
-      osm = new OrderStateMachine({ store, logger, relayer, engines, worker })
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.onEnterPlaced = sinon.stub()
       osm.order = fakeOrder
       osm.tryTo = sinon.stub()
@@ -641,10 +637,8 @@ describe('OrderStateMachine', () => {
     let swapHash
     let inboundSymbol
     let engine
-    let blockOrderId
 
     beforeEach(async () => {
-      blockOrderId = 1234
       preimage = 'as90fdha9s8hf0a8sfhd=='
       completeOrderStub = sinon.stub().resolves({})
       getSettledSwapPreimageStub = sinon.stub().resolves(preimage)
@@ -666,8 +660,7 @@ describe('OrderStateMachine', () => {
           swapPreimage: preimage,
           orderId: orderId
         },
-        setSettledParams,
-        blockOrderId
+        setSettledParams
       }
       engine = { getSettledSwapPreimage: getSettledSwapPreimageStub }
       relayer = {
@@ -681,7 +674,7 @@ describe('OrderStateMachine', () => {
 
       let engines = new Map([ [inboundSymbol, engine] ])
 
-      osm = new OrderStateMachine({ store, logger, relayer, engines, worker })
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.order = fakeOrder
       osm.tryTo = sinon.stub()
 
@@ -717,24 +710,13 @@ describe('OrderStateMachine', () => {
       expect(completeOrderStub).to.have.been.calledOnce()
       expect(completeOrderStub).to.have.been.calledWith({ orderId, swapPreimage: preimage, authorization: fakeAuth })
     })
-
-    it('emits a complete event to the block order', async () => {
-      const fakeAuth = 'fake auth'
-      relayer.identity.authorize.returns(fakeAuth)
-      await osm.complete()
-
-      const { COMPLETE } = OrderStateMachine.__get__('BlockOrderWorkerEvents')
-
-      expect(emitStub).to.have.been.calledOnce()
-      expect(emitStub).to.have.been.calledWith(COMPLETE + blockOrderId, blockOrderId)
-    })
   })
 
   describe('#goto', () => {
     let osm
 
     beforeEach(() => {
-      osm = new OrderStateMachine({ store, logger, relayer, engines, worker })
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.tryTo = sinon.stub()
     })
 
@@ -761,17 +743,15 @@ describe('OrderStateMachine', () => {
 
   describe('#reject', () => {
     let osm
-    let blockOrderId
+    let onRejection
 
     beforeEach(async () => {
-      blockOrderId = 100
-
-      osm = new OrderStateMachine({ store, logger, relayer, engines, worker })
+      onRejection = sinon.stub()
+      osm = new OrderStateMachine({ store, logger, relayer, engines, onRejection })
       await osm.goto('created')
       osm.order = {
         key: 'fakeKey',
-        valueObject: { my: 'object' },
-        blockOrderId
+        valueObject: { my: 'object' }
       }
     })
 
@@ -804,13 +784,12 @@ describe('OrderStateMachine', () => {
       expect(store.put).to.have.been.calledWith(sinon.match(/^NO_ASSIGNED_ID\S+$/))
     })
 
-    it('it emits a rejection event', async () => {
+    it('calls an onRejection function', async () => {
       const err = new Error('fake')
-      const { REJECTED } = OrderStateMachine.__get__('BlockOrderWorkerEvents')
       await osm.reject(err)
 
-      expect(emitStub).to.have.been.calledOnce()
-      expect(emitStub).to.have.been.calledWith(REJECTED + blockOrderId, blockOrderId, sinon.match.any)
+      expect(onRejection).to.have.been.calledOnce()
+      expect(onRejection).to.have.been.calledWith(err)
     })
   })
 
@@ -850,14 +829,14 @@ describe('OrderStateMachine', () => {
     })
 
     it('initializes a state machine', async () => {
-      const osm = await OrderStateMachine.create({ store, logger, relayer, engines, worker }, blockOrderId, params)
+      const osm = await OrderStateMachine.create({ store, logger, relayer, engines }, blockOrderId, params)
 
       expect(osm).to.be.instanceOf(OrderStateMachine)
       expect(osm).to.have.property('store', store)
     })
 
     it('runs a create transition on the state machine', async () => {
-      const osm = await OrderStateMachine.create({ store, logger, relayer, engines, worker }, blockOrderId, params)
+      const osm = await OrderStateMachine.create({ store, logger, relayer, engines }, blockOrderId, params)
 
       expect(osm.state).to.be.equal('created')
       expect(store.put).to.have.been.calledOnce()
@@ -963,14 +942,14 @@ describe('OrderStateMachine', () => {
     })
 
     it('initializes a state machine', async () => {
-      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines, worker }, { key, value })
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(osm).to.be.instanceOf(OrderStateMachine)
       expect(osm).to.have.property('store', store)
     })
 
     it('moves to the correct state', async () => {
-      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines, worker }, { key, value })
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(osm.state).to.be.equal(state)
     })
@@ -978,7 +957,7 @@ describe('OrderStateMachine', () => {
     it('contains the old history', async () => {
       history.push('created')
       value = JSON.stringify(valueObject)
-      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines, worker }, { key, value })
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(osm.history).to.be.an('array')
       expect(osm.history).to.have.lengthOf(1)
@@ -986,7 +965,7 @@ describe('OrderStateMachine', () => {
     })
 
     it('does not include the re-inflating in history', async () => {
-      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines, worker }, { key, value })
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(osm.history).to.be.an('array')
       expect(osm.history).to.have.lengthOf(0)
@@ -996,7 +975,7 @@ describe('OrderStateMachine', () => {
       valueObject.error = 'fakeError'
       value = JSON.stringify(valueObject)
 
-      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines, worker }, { key, value })
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(osm.error).to.be.an('error')
       expect(osm.error.message).to.be.eql('fakeError')
@@ -1006,7 +985,7 @@ describe('OrderStateMachine', () => {
       const myObject = 'fakeObject'
       Order.fromObject.returns(myObject)
 
-      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines, worker }, { key, value })
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
 
       expect(Order.fromObject).to.have.been.calledOnce()
       expect(Order.fromObject).to.have.been.calledWith(key, sinon.match({ my: 'object' }))

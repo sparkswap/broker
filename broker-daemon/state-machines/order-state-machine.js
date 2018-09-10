@@ -1,13 +1,16 @@
 const safeid = require('generate-safe-id')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
+const EventEmitter = require('events')
 
 const { Order } = require('../models')
-const { events: { BlockOrderWorkerEvents } } = require('../utils')
 
 const StateMachine = require('./state-machine')
-const StateMachinePersistence = require('./plugins/persistence')
-const StateMachineRejection = require('./plugins/rejection')
-const StateMachineLogging = require('./plugins/logging')
+const {
+  StateMachinePersistence,
+  StateMachineRejection,
+  StateMachineLogging,
+  StateMachineEvents
+} = require('./plugins')
 
 /**
  * If Orders are saved in the database before they are created on the remote, they lack an ID
@@ -27,6 +30,7 @@ const OrderStateMachine = StateMachine.factory({
     new StateMachineHistory(),
     new StateMachineRejection(),
     new StateMachineLogging(),
+    new StateMachineEvents(),
     new StateMachinePersistence({
       /**
        * @type {StateMachinePersistence~KeyAccessor}
@@ -131,8 +135,9 @@ const OrderStateMachine = StateMachine.factory({
    * @param  {Map<String, Engine>} options.engines     Map of all available engines
    * @return {Object}                                  Data to attach to the state machine
    */
-  data: function ({ store, logger, relayer, engines, worker }) {
-    return { store, logger, relayer, engines, worker, order: {} }
+  data: function ({ store, logger, relayer, engines }) {
+    const events = new EventEmitter()
+    return { store, logger, relayer, engines, events, order: {} }
   },
   methods: {
     /**
@@ -365,7 +370,7 @@ const OrderStateMachine = StateMachine.factory({
      * all statuses accordingly
      */
     onAfterComplete: function () {
-      this.worker.emit(BlockOrderWorkerEvents.COMPLETE + this.order.blockOrderId, this.order.blockOrderId)
+      this.emitComplete(this.order.blockOrderId)
     },
 
     /**
@@ -383,7 +388,7 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onAfterReject: async function () {
-      this.worker.emit(BlockOrderWorkerEvents.REJECTED + this.order.blockOrderId, this.order.blockOrderId, this.error)
+      this.emit(BlockOrderWorkerEvents.REJECTED + this.order.blockOrderId, this.order.blockOrderId, this.error)
     }
   }
 })

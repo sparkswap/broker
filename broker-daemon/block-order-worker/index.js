@@ -7,11 +7,19 @@ const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const {
   Big,
   getRecords,
-  SublevelIndex,
-  events: { BlockOrderWorkerEvents }
+  SublevelIndex
 } = require('../utils')
 
 const { BlockOrderNotFoundError } = require('./errors')
+
+/**
+ * @constant
+ * @type {Object}
+ * @default
+ */
+const WORKER_EVENTS = Object.freeze({
+  CREATE_BLOCK_ORDER: 'CREATE_BLOCK_ORDER'
+})
 
 /**
  * @class Create and work Block Orders
@@ -88,8 +96,6 @@ class BlockOrderWorker extends EventEmitter {
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
     this.logger.info('Moved block order to completed state', { id: blockOrderId })
-
-    this.emit(BlockOrderWorkerEvents.COMPLETED, blockOrder)
   }
 
   /**
@@ -126,26 +132,15 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
 
-    // Register listener events by the current blockOrderId
-    this.once(BlockOrderWorkerEvents.COMPLETE + id, async (blockOrderId) => this.completeBlockOrder(blockOrderId))
-    this.once(BlockOrderWorkerEvents.REJECTED + id, async (blockOrderId, err) => this.failBlockOrder(blockOrderId, err))
-
-    // Remove all listeners on completion of block order. This state can be reached
-    // by either a rejected or complete (all orders executed) block order.
-    this.once(BlockOrderWorkerEvents.COMPLETED + id, (id) => {
-      this.removeAllListeners(BlockOrderWorkerEvents.COMPLETE + id)
-      this.removeAllListeners(BlockOrderWorkerEvents.REJECTED + id)
-      this.removeAllListeners(BlockOrderWorkerEvents.CREATED + id)
-    })
-
-    this.on(BlockOrderWorkerEvents.CREATED + id, async (blockOrder) => {
-      await this.workBlockOrder(blockOrder).catch(e => this.emit(BlockOrderWorkerEvents.REJECTED, blockOrder.id, e))
+    this.on(WORKER_EVENTS.CREATED + id, async (blockOrder) => {
+      // TODO: figure out a way to reject the blockorder here
+      await this.workBlockOrder(blockOrder).catch(e => this.emit('REJECTED', blockOrder.id, e))
     })
 
     // Start working the block order in another process
     // TODO: Use an ID instead of the entire BlockOrder so that we can have multiple
     // services handling events
-    this.emit(BlockOrderWorkerEvents.CREATED + id, blockOrder)
+    this.emit(WORKER_EVENTS.CREATED + id, blockOrder)
 
     return id
   }
@@ -250,8 +245,6 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info('Moved block order to cancelled state', { id: blockOrder.id })
 
-    this.emit(BlockOrderWorkerEvents.COMPLETED, blockOrder.id)
-
     return blockOrder
   }
 
@@ -299,8 +292,6 @@ class BlockOrderWorker extends EventEmitter {
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
     this.logger.info('Moved block order to failed state', { id: blockOrderId })
-
-    this.emit(BlockOrderWorkerEvents.COMPLETED, blockOrder.id)
   }
 
   /**
@@ -446,7 +437,7 @@ class BlockOrderWorker extends EventEmitter {
       // track our current depth so we know what to fill on the next order
       currentDepth = currentDepth.plus(fillAmount)
 
-      return FillStateMachine.create(
+      const fsm = FillStateMachine.create(
         {
           relayer,
           engines,
@@ -458,6 +449,8 @@ class BlockOrderWorker extends EventEmitter {
         order,
         { fillAmount }
       )
+
+      return fsm
     })
 
     // filter out null values, they are orders we decided not to fill
