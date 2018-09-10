@@ -34,7 +34,8 @@ describe('commit', () => {
     orderbooks = new Map([['BTC/LTC', {}]])
     logger = {
       info: sinon.stub(),
-      error: sinon.stub()
+      error: sinon.stub(),
+      debug: sinon.stub()
     }
     getMaxOutboundChannelStub = sinon.stub().resolves({})
     getMaxInboundChannelStub = sinon.stub().resolves({})
