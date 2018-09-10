@@ -417,6 +417,7 @@ class BlockOrderWorker extends EventEmitter {
     const onceCompleteEvent = async (blockOrderId) => this.completeBlockOrder(blockOrderId)
     const onceRejectedEvent = async (blockOrderId) => this.failBlockOrder(blockOrderId, order.error)
 
+    // These events tie directory in the StateMachine's lifecycle hooks for a OrderStateMachine
     order.once('complete', onceCompleteEvent)
     order.once('rejected', onceRejectedEvent)
 
@@ -479,6 +480,7 @@ class BlockOrderWorker extends EventEmitter {
       const onceExecutedEvent = async (blockOrderId) => this.completeBlockOrder(blockOrderId)
       const onceRejectedEvent = async (blockOrderId) => this.failBlockOrder(blockOrderId, order.error)
 
+      // These events tie directory in the StateMachine's lifecycle hooks for a FillStateMachine
       fsm.once('execute', onceExecutedEvent)
       fsm.once('rejected', onceRejectedEvent)
 

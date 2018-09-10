@@ -168,12 +168,12 @@ class BlockOrder {
    * @return {BlockOrder} Modified block order instance
    */
   complete () {
-    const activeOrders = this.openOrders.filter(o => o.status !== BlockOrder.STATUSES.COMPLETED)
-    const activeFills = this.fills.filter(f => f.status !== BlockOrder.STATUSES.COMPLETED)
+    const activeOrders = this.openOrders.filter(o => o.status === BlockOrder.STATUSES.ACTIVE)
+    const activeFills = this.fills.filter(f => f.status === BlockOrder.STATUSES.ACTIVE)
 
     // If we still have active orders or fills, then the block order is not completed
     // so we can simply return the object
-    if (activeOrders || activeFills) {
+    if (activeOrders.length > 0 || activeFills.length > 0) {
       return this
     }
 
