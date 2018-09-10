@@ -1,11 +1,11 @@
 const path = require('path')
 const { Big } = require('../utils')
-const { expect, rewire, sinon, delay } = require('test/test-helper')
+const { expect, rewire, sinon } = require('test/test-helper')
 
 const BlockOrderWorker = rewire(path.resolve(__dirname))
 
-describe('BlockOrderWorker', () => {
-  let eventsOn
+describe.only('BlockOrderWorker', () => {
+  let eventsOnce
   let eventsEmit
   let safeid
   let BlockOrder
@@ -24,9 +24,9 @@ describe('BlockOrderWorker', () => {
   let secondLevel
 
   beforeEach(() => {
-    eventsOn = sinon.stub()
+    eventsOnce = sinon.stub()
     eventsEmit = sinon.stub()
-    BlockOrderWorker.prototype.on = eventsOn
+    BlockOrderWorker.prototype.on = eventsOnce
     BlockOrderWorker.prototype.emit = eventsEmit
 
     safeid = sinon.stub()
@@ -108,6 +108,7 @@ describe('BlockOrderWorker', () => {
 
   describe('new', () => {
     let worker
+
     beforeEach(() => {
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
     })
@@ -202,45 +203,12 @@ describe('BlockOrderWorker', () => {
       expect(Order.fromStorage).to.have.been.calledWith(fakeKey, fakeValue)
       expect(filtered).to.be.equal(false)
     })
-
-    it('works a block order when one is created', async () => {
-      const fakeBlockOrder = 'my fake'
-      eventsOn.withArgs('BlockOrder:create').callsFake(async (evt, fn) => {
-        await delay(10)
-        fn(fakeBlockOrder)
-      })
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
-      worker.workBlockOrder = sinon.stub().resolves()
-
-      await delay(15)
-
-      expect(worker.workBlockOrder).to.have.been.calledOnce()
-      expect(worker.workBlockOrder).to.have.been.calledWith(fakeBlockOrder)
-    })
-
-    it('fails a block order if working it fails', async () => {
-      const fakeErr = new Error('fake')
-      const fakeBlockOrder = {
-        id: 'my fake'
-      }
-      eventsOn.withArgs('BlockOrder:create').callsFake(async (evt, fn) => {
-        await delay(10)
-        fn(fakeBlockOrder)
-      })
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
-      worker.workBlockOrder = sinon.stub().throws(fakeErr)
-      worker.failBlockOrder = sinon.stub()
-
-      await delay(15)
-
-      expect(worker.failBlockOrder).to.have.been.calledOnce()
-      expect(worker.failBlockOrder).to.have.been.calledWith(fakeBlockOrder.id, fakeErr)
-    })
   })
 
   describe('initialize', () => {
     let worker
     let ensureIndex
+
     beforeEach(() => {
       ensureIndex = sinon.stub().resolves()
       SublevelIndex.prototype.ensureIndex = ensureIndex
@@ -262,7 +230,11 @@ describe('BlockOrderWorker', () => {
 
   describe('createBlockOrder', () => {
     let worker
+    let generateIdStub
+
     beforeEach(() => {
+      generateIdStub = sinon.stub()
+
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
     })
 
@@ -345,6 +317,9 @@ describe('BlockOrderWorker', () => {
     })
 
     it('emits an event to trigger working', async () => {
+      const fakeId = 'myfake'
+      safeid.returns(fakeId)
+
       const params = {
         marketName: 'BTC/LTC',
         side: 'BID',
@@ -352,10 +327,54 @@ describe('BlockOrderWorker', () => {
         price: '100',
         timeInForce: 'GTC'
       }
+      const revert = BlockOrderWorker.__set__('generateIdForEvent', () => fakeId)
       await worker.createBlockOrder(params)
 
       expect(eventsEmit).to.have.been.calledOnce()
-      expect(eventsEmit).to.have.been.calledWith('BlockOrder:create', sinon.match.instanceOf(BlockOrder))
+      expect(eventsEmit).to.have.been.calledWith(fakeId, sinon.match.instanceOf(BlockOrder))
+      revert()
+    })
+
+    it('registers a rejected event', async () => {
+      const fakeId = 'myfake'
+      safeid.returns(fakeId)
+
+      const params = {
+        marketName: 'BTC/LTC',
+        side: 'BID',
+        amount: '10000',
+        price: '100',
+        timeInForce: 'GTC'
+      }
+
+      const { REJECTED } = BlockOrderWorker.__get__('WORKER_EVENTS')
+      generateIdStub.withArgs(REJECTED, sinon.match.string).returns(fakeId)
+      const revert = BlockOrderWorker.__set__('generateIdForEvent', generateIdStub)
+      await worker.createBlockOrder(params)
+
+      expect(eventsOnce).to.have.been.calledWith(fakeId, sinon.match.func)
+      revert()
+    })
+
+    it('registers a create event', async () => {
+      const fakeId = 'myfake'
+      safeid.returns(fakeId)
+
+      const params = {
+        marketName: 'BTC/LTC',
+        side: 'BID',
+        amount: '10000',
+        price: '100',
+        timeInForce: 'GTC'
+      }
+
+      const { CREATE } = BlockOrderWorker.__get__('WORKER_EVENTS')
+      generateIdStub.withArgs(CREATE, sinon.match.string).returns(fakeId)
+      const revert = BlockOrderWorker.__set__('generateIdForEvent', generateIdStub)
+      await worker.createBlockOrder(params)
+
+      expect(eventsOnce).to.have.been.calledWith(fakeId, sinon.match.func)
+      revert()
     })
   })
 
@@ -420,14 +439,6 @@ describe('BlockOrderWorker', () => {
 
       expect(store.put).to.have.been.calledOnce()
       expect(store.put).to.have.been.calledWith(fakeBlockOrder.key, fakeBlockOrder.value)
-    })
-
-    it('emits a failed status event', async () => {
-      worker.emit = sinon.stub()
-      await worker.failBlockOrder(fakeId, fakeErr)
-
-      expect(worker.emit).to.have.been.calledOnce()
-      expect(worker.emit).to.have.been.calledWith('BlockOrder:fail', sinon.match({ id: blockOrderId }))
     })
   })
 
@@ -671,15 +682,6 @@ describe('BlockOrderWorker', () => {
       expect(store.put).to.have.been.calledWith(blockOrderKey, blockOrderValue)
     })
 
-    it('emits a failed status event', async () => {
-      const fakeId = 'myid'
-      worker.emit = sinon.stub()
-      await worker.cancelBlockOrder(fakeId)
-
-      expect(worker.emit).to.have.been.calledOnce()
-      expect(worker.emit).to.have.been.calledWith('BlockOrder:cancel', sinon.match({ id: blockOrderId }))
-    })
-
     it('throws a not found error if no order exists', async () => {
       const BlockOrderNotFoundError = BlockOrderWorker.__get__('BlockOrderNotFoundError')
 
@@ -701,6 +703,7 @@ describe('BlockOrderWorker', () => {
     let worker
     let blockOrder
     let order
+
     beforeEach(() => {
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       blockOrder = {
@@ -885,14 +888,16 @@ describe('BlockOrderWorker', () => {
     })
   })
 
-  describe('#_fillOrders', () => {
+  describe.only('#_fillOrders', () => {
     let worker
     let blockOrder
     let fill
     let orders
     let targetDepth
+    let onceStub
 
     beforeEach(() => {
+      onceStub = sinon.stub()
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       blockOrder = {
         id: 'fakeId',
@@ -906,7 +911,8 @@ describe('BlockOrderWorker', () => {
         price: null
       }
       fill = {
-        id: 'anotherId'
+        id: 'anotherId',
+        once: onceStub
       }
       FillStateMachine.create.resolves(fill)
       orders = [
@@ -981,25 +987,14 @@ describe('BlockOrderWorker', () => {
       expect(FillStateMachine.create).to.have.been.calledWith(sinon.match({ engines }))
     })
 
-    it('provides a handler for onRejection', async () => {
+    it('registers an event on a fill for fill execution', async () => {
       await worker._fillOrders(blockOrder, orders, targetDepth)
-
-      expect(FillStateMachine.create).to.have.been.calledWith(sinon.match({ onRejection: sinon.match.func }))
+      expect(onceStub).to.have.been.calledWith('execute', sinon.match.func)
     })
 
-    it('fails the block order if the order is rejected', async () => {
-      worker.failBlockOrder = sinon.stub()
+    it('registers an event on a fill for fill rejection', async () => {
       await worker._fillOrders(blockOrder, orders, targetDepth)
-
-      const { onRejection } = FillStateMachine.create.args[0][0]
-
-      const err = new Error('fale')
-      onRejection(err)
-
-      await delay(10)
-
-      expect(worker.failBlockOrder).to.have.been.calledOnce()
-      expect(worker.failBlockOrder).to.have.been.calledWith(blockOrder.id, err)
+      expect(onceStub).to.have.been.calledWith('rejected', sinon.match.func)
     })
   })
 
@@ -1007,8 +1002,10 @@ describe('BlockOrderWorker', () => {
     let worker
     let blockOrder
     let order
+    let onceStub
 
     beforeEach(() => {
+      onceStub = sinon.stub()
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       blockOrder = {
         id: 'fakeId',
@@ -1023,7 +1020,8 @@ describe('BlockOrderWorker', () => {
         timeInForce: 'GTC'
       }
       order = {
-        id: 'anotherId'
+        id: 'anotherId',
+        once: onceStub
       }
       OrderStateMachine.create.resolves(order)
     })
@@ -1090,25 +1088,14 @@ describe('BlockOrderWorker', () => {
       expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match({ engines }))
     })
 
-    it('provides a handler for onRejection', async () => {
+    it('registers an event on an order for order completion', async () => {
       await worker._placeOrder(blockOrder, '100')
-
-      expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match({ onRejection: sinon.match.func }))
+      expect(onceStub).to.have.been.calledWith('complete', sinon.match.func)
     })
 
-    it('fails the block order if the order is rejected', async () => {
-      worker.failBlockOrder = sinon.stub()
+    it('registers an event on an order for order rejection', async () => {
       await worker._placeOrder(blockOrder, '100')
-
-      const { onRejection } = OrderStateMachine.create.args[0][0]
-
-      const err = new Error('fale')
-      onRejection(err)
-
-      await delay(10)
-
-      expect(worker.failBlockOrder).to.have.been.calledOnce()
-      expect(worker.failBlockOrder).to.have.been.calledWith(blockOrder.id, err)
+      expect(onceStub).to.have.been.calledWith('rejected', sinon.match.func)
     })
   })
 

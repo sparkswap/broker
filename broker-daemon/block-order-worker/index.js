@@ -30,7 +30,7 @@ const WORKER_EVENTS = Object.freeze({
  * @param {String} block order id
  * @returns {String} event id
  */
-function generateIdforEvent (eventType, blockOrderId) {
+function generateIdForEvent (eventType, blockOrderId) {
   return `${eventType}-${blockOrderId}`
 }
 /**
@@ -115,15 +115,15 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
 
     // Register events on a block order worker to handle processing of concurrent orders
-    const createEventId = generateIdforEvent(WORKER_EVENTS.CREATE, id)
-    const rejectedEventId = generateIdforEvent(WORKER_EVENTS.REJECTED, id)
+    const createEventId = generateIdForEvent(WORKER_EVENTS.CREATE, id)
+    const rejectedEventId = generateIdForEvent(WORKER_EVENTS.REJECTED, id)
 
     // Move BlockOrder to a rejected state if any process in working a block order, fails
-    this.on(rejectedEventId, async (blockOrderId, err) => this.failBlockOrder(blockOrderId, err))
+    this.once(rejectedEventId, async (blockOrderId, err) => this.failBlockOrder(blockOrderId, err))
 
     // Start working the block order in another process to prevent blocking the creation
     // of 'other' block orders
-    this.on(createEventId, async (blockOrder) => {
+    this.once(createEventId, async (blockOrder) => {
       await this.workBlockOrder(blockOrder).catch(e => this.emit(rejectedEventId, blockOrder.id, e))
     })
 

@@ -39,7 +39,11 @@ class StateMachineEvents extends StateMachinePlugin {
        * @returns {void}
        */
       onAfterTransition: function (lifecycle) {
-        plugin.eventHandler.emit(lifecycle.transition, this.order.blockOrderId)
+        // We check to see if an order exists, if it does then we are dealing with an
+        // OSM, or else we use the FSM
+        const blockOrderId = this.order ? this.order.blockOrderId : this.fill.blockOrderId
+
+        plugin.eventHandler.emit(lifecycle.transition, blockOrderId)
 
         // Remove all events from the event emitter if we have either cancelled,
         // completed, or rejected an order
