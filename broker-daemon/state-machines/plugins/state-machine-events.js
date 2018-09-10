@@ -5,6 +5,7 @@ const StateMachinePlugin = require('./abstract')
 /**
  * Events that should trigger the cleanup of all event handlers created
  * by the StateMachineEvents plugin
+ *
  * @constant
  * @type {Array<String>}
  * @default
@@ -56,11 +57,7 @@ class StateMachineEvents extends StateMachinePlugin {
     const { eventHandler } = this
 
     return {
-      once: (type, cb) => {
-        console.log('we got into once', { type })
-        eventHandler.once(type, cb)
-      },
-      on: eventHandler.on
+      once: (type, cb) => eventHandler.once(type, cb)
     }
   }
 }
