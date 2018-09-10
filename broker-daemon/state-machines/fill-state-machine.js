@@ -301,14 +301,6 @@ const FillStateMachine = StateMachine.factory({
     },
 
     /**
-     * Triggers `onCompletion` which will check the state of the blockorder and update
-     * all statuses accordingly
-     */
-    onAfterExecute: function () {
-      // EMIT EVENT
-    },
-
-    /**
      * Log errors from rejection
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @param  {Error}  error     Error that caused the rejection
@@ -316,15 +308,6 @@ const FillStateMachine = StateMachine.factory({
      */
     onBeforeReject: function (lifecycle, error) {
       this.logger.error(`Encountered error during transition, rejecting`, error)
-    },
-
-    /**
-     * Handle rejected state by calling a passed in handler
-     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
-     * @return {void}
-     */
-    onAfterReject: async function () {
-      // EMIT EVENT
     }
   }
 })

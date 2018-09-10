@@ -18,9 +18,18 @@ const { BlockOrderNotFoundError } = require('./errors')
  * @default
  */
 const WORKER_EVENTS = Object.freeze({
-  CREATE_BLOCK_ORDER: 'CREATE_BLOCK_ORDER'
+  CREATE: 'CREATE',
+  REJECTED: 'REJECTED'
 })
 
+/**
+ * @param {String} event type
+ * @param {String} block order id
+ * @returns {String} event id
+ */
+function generateIdforEvent (eventType, blockOrderId) {
+  return `${eventType}-${blockOrderId}`
+}
 /**
  * @class Create and work Block Orders
  */
@@ -69,36 +78,6 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
-   * Move a block order to a completed state if all orders have been completed
-   * @param {String} blockOrderId
-   */
-  async completeBlockOrder (blockOrderId) {
-    this.logger.info('Attempting to put block order in a completed state', { id: blockOrderId })
-
-    // TODO: move status to its own sublevel so it can be updated atomically
-    try {
-      var value = await promisify(this.store.get)(blockOrderId)
-    } catch (e) {
-      // TODO: throw here? what's the protocol?
-      if (e.notFound) {
-        this.logger.error('Attempted to move a block order to a completed state that does not exist', { id: blockOrderId })
-      } else {
-        this.logger.error('Error while retrieving block order to move it to a completed state', { id: blockOrderId, error: e.message })
-        throw e
-      }
-    }
-
-    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
-
-    // TODO: fail the remaining orders that are tied to this block order in the ordersStore?
-    blockOrder.complete()
-
-    await promisify(this.store.put)(blockOrder.key, blockOrder.value)
-
-    this.logger.info('Moved block order to completed state', { id: blockOrderId })
-  }
-
-  /**
    * Creates a new block order and registers events for all orders under a block order
    *
    * @param {Object} options
@@ -132,15 +111,26 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
 
-    this.on(WORKER_EVENTS.CREATED + id, async (blockOrder) => {
+    // Register events for a block order
+    const createEventId = generateIdforEvent(WORKER_EVENTS.CREATE, id)
+    const rejectedEventId = generateIdforEvent(WORKER_EVENTS.REJECTED, id)
+
+    // Start working the block order in another process to prevent blocking the creation
+    // of 'other' block orders
+    this.on(createEventId, async (blockOrder) => {
       // TODO: figure out a way to reject the blockorder here
-      await this.workBlockOrder(blockOrder).catch(e => this.emit('REJECTED', blockOrder.id, e))
+      await this.workBlockOrder(blockOrder).catch(e => {
+        this.emit(rejectedEventId, blockOrder.id, e)
+      })
     })
 
-    // Start working the block order in another process
+    this.on(rejectedEventId, async (blockOrderId, err) => {
+      this.failBlockOrder(blockOrderId, err)
+    })
+
     // TODO: Use an ID instead of the entire BlockOrder so that we can have multiple
     // services handling events
-    this.emit(WORKER_EVENTS.CREATED + id, blockOrder)
+    this.emit(createEventId, blockOrder)
 
     return id
   }
@@ -268,7 +258,7 @@ class BlockOrderWorker extends EventEmitter {
    */
   async failBlockOrder (blockOrderId, err) {
     // TODO: expose the stack trace of err because it is hard to troubleshoot without it
-    this.logger.error('Error encountered while working block', { id: blockOrderId, error: err.message })
+    this.logger.error('Error encountered while working block', { id: blockOrderId, error: err.toString() })
     this.logger.info('Moving block order to failed state', { id: blockOrderId })
 
     // TODO: move status to its own sublevel so it can be updated atomically
@@ -359,6 +349,36 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
+   * Move a block order to a completed state if all orders have been completed
+   * @param {String} blockOrderId
+   */
+  async completeBlockOrder (blockOrderId) {
+    this.logger.info('Attempting to put block order in a completed state', { id: blockOrderId })
+
+    // TODO: move status to its own sublevel so it can be updated atomically
+    try {
+      var value = await promisify(this.store.get)(blockOrderId)
+    } catch (e) {
+      // TODO: throw here? what's the protocol?
+      if (e.notFound) {
+        this.logger.error('Attempted to move a block order to a completed state that does not exist', { id: blockOrderId })
+      } else {
+        this.logger.error('Error while retrieving block order to move it to a completed state', { id: blockOrderId, error: e.message })
+        throw e
+      }
+    }
+
+    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+
+    // TODO: fail the remaining orders that are tied to this block order in the ordersStore?
+    blockOrder.complete()
+
+    await promisify(this.store.put)(blockOrder.key, blockOrder.value)
+
+    this.logger.info('Moved block order to completed state', { id: blockOrderId })
+  }
+
+  /**
    * Place an order for a block order of a given amount
    * @param  {BlockOrder} blockOrder Block Order to place an order on behalf of
    * @param  {String} amount     Int64 amount, in base currency's base units to place the order for
@@ -387,12 +407,18 @@ class BlockOrderWorker extends EventEmitter {
         relayer,
         engines,
         logger,
-        store,
-        worker: this
+        store
       },
       blockOrder.id,
       { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
     )
+
+    // Register listener events for the current order
+    const onceCompleteEvent = async (blockOrderId) => this.completeBlockOrder(blockOrderId)
+    const onceRejectedEvent = async (blockOrderId) => this.failBlockOrder(blockOrderId, order.error)
+
+    order.once('complete', onceCompleteEvent)
+    order.once('rejected', onceRejectedEvent)
 
     this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
   }
@@ -442,13 +468,19 @@ class BlockOrderWorker extends EventEmitter {
           relayer,
           engines,
           logger,
-          store,
-          worker: this
+          store
         },
         blockOrder.id,
         order,
         { fillAmount }
       )
+
+      // Register listener events for the current order
+      const onceExecutedEvent = async (blockOrderId) => this.completeBlockOrder(blockOrderId)
+      const onceRejectedEvent = async (blockOrderId) => this.failBlockOrder(blockOrderId, order.error)
+
+      fsm.once('execute', onceExecutedEvent)
+      fsm.once('rejected', onceRejectedEvent)
 
       return fsm
     })

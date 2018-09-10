@@ -1,6 +1,5 @@
 const safeid = require('generate-safe-id')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
-const EventEmitter = require('events')
 
 const { Order } = require('../models')
 
@@ -136,8 +135,7 @@ const OrderStateMachine = StateMachine.factory({
    * @return {Object}                                  Data to attach to the state machine
    */
   data: function ({ store, logger, relayer, engines }) {
-    const events = new EventEmitter()
-    return { store, logger, relayer, engines, events, order: {} }
+    return { store, logger, relayer, engines, order: {} }
   },
   methods: {
     /**
@@ -366,14 +364,6 @@ const OrderStateMachine = StateMachine.factory({
     },
 
     /**
-     * Triggers `onCompletion` which will check the state of the blockorder and update
-     * all statuses accordingly
-     */
-    onAfterComplete: function () {
-      this.emitComplete(this.order.blockOrderId)
-    },
-
-    /**
      * Log errors from rejection
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @param  {Error}  error     Error that caused the rejection
@@ -381,14 +371,6 @@ const OrderStateMachine = StateMachine.factory({
      */
     onBeforeReject: function (lifecycle, error) {
       this.logger.error(`Encountered error during transition, rejecting`, error)
-    },
-
-    /**
-     * Handle rejected state by calling a passed in handler
-     * @return {void}
-     */
-    onAfterReject: async function () {
-      this.emit(BlockOrderWorkerEvents.REJECTED + this.order.blockOrderId, this.order.blockOrderId, this.error)
     }
   }
 })
