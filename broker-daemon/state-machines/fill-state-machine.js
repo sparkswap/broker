@@ -4,9 +4,12 @@ const StateMachineHistory = require('javascript-state-machine/lib/history')
 const { Fill } = require('../models')
 
 const StateMachine = require('./state-machine')
-const StateMachinePersistence = require('./plugins/persistence')
-const StateMachineRejection = require('./plugins/rejection')
-const StateMachineLogging = require('./plugins/logging')
+const {
+  StateMachinePersistence,
+  StateMachineRejection,
+  StateMachineLogging,
+  StateMachineEvents
+} = require('./plugins')
 
 /**
  * If Fills are saved in the database before they are created on the remote, they lack an ID
@@ -24,6 +27,7 @@ const FillStateMachine = StateMachine.factory({
   plugins: [
     new StateMachineHistory(),
     new StateMachineRejection(),
+    new StateMachineEvents(),
     new StateMachineLogging(),
     new StateMachinePersistence({
       /**
@@ -116,8 +120,8 @@ const FillStateMachine = StateMachine.factory({
    * @param  {Function}            options.onCompletion A function to handle the completion of the fill
    * @return {Object}                                  Data to attach to the state machine
    */
-  data: function ({ store, logger, relayer, engines, worker }) {
-    return { store, logger, relayer, engines, worker, fill: {} }
+  data: function ({ store, logger, relayer, engines }) {
+    return { store, logger, relayer, engines, fill: {} }
   },
   methods: {
     /**

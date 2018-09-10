@@ -13,6 +13,9 @@ const {
 const { BlockOrderNotFoundError } = require('./errors')
 
 /**
+ * Event names used for handling emitted events during the 'working' of a single
+ * block order
+ *
  * @constant
  * @type {Object}
  * @default
@@ -111,21 +114,17 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
 
-    // Register events for a block order
+    // Register events on a block order worker to handle processing of concurrent orders
     const createEventId = generateIdforEvent(WORKER_EVENTS.CREATE, id)
     const rejectedEventId = generateIdforEvent(WORKER_EVENTS.REJECTED, id)
+
+    // Move BlockOrder to a rejected state if any process in working a block order, fails
+    this.on(rejectedEventId, async (blockOrderId, err) => this.failBlockOrder(blockOrderId, err))
 
     // Start working the block order in another process to prevent blocking the creation
     // of 'other' block orders
     this.on(createEventId, async (blockOrder) => {
-      // TODO: figure out a way to reject the blockorder here
-      await this.workBlockOrder(blockOrder).catch(e => {
-        this.emit(rejectedEventId, blockOrder.id, e)
-      })
-    })
-
-    this.on(rejectedEventId, async (blockOrderId, err) => {
-      this.failBlockOrder(blockOrderId, err)
+      await this.workBlockOrder(blockOrder).catch(e => this.emit(rejectedEventId, blockOrder.id, e))
     })
 
     // TODO: Use an ID instead of the entire BlockOrder so that we can have multiple
@@ -257,8 +256,7 @@ class BlockOrderWorker extends EventEmitter {
    * @return {void}
    */
   async failBlockOrder (blockOrderId, err) {
-    // TODO: expose the stack trace of err because it is hard to troubleshoot without it
-    this.logger.error('Error encountered while working block', { id: blockOrderId, error: err.toString() })
+    this.logger.error('Error encountered while working block', { id: blockOrderId, error: err.stack })
     this.logger.info('Moving block order to failed state', { id: blockOrderId })
 
     // TODO: move status to its own sublevel so it can be updated atomically
@@ -370,7 +368,8 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
 
-    // TODO: fail the remaining orders that are tied to this block order in the ordersStore?
+    // An order is only completed if all orders underneath the blockorder are out of
+    // an `ACTIVE` state.
     blockOrder.complete()
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)

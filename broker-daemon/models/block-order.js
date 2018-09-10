@@ -159,6 +159,7 @@ class BlockOrder {
    * @return {BlockOrder} Modified block order instance
    */
   fail () {
+    // TODO: Do we need to fail the remaining orders that are tied to this block order in the ordersStore?
     this.status = BlockOrder.STATUSES.FAILED
     return this
   }
@@ -186,6 +187,7 @@ class BlockOrder {
    * @return {BlockOrder} Modified block order instance
    */
   cancel () {
+    // TODO: Do we need to cancel the remaining orders that are tied to this block order in the ordersStore?
     this.status = BlockOrder.STATUSES.CANCELLED
     return this
   }
