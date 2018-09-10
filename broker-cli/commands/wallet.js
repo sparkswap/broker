@@ -147,9 +147,9 @@ async function commit (args, opts, logger) {
 
     // We try to take the lowest total here between 2 Big numbers due to a
     // commit limit specified as `maxChannelBalance` in the currency configuration
-    let maxSupportedBalance = uncommittedBalance
+    let maxSupportedBalance = totalUncommittedBalance
 
-    const maxChannelBalance = currentCurrencyConfig.maxChannelBalance
+    const maxChannelBalance = Big(currentCurrencyConfig.maxChannelBalance)
 
     if (totalUncommittedBalance.gt(maxChannelBalance)) {
       maxSupportedBalance = maxChannelBalance
@@ -161,7 +161,7 @@ async function commit (args, opts, logger) {
 
     // Amount is specified in currency instead of satoshis
     if (amount) {
-      maxSupportedBalance = (amount * divideBy)
+      maxSupportedBalance = Big(amount).times(divideBy)
     }
 
     logger.info(`For your knowledge, the Maximum supported balance at this time is: ${Big(maxSupportedBalance).div(divideBy)} ${symbol}`)
@@ -171,7 +171,7 @@ async function commit (args, opts, logger) {
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    if (Big(maxSupportedBalance).gt(uncommittedBalance)) {
+    if (maxSupportedBalance.gt(uncommittedBalance)) {
       throw new Error(`Amount specified is larger than your current uncommitted balance of ${Big(uncommittedBalance).div(divideBy)} ${symbol}`)
     }
 

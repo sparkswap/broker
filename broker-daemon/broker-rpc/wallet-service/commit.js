@@ -11,6 +11,13 @@ const { currencies: currencyConfig } = require('../../config')
 const MINIMUM_FUNDING_AMOUNT = 400000
 
 /**
+ * @constant
+ * @type {String}
+ * @default
+ */
+const CHANNEL_FUNDING_ERROR = 'not enough witness outputs to create funding transaction'
+
+/**
  * Grabs public lightning network information from relayer and opens a channel
  *
  * @param {Object} request - request object
@@ -56,7 +63,7 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
 
   logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balance}`)
 
-  const maxChannelBalance = currentCurrencyConfig.maxChannelBalance
+  const maxChannelBalance = Number(currentCurrencyConfig.maxChannelBalance)
 
   // TODO: Validate that the amount is above the minimum channel balance
   // TODO: Choose the correct engine depending on the market
@@ -93,11 +100,29 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     throw new PublicError(errorMessage)
   }
 
-  await engine.createChannel(address, balance)
+  logger.debug('Creating outbound channel')
+
+  try {
+    await engine.createChannel(address, balance)
+  } catch (e) {
+    logger.error('Received error when creating outbound channel', { e })
+
+    if (e.details && e.details.includes(CHANNEL_FUNDING_ERROR)) {
+      throw new PublicError(`Failed to commit wallet: Your wallet balance cannot cover on-chain fees. Please commit a smaller balance`)
+    }
+
+    throw (e)
+  }
 
   const paymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
 
-  await relayer.paymentChannelNetworkService.createChannel({address: paymentChannelNetworkAddress, balance: convertedBalance, symbol: inverseSymbol})
+  try {
+    logger.debug('Requesting inbound channel from relayer')
+    await relayer.paymentChannelNetworkService.createChannel({address: paymentChannelNetworkAddress, balance: convertedBalance, symbol: inverseSymbol})
+  } catch (e) {
+    // TODO: Close channel that was open if relayer call has failed
+    throw (e)
+  }
 
   return new EmptyResponse({})
 }
