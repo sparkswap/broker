@@ -38,6 +38,10 @@ async function healthCheck (args, opts, logger) {
   } catch (e) {
     if (e.message === '14 UNAVAILABLE: Connect Failed') {
       logger.error(handleError(e))
+    } else if (e.details) {
+      logger.error(e.details)
+    } else {
+      logger.error(e)
     }
   }
 };

@@ -20,6 +20,7 @@ describe('WalletService', () => {
   let getTradingCapacities
   let orderbooks
   let releaseChannels
+  let auth
 
   before(() => {
     responseStub = sinon.stub()
@@ -36,6 +37,7 @@ describe('WalletService', () => {
       },
       GetTradingCapacitiesResponse: responseStub
     })
+    auth = sinon.stub()
     logger = sinon.stub()
     engines = sinon.stub()
     relayer = sinon.stub()
@@ -59,7 +61,7 @@ describe('WalletService', () => {
     WalletService.__set__('getTradingCapacities', getTradingCapacities)
     WalletService.__set__('releaseChannels', releaseChannels)
 
-    wallet = new WalletService(protoPath, { logger, engines, relayer, orderbooks })
+    wallet = new WalletService(protoPath, { logger, engines, relayer, orderbooks, auth })
   })
 
   it('sets a protoPath', () => expect(wallet.protoPath).to.eql(protoPath))
@@ -77,7 +79,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         newDepositAddress,
         expectedMessageId,
-        { logger, engines },
+        { logger, engines, auth },
         { NewDepositAddressResponse: responseStub }
       )
     })
@@ -88,7 +90,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         balanceSpy,
         expectedMessageId,
-        { logger, engines },
+        { logger, engines, auth },
         { GetBalancesResponse: responseStub }
       )
     })
@@ -99,7 +101,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         commitSpy,
         expectedMessageId,
-        { logger, engines, relayer, orderbooks },
+        { logger, engines, relayer, orderbooks, auth },
         { EmptyResponse: responseStub }
       )
     })
@@ -110,7 +112,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         getPaymentChannelNetworkAddress,
         expectedMessageId,
-        { logger, engines },
+        { logger, engines, auth },
         { GetPaymentChannelNetworkAddressResponse: responseStub }
       )
     })
@@ -121,7 +123,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         getTradingCapacities,
         expectedMessageId,
-        { logger, engines, orderbooks },
+        { logger, engines, orderbooks, auth },
         { GetTradingCapacitiesResponse: responseStub }
       )
     })
@@ -132,7 +134,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         releaseChannels,
         expectedMessageId,
-        { logger, engines, orderbooks },
+        { logger, engines, orderbooks, auth },
         { EmptyResponse: responseStub }
       )
     })

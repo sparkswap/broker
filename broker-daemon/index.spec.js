@@ -31,6 +31,8 @@ describe('broker daemon', () => {
   let disableAuth
   let relayerOptions
   let brokerDaemonOptions
+  let rpcUser
+  let rpcPass
 
   beforeEach(() => {
     level = sinon.stub().returns('fake-level')
@@ -133,6 +135,8 @@ describe('broker daemon', () => {
       marketNames,
       engines,
       disableAuth,
+      rpcUser,
+      rpcPass,
       relayerOptions
     }
   })
@@ -168,10 +172,6 @@ describe('broker daemon', () => {
     it('creates an empty orderbooks map', () => {
       expect(brokerDaemon).to.have.property('orderbooks')
       expect(brokerDaemon.orderbooks).to.be.eql(new Map())
-    })
-
-    it('creates a broker rpc server', () => {
-      expect(rpcServer)
     })
 
     describe('engines', () => {
@@ -460,6 +460,32 @@ describe('broker daemon', () => {
     it('sets an RPC address from parameters', async () => {
       brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
       expect(brokerDaemon.dataDir).to.be.eql(dataDir)
+    })
+  })
+
+  describe('rpcUser', () => {
+    it('defaults to null', () => {
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      expect(brokerDaemon.rpcUser).to.be.null()
+    })
+
+    it('sets an RPC address from parameters', async () => {
+      brokerDaemonOptions.rpcUser = 'myuser'
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      expect(brokerDaemon.rpcUser).to.be.eql('myuser')
+    })
+  })
+
+  describe('rpcPass', () => {
+    it('defaults to null', () => {
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      expect(brokerDaemon.rpcPass).to.be.null()
+    })
+
+    it('sets an RPC address from parameters', async () => {
+      brokerDaemonOptions.rpcPass = 'passwd'
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      expect(brokerDaemon.rpcPass).to.be.eql('passwd')
     })
   })
 })
