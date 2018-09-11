@@ -85,14 +85,16 @@ class BrokerDaemon {
    * @param {String} opts.dataDir - Relative path to a directory where application data should be stored
    * @param {Array}  opts.marketNames - List of market names (e.g. 'BTC/LTC') to support
    * @param {Object} opts.engines - Configuration for all the engines to instantiate
-   * @param {String} [opts.disableAuth=false] - Disable SSL for the daemon
-   * @param {Object} relayerOptions
-   * @param {String} relayerOptions.relayerRpcHost - Host and port for the Relayer RPC
-   * @param {String} relayerOptions.certPath - Absolute path to the root certificate for the relayer
+   * @param {Boolean} [opts.disableAuth=false] - Disable SSL for the daemon
+   * @param {String} [opts.rpcUser] - RPC username, only used when auth is enabled
+   * @param {String} [opts.rpcPass] - RPC password, only used when auth is enabled
+   * @param {Object} opts.relayerOptions
+   * @param {String} opts.relayerOptions.relayerRpcHost - Host and port for the Relayer RPC
+   * @param {String} opts.relayerOptions.certPath - Absolute path to the root certificate for the relayer
    * @param {Boolean} [relayerOptions.disableRelayerAuth=false] - Disable SSL encryption and message signing in communications with the Relayer. DEVELOPMENT ONLY.
    * @return {BrokerDaemon}
    */
-  constructor ({ privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, relayerOptions = {} }) {
+  constructor ({ privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {} }) {
     if (!privIdKeyPath) throw new Error('Private Key path is required to create a BrokerDaemon')
     if (!pubIdKeyPath) throw new Error('Public Key path is required to create a BrokerDaemon')
 
@@ -106,6 +108,8 @@ class BrokerDaemon {
     this.marketNames = marketNames || []
     this.interchainRouterAddress = interchainRouterAddress || DEFAULT_INTERCHAIN_ROUTER_ADDRESS
     this.disableAuth = disableAuth
+    this.rpcUser = rpcUser
+    this.rpcPass = rpcPass
     this.relayerRpcHost = relayerRpcHost || DEFAULT_RELAYER_HOST
     this.relayerCertPath = relayerCertPath
 
@@ -136,7 +140,9 @@ class BrokerDaemon {
       blockOrderWorker: this.blockOrderWorker,
       privKeyPath: privRpcKeyPath,
       pubKeyPath: pubRpcKeyPath,
-      disableAuth
+      disableAuth,
+      rpcUser,
+      rpcPass
     })
 
     this.interchainRouter = new InterchainRouter({

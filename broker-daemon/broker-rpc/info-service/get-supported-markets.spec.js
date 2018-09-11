@@ -3,7 +3,7 @@ const { expect, rewire, sinon } = require('test/test-helper')
 
 const getSupportedMarkets = rewire(path.resolve(__dirname, 'get-supported-markets'))
 
-describe.only('getSupportedMarkets', () => {
+describe('getSupportedMarkets', () => {
   let logger
   let engineStub
   let engines

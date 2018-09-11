@@ -27,5 +27,17 @@ module.exports = {
    * if you will be hosting the daemon remotely
    * @type {Boolean}
    */
-  // disableSsl: true
+  // disableAuth: true
+
+  /**
+   * The username specified on the remote Broker Daemon RPC
+   * @type {String}
+   */
+  // rpcUser: 'sparkswap',
+
+  /**
+   * The password specified on the remote Broker Daemon RPC
+   * @type {String}
+   */
+  // rpcPass: 'sparkswap'
 }

@@ -21,12 +21,18 @@ describe('BrokerDaemonClient', () => {
   let certPath
   let certFile
   let credentialStub
+  let combineCredentialsStub
+  let generateAuthCredentialsStub
+  let sslCredential
+  let callCredential
   let infoStub
 
   beforeEach(() => {
     address = '172.0.0.1:27492'
     certPath = '/my/cert/path.cert'
     certFile = 'mycertfile'
+    sslCredential = 'sslcred'
+    callCredential = 'callcred'
 
     credentialStub = sinon.stub()
     callerStub = sinon.stub()
@@ -44,14 +50,13 @@ describe('BrokerDaemonClient', () => {
       InfoService: infoStub
     })
     readFileSyncStub = sinon.stub().returns(certFile)
-    createInsecureStub = sinon.stub().returns(true)
-    createSslStub = sinon.stub().returns(credentialStub)
+    createInsecureStub = sinon.stub().returns(credentialStub)
+    createSslStub = sinon.stub().returns(sslCredential)
     joinStub = sinon.stub().returns(certPath)
-    loadConfigStub = sinon.stub().returns({
-      rpcAddress: address,
-      rpcCertPath: certPath
-    })
+    loadConfigStub = sinon.stub()
     consoleStub = { warn: sinon.stub() }
+    combineCredentialsStub = sinon.stub()
+    generateAuthCredentialsStub = sinon.stub().returns(callCredential)
 
     BrokerDaemonClient.__set__('loadConfig', loadConfigStub)
     BrokerDaemonClient.__set__('console', consoleStub)
@@ -59,11 +64,23 @@ describe('BrokerDaemonClient', () => {
     BrokerDaemonClient.__set__('caller', callerStub)
     BrokerDaemonClient.__set__('readFileSync', readFileSyncStub)
     BrokerDaemonClient.__set__('path', { join: joinStub })
+    BrokerDaemonClient.__set__('basicAuth', {
+      generateBasicAuthCredentials: generateAuthCredentialsStub
+    })
     BrokerDaemonClient.__set__('grpc', {
       credentials: {
         createInsecure: createInsecureStub,
+        combineChannelCredentials: combineCredentialsStub,
         createSsl: createSslStub
       }
+    })
+  })
+
+  beforeEach(() => {
+    loadConfigStub.returns({
+      rpcAddress: address,
+      rpcCert: certPath,
+      disableAuth: true
     })
   })
 
@@ -73,14 +90,22 @@ describe('BrokerDaemonClient', () => {
     expect(protoStub).to.have.been.calledWith(protoPath)
   })
 
-  describe('ssl auth', () => {
+  describe('authentication', () => {
     let broker
+    let rpcUser
+    let rpcPass
 
-    it('creates insecure credentials if ssl is disabled', () => {
-      loadConfigStub.returns({ rpcAddress: address, disableSsl: true })
-      broker = new BrokerDaemonClient()
-      expect(createInsecureStub).to.have.been.calledOnce()
-      expect(broker.disableSsl).to.be.true()
+    beforeEach(() => {
+      rpcUser = 'sparkswap'
+      rpcPass = 'passwd'
+
+      loadConfigStub.returns({
+        rpcAddress: address,
+        rpcCert: certPath,
+        disableAuth: false,
+        rpcUser,
+        rpcPass
+      })
     })
 
     it('reads a cert file', () => {
@@ -91,6 +116,25 @@ describe('BrokerDaemonClient', () => {
     it('creates ssl credentials', () => {
       broker = new BrokerDaemonClient()
       expect(createSslStub).to.have.been.calledWith(certFile)
+    })
+
+    it('creates basic authorization credentials', () => {
+      broker = new BrokerDaemonClient()
+      expect(generateAuthCredentialsStub).to.have.been.calledWith(rpcUser, rpcPass)
+    })
+
+    it('adds credentials to the broker daemon client', () => {
+      broker = new BrokerDaemonClient()
+      expect(combineCredentialsStub).to.have.been.calledWith(sslCredential, callCredential)
+    })
+
+    context('auth is disabled', () => {
+      it('creates insecure credentials', () => {
+        loadConfigStub.returns({ rpcAddress: address, disableAuth: true })
+        broker = new BrokerDaemonClient()
+        expect(createInsecureStub).to.have.been.calledOnce()
+        expect(broker.disableAuth).to.be.true()
+      })
     })
   })
 
