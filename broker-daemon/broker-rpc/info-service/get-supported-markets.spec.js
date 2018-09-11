@@ -42,7 +42,6 @@ describe.only('getSupportedMarkets', () => {
         base: 'BTC',
         counter: 'LTC',
         id: 'BTC/LTC',
-        precision: 16,
         symbol: 'BTC/LTC'
       }]
     })
@@ -65,7 +64,6 @@ describe.only('getSupportedMarkets', () => {
         base: 'BTC',
         counter: 'LTC',
         id: 'BTC/LTC',
-        precision: 16,
         symbol: 'BTC/LTC'
       }]
     })

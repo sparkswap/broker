@@ -1051,8 +1051,6 @@ message SupportedMarket {
   string counter = 4;
   // if the market is active or not
   bool active = 5;
-  // number of digits for the balances in the market
-  int64 precision = 6;
 }
 
 /**
@@ -1098,7 +1096,6 @@ service InfoService {
    *       "base": "BTC",
    *       "counter": "LTC",
    *       "active": true,
-   *       "precision": '16'
    *     }
    *   ]
    * }
@@ -1110,8 +1107,7 @@ service InfoService {
    *       symbol: 'BTC/LTC',
    *       base: 'BTC',
    *       counter: 'LTC',
-   *       active: true,
-   *       precision: '16' } ] }
+   *       active: true } ] }
    * ```
    */
   rpc getSupportedMarkets (google.protobuf.Empty) returns (GetSupportedMarketsResponse);

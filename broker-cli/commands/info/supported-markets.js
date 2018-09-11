@@ -5,6 +5,7 @@ const { handleError } = require('../../utils')
  *
  * ex: `sparkswap info supported-markets'
  *
+ * @param {Object} opts
  * @param {String} [rpcaddress] opts.rpcaddress
  * @param {Logger} logger
  */
