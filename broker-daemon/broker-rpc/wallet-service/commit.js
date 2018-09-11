@@ -5,10 +5,10 @@ const { currencies: currencyConfig } = require('../../config')
 
 /**
  * @constant
- * @type {Long}
+ * @type {Big}
  * @default
  */
-const MINIMUM_FUNDING_AMOUNT = 400000
+const MINIMUM_FUNDING_AMOUNT = Big(400000)
 
 /**
  * @constant
@@ -63,16 +63,15 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
 
   logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balance}`)
 
-  const maxChannelBalance = Number(currentCurrencyConfig.maxChannelBalance)
+  const maxChannelBalance = Big(currentCurrencyConfig.maxChannelBalance)
 
   // TODO: Validate that the amount is above the minimum channel balance
-  // TODO: Choose the correct engine depending on the market
   // TODO: Get correct fee amount from engine
-  if (balance < MINIMUM_FUNDING_AMOUNT) {
+  if (MINIMUM_FUNDING_AMOUNT.gt(balance)) {
     throw new PublicError(`Minimum balance of ${MINIMUM_FUNDING_AMOUNT} needed to commit to the relayer`)
-  } else if (balance > maxChannelBalance) {
-    logger.error(`Balance from the client exceeds maximum balance allowed (${maxChannelBalance}).`, { balance })
-    throw new PublicError(`Maximum balance of ${maxChannelBalance} exceeded for committing to the relayer. Please try again.`)
+  } else if (maxChannelBalance.lt(balance)) {
+    logger.error(`Balance from the client exceeds maximum balance allowed (${maxChannelBalance.toString()}).`, { balance })
+    throw new PublicError(`Maximum balance of ${maxChannelBalance.toString()} exceeded for committing to the relayer. Please try again.`)
   }
 
   // Get the max balance for outbound and inbound channels to see if there are already channels with the balance open. If this is the
@@ -100,13 +99,14 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     throw new PublicError(errorMessage)
   }
 
-  logger.debug('Creating outbound channel')
+  logger.debug('Creating outbound channel', { address, balance })
 
   try {
     await engine.createChannel(address, balance)
   } catch (e) {
     logger.error('Received error when creating outbound channel', { e })
 
+    // TODO: Remove this error checking once fees have been added to the commit balance calculations
     if (e.details && e.details.includes(CHANNEL_FUNDING_ERROR)) {
       throw new PublicError(`Failed to commit wallet: Your wallet balance cannot cover on-chain fees. Please commit a smaller balance`)
     }
@@ -117,7 +117,7 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
   const paymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
 
   try {
-    logger.debug('Requesting inbound channel from relayer')
+    logger.debug('Requesting inbound channel from relayer', { address: paymentChannelNetworkAddress, balance: convertBalance, symbol: inverseSymbol })
     await relayer.paymentChannelNetworkService.createChannel({address: paymentChannelNetworkAddress, balance: convertedBalance, symbol: inverseSymbol})
   } catch (e) {
     // TODO: Close channel that was open if relayer call has failed
