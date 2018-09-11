@@ -5,8 +5,6 @@ const { expect, rewire, sinon } = require('test/test-helper')
 const BlockOrderWorker = rewire(path.resolve(__dirname))
 
 describe('BlockOrderWorker', () => {
-  let eventsOnce
-  let eventsEmit
   let safeid
   let BlockOrder
   let Order
@@ -24,11 +22,6 @@ describe('BlockOrderWorker', () => {
   let secondLevel
 
   beforeEach(() => {
-    eventsOnce = sinon.stub()
-    eventsEmit = sinon.stub()
-    BlockOrderWorker.prototype.on = eventsOnce
-    BlockOrderWorker.prototype.emit = eventsEmit
-
     safeid = sinon.stub()
     BlockOrderWorker.__set__('safeid', safeid)
 
