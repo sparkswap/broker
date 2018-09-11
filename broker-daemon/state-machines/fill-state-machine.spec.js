@@ -586,11 +586,9 @@ describe('FillStateMachine', () => {
 
   describe('#reject', () => {
     let fsm
-    let onRejection
 
     beforeEach(async () => {
-      onRejection = sinon.stub()
-      fsm = new FillStateMachine({ store, logger, relayer, engines, onRejection })
+      fsm = new FillStateMachine({ store, logger, relayer, engines })
       await fsm.goto('created')
       fsm.fill = {
         key: 'fakeKey',
@@ -625,14 +623,6 @@ describe('FillStateMachine', () => {
 
       expect(store.put).to.have.been.calledOnce()
       expect(store.put).to.have.been.calledWith(sinon.match(/^NO_ASSIGNED_ID_\S+$/))
-    })
-
-    it('calls an onRejection function', async () => {
-      const err = new Error('fake')
-      await fsm.reject(err)
-
-      expect(onRejection).to.have.been.calledOnce()
-      expect(onRejection).to.have.been.calledWith(err)
     })
   })
 

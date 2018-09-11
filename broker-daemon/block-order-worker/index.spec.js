@@ -4,7 +4,7 @@ const { expect, rewire, sinon } = require('test/test-helper')
 
 const BlockOrderWorker = rewire(path.resolve(__dirname))
 
-describe.only('BlockOrderWorker', () => {
+describe('BlockOrderWorker', () => {
   let eventsOnce
   let eventsEmit
   let safeid
@@ -230,12 +230,16 @@ describe.only('BlockOrderWorker', () => {
 
   describe('createBlockOrder', () => {
     let worker
-    let generateIdStub
+    let workBlockOrderStub
+    let failBlockOrderStub
 
     beforeEach(() => {
-      generateIdStub = sinon.stub()
+      workBlockOrderStub = sinon.stub().resolves()
+      failBlockOrderStub = sinon.stub()
 
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.workBlockOrder = workBlockOrderStub
+      worker.failBlockOrder = failBlockOrderStub
     })
 
     it('throws if the market is not supported', () => {
@@ -316,7 +320,7 @@ describe.only('BlockOrderWorker', () => {
       expect(store.put).to.have.been.calledWith(fakeKey, fakeValue)
     })
 
-    it('emits an event to trigger working', async () => {
+    it('starts working a block order', async () => {
       const fakeId = 'myfake'
       safeid.returns(fakeId)
 
@@ -327,15 +331,11 @@ describe.only('BlockOrderWorker', () => {
         price: '100',
         timeInForce: 'GTC'
       }
-      const revert = BlockOrderWorker.__set__('generateIdForEvent', () => fakeId)
       await worker.createBlockOrder(params)
-
-      expect(eventsEmit).to.have.been.calledOnce()
-      expect(eventsEmit).to.have.been.calledWith(fakeId, sinon.match.instanceOf(BlockOrder))
-      revert()
+      expect(workBlockOrderStub).to.have.been.calledOnce()
     })
 
-    it('registers a rejected event', async () => {
+    it('fails a block order if working a block order is unsuccessful', async () => {
       const fakeId = 'myfake'
       safeid.returns(fakeId)
 
@@ -347,34 +347,12 @@ describe.only('BlockOrderWorker', () => {
         timeInForce: 'GTC'
       }
 
-      const { REJECTED } = BlockOrderWorker.__get__('WORKER_EVENTS')
-      generateIdStub.withArgs(REJECTED, sinon.match.string).returns(fakeId)
-      const revert = BlockOrderWorker.__set__('generateIdForEvent', generateIdStub)
+      workBlockOrderStub.rejects()
+
       await worker.createBlockOrder(params)
 
-      expect(eventsOnce).to.have.been.calledWith(fakeId, sinon.match.func)
-      revert()
-    })
-
-    it('registers a create event', async () => {
-      const fakeId = 'myfake'
-      safeid.returns(fakeId)
-
-      const params = {
-        marketName: 'BTC/LTC',
-        side: 'BID',
-        amount: '10000',
-        price: '100',
-        timeInForce: 'GTC'
-      }
-
-      const { CREATE } = BlockOrderWorker.__get__('WORKER_EVENTS')
-      generateIdStub.withArgs(CREATE, sinon.match.string).returns(fakeId)
-      const revert = BlockOrderWorker.__set__('generateIdForEvent', generateIdStub)
-      await worker.createBlockOrder(params)
-
-      expect(eventsOnce).to.have.been.calledWith(fakeId, sinon.match.func)
-      revert()
+      expect(workBlockOrderStub).to.have.been.calledOnce()
+      expect(failBlockOrderStub).to.have.been.calledOnce()
     })
   })
 
@@ -888,7 +866,7 @@ describe.only('BlockOrderWorker', () => {
     })
   })
 
-  describe.only('#_fillOrders', () => {
+  describe('#_fillOrders', () => {
     let worker
     let blockOrder
     let fill

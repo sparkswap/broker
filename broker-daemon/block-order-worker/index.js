@@ -13,27 +13,6 @@ const {
 const { BlockOrderNotFoundError } = require('./errors')
 
 /**
- * Event names used for handling emitted events during the 'working' of a single
- * block order
- *
- * @constant
- * @type {Object}
- * @default
- */
-const WORKER_EVENTS = Object.freeze({
-  CREATE: 'CREATE',
-  REJECTED: 'REJECTED'
-})
-
-/**
- * @param {String} event type
- * @param {String} block order id
- * @returns {String} event id
- */
-function generateIdForEvent (eventType, blockOrderId) {
-  return `${eventType}-${blockOrderId}`
-}
-/**
  * @class Create and work Block Orders
  */
 class BlockOrderWorker extends EventEmitter {
@@ -114,22 +93,9 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
 
-    // Register events on a block order worker to handle processing of concurrent orders
-    const createEventId = generateIdForEvent(WORKER_EVENTS.CREATE, id)
-    const rejectedEventId = generateIdForEvent(WORKER_EVENTS.REJECTED, id)
-
-    // Move BlockOrder to a rejected state if any process in working a block order, fails
-    this.once(rejectedEventId, async (blockOrderId, err) => this.failBlockOrder(blockOrderId, err))
-
-    // Start working the block order in another process to prevent blocking the creation
+    // Start working the block order asynchronously to prevent blocking the creation
     // of 'other' block orders
-    this.once(createEventId, async (blockOrder) => {
-      await this.workBlockOrder(blockOrder).catch(e => this.emit(rejectedEventId, blockOrder.id, e))
-    })
-
-    // TODO: Use an ID instead of the entire BlockOrder so that we can have multiple
-    // services handling events
-    this.emit(createEventId, blockOrder)
+    this.workBlockOrder(blockOrder).catch(err => this.failBlockOrder(blockOrder.id, err))
 
     return id
   }
@@ -412,13 +378,9 @@ class BlockOrderWorker extends EventEmitter {
       { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
     )
 
-    // Register listener events for the current order
-    const onceCompleteEvent = async (blockOrderId) => this.completeBlockOrder(blockOrderId)
-    const onceRejectedEvent = async (blockOrderId) => this.failBlockOrder(blockOrderId, order.error)
-
     // These events tie directory in the StateMachine's lifecycle hooks for a OrderStateMachine
-    order.once('complete', onceCompleteEvent)
-    order.once('rejected', onceRejectedEvent)
+    order.once('complete', () => this.completeBlockOrder(blockOrder.id))
+    order.once('rejected', () => this.failBlockOrder(blockOrder.id, order.error))
 
     this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
   }
@@ -449,7 +411,7 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No engine available for ${counterSymbol}`)
     }
 
-    const promisedFills = orders.map((order) => {
+    const promisedFills = orders.map(async (order) => {
       const depthRemaining = targetDepth.minus(currentDepth)
 
       // if we have already reached our target depth, create no further fills
@@ -463,7 +425,7 @@ class BlockOrderWorker extends EventEmitter {
       // track our current depth so we know what to fill on the next order
       currentDepth = currentDepth.plus(fillAmount)
 
-      const fsm = FillStateMachine.create(
+      const fsm = await FillStateMachine.create(
         {
           relayer,
           engines,
@@ -475,13 +437,9 @@ class BlockOrderWorker extends EventEmitter {
         { fillAmount }
       )
 
-      // Register listener events for the current order
-      const onceExecutedEvent = async (blockOrderId) => this.completeBlockOrder(blockOrderId)
-      const onceRejectedEvent = async (blockOrderId) => this.failBlockOrder(blockOrderId, order.error)
-
       // These events tie directory in the StateMachine's lifecycle hooks for a FillStateMachine
-      fsm.once('execute', onceExecutedEvent)
-      fsm.once('rejected', onceRejectedEvent)
+      fsm.once('execute', () => this.completeBlockOrder(blockOrder.id))
+      fsm.once('rejected', () => this.failBlockOrder(blockOrder.id, order.error))
 
       return fsm
     })
