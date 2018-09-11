@@ -155,13 +155,17 @@ async function commit (args, opts, logger) {
       maxSupportedBalance = maxChannelBalance
     }
 
-    // We use this for normalization of the amount from satoshis to a decimal
-    // value
+    // We use this for normalization of the amount from satoshis to a decimal value
     const divideBy = currentCurrencyConfig.quantumsPerCommon
 
-    // Amount is specified in currency instead of satoshis
+    // The logic here only runs if an amount is specified in the commit command
     if (amount) {
-      maxSupportedBalance = Big(amount).times(divideBy)
+      // Amount is specified in currency instead of satoshis
+      const specifiedAmount = Big(amount).times(divideBy)
+
+      if (specifiedAmount.lt(maxChannelBalance)) {
+        maxSupportedBalance = specifiedAmount
+      }
     }
 
     logger.info(`For your knowledge, the Maximum supported balance at this time is: ${Big(maxSupportedBalance).div(divideBy)} ${symbol}`)

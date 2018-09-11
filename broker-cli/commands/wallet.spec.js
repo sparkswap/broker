@@ -5,8 +5,8 @@ const {
   expect
 } = require('test/test-helper')
 
-const programPath = path.resolve(__dirname, 'wallet')
-const program = rewire(programPath)
+const { currencies: currencyConfig } = require('../configuration')
+const program = rewire(path.resolve(__dirname, 'wallet'))
 
 describe('cli wallet', () => {
   describe('newDepositAddress', () => {
@@ -303,7 +303,7 @@ describe('cli wallet', () => {
       args = { symbol, amount }
       rpcAddress = 'test:1337'
       balances = [
-        { symbol: 'BTC', uncommittedBalance: 10000000, totalChannelBalance: 100 }
+        { symbol: 'BTC', uncommittedBalance: 16777000, totalChannelBalance: 100 }
       ]
       walletBalanceStub = sinon.stub().returns({ balances })
       commitStub = sinon.stub()
@@ -324,29 +324,45 @@ describe('cli wallet', () => {
       program.__set__('askQuestion', askQuestionStub)
     })
 
-    beforeEach(async () => {
+    it('gets a balance from the daemon', async () => {
       await commit(args, opts, logger)
-    })
-
-    it('gets a balance from the daemon', () => {
       expect(walletBalanceStub).to.have.been.called()
     })
 
-    it('calls the daemon to commit a balance to the relayer', () => {
+    it('calls the daemon to commit a balance to the relayer', async () => {
+      await commit(args, opts, logger)
       const { uncommittedBalance } = balances[0]
       expect(commitStub).to.have.been.calledWith({ balance: uncommittedBalance.toString(), symbol, market })
     })
 
-    it('asks the user if they are ok to commit to a balance', () => {
+    it('asks the user if they are ok to commit to a balance', async () => {
+      await commit(args, opts, logger)
       expect(askQuestionStub).to.have.been.called()
     })
 
-    it('logs an error', async () => {
+    it('logs an error if currency is not supported', async () => {
+      await commit(args, opts, logger)
       const badSymbol = 'bad'
       await commit({ symbol: badSymbol }, opts, logger)
       const expectedError = sinon.match.instanceOf(Error)
         .and(sinon.match.has('message', `Currency is not supported by the CLI: ${badSymbol}`))
       expect(errorStub).to.have.been.calledWith(sinon.match(expectedError))
+    })
+
+    it('converts a specified amount to satoshis', async () => {
+      const newAmount = 0.1
+      const btc = currencyConfig.find(c => c.symbol === 'BTC')
+      const expectedAmount = newAmount * btc.quantumsPerCommon
+      args.amount = newAmount
+      await commit(args, opts, logger)
+      expect(commitStub).to.have.been.calledWith(sinon.match({ balance: expectedAmount.toString() }))
+    })
+
+    it('defaults a specified amount to uncommitted balance', async () => {
+      const { uncommittedBalance } = balances[0]
+      args.amount = '1234'
+      await commit(args, opts, logger)
+      expect(commitStub).to.have.been.calledWith(sinon.match({ balance: uncommittedBalance.toString() }))
     })
   })
 

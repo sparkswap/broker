@@ -11,13 +11,6 @@ const { currencies: currencyConfig } = require('../../config')
 const MINIMUM_FUNDING_AMOUNT = Big(400000)
 
 /**
- * @constant
- * @type {String}
- * @default
- */
-const CHANNEL_FUNDING_ERROR = 'not enough witness outputs to create funding transaction'
-
-/**
  * Grabs public lightning network information from relayer and opens a channel
  *
  * @param {Object} request - request object
@@ -104,14 +97,8 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
   try {
     await engine.createChannel(address, balance)
   } catch (e) {
-    logger.error('Received error when creating outbound channel', { e })
-
-    // TODO: Remove this error checking once fees have been added to the commit balance calculations
-    if (e.details && e.details.includes(CHANNEL_FUNDING_ERROR)) {
-      throw new PublicError(`Failed to commit wallet: Your wallet balance cannot cover on-chain fees. Please commit a smaller balance`)
-    }
-
-    throw (e)
+    logger.error('Received error when creating outbound channel', { error: e.stack })
+    throw new PublicError(`Funding error: Check that you have sufficient balance`)
   }
 
   const paymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
