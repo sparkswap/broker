@@ -85,6 +85,7 @@ class BrokerDaemonClient {
     this.orderService = caller(this.address, this.proto.OrderService, this.credentials)
     this.orderBookService = caller(this.address, this.proto.OrderBookService, this.credentials)
     this.walletService = caller(this.address, this.proto.WalletService, this.credentials)
+    this.infoService = caller(this.address, this.proto.InfoService, this.credentials)
   }
 }
 
