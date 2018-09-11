@@ -19,6 +19,7 @@ describe('RelayerClient', () => {
   let TakerService
   let OrderBookService
   let HealthService
+  let InfoService
   let PaymentChannelNetworkService
   let ResponseType = {
     EXISTING_EVENT: 'EXISTING_EVENT',
@@ -58,6 +59,7 @@ describe('RelayerClient', () => {
     OrderBookService = sinon.stub()
     HealthService = sinon.stub()
     PaymentChannelNetworkService = sinon.stub()
+    InfoService = sinon.stub()
 
     pathResolve = sinon.stub()
     RelayerClient.__set__('path', { resolve: pathResolve })
@@ -71,6 +73,7 @@ describe('RelayerClient', () => {
       OrderBookService,
       HealthService,
       PaymentChannelNetworkService,
+      InfoService,
       WatchMarketResponse: {
         ResponseType
       }
@@ -191,10 +194,11 @@ describe('RelayerClient', () => {
         relayer = new RelayerClient(idKeyPath, { host: relayerHost })
       })
 
-      it('creates an makerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, MakerService, fakeCreds))
-      it('creates an takerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, TakerService, fakeCreds))
+      it('creates a makerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, MakerService, fakeCreds))
+      it('creates a takerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, TakerService, fakeCreds))
       it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(relayer.address, OrderBookService, fakeCreds))
-      it('creates an healthService', () => expect(callerStub).to.have.been.calledWith(relayer.address, HealthService, fakeCreds))
+      it('creates a healthService', () => expect(callerStub).to.have.been.calledWith(relayer.address, HealthService, fakeCreds))
+      it('creates an infoService', () => expect(callerStub).to.have.been.calledWith(relayer.address, InfoService, fakeCreds))
     })
   })
 

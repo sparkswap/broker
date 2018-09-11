@@ -25,7 +25,9 @@ const {
   DISABLE_AUTH,
   DISABLE_RELAYER_AUTH,
   RPC_PRIV_KEY,
-  RPC_PUB_KEY
+  RPC_PUB_KEY,
+  RPC_USER,
+  RPC_PASS
 } = process.env
 
 // TODO: Add validations to ./bin/sparkswapd when they become available
@@ -35,6 +37,8 @@ program
   .option('--interchain-router-address <server>', 'Add a host/port to listen for interchain router RPC connections', validations.isHost, INTERCHAIN_ROUTER_ADDRESS)
   .option('--data-dir <path>', 'Location to store SparkSwap data', validations.isFormattedPath, DATA_DIR)
   .option('--disable-auth', 'Disable SSL for the broker (DEV ONLY)', program.BOOL, DISABLE_AUTH)
+  .option('--rpc-user', 'Rpc user name, used when auth is enabled', program.String, RPC_USER)
+  .option('--rpc-pass', 'Rpc password, used when auth is enabled', program.String, RPC_PASS)
   .option('--rpc-privkey-path <path>', 'Location of private key for the broker\'s rpc', validations.isFormattedPath, RPC_PRIV_KEY)
   .option('--rpc-pubkey-path <path>', 'Location of the public key for the broker\'s rpc', validations.isFormattedPath, RPC_PUB_KEY)
   .option('--disable-relayer-auth', 'Disable SSL and message signing to the relayer (DEV ONLY)', program.BOOL, DISABLE_RELAYER_AUTH)
@@ -74,7 +78,9 @@ program
       disableRelayerAuth,
       disableAuth,
       rpcPrivkeyPath: privRpcKeyPath,
-      rpcPubkeyPath: pubRpcKeyPath
+      rpcPubkeyPath: pubRpcKeyPath,
+      rpcUser,
+      rpcPass
     } = opts
 
     const engines = {}
@@ -104,6 +110,8 @@ program
       marketNames,
       engines,
       disableAuth,
+      rpcUser,
+      rpcPass,
       relayerOptions: {
         relayerRpcHost,
         relayerCertPath,

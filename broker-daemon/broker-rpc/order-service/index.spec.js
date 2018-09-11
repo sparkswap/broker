@@ -17,6 +17,7 @@ describe('OrderService', () => {
 
   let protoPath
   let logger
+  let auth
 
   let blockOrderWorker
 
@@ -39,6 +40,7 @@ describe('OrderService', () => {
       info: sinon.stub(),
       error: sinon.stub()
     }
+    auth = sinon.stub()
 
     blockOrderWorker = sinon.stub()
     GrpcMethod = sinon.stub()
@@ -64,7 +66,7 @@ describe('OrderService', () => {
   })
 
   beforeEach(() => {
-    server = new OrderService(protoPath, { logger, blockOrderWorker })
+    server = new OrderService(protoPath, { logger, blockOrderWorker, auth })
   })
 
   it('assigns a proto path', () => {
@@ -138,6 +140,10 @@ describe('OrderService', () => {
       it('block order worker', () => {
         expect(callArgs[2]).to.have.property('blockOrderWorker', blockOrderWorker)
       })
+
+      it('passes in auth', () => {
+        expect(callArgs[2]).to.have.property('auth', auth)
+      })
     })
 
     it('passes in the response', () => {
@@ -186,6 +192,10 @@ describe('OrderService', () => {
       it('block order worker', () => {
         expect(callArgs[2]).to.have.property('blockOrderWorker', blockOrderWorker)
       })
+
+      it('passes in auth', () => {
+        expect(callArgs[2]).to.have.property('auth', auth)
+      })
     })
 
     it('passes in the response', () => {
@@ -229,6 +239,10 @@ describe('OrderService', () => {
       it('block order worker', () => {
         expect(callArgs[2]).to.have.property('blockOrderWorker', blockOrderWorker)
       })
+
+      it('passes in auth', () => {
+        expect(callArgs[2]).to.have.property('auth', auth)
+      })
     })
   })
 
@@ -266,6 +280,10 @@ describe('OrderService', () => {
 
       it('block order worker', () => {
         expect(callArgs[2]).to.have.property('blockOrderWorker', blockOrderWorker)
+      })
+
+      it('passes in auth', () => {
+        expect(callArgs[2]).to.have.property('auth', auth)
       })
     })
 

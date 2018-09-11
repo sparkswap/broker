@@ -49,6 +49,8 @@ services:
       - DISABLE_AUTH=true
       - RPC_PRIV_KEY=/secure/broker-rpc-tls.key
       - RPC_PUB_KEY=/secure/broker-rpc-tls.cert
+      - RPC_USER=sparkswap
+      - RPC_PASS=sparkswap
     ports:
       - '27492:27492'
     networks:
