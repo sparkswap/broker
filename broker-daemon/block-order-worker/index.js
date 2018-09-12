@@ -229,13 +229,15 @@ class BlockOrderWorker extends EventEmitter {
     try {
       var value = await promisify(this.store.get)(blockOrderId)
     } catch (e) {
-      // TODO: throw here? what's the protocol?
+      // No matter the case, if the record isn't found, or we cannot retrieve the block
+      // order to be completed, we need to throw an exception.
       if (e.notFound) {
         this.logger.error('Attempted to move a block order to a failed state that does not exist', { id: blockOrderId })
       } else {
         this.logger.error('Error while retrieving block order to move it to a failed state', { id: blockOrderId, error: e.message })
-        throw e
       }
+
+      throw e
     }
 
     const blockOrder = BlockOrder.fromStorage(blockOrderId, value)

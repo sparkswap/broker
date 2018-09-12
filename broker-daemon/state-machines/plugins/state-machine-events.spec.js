@@ -3,7 +3,7 @@ const { expect, sinon, rewire } = require('test/test-helper')
 
 const StateMachineEvents = rewire(path.resolve(__dirname, 'state-machine-events'))
 
-describe.only('StateMachineEvents', () => {
+describe('StateMachineEvents', () => {
   describe('constructor', () => {
     it('has an event handler', () => {
       const sme = new StateMachineEvents()
