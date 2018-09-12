@@ -14,6 +14,8 @@ describe('BrokerRPCServer', () => {
   let orderBookService
   let WalletService
   let walletService
+  let InfoService
+  let infoService
   let pathResolve
   let protoPath
   let engines
@@ -47,6 +49,13 @@ describe('BrokerRPCServer', () => {
     WalletService = sinon.stub().returns(walletService)
     BrokerRPCServer.__set__('WalletService', WalletService)
 
+    infoService = {
+      definition: 'mydef',
+      implementation: 'myimp'
+    }
+    InfoService = sinon.stub().returns(infoService)
+    BrokerRPCServer.__set__('InfoService', InfoService)
+
     addService = sinon.stub()
     rpcServer = sinon.stub().returns({
       addService
@@ -73,13 +82,28 @@ describe('BrokerRPCServer', () => {
       expect(server.logger).to.be.eql(logger)
     })
 
-    xit('assigns an engine')
+    it('assigns an engine', () => {
+      const server = new BrokerRPCServer({ engines })
+      expect(server.engines).to.be.eql(engines)
+    })
 
-    xit('assigns a relayer')
+    it('assigns a relayer', () => {
+      const relayer = 'Relayer'
+      const server = new BrokerRPCServer({ relayer })
+      expect(server.relayer).to.be.eql(relayer)
+    })
 
-    xit('assigns a block order worker')
+    it('assigns a block order worker', () => {
+      const blockOrderWorker = 'BlockOrderWorker'
+      const server = new BrokerRPCServer({ blockOrderWorker })
+      expect(server.blockOrderWorker).to.be.eql(blockOrderWorker)
+    })
 
-    xit('assigns orderbooks')
+    it('assigns orderbooks', () => {
+      const orderbooks = { 'BTC/LTC': [] }
+      const server = new BrokerRPCServer({ orderbooks })
+      expect(server.orderbooks).to.be.eql(orderbooks)
+    })
 
     it('assigns the proto path', () => {
       const BROKER_PROTO_PATH = BrokerRPCServer.__get__('BROKER_PROTO_PATH')
@@ -182,6 +206,27 @@ describe('BrokerRPCServer', () => {
       expect(server.walletService).to.be.equal(walletService)
     })
 
+    it('adds the info service', () => {
+      const server = new BrokerRPCServer()
+
+      expect(server).to.have.property('server')
+      expect(server.server.addService).to.be.equal(addService)
+      expect(addService).to.have.been.calledWith(infoService.definition, infoService.implementation)
+    })
+
+    it('creates a info service', () => {
+      const logger = 'mylogger'
+      const engines = 'myengines'
+
+      const server = new BrokerRPCServer({ logger, engines })
+
+      expect(InfoService).to.have.been.calledOnce()
+      expect(InfoService).to.have.been.calledWith(protoPath, sinon.match({ logger, engines }))
+      expect(InfoService).to.have.been.calledWithNew()
+      expect(server).to.have.property('infoService')
+      expect(server.infoService).to.be.equal(infoService)
+    })
+
     it('adds the orderBook service', () => {
       const server = new BrokerRPCServer()
 
@@ -198,5 +243,111 @@ describe('BrokerRPCServer', () => {
     })
   })
 
-  describe.skip('#listen')
+  describe('#listen', () => {
+    let host
+    let server
+    let credentialStub
+    let credentials
+    let serverStub
+    let bindStub
+
+    beforeEach(() => {
+      host = '127.0.0.1:27492'
+      credentials = 'credentials'
+      credentialStub = sinon.stub().returns(credentials)
+      serverStub = sinon.stub()
+      bindStub = sinon.stub()
+
+      server = new BrokerRPCServer()
+      server.createCredentials = credentialStub
+      server.server = {
+        bind: bindStub,
+        start: serverStub
+      }
+    })
+
+    beforeEach(() => {
+      server.listen(host)
+    })
+
+    it('creates server credentials', () => {
+      expect(credentialStub).to.have.been.calledOnce()
+    })
+
+    it('starts a server at a specified host', () => {
+      expect(bindStub).to.have.been.calledWith(host, credentials)
+    })
+
+    it('starts a server', () => {
+      expect(serverStub).to.have.been.calledOnce()
+    })
+  })
+
+  describe('#createCredentials', () => {
+    let insecureCredStub
+    let sslStub
+    let server
+    let loggerWarnStub
+    let fileSyncStub
+    let privKeyPath
+    let pubKeyPath
+
+    beforeEach(() => {
+      insecureCredStub = sinon.stub()
+      sslStub = sinon.stub()
+      loggerWarnStub = sinon.stub()
+      fileSyncStub = sinon.stub()
+      privKeyPath = 'privatekey'
+      pubKeyPath = 'publickey'
+
+      const logger = {
+        warn: loggerWarnStub,
+        debug: sinon.stub()
+      }
+
+      server = new BrokerRPCServer({ logger, privKeyPath, pubKeyPath })
+
+      BrokerRPCServer.__set__('grpc', {
+        ServerCredentials: {
+          createInsecure: insecureCredStub,
+          createSsl: sslStub
+        }
+      })
+      BrokerRPCServer.__set__('readFileSync', fileSyncStub)
+    })
+
+    it('returns insecure credentials if disableAuth is true', () => {
+      server.disableAuth = true
+      server.createCredentials()
+      expect(insecureCredStub).to.have.been.called()
+    })
+
+    it('warns the user if disableAuth is true', () => {
+      server.disableAuth = true
+      server.createCredentials()
+      expect(loggerWarnStub).to.have.been.calledWith(sinon.match('DISABLE_AUTH is set to TRUE'))
+    })
+
+    it('throws an error if disableAuth is true and the server is in production', () => {
+      const revert = BrokerRPCServer.__set__('IS_PRODUCTION', true)
+      server.disableAuth = true
+      expect(() => server.createCredentials()).to.throw('Cannot disable SSL in production')
+      revert()
+    })
+
+    it('reads a private key path for ssl generation', () => {
+      server.createCredentials()
+      expect(fileSyncStub).to.have.been.calledWith(privKeyPath)
+    })
+
+    it('reads a public key path for ssl generation', () => {
+      server.createCredentials()
+      expect(fileSyncStub).to.have.been.calledWith(pubKeyPath)
+    })
+
+    it('creates ssl credentials', () => {
+      server.createCredentials()
+      expect(sslStub).to.have.been.calledOnce()
+    })
+  })
 })

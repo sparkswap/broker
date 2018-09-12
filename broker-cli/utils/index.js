@@ -4,6 +4,7 @@ const loadProto = require('./load-proto')
 const askQuestion = require('./ask-question')
 const Big = require('./big')
 const handleError = require('./error-handler')
+const basicAuth = require('./basic-auth')
 
 module.exports = {
   ENUMS,
@@ -11,5 +12,6 @@ module.exports = {
   askQuestion,
   loadProto,
   Big,
-  handleError
+  handleError,
+  basicAuth
 }

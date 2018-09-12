@@ -3,6 +3,10 @@ const { sinon, rewire, expect } = require('test/test-helper')
 
 const sparkswapd = rewire(path.resolve(__dirname, 'sparkswapd.js'))
 
+/**
+ * IMPORTANT NOTE: We skip all of the environment variable (default) tests because
+ * we bind to process.env before `rewire` has a chance to replace the values.
+ */
 describe('sparkswapd', () => {
   let BrokerDaemon
   let argv
@@ -18,11 +22,6 @@ describe('sparkswapd', () => {
       './broker-daemon/bin/sparkswapd'
     ]
   })
-
-  /**
-   * We skip all of the environment variable tests because we bind to process.env before
-   * `rewire` has a chance to replace the values.
-   */
 
   it('starts the BrokerDaemon', () => {
     sparkswapd(argv)
@@ -67,6 +66,20 @@ describe('sparkswapd', () => {
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ }))
   })
 
+  it('provides an rpc user/pass', () => {
+    const rpcUser = 'sparkswap'
+    const rpcPass = 'passwd'
+
+    argv.push('--rpc-user')
+    argv.push(rpcUser)
+    argv.push('--rpc-pass')
+    argv.push(rpcPass)
+
+    sparkswapd(argv)
+
+    expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ rpcUser, rpcPass }))
+  })
+
   it('provides an rpc address', () => {
     const rpcAddress = '0.0.0.0:9876'
     argv.push('--rpc-address')
@@ -76,8 +89,6 @@ describe('sparkswapd', () => {
 
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ rpcAddress }))
   })
-
-  xit('defaults the rpc address to the env variable')
 
   it('provides an interchain router address', () => {
     const interchainRouterAddress = '0.0.0.0:9876'
@@ -89,8 +100,6 @@ describe('sparkswapd', () => {
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ interchainRouterAddress }))
   })
 
-  xit('defaults the interchain router address to the env variable')
-
   it('provides an data dir', () => {
     const dataDir = '/dev/null'
     argv.push('--data-dir')
@@ -100,8 +109,6 @@ describe('sparkswapd', () => {
 
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ dataDir }))
   })
-
-  xit('defaults the data dir to the env variable')
 
   it('provides a relayer host', () => {
     const relayerHost = 'example.com:9876'
@@ -113,8 +120,6 @@ describe('sparkswapd', () => {
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ relayerOptions: { relayerRpcHost: relayerHost } }))
   })
 
-  xit('defaults the relayer host to the env variable')
-
   it('provides a relayer cert path', () => {
     const relayerCertPath = '/path/to/relayer/root.pem'
     argv.push('--relayer-cert-path')
@@ -124,8 +129,6 @@ describe('sparkswapd', () => {
 
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ relayerOptions: { relayerCertPath } }))
   })
-
-  xit('defaults the relayer cert path to the env variable')
 
   it('provides a flag for relayer auth', () => {
     argv.push('--disable-relayer-auth')
@@ -141,8 +144,6 @@ describe('sparkswapd', () => {
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ relayerOptions: { disableRelayerAuth: undefined } }))
   })
 
-  xit('defaults relayer auth to the env variable')
-
   it('provides the markets', () => {
     const markets = 'BTC/LTC,ABC/XYZ'
     argv.push('--markets')
@@ -155,8 +156,6 @@ describe('sparkswapd', () => {
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ marketNames }))
   })
 
-  xit('defaults the markets to the env variable')
-
   it('provides the engine type', () => {
     const ltcEngineType = 'LND'
     argv.push('--ltc-engine-type')
@@ -167,8 +166,6 @@ describe('sparkswapd', () => {
     const { engines } = BrokerDaemon.args[0][0]
     expect(engines.LTC).to.have.property('type', ltcEngineType)
   })
-
-  xit('defaults the engine type to the env variable')
 
   it('provides the engine rpc address', () => {
     const ltcEngineType = 'LND'
@@ -184,8 +181,6 @@ describe('sparkswapd', () => {
     expect(engines.LTC).to.have.property('lndRpc', ltcLndRpc)
   })
 
-  xit('defaults the engine rpc address to the env variable')
-
   it('provides the engine tls cert', () => {
     const ltcEngineType = 'LND'
     argv.push('--ltc-engine-type')
@@ -200,8 +195,6 @@ describe('sparkswapd', () => {
     expect(engines.LTC).to.have.property('lndTls', ltcLndTls)
   })
 
-  xit('defaults the engine tls cert to the env variable')
-
   it('provides the engine macaroon path', () => {
     const ltcEngineType = 'LND'
     argv.push('--ltc-engine-type')
@@ -215,6 +208,4 @@ describe('sparkswapd', () => {
     const { engines } = BrokerDaemon.args[0][0]
     expect(engines.LTC).to.have.property('lndMacaroon', ltcLndMacaroon)
   })
-
-  xit('defaults the engine macaroon path to the env variable')
 })

@@ -4,7 +4,15 @@ const { loadProto } = require('../../utils')
 const healthCheck = require('./health-check')
 
 class AdminService {
-  constructor (protoPath, { logger, relayer, engine, engines }) {
+  /**
+   * @param {String} protoPath
+   * @param {Object} opts
+   * @param {Object} opts.logger
+   * @param {Object} opts.relayer
+   * @param {Map} opts.engines
+   * @param {Function} opts.auth
+   */
+  constructor (protoPath, { logger, relayer, engines, auth }) {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
     this.logger = logger
@@ -17,7 +25,7 @@ class AdminService {
     } = this.proto
 
     this.implementation = {
-      healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer, engines }, { HealthCheckResponse }).register()
+      healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer, engines, auth }, { HealthCheckResponse }).register()
     }
   }
 
