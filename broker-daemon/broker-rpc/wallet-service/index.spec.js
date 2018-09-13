@@ -20,6 +20,7 @@ describe('WalletService', () => {
   let getTradingCapacities
   let orderbooks
   let releaseChannels
+  let withdrawFunds
   let auth
 
   before(() => {
@@ -46,6 +47,7 @@ describe('WalletService', () => {
     getPaymentChannelNetworkAddress = sinon.stub()
     getTradingCapacities = sinon.stub()
     releaseChannels = sinon.stub()
+    withdrawFunds = sinon.stub()
     balanceSpy = sinon.spy()
     commitSpy = sinon.spy()
     unaryMethodStub = sinon.stub()
@@ -60,6 +62,7 @@ describe('WalletService', () => {
     WalletService.__set__('getPaymentChannelNetworkAddress', getPaymentChannelNetworkAddress)
     WalletService.__set__('getTradingCapacities', getTradingCapacities)
     WalletService.__set__('releaseChannels', releaseChannels)
+    WalletService.__set__('withdrawFunds', withdrawFunds)
 
     wallet = new WalletService(protoPath, { logger, engines, relayer, orderbooks, auth })
   })
@@ -135,6 +138,17 @@ describe('WalletService', () => {
         releaseChannels,
         expectedMessageId,
         { logger, engines, orderbooks, auth },
+        { EmptyResponse: responseStub }
+      )
+    })
+
+    it('creates a unary method for withdrawFunds', () => {
+      const expectedMessageId = '[WalletService:withdrawFunds]'
+
+      expect(unaryMethodStub).to.have.been.calledWith(
+        withdrawFunds,
+        expectedMessageId,
+        { logger, engines, auth },
         { EmptyResponse: responseStub }
       )
     })
