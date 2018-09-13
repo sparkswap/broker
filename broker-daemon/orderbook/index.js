@@ -112,12 +112,13 @@ class Orderbook {
   }
 
   /**
-   * Gets the last time this market was updated with data from the relayer
+   * Returns the last market event that we have saved
    *
-   * @returns {Promise<number>} A promise that contains the timestamp of the last update, or null if no update exists
+   * @returns {Promise<Object>} event
    */
-  async lastUpdate () {
+  async lastEvent () {
     this.logger.info(`Retrieving last update from store for ${this.marketName}`)
+
     const [ lastEvent ] = await getRecords(
       this.eventStore,
       MarketEvent.fromStorage.bind(MarketEvent),
@@ -127,11 +128,30 @@ class Orderbook {
       }
     )
 
-    const timestamp = lastEvent ? lastEvent.timestamp : null
+    return lastEvent
+  }
 
+  /**
+   * Gets the last time this market was updated with data from the relayer
+   *
+   * @returns {Promise<Number>} A promise that contains the timestamp of the last update, or null if no update exists
+   */
+  async lastUpdate () {
+    // TODO: What should we do if the timestamp is null?
+    const { timestamp = null } = await this.lastEvent()
     this.logger.info(`Found last update of ${timestamp}`)
-
     return timestamp
+  }
+
+  /**
+   * Gets the last event number from when this market was updated with data from the relayer
+   *
+   * @returns {Promise<String>} eventNumber
+   */
+  async lastEventNumber () {
+    const { eventNumber } = await this.lastEvent()
+    this.logger.info(`Found last update of ${eventNumber}`)
+    return eventNumber
   }
 }
 

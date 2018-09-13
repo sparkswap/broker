@@ -6,7 +6,7 @@ const caller = require('grpc-caller')
 const Identity = require('./identity')
 
 const { MarketEvent } = require('../models')
-const { loadProto, migrateStore } = require('../utils')
+const { loadProto, migrateStore, getRecords, Big } = require('../utils')
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
 
@@ -101,10 +101,33 @@ class RelayerClient {
       try {
         const watcher = this.orderbookService.watchMarket(params)
 
-        // we set this value to be a promise when we are migrating the database.
+        // We set this value to be a promise when we are migrating the database.
         // if we were to continue processing before deletion is finished, we could
         // inadvertently delete new events added to the store.
         let migrating
+
+        // We save the last event number from the stream/leveldb to make sure that
+        // we have not missed any events. If the previousEventNumber does not match
+        // the current event - (minus) 1, then we wipe the event store and restart
+        // the daemon. This process will trigger the relayer to send the entire orderbook.
+        //
+        const [ lastEvent ] = await getRecords(
+          store,
+          MarketEvent.fromStorage.bind(MarketEvent),
+          {
+            reverse: true,
+            limit: 1
+          }
+        )
+
+        // TODO: What should happen if eventNumber was never saved? Should we bail?
+        if (!lastEvent.eventNumber) {
+          this.logger.warn('Expected eventNumber to be present, but instead got null')
+        }
+
+        const { eventNumber: lastEventNumber = 0 } = lastEvent
+
+        let previousEventNumber = Big(lastEventNumber)
 
         watcher.on('end', () => {
           this.logger.error('Remote ended stream', params)
@@ -138,8 +161,37 @@ class RelayerClient {
             return this.logger.debug(`Returning because response type is: ${response.type}`)
           }
 
-          this.logger.debug('Creating a market event', response.marketEvent)
-          const { key, value } = new MarketEvent(response.marketEvent)
+          const { marketEvent = {} } = response
+          const { eventNumber } = marketEvent
+
+          if (!eventNumber) {
+            // TODO: Not sure how to handle this, since it would be a relayer issue
+            // or connection might be down
+            throw new Error('Event number did not exist on market event')
+          }
+
+          this.logger.debug('Creating a market event', marketEvent)
+
+          // Grab the absolute value because we can have situations where the eventNumber is
+          // greater than the previous event (when the relayer has reset) or less than
+          // the current event number (because the broker went offline). If the difference
+          // is greater than one, then that means we have potentially missed events and should
+          // start over from the beginning
+          if (Big(eventNumber).minus(previousEventNumber).abs() > 1) {
+            this.logger.debug('Orderbook is in a weird state', { previousEventNumber, currentEvent: marketEvent.eventNumber })
+
+            // this deletes every event in the store, and makes `migrating` a promise
+            // that resolves when deletion is complete, allowing other events to be processed.
+            this.logger.debug('Deleting store')
+            migrating = migrateStore(store, store, (key) => { return { type: 'del', key } })
+
+            reject(new Error('Orderbook is in a weird state'))
+          }
+
+          previousEventNumber = marketEvent.eventNumber
+
+          const { key, value } = new MarketEvent(marketEvent)
+
           store.put(key, value)
         })
 
@@ -148,6 +200,8 @@ class RelayerClient {
           process.exit(1)
           reject(err)
         })
+      // NOTE: This catch will NOT handle any errors that are thrown inside of `watcher`
+      // events. You must reject the promise in order to bubble-up any exceptions
       } catch (e) {
         this.logger.error('Error encountered while setting up stream')
         return reject(e)
