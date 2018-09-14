@@ -371,6 +371,15 @@ describe('RelayerClient', () => {
   })
 
   describe('insecureIdentity', () => {
+    let insecureIdentity
 
+    beforeEach(() => {
+      insecureIdentity = RelayerClient.__get__('insecureIdentity')
+    })
+
+    it('creates an insecure identity', () => {
+      const res = insecureIdentity(logger)
+      expect(res).to.have.property('authorize')
+    })
   })
 })

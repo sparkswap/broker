@@ -3,7 +3,7 @@ const { rewire, sinon, expect } = require('test/test-helper')
 
 const Orderbook = rewire(path.resolve('broker-daemon', 'orderbook', 'index'))
 
-describe.only('Orderbook', () => {
+describe('Orderbook', () => {
   let EventFromStorage
   let EventFromStorageBind
   let EventTypes = {
