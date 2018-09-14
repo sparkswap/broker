@@ -88,14 +88,14 @@ class RelayerClient {
    * @param {String} params.lastUpdated - nanosecond timestamp
    * @returns {Promise<void>} a promise that resolves when the market is up to date with the remote relayer
    */
-  watchMarket (store, { baseSymbol, counterSymbol, lastUpdated, lastUpdatedVersion: version }) {
+  watchMarket (store, { baseSymbol, counterSymbol, lastUpdated, eventOrder }) {
     const RESPONSE_TYPES = this.proto.WatchMarketResponse.ResponseType
 
     const params = {
       baseSymbol,
       counterSymbol,
       lastUpdated,
-      version
+      eventOrder
     }
 
     return new Promise(async (resolve, reject) => {
