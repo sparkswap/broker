@@ -3,7 +3,7 @@ const { rewire, sinon, expect } = require('test/test-helper')
 
 const Orderbook = rewire(path.resolve('broker-daemon', 'orderbook', 'index'))
 
-describe('Orderbook', () => {
+describe.only('Orderbook', () => {
   let EventFromStorage
   let EventFromStorageBind
   let EventTypes = {
@@ -190,6 +190,42 @@ describe('Orderbook', () => {
   })
 
   describe('#lastUpdate', () => {
+    let orderbook
+    let getLastRecordStub
+    let timestamp
+    let eventOrder
+
+    beforeEach(() => {
+      const marketName = 'XYZ/ABC'
+      timestamp = '1234'
+      eventOrder = '0'
+
+      getLastRecordStub = sinon.stub().returns({
+        timestamp,
+        eventOrder
+      })
+
+      orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+      orderbook.getLastRecord = getLastRecordStub
+    })
+
+    it('grabs the last record from the orderbook', async () => {
+      await orderbook.lastUpdate()
+      expect(getLastRecordStub)
+    })
+
+    it('returns lastUpdated timestamp', async () => {
+      const result = await orderbook.lastUpdate()
+      expect(result).to.have.property('lastUpdated', timestamp)
+    })
+
+    it('returns an event order number', async () => {
+      const result = await orderbook.lastUpdate()
+      expect(result).to.have.property('eventOrder', eventOrder)
+    })
+  })
+
+  describe('#getLastRecord', () => {
     it('gets the timestamp of the last event', async () => {
       const marketName = 'XYZ/ABC'
       const orderbook = new Orderbook(marketName, relayer, baseStore, logger)
@@ -201,11 +237,11 @@ describe('Orderbook', () => {
       }
       getRecords.resolves([ lastEvent ])
 
-      const timestamp = await orderbook.lastUpdate()
+      const event = await orderbook.getLastRecord()
 
       expect(getRecords).to.have.been.calledOnce()
       expect(getRecords).to.have.been.calledWith(eventStore, bound, sinon.match({ reverse: true, limit: 1 }))
-      expect(timestamp).to.be.equal(lastEvent.timestamp)
+      expect(event).to.be.eql(lastEvent)
     })
 
     it('returns null if there are no events', async () => {
@@ -214,9 +250,9 @@ describe('Orderbook', () => {
 
       getRecords.resolves([])
 
-      const timestamp = await orderbook.lastUpdate()
+      const event = await orderbook.getLastRecord()
 
-      expect(timestamp).to.be.null()
+      expect(event).to.be.null()
     })
   })
 
