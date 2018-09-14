@@ -21,6 +21,7 @@ describe('commit', () => {
   let getMaxOutboundChannelStub
   let getMaxInboundChannelStub
   let orderbooks
+  let currencyConfig
 
   beforeEach(() => {
     EmptyResponse = sinon.stub()
@@ -33,7 +34,8 @@ describe('commit', () => {
     orderbooks = new Map([['BTC/LTC', {}]])
     logger = {
       info: sinon.stub(),
-      error: sinon.stub()
+      error: sinon.stub(),
+      debug: sinon.stub()
     }
     getMaxOutboundChannelStub = sinon.stub().resolves({})
     getMaxInboundChannelStub = sinon.stub().resolves({})
@@ -61,7 +63,36 @@ describe('commit', () => {
         createChannel: createChannelRelayerStub
       }
     }
+    currencyConfig = [{
+      name: 'Bitcoin',
+      symbol: 'BTC',
+      quantumsPerCommon: '100000000',
+      maxChannelBalance: '16777215'
+    }]
+
     commit.__set__('convertBalance', convertBalanceStub)
+    commit.__set__('currencyConfig', currencyConfig)
+  })
+
+  it('throws an error if engine does not exist for symbol', () => {
+    const badSymbol = 'bad'
+    const errorMessage = `Currency was not found when trying to commit to market: ${badSymbol}`
+    return expect(commit({ params: { symbol: badSymbol }, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
+  })
+
+  it('balance under minimum amount throws an error for an incorrect balance', () => {
+    params.balance = '100'
+    return expect(
+      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+    ).to.be.rejectedWith(PublicError, 'Minimum balance of')
+  })
+
+  it('balance over allowed maximum value throws an error for an incorrect balance', () => {
+    const maxBalance = currencyConfig[0].maxChannelBalance
+    params.balance = maxBalance + 1
+    return expect(
+      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+    ).to.be.rejectedWith(PublicError, 'Maximum balance')
   })
 
   describe('committing a balance to the exchange', () => {
@@ -112,6 +143,14 @@ describe('commit', () => {
 
   describe('invalid engine types', () => {
     it('throws an error if engine does not exist for symbol', () => {
+      currencyConfig = [{
+        name: 'BadBitcoin',
+        symbol: 'BAD',
+        quantumsPerCommon: '100000000',
+        maxChannelBalance: '16777215'
+      }]
+
+      commit.__set__('currencyConfig', currencyConfig)
       const badParams = {symbol: 'BAD', market: 'BTC/LTC'}
       const errorMessage = `No engine is configured for symbol: ${badParams.symbol}`
       return expect(commit({ params: badParams, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
@@ -122,26 +161,6 @@ describe('commit', () => {
       return expect(
         commit({ params, relayer, logger, engines: badEngines, orderbooks }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError, 'No engine is configured for symbol')
-    })
-  })
-
-  describe('balance under minimum amount', () => {
-    it('throws an error for an incorrect balance', () => {
-      params.balance = '100'
-      return expect(
-        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-      ).to.be.rejectedWith(PublicError, 'Minimum balance of')
-    })
-  })
-
-  describe('balance over allowed maximum value', () => {
-    let maxBalance = commit.__get__('MAX_CHANNEL_BALANCE')
-
-    it('throws an error for an incorrect balance', () => {
-      params.balance = maxBalance + 1
-      return expect(
-        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-      ).to.be.rejectedWith(PublicError)
     })
   })
 
