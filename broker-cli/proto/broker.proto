@@ -1056,12 +1056,21 @@ service WalletService {
    * WithdrawFunds moves funds (of the specified currency and amount) to the specified address
    *
    * ```javascript
-   * await walletService.withdrawFunds({ symbol: 'BTC', amount: '2', address: 'asdfasdf' })
-   * console.log(paymentChannelNetworkAddress)
+   * const id = await walletService.withdrawFunds({ symbol: 'BTC', amount: '2', address: 'asdfasdf' })
+   * console.log(id)
+   * ```
+   * > The above command will print:
+   *
+   * ```javascript
+   * '66a581f618ee68dde53142c55e924d56cd2b2c169be5b374bc810ac692fb17fd'
    * ```
    *
    * ```shell
    * > sparkswap wallet withdraw BTC 10 --wallet-address asdfadf
+   * ```
+   *
+   * ```shell
+   * Successfully withdrew 2 BTC from your wallet! { id: '66a581f618ee68dde53142c55e924d56cd2b2c169be5b374bc810ac692fb17fd' }
    * ```
    */
   rpc WithdrawFunds (WithdrawFundsRequest) returns (WithdrawFundsResponse);

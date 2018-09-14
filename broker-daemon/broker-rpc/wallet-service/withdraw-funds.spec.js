@@ -16,7 +16,7 @@ describe('withdrawFunds', () => {
   beforeEach(() => {
     txid = 'asdf'
     WithdrawFundsResponse = sinon.stub()
-    withdrawFundsStub = sinon.stub().resolves({txid})
+    withdrawFundsStub = sinon.stub().resolves(txid)
     logger = {
       info: sinon.stub()
     }
@@ -32,7 +32,7 @@ describe('withdrawFunds', () => {
     }
   })
 
-  describe('withdrawFunds a balance to the exchange', () => {
+  describe('withdrawFunds', () => {
     beforeEach(async () => {
       await withdrawFunds({ params, relayer, logger, engines }, { WithdrawFundsResponse })
     })
