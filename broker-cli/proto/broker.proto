@@ -815,6 +815,11 @@ message WithdrawFundsRequest {
   string address = 3;
 }
 
+message WithdrawFundsResponse {
+  // transaction id of the withdrawal
+  string id = 1;
+}
+
 /**
  * The WalletService is for interacting with the wallets managed by the Broker on behalf of the user.
  *
@@ -1059,7 +1064,7 @@ service WalletService {
    * > sparkswap wallet withdraw BTC 10 --wallet-address asdfadf
    * ```
    */
-  rpc WithdrawFunds (WithdrawFundsRequest) returns (google.protobuf.Empty);
+  rpc WithdrawFunds (WithdrawFundsRequest) returns (WithdrawFundsResponse);
 }
 
 /**

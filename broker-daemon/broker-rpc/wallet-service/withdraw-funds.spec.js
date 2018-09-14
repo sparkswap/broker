@@ -4,18 +4,19 @@ const { PublicError } = require('grpc-methods')
 const withdrawFunds = rewire(path.resolve(__dirname, 'withdraw-funds'))
 
 describe('withdrawFunds', () => {
-  let EmptyResponse
+  let WithdrawFundsResponse
   let params
   let relayer
   let logger
   let btcEngine
-  let res
   let engines
   let withdrawFundsStub
+  let txid
 
   beforeEach(() => {
-    EmptyResponse = sinon.stub()
-    withdrawFundsStub = sinon.stub().resolves({txid: 'asdf'})
+    txid = 'asdf'
+    WithdrawFundsResponse = sinon.stub()
+    withdrawFundsStub = sinon.stub().resolves({txid})
     logger = {
       info: sinon.stub()
     }
@@ -33,7 +34,7 @@ describe('withdrawFunds', () => {
 
   describe('withdrawFunds a balance to the exchange', () => {
     beforeEach(async () => {
-      res = await withdrawFunds({ params, relayer, logger, engines }, { EmptyResponse })
+      await withdrawFunds({ params, relayer, logger, engines }, { WithdrawFundsResponse })
     })
 
     it('makes a request to the engine to withdrawFunds to the address specified', () => {
@@ -43,8 +44,8 @@ describe('withdrawFunds', () => {
       )
     })
 
-    it('returns an empty object', () => {
-      expect(res).to.be.eql({})
+    it('returns an WithdrawFundsResponse', () => {
+      expect(WithdrawFundsResponse).to.have.been.calledWith({id: txid})
     })
   })
 
@@ -52,7 +53,7 @@ describe('withdrawFunds', () => {
     it('throws an error if engine is not found', () => {
       const badEngines = new Map([['BTC', undefined]])
       return expect(
-        withdrawFunds({ params, relayer, logger, engines: badEngines }, { EmptyResponse })
+        withdrawFunds({ params, relayer, logger, engines: badEngines }, { WithdrawFundsResponse })
       ).to.be.rejectedWith(PublicError, `No engine available for ${params.symbol}`)
     })
   })
@@ -62,7 +63,7 @@ describe('withdrawFunds', () => {
       withdrawFundsStub.throws('Error', 'Insufficient Funds')
 
       return expect(
-        withdrawFunds({ params, relayer, logger, engines }, { EmptyResponse })
+        withdrawFunds({ params, relayer, logger, engines }, { WithdrawFundsResponse })
       ).to.be.rejectedWith(PublicError, 'Insufficient Funds')
     })
   })

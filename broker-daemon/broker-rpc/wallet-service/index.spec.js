@@ -36,7 +36,8 @@ describe('WalletService', () => {
           Empty: responseStub
         }
       },
-      GetTradingCapacitiesResponse: responseStub
+      GetTradingCapacitiesResponse: responseStub,
+      WithdrawFundsResponse: responseStub
     })
     auth = sinon.stub()
     logger = sinon.stub()
@@ -149,7 +150,7 @@ describe('WalletService', () => {
         withdrawFunds,
         expectedMessageId,
         { logger, engines, auth },
-        { EmptyResponse: responseStub }
+        { WithdrawFundsResponse: responseStub }
       )
     })
   })

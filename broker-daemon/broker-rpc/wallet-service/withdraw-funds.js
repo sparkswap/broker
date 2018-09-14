@@ -8,10 +8,10 @@ const { PublicError } = require('grpc-methods')
  * @param {RelayerClient} request.relayer
  * @param {Logger} request.logger
  * @param {Engine} request.engines
- * @param {Object} responses
- * @return {Object} empty object
+ * @param {function} responses.WithdrawFundsResponse
+ * @return {WithdrawFundsResponse}
  */
-async function withdrawFunds ({ params, relayer, logger, engines }) {
+async function withdrawFunds ({ params, relayer, logger, engines }, { WithdrawFundsResponse }) {
   const { symbol, amount, address } = params
 
   const amountInSat = (parseInt(amount) * 100000000)
@@ -25,10 +25,10 @@ async function withdrawFunds ({ params, relayer, logger, engines }) {
     logger.info(`Attempting to withdraw ${amount} ${symbol} from wallet to ${address}`)
     const { txid } = await engine.withdrawFunds(address, amountInSat)
     logger.info(`Successfully withdrew ${amount} ${symbol} from wallet to ${address}, transaction id: ${txid}`)
+    return new WithdrawFundsResponse({id: txid})
   } catch (err) {
     throw new PublicError(err.message, err)
   }
-  return {}
 }
 
 module.exports = withdrawFunds

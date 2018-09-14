@@ -35,6 +35,7 @@ class WalletService {
       GetBalancesResponse,
       GetPaymentChannelNetworkAddressResponse,
       GetTradingCapacitiesResponse,
+      WithdrawFundsResponse,
       google: {
         protobuf: {
           Empty: EmptyResponse
@@ -49,7 +50,7 @@ class WalletService {
       getPaymentChannelNetworkAddress: new GrpcUnaryMethod(getPaymentChannelNetworkAddress, this.messageId('getPaymentChannelNetworkAddress'), { logger, engines, auth }, { GetPaymentChannelNetworkAddressResponse }).register(),
       getTradingCapacities: new GrpcUnaryMethod(getTradingCapacities, this.messageId('getTradingCapacities'), { logger, engines, orderbooks, auth }, { GetTradingCapacitiesResponse }).register(),
       releaseChannels: new GrpcUnaryMethod(releaseChannels, this.messageId('releaseChannels'), { logger, engines, orderbooks, auth }, { EmptyResponse }).register(),
-      withdrawFunds: new GrpcUnaryMethod(withdrawFunds, this.messageId('withdrawFunds'), { logger, engines, auth }, { EmptyResponse }).register()
+      withdrawFunds: new GrpcUnaryMethod(withdrawFunds, this.messageId('withdrawFunds'), { logger, engines, auth }, { WithdrawFundsResponse }).register()
     }
   }
 

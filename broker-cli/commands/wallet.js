@@ -333,8 +333,8 @@ async function withdraw (args, opts, logger) {
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    await client.walletService.withdrawFunds({ symbol, address, amount })
-    logger.info(`Successfully withdrew ${amount} ${symbol} from your wallet!`)
+    const { id } = await client.walletService.withdrawFunds({ symbol, address, amount })
+    logger.info(`Successfully withdrew ${amount} ${symbol} from your wallet!`, { id })
   } catch (e) {
     logger.error(handleError(e))
   }
