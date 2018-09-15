@@ -315,10 +315,10 @@ async function release (args, opts, logger) {
  *
  * @function
  * @param {Object} args
- * @param {Object} args.symbol
+ * @param {String} args.symbol
  * @param {Object} opts
  * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.market] market name, i.e BTC/LTC
+ * @param {String} [opts.walletAddress] wallet address to move funds to
  * @param {Logger} logger
  * @return {Void}
  */
@@ -333,8 +333,8 @@ async function withdraw (args, opts, logger) {
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    const { id } = await client.walletService.withdrawFunds({ symbol, address, amount })
-    logger.info(`Successfully withdrew ${amount} ${symbol} from your wallet!`, { id })
+    const { txid } = await client.walletService.withdrawFunds({ symbol, address, amount })
+    logger.info(`Successfully withdrew ${amount} ${symbol} from your wallet!`, { id: txid })
   } catch (e) {
     logger.error(handleError(e))
   }

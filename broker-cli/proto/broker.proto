@@ -817,7 +817,7 @@ message WithdrawFundsRequest {
 
 message WithdrawFundsResponse {
   // transaction id of the withdrawal
-  string id = 1;
+  string txid = 1;
 }
 
 /**
@@ -1056,8 +1056,8 @@ service WalletService {
    * WithdrawFunds moves funds (of the specified currency and amount) to the specified address
    *
    * ```javascript
-   * const id = await walletService.withdrawFunds({ symbol: 'BTC', amount: '2', address: 'asdfasdf' })
-   * console.log(id)
+   * const { txid } = await walletService.withdrawFunds({ symbol: 'BTC', amount: '2', address: 'asdfasdf' })
+   * console.log(txid)
    * ```
    * > The above command will print:
    *
