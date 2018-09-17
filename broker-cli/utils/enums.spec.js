@@ -3,8 +3,7 @@ const { expect } = require('test/test-helper')
 const {
   TIME_IN_FORCE,
   ORDER_TYPES,
-  STATUS_CODES,
-  MAX_CHANNEL_BALANCE
+  STATUS_CODES
 } = require('./enums')
 
 describe('Validations', () => {
@@ -21,10 +20,5 @@ describe('Validations', () => {
   it('defines STATUS_CODES', () => {
     expect(STATUS_CODES).to.not.be.null()
     expect(STATUS_CODES).to.not.be.undefined()
-  })
-
-  it('defines MAX_CHANNEL_BALANCE', () => {
-    expect(MAX_CHANNEL_BALANCE).to.not.be.null()
-    expect(MAX_CHANNEL_BALANCE).to.not.be.undefined()
   })
 })

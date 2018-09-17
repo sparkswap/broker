@@ -5,8 +5,9 @@
 
 const Table = require('cli-table')
 require('colors')
+
 const BrokerDaemonClient = require('../broker-daemon-client')
-const { ENUMS, validations, askQuestion, Big, handleError } = require('../utils')
+const { validations, askQuestion, Big, handleError } = require('../utils')
 const { currencies: currencyConfig } = require('../configuration')
 
 /**
@@ -125,8 +126,13 @@ async function newDepositAddress (args, opts, logger) {
 async function commit (args, opts, logger) {
   const { symbol, amount } = args
   const { rpcAddress = null, market } = opts
+  const currentCurrencyConfig = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol)
 
   try {
+    if (!currentCurrencyConfig) {
+      throw new Error(`Currency is not supported by the CLI: ${symbol}`)
+    }
+
     const client = new BrokerDaemonClient(rpcAddress)
 
     const { balances } = await client.walletService.getBalances({})
@@ -140,31 +146,36 @@ async function commit (args, opts, logger) {
     }
 
     // We try to take the lowest total here between 2 Big numbers due to a
-    // commit limit specified as MAX_CHANNEL_BALANCE
-    let maxSupportedBalance = uncommittedBalance
+    // commit limit specified as `maxChannelBalance` in the currency configuration
+    let maxSupportedBalance = totalUncommittedBalance
 
-    // TODO: Change the MAX_CHANNEL_BALANCE to be set per currency
-    if (totalUncommittedBalance.gt(ENUMS.MAX_CHANNEL_BALANCE)) {
-      maxSupportedBalance = ENUMS.MAX_CHANNEL_BALANCE
+    const maxChannelBalance = Big(currentCurrencyConfig.maxChannelBalance)
+
+    if (totalUncommittedBalance.gt(maxChannelBalance)) {
+      maxSupportedBalance = maxChannelBalance
     }
 
-    // We use this for normalization of the amount from satoshis to a decimal
-    // value
-    const divideBy = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
+    // We use this for normalization of the amount from satoshis to a decimal value
+    const divideBy = currentCurrencyConfig.quantumsPerCommon
 
-    // Amount is specified in currency instead of satoshis
+    // The logic here only runs if an amount is specified in the commit command
     if (amount) {
-      maxSupportedBalance = (amount * divideBy)
+      // Amount is specified in currency instead of satoshis
+      const specifiedAmount = Big(amount).times(divideBy)
+
+      if (specifiedAmount.lt(maxChannelBalance)) {
+        maxSupportedBalance = specifiedAmount
+      }
     }
 
-    logger.info(`For your knowledge, the Maximum supported balance at this time is: ${Big(ENUMS.MAX_CHANNEL_BALANCE).div(divideBy)} ${symbol}`)
+    logger.info(`For your knowledge, the Maximum supported balance at this time is: ${Big(maxSupportedBalance).div(divideBy)} ${symbol}`)
     logger.info(`Your current uncommitted wallet balance is: ${Big(uncommittedBalance).div(divideBy)} ${symbol}`)
 
     const answer = await askQuestion(`Are you OK committing ${Big(maxSupportedBalance).div(divideBy)} ${symbol} to sparkswap? (Y/N)`)
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    if (Big(maxSupportedBalance).gt(uncommittedBalance)) {
+    if (maxSupportedBalance.gt(uncommittedBalance)) {
       throw new Error(`Amount specified is larger than your current uncommitted balance of ${Big(uncommittedBalance).div(divideBy)} ${symbol}`)
     }
 
