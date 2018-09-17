@@ -22,10 +22,9 @@ async function withdrawFunds ({ params, relayer, logger, engines }, { WithdrawFu
     throw new PublicError(`No engine available for ${symbol}`)
   }
 
-  const multiplier = (currencies.find(({ symbol: configSymbol }) => configSymbol === symbol) || {}).quantumsPerCommon
-  console.log('multiplier', multiplier)
+  const { quantumsPerCommon: multiplier } = currencies.find(({ symbol: configSymbol }) => configSymbol === symbol) || {}
   if (!multiplier) {
-    throw new PublicError(`No multiplier available for ${symbol}`)
+    throw new PublicError(`Invalid configuration: missing quantumsPerCommon for ${symbol}`)
   }
   const amountInSat = Big(amount).times(multiplier)
 

@@ -96,7 +96,7 @@ describe('withdrawFunds', () => {
     it('throws an error currency multiplier does not exist', () => {
       return expect(
         withdrawFunds({ params, relayer, logger, engines }, { WithdrawFundsResponse })
-      ).to.be.rejectedWith(PublicError, `No multiplier available for ${params.symbol}`)
+      ).to.be.rejectedWith(PublicError, `Invalid configuration: missing quantumsPerCommon for ${params.symbol}`)
     })
   })
 })
