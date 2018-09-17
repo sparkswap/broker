@@ -804,6 +804,23 @@ message GetPaymentChannelNetworkAddressResponse {
 }
 
 /**
+ * Request to withdraw funds from wallet to specified address
+ */
+message WithdrawFundsRequest {
+  // Currency of funds to withdraw
+  Symbol symbol = 1;
+  // Amount of funds to withdraw
+  string amount = 2;
+  // Address to send the funds to
+  string address = 3;
+}
+
+message WithdrawFundsResponse {
+  // transaction id of the withdrawal
+  string txid = 1;
+}
+
+/**
  * The WalletService is for interacting with the wallets managed by the Broker on behalf of the user.
  *
  * It is used primarily during set up (e.g. making deposits) of a Broker.
@@ -1035,6 +1052,28 @@ service WalletService {
    */
   rpc GetTradingCapacities (GetTradingCapacitiesRequest) returns (GetTradingCapacitiesResponse);
 
+  /**
+   * WithdrawFunds moves funds (of the specified currency and amount) to the specified address
+   *
+   * ```javascript
+   * const { txid } = await walletService.withdrawFunds({ symbol: 'BTC', amount: '2', address: 'asdfasdf' })
+   * console.log(txid)
+   * ```
+   * > The above command will print:
+   *
+   * ```javascript
+   * '66a581f618ee68dde53142c55e924d56cd2b2c169be5b374bc810ac692fb17fd'
+   * ```
+   *
+   * ```shell
+   * > sparkswap wallet withdraw BTC 10 --wallet-address asdfadf
+   * ```
+   *
+   * ```shell
+   * Successfully withdrew 2 BTC from your wallet! { id: '66a581f618ee68dde53142c55e924d56cd2b2c169be5b374bc810ac692fb17fd' }
+   * ```
+   */
+  rpc WithdrawFunds (WithdrawFundsRequest) returns (WithdrawFundsResponse);
 }
 
 /**

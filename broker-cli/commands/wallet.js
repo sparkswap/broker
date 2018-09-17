@@ -37,7 +37,8 @@ const SUPPORTED_COMMANDS = Object.freeze({
   COMMIT: 'commit',
   NETWORK_ADDRESS: 'network-address',
   NETWORK_STATUS: 'network-status',
-  RELEASE: 'release'
+  RELEASE: 'release',
+  WITHDRAW: 'withdraw'
 })
 
 /**
@@ -318,6 +319,40 @@ async function release (args, opts, logger) {
   }
 }
 
+/**
+ * withdraw
+ *
+ * ex: `sparkswap wallet withdraw`
+ *
+ * @function
+ * @param {Object} args
+ * @param {String} args.symbol
+ * @param {String} args.address
+ * @param {String} args.amount
+ * @param {Object} opts
+ * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {String} [opts.walletAddress] wallet address to move funds to
+ * @param {Logger} logger
+ * @return {Void}
+ */
+async function withdraw (args, opts, logger) {
+  const {symbol, address, amount} = args
+  const { rpcAddress = null } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+
+    const answer = await askQuestion(`Are you sure you want to withdraw ${amount} ${symbol} from your wallet? (Y/N)`)
+
+    if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
+
+    const { txid } = await client.walletService.withdrawFunds({ symbol, address, amount })
+    logger.info(`Successfully withdrew ${amount} ${symbol} from your wallet!`, { id: txid })
+  } catch (e) {
+    logger.error(handleError(e))
+  }
+}
+
 module.exports = (program) => {
   program
     .command('wallet', 'Commands to handle a wallet instance')
@@ -326,6 +361,7 @@ module.exports = (program) => {
     .argument('[sub-arguments...]')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
+    .option('--wallet-address [address]', 'Address to send the coins to', validations.isHost)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
       const { market } = opts
@@ -375,6 +411,19 @@ module.exports = (program) => {
         case SUPPORTED_COMMANDS.RELEASE:
           opts.market = validations.isMarketName(market)
           return release(args, opts, logger)
+        case SUPPORTED_COMMANDS.WITHDRAW:
+          symbol = symbol.toUpperCase()
+          const { walletAddress } = opts
+
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
+            throw new Error(`Provided symbol is not a valid currency for the exchange`)
+          }
+
+          args.symbol = symbol
+          args.amount = amount
+          args.address = walletAddress
+
+          return withdraw(args, opts, logger)
       }
     })
     .command('wallet balance', 'Current daemon wallet balance')
@@ -390,4 +439,8 @@ module.exports = (program) => {
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .command('wallet release', 'Closes channels open on the specified market')
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
+    .command('wallet withdraw', 'Withdraws specified amount of coin from wallet')
+    .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
+    .argument('<amount>', 'Amount of currency to commit to the relayer', validations.isDecimal)
+    .option('--wallet-address', 'Address to send the coins to', validations.isHost)
 }

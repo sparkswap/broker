@@ -416,4 +416,62 @@ describe('cli wallet', () => {
       expect(logger.info).to.have.been.called()
     })
   })
+
+  describe('withdraw', () => {
+    let args
+    let opts
+    let logger
+    let rpcAddress
+    let address
+    let daemonStub
+    let withdrawStub
+    let askQuestionStub
+    let symbol
+    let amount
+    let txid
+
+    const withdraw = program.__get__('withdraw')
+
+    beforeEach(() => {
+      symbol = 'BTC'
+      rpcAddress = 'test:1337'
+      amount = 2
+      address = 'asdfasdf'
+      args = { symbol, amount, address }
+      opts = { rpcAddress }
+      txid = '1234'
+      withdrawStub = sinon.stub().resolves({txid: '1234'})
+      askQuestionStub = sinon.stub().returns('Y')
+      logger = { info: sinon.stub(), error: sinon.stub() }
+
+      daemonStub = sinon.stub()
+      daemonStub.prototype.walletService = {
+        withdrawFunds: withdrawStub
+      }
+
+      program.__set__('BrokerDaemonClient', daemonStub)
+      program.__set__('askQuestion', askQuestionStub)
+    })
+
+    it('calls the daemon to withdraw channels in the given market', async () => {
+      await withdraw(args, opts, logger)
+      expect(withdrawStub).to.have.been.calledWith({amount, symbol, address})
+    })
+
+    it('asks the user if they are ok to withdraw channels', async () => {
+      await withdraw(args, opts, logger)
+      expect(askQuestionStub).to.have.been.called()
+    })
+
+    it('returns early if the user does not agree to withdraw channels', async () => {
+      askQuestionStub.returns('N')
+      await withdraw(args, opts, logger)
+      expect(withdrawStub).to.not.have.been.called()
+    })
+
+    it('logs a successful withdrawal of funds', async () => {
+      await withdraw(args, opts, logger)
+      expect(logger.info).to.have.been.calledWith(`Successfully withdrew ${amount} ${symbol} from your wallet!`, { id: txid })
+    })
+  })
 })
