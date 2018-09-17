@@ -1,6 +1,7 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
 const { PublicError } = require('grpc-methods')
+const { Big } = require('../../utils')
 const withdrawFunds = rewire(path.resolve(__dirname, 'withdraw-funds'))
 
 describe('withdrawFunds', () => {
@@ -12,6 +13,8 @@ describe('withdrawFunds', () => {
   let engines
   let withdrawFundsStub
   let txid
+  let currencies
+  let revert
 
   beforeEach(() => {
     txid = 'asdf'
@@ -30,6 +33,24 @@ describe('withdrawFunds', () => {
       symbol: 'BTC',
       address: 'asdf'
     }
+
+    currencies = [
+      {
+        'name': 'Bitcoin',
+        'symbol': 'BTC',
+        'quantumsPerCommon': '100000000'
+      },
+      {
+        'name': 'Litecoin',
+        'symbol': 'LTC',
+        'quantumsPerCommon': '100000000'
+      }
+    ]
+    revert = withdrawFunds.__set__('currencies', currencies)
+  })
+
+  afterEach(() => {
+    revert()
   })
 
   describe('withdrawFunds', () => {
@@ -40,7 +61,7 @@ describe('withdrawFunds', () => {
     it('makes a request to the engine to withdrawFunds to the address specified', () => {
       expect(btcEngine.withdrawFunds).to.have.been.calledWith(
         params.address,
-        parseInt(params.amount) * 100000000
+        Big(params.amount).times(100000000)
       )
     })
 
@@ -59,12 +80,23 @@ describe('withdrawFunds', () => {
   })
 
   describe('balance under minimum amount', () => {
-    it('throws an error for an incorrect balance', () => {
+    it('throws a PublicError on withdraw failure', () => {
       withdrawFundsStub.throws('Error', 'Insufficient Funds')
 
       return expect(
         withdrawFunds({ params, relayer, logger, engines }, { WithdrawFundsResponse })
       ).to.be.rejectedWith(PublicError, 'Insufficient Funds')
+    })
+  })
+
+  describe('invalid currency multiplier', () => {
+    beforeEach(() => {
+      revert = withdrawFunds.__set__('currencies', [])
+    })
+    it('throws an error currency multiplier does not exist', () => {
+      return expect(
+        withdrawFunds({ params, relayer, logger, engines }, { WithdrawFundsResponse })
+      ).to.be.rejectedWith(PublicError, `No multiplier available for ${params.symbol}`)
     })
   })
 })

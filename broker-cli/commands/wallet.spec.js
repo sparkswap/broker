@@ -399,6 +399,7 @@ describe('cli wallet', () => {
     let askQuestionStub
     let symbol
     let amount
+    let txid
 
     const withdraw = program.__get__('withdraw')
 
@@ -409,7 +410,8 @@ describe('cli wallet', () => {
       address = 'asdfasdf'
       args = { symbol, amount, address }
       opts = { rpcAddress }
-      withdrawStub = sinon.stub().resolves({})
+      txid = '1234'
+      withdrawStub = sinon.stub().resolves({txid: '1234'})
       askQuestionStub = sinon.stub().returns('Y')
       logger = { info: sinon.stub(), error: sinon.stub() }
 
@@ -438,9 +440,9 @@ describe('cli wallet', () => {
       expect(withdrawStub).to.not.have.been.called()
     })
 
-    it('logs the number of channels closed', async () => {
+    it('logs a successful withdrawal of funds', async () => {
       await withdraw(args, opts, logger)
-      expect(logger.info).to.have.been.called()
+      expect(logger.info).to.have.been.calledWith(`Successfully withdrew ${amount} ${symbol} from your wallet!`, { id: txid })
     })
   })
 })

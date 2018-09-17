@@ -309,13 +309,15 @@ async function release (args, opts, logger) {
 }
 
 /**
- * release
+ * withdraw
  *
- * ex: `sparkswap wallet release`
+ * ex: `sparkswap wallet withdraw`
  *
  * @function
  * @param {Object} args
  * @param {String} args.symbol
+ * @param {String} args.address
+ * @param {String} args.amount
  * @param {Object} opts
  * @param {String} [opts.rpcAddress] broker rpc address
  * @param {String} [opts.walletAddress] wallet address to move funds to
