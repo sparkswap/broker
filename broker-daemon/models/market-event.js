@@ -1,5 +1,5 @@
 class MarketEvent {
-  constructor ({ eventId, orderId, timestamp, eventType, eventOrder, ...payload }) {
+  constructor ({ eventId, orderId, timestamp, eventType, sequence, ...payload }) {
     if (!Object.keys(this.constructor.TYPES).includes(eventType)) {
       throw new Error(`MarketEvents do not support a "${eventType}" type.`)
     }
@@ -8,13 +8,13 @@ class MarketEvent {
     this.orderId = orderId
     this.timestamp = timestamp
     this.eventType = eventType
-    this.eventOrder = eventOrder
+    this.sequence = sequence
     this.payload = payload
     this.sep = this.constructor.sep
   }
 
   get key () {
-    return `${this.timestamp}${this.sep}${this.eventId}${this.sep}${this.eventOrder}`
+    return `${this.timestamp}${this.sep}${this.sequence}${this.sep}${this.eventId}`
   }
 
   get value () {
@@ -23,13 +23,13 @@ class MarketEvent {
   }
 
   serialize () {
-    const { eventId, orderId, eventType, timestamp, eventOrder, payload } = this
+    const { eventId, orderId, eventType, timestamp, sequence, payload } = this
     return {
       eventId,
       orderId,
       eventType,
       timestamp,
-      eventOrder,
+      sequence,
       ...payload
     }
   }
@@ -46,8 +46,8 @@ class MarketEvent {
    * @returns {MarketEvent}
    */
   static fromStorage (key, value) {
-    const [timestamp, eventId, eventOrder] = key.split(this.sep)
-    return new this({ timestamp, eventId, eventOrder, ...JSON.parse(value) })
+    const [timestamp, sequence, eventId] = key.split(this.sep)
+    return new this({ timestamp, sequence, eventId, ...JSON.parse(value) })
   }
 }
 

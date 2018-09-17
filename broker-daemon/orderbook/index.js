@@ -29,8 +29,8 @@ class Orderbook {
     this.logger.info(`Initializing market ${this.marketName}...`)
 
     const { baseSymbol, counterSymbol } = this
-    const { lastUpdated, eventOrder } = await this.lastUpdate()
-    const params = { baseSymbol, counterSymbol, lastUpdated, eventOrder }
+    const { lastUpdated, sequence } = await this.lastUpdate()
+    const params = { baseSymbol, counterSymbol, lastUpdated, sequence }
 
     await this.relayer.watchMarket(this.eventStore, params)
 
@@ -135,19 +135,19 @@ class Orderbook {
    *
    * @returns {Object} res
    * @returns {String} [lastUpdated=0] - nanosecond timestamp
-   * @returns {String} [eventOrder=0] - event version for a given timestamp
+   * @returns {String} [sequence=0] - event version for a given timestamp
    */
   async lastUpdate () {
     this.logger.info(`Retrieving last update from store for ${this.marketName}`)
 
     const {
       timestamp: lastUpdated = 0,
-      eventOrder = 0
+      sequence = 0
     } = await this.getLastRecord()
 
     return {
       lastUpdated,
-      eventOrder
+      sequence
     }
   }
 }

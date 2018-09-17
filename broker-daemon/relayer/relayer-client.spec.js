@@ -220,7 +220,7 @@ describe('RelayerClient', () => {
         baseSymbol: 'XYZ',
         counterSymbol: 'CBAA',
         lastUpdated: '123',
-        eventOrder: '0'
+        sequence: '0'
       }
 
       MarketEvent.prototype.key = 'key'

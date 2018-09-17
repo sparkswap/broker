@@ -193,16 +193,16 @@ describe('Orderbook', () => {
     let orderbook
     let getLastRecordStub
     let timestamp
-    let eventOrder
+    let sequence
 
     beforeEach(() => {
       const marketName = 'XYZ/ABC'
       timestamp = '1234'
-      eventOrder = '0'
+      sequence = '0'
 
       getLastRecordStub = sinon.stub().returns({
         timestamp,
-        eventOrder
+        sequence
       })
 
       orderbook = new Orderbook(marketName, relayer, baseStore, logger)
@@ -219,9 +219,9 @@ describe('Orderbook', () => {
       expect(result).to.have.property('lastUpdated', timestamp)
     })
 
-    it('returns an event order number', async () => {
+    it('returns a sequence number', async () => {
       const result = await orderbook.lastUpdate()
-      expect(result).to.have.property('eventOrder', eventOrder)
+      expect(result).to.have.property('sequence', sequence)
     })
   })
 

@@ -46,9 +46,9 @@ describe('MarketEvent', () => {
       const orderId = 'myorder'
       const timestamp = '123456677'
       const eventType = MarketEvent.TYPES.PLACED
-      const eventOrder = '0'
+      const sequence = '0'
 
-      const key = `${timestamp}:${eventId}:${eventOrder}`
+      const key = `${timestamp}:${sequence}:${eventId}`
       const value = JSON.stringify({
         eventType,
         orderId
@@ -64,8 +64,8 @@ describe('MarketEvent', () => {
       expect(event.timestamp).to.be.eql(timestamp)
       expect(event).to.have.property('eventType')
       expect(event.eventType).to.be.eql(eventType)
-      expect(event).to.have.property('eventOrder')
-      expect(event.eventOrder).to.be.eql(eventOrder)
+      expect(event).to.have.property('sequence')
+      expect(event.sequence).to.be.eql(sequence)
     })
 
     it('creates events with mixed payloads from a key and value', () => {
@@ -147,12 +147,12 @@ describe('MarketEvent', () => {
       const orderId = 'myorder'
       const timestamp = '123456677'
       const eventType = MarketEvent.TYPES.PLACED
-      const eventOrder = '0'
+      const sequence = '0'
 
-      const event = new MarketEvent({ eventId, orderId, timestamp, eventType, eventOrder })
+      const event = new MarketEvent({ eventId, orderId, timestamp, eventType, sequence })
 
       expect(event).to.have.property('key')
-      expect(event.key).to.be.eql(`${timestamp}:${eventId}:${eventOrder}`)
+      expect(event.key).to.be.eql(`${timestamp}:${sequence}:${eventId}`)
     })
   })
 
@@ -211,9 +211,9 @@ describe('MarketEvent', () => {
       const orderId = 'myorder'
       const timestamp = '123456677'
       const eventType = MarketEvent.TYPES.PLACED
-      const eventOrder = '0'
+      const sequence = '0'
 
-      const event = new MarketEvent({ eventId, orderId, timestamp, eventType, eventOrder })
+      const event = new MarketEvent({ eventId, orderId, timestamp, eventType, sequence })
       const serialized = event.serialize()
 
       expect(serialized).to.be.eql({
@@ -221,7 +221,7 @@ describe('MarketEvent', () => {
         orderId,
         timestamp,
         eventType,
-        eventOrder
+        sequence
       })
     })
 
