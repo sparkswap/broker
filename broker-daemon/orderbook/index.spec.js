@@ -244,7 +244,7 @@ describe('Orderbook', () => {
       expect(event).to.be.eql(lastEvent)
     })
 
-    it('returns null if there are no events', async () => {
+    it('returns an empty object if there are no events', async () => {
       const marketName = 'XYZ/ABC'
       const orderbook = new Orderbook(marketName, relayer, baseStore, logger)
 
@@ -252,7 +252,7 @@ describe('Orderbook', () => {
 
       const event = await orderbook.getLastRecord()
 
-      expect(event).to.be.null()
+      expect(event).to.be.eql({})
     })
   })
 

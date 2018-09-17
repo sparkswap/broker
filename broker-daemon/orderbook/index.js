@@ -116,10 +116,10 @@ class Orderbook {
    * Gets the last record in an event store
    *
    * @returns {MarketEvent}
-   * @returns {null} no record exists
+   * @returns {Object} empty object if no record exists
    */
   async getLastRecord () {
-    const [ lastEvent = null ] = await getRecords(
+    const [ lastEvent = {} ] = await getRecords(
       this.eventStore,
       MarketEvent.fromStorage.bind(MarketEvent),
       {
