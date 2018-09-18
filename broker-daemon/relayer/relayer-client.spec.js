@@ -26,7 +26,7 @@ describe('RelayerClient', () => {
     NEW_EVENT: 'NEW_EVENT',
     START_OF_EVENTS: 'START_OF_EVENTS'
   }
-  let fakeConsole
+  let logger
   let callerStub
 
   let relayerHost = 'localhost:1337'
@@ -43,6 +43,12 @@ describe('RelayerClient', () => {
         identify: identityIdentify
       })
     }
+    logger = {
+      info: sinon.stub(),
+      debug: sinon.stub(),
+      error: sinon.stub()
+    }
+
     RelayerClient.__set__('Identity', Identity)
 
     MarketEvent = sinon.stub()
@@ -79,12 +85,6 @@ describe('RelayerClient', () => {
     callerStub = sinon.stub()
     RelayerClient.__set__('caller', callerStub)
 
-    fakeConsole = {
-      info: sinon.stub(),
-      error: sinon.stub()
-    }
-    RelayerClient.__set__('console', fakeConsole)
-
     createSslStub = sinon.stub()
     createFromMetadataGeneratorStub = sinon.stub()
     combineChannelCredentialsStub = sinon.stub()
@@ -100,7 +100,6 @@ describe('RelayerClient', () => {
 
   describe('new', () => {
     it('assigns a logger', () => {
-      const logger = {}
       const relayer = new RelayerClient(idKeyPath, relayerHost, logger)
 
       expect(relayer).to.have.property('logger')
@@ -110,7 +109,7 @@ describe('RelayerClient', () => {
     it('loads the proto', () => {
       const fakePath = 'mypath'
       pathResolve.returns(fakePath)
-      const relayer = new RelayerClient(idKeyPath, { host: relayerHost })
+      const relayer = new RelayerClient(idKeyPath, { host: relayerHost }, logger)
 
       expect(pathResolve).to.have.been.calledOnce()
       expect(pathResolve).to.have.been.calledWith('./proto/relayer.proto')
@@ -124,7 +123,7 @@ describe('RelayerClient', () => {
       const fakeId = 'myid'
       Identity.load.returns(fakeId)
 
-      const relayer = new RelayerClient(idKeyPath, relayerHost)
+      const relayer = new RelayerClient(idKeyPath, relayerHost, logger)
 
       expect(Identity.load).to.have.been.calledOnce()
       expect(Identity.load).to.have.been.calledWith(idKeyPath.privKeyPath, idKeyPath.pubKeyPath)
@@ -137,7 +136,7 @@ describe('RelayerClient', () => {
       readFileSync.returns(fakeCert)
 
       // eslint-disable-next-line
-      new RelayerClient(idKeyPath, { host: relayerHost, certPath: fakePath })
+      new RelayerClient(idKeyPath, { host: relayerHost, certPath: fakePath }, logger)
 
       expect(readFileSync).to.have.been.calledOnce()
       expect(readFileSync).to.have.been.calledWith(fakePath)
@@ -147,7 +146,7 @@ describe('RelayerClient', () => {
 
     it('creates call credentials using the custom signer', () => {
       // eslint-disable-next-line
-      new RelayerClient(idKeyPath, { host: relayerHost })
+      new RelayerClient(idKeyPath, { host: relayerHost }, logger)
 
       const generator = createFromMetadataGeneratorStub.args[0][0]
 
@@ -172,7 +171,7 @@ describe('RelayerClient', () => {
       createFromMetadataGeneratorStub.returns(fakeCallCreds)
       combineChannelCredentialsStub.returns(fakeCombined)
 
-      const relayer = new RelayerClient(idKeyPath, { host: relayerHost })
+      const relayer = new RelayerClient(idKeyPath, { host: relayerHost }, logger)
 
       expect(combineChannelCredentialsStub).to.have.been.calledOnce()
       expect(combineChannelCredentialsStub).to.have.been.calledWith(fakeSslCreds, fakeCallCreds)
@@ -186,7 +185,7 @@ describe('RelayerClient', () => {
       beforeEach(() => {
         fakeCreds = 'somecreds'
         combineChannelCredentialsStub.returns(fakeCreds)
-        relayer = new RelayerClient(idKeyPath, { host: relayerHost })
+        relayer = new RelayerClient(idKeyPath, { host: relayerHost }, logger)
       })
 
       it('creates a makerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, MakerService, fakeCreds))
@@ -213,14 +212,15 @@ describe('RelayerClient', () => {
       watchMarket = sinon.stub().returns(stream)
 
       callerStub.withArgs(sinon.match.any, OrderBookService).returns({ watchMarket })
-      relayer = new RelayerClient(idKeyPath, { host: relayerHost })
+      relayer = new RelayerClient(idKeyPath, { host: relayerHost }, logger)
       store = {
         put: sinon.stub()
       }
       params = {
         baseSymbol: 'XYZ',
         counterSymbol: 'CBAA',
-        lastUpdated: '123'
+        lastUpdated: '123',
+        sequence: '0'
       }
 
       MarketEvent.prototype.key = 'key'
@@ -244,14 +244,6 @@ describe('RelayerClient', () => {
       expect(watchMarket).to.have.been.calledWith(params)
     })
 
-    it('uses a 0 (int64 null value) for lastUpdated when a falsey value is passed', () => {
-      params.lastUpdated = null
-      relayer.watchMarket(store, params)
-
-      expect(watchMarket).to.have.been.calledOnce()
-      expect(watchMarket).to.have.been.calledWith(sinon.match({ lastUpdated: '0' }))
-    })
-
     it('errors out when stream creation fails', () => {
       watchMarket.throws(new Error('fake error'))
 
@@ -269,8 +261,16 @@ describe('RelayerClient', () => {
       expect(stream.on).to.have.been.calledWith('error')
     })
 
-    // TODO: figure out how to test an async throw
-    xit('throws if the relayer ends the stream', async () => {
+    it('throws if the relayer ends the stream', async () => {
+      try {
+        stream.on.withArgs('end').callsFake((evt, fn) => {
+          fn()
+        })
+
+        await relayer.watchMarket(store, params)
+      } catch (e) {
+        expect(e.toString()).to.include('Remote relayer ended stream')
+      }
     })
 
     it('resolves when existing events are done', async () => {
@@ -370,7 +370,16 @@ describe('RelayerClient', () => {
     })
   })
 
-  describe.skip('healthCheck', () => {
+  describe('insecureIdentity', () => {
+    let insecureIdentity
 
+    beforeEach(() => {
+      insecureIdentity = RelayerClient.__get__('insecureIdentity')
+    })
+
+    it('creates an insecure identity', () => {
+      const res = insecureIdentity(logger)
+      expect(res).to.have.property('authorize')
+    })
   })
 })
