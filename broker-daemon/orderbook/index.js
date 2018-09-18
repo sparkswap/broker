@@ -141,8 +141,8 @@ class Orderbook {
     this.logger.info(`Retrieving last update from store for ${this.marketName}`)
 
     const {
-      timestamp: lastUpdated = 0,
-      sequence = 0
+      timestamp: lastUpdated = '0',
+      sequence = '0'
     } = await this.getLastRecord()
 
     return {
