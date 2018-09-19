@@ -1112,17 +1112,17 @@ message GetMarketStatsResponse {
   // 64-bit Unix nano-second timestamp
   int64 timestamp = 2;
 
-  // ISO8601 datetime string
+  // ISO8601 datetime string (nano-seconds)
   string datetime = 3;
 
   // NOTE:
   // The following parameters are all float-value strings
   //
 
-  // highest price
+  // highest price in past 24 hours
   string high = 4;
 
-  // lowest price
+  // lowest price in past 24 hours
   string low = 5;
 
   // current best bid
@@ -1137,7 +1137,7 @@ message GetMarketStatsResponse {
   // current best ask's amount
   string askVolume = 9;
 
-  // volume weighed average
+  // volume weighed average price (vwap) for the past 24 hours
   string vwap = 10;
 
   // volume of base currency in past 24 hours
