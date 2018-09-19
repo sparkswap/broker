@@ -5,8 +5,9 @@
 
 const Table = require('cli-table')
 require('colors')
+
 const BrokerDaemonClient = require('../broker-daemon-client')
-const { ENUMS, validations, askQuestion, Big, handleError } = require('../utils')
+const { validations, askQuestion, Big, handleError } = require('../utils')
 const { currencies: currencyConfig } = require('../configuration')
 
 /**
@@ -36,7 +37,8 @@ const SUPPORTED_COMMANDS = Object.freeze({
   COMMIT: 'commit',
   NETWORK_ADDRESS: 'network-address',
   NETWORK_STATUS: 'network-status',
-  RELEASE: 'release'
+  RELEASE: 'release',
+  WITHDRAW: 'withdraw'
 })
 
 /**
@@ -125,8 +127,13 @@ async function newDepositAddress (args, opts, logger) {
 async function commit (args, opts, logger) {
   const { symbol, amount } = args
   const { rpcAddress = null, market } = opts
+  const currentCurrencyConfig = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol)
 
   try {
+    if (!currentCurrencyConfig) {
+      throw new Error(`Currency is not supported by the CLI: ${symbol}`)
+    }
+
     const client = new BrokerDaemonClient(rpcAddress)
 
     const { balances } = await client.walletService.getBalances({})
@@ -140,31 +147,36 @@ async function commit (args, opts, logger) {
     }
 
     // We try to take the lowest total here between 2 Big numbers due to a
-    // commit limit specified as MAX_CHANNEL_BALANCE
-    let maxSupportedBalance = uncommittedBalance
+    // commit limit specified as `maxChannelBalance` in the currency configuration
+    let maxSupportedBalance = totalUncommittedBalance
 
-    // TODO: Change the MAX_CHANNEL_BALANCE to be set per currency
-    if (totalUncommittedBalance.gt(ENUMS.MAX_CHANNEL_BALANCE)) {
-      maxSupportedBalance = ENUMS.MAX_CHANNEL_BALANCE
+    const maxChannelBalance = Big(currentCurrencyConfig.maxChannelBalance)
+
+    if (totalUncommittedBalance.gt(maxChannelBalance)) {
+      maxSupportedBalance = maxChannelBalance
     }
 
-    // We use this for normalization of the amount from satoshis to a decimal
-    // value
-    const divideBy = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
+    // We use this for normalization of the amount from satoshis to a decimal value
+    const divideBy = currentCurrencyConfig.quantumsPerCommon
 
-    // Amount is specified in currency instead of satoshis
+    // The logic here only runs if an amount is specified in the commit command
     if (amount) {
-      maxSupportedBalance = (amount * divideBy)
+      // Amount is specified in currency instead of satoshis
+      const specifiedAmount = Big(amount).times(divideBy)
+
+      if (specifiedAmount.lt(maxChannelBalance)) {
+        maxSupportedBalance = specifiedAmount
+      }
     }
 
-    logger.info(`For your knowledge, the Maximum supported balance at this time is: ${Big(ENUMS.MAX_CHANNEL_BALANCE).div(divideBy)} ${symbol}`)
+    logger.info(`For your knowledge, the Maximum supported balance at this time is: ${Big(maxSupportedBalance).div(divideBy)} ${symbol}`)
     logger.info(`Your current uncommitted wallet balance is: ${Big(uncommittedBalance).div(divideBy)} ${symbol}`)
 
     const answer = await askQuestion(`Are you OK committing ${Big(maxSupportedBalance).div(divideBy)} ${symbol} to sparkswap? (Y/N)`)
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    if (Big(maxSupportedBalance).gt(uncommittedBalance)) {
+    if (maxSupportedBalance.gt(uncommittedBalance)) {
       throw new Error(`Amount specified is larger than your current uncommitted balance of ${Big(uncommittedBalance).div(divideBy)} ${symbol}`)
     }
 
@@ -307,6 +319,40 @@ async function release (args, opts, logger) {
   }
 }
 
+/**
+ * withdraw
+ *
+ * ex: `sparkswap wallet withdraw`
+ *
+ * @function
+ * @param {Object} args
+ * @param {String} args.symbol
+ * @param {String} args.address
+ * @param {String} args.amount
+ * @param {Object} opts
+ * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {String} [opts.walletAddress] wallet address to move funds to
+ * @param {Logger} logger
+ * @return {Void}
+ */
+async function withdraw (args, opts, logger) {
+  const {symbol, address, amount} = args
+  const { rpcAddress = null } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+
+    const answer = await askQuestion(`Are you sure you want to withdraw ${amount} ${symbol} from your wallet? (Y/N)`)
+
+    if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
+
+    const { txid } = await client.walletService.withdrawFunds({ symbol, address, amount })
+    logger.info(`Successfully withdrew ${amount} ${symbol} from your wallet!`, { id: txid })
+  } catch (e) {
+    logger.error(handleError(e))
+  }
+}
+
 module.exports = (program) => {
   program
     .command('wallet', 'Commands to handle a wallet instance')
@@ -315,6 +361,7 @@ module.exports = (program) => {
     .argument('[sub-arguments...]')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
+    .option('--wallet-address [address]', 'Address to send the coins to', validations.isHost)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
       const { market } = opts
@@ -364,6 +411,19 @@ module.exports = (program) => {
         case SUPPORTED_COMMANDS.RELEASE:
           opts.market = validations.isMarketName(market)
           return release(args, opts, logger)
+        case SUPPORTED_COMMANDS.WITHDRAW:
+          symbol = symbol.toUpperCase()
+          const { walletAddress } = opts
+
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
+            throw new Error(`Provided symbol is not a valid currency for the exchange`)
+          }
+
+          args.symbol = symbol
+          args.amount = amount
+          args.address = walletAddress
+
+          return withdraw(args, opts, logger)
       }
     })
     .command('wallet balance', 'Current daemon wallet balance')
@@ -379,4 +439,8 @@ module.exports = (program) => {
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .command('wallet release', 'Closes channels open on the specified market')
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
+    .command('wallet withdraw', 'Withdraws specified amount of coin from wallet')
+    .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
+    .argument('<amount>', 'Amount of currency to commit to the relayer', validations.isDecimal)
+    .option('--wallet-address', 'Address to send the coins to', validations.isHost)
 }

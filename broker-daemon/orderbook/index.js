@@ -3,6 +3,7 @@ const AskIndex = require('./ask-index')
 const BidIndex = require('./bid-index')
 const OrderbookIndex = require('./orderbook-index')
 const { getRecords, Big } = require('../utils')
+
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
 
@@ -28,8 +29,8 @@ class Orderbook {
     this.logger.info(`Initializing market ${this.marketName}...`)
 
     const { baseSymbol, counterSymbol } = this
-    const lastUpdated = await this.lastUpdate()
-    const params = { baseSymbol, counterSymbol, lastUpdated }
+    const { lastUpdated, sequence } = await this.lastUpdate()
+    const params = { baseSymbol, counterSymbol, lastUpdated, sequence }
 
     await this.relayer.watchMarket(this.eventStore, params)
 
@@ -112,13 +113,13 @@ class Orderbook {
   }
 
   /**
-   * Gets the last time this market was updated with data from the relayer
+   * Gets the last record in an event store
    *
-   * @returns {Promise<number>} A promise that contains the timestamp of the last update, or null if no update exists
+   * @returns {MarketEvent}
+   * @returns {Object} empty object if no record exists
    */
-  async lastUpdate () {
-    this.logger.info(`Retrieving last update from store for ${this.marketName}`)
-    const [ lastEvent ] = await getRecords(
+  async getLastRecord () {
+    const [ lastEvent = {} ] = await getRecords(
       this.eventStore,
       MarketEvent.fromStorage.bind(MarketEvent),
       {
@@ -126,12 +127,28 @@ class Orderbook {
         limit: 1
       }
     )
+    return lastEvent
+  }
 
-    const timestamp = lastEvent ? lastEvent.timestamp : null
+  /**
+   * Gets the last time this market was updated with data from the relayer
+   *
+   * @returns {Object} res
+   * @returns {String} [lastUpdated=0] - nanosecond timestamp
+   * @returns {String} [sequence=0] - event version for a given timestamp
+   */
+  async lastUpdate () {
+    this.logger.info(`Retrieving last update from store for ${this.marketName}`)
 
-    this.logger.info(`Found last update of ${timestamp}`)
+    const {
+      timestamp: lastUpdated = '0',
+      sequence = '0'
+    } = await this.getLastRecord()
 
-    return timestamp
+    return {
+      lastUpdated,
+      sequence
+    }
   }
 }
 

@@ -46,8 +46,9 @@ describe('MarketEvent', () => {
       const orderId = 'myorder'
       const timestamp = '123456677'
       const eventType = MarketEvent.TYPES.PLACED
+      const sequence = '0'
 
-      const key = `${timestamp}:${eventId}`
+      const key = `${timestamp}:${sequence}:${eventId}`
       const value = JSON.stringify({
         eventType,
         orderId
@@ -63,6 +64,8 @@ describe('MarketEvent', () => {
       expect(event.timestamp).to.be.eql(timestamp)
       expect(event).to.have.property('eventType')
       expect(event.eventType).to.be.eql(eventType)
+      expect(event).to.have.property('sequence')
+      expect(event.sequence).to.be.eql(sequence)
     })
 
     it('creates events with mixed payloads from a key and value', () => {
@@ -144,11 +147,12 @@ describe('MarketEvent', () => {
       const orderId = 'myorder'
       const timestamp = '123456677'
       const eventType = MarketEvent.TYPES.PLACED
+      const sequence = '0'
 
-      const event = new MarketEvent({ eventId, orderId, timestamp, eventType })
+      const event = new MarketEvent({ eventId, orderId, timestamp, eventType, sequence })
 
       expect(event).to.have.property('key')
-      expect(event.key).to.be.eql(`${timestamp}:${eventId}`)
+      expect(event.key).to.be.eql(`${timestamp}:${sequence}:${eventId}`)
     })
   })
 
@@ -207,15 +211,17 @@ describe('MarketEvent', () => {
       const orderId = 'myorder'
       const timestamp = '123456677'
       const eventType = MarketEvent.TYPES.PLACED
+      const sequence = '0'
 
-      const event = new MarketEvent({ eventId, orderId, timestamp, eventType })
+      const event = new MarketEvent({ eventId, orderId, timestamp, eventType, sequence })
       const serialized = event.serialize()
 
       expect(serialized).to.be.eql({
         eventId,
         orderId,
         timestamp,
-        eventType
+        eventType,
+        sequence
       })
     })
 
