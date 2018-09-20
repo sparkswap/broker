@@ -10,16 +10,16 @@ const { handleError } = require('../../utils')
  * @param {String} [rpcaddress] opts.rpcaddress
  * @param {Logger} logger
  */
-async function supportedMarkets (opts, logger) {
+async function marketStats (opts, logger) {
   const { market, rpcAddress = null } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const marketStats = await client.infoService.getMarketStats({ market })
-    logger.info(marketStats)
+    const stats = await client.infoService.getMarketStats({ market })
+    logger.info(stats)
   } catch (e) {
     logger.error(handleError(e))
   }
 };
 
-module.exports = supportedMarkets
+module.exports = marketStats

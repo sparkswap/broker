@@ -77,11 +77,13 @@ async function getMarketStats ({ params, relayer, logger, orderbooks }, { GetMar
 
   logger.debug(`Checking currency configurations for: ${market}`)
 
-  const baseCurrencyConfig = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === baseSymbol)
-  const counterCurrencyConfig = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === counterSymbol)
+  // Get quantumsPerCommon for both currencies or fail, as we need these to calculate
+  // the correct amounts
+  const { quantumsPerCommon: baseQuantumsPerCommon } = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === baseSymbol) || {}
+  const { quantumsPerCommon: counterQuantumsPerCommon } = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === counterSymbol) || {}
 
-  if (!baseCurrencyConfig) throw new PublicError(`Invalid configuration: missing quantumsPerCommon for ${baseSymbol}`)
-  if (!counterCurrencyConfig) throw new PublicError(`Invalid configuration: missing quantumsPerCommon for ${counterSymbol}`)
+  if (!baseQuantumsPerCommon) throw new PublicError(`Invalid configuration: missing quantumsPerCommon for ${baseSymbol}`)
+  if (!counterQuantumsPerCommon) throw new PublicError(`Invalid configuration: missing quantumsPerCommon for ${counterSymbol}`)
   if (!orderbook) throw new PublicError(`${market} is not being tracked as a market.`)
 
   const currentTime = nano.now()
@@ -155,10 +157,14 @@ async function getMarketStats ({ params, relayer, logger, orderbooks }, { GetMar
   const vwap = vwapTotalAmount.div(vwapTotalShares)
 
   // Grab the total amount of base currency traded for the day - market events
-  const totalBase = filledMarketEvents.reduce(bestBaseAmount, Big(0))
+  const totalBase = filledMarketEvents.reduce((acc, event) => {
+    return acc.plus(event.baseAmount)
+  }, Big(0))
 
   // Grab the total amount of counter (quote) currency traded for the day - market events
-  const totalCounter = filledMarketEvents.reduce(worstCounterAmount, Big(0))
+  const totalCounter = filledMarketEvents.reduce((acc, event) => {
+    return acc.plus(event.counterAmount)
+  }, Big(0))
 
   // TODO: We are currently missing the following open/close pricing because we do not allow
   // the user to specify a datetime for the price ticket (we only return the previous 24 hours)
@@ -175,15 +181,15 @@ async function getMarketStats ({ params, relayer, logger, orderbooks }, { GetMar
     symbol: market,
     timestamp,
     datetime,
-    high: highestPrice.toString(),
-    low: lowestPrice.toString(),
-    ask: bestAskAmount.toString(),
-    askVolume: bestAskPrice.toString(),
-    bid: bestBidAmount.toString(),
-    bidVolume: bestBidPrice.toString(),
-    vwap: vwap.toString(),
-    baseVolume: totalBase.toString(),
-    counterVolume: totalCounter.toString()
+    high: highestPrice.div(counterQuantumsPerCommon).toString(),
+    low: lowestPrice.div(counterQuantumsPerCommon).toString(),
+    ask: bestAskAmount.div(baseQuantumsPerCommon).toString(),
+    askVolume: bestAskPrice.div(counterQuantumsPerCommon).toString(),
+    bid: bestBidAmount.div(baseQuantumsPerCommon).toString(),
+    bidVolume: bestBidPrice.div(counterQuantumsPerCommon).toString(),
+    vwap: vwap.div(counterQuantumsPerCommon).toString(),
+    baseVolume: totalBase.div(baseQuantumsPerCommon).toString(),
+    counterVolume: totalCounter.div(counterQuantumsPerCommon).toString()
   }
 }
 
