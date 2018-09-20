@@ -67,14 +67,14 @@ class MarketEvent {
   /**
    * Returns a range query for leveldb from a given timestamp
    *
-   * @param {String} start - time in nanoseconds
+   * @param {String} startTime - time in nanoseconds
    * @return {Object} range
    * @return {String} range.gte
    *
    */
-  static rangeFromTimestamp (start) {
+  static rangeFromTimestamp (startTime) {
     return {
-      gte: `${start}${DELIMITER}${LOWER_BOUND}`
+      gte: `${startTime}${DELIMITER}${LOWER_BOUND}`
     }
   }
 }
