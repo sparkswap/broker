@@ -1,5 +1,12 @@
 const nano = require('nano-seconds')
 
+/**
+ * Converts nanoseconds string to ISO8601 datetime
+ *
+ * @param {String} nanoseconds
+ * @return {String} ISO8601 string
+ * @throws {Error} Invalid format for nanoseconds
+ */
 function nanoToDatetime (nanoseconds) {
   if (nanoseconds.length !== 13) {
     throw new Error('Invalid format for nanoseconds')
