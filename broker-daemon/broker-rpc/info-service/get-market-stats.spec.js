@@ -11,7 +11,7 @@ const { Big } = require('../../utils')
 
 const getMarketStats = rewire(path.resolve(__dirname, 'get-market-stats'))
 
-describe.only('getMarketStats', () => {
+describe('getMarketStats', () => {
   let market
   let params
   let logger
