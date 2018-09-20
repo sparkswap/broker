@@ -151,20 +151,32 @@ class Orderbook {
     }
   }
 
+  /**
+   * Gets current orderbook events by timestamp
+   *
+   * @param {String} timestamp - timestamp in nano-seconds
+   * @returns {Array<MarketEventOrder>}
+   */
   async getOrderbookEventsByTimestamp (timestamp) {
     return getRecords(
       this.store,
       (key, value) => JSON.parse(value),
-      // Limits the query to a 24 hour period
+      // Limits the query to gte to a specific timestamp
       MarketEvent.rangeFromTimestamp(timestamp)
     )
   }
 
+  /**
+   * Gets MarketEvents by timestamp
+   *
+   * @param {String} timestamp - timestamp in nano-seconds
+   * @returns {Array<MarketEventOrder>}
+   */
   async getMarketEventsByTimestamp (timestamp) {
     return getRecords(
       this.eventStore,
       (key, value) => JSON.parse(value),
-      // Limits the query to a 24 hour period
+      // Limits the query to gte to a specific timestamp
       MarketEvent.rangeFromTimestamp(timestamp)
     )
   }
