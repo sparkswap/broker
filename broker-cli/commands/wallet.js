@@ -22,7 +22,9 @@ const ACCEPTED_ANSWERS = Object.freeze(['y', 'yes'])
  * @type {Array<string>}
  * @default
  */
-const SUPPORTED_SYMBOLS = Object.freeze(['BTC', 'LTC'])
+const SUPPORTED_SYMBOLS = Object.freeze(
+  Object.values(currencyConfig).map(currency => currency.symbol)
+)
 
 /**
  * Supported commands for `sparkswap wallet`
@@ -356,7 +358,7 @@ async function withdraw (args, opts, logger) {
 module.exports = (program) => {
   program
     .command('wallet', 'Commands to handle a wallet instance')
-    .help('Available Commands: balance, new-deposit-address, commit, network-address, network-status, release')
+    .help(`Available Commands: ${Object.values(SUPPORTED_COMMANDS).join(', ')}`)
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
@@ -426,20 +428,20 @@ module.exports = (program) => {
           return withdraw(args, opts, logger)
       }
     })
-    .command('wallet balance', 'Current daemon wallet balance')
-    .command('wallet new-deposit-address', 'Generates a new wallet address for a daemon instance')
+    .command(`wallet ${SUPPORTED_COMMANDS.BALANCE}`, 'Current daemon wallet balance')
+    .command(`wallet ${SUPPORTED_COMMANDS.NEW_DEPOSIT_ADDRESS}`, 'Generates a new wallet address for a daemon instance')
     .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`)
-    .command('wallet commit')
+    .command(`wallet ${SUPPORTED_COMMANDS.COMMIT}`)
     .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`)
     .argument('[amount]', 'Amount of currency to commit to the relayer', validations.isDecimal)
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
-    .command('wallet network-address', 'Payment Channel Network Public key for a given currency')
+    .command(`wallet ${SUPPORTED_COMMANDS.NEW_DEPOSIT_ADDRESS}`, 'Payment Channel Network Public key for a given currency')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
-    .command('wallet network-status', 'Payment Channel Network status for trading in different markets')
+    .command(`wallet ${SUPPORTED_COMMANDS.NETWORK_STATUS}`, 'Payment Channel Network status for trading in different markets')
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
-    .command('wallet release', 'Closes channels open on the specified market')
+    .command(`wallet ${SUPPORTED_COMMANDS.RELEASE}`, 'Closes channels open on the specified market')
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
-    .command('wallet withdraw', 'Withdraws specified amount of coin from wallet')
+    .command(`wallet ${SUPPORTED_COMMANDS.WITHDRAW}`, 'Withdraws specified amount of coin from wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .argument('<amount>', 'Amount of currency to commit to the relayer', validations.isDecimal)
     .option('--wallet-address', 'Address to send the coins to', validations.isHost)
