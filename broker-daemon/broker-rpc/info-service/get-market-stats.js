@@ -13,53 +13,6 @@ const { currencies: currencyConfig } = require('../../config')
 const ONE_DAY_IN_NANOSECONDS = Big('86400000000000')
 
 /**
- *
- * @param {Big} acc
- * @param {MarketEventOrder} event
- * @returns {Big}
- */
-function bestBaseAmount (acc, event) {
-  if (acc.lt(event.baseAmount)) {
-    acc = Big(event.baseAmount)
-  }
-  return acc
-}
-
-/**
- *
- * @param {Big} acc
- * @param {MarketEventOrder} event
- * @returns {Big}
- */
-function bestCounterAmount (acc, event) {
-  if (acc.lt(event.counterAmount)) {
-    acc = Big(event.counterAmount)
-  }
-  return acc
-}
-
-/**
- *
- * @param {Big} acc
- * @param {MarketEventOrder} event
- * @param {Number} idx
- * @returns {Big}
- */
-function worstCounterAmount (acc, event, idx) {
-  // If this is the first element, we can set the accumulator to the counter
-  // amount and continue so that we have a value to compare against
-  if (idx === 0) {
-    acc = Big(event.counterAmount)
-    return acc
-  }
-
-  if (acc.gt(event.counterAmount)) {
-    acc = Big(event.counterAmount)
-  }
-  return acc
-}
-
-/**
  * Gets price ticker (stats) information about a specified market
  *
  * @param {Object} request - request object
@@ -74,16 +27,13 @@ async function getMarketStats ({ params, relayer, logger, orderbooks }, { GetMar
   const { market } = params
   const orderbook = orderbooks.get(market)
   const [baseSymbol, counterSymbol] = market.split('/')
-
-  logger.debug(`Checking currency configurations for: ${market}`)
-
-  // Get quantumsPerCommon for both currencies or fail, as we need these to calculate
-  // the correct amounts
   const { quantumsPerCommon: baseQuantumsPerCommon } = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === baseSymbol) || {}
   const { quantumsPerCommon: counterQuantumsPerCommon } = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === counterSymbol) || {}
 
-  if (!baseQuantumsPerCommon) throw new PublicError(`Invalid configuration: missing quantumsPerCommon for ${baseSymbol}`)
-  if (!counterQuantumsPerCommon) throw new PublicError(`Invalid configuration: missing quantumsPerCommon for ${counterSymbol}`)
+  logger.debug(`Checking currency configurations for: ${market}`)
+
+  if (!baseQuantumsPerCommon) throw new PublicError(`Currency was not found when trying to commit to market: ${baseSymbol}`)
+  if (!counterQuantumsPerCommon) throw new PublicError(`Currency was not found when trying to commit to market: ${counterSymbol}`)
   if (!orderbook) throw new PublicError(`${market} is not being tracked as a market.`)
 
   const currentTime = nano.now()
@@ -108,19 +58,42 @@ async function getMarketStats ({ params, relayer, logger, orderbooks }, { GetMar
   )
 
   const currentAsks = currentOrderbookEvents.filter(e => e.side === BlockOrder.SIDES.ASK)
+
+  // Grab the best ask's price (lowest sell)
+  const bestAskPrice = currentAsks.reduce((acc, event, idx) => {
+    const amount = Big(event.counterAmount).div(event.baseAmount)
+    // If this is the first element of the currentAsks, then we need to set an initial
+    // value, otherwise the bestAskPrice would always be stuck to zero
+    if (idx === 0) return amount
+    if (amount.lt(acc)) return amount
+    return acc
+  }, Big(0))
+
+  // Grab the best ask (lowest sell)
+  const bestAskAmount = currentAsks.reduce((acc, event, idx) => {
+    const amount = Big(event.baseAmount).div(baseQuantumsPerCommon)
+    // If this is the first element of the currentAsks, then we need to set an initial
+    // value, otherwise the bestAskPrice would always be stuck to zero
+    if (idx === 0) return amount
+    if (amount.lt(acc)) return amount
+    return acc
+  }, Big(0))
+
   const currentBids = currentOrderbookEvents.filter(e => e.side === BlockOrder.SIDES.BID)
 
-  // Grab the best ask, orderbook
-  const bestAskAmount = currentAsks.reduce(bestBaseAmount, Big(0))
+  // Grab the best bid (highest bid)
+  const bestBidAmount = currentBids.reduce((acc, event) => {
+    const amount = Big(event.baseAmount).div(baseQuantumsPerCommon)
+    if (amount.gt(acc)) return amount
+    return acc
+  }, Big(0))
 
-  // Grab the best ask's price, orderbook
-  const bestAskPrice = currentAsks.reduce(bestCounterAmount, Big(0))
-
-  // Grab the best bid, orderbook
-  const bestBidAmount = currentBids.reduce(bestBaseAmount, Big(0))
-
-  // Grab the best bid's price, orderbook
-  const bestBidPrice = currentBids.reduce(bestCounterAmount, Big(0))
+  // Grab the best bid's price (highest bids price)
+  const bestBidPrice = currentBids.reduce((acc, event) => {
+    const amount = Big(event.counterAmount).div(event.baseAmount)
+    if (amount.gt(acc)) return amount
+    return acc
+  }, Big(0))
 
   // Grab the highest price for 24 hours, requires market events
   // Grab the lowest price for 24 hours, requires market events
@@ -138,8 +111,20 @@ async function getMarketStats ({ params, relayer, logger, orderbooks }, { GetMar
   // const filledMarketEvents = currentMarketEvents.filter(e => e.eventType === MarketEvent.TYPES.FILLED)
   const filledMarketEvents = currentMarketEvents
 
-  const highestPrice = filledMarketEvents.reduce(bestCounterAmount, Big(0))
-  const lowestPrice = filledMarketEvents.reduce(worstCounterAmount, Big(0))
+  const highestPrice = filledMarketEvents.reduce((acc, event) => {
+    const amount = Big(event.counterAmount).div(event.baseAmount)
+    if (amount.gt(acc)) return amount
+    return acc
+  }, Big(0))
+
+  const lowestPrice = filledMarketEvents.reduce((acc, event, idx) => {
+    const amount = Big(event.counterAmount).div(event.baseAmount)
+    // If this is the first element of the filledMarketEvents, then we need to set an initial
+    // value, otherwise the lowestPrice would always be stuck to zero
+    if (idx === 0) return amount
+    if (amount.lt(acc)) return amount
+    return acc
+  }, Big(0))
 
   // VWAP Calculations - market events
   // 0.001 btc for 59.2
@@ -158,12 +143,12 @@ async function getMarketStats ({ params, relayer, logger, orderbooks }, { GetMar
 
   // Grab the total amount of base currency traded for the day - market events
   const totalBase = filledMarketEvents.reduce((acc, event) => {
-    return acc.plus(event.baseAmount)
+    return acc.plus(event.baseAmount).div(baseQuantumsPerCommon)
   }, Big(0))
 
   // Grab the total amount of counter (quote) currency traded for the day - market events
   const totalCounter = filledMarketEvents.reduce((acc, event) => {
-    return acc.plus(event.counterAmount)
+    return acc.plus(event.counterAmount).times(event.baseAmount).div(counterQuantumsPerCommon)
   }, Big(0))
 
   // TODO: We are currently missing the following open/close pricing because we do not allow
@@ -181,15 +166,15 @@ async function getMarketStats ({ params, relayer, logger, orderbooks }, { GetMar
     symbol: market,
     timestamp,
     datetime,
-    high: highestPrice.div(counterQuantumsPerCommon).toString(),
-    low: lowestPrice.div(counterQuantumsPerCommon).toString(),
-    ask: bestAskAmount.div(baseQuantumsPerCommon).toString(),
-    askVolume: bestAskPrice.div(counterQuantumsPerCommon).toString(),
-    bid: bestBidAmount.div(baseQuantumsPerCommon).toString(),
-    bidVolume: bestBidPrice.div(counterQuantumsPerCommon).toString(),
-    vwap: vwap.div(counterQuantumsPerCommon).toString(),
-    baseVolume: totalBase.div(baseQuantumsPerCommon).toString(),
-    counterVolume: totalCounter.div(counterQuantumsPerCommon).toString()
+    high: highestPrice.toString(),
+    low: lowestPrice.toString(),
+    ask: bestAskPrice.toString(),
+    askVolume: bestAskAmount.toString(),
+    bid: bestBidPrice.toString(),
+    bidVolume: bestBidAmount.toString(),
+    vwap: vwap.toString(),
+    baseVolume: totalBase.toString(),
+    counterVolume: totalCounter.toString()
   }
 }
 
