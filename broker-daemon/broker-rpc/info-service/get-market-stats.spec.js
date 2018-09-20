@@ -67,9 +67,7 @@ describe('getMarketStats', () => {
     let nanoToStringStub
     let nanoToISOStringStub
     let currentTime
-    let bestAskPriceStub
     let bestAskAmountStub
-    let bestBidPriceStub
     let bestBidAmountStub
     let highestPriceStub
     let lowestPriceStub
@@ -77,9 +75,7 @@ describe('getMarketStats', () => {
     let baseVolumeStub
     let counterVolumeStub
     let marketStatsStub
-    let bestAskPrice
     let bestAskAmount
-    let bestBidPrice
     let bestBidAmount
     let highestPrice
     let lowestPrice
@@ -111,9 +107,7 @@ describe('getMarketStats', () => {
       getOrderbookEventsByTimestampStub.returns(orderbookEvents)
       getMarketEventsByTimestampStub.returns(marketEvents)
 
-      bestAskPrice = Big(1234)
       bestAskAmount = Big(0.00000231)
-      bestBidPrice = Big(123412)
       bestBidAmount = Big(0.0001)
       highestPrice = Big(59.2)
       lowestPrice = Big(50.2)
@@ -121,9 +115,7 @@ describe('getMarketStats', () => {
       baseVolume = Big(0.12341222)
       counterVolume = Big(0.2343)
 
-      bestAskPriceStub = sinon.stub().returns(bestAskPrice)
       bestAskAmountStub = sinon.stub().returns(bestAskAmount)
-      bestBidPriceStub = sinon.stub().returns(bestBidPrice)
       bestBidAmountStub = sinon.stub().returns(bestBidAmount)
       highestPriceStub = sinon.stub().returns(highestPrice)
       lowestPriceStub = sinon.stub().returns(lowestPrice)
@@ -132,9 +124,7 @@ describe('getMarketStats', () => {
       counterVolumeStub = sinon.stub().returns(counterVolume)
 
       marketStatsStub = sinon.stub()
-      marketStatsStub.prototype.bestAskPrice = bestAskPriceStub
       marketStatsStub.prototype.bestAskAmount = bestAskAmountStub
-      marketStatsStub.prototype.bestBidPrice = bestBidPriceStub
       marketStatsStub.prototype.bestBidAmount = bestBidAmountStub
       marketStatsStub.prototype.highestPrice = highestPriceStub
       marketStatsStub.prototype.lowestPrice = lowestPriceStub
@@ -172,7 +162,7 @@ describe('getMarketStats', () => {
     })
 
     it('gets the best ask price for current asks', () => {
-      expect(bestAskPriceStub).to.have.been.calledWith([orderbookAsk])
+      expect(lowestPriceStub).to.have.been.calledWith([orderbookAsk])
     })
 
     it('gets the best ask amount for current asks', () => {
@@ -180,7 +170,7 @@ describe('getMarketStats', () => {
     })
 
     it('gets the best bid price for current bids', () => {
-      expect(bestBidPriceStub).to.have.been.calledWith([orderbookBid])
+      expect(highestPriceStub).to.have.been.calledWith([orderbookBid])
     })
 
     it('gets the best bid amount for current bids', () => {
@@ -214,9 +204,9 @@ describe('getMarketStats', () => {
         datetime,
         high: highestPrice.toString(),
         low: lowestPrice.toString(),
-        ask: bestAskPrice.toString(),
+        ask: lowestPrice.toString(),
         askVolume: bestAskAmount.toString(),
-        bid: bestBidPrice.toString(),
+        bid: highestPrice.toString(),
         bidVolume: bestBidAmount.toString(),
         vwap: vwap.toString(),
         baseVolume: baseVolume.toString(),

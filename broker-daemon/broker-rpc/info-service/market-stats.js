@@ -25,7 +25,7 @@ class MarketStats {
    * @param {Array<MarketEventOrder>} events
    * @returns {Big}
    */
-  async highestPrice (events) {
+  async highestPrice (events = []) {
     return events.reduce((acc, event) => {
       const amount = Big(event.counterAmount).div(event.baseAmount)
       if (amount.gt(acc)) return amount
@@ -38,7 +38,7 @@ class MarketStats {
    * @param {Array<MarketEventOrder>} events
    * @returns {Big}
    */
-  async lowestPrice (events) {
+  async lowestPrice (events = []) {
     return events.reduce((acc, event, idx) => {
       const amount = Big(event.counterAmount).div(event.baseAmount)
       // If this is the first element of the filledMarketEvents, then we need to set an initial
@@ -54,7 +54,7 @@ class MarketStats {
    * @param {Array<MarketEventOrder>} events
    * @returns {Big}
    */
-  async vwap (events) {
+  async vwap (events = []) {
     // VWAP Calculations - market events
     // 0.001 btc for 59.2
     // 0.002 btc for 59.3
@@ -71,36 +71,14 @@ class MarketStats {
       return acc.plus(Big(event.baseAmount).times(event.baseAmount))
     }, Big(0))
 
+    // There is the potential that these items can be zero if no events are passed
+    // in. If this is the case, Big will error out because we are trying to divide
+    // by zero. Instead we will just return Big(0)
+    if (vwapTotalShares.eq(0)) {
+      return Big(0)
+    }
+
     return vwapTotalAmount.div(vwapTotalShares)
-  }
-
-  /**
-   * Returns the best ask price (lowest sell) from a collection of asks
-   * @param {Array<MarketEventOrder>} asks
-   * @returns {Big}
-   */
-  async bestAskPrice (asks) {
-    return asks.reduce((acc, ask, idx) => {
-      const amount = Big(ask.counterAmount).div(ask.baseAmount)
-      // If this is the first element of the currentAsks, then we need to set an initial
-      // value, otherwise the bestAskPrice would always be stuck to zero
-      if (idx === 0) return amount
-      if (amount.lt(acc)) return amount
-      return acc
-    }, Big(0))
-  }
-
-  /**
-   * Returns the best bid price (highest buy) from a collection of bids
-   * @param {Array<MarketEventOrder>} bids
-   * @returns {Big}
-   */
-  async bestBidPrice (bids) {
-    return bids.reduce((acc, bid) => {
-      const amount = Big(bid.counterAmount).div(bid.baseAmount)
-      if (amount.gt(acc)) return amount
-      return acc
-    }, Big(0))
   }
 
   /**
@@ -108,7 +86,7 @@ class MarketStats {
    * @param {Array<MarketEventOrder>} asks
    * @returns {Big}
    */
-  async bestAskAmount (asks) {
+  async bestAskAmount (asks = []) {
     return asks.reduce((acc, ask, idx) => {
       const amount = Big(ask.baseAmount).div(this.baseQuantumsPerCommon)
       // If this is the first element of the currentAsks, then we need to set an initial
@@ -124,7 +102,7 @@ class MarketStats {
    * @param {Array<MarketEventOrder>} bids
    * @returns {Big}
    */
-  async bestBidAmount (bids) {
+  async bestBidAmount (bids = []) {
     return bids.reduce((acc, bid) => {
       const amount = Big(bid.baseAmount).div(this.baseQuantumsPerCommon)
       if (amount.gt(acc)) return amount
@@ -137,9 +115,10 @@ class MarketStats {
    * @param {Array<MarketEventOrder>} events
    * @returns {Big}
    */
-  async baseVolume (events) {
+  async baseVolume (events = []) {
     return events.reduce((acc, event) => {
-      return acc.plus(event.baseAmount).div(this.baseQuantumsPerCommon)
+      const amount = Big(event.baseAmount).div(this.baseQuantumsPerCommon)
+      return acc.plus(amount)
     }, Big(0))
   }
 
@@ -148,9 +127,10 @@ class MarketStats {
    * @param {Array<MarketEventOrder>} events
    * @returns {Big}
    */
-  async counterVolume (events) {
+  async counterVolume (events = []) {
     return events.reduce((acc, event) => {
-      return acc.plus(event.counterAmount).div(this.counterQuantumsPerCommon)
+      const amount = Big(event.counterAmount).div(this.counterQuantumsPerCommon)
+      return acc.plus(amount)
     }, Big(0))
   }
 }

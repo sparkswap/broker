@@ -51,14 +51,16 @@ async function getMarketStats ({ params, logger, orderbooks }, { GetMarketStatsR
   // We grab the current asks from the past 24 hours and calculate
   // the best ask price and best ask amount (lowest sell)
   const currentAsks = currentOrderbookEvents.filter(e => e.side === BlockOrder.SIDES.ASK)
-  const bestAskPrice = await stats.bestAskPrice(currentAsks)
+  const bestAskPrice = await stats.lowestPrice(currentAsks)
   const bestAskAmount = await stats.bestAskAmount(currentAsks)
 
   // We grab the current bids from the past 24 hours and calculate the best
   // bid price and best bid amount (highest bid)
   const currentBids = currentOrderbookEvents.filter(e => e.side === BlockOrder.SIDES.BID)
-  const bestBidPrice = await stats.bestBidPrice(currentBids)
+  const bestBidPrice = await stats.highestPrice(currentBids)
   const bestBidAmount = await stats.bestBidAmount(currentBids)
+
+  console.log(currentAsks)
 
   // We only care about events that have been filled, because highest/lowest prices
   // and totals are only applicable for orders that are completed
