@@ -1,14 +1,13 @@
 const path = require('path')
 const {
   expect,
-  rewire,
-  sinon
+  rewire
 } = require('test/test-helper')
 const { Big } = require('../../utils')
 
 const MarketStats = rewire(path.resolve(__dirname, 'market-stats'))
 
-describe.only('MarketStats', () => {
+describe('MarketStats', () => {
   let market
   let currencyConfig
   let stats
