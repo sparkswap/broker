@@ -23,7 +23,7 @@ const ONE_DAY_IN_NANOSECONDS = Big('86400000000000')
  * @param {function} responses.GetMarketStatsResponse
  * @return {GetMarketStatsResponse}
  */
-async function getMarketStats ({ params, relayer, logger, orderbooks }, { GetMarketStatsResponse }) {
+async function getMarketStats ({ params, logger, orderbooks }, { GetMarketStatsResponse }) {
   const { market } = params
   const orderbook = orderbooks.get(market)
 
@@ -81,7 +81,7 @@ async function getMarketStats ({ params, relayer, logger, orderbooks }, { GetMar
   // Grab the total amount of counter (quote) currency traded for the day - market events
   const totalCounter = await stats.counterVolume(filledMarketEvents)
 
-  return {
+  return new GetMarketStatsResponse({
     symbol: market,
     timestamp,
     datetime,
@@ -94,7 +94,7 @@ async function getMarketStats ({ params, relayer, logger, orderbooks }, { GetMar
     vwap: vwap.toString(),
     baseVolume: totalBase.toString(),
     counterVolume: totalCounter.toString()
-  }
+  })
 }
 
 module.exports = getMarketStats
