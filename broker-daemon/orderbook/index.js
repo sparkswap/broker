@@ -150,6 +150,24 @@ class Orderbook {
       sequence
     }
   }
+
+  async getOrderbookEventsByTimestamp (timestamp) {
+    return getRecords(
+      this.store,
+      (key, value) => JSON.parse(value),
+      // Limits the query to a 24 hour period
+      MarketEvent.rangeFromTimestamp(timestamp)
+    )
+  }
+
+  async getMarketEventsByTimestamp (timestamp) {
+    return getRecords(
+      this.eventStore,
+      (key, value) => JSON.parse(value),
+      // Limits the query to a 24 hour period
+      MarketEvent.rangeFromTimestamp(timestamp)
+    )
+  }
 }
 
 module.exports = Orderbook
