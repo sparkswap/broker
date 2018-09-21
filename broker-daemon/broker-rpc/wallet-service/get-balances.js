@@ -1,18 +1,41 @@
+const { PublicError } = require('grpc-methods')
+
+const { currencies: currencyConfig } = require('../../config')
+const { Big } = require('../../utils')
+
 /**
  * Grabs the total balance and total channel balance from a specified engine
  *
  * @param {Array<symbol, engine>} SparkSwap Payment Channel Network Engine
+ * @param {Logger} logger
  * @return {Array} res
  * @return {String} res.symbol
- * @return {Object} res.engine
+ * @return {String} res.uncommittedBalance
+ * @return {String} res.uncommittedPendingBalance
+ * @return {String} res.totalChannelBalance
+ * @return {String} res.totalPendingChannelBalance
  */
-async function getEngineBalances ([symbol, engine]) {
-  const [uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance] = await Promise.all([
+async function getEngineBalances ([symbol, engine], logger) {
+  const { quantumsPerCommon } = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol) || {}
+
+  if (!quantumsPerCommon) {
+    logger.error(`Currency not supported in ${symbol} configuration`)
+    throw new PublicError(`Currency not supported in ${symbol} configuration`)
+  }
+
+  let [uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance] = await Promise.all([
     engine.getUncommittedBalance(),
     engine.getTotalChannelBalance(),
     engine.getTotalPendingChannelBalance(),
     engine.getUncommittedPendingBalance()
   ])
+
+  logger.debug(`Received balances from ${symbol} engine`, { uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance })
+
+  totalChannelBalance = Big(totalChannelBalance).div(quantumsPerCommon).toFixed(16)
+  totalPendingChannelBalance = Big(totalPendingChannelBalance).div(quantumsPerCommon).toFixed(8)
+  uncommittedBalance = Big(uncommittedBalance).div(quantumsPerCommon).toFixed(16)
+  uncommittedPendingBalance = Big(uncommittedPendingBalance).div(quantumsPerCommon).toFixed(8)
 
   return {
     symbol,
@@ -39,7 +62,11 @@ async function getBalances ({ logger, engines }, { GetBalancesResponse }) {
 
   // We convert the engines map to an array and run totalBalance commands
   // against each configuration
-  const engineBalances = await Promise.all(Array.from(engines).map(getEngineBalances))
+  const engineBalances = await Promise.all(Array.from(engines).map((engine) => {
+    return getEngineBalances(engine, logger)
+  }))
+
+  logger.debug('Received engine balances', { engineBalances })
 
   return new GetBalancesResponse({ balances: engineBalances })
 }

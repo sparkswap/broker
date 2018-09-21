@@ -5,7 +5,6 @@ const {
   expect
 } = require('test/test-helper')
 
-const { currencies: currencyConfig } = require('../configuration')
 const program = rewire(path.resolve(__dirname, 'wallet'))
 
 describe('cli wallet', () => {
@@ -347,15 +346,6 @@ describe('cli wallet', () => {
       const expectedError = sinon.match.instanceOf(Error)
         .and(sinon.match.has('message', `Currency is not supported by the CLI: ${badSymbol}`))
       expect(errorStub).to.have.been.calledWith(sinon.match(expectedError))
-    })
-
-    it('converts a specified amount to satoshis', async () => {
-      const newAmount = 0.1
-      const btc = currencyConfig.find(c => c.symbol === 'BTC')
-      const expectedAmount = newAmount * btc.quantumsPerCommon
-      args.amount = newAmount
-      await commit(args, opts, logger)
-      expect(commitStub).to.have.been.calledWith(sinon.match({ balance: expectedAmount.toString() }))
     })
 
     it('defaults a specified amount to uncommitted balance', async () => {

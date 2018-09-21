@@ -8,7 +8,7 @@ require('colors')
 
 const BrokerDaemonClient = require('../broker-daemon-client')
 const { validations, askQuestion, Big, handleError } = require('../utils')
-const { currencies: currencyConfig } = require('../configuration')
+const { currencies: currencyConfig } = require('../config')
 
 /**
  * @constant
@@ -63,20 +63,15 @@ async function balance (args, opts, logger) {
 
     const balancesTable = new Table({
       head: ['', 'Committed (Pending)', 'Uncommitted (Pending)'],
-      colWidths: [10, 34, 34],
       style: { head: ['gray'] }
     })
 
     balances.forEach(({ symbol, uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance }) => {
-      const divideBy = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
-
-      balancesTable.push(
-        [
-          symbol,
-          `${Big(totalChannelBalance).div(divideBy).toFixed(16).green}` + ` (${Big(totalPendingChannelBalance).div(divideBy).toFixed(8)})`.grey,
-          Big(uncommittedBalance).div(divideBy).toFixed(16) + ` (${Big(uncommittedPendingBalance).div(divideBy).toFixed(8)})`.grey
-        ]
-      )
+      balancesTable.push([
+        symbol,
+        `${totalChannelBalance.green}` + ` (${totalPendingChannelBalance})`.grey,
+        uncommittedBalance + ` (${uncommittedPendingBalance})`.grey
+      ])
     })
 
     logger.info('Wallet Balances'.bold.white)
@@ -158,28 +153,24 @@ async function commit (args, opts, logger) {
       maxSupportedBalance = maxChannelBalance
     }
 
-    // We use this for normalization of the amount from satoshis to a decimal value
-    const divideBy = currentCurrencyConfig.quantumsPerCommon
-
     // The logic here only runs if an amount is specified in the commit command
     if (amount) {
-      // Amount is specified in currency instead of satoshis
-      const specifiedAmount = Big(amount).times(divideBy)
+      const specifiedAmount = Big(amount)
 
       if (specifiedAmount.lt(maxChannelBalance)) {
         maxSupportedBalance = specifiedAmount
       }
     }
 
-    logger.info(`For your knowledge, the Maximum supported balance at this time is: ${Big(maxSupportedBalance).div(divideBy)} ${symbol}`)
-    logger.info(`Your current uncommitted wallet balance is: ${Big(uncommittedBalance).div(divideBy)} ${symbol}`)
+    logger.info(`For your knowledge, the Maximum supported balance at this time is: ${maxSupportedBalance.toString()} ${symbol}`)
+    logger.info(`Your current uncommitted wallet balance is: ${uncommittedBalance.toString()} ${symbol}`)
 
-    const answer = await askQuestion(`Are you OK committing ${Big(maxSupportedBalance).div(divideBy)} ${symbol} to sparkswap? (Y/N)`)
+    const answer = await askQuestion(`Are you OK committing ${maxSupportedBalance.toString()} ${symbol} to sparkswap? (Y/N)`)
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
     if (maxSupportedBalance.gt(uncommittedBalance)) {
-      throw new Error(`Amount specified is larger than your current uncommitted balance of ${Big(uncommittedBalance).div(divideBy)} ${symbol}`)
+      throw new Error(`Amount specified is larger than your current uncommitted balance of ${uncommittedBalance} ${symbol}`)
     }
 
     await client.walletService.commit({ balance: maxSupportedBalance.toString(), symbol, market })
