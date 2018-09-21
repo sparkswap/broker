@@ -4,6 +4,13 @@ const { currencies: currencyConfig } = require('../../config')
 const { Big } = require('../../utils')
 
 /**
+ * @constant
+ * @type {object}
+ * @default
+ */
+const BALANCE_PRECISION = 16
+
+/**
  * Grabs the total balance and total channel balance from a specified engine
  *
  * @param {Array<symbol, engine>} SparkSwap Payment Channel Network Engine
@@ -32,10 +39,10 @@ async function getEngineBalances ([symbol, engine], logger) {
 
   logger.debug(`Received balances from ${symbol} engine`, { uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance })
 
-  totalChannelBalance = Big(totalChannelBalance).div(quantumsPerCommon).toFixed(16)
-  totalPendingChannelBalance = Big(totalPendingChannelBalance).div(quantumsPerCommon).toFixed(8)
-  uncommittedBalance = Big(uncommittedBalance).div(quantumsPerCommon).toFixed(16)
-  uncommittedPendingBalance = Big(uncommittedPendingBalance).div(quantumsPerCommon).toFixed(8)
+  totalChannelBalance = Big(totalChannelBalance).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
+  totalPendingChannelBalance = Big(totalPendingChannelBalance).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
+  uncommittedBalance = Big(uncommittedBalance).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
+  uncommittedPendingBalance = Big(uncommittedPendingBalance).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
 
   return {
     symbol,

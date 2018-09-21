@@ -69,8 +69,10 @@ async function balance (args, opts, logger) {
     balances.forEach(({ symbol, uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance }) => {
       balancesTable.push([
         symbol,
-        `${totalChannelBalance.green}` + ` (${totalPendingChannelBalance})`.grey,
-        uncommittedBalance + ` (${uncommittedPendingBalance})`.grey
+        // We fix all pending balances to 8 decimal places due to aesthetics. Since
+        // this balance should only be temporary, we do not care as much about precision
+        `${totalChannelBalance.green}` + ` (${Big(totalPendingChannelBalance).toFixed(8)})`.grey,
+        uncommittedBalance + ` (${Big(uncommittedPendingBalance).toFixed(8)})`.grey
       ])
     })
 

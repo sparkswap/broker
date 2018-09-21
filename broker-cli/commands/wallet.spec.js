@@ -5,6 +5,8 @@ const {
   expect
 } = require('test/test-helper')
 
+const { Big } = require('../utils')
+
 const program = rewire(path.resolve(__dirname, 'wallet'))
 
 describe('cli wallet', () => {
@@ -96,8 +98,20 @@ describe('cli wallet', () => {
       rpcAddress = 'test:1337'
       opts = { rpcAddress }
       logger = { info: sinon.stub(), error: sinon.stub() }
-      btcBalance = { symbol, uncommittedBalance: 10000, totalChannelBalance: 2000, totalPendingChannelBalance: 1000, uncommittedPendingBalance: 3000 }
-      ltcBalance = { symbol: 'LTC', uncommittedBalance: 200, totalChannelBalance: 200, totalPendingChannelBalance: 500, uncommittedPendingBalance: 100 }
+      btcBalance = {
+        symbol,
+        uncommittedBalance: '0.0001000000000000',
+        totalChannelBalance: '0.0000200000000000',
+        totalPendingChannelBalance: '0.0000100000000000',
+        uncommittedPendingBalance: '0.0000300000000000'
+      }
+      ltcBalance = {
+        symbol: 'LTC',
+        uncommittedBalance: '0.0000020000000000',
+        totalChannelBalance: '0.0000020000000000',
+        totalPendingChannelBalance: '0.0000050000000000',
+        uncommittedPendingBalance: '0.0000010000000000'
+      }
       balances = [btcBalance, ltcBalance]
 
       walletBalanceStub = sinon.stub().returns({ balances })
@@ -302,7 +316,7 @@ describe('cli wallet', () => {
       args = { symbol, amount }
       rpcAddress = 'test:1337'
       balances = [
-        { symbol: 'BTC', uncommittedBalance: 16777000, totalChannelBalance: 100 }
+        { symbol: 'BTC', uncommittedBalance: '0.1677700000000000' }
       ]
       walletBalanceStub = sinon.stub().returns({ balances })
       commitStub = sinon.stub()
@@ -331,7 +345,7 @@ describe('cli wallet', () => {
     it('calls the daemon to commit a balance to the relayer', async () => {
       await commit(args, opts, logger)
       const { uncommittedBalance } = balances[0]
-      expect(commitStub).to.have.been.calledWith({ balance: uncommittedBalance.toString(), symbol, market })
+      expect(commitStub).to.have.been.calledWith({ balance: Big(uncommittedBalance).toString(), symbol, market })
     })
 
     it('asks the user if they are ok to commit to a balance', async () => {
@@ -352,7 +366,7 @@ describe('cli wallet', () => {
       const { uncommittedBalance } = balances[0]
       args.amount = '1234'
       await commit(args, opts, logger)
-      expect(commitStub).to.have.been.calledWith(sinon.match({ balance: uncommittedBalance.toString() }))
+      expect(commitStub).to.have.been.calledWith(sinon.match({ balance: Big(uncommittedBalance).toString() }))
     })
   })
 
