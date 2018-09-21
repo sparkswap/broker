@@ -16,6 +16,7 @@ async function getOrderbook ({ params, logger, orderbooks }, { GetOrderbookRespo
   const orderbook = orderbooks.get(market)
 
   if (!orderbook) {
+    logger.error(`${market} is not being tracked as a market.`)
     throw new Error(`${market} is not being tracked as a market.`)
   }
   try {
@@ -37,7 +38,8 @@ async function getOrderbook ({ params, logger, orderbooks }, { GetOrderbookRespo
 
     return new GetOrderbookResponse({timestamp, datetime, bids, asks})
   } catch (err) {
-    throw new Error(err.message)
+    logger.error(`Failed to get orderbook: ${err.message}`)
+    throw new Error(err)
   }
 }
 
