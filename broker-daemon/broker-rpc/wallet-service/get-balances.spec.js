@@ -9,7 +9,8 @@ describe('get-balances', () => {
   beforeEach(() => {
     logger = {
       info: sinon.stub(),
-      debug: sinon.stub()
+      debug: sinon.stub(),
+      error: sinon.stub()
     }
   })
 
@@ -61,6 +62,7 @@ describe('get-balances', () => {
     let uncommittedPendingBalance
     let uncommittedPendingBalanceStub
     let totalPendingBalanceStub
+    let currencyConfig
 
     beforeEach(() => {
       symbol = 'BTC'
@@ -68,6 +70,13 @@ describe('get-balances', () => {
       totalChannelBalance = 10000
       totalPendingChannelBalance = 1000
       uncommittedPendingBalance = 5000
+      currencyConfig = [{
+        name: 'Bitcoin',
+        symbol: 'BTC',
+        quantumsPerCommon: '100000000',
+        maxChannelBalance: '16777215'
+      }]
+
       uncommittedBalanceStub = sinon.stub().resolves(uncommittedBalance)
       totalChannelBalanceStub = sinon.stub().resolves(totalChannelBalance)
       totalPendingBalanceStub = sinon.stub().resolves(totalPendingChannelBalance)
@@ -81,6 +90,7 @@ describe('get-balances', () => {
       engine = [symbol, engineStub]
 
       getEngineBalances = getBalances.__get__('getEngineBalances')
+      getBalances.__set__('currencyConfig', currencyConfig)
     })
 
     beforeEach(async () => {
@@ -103,6 +113,11 @@ describe('get-balances', () => {
         totalPendingChannelBalance: '0.0000100000000000',
         uncommittedPendingBalance: '0.0000500000000000'
       })
+    })
+
+    it('returns an error if a currencies config is not found', () => {
+      engine = ['LTC', engineStub]
+      return expect(getEngineBalances(engine, logger)).to.eventually.be.rejectedWith('Currency not supported')
     })
   })
 })
