@@ -4,12 +4,12 @@ const { convertBalance, Big } = require('../../utils')
 const { currencies: currencyConfig } = require('../../config')
 
 /**
- * Minimum funding amount in base units (e.g. BTC/LTC satoshis/litoshis)
+ * Minimum funding amount in common units (e.g. 0.123 BTC)
  * @constant
  * @type {Big}
  * @default
  */
-const MINIMUM_FUNDING_AMOUNT = Big(400000)
+const MINIMUM_FUNDING_AMOUNT = Big(0.00400000)
 
 /**
  * Grabs public lightning network information from relayer and opens a channel
@@ -60,9 +60,10 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
 
   logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balanceInCommonUnits}`, { balanceInCommonUnits, balance })
 
-  // TODO: Validate that the amount is above the minimum channel balance
+  // We use common units for these calculation so that we can provide
+  // friendly errors to the user.
   // TODO: Get correct fee amount from engine
-  if (MINIMUM_FUNDING_AMOUNT.gt(balance)) {
+  if (MINIMUM_FUNDING_AMOUNT.gt(balanceInCommonUnits)) {
     throw new PublicError(`Minimum balance of ${MINIMUM_FUNDING_AMOUNT} needed to commit to the relayer`)
   } else if (maxChannelBalance.lt(balance)) {
     logger.error(`Balance from the client exceeds maximum balance allowed (${maxChannelBalance.toString()}).`, { balance })
@@ -89,7 +90,7 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     } else if (insufficientInboundBalance) {
       errorMessage = 'You have another inbound channel open with a balance lower than desired, release that channel and try again.'
     } else {
-      errorMessage = `You already have a channel open with ${balance} or greater.`
+      errorMessage = `You already have a channel open with ${balanceInCommonUnits} or greater.`
     }
 
     logger.error(errorMessage, { balance, maxOutboundBalance, maxInboundBalance, inboundBalance: convertedBalance })

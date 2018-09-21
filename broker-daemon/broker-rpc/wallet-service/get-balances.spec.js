@@ -4,8 +4,16 @@ const { expect, rewire, sinon } = require('test/test-helper')
 const getBalances = rewire(path.resolve(__dirname, 'get-balances'))
 
 describe('get-balances', () => {
+  let logger
+
+  beforeEach(() => {
+    logger = {
+      info: sinon.stub(),
+      debug: sinon.stub()
+    }
+  })
+
   describe('getBalances', () => {
-    let logger
     let engineStub
     let engines
     let GetBalancesResponse
@@ -13,9 +21,6 @@ describe('get-balances', () => {
     let revert
 
     beforeEach(() => {
-      logger = {
-        info: sinon.stub()
-      }
       engineStub = sinon.stub()
       engines = [ engineStub ]
       balancesStub = sinon.stub().resolves(engineStub)
@@ -79,7 +84,7 @@ describe('get-balances', () => {
     })
 
     beforeEach(async () => {
-      res = await getEngineBalances(engine)
+      res = await getEngineBalances(engine, logger)
     })
 
     it('gets the total balance of an engine', () => {
@@ -93,10 +98,10 @@ describe('get-balances', () => {
     it('returns balances for an engine', () => {
       expect(res).to.eql({
         symbol,
-        uncommittedBalance,
-        totalChannelBalance,
-        totalPendingChannelBalance,
-        uncommittedPendingBalance
+        uncommittedBalance: '0.0100000000000000',
+        totalChannelBalance: '0.0001000000000000',
+        totalPendingChannelBalance: '0.0000100000000000',
+        uncommittedPendingBalance: '0.0000500000000000'
       })
     })
   })
