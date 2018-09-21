@@ -189,7 +189,7 @@ class BrokerDaemon {
       this.interchainRouter.listen(this.interchainRouterAddress)
       this.logger.info(`Interchain Router server started: gRPC Server listening on ${this.interchainRouterAddress}`)
     } catch (e) {
-      this.logger.error('BrokerDaemon failed to initialize', { error: e.toString() })
+      this.logger.error('BrokerDaemon failed to initialize', { error: e.stack })
       this.logger.error(e.toString(), e)
       this.logger.info('BrokerDaemon shutting down...')
       process.exit(1)
