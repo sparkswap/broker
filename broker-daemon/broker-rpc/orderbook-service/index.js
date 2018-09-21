@@ -1,7 +1,8 @@
-const { GrpcServerStreamingMethod } = require('grpc-methods')
+const { GrpcServerStreamingMethod, GrpcUnaryMethod } = require('grpc-methods')
 const { loadProto } = require('../../utils')
 
 const watchMarket = require('./watch-market')
+const getOrderbook = require('./get-orderbook')
 
 class OrderBookService {
   /**
@@ -21,11 +22,13 @@ class OrderBookService {
     this.serviceName = 'OrderBookService'
 
     const {
-      WatchMarketResponse
+      WatchMarketResponse,
+      GetOrderbookResponse
     } = this.proto
 
     this.implementation = {
-      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks, auth }, { WatchMarketResponse }).register()
+      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks, auth }, { WatchMarketResponse }).register(),
+      getOrderbook: new GrpcUnaryMethod(getOrderbook, this.messageId('getOrderbook'), { logger, relayer, orderbooks, auth }, { GetOrderbookResponse }).register()
     }
   }
 
