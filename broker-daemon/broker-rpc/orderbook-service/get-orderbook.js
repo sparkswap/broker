@@ -1,4 +1,5 @@
-const nanoToDatetime = require('../../utils/nano-to-datetime')
+const nano = require('nano-seconds')
+
 /**
  * Retrieve price and amount information for current orderbook state
  *
@@ -18,7 +19,9 @@ async function getOrderbook ({ params, logger, orderbooks }, { GetOrderbookRespo
     throw new Error(`${market} is not being tracked as a market.`)
   }
   try {
-    const timestamp = new Date().getTime()
+    const currentTime = nano.now()
+    const timestamp = nano.toString(currentTime)
+    const datetime = nano.toISOString(currentTime)
     const orders = await orderbook.all()
 
     const bids = []
@@ -32,8 +35,6 @@ async function getOrderbook ({ params, logger, orderbooks }, { GetOrderbookRespo
       }
     })
 
-    const datetimeInNano = (orders[orders.length - 1] || {}).createdAt
-    const datetime = nanoToDatetime(datetimeInNano)
     return new GetOrderbookResponse({timestamp, datetime, bids, asks})
   } catch (err) {
     throw new Error(err.message)
