@@ -7,6 +7,7 @@ const commit = require('./commit')
 const getPaymentChannelNetworkAddress = require('./get-payment-channel-network-address')
 const getTradingCapacities = require('./get-trading-capacities')
 const releaseChannels = require('./release-channels')
+const withdrawFunds = require('./withdraw-funds')
 
 /**
  * WalletService provides interactions with an engine's crypto wallet
@@ -34,6 +35,7 @@ class WalletService {
       GetBalancesResponse,
       GetPaymentChannelNetworkAddressResponse,
       GetTradingCapacitiesResponse,
+      WithdrawFundsResponse,
       google: {
         protobuf: {
           Empty: EmptyResponse
@@ -47,7 +49,8 @@ class WalletService {
       commit: new GrpcUnaryMethod(commit, this.messageId('commit'), { logger, engines, relayer, orderbooks, auth }, { EmptyResponse }).register(),
       getPaymentChannelNetworkAddress: new GrpcUnaryMethod(getPaymentChannelNetworkAddress, this.messageId('getPaymentChannelNetworkAddress'), { logger, engines, auth }, { GetPaymentChannelNetworkAddressResponse }).register(),
       getTradingCapacities: new GrpcUnaryMethod(getTradingCapacities, this.messageId('getTradingCapacities'), { logger, engines, orderbooks, auth }, { GetTradingCapacitiesResponse }).register(),
-      releaseChannels: new GrpcUnaryMethod(releaseChannels, this.messageId('releaseChannels'), { logger, engines, orderbooks, auth }, { EmptyResponse }).register()
+      releaseChannels: new GrpcUnaryMethod(releaseChannels, this.messageId('releaseChannels'), { logger, engines, orderbooks, auth }, { EmptyResponse }).register(),
+      withdrawFunds: new GrpcUnaryMethod(withdrawFunds, this.messageId('withdrawFunds'), { logger, engines, auth }, { WithdrawFundsResponse }).register()
     }
   }
 

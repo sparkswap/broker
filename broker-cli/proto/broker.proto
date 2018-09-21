@@ -603,6 +603,39 @@ message MarketEvent {
   Side side = 4;
 }
 
+message GetOrderbookRequest {
+  // Market to retrieve updates for, e.g. `'BTC/LTC'`.
+  string market = 1;
+}
+
+message Bid {
+  // price of the bid
+  string price = 1;
+  // amount to be bought
+  string amount = 2;
+}
+
+message Ask {
+  // price of the ask
+  string price = 1;
+  // amount to be sold
+  string amount = 2;
+}
+
+/**
+ * Contains information about bids and asks on the orderbook
+ */
+message GetOrderbookResponse {
+  // list of bids on the orderbook in the current state
+  repeated Bid bids = 1;
+  // list of asks on the orderbook in the current state
+  repeated Ask asks = 2;
+  // time in milliseconds of generation time of the orderbook (when the call was made)
+  int64 timestamp = 3;
+  // time the last entry that was added (ISO8601 datetime string)
+  string datetime = 4;
+}
+
 /**
  * The OrderBookService is intended to update users on network activity and provide an up to date orderbook for the user.
  *
@@ -677,6 +710,30 @@ service OrderBookService {
    * ```
    */
   rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
+  /**
+   * GetOrderbook returns price and amount information about the bids and asks on the orderbook in the current state.
+   * > Below is a simple example of a console-based UI for an orderbook:
+   *
+   * ```javascript
+   * const { bids, asks, timestamp, datetime } = orderBookService.getOrderbook(request)
+   * console.log({ bids, asks, timestamp, datetime })
+   * ```
+   *
+   *
+   * > The response from the above call would look like:
+   *
+   * ```javascript
+   * { bids:
+   *    [ { price: '0.0003000000000000', amount: '0.0000100000000000' },
+   *      { price: '0.0002000000000000', amount: '0.0000100000000000' } ],
+   *   asks:
+   *    [ { price: '0.0003000000000000', amount: '0.0000300000000000' } ],
+   *   timestamp: '1537466254497',
+   *   datetime: '2018-09-20T16:27:28.0733219Z' }
+   * ```
+   */
+  rpc GetOrderbook (GetOrderbookRequest) returns (GetOrderbookResponse);
+
 }
 
 /**
@@ -801,6 +858,23 @@ message GetPaymentChannelNetworkAddressRequest {
 message GetPaymentChannelNetworkAddressResponse {
   // Network Address retrieved
   string payment_channel_network_address = 1;
+}
+
+/**
+ * Request to withdraw funds from wallet to specified address
+ */
+message WithdrawFundsRequest {
+  // Currency of funds to withdraw
+  Symbol symbol = 1;
+  // Amount of funds to withdraw
+  string amount = 2;
+  // Address to send the funds to
+  string address = 3;
+}
+
+message WithdrawFundsResponse {
+  // transaction id of the withdrawal
+  string txid = 1;
 }
 
 /**
@@ -1035,6 +1109,28 @@ service WalletService {
    */
   rpc GetTradingCapacities (GetTradingCapacitiesRequest) returns (GetTradingCapacitiesResponse);
 
+  /**
+   * WithdrawFunds moves funds (of the specified currency and amount) to the specified address
+   *
+   * ```javascript
+   * const { txid } = await walletService.withdrawFunds({ symbol: 'BTC', amount: '2', address: 'asdfasdf' })
+   * console.log(txid)
+   * ```
+   * > The above command will print:
+   *
+   * ```javascript
+   * '66a581f618ee68dde53142c55e924d56cd2b2c169be5b374bc810ac692fb17fd'
+   * ```
+   *
+   * ```shell
+   * > sparkswap wallet withdraw BTC 10 --wallet-address asdfadf
+   * ```
+   *
+   * ```shell
+   * Successfully withdrew 2 BTC from your wallet! { id: '66a581f618ee68dde53142c55e924d56cd2b2c169be5b374bc810ac692fb17fd' }
+   * ```
+   */
+  rpc WithdrawFunds (WithdrawFundsRequest) returns (WithdrawFundsResponse);
 }
 
 /**

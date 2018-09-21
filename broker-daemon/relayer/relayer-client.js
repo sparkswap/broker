@@ -7,6 +7,7 @@ const Identity = require('./identity')
 
 const { MarketEvent } = require('../models')
 const { loadProto, migrateStore } = require('../utils')
+
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
 
@@ -80,19 +81,22 @@ class RelayerClient {
   /**
    * Opens a stream with the exchange to watch for market events
    *
-   * @param {EventEmitter} eventHandler
    * @param {LevelUP} store
    * @param {Object} params
+   * @param {String} params.baseSymbol
+   * @param {String} params.counterSymbol
+   * @param {String} params.lastUpdated - nanosecond timestamp
+   * @param {String} params.sequence
    * @returns {Promise<void>} a promise that resolves when the market is up to date with the remote relayer
    */
-  watchMarket (store, { baseSymbol, counterSymbol, lastUpdated }) {
+  watchMarket (store, { baseSymbol, counterSymbol, lastUpdated, sequence }) {
     const RESPONSE_TYPES = this.proto.WatchMarketResponse.ResponseType
 
     const params = {
       baseSymbol,
       counterSymbol,
-      // TODO: fix null value for lastUpdated
-      lastUpdated: (lastUpdated || '0')
+      lastUpdated,
+      sequence
     }
 
     return new Promise(async (resolve, reject) => {
@@ -101,7 +105,7 @@ class RelayerClient {
       try {
         const watcher = this.orderbookService.watchMarket(params)
 
-        // we set this value to be a promise when we are migrating the database.
+        // We set this value to be a promise when we are migrating the database.
         // if we were to continue processing before deletion is finished, we could
         // inadvertently delete new events added to the store.
         let migrating
@@ -138,8 +142,11 @@ class RelayerClient {
             return this.logger.debug(`Returning because response type is: ${response.type}`)
           }
 
-          this.logger.debug('Creating a market event', response.marketEvent)
-          const { key, value } = new MarketEvent(response.marketEvent)
+          const { marketEvent } = response
+
+          this.logger.debug('Creating a market event', marketEvent)
+
+          const { key, value } = new MarketEvent(marketEvent)
           store.put(key, value)
         })
 
@@ -148,6 +155,8 @@ class RelayerClient {
           process.exit(1)
           reject(err)
         })
+      // NOTE: This catch will NOT handle any errors that are thrown inside of `watcher`
+      // events. You must reject the promise in order to bubble-up any exceptions
       } catch (e) {
         this.logger.error('Error encountered while setting up stream')
         return reject(e)

@@ -1,25 +1,14 @@
 const { PublicError } = require('grpc-methods')
+
 const { convertBalance, Big } = require('../../utils')
-/**
- * @constant
- * @type {Long}
- * @default
- */
-const MINIMUM_FUNDING_AMOUNT = 400000
+const { currencies: currencyConfig } = require('../../config')
 
 /**
- * This is the max allowed balance for a channel for LND while software is currently
- * in beta
- *
- * Maximum channel balance (no inclusive) is 2^32 or 16777216
- * More info: https://github.com/lightningnetwork/lnd/releases/tag/v0.3-alpha
- *
- * @todo make this engine agnostic (non-LND)
  * @constant
- * @type {Long}
+ * @type {Big}
  * @default
  */
-const MAX_CHANNEL_BALANCE = 16777215
+const MINIMUM_FUNDING_AMOUNT = Big(400000)
 
 /**
  * Grabs public lightning network information from relayer and opens a channel
@@ -35,12 +24,18 @@ const MAX_CHANNEL_BALANCE = 16777215
  */
 async function commit ({ params, relayer, logger, engines, orderbooks }, { EmptyResponse }) {
   const { balance, symbol, market } = params
+  const currentCurrencyConfig = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol)
+
+  if (!currentCurrencyConfig) {
+    throw new Error(`Currency was not found when trying to commit to market: ${symbol}`)
+  }
 
   const orderbook = orderbooks.get(market)
 
   if (!orderbook) {
     throw new Error(`${market} is not being tracked as a market.`)
   }
+
   const { address } = await relayer.paymentChannelNetworkService.getAddress({symbol})
 
   const [ baseSymbol, counterSymbol ] = market.split('/')
@@ -61,14 +56,15 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
 
   logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balance}`)
 
+  const maxChannelBalance = Big(currentCurrencyConfig.maxChannelBalance)
+
   // TODO: Validate that the amount is above the minimum channel balance
-  // TODO: Choose the correct engine depending on the market
   // TODO: Get correct fee amount from engine
-  if (balance < MINIMUM_FUNDING_AMOUNT) {
+  if (MINIMUM_FUNDING_AMOUNT.gt(balance)) {
     throw new PublicError(`Minimum balance of ${MINIMUM_FUNDING_AMOUNT} needed to commit to the relayer`)
-  } else if (balance > MAX_CHANNEL_BALANCE) {
-    logger.error(`Balance from the client exceeds maximum balance allowed (${MAX_CHANNEL_BALANCE}).`, { balance })
-    throw new PublicError(`Maxium balance of ${MAX_CHANNEL_BALANCE} exceeded for committing to the relayer. Please try again.`)
+  } else if (maxChannelBalance.lt(balance)) {
+    logger.error(`Balance from the client exceeds maximum balance allowed (${maxChannelBalance.toString()}).`, { balance })
+    throw new PublicError(`Maximum balance of ${maxChannelBalance.toString()} exceeded for committing to the relayer. Please try again.`)
   }
 
   // Get the max balance for outbound and inbound channels to see if there are already channels with the balance open. If this is the
@@ -96,11 +92,24 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     throw new PublicError(errorMessage)
   }
 
-  await engine.createChannel(address, balance)
+  logger.debug('Creating outbound channel', { address, balance })
+
+  try {
+    await engine.createChannel(address, balance)
+  } catch (e) {
+    logger.error('Received error when creating outbound channel', { error: e.stack })
+    throw new PublicError(`Funding error: Check that you have sufficient balance`)
+  }
 
   const paymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
 
-  await relayer.paymentChannelNetworkService.createChannel({address: paymentChannelNetworkAddress, balance: convertedBalance, symbol: inverseSymbol})
+  try {
+    logger.debug('Requesting inbound channel from relayer', { address: paymentChannelNetworkAddress, balance: convertBalance, symbol: inverseSymbol })
+    await relayer.paymentChannelNetworkService.createChannel({address: paymentChannelNetworkAddress, balance: convertedBalance, symbol: inverseSymbol})
+  } catch (e) {
+    // TODO: Close channel that was open if relayer call has failed
+    throw (e)
+  }
 
   return new EmptyResponse({})
 }
