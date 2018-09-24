@@ -1,6 +1,8 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
 const { PublicError } = require('grpc-methods')
+const { Big } = require('../../utils')
+
 const commit = rewire(path.resolve(__dirname, 'commit'))
 
 describe('commit', () => {
@@ -10,7 +12,7 @@ describe('commit', () => {
   let logger
   let btcEngine
   let ltcEngine
-  let address
+  let paymentNetworkAddress
   let res
   let createChannelRelayerStub
   let convertBalanceStub
@@ -25,9 +27,9 @@ describe('commit', () => {
 
   beforeEach(() => {
     EmptyResponse = sinon.stub()
-    address = 'asdf12345@localhost'
+    paymentNetworkAddress = 'asdf12345@localhost'
     relayerAddress = 'qwerty@localhost'
-    getAddressStub = sinon.stub().resolves({ address })
+    getAddressStub = sinon.stub().resolves({ address: paymentNetworkAddress })
     createChannelRelayerStub = sinon.stub().resolves({})
     convertBalanceStub = sinon.stub().returns('100')
     createChannelStub = sinon.stub()
@@ -53,7 +55,7 @@ describe('commit', () => {
       ['LTC', ltcEngine]
     ])
     params = {
-      balance: '10000000',
+      balance: '0.10000000',
       symbol: 'BTC',
       market: 'BTC/LTC'
     }
@@ -81,7 +83,7 @@ describe('commit', () => {
   })
 
   it('balance under minimum amount throws an error for an incorrect balance', () => {
-    params.balance = '100'
+    params.balance = '0.00000100'
     return expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
     ).to.be.rejectedWith(PublicError, 'Minimum balance of')
@@ -104,8 +106,9 @@ describe('commit', () => {
       expect(getAddressStub).to.have.been.calledWith({symbol: params.symbol})
     })
 
-    it('creates a channel through an btc engine', () => {
-      expect(btcEngine.createChannel).to.have.been.calledWith(address, params.balance)
+    it('creates a channel through an btc engine with base units', () => {
+      const baseUnitsBalance = Big(params.balance).times(currencyConfig[0].quantumsPerCommon).toString()
+      expect(btcEngine.createChannel).to.have.been.calledWith(paymentNetworkAddress, baseUnitsBalance)
     })
 
     it('retrieves the address from an inverse engine', () => {

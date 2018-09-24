@@ -4,11 +4,12 @@ const { convertBalance, Big } = require('../../utils')
 const { currencies: currencyConfig } = require('../../config')
 
 /**
+ * Minimum funding amount in common units (e.g. 0.123 BTC)
  * @constant
  * @type {Big}
  * @default
  */
-const MINIMUM_FUNDING_AMOUNT = Big(400000)
+const MINIMUM_FUNDING_AMOUNT = Big(0.00400000)
 
 /**
  * Grabs public lightning network information from relayer and opens a channel
@@ -23,7 +24,7 @@ const MINIMUM_FUNDING_AMOUNT = Big(400000)
  * @return {responses.EmptyResponse}
  */
 async function commit ({ params, relayer, logger, engines, orderbooks }, { EmptyResponse }) {
-  const { balance, symbol, market } = params
+  const { balance: balanceInCommonUnits, symbol, market } = params
   const currentCurrencyConfig = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol)
 
   if (!currentCurrencyConfig) {
@@ -54,17 +55,19 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     throw new PublicError(`No engine is configured for symbol: ${inverseSymbol}`)
   }
 
-  logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balance}`)
-
   const maxChannelBalance = Big(currentCurrencyConfig.maxChannelBalance)
+  const balance = Big(balanceInCommonUnits).times(currentCurrencyConfig.quantumsPerCommon).toString()
 
-  // TODO: Validate that the amount is above the minimum channel balance
+  logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balanceInCommonUnits}`, { balanceInCommonUnits, balance })
+
+  // We use common units for these calculation so that we can provide
+  // friendly errors to the user.
   // TODO: Get correct fee amount from engine
-  if (MINIMUM_FUNDING_AMOUNT.gt(balance)) {
+  if (MINIMUM_FUNDING_AMOUNT.gt(balanceInCommonUnits)) {
     throw new PublicError(`Minimum balance of ${MINIMUM_FUNDING_AMOUNT} needed to commit to the relayer`)
   } else if (maxChannelBalance.lt(balance)) {
     logger.error(`Balance from the client exceeds maximum balance allowed (${maxChannelBalance.toString()}).`, { balance })
-    throw new PublicError(`Maximum balance of ${maxChannelBalance.toString()} exceeded for committing to the relayer. Please try again.`)
+    throw new PublicError(`Maximum balance of ${maxChannelBalance.toString()} exceeded for committing of ${balance} to the relayer. Please try again.`)
   }
 
   // Get the max balance for outbound and inbound channels to see if there are already channels with the balance open. If this is the
@@ -81,13 +84,15 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     const insufficientInboundBalance = maxInboundBalance && Big(maxInboundBalance).lt(convertedBalance)
 
     let errorMessage
+
     if (insufficientOutboundBalance) {
       errorMessage = 'You have another outbound channel open with a balance lower than desired, release that channel and try again.'
     } else if (insufficientInboundBalance) {
       errorMessage = 'You have another inbound channel open with a balance lower than desired, release that channel and try again.'
     } else {
-      errorMessage = `You already have a channel open with ${balance} or greater.`
+      errorMessage = `You already have a channel open with ${balanceInCommonUnits} or greater.`
     }
+
     logger.error(errorMessage, { balance, maxOutboundBalance, maxInboundBalance, inboundBalance: convertedBalance })
     throw new PublicError(errorMessage)
   }
