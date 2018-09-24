@@ -14,8 +14,13 @@ describe('getPreimage', () => {
   let engines
   let preimage
   let translateSwap
+  let logger
 
   beforeEach(() => {
+    logger = {
+      error: sinon.stub(),
+      debug: sinon.stub()
+    }
     order = {
       inboundSymbol: 'BTC',
       inboundAmount: '1000000',
@@ -62,7 +67,7 @@ describe('getPreimage', () => {
   it('gets the records for the hash', async () => {
     const fakeRange = 'myrange'
     ordersByHash.range.returns(fakeRange)
-    await getPreimage({ params, send, ordersByHash, engines })
+    await getPreimage({ params, send, ordersByHash, engines, logger })
 
     expect(ordersByHash.range).to.have.been.calledOnce()
     expect(ordersByHash.range).to.have.been.calledWith({
@@ -78,7 +83,7 @@ describe('getPreimage', () => {
   it('returns permanent error if too many orders match the hash', async () => {
     getRecords.resolves([ order, order ])
 
-    await getPreimage({ params, send, ordersByHash, engines })
+    await getPreimage({ params, send, ordersByHash, engines, logger })
 
     expect(send).to.have.been.calledOnce()
     expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('Too many routing entries') }))
@@ -86,7 +91,7 @@ describe('getPreimage', () => {
 
   it('returns permanent error if no orders match the hash', async () => {
     getRecords.resolves([ ])
-    await getPreimage({ params, send, ordersByHash, engines })
+    await getPreimage({ params, send, ordersByHash, engines, logger })
 
     expect(send).to.have.been.calledOnce()
     expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('No routing entry available') }))
@@ -95,7 +100,7 @@ describe('getPreimage', () => {
   it('returns permanent error if the amount is not at least as much as on the order', async () => {
     params.amount = '10'
 
-    await getPreimage({ params, send, ordersByHash, engines })
+    await getPreimage({ params, send, ordersByHash, engines, logger })
 
     expect(send).to.have.been.calledOnce()
     expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('Insufficient currency') }))
@@ -104,7 +109,7 @@ describe('getPreimage', () => {
   it('returns permanent error if the symbol does not match the inbound symbol on the order', async () => {
     order.inboundSymbol = 'LTC'
 
-    await getPreimage({ params, send, ordersByHash, engines })
+    await getPreimage({ params, send, ordersByHash, engines, logger })
 
     expect(send).to.have.been.calledOnce()
     expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('Wrong currency') }))
@@ -113,7 +118,7 @@ describe('getPreimage', () => {
   it('returns permanent error if the current block height is too high for the time lock', async () => {
     params.bestHeight = '10000'
 
-    await getPreimage({ params, send, ordersByHash, engines })
+    await getPreimage({ params, send, ordersByHash, engines, logger })
 
     expect(send).to.have.been.calledOnce()
     expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('is higher than') }))
@@ -122,14 +127,14 @@ describe('getPreimage', () => {
   it('returns permanent error if the outbound engine is unavailable', async () => {
     order.outboundSymbol = 'XYZ'
 
-    await getPreimage({ params, send, ordersByHash, engines })
+    await getPreimage({ params, send, ordersByHash, engines, logger })
 
     expect(send).to.have.been.calledOnce()
     expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('No engine') }))
   })
 
   it('makes a payment to the outbound engine', async () => {
-    await getPreimage(({ params, send, ordersByHash, engines }))
+    await getPreimage(({ params, send, ordersByHash, engines, logger }))
 
     expect(engines.get('LTC').translateSwap).to.have.been.calledOnce()
     expect(engines.get('LTC').translateSwap).to.have.been.calledWith(order.takerAddress, params.paymentHash, order.outboundAmount, '600000')
@@ -138,14 +143,24 @@ describe('getPreimage', () => {
   it('returns permanentError if the outbound engine returns one', async () => {
     translateSwap.resolves({ permanentError: 'fake error' })
 
-    await getPreimage({ params, send, ordersByHash, engines })
+    await getPreimage({ params, send, ordersByHash, engines, logger })
 
     expect(send).to.have.been.calledOnce()
     expect(send).to.have.been.calledWith(sinon.match({ permanentError: 'fake error' }))
   })
 
+  it('returns permanentError rpc call to translateSwap fails', async () => {
+    const rpcError = 'RPC_ERROR'
+    translateSwap.rejects(new Error(rpcError))
+
+    await getPreimage({ params, send, ordersByHash, engines, logger })
+
+    expect(send).to.have.been.calledOnce()
+    expect(send).to.have.been.calledWith(sinon.match({ permanentError: rpcError }))
+  })
+
   it('returns the preimage to the requesting client', async () => {
-    await getPreimage(({ params, send, ordersByHash, engines }))
+    await getPreimage(({ params, send, ordersByHash, engines, logger }))
 
     expect(send).to.have.been.calledOnce()
     expect(send).to.have.been.calledWith({ paymentPreimage: preimage })
