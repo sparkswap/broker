@@ -3,7 +3,7 @@ const { expect, rewire, sinon } = require('test/test-helper')
 
 const getPreimage = rewire(path.resolve(__dirname, 'get-preimage'))
 
-describe.only('getPreimage', () => {
+describe('getPreimage', () => {
   let params
   let getRecords
   let Order
