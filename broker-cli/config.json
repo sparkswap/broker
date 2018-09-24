@@ -1,0 +1,14 @@
+{
+  "currencies": [
+    {
+      "name": "Bitcoin",
+      "symbol": "BTC",
+      "maxChannelBalance": "0.16777215"
+    },
+    {
+      "name": "Litecoin",
+      "symbol": "LTC",
+      "maxChannelBalance": "10.06632900"
+    }
+  ]
+}

@@ -768,14 +768,14 @@ message NewDepositAddressResponse {
 message Balance {
   // Currency of the balance.
   string symbol = 1;
-  // Total balance of the wallets managed by this node in this currency, including balance in channels. This is currently in base units (e.g. Satoshi/Litoshis)
-  int64 uncommitted_balance = 2;
-  // Balance in the listed currency that is currently in channels. This is currently in base units (e.g. Satoshis/Litoshis)
-  int64 total_channel_balance = 3;
-  // Balance in the listed currency that is currently in pending channels. This is currently in base units (e.g. Satoshis/Litoshis)
-  int64 total_pending_channel_balance = 4;
-  // Balance in the listed currency that is currently in pending closing channels and unconfirmed wallet balance. This is currently in base units (e.g. Satoshis/Litoshis)
-  int64 uncommitted_pending_balance = 5;
+  // Total balance of the wallets managed by this node in this currency, including balance in channels. This is currently in common units (e.g. 0.5 BTC)
+  string uncommitted_balance = 2;
+  // Balance in the listed currency that is currently in channels. This is currently in common units (e.g. 0.5 BTC)
+  string total_channel_balance = 3;
+  // Balance in the listed currency that is currently in pending channels. This is currently in common units (e.g. 0.5 BTC)
+  string total_pending_channel_balance = 4;
+  // Balance in the listed currency that is currently in pending closing channels and unconfirmed wallet balance. This is currently in common units (e.g. 0.5 BTC)
+  string uncommitted_pending_balance = 5;
 }
 
 /**
@@ -830,8 +830,8 @@ message GetTradingCapacitiesRequest {
 message CommitRequest {
   // Currency of the balance to commit.
   Symbol symbol = 1;
-  // Amount of the currency to commit. This is currently in base units (e.g. Satoshis/Litoshis)
-  int64 balance = 2;
+  // Amount of the currency to commit. This is currently in common units (e.g. 0.5 BTC)
+  string balance = 2;
   // Market to commit the amount in currency to. e.g. BTC/LTC
   string market = 3;
 }
@@ -937,17 +937,17 @@ service WalletService {
    * [
    *   {
    *     "symbol": "BTC",
-   *     "uncommittedBalance": "1000000000",
-   *     "totalChannelBalance": "16700000",
-   *     "totalPendingChannelBalance": "10000",
-   *     "uncommittedPendingBalance": "00000"
+   *     "uncommittedBalance": "10.0000000000000000",
+   *     "totalChannelBalance": "0.1670000000000000",
+   *     "totalPendingChannelBalance": "0.0001000000000000",
+   *     "uncommittedPendingBalance": "0"
    *   },
    *   {
    *     "symbol": "LTC",
-   *     "uncommittedBalance": "1000000000",
-   *     "totalChannelBalance": "16700000",
-   *     "totalPendingChannelBalance": "20000",
-   *     "uncommittedPendingBalance": "00000"
+   *     "uncommittedBalance": "10.0000000000000000",
+   *     "totalChannelBalance": "0.1670000000000000",
+   *     "totalPendingChannelBalance": "0.0002000000000000",
+   *     "uncommittedPendingBalance": "0"
    *   }
    * ]
    * ```
