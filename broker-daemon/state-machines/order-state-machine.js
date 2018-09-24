@@ -383,6 +383,7 @@ const OrderStateMachine = StateMachine.factory({
      */
     onBeforeReject: function (lifecycle, error) {
       this.logger.error(`Encountered error during transition, rejecting`, error)
+      this.order.error = error
     }
   }
 })
