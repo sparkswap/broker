@@ -35,7 +35,7 @@ describe('BlockOrderWorker', () => {
     BlockOrder.TIME_RESTRICTIONS = {
       GTC: 'GTC'
     }
-    BlockOrder.fromStorage = sinon.stub()
+    BlockOrder.fromStore = sinon.stub()
     BlockOrderWorker.__set__('BlockOrder', BlockOrder)
 
     Order = {
@@ -379,7 +379,7 @@ describe('BlockOrderWorker', () => {
         fail: sinon.stub()
       }
 
-      BlockOrder.fromStorage.returns(fakeBlockOrder)
+      BlockOrder.fromStore.returns(fakeBlockOrder)
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       fakeErr = new Error('fake')
       fakeId = 'myid'
@@ -388,15 +388,8 @@ describe('BlockOrderWorker', () => {
     it('retrieves a block order from the store', async () => {
       await worker.failBlockOrder(fakeId, fakeErr)
 
-      expect(store.get).to.have.been.calledOnce()
-      expect(store.get).to.have.been.calledWith(fakeId)
-    })
-
-    it('inflates the BlockOrder model', async () => {
-      await worker.failBlockOrder(fakeId, fakeErr)
-
-      expect(BlockOrder.fromStorage).to.have.been.calledOnce()
-      expect(BlockOrder.fromStorage).to.have.been.calledWith(fakeId, blockOrder)
+      expect(BlockOrder.fromStore).to.have.been.calledOnce()
+      expect(BlockOrder.fromStore).to.have.been.calledWith(store, fakeId)
     })
 
     it('updates the block order to failed status', async () => {
@@ -437,7 +430,7 @@ describe('BlockOrderWorker', () => {
       store.get.callsArgWithAsync(1, null, blockOrder)
       OrderStateMachine.getAll.resolves(orders)
       FillStateMachine.getAll.resolves(fills)
-      BlockOrder.fromStorage.returns({ id: blockOrderId })
+      BlockOrder.fromStore.returns({ id: blockOrderId })
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
     })
 
@@ -445,18 +438,8 @@ describe('BlockOrderWorker', () => {
       const fakeId = 'myid'
       await worker.getBlockOrder(fakeId)
 
-      expect(store.get).to.have.been.calledOnce()
-      expect(store.get).to.have.been.calledWith(fakeId)
-    })
-
-    it('inflates the BlockOrder model', async () => {
-      const fakeId = 'myid'
-      const bO = await worker.getBlockOrder(fakeId)
-
-      expect(BlockOrder.fromStorage).to.have.been.calledOnce()
-      expect(BlockOrder.fromStorage).to.have.been.calledWith(fakeId, blockOrder)
-
-      expect(bO).to.be.have.property('id', blockOrderId)
+      expect(BlockOrder.fromStore).to.have.been.calledOnce()
+      expect(BlockOrder.fromStore).to.have.been.calledWith(store)
     })
 
     it('retrieves all open orders associated with a block order', async () => {
@@ -515,7 +498,7 @@ describe('BlockOrderWorker', () => {
       ]
       store.get.callsArgWithAsync(1, null, blockOrder)
       blockOrderCancel = sinon.stub()
-      BlockOrder.fromStorage.returns({
+      BlockOrder.fromStore.returns({
         id: blockOrderId,
         cancel: blockOrderCancel,
         key: blockOrderKey,
@@ -540,18 +523,8 @@ describe('BlockOrderWorker', () => {
       const fakeId = 'myid'
       await worker.cancelBlockOrder(fakeId)
 
-      expect(store.get).to.have.been.calledOnce()
-      expect(store.get).to.have.been.calledWith(fakeId)
-    })
-
-    it('inflates the BlockOrder model', async () => {
-      const fakeId = 'myid'
-      const bO = await worker.cancelBlockOrder(fakeId)
-
-      expect(BlockOrder.fromStorage).to.have.been.calledOnce()
-      expect(BlockOrder.fromStorage).to.have.been.calledWith(fakeId, blockOrder)
-
-      expect(bO).to.be.have.property('id', blockOrderId)
+      expect(BlockOrder.fromStore).to.have.been.calledOnce()
+      expect(BlockOrder.fromStore).to.have.been.calledWith(store, fakeId)
     })
 
     it('retrieves all open orders associated with a block order', async () => {
@@ -565,26 +538,6 @@ describe('BlockOrderWorker', () => {
       expect(Order.rangeForBlockOrder).to.have.been.calledWith(bO.id)
       expect(getRecords).to.have.been.calledOnce()
       expect(getRecords).to.have.been.calledWith(secondLevel, sinon.match.func, fakeRange)
-    })
-
-    it('inflates order models for all of the order records', async () => {
-      const fakeId = 'myid'
-
-      await worker.cancelBlockOrder(fakeId)
-
-      const eachRecord = getRecords.args[0][1]
-
-      const fakeKey = 'mykey'
-      const fakeValue = { my: 'value' }
-      const fakeState = 'created'
-      const fakeValueStr = JSON.stringify({ state: fakeState, order: fakeValue })
-      const fakeOrder = 'my order'
-
-      Order.fromObject.returns(fakeOrder)
-
-      expect(eachRecord(fakeKey, fakeValueStr)).to.be.eql({ state: fakeState, order: fakeOrder })
-      expect(Order.fromObject).to.have.been.calledOnce()
-      expect(Order.fromObject).to.have.been.calledWith(fakeKey, sinon.match(fakeValue))
     })
 
     it('cancels all of the orders on the relayer', async () => {
@@ -641,16 +594,6 @@ describe('BlockOrderWorker', () => {
 
       expect(store.put).to.have.been.calledOnce()
       expect(store.put).to.have.been.calledWith(blockOrderKey, blockOrderValue)
-    })
-
-    it('throws a not found error if no order exists', async () => {
-      const BlockOrderNotFoundError = BlockOrderWorker.__get__('BlockOrderNotFoundError')
-
-      const err = new Error('fake error')
-      err.notFound = true
-      store.get.callsArgWithAsync(1, err)
-
-      return expect(worker.cancelBlockOrder('fakeId')).to.eventually.be.rejectedWith(BlockOrderNotFoundError)
     })
 
     it('authorizes the request', async () => {
@@ -1073,11 +1016,13 @@ describe('BlockOrderWorker', () => {
       secondBlockOrder = { marketName: 'ABC/XYZ' }
       getRecords = sinon.stub().resolves([firstBlockOrder, secondBlockOrder])
       BlockOrderWorker.__set__('getRecords', getRecords)
+      BlockOrder.fromStorage = {
+        bind: sinon.stub()
+      }
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
     })
 
     it('retrieves all block orders from the store', async () => {
-      BlockOrder.fromStorage.bind = sinon.stub()
       await worker.getBlockOrders(market)
 
       expect(getRecords).to.have.been.calledOnce()

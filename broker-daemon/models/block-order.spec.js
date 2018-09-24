@@ -4,6 +4,7 @@ const { Big } = require('../utils')
 
 const BlockOrder = rewire(path.resolve(__dirname, 'block-order'))
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
+const { BlockOrderNotFoundError } = require('../block-order-worker/errors')
 
 describe('BlockOrder', () => {
   describe('::fromStorage', () => {
@@ -65,6 +66,64 @@ describe('BlockOrder', () => {
       expect(() => {
         BlockOrder.fromStorage(id, JSON.stringify(params))
       }).to.throw()
+    })
+  })
+
+  describe('::fromStore', () => {
+    let promisifyStore
+    let blockOrder
+    let blockOrderStub
+    let fromStorageStub
+    let serializedBlockOrder
+    let storeGetStub
+    let storeStub
+
+    let revert
+
+    beforeEach(() => {
+      blockOrder = { blockOrderId: 1234 }
+      blockOrderStub = sinon.stub().returns(blockOrder)
+      promisifyStore = sinon.stub().returns(blockOrderStub)
+      serializedBlockOrder = sinon.stub()
+      fromStorageStub = sinon.stub().returns(serializedBlockOrder)
+      storeGetStub = sinon.stub()
+      storeStub = {
+        get: storeGetStub
+      }
+
+      revert = BlockOrder.__set__('promisify', promisifyStore)
+      BlockOrder.fromStorage = fromStorageStub
+    })
+
+    afterEach(() => {
+      revert()
+    })
+
+    it('defines a static method for creating block orders from storage', () => {
+      expect(BlockOrder).itself.to.respondTo('fromStore')
+    })
+
+    it('throws an error if a passed in sublevel is not defined', () => {
+      expect(BlockOrder.fromStore()).to.eventually.be.rejectedWith('No leveldb store is defined')
+    })
+
+    it('throws a BlockOrderNotFoundError if the record is not found', () => {
+      const error = new Error('BAD')
+      error.notFound = true
+      blockOrderStub.throws(error)
+      expect(BlockOrder.fromStore(storeStub)).to.eventually.be.rejectedWith(BlockOrderNotFoundError)
+    })
+
+    it('deserializes a blockorder from leveldb', async () => {
+      await BlockOrder.fromStore(storeStub, blockOrder.blockOrderId)
+      expect(fromStorageStub).to.have.been.calledWith(blockOrder.blockOrderId, sinon.match.any)
+    })
+
+    it('returns a blockorder', async () => {
+      const res = await BlockOrder.fromStore(storeStub, blockOrder.blockOrderId)
+      expect(promisifyStore).to.have.been.calledWith(storeStub.get)
+      expect(blockOrderStub).to.have.been.calledWith(blockOrder.blockOrderId)
+      expect(res).to.be.eql(serializedBlockOrder)
     })
   })
 
