@@ -10,8 +10,6 @@ const {
   SublevelIndex
 } = require('../utils')
 
-const { BlockOrderNotFoundError } = require('./errors')
-
 /**
  * @class Create and work Block Orders
  */
@@ -108,17 +106,7 @@ class BlockOrderWorker extends EventEmitter {
   async getBlockOrder (blockOrderId) {
     this.logger.info('Getting block order', { id: blockOrderId })
 
-    try {
-      var value = await promisify(this.store.get)(blockOrderId)
-    } catch (e) {
-      if (e.notFound) {
-        throw new BlockOrderNotFoundError(blockOrderId, e)
-      } else {
-        throw e
-      }
-    }
-
-    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+    const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
 
     const { logger } = this
     const openOrders = await OrderStateMachine.getAll(
@@ -148,17 +136,7 @@ class BlockOrderWorker extends EventEmitter {
   async cancelBlockOrder (blockOrderId) {
     this.logger.info('Cancelling block order ', { id: blockOrderId })
 
-    try {
-      var value = await promisify(this.store.get)(blockOrderId)
-    } catch (e) {
-      if (e.notFound) {
-        throw new BlockOrderNotFoundError(blockOrderId, e)
-      } else {
-        throw e
-      }
-    }
-
-    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+    const blockOrder = BlockOrder.fromStore(this.store, blockOrderId)
 
     const orders = await getRecords(
       this.ordersStore,
@@ -226,19 +204,7 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info('Moving block order to failed state', { id: blockOrderId })
 
     // TODO: move status to its own sublevel so it can be updated atomically
-    try {
-      var value = await promisify(this.store.get)(blockOrderId)
-    } catch (e) {
-      if (e.notFound) {
-        this.logger.error('Attempted to move a block order to a failed state that does not exist', { id: blockOrderId })
-      } else {
-        this.logger.error('Error while retrieving block order to move it to a failed state', { id: blockOrderId, error: e.message })
-      }
-
-      throw e
-    }
-
-    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+    const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
 
     // TODO: fail the remaining orders that are tied to this block order in the ordersStore?
     blockOrder.fail()
@@ -319,24 +285,28 @@ class BlockOrderWorker extends EventEmitter {
   async completeBlockOrder (blockOrderId) {
     this.logger.info('Attempting to put block order in a completed state', { id: blockOrderId })
 
-    // TODO: move status to its own sublevel so it can be updated atomically
-    try {
-      var value = await promisify(this.store.get)(blockOrderId)
-    } catch (e) {
-      if (e.notFound) {
-        this.logger.error('Attempted to move a block order to a completed state that does not exist', { id: blockOrderId })
-      } else {
-        this.logger.error('Error while retrieving block order to move it to a completed state', { id: blockOrderId, error: e.message })
-      }
+    const blockOrder = await this.getBlockOrder(blockOrderId)
 
-      throw e
+    // Need to figure out how to get all of the orders here... cause these will be blank if they
+    // come from storage
+    const activeOrders = blockOrder.openOrders.some(o => o.status === BlockOrder.STATUSES.ACTIVE)
+    const activeFills = blockOrder.fills.some(f => f.status === BlockOrder.STATUSES.ACTIVE)
+
+    // check the fillamount vs how much we are trying to fill from the block order
+    const totalFilled = blockOrder.fills.reduce((acc, fill) => acc.plus(fill.fillAmount), Big(0))
+    const stillBeingFilled = totalFilled.lt(blockOrder.amount)
+
+    if (!activeOrders && !activeFills && !stillBeingFilled) {
+      // An order is only completed if all orders underneath the blockorder are out of
+      // an `ACTIVE` state and it is entirely filled
+      blockOrder.complete()
+    } else if (stillBeingFilled && !activeFills && !activeOrders) {
+      throw new Error('Block order in a weird state. Order is filled, but no active orders/fills still exist')
+    } else if (!stillBeingFilled && (activeFills || activeOrders)) {
+      throw new Error('Block order in a weird state. Order is not being filled, but active orders/fills still exist')
+    } else {
+      this.logger.debug('Block order is not ready to be completed', { blockOrderId })
     }
-
-    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
-
-    // An order is only completed if all orders underneath the blockorder are out of
-    // an `ACTIVE` state.
-    blockOrder.complete()
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 

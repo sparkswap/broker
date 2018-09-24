@@ -27,7 +27,6 @@ describe('RelayerClient', () => {
     NEW_EVENT: 'NEW_EVENT',
     START_OF_EVENTS: 'START_OF_EVENTS'
   }
-  let logger
   let callerStub
 
   let relayerHost = 'localhost:1337'

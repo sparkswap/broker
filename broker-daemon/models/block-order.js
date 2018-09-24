@@ -1,5 +1,8 @@
+const { promisify } = require('util')
+
 const { Big } = require('../utils')
 const CONFIG = require('../config')
+const { BlockOrderNotFoundError } = require('../block-order-worker/errors')
 
 /**
  * @class Model representing Block Orders
@@ -169,15 +172,6 @@ class BlockOrder {
    * @return {BlockOrder} Modified block order instance
    */
   complete () {
-    const activeOrders = this.openOrders.filter(o => o.status === BlockOrder.STATUSES.ACTIVE)
-    const activeFills = this.fills.filter(f => f.status === BlockOrder.STATUSES.ACTIVE)
-
-    // If we still have active orders or fills, then the block order is not completed
-    // so we can simply return the object
-    if (activeOrders.length > 0 || activeFills.length > 0) {
-      return this
-    }
-
     this.status = BlockOrder.STATUSES.COMPLETED
     return this
   }
@@ -267,6 +261,7 @@ class BlockOrder {
 
   /**
    * Re-instantiate a previously saved BlockOrder
+   *
    * @param  {String} key   Key used to retrieve the BlockOrder
    * @param  {String} value Value returned from leveldb
    * @return {BlockOrder}   BlockOrder instance
@@ -280,6 +275,30 @@ class BlockOrder {
     }
 
     return new this({ id, marketName, side, amount, price, timeInForce, status })
+  }
+
+  /**
+   * Grab a block order from a given sublevel
+   *
+   * @param {Sublevel} store block order sublevel store
+   * @param {String} blockOrderId
+   * @return {BlockOrder} BlockOrder instance
+   * @throws {Error} store is null
+   * @throws {BlockOrderNotFoundError} block order could not be found
+   */
+  static async fromStore (store, blockOrderId) {
+    if (!store) throw new Error('[BlockOrder#fromStore] No leveldb store is defined')
+
+    try {
+      var value = await promisify(store.get)(blockOrderId)
+    } catch (e) {
+      if (e.notFound) {
+        throw new BlockOrderNotFoundError(blockOrderId, e)
+      }
+      throw e
+    }
+
+    return BlockOrder.fromStorage(blockOrderId, value)
   }
 }
 

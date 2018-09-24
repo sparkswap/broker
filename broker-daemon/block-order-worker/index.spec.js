@@ -486,16 +486,6 @@ describe('BlockOrderWorker', () => {
       expect(FillStateMachine.getAll).to.have.been.calledWith(sinon.match({ store: secondLevel }), fakeRange)
       expect(bO).to.have.property('fills', fills)
     })
-
-    it('throws a not found error if no order exists', async () => {
-      const BlockOrderNotFoundError = BlockOrderWorker.__get__('BlockOrderNotFoundError')
-
-      const err = new Error('fake error')
-      err.notFound = true
-      store.get.callsArgWithAsync(1, err)
-
-      return expect(worker.getBlockOrder('fakeId')).to.eventually.be.rejectedWith(BlockOrderNotFoundError)
-    })
   })
 
   describe('#cancelBlockOrder', () => {
