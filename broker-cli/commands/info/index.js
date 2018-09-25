@@ -31,14 +31,11 @@ module.exports = (program) => {
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
 
-      let since
-      let limit
-
       switch (command) {
         case SUPPORTED_COMMANDS.SUPPORTED_MARKETS:
           return supportedMarkets(opts, logger)
         case SUPPORTED_COMMANDS.TRADES:
-          [since, limit] = subArguments
+          const [since, limit] = subArguments
           args.since = since
           args.limit = limit
 

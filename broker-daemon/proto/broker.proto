@@ -1197,7 +1197,7 @@ service InfoService {
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
-   * infoService.getTrades({
+   * infoService.getTrades(
    *   {
    *     market: 'BTC/LTC', // trading BTC and LTC
    *     since: '2018-09-20T18:58:07.866Z', // only retrieve records since this date
@@ -1205,7 +1205,7 @@ service InfoService {
    *   }, { deadline }, (err, { trades }) => {
    *   if (err) return console.error(err)
    *   console.log({ trades })
-   * })
+   * }))
    * ```
    *
    * ```shell

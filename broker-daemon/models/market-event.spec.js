@@ -294,7 +294,7 @@ describe('MarketEvent', () => {
       expect(event.tradeInfo('BTC/LTC')).to.be.eql(
         {
           amount: '0.0000100000000000',
-          datetime: '2018-09-21T10:40:31.0342339Z',
+          datetime: '2018-09-21T10:40:31.8342339Z',
           id: 'myid',
           order: 'myorder',
           price: '100.0000000000000000',
@@ -302,7 +302,7 @@ describe('MarketEvent', () => {
           symbol: 'BTC/LTC',
           timestamp: '1537526431834233900',
           type: 'limit',
-          info: '{"id":"myid","timestamp":"1537526431834233900","datetime":"2018-09-21T10:40:31.0342339Z","order":"myorder","symbol":"BTC/LTC","type":"limit","side":"buy","price":"100.0000000000000000","amount":"0.0000100000000000"}'
+          info: '{"id":"myid","timestamp":"1537526431834233900","datetime":"2018-09-21T10:40:31.8342339Z","order":"myorder","symbol":"BTC/LTC","type":"limit","side":"buy","price":"100.0000000000000000","amount":"0.0000100000000000"}'
         }
       )
     })

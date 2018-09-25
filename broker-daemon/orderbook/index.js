@@ -54,7 +54,7 @@ class Orderbook {
   }
 
   /**
-   * Get existing block orders
+   * Gets all trades for a specific timestamp
    * @param  {String} since datetime lowerbound
    * @param  {Integer} limit of records returned
 

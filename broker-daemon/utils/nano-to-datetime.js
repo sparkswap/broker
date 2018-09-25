@@ -7,9 +7,9 @@ const nano = require('nano-seconds')
  * @return {String} ISO8601 string
  */
 function nanoToDatetime (nanoseconds) {
-  const first = nanoseconds.substring(0, nanoseconds.length - 9)
-  const second = nanoseconds.substring(nanoseconds.length - 8, nanoseconds.length)
-  const formattedDate = [first, second]
+  const timeMilliseconds = nanoseconds.substring(0, nanoseconds.length - 9)
+  const timeNanoseconds = nanoseconds.substring(nanoseconds.length - 9, nanoseconds.length)
+  const formattedDate = [timeMilliseconds, timeNanoseconds]
   const datetime = nano.toISOString(formattedDate)
   return datetime
 }

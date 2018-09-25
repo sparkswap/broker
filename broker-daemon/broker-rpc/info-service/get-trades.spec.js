@@ -1,5 +1,6 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
+const { Big } = require('../../utils')
 
 const getTrades = rewire(path.resolve(__dirname, 'get-trades'))
 
@@ -73,6 +74,6 @@ describe('getTrades', () => {
   it('sets the limit to the default of 50 if no limit is specified', async () => {
     params.limit = undefined
     await getTrades({ params, logger, orderbooks }, { GetTradesResponse })
-    expect(orderbookStub.getTrades).to.have.been.calledWith(since, 50)
+    expect(orderbookStub.getTrades).to.have.been.calledWith(since, Big(50))
   })
 })

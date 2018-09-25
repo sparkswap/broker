@@ -62,8 +62,7 @@ class MarketEvent {
       price: this.price(baseSymbol, counterSymbol),
       amount: this.amount(baseSymbol)
     }
-    const jsonInfo = JSON.stringify(info)
-    info.info = jsonInfo
+    info.info = JSON.stringify(info)
     return info
   }
 

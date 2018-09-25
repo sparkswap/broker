@@ -1,11 +1,12 @@
 const { MarketEvent } = require('../../models')
+const { Big } = require('../../utils')
 
 /**
  * Default limit for number of records returned per call
  * @type {Integer}
  * @constant
  */
-const DEFAULT_LIMIT = 50
+const DEFAULT_LIMIT = Big(50)
 
 /**
  * Retrieve information about trades (filled orders) since a specified date.
