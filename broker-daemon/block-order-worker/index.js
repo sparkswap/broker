@@ -284,6 +284,7 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Move a block order to a completed state if all orders have been completed
+   * @todo What should we do if this method fails, but the order itself is completed?
    * @param {String} blockOrderId
    */
   async completeBlockOrder (blockOrderId) {
@@ -294,15 +295,22 @@ class BlockOrderWorker extends EventEmitter {
     const activeOrders = blockOrder.openOrders.some(osm => osm.order.status === BlockOrder.STATUSES.ACTIVE)
     const activeFills = blockOrder.fills.some(fsm => fsm.fill.status === BlockOrder.STATUSES.ACTIVE)
 
-    // check the fillamount on the fsm machines from the block order and make sure they
-    // are equal to how much we are trying to fill.
-    const totalFilled = blockOrder.fills.reduce((acc, fsm) => {
-      return acc.plus(fsm.fill.fillAmount)
-    }, Big(0))
+    // check the fillamount on each collection of state machines from the block order
+    // and make sure that either is equal to how much we are trying to fill.
+    let totalFilled = Big(0)
 
-    this.logger.debug('Current total filled amount: ', { totalFilled, blockOrderAmount: blockOrder.amount })
+    if (blockOrder.fills.length) {
+      totalFilled = blockOrder.fills.reduce((acc, fsm) => acc.plus(fsm.fill.fillAmount), Big(0))
+    } else if (blockOrder.openOrders.length) {
+      totalFilled = blockOrder.openOrders.reduce((acc, osm) => acc.plus(osm.order.fillAmount), Big(0))
+    } else {
+      this.logger.error('Broker in a bad state, no fills or orders on block order', { blockOrderId })
+      throw new Error('No fills or orders on blockOrder')
+    }
 
-    const stillBeingFilled = totalFilled.lt('lol')
+    this.logger.debug('Current total filled amount: ', { totalFilled, blockOrderAmount: blockOrder.baseAmount })
+
+    const stillBeingFilled = totalFilled.lt(blockOrder.baseAmount)
 
     if (!activeOrders && !activeFills && !stillBeingFilled) {
       // An order is only completed if all orders underneath the blockorder are out of
@@ -358,8 +366,11 @@ class BlockOrderWorker extends EventEmitter {
 
     // The events below tie into the StateMachine's lifecycle hooks for a OrderStateMachine
     order.once('complete', async () => {
-      this.completeBlockOrder(blockOrder.id).catch(e => this.failBlockOrder(blockOrder.id, e))
+      this.completeBlockOrder(blockOrder.id).catch(e => {
+        this.logger.error(`BlockOrder failed to be completed, status is left active: ${blockOrder.id}`, { error: e.stack })
+      })
     })
+
     order.once('reject', async () => this.failBlockOrder(blockOrder.id, order.error))
 
     this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
@@ -419,9 +430,11 @@ class BlockOrderWorker extends EventEmitter {
 
       // The events below tie into the StateMachine's lifecycle hooks for a OrderStateMachine
       fsm.once('execute', () => {
-        this.completeBlockOrder(blockOrder.id).catch(e => this.failBlockOrder(blockOrder.id, e))
+        this.completeBlockOrder(blockOrder.id).catch(e => {
+          this.logger.error(`BlockOrder failed to be completed, status is left active: ${blockOrder.id}`, { error: e.stack })
+        })
       })
-      // TODO: Is there anything we want to do if failing a block order fails?
+
       fsm.once('reject', () => this.failBlockOrder(blockOrder.id, fsm.fill.error))
 
       return fsm

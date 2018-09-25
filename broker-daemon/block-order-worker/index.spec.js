@@ -898,7 +898,7 @@ describe('BlockOrderWorker', () => {
 
     it('registers an event on a fill for fill rejection', async () => {
       await worker._fillOrders(blockOrder, orders, targetDepth)
-      expect(onceStub).to.have.been.calledWith('rejected', sinon.match.func)
+      expect(onceStub).to.have.been.calledWith('reject', sinon.match.func)
     })
   })
 
@@ -999,7 +999,7 @@ describe('BlockOrderWorker', () => {
 
     it('registers an event on an order for order rejection', async () => {
       await worker._placeOrder(blockOrder, '100')
-      expect(onceStub).to.have.been.calledWith('rejected', sinon.match.func)
+      expect(onceStub).to.have.been.calledWith('reject', sinon.match.func)
     })
   })
 
