@@ -3,6 +3,7 @@ const AskIndex = require('./ask-index')
 const BidIndex = require('./bid-index')
 const OrderbookIndex = require('./orderbook-index')
 const { getRecords, Big } = require('../utils')
+const nano = require('nano-seconds')
 
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
@@ -50,6 +51,21 @@ class Orderbook {
   async all () {
     this.logger.info(`Retrieving all records for ${this.marketName}`)
     return getRecords(this.store, MarketEventOrder.fromStorage.bind(MarketEventOrder))
+  }
+
+  /**
+   * Get existing block orders
+   * @param  {String} since datetime lowerbound
+   * @param  {Integer} limit of records returned
+
+   * @return {Array<Object>} trades
+   */
+  async getTrades (since, limit) {
+    const sinceDate = new Date(since).toISOString()
+    const sinceInNanoseconds = nano.toString(nano.fromISOString(sinceDate))
+    const params = {limit, gte: sinceInNanoseconds}
+    const trades = await getRecords(this.eventStore, MarketEvent.fromStorage.bind(MarketEvent), params)
+    return trades
   }
 
   /**

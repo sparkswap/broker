@@ -424,4 +424,42 @@ describe('Orderbook', () => {
       expect(orderbook.counterSymbol).to.be.equal('ABC')
     })
   })
+
+  describe('getTrades', () => {
+    let orderbook
+    let marketName
+    let timestamp
+    let limit
+    let revert
+    let getRecordsStub
+    let bound
+
+    beforeEach(() => {
+      marketName = 'BTC/LTC'
+      timestamp = '2018-09-21T10:40:31.0342339Z'
+      limit = 5
+      getRecordsStub = sinon.stub()
+      orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+      bound = 'mybind'
+      EventFromStorageBind.returns(bound)
+
+      revert = Orderbook.__set__('getRecords', getRecordsStub)
+    })
+
+    beforeEach(async () => {
+      await orderbook.getTrades(timestamp, limit)
+    })
+
+    afterEach(() => {
+      revert()
+    })
+
+    it('calls get records with a timestamp', () => {
+      expect(getRecordsStub).to.have.been.calledWith(
+        eventStore,
+        bound,
+        {gte: '1537526431034000000', limit}
+      )
+    })
+  })
 })

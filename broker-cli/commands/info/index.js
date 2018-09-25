@@ -12,10 +12,13 @@ const { validations } = require('../../utils')
  * @default
  */
 const SUPPORTED_COMMANDS = Object.freeze({
-  SUPPORTED_MARKETS: 'supported-markets'
+  SUPPORTED_MARKETS: 'supported-markets',
+  TRADES: 'trades'
+
 })
 
 const supportedMarkets = require('./supported-markets')
+const trades = require('./trades')
 
 module.exports = (program) => {
   program
@@ -24,14 +27,31 @@ module.exports = (program) => {
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .action(async (args, opts, logger) => {
-      const { command } = args
+      const { command, subArguments } = args
+
+      let since
+      let limit
 
       switch (command) {
         case SUPPORTED_COMMANDS.SUPPORTED_MARKETS:
           return supportedMarkets(opts, logger)
+        case SUPPORTED_COMMANDS.TRADES:
+          [since, limit] = subArguments
+          args.since = since
+          args.limit = limit
+
+          const { market } = opts
+          opts.market = validations.isMarketName(market)
+          return trades(args, opts, logger)
       }
     })
     .command(`info ${SUPPORTED_COMMANDS.SUPPORTED_MARKETS}`, 'Get the markets currently supported')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .command(`info ${SUPPORTED_COMMANDS.TRADES}`, 'Get the markets currently supported')
+    .argument('<since>', 'Block order to get status of.')
+    .argument('<limit>', 'Block order to get status of.')
+    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
 }

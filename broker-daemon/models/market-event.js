@@ -1,3 +1,6 @@
+const { nanoToDatetime, Big } = require('../utils')
+const CONFIG = require('../config')
+
 class MarketEvent {
   constructor ({ eventId, orderId, timestamp, eventType, sequence, ...payload }) {
     if (!Object.keys(this.constructor.TYPES).includes(eventType)) {
@@ -20,6 +23,48 @@ class MarketEvent {
   get value () {
     const { orderId, eventType, payload } = this
     return JSON.stringify({ orderId, eventType, ...payload })
+  }
+
+  /**
+   * Get the amount of the order - i.e. the number of common units of base currency
+   * @return {String} Decimal string of the amount
+   */
+  amount (baseSymbol) {
+    const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === baseSymbol)
+
+    return Big(this.payload.fillAmount).div(baseCurrencyConfig.quantumsPerCommon).toFixed(16)
+  }
+
+  /**
+   * Price of the order in common units for each currency
+   * @return {String} Decimal string of the price in common units
+   */
+  price (baseSymbol, counterSymbol) {
+    const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === baseSymbol)
+    const counterCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === counterSymbol)
+
+    const baseCommonAmount = Big(this.payload.baseAmount).div(baseCurrencyConfig.quantumsPerCommon)
+    const counterCommonAmount = Big(this.payload.counterAmount).div(counterCurrencyConfig.quantumsPerCommon)
+
+    return counterCommonAmount.div(baseCommonAmount).toFixed(16)
+  }
+
+  tradeInfo (marketName) {
+    const [baseSymbol, counterSymbol] = marketName.split('/')
+    const info = {
+      id: this.eventId,
+      timestamp: this.timestamp,
+      datetime: nanoToDatetime(this.timestamp),
+      order: this.orderId,
+      symbol: marketName,
+      type: this.price ? 'limit' : 'market',
+      side: this.payload.side.toLowerCase() === 'bid' ? 'buy' : 'sell',
+      price: this.price(baseSymbol, counterSymbol),
+      amount: this.amount(baseSymbol)
+    }
+    const jsonInfo = JSON.stringify(info)
+    info.info = jsonInfo
+    return info
   }
 
   serialize () {

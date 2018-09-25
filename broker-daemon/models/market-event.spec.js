@@ -252,4 +252,59 @@ describe('MarketEvent', () => {
       expect(serialized.are).to.be.eql(payload.are)
     })
   })
+
+  describe('price', () => {
+    it('returns a price given base and counter symbols', () => {
+      const eventId = 'myid'
+      const orderId = 'myorder'
+      const timestamp = '123456677'
+      const eventType = MarketEvent.TYPES.PLACED
+      const payload = { baseAmount: '1000', counterAmount: '100000', fillAmount: '100' }
+
+      const event = new MarketEvent({ eventId, orderId, timestamp, eventType, ...payload })
+
+      expect(event.price('BTC', 'LTC')).to.be.eql('100.0000000000000000')
+    })
+  })
+
+  describe('amount', () => {
+    it('returns an amount given base symbol', () => {
+      const eventId = 'myid'
+      const orderId = 'myorder'
+      const timestamp = '123456677'
+      const eventType = MarketEvent.TYPES.PLACED
+      const payload = { baseAmount: '1000', counterAmount: '100000', fillAmount: '1000' }
+
+      const event = new MarketEvent({ eventId, orderId, timestamp, eventType, ...payload })
+
+      expect(event.amount('BTC')).to.be.eql('0.0000100000000000')
+    })
+  })
+
+  describe('tradeInfo', () => {
+    it('returns info about a trade given a marketName', () => {
+      const eventId = 'myid'
+      const orderId = 'myorder'
+      const timestamp = '1537526431834233900'
+      const eventType = MarketEvent.TYPES.PLACED
+      const payload = { baseAmount: '1000', counterAmount: '100000', fillAmount: '1000', side: 'BID' }
+
+      const event = new MarketEvent({ eventId, orderId, timestamp, eventType, ...payload })
+
+      expect(event.tradeInfo('BTC/LTC')).to.be.eql(
+        {
+          amount: '0.0000100000000000',
+          datetime: '2018-09-21T10:40:31.0342339Z',
+          id: 'myid',
+          order: 'myorder',
+          price: '100.0000000000000000',
+          side: 'buy',
+          symbol: 'BTC/LTC',
+          timestamp: '1537526431834233900',
+          type: 'limit',
+          info: '{"id":"myid","timestamp":"1537526431834233900","datetime":"2018-09-21T10:40:31.0342339Z","order":"myorder","symbol":"BTC/LTC","type":"limit","side":"buy","price":"100.0000000000000000","amount":"0.0000100000000000"}'
+        }
+      )
+    })
+  })
 })
