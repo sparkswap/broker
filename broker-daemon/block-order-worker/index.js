@@ -93,7 +93,6 @@ class BlockOrderWorker extends EventEmitter {
 
     // Start working the block order asynchronously to prevent blocking the creation
     // of 'other' block orders
-    // TODO: this is not handling the exceptions
     this.workBlockOrder(blockOrder).catch(err => {
       this.failBlockOrder(blockOrder.id, err)
     })
@@ -292,9 +291,6 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = await this.getBlockOrder(blockOrderId)
 
-    const activeOrders = blockOrder.openOrders.some(osm => osm.order.status === BlockOrder.STATUSES.ACTIVE)
-    const activeFills = blockOrder.fills.some(fsm => fsm.fill.status === BlockOrder.STATUSES.ACTIVE)
-
     // check the fillamount on each collection of state machines from the block order
     // and make sure that either is equal to how much we are trying to fill.
     let totalFilled = Big(0)
@@ -311,6 +307,13 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.debug('Current total filled amount: ', { totalFilled, blockOrderAmount: blockOrder.baseAmount })
 
     const stillBeingFilled = totalFilled.lt(blockOrder.baseAmount)
+
+    // Get all active orders and check if any have a non-completed status
+    const { PLACED: OSM_PLACED, CANCELLED: OSM_CANCELLED } = OrderStateMachine.STATES
+    const activeOrders = blockOrder.openOrders.some(osm => ![OSM_PLACED, OSM_CANCELLED].includes(osm.order.status))
+
+    // Get all active fills and check if any have a non-filled status
+    const activeFills = blockOrder.fills.some(fsm => fsm.fill.status !== FillStateMachine.STATES.FILLED)
 
     if (!activeOrders && !activeFills && !stillBeingFilled) {
       // An order is only completed if all orders underneath the blockorder are out of
