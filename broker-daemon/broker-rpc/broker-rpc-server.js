@@ -1,6 +1,9 @@
 const grpc = require('grpc')
 const path = require('path')
 const { readFileSync } = require('fs')
+const grpcGateway = require('grpc-dynamic-gateway')
+const express = require('express')
+const bodyParser = require('body-parser')
 
 const AdminService = require('./admin-service')
 const OrderService = require('./order-service')
@@ -58,6 +61,7 @@ class BrokerRPCServer {
     this.protoPath = path.resolve(BROKER_PROTO_PATH)
 
     this.server = new grpc.Server()
+    this.httpServer = express()
 
     this.adminService = new AdminService(this.protoPath, { logger, relayer, engines, auth: this.auth })
     this.server.addService(this.adminService.definition, this.adminService.implementation)
@@ -82,9 +86,17 @@ class BrokerRPCServer {
    * @returns {void}
    */
   listen (host) {
+    app.use(bodyParser.json())
+    app.use(bodyParser.urlencoded({ extended: false }))
     const rpcCredentials = this.createCredentials()
     this.server.bind(host, rpcCredentials)
     this.server.start()
+    app.use('/', grpcGateway([`/${this.protoPath}`], '0.0.0.0:27492', undefined, true, ''))
+
+    const port = 8080
+    app.listen(port, () => {
+      console.log(`Listening on http://0.0.0.0:${port}`)
+    })
   }
 
   /**

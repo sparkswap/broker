@@ -19,7 +19,7 @@ class OrderService {
     this.proto = loadProto(this.protoPath)
     this.logger = logger
 
-    this.definition = this.proto.OrderService.service
+    this.definition = this.proto.brokerrpc.OrderService.service
     this.serviceName = 'OrderService'
 
     const {

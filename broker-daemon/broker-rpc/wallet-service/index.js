@@ -26,7 +26,7 @@ class WalletService {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
     this.logger = logger
-    this.definition = this.proto.WalletService.service
+    this.definition = this.proto.brokerrpc.WalletService.service
     this.serviceName = 'WalletService'
     this.engines = engines
 
@@ -36,9 +36,11 @@ class WalletService {
       GetPaymentChannelNetworkAddressResponse,
       GetTradingCapacitiesResponse,
       WithdrawFundsResponse,
-      google: {
-        protobuf: {
-          Empty: EmptyResponse
+      brokerrpc: {
+        google: {
+          protobuf: {
+            Empty: EmptyResponse
+          }
         }
       }
     } = this.proto

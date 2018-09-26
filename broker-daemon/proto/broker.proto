@@ -45,6 +45,8 @@
  * ```
  */
 syntax = "proto3";
+package brokerrpc;
+import "google/api/annotations.proto";
 
 // import "google/protobuf/empty.proto";
 // normally we would us the above import statement, but the node.js grpc doesn't import
@@ -140,7 +142,12 @@ service AdminService {
    * }
    * ```
    */
-  rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
+  rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse) {
+    option (google.api.http) = {
+      get: "/v1/admin/healthcheck"
+      body: "*"
+    };
+  }
 }
 
 /**

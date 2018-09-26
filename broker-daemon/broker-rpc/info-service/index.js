@@ -9,7 +9,7 @@ class InfoService {
     this.proto = loadProto(this.protoPath)
     this.logger = logger
 
-    this.definition = this.proto.InfoService.service
+    this.definition = this.proto.brokerrpc.InfoService.service
     this.serviceName = 'InfoService'
 
     const {

@@ -53,6 +53,7 @@ services:
       - RPC_PASS=sparkswap
     ports:
       - '27492:27492'
+      - '8081:8080'
     networks:
       - broker
     working_dir: '/home/app'
