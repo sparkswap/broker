@@ -1,7 +1,7 @@
 const nano = require('nano-seconds')
 const { PublicError } = require('grpc-methods')
 
-const { BlockOrder } = require('../../models')
+const { BlockOrder, MarketEvent } = require('../../models')
 const { Big } = require('../../utils')
 const MarketStats = require('./market-stats')
 
@@ -60,13 +60,10 @@ async function getMarketStats ({ params, logger, orderbooks }, { GetMarketStatsR
   const bestBidPrice = await stats.highestPrice(currentBids)
   const bestBidAmount = await stats.bestBidAmount(currentBids)
 
-  console.log(currentAsks)
-
   // We only care about events that have been filled, because highest/lowest prices
   // and totals are only applicable for orders that are completed
   // TODO: Do we care about other events IE w/ fill amount?
-  // const filledMarketEvents = currentMarketEvents.filter(e => e.eventType === MarketEvent.TYPES.FILLED)
-  const filledMarketEvents = currentMarketEvents
+  const filledMarketEvents = currentMarketEvents.filter(e => e.eventType === MarketEvent.TYPES.FILLED)
 
   // Grab the highest price for 24 hours
   const highestPrice = await stats.highestPrice(filledMarketEvents)

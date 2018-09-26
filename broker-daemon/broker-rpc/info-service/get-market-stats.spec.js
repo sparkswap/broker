@@ -178,23 +178,23 @@ describe('getMarketStats', () => {
     })
 
     it('gets the highest price for a collection of events', () => {
-      expect(highestPriceStub).to.have.been.calledWith(marketEvents)
+      expect(highestPriceStub).to.have.been.calledWith([filledOrder])
     })
 
     it('gets the lowest price for a collection of events', () => {
-      expect(lowestPriceStub).to.have.been.calledWith(marketEvents)
+      expect(lowestPriceStub).to.have.been.calledWith([filledOrder])
     })
 
     it('gets the vwap for a collection of events', () => {
-      expect(vwapStub).to.have.been.calledWith(marketEvents)
+      expect(vwapStub).to.have.been.calledWith([filledOrder])
     })
 
     it('gets the total amount of base currency', () => {
-      expect(baseVolumeStub).to.have.been.calledWith(marketEvents)
+      expect(baseVolumeStub).to.have.been.calledWith([filledOrder])
     })
 
     it('gets the total amount of counter (quote) currency', () => {
-      expect(counterVolumeStub).to.have.been.calledWith(marketEvents)
+      expect(counterVolumeStub).to.have.been.calledWith([filledOrder])
     })
 
     it('returns market data', () => {

@@ -110,7 +110,6 @@ class MarketEventOrder {
   }
 }
 
-// TODO: get from proto?
 MarketEventOrder.SIDES = Object.freeze({
   ASK: 'ASK',
   BID: 'BID'
