@@ -12,6 +12,9 @@ const DELIMITER = ':'
  */
 const LOWER_BOUND = '\x00'
 
+/**
+ * Class representation from watchMarket events coming from the relayer.
+ */
 class MarketEvent {
   constructor ({ eventId, orderId, timestamp, eventType, sequence, ...payload }) {
     if (!Object.keys(this.constructor.TYPES).includes(eventType)) {

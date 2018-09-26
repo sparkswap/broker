@@ -3,17 +3,21 @@ const Big = require('../utils/big')
 const CONFIG = require('../config')
 
 /**
- * Create a MarketEventOrder
- * @param  {String} order.orderId       Unique ID assigned by the relayer to identify an order
- * @param  {String} order.createdAt     When the order was created
- * @param  {String} order.baseAmount    Amount, represented as an integer in the base currency's smallest unit, to be transacted
- * @param  {String} order.counterAmount Amount, represented as an integer in the counter currency's smallest unit, to be transacted
- * @param  {String} order.side          Side of the transaction that the order is on, either BID or ASK
- * @param  {String} order.baseSymbol    Currency symbol for the base currency in the market, e.g. BTC
- * @param  {String} order.counterSymbol Currency symbol for the counter or quote currency in the market, e.g. LTC
- * @return {MarketEventOrder}           Instance of a MarketEventOrder
+ * Class representation from market events that are used for the orderbook. This model
+ * is local to the broker only.
  */
 class MarketEventOrder {
+  /**
+   * Create a MarketEventOrder
+   * @param  {String} order.orderId       Unique ID assigned by the relayer to identify an order
+   * @param  {String} order.createdAt     When the order was created
+   * @param  {String} order.baseAmount    Amount, represented as an integer in the base currency's smallest unit, to be transacted
+   * @param  {String} order.counterAmount Amount, represented as an integer in the counter currency's smallest unit, to be transacted
+   * @param  {String} order.side          Side of the transaction that the order is on, either BID or ASK
+   * @param  {String} order.baseSymbol    Currency symbol for the base currency in the market, e.g. BTC
+   * @param  {String} order.counterSymbol Currency symbol for the counter or quote currency in the market, e.g. LTC
+   * @return {MarketEventOrder}           Instance of a MarketEventOrder
+   */
   constructor ({ orderId, createdAt, baseAmount, counterAmount, side, baseSymbol, counterSymbol }) {
     this.orderId = orderId
     this.createdAt = createdAt
