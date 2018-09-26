@@ -244,6 +244,16 @@ class Fill {
   }
 
   /**
+   * @return {Boolean}
+   */
+  get active () {
+    // We define an "ACTIVE" fill as a Fill that has not been assigned a maker address
+    // meaning that the fill has no been set to execute.
+    // TODO: Figure out a better definition of an "ACTIVE" fill (setting a status?)
+    return (!this.makerAddress)
+  }
+
+  /**
    * Create an instance of an fill object from a stored copy
    * @param  {String} key   Unique key for the order, i.e. its `fillId`
    * @param  {String} fillStateMachineRecord Stringified representation of the order

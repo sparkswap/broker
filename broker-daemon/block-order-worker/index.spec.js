@@ -792,6 +792,186 @@ describe('BlockOrderWorker', () => {
     })
   })
 
+  describe('createBlockOrder', () => {
+    context('invalid block order', () => {
+      let blockOrder
+      let getBlockOrderStub
+      let worker
+
+      beforeEach(() => {
+        getBlockOrderStub = sinon.stub()
+        blockOrder = {
+          id: '1234',
+          fills: [],
+          openOrders: []
+        }
+
+        worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+        worker.blockOrder = blockOrder
+        worker.getBlockOrder = getBlockOrderStub.returns(blockOrder)
+      })
+
+      it('gets a block order by id', async () => {
+        await worker.completeBlockOrder(blockOrder.id).catch(() => {})
+        expect(getBlockOrderStub).to.have.been.calledWith(blockOrder.id)
+      })
+
+      it('errors if no orders or fills are found on the block order', () => {
+        expect(worker.completeBlockOrder(blockOrder.id)).to.eventually.be.rejectedWith('No fills or orders on blockOrder')
+      })
+    })
+
+    context('block order with openOrders', () => {
+      let blockOrder
+      let getBlockOrderStub
+      let worker
+      let orderStateMachines
+      let blockOrderCompleteStub
+
+      beforeEach(() => {
+        getBlockOrderStub = sinon.stub()
+        blockOrderCompleteStub = sinon.stub()
+        orderStateMachines = [
+          { order: { fillAmount: 100, active: false } },
+          { order: { fillAmount: 200, active: false } },
+          { order: { fillAmount: 300, active: false } }
+        ]
+        blockOrder = {
+          id: '1234',
+          baseAmount: 600,
+          fills: [],
+          openOrders: orderStateMachines,
+          complete: blockOrderCompleteStub
+        }
+
+        worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+        worker.blockOrder = blockOrder
+        worker.getBlockOrder = getBlockOrderStub.returns(blockOrder)
+      })
+
+      it('completes a block order', async () => {
+        await worker.completeBlockOrder(blockOrder.id)
+        expect(blockOrderCompleteStub).to.have.been.calledOnce()
+      })
+
+      it('does not complete a block order if orders are still active', async () => {
+        const activeBlockOrder = {
+          id: '1234',
+          baseAmount: 600,
+          fills: [],
+          openOrders: [
+            { order: { active: true } }
+          ]
+        }
+        getBlockOrderStub.returns(activeBlockOrder)
+        await worker.completeBlockOrder(blockOrder.id)
+        expect(blockOrderCompleteStub).to.not.have.been.calledOnce()
+      })
+
+      it('errors if the block order is not being filled, but has active orders', () => {
+        const activeBlockOrder = {
+          id: '1234',
+          baseAmount: 600,
+          fills: [],
+          openOrders: [
+            { order: { fillAmount: 600, active: false } },
+            { order: { active: true } }
+          ]
+        }
+        getBlockOrderStub.returns(activeBlockOrder)
+        return expect(worker.completeBlockOrder(blockOrder.id)).to.eventually.be.rejectedWith('Block order in a weird state. Order is not being filled')
+      })
+
+      it('errors if the block order is being filled, but no active orders are present', async () => {
+        const inactiveBlockOrder = {
+          id: '1234',
+          baseAmount: 600,
+          fills: [],
+          openOrders: [
+            { order: { fillAmount: 300, active: false } }
+          ]
+        }
+        getBlockOrderStub.returns(inactiveBlockOrder)
+        return expect(worker.completeBlockOrder(blockOrder.id)).to.eventually.be.rejectedWith('Block order in a weird state. Order is filled')
+      })
+    })
+
+    context('block order with fills', () => {
+      let blockOrder
+      let getBlockOrderStub
+      let worker
+      let fillStateMachines
+      let blockOrderCompleteStub
+
+      beforeEach(() => {
+        getBlockOrderStub = sinon.stub()
+        blockOrderCompleteStub = sinon.stub()
+        fillStateMachines = [
+          { order: { fillAmount: 100, active: false } },
+          { order: { fillAmount: 200, active: false } },
+          { order: { fillAmount: 300, active: false } }
+        ]
+        blockOrder = {
+          id: '1234',
+          baseAmount: 600,
+          fills: [],
+          openOrders: fillStateMachines,
+          complete: blockOrderCompleteStub
+        }
+
+        worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+        worker.blockOrder = blockOrder
+        worker.getBlockOrder = getBlockOrderStub.returns(blockOrder)
+      })
+
+      it('completes a block order', async () => {
+        await worker.completeBlockOrder(blockOrder.id)
+        expect(blockOrderCompleteStub).to.have.been.calledOnce()
+      })
+
+      it('does not complete a block order if orders are still active', async () => {
+        const activeBlockOrder = {
+          id: '1234',
+          baseAmount: 600,
+          openOrders: [],
+          fills: [
+            { fill: { fillAmount: 100, active: true } }
+          ]
+        }
+        getBlockOrderStub.returns(activeBlockOrder)
+        await worker.completeBlockOrder(blockOrder.id)
+        expect(blockOrderCompleteStub).to.not.have.been.calledOnce()
+      })
+
+      it('errors if the block order is not being filled, but has active fills', () => {
+        const activeBlockOrder = {
+          id: '1234',
+          baseAmount: 600,
+          openOrders: [],
+          fills: [
+            { fill: { fillAmount: 600, active: false } },
+            { fill: { fillAmount: 100, active: true } }
+          ]
+        }
+        getBlockOrderStub.returns(activeBlockOrder)
+        return expect(worker.completeBlockOrder(blockOrder.id)).to.eventually.be.rejectedWith('Block order in a weird state. Order is not being filled')
+      })
+
+      it('errors if the block order is being filled, but no active fills are present', async () => {
+        const inactiveBlockOrder = {
+          id: '1234',
+          baseAmount: 600,
+          openOrders: [],
+          fills: [
+            { fill: { fillAmount: 300, active: false } }
+          ]
+        }
+        getBlockOrderStub.returns(inactiveBlockOrder)
+        return expect(worker.completeBlockOrder(blockOrder.id)).to.eventually.be.rejectedWith('Block order in a weird state. Order is filled')
+      })
+    })
+  })
+
   describe('#_fillOrders', () => {
     let worker
     let blockOrder

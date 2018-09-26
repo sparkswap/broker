@@ -298,7 +298,11 @@ class BlockOrderWorker extends EventEmitter {
     if (blockOrder.fills.length) {
       totalFilled = blockOrder.fills.reduce((acc, fsm) => acc.plus(fsm.fill.fillAmount), Big(0))
     } else if (blockOrder.openOrders.length) {
-      totalFilled = blockOrder.openOrders.reduce((acc, osm) => acc.plus(osm.order.fillAmount), Big(0))
+      totalFilled = blockOrder.openOrders.reduce((acc, osm) => {
+        // If the order has not been filled yet, then the `fillAmount` will be undefined
+        // so we instead default to 0
+        return acc.plus(osm.order.fillAmount || 0)
+      }, Big(0))
     } else {
       this.logger.error('Broker in a bad state, no fills or orders on block order', { blockOrderId })
       throw new Error('No fills or orders on blockOrder')
@@ -308,28 +312,24 @@ class BlockOrderWorker extends EventEmitter {
 
     const stillBeingFilled = totalFilled.lt(blockOrder.baseAmount)
 
-    // Get all active orders and check if any have a non-completed status
-    const { PLACED: OSM_PLACED, CANCELLED: OSM_CANCELLED } = OrderStateMachine.STATES
-    const activeOrders = blockOrder.openOrders.some(osm => ![OSM_PLACED, OSM_CANCELLED].includes(osm.order.status))
-
-    // Get all active fills and check if any have a non-filled status
-    const activeFills = blockOrder.fills.some(fsm => fsm.fill.status !== FillStateMachine.STATES.FILLED)
+    const activeOrders = blockOrder.openOrders.some(osm => osm.order.active)
+    const activeFills = blockOrder.fills.some(fsm => fsm.fill.active)
 
     if (!activeOrders && !activeFills && !stillBeingFilled) {
       // An order is only completed if all orders underneath the blockorder are out of
       // an `ACTIVE` state and it is entirely filled
       blockOrder.complete()
+      await promisify(this.store.put)(blockOrder.key, blockOrder.value)
+      this.logger.info('Moved block order to completed state', { blockOrderId })
     } else if (stillBeingFilled && !activeFills && !activeOrders) {
+      this.logger.error('Block order is still being filled, but has no active orders/fills', { blockOrderId })
       throw new Error('Block order in a weird state. Order is filled, but no active orders/fills still exist')
     } else if (!stillBeingFilled && (activeFills || activeOrders)) {
+      this.logger.error('Block order is not being filled and has active orders/fills', { activeFills, activeOrders, blockOrderId })
       throw new Error('Block order in a weird state. Order is not being filled, but active orders/fills still exist')
     } else {
       this.logger.debug('Block order is not ready to be completed', { blockOrderId })
     }
-
-    await promisify(this.store.put)(blockOrder.key, blockOrder.value)
-
-    this.logger.info('Moved block order to completed state', { id: blockOrderId })
   }
 
   /**

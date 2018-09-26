@@ -331,6 +331,21 @@ describe('Order', () => {
       })
     })
 
+    describe('get active', () => {
+      it('defines a value getter for storage', () => {
+        expect(order).to.have.property('active')
+      })
+
+      it('sets active to true if no preimage exists', () => {
+        expect(order.active).to.be.true()
+      })
+
+      it('sets active to true if no preimage exists', () => {
+        order.setSettledParams({ swapPreimage: 'SWAP' })
+        expect(order.active).to.be.false()
+      })
+    })
+
     describe('#setCreatedParams', () => {
       let createdParams = {
         orderId: 'myid',
