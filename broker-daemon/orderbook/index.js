@@ -61,9 +61,11 @@ class Orderbook {
    * @return {Array<Object>} trades
    */
   async getTrades (since, limit) {
-    const sinceDate = new Date(since).toISOString()
-    const sinceInNanoseconds = nano.toString(nano.fromISOString(sinceDate))
-    const params = {limit, gte: sinceInNanoseconds}
+    const params = {limit}
+    if (since) {
+      const sinceDate = new Date(since).toISOString()
+      params.gte = nano.toString(nano.fromISOString(sinceDate))
+    }
     const trades = await getRecords(this.eventStore, MarketEvent.fromStorage.bind(MarketEvent), params)
     return trades
   }

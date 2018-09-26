@@ -47,8 +47,8 @@ module.exports = (program) => {
     .command(`info ${SUPPORTED_COMMANDS.SUPPORTED_MARKETS}`, 'Get the markets currently supported')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
     .command(`info ${SUPPORTED_COMMANDS.TRADES}`, 'Get the markets currently supported')
-    .argument('<since>', 'Block order to get status of.')
-    .argument('<limit>', 'Block order to get status of.')
+    .argument('<since>', 'Datetime for lowerbound of range.')
+    .argument('<limit>', 'Number of records to be retrieved')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
 }
