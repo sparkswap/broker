@@ -5,6 +5,7 @@ const OrderBookService = rewire(path.resolve(__dirname))
 
 describe('OrderBookService', () => {
   let watchMarketStub
+  let getOrderbookStub
 
   let GrpcMethod
   let register
@@ -26,7 +27,8 @@ describe('OrderBookService', () => {
       OrderBookService: {
         service: 'fakeService'
       },
-      WatchMarketResponse: sinon.stub()
+      WatchMarketResponse: sinon.stub(),
+      GetOrderbookResponse: sinon.stub()
     }
     logger = {
       info: sinon.stub(),
@@ -43,12 +45,16 @@ describe('OrderBookService', () => {
     register = sinon.stub().returns(fakeRegistered)
     GrpcMethod.prototype.register = register
     OrderBookService.__set__('GrpcServerStreamingMethod', GrpcMethod)
+    OrderBookService.__set__('GrpcUnaryMethod', GrpcMethod)
 
     loadProto = sinon.stub().returns(proto)
     OrderBookService.__set__('loadProto', loadProto)
 
     watchMarketStub = sinon.stub()
     OrderBookService.__set__('watchMarket', watchMarketStub)
+
+    getOrderbookStub = sinon.stub()
+    OrderBookService.__set__('getOrderbook', getOrderbookStub)
   })
 
   beforeEach(() => {
@@ -138,6 +144,52 @@ describe('OrderBookService', () => {
 
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.eql({ WatchMarketResponse: proto.WatchMarketResponse })
+    })
+  })
+
+  describe('#getOrderbook', () => {
+    let callOrder = 1
+    let callArgs
+
+    beforeEach(() => {
+      callArgs = GrpcMethod.args[callOrder]
+    })
+
+    it('exposes an implementation', () => {
+      expect(server.implementation).to.have.property('getOrderbook')
+      expect(server.implementation.getOrderbook).to.be.a('function')
+    })
+
+    it('creates a GrpcMethod', () => {
+      expect(GrpcMethod).to.have.been.called()
+      expect(GrpcMethod).to.have.been.calledWithNew()
+      expect(server.implementation.getOrderbook).to.be.equal(fakeRegistered)
+    })
+
+    it('provides the method', () => {
+      expect(callArgs[0]).to.be.equal(getOrderbookStub)
+    })
+
+    it('provides a message id', () => {
+      expect(callArgs[1]).to.be.equal('[OrderBookService:getOrderbook]')
+    })
+
+    describe('request options', () => {
+      it('passes in the logger', () => {
+        expect(callArgs[2]).to.have.property('logger', logger)
+      })
+
+      it('passes in the orderbooks', () => {
+        expect(callArgs[2]).to.have.property('orderbooks', orderbooks)
+      })
+
+      it('passes in auth', () => {
+        expect(callArgs[2]).to.have.property('auth', auth)
+      })
+    })
+
+    it('passes in the response', () => {
+      expect(callArgs[3]).to.be.eql({ GetOrderbookResponse: proto.GetOrderbookResponse })
     })
   })
 })

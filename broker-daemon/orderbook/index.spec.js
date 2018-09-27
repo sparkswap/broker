@@ -23,14 +23,20 @@ describe('Orderbook', () => {
   let relayer
   let logger
   let OrderbookIndex
+  let rangeFromTimestampStub
+  let rangeFromTimestamp
 
   beforeEach(() => {
     EventFromStorageBind = sinon.stub()
     EventFromStorage = sinon.stub()
     EventFromStorage.bind = EventFromStorageBind
+    rangeFromTimestamp = sinon.stub()
+    rangeFromTimestampStub = sinon.stub().returns(rangeFromTimestamp)
+
     Orderbook.__set__('MarketEvent', {
       fromStorage: EventFromStorage,
-      TYPES: EventTypes
+      TYPES: EventTypes,
+      rangeFromTimestamp: rangeFromTimestampStub
     })
 
     MarketEventOrderFromStorageBind = sinon.stub()
@@ -442,7 +448,6 @@ describe('Orderbook', () => {
       orderbook = new Orderbook(marketName, relayer, baseStore, logger)
       bound = 'mybind'
       EventFromStorageBind.returns(bound)
-
       revert = Orderbook.__set__('getRecords', getRecordsStub)
     })
 
@@ -467,6 +472,73 @@ describe('Orderbook', () => {
         bound,
         {gte: '1537526431034000000', limit}
       )
+    })
+  })
+
+  describe('getOrderbookEventsByTimestamp', () => {
+    let orderbook
+    let marketName
+    let timestamp
+    let revert
+    let getRecordsStub
+
+    beforeEach(() => {
+      marketName = 'BTC/LTC'
+      timestamp = 'fake nano timestamp'
+      getRecordsStub = sinon.stub()
+      orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+      revert = Orderbook.__set__('getRecords', getRecordsStub)
+    })
+
+    beforeEach(async () => {
+      await orderbook.getOrderbookEventsByTimestamp(timestamp)
+    })
+
+    afterEach(() => {
+      revert()
+    })
+
+    it('calls get records with a timestamp', () => {
+      expect(getRecordsStub).to.have.been.calledWith(
+        orderbookStore,
+        sinon.match.func,
+        rangeFromTimestamp
+      )
+      expect(rangeFromTimestampStub).to.have.been.calledWith(timestamp)
+    })
+  })
+
+  describe('getMarketEventsByTimestamp', () => {
+    let orderbook
+    let marketName
+    let timestamp
+    let revert
+    let getRecordsStub
+
+    beforeEach(() => {
+      marketName = 'BTC/LTC'
+      timestamp = 'fake nano timestamp'
+      getRecordsStub = sinon.stub()
+      orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+
+      revert = Orderbook.__set__('getRecords', getRecordsStub)
+    })
+
+    beforeEach(async () => {
+      await orderbook.getMarketEventsByTimestamp(timestamp)
+    })
+
+    afterEach(() => {
+      revert()
+    })
+
+    it('calls get records with a timestamp', () => {
+      expect(getRecordsStub).to.have.been.calledWith(
+        eventStore,
+        sinon.match.func,
+        rangeFromTimestamp
+      )
+      expect(rangeFromTimestampStub).to.have.been.calledWith(timestamp)
     })
   })
 })

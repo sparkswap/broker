@@ -1,6 +1,23 @@
 const { nanoToDatetime, Big } = require('../utils')
 const CONFIG = require('../config')
 
+/**
+ * Delimiter for MarketEvent keys
+ * @type {String}
+ * @constant
+ */
+const DELIMITER = ':'
+
+/**
+ * Lower bound for leveldb ranged queries
+ * @type {String}
+ * @constant
+ */
+const LOWER_BOUND = '\x00'
+
+/**
+ * Class representation from watchMarket events coming from the relayer.
+ */
 class MarketEvent {
   constructor ({ eventId, orderId, timestamp, eventType, sequence, ...payload }) {
     if (!Object.keys(this.constructor.TYPES).includes(eventType)) {
@@ -92,6 +109,20 @@ class MarketEvent {
   static fromStorage (key, value) {
     const [timestamp, sequence, eventId] = key.split(this.sep)
     return new this({ timestamp, sequence, eventId, ...JSON.parse(value) })
+  }
+
+  /**
+   * Returns a range query for leveldb from a given timestamp
+   *
+   * @param {String} startTime - time in nanoseconds
+   * @return {Object} range
+   * @return {String} range.gte
+   *
+   */
+  static rangeFromTimestamp (startTime) {
+    return {
+      gte: `${startTime}${DELIMITER}${LOWER_BOUND}`
+    }
   }
 }
 

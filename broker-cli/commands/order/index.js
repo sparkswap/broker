@@ -24,7 +24,7 @@ const summary = require('./summary')
 module.exports = (program) => {
   program
     .command('order', 'Commands to manage block orders')
-    .help('Available Commands: status')
+    .help(`Available Commands: ${Object.values(SUPPORTED_COMMANDS).join(', ')}`)
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
