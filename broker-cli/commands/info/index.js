@@ -47,8 +47,8 @@ module.exports = (program) => {
     .command(`info ${SUPPORTED_COMMANDS.SUPPORTED_MARKETS}`, 'Get the markets currently supported')
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
     .command(`info ${SUPPORTED_COMMANDS.TRADES}`, 'Get the markets currently supported')
-    .argument('<since>', 'Datetime for lowerbound of range.')
-    .argument('<limit>', 'Number of records to be retrieved')
+    .argument('<since>', 'Datetime for lowerbound of range.', validations.isDate)
+    .argument('<limit>', 'Number of records to be retrieved', validations.isPositiveInteger)
     .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
 }

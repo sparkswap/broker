@@ -56,7 +56,7 @@ describe('getTrades', () => {
 
   it('retrieves trades from the orderbook', async () => {
     await getTrades({ params, logger, orderbooks }, { GetTradesResponse })
-    expect(orderbookStub.getTrades).to.have.been.calledWith(since, limit)
+    expect(orderbookStub.getTrades).to.have.been.calledWith(since, Big(limit))
   })
 
   it('filters the trades to only filled orders', async () => {

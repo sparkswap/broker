@@ -446,15 +446,22 @@ describe('Orderbook', () => {
       revert = Orderbook.__set__('getRecords', getRecordsStub)
     })
 
-    beforeEach(async () => {
-      await orderbook.getTrades(timestamp, limit)
-    })
-
     afterEach(() => {
       revert()
     })
 
-    it('calls get records with a timestamp', () => {
+    it('does not add a lowerbound if no since date is provided', async () => {
+      timestamp = undefined
+      await orderbook.getTrades(timestamp, limit)
+      expect(getRecordsStub).to.have.been.calledWith(
+        eventStore,
+        bound,
+        {limit}
+      )
+    })
+
+    it('calls get records with a timestamp', async () => {
+      await orderbook.getTrades(timestamp, limit)
       expect(getRecordsStub).to.have.been.calledWith(
         eventStore,
         bound,

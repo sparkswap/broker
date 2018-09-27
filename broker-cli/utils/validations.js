@@ -137,11 +137,43 @@ function isBlockOrderId (str) {
   throw new Error('Block order IDs only contain upper and lower case letters, numbers, dashes (-) and underscores (_).')
 }
 
+/**
+ * Checks if a specified string is a valid date.
+ *
+ * @param  {String}  str - date
+ * @return {String}  str - date
+ * @throws {Error} If string cannot be parsed into a date
+ */
+function isDate (str) {
+  if (Date.parse(str)) {
+    return str
+  }
+
+  throw new Error('Given datetime is not in a valid date format')
+}
+
+/**
+ * Checks if a specified string is a limit
+ *
+ * @param  {String}  str - limit
+ * @return {String}  str - limit
+ * @throws {Error} If string is not a valid integer
+ */
+function isPositiveInteger (str) {
+  if (/^\+?[1-9][\d]*$/.test(str)) {
+    return str
+  }
+
+  throw new Error('Not a valid integer value')
+}
+
 module.exports = {
   isDecimal,
   isMarketName,
   isHost,
   isFormattedPath,
   areValidMarketNames,
-  isBlockOrderId
+  isBlockOrderId,
+  isDate,
+  isPositiveInteger
 }
