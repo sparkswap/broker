@@ -252,4 +252,13 @@ describe('MarketEvent', () => {
       expect(serialized.are).to.be.eql(payload.are)
     })
   })
+
+  describe('::rangeFromTimestamp', () => {
+    it('creates a leveldb range query from a given startTime', () => {
+      const startTime = 'starttime'
+      const range = MarketEvent.rangeFromTimestamp(startTime)
+      expect(range).to.have.property('gte')
+      expect(range.gte).to.include(startTime)
+    })
+  })
 })
