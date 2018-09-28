@@ -3,6 +3,7 @@ const AskIndex = require('./ask-index')
 const BidIndex = require('./bid-index')
 const OrderbookIndex = require('./orderbook-index')
 const { getRecords, Big } = require('../utils')
+const nano = require('nano-seconds')
 
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
@@ -50,6 +51,23 @@ class Orderbook {
   async all () {
     this.logger.info(`Retrieving all records for ${this.marketName}`)
     return getRecords(this.store, MarketEventOrder.fromStorage.bind(MarketEventOrder))
+  }
+
+  /**
+   * Gets all trades for a specific timestamp
+   * @param  {String} since datetime lowerbound
+   * @param  {Integer} limit of records returned
+
+   * @return {Array<Object>} trades
+   */
+  async getTrades (since, limit) {
+    const params = {limit}
+    if (since) {
+      const sinceDate = new Date(since).toISOString()
+      params.gte = nano.toString(nano.fromISOString(sinceDate))
+    }
+    const trades = await getRecords(this.eventStore, MarketEvent.fromStorage.bind(MarketEvent), params)
+    return trades
   }
 
   /**
@@ -149,6 +167,36 @@ class Orderbook {
       lastUpdated,
       sequence
     }
+  }
+
+  /**
+   * Gets current orderbook events by timestamp
+   *
+   * @param {String} timestamp - timestamp in nano-seconds
+   * @returns {Array<MarketEventOrder>}
+   */
+  async getOrderbookEventsByTimestamp (timestamp) {
+    return getRecords(
+      this.store,
+      (key, value) => JSON.parse(value),
+      // Limits the query to gte to a specific timestamp
+      MarketEvent.rangeFromTimestamp(timestamp)
+    )
+  }
+
+  /**
+   * Gets MarketEvents by timestamp
+   *
+   * @param {String} timestamp - timestamp in nano-seconds
+   * @returns {Array<MarketEventOrder>}
+   */
+  async getMarketEventsByTimestamp (timestamp) {
+    return getRecords(
+      this.eventStore,
+      (key, value) => JSON.parse(value),
+      // Limits the query to gte to a specific timestamp
+      MarketEvent.rangeFromTimestamp(timestamp)
+    )
   }
 }
 

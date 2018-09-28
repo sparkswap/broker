@@ -24,11 +24,15 @@ describe('OrderBookService', () => {
   beforeEach(() => {
     protoPath = 'fakePath'
     proto = {
-      OrderBookService: {
-        service: 'fakeService'
-      },
-      WatchMarketResponse: sinon.stub(),
-      GetOrderbookResponse: sinon.stub()
+      broker: {
+        rpc: {
+          OrderBookService: {
+            service: 'fakeService'
+          },
+          WatchMarketResponse: sinon.stub(),
+          GetOrderbookResponse: sinon.stub()
+        }
+      }
     }
     logger = {
       info: sinon.stub(),
@@ -83,7 +87,7 @@ describe('OrderBookService', () => {
 
   it('assigns the definition', () => {
     expect(server).to.have.property('definition')
-    expect(server.definition).to.be.equal(proto.OrderBookService.service)
+    expect(server.definition).to.be.equal(proto.broker.rpc.OrderBookService.service)
   })
 
   it('creates a name', () => {
@@ -143,7 +147,7 @@ describe('OrderBookService', () => {
     })
 
     it('passes in the response', () => {
-      expect(callArgs[3]).to.be.eql({ WatchMarketResponse: proto.WatchMarketResponse })
+      expect(callArgs[3]).to.be.eql({ WatchMarketResponse: proto.broker.rpc.WatchMarketResponse })
     })
   })
 
@@ -189,7 +193,7 @@ describe('OrderBookService', () => {
     })
 
     it('passes in the response', () => {
-      expect(callArgs[3]).to.be.eql({ GetOrderbookResponse: proto.GetOrderbookResponse })
+      expect(callArgs[3]).to.be.eql({ GetOrderbookResponse: proto.broker.rpc.GetOrderbookResponse })
     })
   })
 })

@@ -6,7 +6,8 @@ const {
   isHost,
   areValidMarketNames,
   isFormattedPath,
-  isBlockOrderId
+  isBlockOrderId,
+  isDate
 } = require('./validations')
 
 describe('Validations', () => {
@@ -154,6 +155,20 @@ describe('Validations', () => {
     it('throws an error if the id is falsey', () => {
       const id = ''
       expect(() => isBlockOrderId(id)).to.throw(expectedError)
+    })
+  })
+
+  describe('isDate', () => {
+    const expectedError = 'Given datetime is not in a valid date format'
+
+    it('returns the date string if the string can be parsed to a valid date', () => {
+      const date = '2018-09-25T13:10:53.023Z'
+      expect(isDate(date)).to.eql(date)
+    })
+
+    it('throws an error if the string can be parsed to a valid date', () => {
+      const date = '2018-09-T13:10:53.0233343Z'
+      expect(() => isDate(date)).to.throw(expectedError)
     })
   })
 })
