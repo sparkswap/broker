@@ -35,7 +35,7 @@ async function getTrades ({ params, logger, orderbooks }, { GetTradesResponse })
     logger.info(`Fetching trades for ${market} since ${since}, limit: ${limit}`)
     const trades = await orderbook.getTrades(since, limit)
     logger.info(`Formatting trades for ${market} since ${since}, limit: ${limit}`)
-    const formattedTrades = trades.filter(trade => trade.eventType === MarketEvent.TYPES.PLACED).map(t => t.tradeInfo(market))
+    const formattedTrades = trades.filter(trade => trade.eventType === MarketEvent.TYPES.FILLED).map(t => t.tradeInfo(market))
     return new GetTradesResponse({trades: formattedTrades})
   } catch (err) {
     throw new Error(err.message)

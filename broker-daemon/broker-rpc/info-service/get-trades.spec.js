@@ -15,7 +15,8 @@ describe('getTrades', () => {
   let orderbookStub
   let trades
   let tradeInfo
-  let tradeInfoStub
+  let placedTradeInfoStub
+  let filledTradeInfoStub
 
   beforeEach(() => {
     logger = {
@@ -41,9 +42,10 @@ describe('getTrades', () => {
       side: 'buy',
       price: '0.0010000000000000',
       amount: '400.000000000000' }
-    tradeInfoStub = sinon.stub().returns(tradeInfo)
+    filledTradeInfoStub = sinon.stub().returns(tradeInfo)
+    placedTradeInfoStub = sinon.stub().returns({})
 
-    trades = [{eventType: 'FILLED', tradeInfo: tradeInfoStub}, {eventType: 'PLACED', tradeInfo: tradeInfoStub}]
+    trades = [{eventType: 'FILLED', tradeInfo: filledTradeInfoStub}, {eventType: 'PLACED', tradeInfo: placedTradeInfoStub}]
     orderbookStub = { getTrades: sinon.stub().resolves(trades) }
     orderbooks = new Map([['BTC/LTC', orderbookStub]])
     GetTradesResponse = sinon.stub()
@@ -61,7 +63,8 @@ describe('getTrades', () => {
 
   it('filters the trades to only filled orders', async () => {
     await getTrades({ params, logger, orderbooks }, { GetTradesResponse })
-    expect(tradeInfoStub).to.have.been.calledOnce()
+    expect(filledTradeInfoStub).to.have.been.calledOnce()
+    expect(placedTradeInfoStub).to.not.have.been.called()
   })
 
   it('returns trades in the GetTradesResponse', async () => {
