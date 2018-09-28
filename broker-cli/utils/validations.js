@@ -145,8 +145,10 @@ function isBlockOrderId (str) {
  * @throws {Error} If string cannot be parsed into a date
  */
 function isDate (str) {
-  if (Date.parse(str)) {
-    return str
+  if (new Date(str) !== 'Invalid Date' && !isNaN(new Date(str))) {
+    if (str === new Date(str).toISOString()) {
+      return str
+    }
   }
 
   throw new Error('Given datetime is not in a valid date format')

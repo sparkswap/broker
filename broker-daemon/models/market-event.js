@@ -1,4 +1,4 @@
-const { nanoToDatetime, Big } = require('../utils')
+const { Big } = require('../utils')
 const CONFIG = require('../config')
 
 /**
@@ -67,11 +67,12 @@ class MarketEvent {
   }
 
   tradeInfo (marketName) {
+    const timestampInMilliseconds = parseInt(Big(this.timestamp).div(1000000).round(0))
     const [baseSymbol, counterSymbol] = marketName.split('/')
     const info = {
       id: this.eventId,
-      timestamp: this.timestamp,
-      datetime: nanoToDatetime(this.timestamp),
+      timestamp: timestampInMilliseconds.toString(),
+      datetime: new Date(timestampInMilliseconds).toISOString(),
       order: this.orderId,
       symbol: marketName,
       type: this.price ? 'limit' : 'market',

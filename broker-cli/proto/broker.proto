@@ -1372,49 +1372,49 @@ service InfoService {
    * ```javascript
    * { trades:
    *  [ { id: 'yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm',
-   *    timestamp: '1537526431834233900',
-   *    datetime: '2018-09-21T10:40:31.0342339Z',
+   *    timestamp: '1537526431834',
+   *    datetime: '2018-09-21T10:40:31.034Z',
    *    order: 'tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg',
    *    symbol: 'BTC/LTC',
    *    type: 'limit',
    *    side: 'buy',
    *    price: '0.0010000000000000',
    *    amount: '400.000000000000',
-   *    info: '{"id":"yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm","timestamp":"1537526431834233900","datetime":"2018-09-21T10:40:31.0342339Z","order":"tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg","symbol":"BTC/LTC","type":"limit","side":"buy","price":"0.0010000000000000","amount":"400.000000000000"}' },
+   *    info: '{"id":"yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm","timestamp":"1537526431834","datetime":"2018-09-21T10:40:31.034Z","order":"tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg","symbol":"BTC/LTC","type":"limit","side":"buy","price":"0.0010000000000000","amount":"400.000000000000"}' },
    *   { id: 'd4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP',
-   *    timestamp: '1537527538513117400',
-   *    datetime: '2018-09-21T10:58:58.0131174Z',
+   *    timestamp: '1537527538513',
+   *    datetime: '2018-09-21T10:58:58.513Z',
    *    order: 'W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt',
    *    symbol: 'BTC/LTC',
    *    type: 'limit',
    *    side: 'sell',
    *    price: '0.1000000000000000',
    *    amount: '50.000000000000000',
-   *    info: '{"id":"d4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP","timestamp":"1537527538513117400","datetime":"2018-09-21T10:58:58.0131174Z","order":"W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt","symbol":"BTC/LTC","type":"limit","side":"sell","price":"0.1000000000000000","amount":"50.000000000000000"}' } ] }
+   *    info: '{"id":"d4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP","timestamp":"1537527538513","datetime":"2018-09-21T10:58:58.513Z","order":"W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt","symbol":"BTC/LTC","type":"limit","side":"sell","price":"0.1000000000000000","amount":"50.000000000000000"}' } ] }
    * ```
    *
    * ```shell
    * { trades:
    *  [ { id: 'yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm',
-   *    timestamp: '1537526431834233900',
-   *    datetime: '2018-09-21T10:40:31.0342339Z',
+   *    timestamp: '1537526431834',
+   *    datetime: '2018-09-21T10:40:31.034Z',
    *    order: 'tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg',
    *    symbol: 'BTC/LTC',
    *    type: 'limit',
    *    side: 'buy',
    *    price: '0.0010000000000000',
    *    amount: '400.000000000000',
-   *    info: '{"id":"yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm","timestamp":"1537526431834233900","datetime":"2018-09-21T10:40:31.0342339Z","order":"tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg","symbol":"BTC/LTC","type":"limit","side":"buy","price":"0.0010000000000000","amount":"400.000000000000"}' },
+   *    info: '{"id":"yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm","timestamp":"1537526431834","datetime":"2018-09-21T10:40:31.034Z","order":"tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg","symbol":"BTC/LTC","type":"limit","side":"buy","price":"0.0010000000000000","amount":"400.000000000000"}' },
    *   { id: 'd4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP',
-   *    timestamp: '1537527538513117400',
-   *    datetime: '2018-09-21T10:58:58.0131174Z',
+   *    timestamp: '1537527538513',
+   *    datetime: '2018-09-21T10:58:58.513Z',
    *    order: 'W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt',
    *    symbol: 'BTC/LTC',
    *    type: 'limit',
    *    side: 'sell',
    *    price: '0.1000000000000000',
    *    amount: '50.000000000000000',
-   *    info: '{"id":"d4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP","timestamp":"1537527538513117400","datetime":"2018-09-21T10:58:58.0131174Z","order":"W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt","symbol":"BTC/LTC","type":"limit","side":"sell","price":"0.1000000000000000","amount":"50.000000000000000"}' } ] }
+   *    info: '{"id":"d4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP","timestamp":"1537527538513","datetime":"2018-09-21T10:58:58.513Z","order":"W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt","symbol":"BTC/LTC","type":"limit","side":"sell","price":"0.1000000000000000","amount":"50.000000000000000"}' } ] }
    * ```
    */
   rpc GetTrades (GetTradesRequest) returns (GetTradesResponse);

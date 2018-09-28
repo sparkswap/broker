@@ -162,7 +162,7 @@ describe('Validations', () => {
     const expectedError = 'Given datetime is not in a valid date format'
 
     it('returns the date string if the string can be parsed to a valid date', () => {
-      const date = '2018-09-25T13:10:53.0233343Z'
+      const date = '2018-09-25T13:10:53.023Z'
       expect(isDate(date)).to.eql(date)
     })
 
