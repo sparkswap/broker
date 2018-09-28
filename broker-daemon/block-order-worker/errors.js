@@ -9,15 +9,6 @@ class BlockOrderError extends Error {
   }
 }
 
-class BlockOrderNotFoundError extends BlockOrderError {
-  constructor (id, err) {
-    super(`Block Order with ID ${id} was not found.`, err)
-
-    this.notFound = true
-  }
-}
-
 module.exports = {
-  BlockOrderError,
-  BlockOrderNotFoundError
+  BlockOrderError
 }

@@ -10,11 +10,10 @@ class StateMachineEvents extends StateMachinePlugin {
    * Setup for configuration of StateMachineEvents plugin
    * @returns {StateMachineEvents}
    */
-  constructor ({ exitEvents = [] } = {}) {
+  constructor () {
     super()
 
     this.eventHandler = new EventEmitter()
-    this.exitEvents = exitEvents
   }
 
   /**
@@ -31,12 +30,6 @@ class StateMachineEvents extends StateMachinePlugin {
        */
       onAfterTransition: function (lifecycle) {
         plugin.eventHandler.emit(lifecycle.transition)
-
-        // Remove all events from the event emitter if we have either cancelled,
-        // completed, or rejected an order
-        if (plugin.exitEvents.includes(lifecycle.transition)) {
-          plugin.eventHandler.removeAllListeners()
-        }
       }
     }
   }
@@ -48,7 +41,8 @@ class StateMachineEvents extends StateMachinePlugin {
     const { eventHandler } = this
 
     return {
-      once: (type, cb) => eventHandler.once(type, cb)
+      once: (type, cb) => eventHandler.once(type, cb),
+      removeAllListeners: () => eventHandler.removeAllListeners()
     }
   }
 }

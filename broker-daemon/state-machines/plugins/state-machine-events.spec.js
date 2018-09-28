@@ -9,24 +9,10 @@ describe('StateMachineEvents', () => {
       const sme = new StateMachineEvents()
       expect(sme).to.have.property('eventHandler')
     })
-
-    it('defines exit events', () => {
-      const exitEvents = ['cancel']
-      const sme = new StateMachineEvents({ exitEvents })
-      expect(sme).to.have.property('exitEvents')
-      expect(sme.exitEvents).to.be.eql(exitEvents)
-    })
-
-    it('defaults exit events to an empty array', () => {
-      const sme = new StateMachineEvents()
-      expect(sme).to.have.property('exitEvents')
-      expect(sme.exitEvents).to.be.eql([])
-    })
   })
 
   describe('observers', () => {
     let emitStub
-    let exitEvents
     let removeListenersStub
     let stateMachine
     let observers
@@ -34,7 +20,6 @@ describe('StateMachineEvents', () => {
 
     beforeEach(() => {
       emitStub = sinon.stub()
-      exitEvents = ['cancel']
       removeListenersStub = sinon.stub()
       eventEmitterStub = sinon.stub()
       eventEmitterStub.prototype.emit = emitStub
@@ -42,7 +27,7 @@ describe('StateMachineEvents', () => {
 
       StateMachineEvents.__set__('EventEmitter', eventEmitterStub)
 
-      stateMachine = new StateMachineEvents({ exitEvents })
+      stateMachine = new StateMachineEvents()
     })
 
     beforeEach(() => {
@@ -59,14 +44,6 @@ describe('StateMachineEvents', () => {
       onAfterTransition(lifecycle)
       expect(emitStub).to.have.been.calledWith(lifecycle.transition)
     })
-
-    it('should remove all listeners if an event is listed as an exit event', () => {
-      const lifecycle = { transition: 'cancel' }
-      const { onAfterTransition } = observers
-      onAfterTransition(lifecycle)
-      expect(emitStub).to.have.been.calledWith(lifecycle.transition)
-      expect(removeListenersStub).to.have.been.calledOnce()
-    })
   })
 
   describe('methods', () => {
@@ -74,11 +51,14 @@ describe('StateMachineEvents', () => {
     let stateMachine
     let methods
     let eventEmitterStub
+    let removeAllListenersStub
 
     beforeEach(() => {
       onceStub = sinon.stub()
+      removeAllListenersStub = sinon.stub()
       eventEmitterStub = sinon.stub()
       eventEmitterStub.prototype.once = onceStub
+      eventEmitterStub.prototype.removeAllListeners = removeAllListenersStub
 
       StateMachineEvents.__set__('EventEmitter', eventEmitterStub)
 
@@ -100,6 +80,14 @@ describe('StateMachineEvents', () => {
         const { once: stateMachineEventsOnce } = methods
         stateMachineEventsOnce(type, cb)
         expect(onceStub).to.have.been.calledWith(type, cb)
+      })
+    })
+
+    describe('#removeAllListeners', () => {
+      it('should call an event emitters method', () => {
+        const { removeAllListeners: stateMachineEventsRemove } = methods
+        stateMachineEventsRemove()
+        expect(removeAllListenersStub).to.have.been.calledOnce()
       })
     })
   })

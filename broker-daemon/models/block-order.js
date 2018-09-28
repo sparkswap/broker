@@ -2,7 +2,21 @@ const { promisify } = require('util')
 
 const { Big } = require('../utils')
 const CONFIG = require('../config')
-const { BlockOrderNotFoundError } = require('../block-order-worker/errors')
+
+class BlockOrderNotFoundError extends Error {
+  /**
+   * @param {String} id - a blockorder id
+   * @param {Error} err
+   */
+  constructor (id, err) {
+    super(`Block Order with ID ${id} was not found.`, err)
+
+    this.name = this.constructor.name
+    this.notFound = true
+
+    if (err) this.stack = err.stack
+  }
+}
 
 /**
  * @class Model representing Block Orders
@@ -316,6 +330,10 @@ BlockOrder.STATUSES = Object.freeze({
   CANCELLED: 'CANCELLED',
   COMPLETED: 'COMPLETED',
   FAILED: 'FAILED'
+})
+
+BlockOrder.ERRORS = Object.freeze({
+  BlockOrderNotFoundError
 })
 
 module.exports = BlockOrder

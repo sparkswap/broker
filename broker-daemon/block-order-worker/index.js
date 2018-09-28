@@ -294,24 +294,16 @@ class BlockOrderWorker extends EventEmitter {
     // check the fillamount on each collection of state machines from the block order
     // and make sure that either is equal to how much we are trying to fill.
     let totalFilled = Big(0)
-
-    if (blockOrder.fills.length) {
-      totalFilled = blockOrder.fills.reduce((acc, fsm) => acc.plus(fsm.fill.fillAmount), Big(0))
-    } else if (blockOrder.openOrders.length) {
-      totalFilled = blockOrder.openOrders.reduce((acc, osm) => {
-        // If the order has not been filled yet, then the `fillAmount` will be undefined
-        // so we instead default to 0
-        return acc.plus(osm.order.fillAmount || 0)
-      }, Big(0))
-    } else {
-      this.logger.error('Broker in a bad state, no fills or orders on block order', { blockOrderId })
-      throw new Error('No fills or orders on blockOrder')
-    }
+    totalFilled = blockOrder.fills.reduce((acc, fsm) => acc.plus(fsm.fill.fillAmount), totalFilled)
+    totalFilled = blockOrder.openOrders.reduce((acc, osm) => {
+      // If the order has not been filled yet, then the `fillAmount` will be undefined
+      // so we instead default to 0
+      return acc.plus(osm.order.fillAmount || 0)
+    }, totalFilled)
 
     this.logger.debug('Current total filled amount: ', { totalFilled, blockOrderAmount: blockOrder.baseAmount })
 
     const stillBeingFilled = totalFilled.lt(blockOrder.baseAmount)
-
     const activeOrders = blockOrder.openOrders.some(osm => osm.order.active)
     const activeFills = blockOrder.fills.some(fsm => fsm.fill.active)
 
@@ -321,12 +313,6 @@ class BlockOrderWorker extends EventEmitter {
       blockOrder.complete()
       await promisify(this.store.put)(blockOrder.key, blockOrder.value)
       this.logger.info('Moved block order to completed state', { blockOrderId })
-    } else if (stillBeingFilled && !activeFills && !activeOrders) {
-      this.logger.error('Block order is still being filled, but has no active orders/fills', { blockOrderId })
-      throw new Error('Block order in a weird state. Order is filled, but no active orders/fills still exist')
-    } else if (!stillBeingFilled && (activeFills || activeOrders)) {
-      this.logger.error('Block order is not being filled and has active orders/fills', { activeFills, activeOrders, blockOrderId })
-      throw new Error('Block order in a weird state. Order is not being filled, but active orders/fills still exist')
     } else {
       this.logger.debug('Block order is not ready to be completed', { blockOrderId })
     }
@@ -369,12 +355,22 @@ class BlockOrderWorker extends EventEmitter {
 
     // The events below tie into the StateMachine's lifecycle hooks for a OrderStateMachine
     order.once('complete', async () => {
-      this.completeBlockOrder(blockOrder.id).catch(e => {
-        this.logger.error(`BlockOrder failed to be completed, status is left active: ${blockOrder.id}`, { error: e.stack })
-      })
+      this.completeBlockOrder(blockOrder.id)
+        .then(() => order.removeAllListeners())
+        .catch(e => {
+          this.logger.error(`BlockOrder failed to be completed from order, status is left active: ${blockOrder.id}`, { error: e.stack })
+          order.removeAllListeners()
+        })
     })
 
-    order.once('reject', async () => this.failBlockOrder(blockOrder.id, order.error))
+    order.once('reject', async () => {
+      this.failBlockOrder(blockOrder.id, order.error)
+        .then(() => order.removeAllListeners())
+        .catch(e => {
+          this.logger.error(`BlockOrder failed on setting a failed status from order, status is left active: ${blockOrder.id}`, { error: e.stack })
+          order.removeAllListeners()
+        })
+    })
 
     this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
   }
@@ -433,12 +429,22 @@ class BlockOrderWorker extends EventEmitter {
 
       // The events below tie into the StateMachine's lifecycle hooks for a OrderStateMachine
       fsm.once('execute', () => {
-        this.completeBlockOrder(blockOrder.id).catch(e => {
-          this.logger.error(`BlockOrder failed to be completed, status is left active: ${blockOrder.id}`, { error: e.stack })
-        })
+        this.completeBlockOrder(blockOrder.id)
+          .then(() => fsm.removeAllListeners())
+          .catch(e => {
+            this.logger.error(`BlockOrder failed to be completed from fill, status is left active: ${blockOrder.id}`, { error: e.stack })
+            fsm.removeAllListeners()
+          })
       })
 
-      fsm.once('reject', () => this.failBlockOrder(blockOrder.id, fsm.fill.error))
+      fsm.once('reject', () => {
+        this.failBlockOrder(blockOrder.id, fsm.fill.error)
+          .then(() => fsm.removeAllListeners())
+          .catch(e => {
+            this.logger.error(`BlockOrder failed on setting a failed status from fill, status is left active: ${blockOrder.id}`, { error: e.stack })
+            fsm.removeAllListeners()
+          })
+      })
 
       return fsm
     })

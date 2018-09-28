@@ -12,16 +12,6 @@ const {
 } = require('./plugins')
 
 /**
- * Events that should trigger the cleanup of all event handlers created
- * by the StateMachineEvents plugin
- *
- * @constant
- * @type {Array<String>}
- * @default
- */
-const EXIT_EVENTS = Object.freeze(['cancel', 'complete', 'reject'])
-
-/**
  * If Orders are saved in the database before they are created on the remote, they lack an ID
  * This string indicates an order that does not have an assigned remote ID
  *
@@ -39,9 +29,7 @@ const OrderStateMachine = StateMachine.factory({
     new StateMachineHistory(),
     new StateMachineRejection(),
     new StateMachineLogging(),
-    new StateMachineEvents({
-      exitEvents: EXIT_EVENTS
-    }),
+    new StateMachineEvents(),
     new StateMachinePersistence({
       /**
        * @type {StateMachinePersistence~KeyAccessor}

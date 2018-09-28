@@ -792,7 +792,7 @@ describe('BlockOrderWorker', () => {
     })
   })
 
-  describe('createBlockOrder', () => {
+  describe('completeBlockOrder', () => {
     context('invalid block order', () => {
       let blockOrder
       let getBlockOrderStub
@@ -814,10 +814,6 @@ describe('BlockOrderWorker', () => {
       it('gets a block order by id', async () => {
         await worker.completeBlockOrder(blockOrder.id).catch(() => {})
         expect(getBlockOrderStub).to.have.been.calledWith(blockOrder.id)
-      })
-
-      it('errors if no orders or fills are found on the block order', () => {
-        expect(worker.completeBlockOrder(blockOrder.id)).to.eventually.be.rejectedWith('No fills or orders on blockOrder')
       })
     })
 
@@ -867,33 +863,6 @@ describe('BlockOrderWorker', () => {
         await worker.completeBlockOrder(blockOrder.id)
         expect(blockOrderCompleteStub).to.not.have.been.calledOnce()
       })
-
-      it('errors if the block order is not being filled, but has active orders', () => {
-        const activeBlockOrder = {
-          id: '1234',
-          baseAmount: 600,
-          fills: [],
-          openOrders: [
-            { order: { fillAmount: 600, active: false } },
-            { order: { active: true } }
-          ]
-        }
-        getBlockOrderStub.returns(activeBlockOrder)
-        return expect(worker.completeBlockOrder(blockOrder.id)).to.eventually.be.rejectedWith('Block order in a weird state. Order is not being filled')
-      })
-
-      it('errors if the block order is being filled, but no active orders are present', async () => {
-        const inactiveBlockOrder = {
-          id: '1234',
-          baseAmount: 600,
-          fills: [],
-          openOrders: [
-            { order: { fillAmount: 300, active: false } }
-          ]
-        }
-        getBlockOrderStub.returns(inactiveBlockOrder)
-        return expect(worker.completeBlockOrder(blockOrder.id)).to.eventually.be.rejectedWith('Block order in a weird state. Order is filled')
-      })
     })
 
     context('block order with fills', () => {
@@ -941,33 +910,6 @@ describe('BlockOrderWorker', () => {
         getBlockOrderStub.returns(activeBlockOrder)
         await worker.completeBlockOrder(blockOrder.id)
         expect(blockOrderCompleteStub).to.not.have.been.calledOnce()
-      })
-
-      it('errors if the block order is not being filled, but has active fills', () => {
-        const activeBlockOrder = {
-          id: '1234',
-          baseAmount: 600,
-          openOrders: [],
-          fills: [
-            { fill: { fillAmount: 600, active: false } },
-            { fill: { fillAmount: 100, active: true } }
-          ]
-        }
-        getBlockOrderStub.returns(activeBlockOrder)
-        return expect(worker.completeBlockOrder(blockOrder.id)).to.eventually.be.rejectedWith('Block order in a weird state. Order is not being filled')
-      })
-
-      it('errors if the block order is being filled, but no active fills are present', async () => {
-        const inactiveBlockOrder = {
-          id: '1234',
-          baseAmount: 600,
-          openOrders: [],
-          fills: [
-            { fill: { fillAmount: 300, active: false } }
-          ]
-        }
-        getBlockOrderStub.returns(inactiveBlockOrder)
-        return expect(worker.completeBlockOrder(blockOrder.id)).to.eventually.be.rejectedWith('Block order in a weird state. Order is filled')
       })
     })
   })
