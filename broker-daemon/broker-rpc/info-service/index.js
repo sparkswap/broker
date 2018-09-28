@@ -11,14 +11,14 @@ class InfoService {
     this.proto = loadProto(this.protoPath)
     this.logger = logger
 
-    this.definition = this.proto.InfoService.service
+    this.definition = this.proto.broker.rpc.InfoService.service
     this.serviceName = 'InfoService'
 
     const {
       GetSupportedMarketsResponse,
       GetMarketStatsResponse,
       GetTradesResponse
-    } = this.proto
+    } = this.proto.broker.rpc
 
     this.implementation = {
       getSupportedMarkets: new GrpcUnaryMethod(getSupportedMarkets, this.messageId('getSupportedMarkets'), { logger, relayer, orderbooks }, { GetSupportedMarketsResponse }).register(),

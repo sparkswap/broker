@@ -17,12 +17,12 @@ class AdminService {
     this.proto = loadProto(this.protoPath)
     this.logger = logger
 
-    this.definition = this.proto.AdminService.service
+    this.definition = this.proto.broker.rpc.AdminService.service
     this.serviceName = 'AdminService'
 
     const {
       HealthCheckResponse
-    } = this.proto
+    } = this.proto.broker.rpc
 
     this.implementation = {
       healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer, engines, auth }, { HealthCheckResponse }).register()

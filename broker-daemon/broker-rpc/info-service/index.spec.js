@@ -22,12 +22,16 @@ describe('InfoService', () => {
   beforeEach(() => {
     protoPath = 'fakePath'
     proto = {
-      InfoService: {
-        service: 'fakeService'
-      },
-      GetSupportedMarketsResponse: sinon.stub(),
-      GetMarketStatsResponse: sinon.stub(),
-      GetTradesResponse: sinon.stub()
+      broker: {
+        rpc: {
+          InfoService: {
+            service: 'fakeService'
+          },
+          GetSupportedMarketsResponse: sinon.stub(),
+          GetMarketStatsResponse: sinon.stub(),
+          GetTradesResponse: sinon.stub()
+        }
+      }
     }
     logger = {
       info: sinon.stub(),
@@ -81,7 +85,7 @@ describe('InfoService', () => {
 
   it('assigns the definition', () => {
     expect(server).to.have.property('definition')
-    expect(server.definition).to.be.equal(proto.InfoService.service)
+    expect(server.definition).to.be.equal(proto.broker.rpc.InfoService.service)
   })
 
   it('creates a name', () => {
@@ -141,7 +145,7 @@ describe('InfoService', () => {
 
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('GetSupportedMarketsResponse', proto.GetSupportedMarketsResponse)
+      expect(callArgs[3]).to.have.property('GetSupportedMarketsResponse', proto.broker.rpc.GetSupportedMarketsResponse)
     })
   })
 
@@ -186,7 +190,7 @@ describe('InfoService', () => {
 
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('GetMarketStatsResponse', proto.GetMarketStatsResponse)
+      expect(callArgs[3]).to.have.property('GetMarketStatsResponse', proto.broker.rpc.GetMarketStatsResponse)
     })
   })
 
@@ -231,7 +235,7 @@ describe('InfoService', () => {
 
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('GetTradesResponse', proto.GetTradesResponse)
+      expect(callArgs[3]).to.have.property('GetTradesResponse', proto.broker.rpc.GetTradesResponse)
     })
   })
 })

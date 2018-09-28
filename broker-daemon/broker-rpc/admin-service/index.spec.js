@@ -24,10 +24,14 @@ describe('AdminService', () => {
   beforeEach(() => {
     protoPath = 'fakePath'
     proto = {
-      AdminService: {
-        service: 'fakeService'
-      },
-      HealthCheckResponse: sinon.stub()
+      broker: {
+        rpc: {
+          AdminService: {
+            service: 'fakeService'
+          },
+          HealthCheckResponse: sinon.stub()
+        }
+      }
     }
     logger = {
       info: sinon.stub(),
@@ -77,7 +81,7 @@ describe('AdminService', () => {
 
   it('assigns the definition', () => {
     expect(server).to.have.property('definition')
-    expect(server.definition).to.be.equal(proto.AdminService.service)
+    expect(server.definition).to.be.equal(proto.broker.rpc.AdminService.service)
   })
 
   it('creates a name', () => {
@@ -137,7 +141,7 @@ describe('AdminService', () => {
     })
 
     it('passes in the response', () => {
-      expect(callArgs[3]).to.be.eql({ HealthCheckResponse: proto.HealthCheckResponse })
+      expect(callArgs[3]).to.be.eql({ HealthCheckResponse: proto.broker.rpc.HealthCheckResponse })
     })
   })
 })

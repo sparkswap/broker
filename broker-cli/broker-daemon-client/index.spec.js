@@ -43,11 +43,15 @@ describe('BrokerDaemonClient', () => {
     infoStub = sinon.stub()
 
     protoStub = sinon.stub().returns({
-      AdminService: adminStub,
-      OrderService: orderStub,
-      OrderBookService: orderbookStub,
-      WalletService: walletStub,
-      InfoService: infoStub
+      broker: {
+        rpc: {
+          AdminService: adminStub,
+          OrderService: orderStub,
+          OrderBookService: orderbookStub,
+          WalletService: walletStub,
+          InfoService: infoStub
+        }
+      }
     })
     readFileSyncStub = sinon.stub().returns(certFile)
     createInsecureStub = sinon.stub().returns(credentialStub)

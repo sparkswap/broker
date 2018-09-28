@@ -45,7 +45,7 @@
  * ```
  */
 syntax = "proto3";
-
+package broker.rpc;
 // import "google/protobuf/empty.proto";
 // normally we would us the above import statement, but the node.js grpc doesn't import
 // the standard types and so it throws an error message saying that it can't find google/protobuf.empty.proto

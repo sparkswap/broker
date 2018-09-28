@@ -19,7 +19,7 @@ class OrderService {
     this.proto = loadProto(this.protoPath)
     this.logger = logger
 
-    this.definition = this.proto.OrderService.service
+    this.definition = this.proto.broker.rpc.OrderService.service
     this.serviceName = 'OrderService'
 
     const {
@@ -27,7 +27,7 @@ class OrderService {
       TimeInForce,
       GetBlockOrderResponse,
       GetBlockOrdersResponse
-    } = this.proto
+    } = this.proto.broker.rpc
 
     this.implementation = {
       createBlockOrder: new GrpcUnaryMethod(createBlockOrder, this.messageId('createBlockOrder'), { logger, blockOrderWorker, auth }, { CreateBlockOrderResponse, TimeInForce }).register(),
