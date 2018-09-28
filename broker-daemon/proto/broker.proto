@@ -1205,6 +1205,48 @@ message GetMarketStatsResponse {
 }
 
 /**
+ * Parameters to retrieve a list of trades within a specified time frame on a given market
+ */
+message GetTradesRequest {
+  string market = 1;
+  string since = 2;
+  int64 limit = 3;
+}
+
+/**
+ * Trade exposes all relevant information about a filled order
+ */
+message Trade {
+  // id of the trade
+  string id = 1;
+  // Unix timestamp in milliseconds the trade was created
+  string timestamp = 2;
+  // ISO8601 datetime in milliseconds the trade was created
+  string datetime = 3;
+  // order id
+  string order = 4;
+  // market name the trade was executed on
+  string symbol = 5;
+  // order type, 'market', 'limit' or undefined/None/null
+  string type = 6;
+  // direction of the trade, 'buy' or 'sell'
+  string side = 7;
+  // float price in quote currency
+  string price = 8;
+  // amount of base currency
+  string amount = 9;
+  // the original decoded JSON as is
+  string info = 10;
+}
+
+/**
+ * Contains information about all trades on sparkswap
+ */
+message GetTradesResponse {
+  repeated Trade trades = 1;
+}
+
+/**
  * The InfoService gets information about the state of the markets, currencies, transactions.
  *
  * ```javascript
@@ -1305,4 +1347,75 @@ service InfoService {
    * ```
    */
   rpc getMarketStats (GetMarketStatsRequest) returns (GetMarketStatsResponse);
+  /**
+   * getTrades returns detailed information about trades from a given time range.
+   *
+   * ```javascript
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * infoService.getTrades(
+   *   {
+   *     market: 'BTC/LTC', // trading BTC and LTC
+   *     since: '2018-09-20T18:58:07.866Z', // only retrieve records since this date
+   *     limit: 10, // retrieve first 10 records
+   *   }, { deadline }, (err, { trades }) => {
+   *   if (err) return console.error(err)
+   *   console.log({ trades })
+   * }))
+   * ```
+   *
+   * ```shell
+   * > sparkswap info trades 2018-09-20T18:58:07.866Z 50 --market BTC/LTC
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * { trades:
+   *  [ { id: 'yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm',
+   *    timestamp: '1537526431834',
+   *    datetime: '2018-09-21T10:40:31.034Z',
+   *    order: 'tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg',
+   *    symbol: 'BTC/LTC',
+   *    type: 'limit',
+   *    side: 'buy',
+   *    price: '0.0010000000000000',
+   *    amount: '400.000000000000',
+   *    info: '{"id":"yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm","timestamp":"1537526431834","datetime":"2018-09-21T10:40:31.034Z","order":"tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg","symbol":"BTC/LTC","type":"limit","side":"buy","price":"0.0010000000000000","amount":"400.000000000000"}' },
+   *   { id: 'd4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP',
+   *    timestamp: '1537527538513',
+   *    datetime: '2018-09-21T10:58:58.513Z',
+   *    order: 'W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt',
+   *    symbol: 'BTC/LTC',
+   *    type: 'limit',
+   *    side: 'sell',
+   *    price: '0.1000000000000000',
+   *    amount: '50.000000000000000',
+   *    info: '{"id":"d4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP","timestamp":"1537527538513","datetime":"2018-09-21T10:58:58.513Z","order":"W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt","symbol":"BTC/LTC","type":"limit","side":"sell","price":"0.1000000000000000","amount":"50.000000000000000"}' } ] }
+   * ```
+   *
+   * ```shell
+   * { trades:
+   *  [ { id: 'yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm',
+   *    timestamp: '1537526431834',
+   *    datetime: '2018-09-21T10:40:31.034Z',
+   *    order: 'tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg',
+   *    symbol: 'BTC/LTC',
+   *    type: 'limit',
+   *    side: 'buy',
+   *    price: '0.0010000000000000',
+   *    amount: '400.000000000000',
+   *    info: '{"id":"yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm","timestamp":"1537526431834","datetime":"2018-09-21T10:40:31.034Z","order":"tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg","symbol":"BTC/LTC","type":"limit","side":"buy","price":"0.0010000000000000","amount":"400.000000000000"}' },
+   *   { id: 'd4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP',
+   *    timestamp: '1537527538513',
+   *    datetime: '2018-09-21T10:58:58.513Z',
+   *    order: 'W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt',
+   *    symbol: 'BTC/LTC',
+   *    type: 'limit',
+   *    side: 'sell',
+   *    price: '0.1000000000000000',
+   *    amount: '50.000000000000000',
+   *    info: '{"id":"d4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP","timestamp":"1537527538513","datetime":"2018-09-21T10:58:58.513Z","order":"W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt","symbol":"BTC/LTC","type":"limit","side":"sell","price":"0.1000000000000000","amount":"50.000000000000000"}' } ] }
+   * ```
+   */
+  rpc GetTrades (GetTradesRequest) returns (GetTradesResponse);
 }
