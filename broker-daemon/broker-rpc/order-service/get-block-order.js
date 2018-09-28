@@ -1,5 +1,6 @@
 const { PublicError } = require('grpc-methods')
-const { BlockOrder } = require('../../models')
+
+const { BlockOrderNotFoundError } = require('../../models/errors')
 
 /**
  * Check on the status of a block order
@@ -25,7 +26,7 @@ async function getBlockOrder ({ params, logger, blockOrderWorker }, { GetBlockOr
     // so instead, we use a plain object
     return blockOrder.serialize()
   } catch (err) {
-    if (err instanceof BlockOrder.ERRORS.BlockOrderNotFoundError) {
+    if (err instanceof BlockOrderNotFoundError) {
       throw new PublicError(err.message, err)
     }
 

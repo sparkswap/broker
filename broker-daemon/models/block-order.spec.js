@@ -4,10 +4,9 @@ const { Big } = require('../utils')
 
 const BlockOrder = rewire(path.resolve(__dirname, 'block-order'))
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
+const { BlockOrderNotFoundError } = require('./errors')
 
 describe('BlockOrder', () => {
-  const { ERRORS: { BlockOrderNotFoundError } } = BlockOrder
-
   describe('::fromStorage', () => {
     it('defines a static method for creating block orders from storage', () => {
       expect(BlockOrder).itself.to.respondTo('fromStorage')
@@ -646,43 +645,6 @@ describe('BlockOrder', () => {
       it('calculates the quantumPrice', () => {
         expect(blockOrder).to.have.property('quantumPrice', '100.0000000000000000')
       })
-    })
-  })
-
-  describe('BlockOrderNotFoundError', () => {
-    let blockOrderError
-    let err
-    let id
-
-    beforeEach(() => {
-      err = new Error('test error')
-      id = 'fakeID'
-
-      blockOrderError = new BlockOrderNotFoundError(id, err)
-    })
-
-    it('inherits from BlockOrderError', () => {
-      expect(blockOrderError).to.be.an('error')
-    })
-
-    it('is a BlockOrderNotFoundError', () => {
-      expect(blockOrderError.name).to.be.eql('BlockOrderNotFoundError')
-    })
-
-    it('sets a stack on the public error referencing the error argument', () => {
-      expect(blockOrderError.stack).to.eql(err.stack)
-    })
-
-    it('defaults to the caller stack if no error argument exists', () => {
-      expect(new BlockOrderNotFoundError(id).stack).to.not.eql(err.stack)
-    })
-
-    it('provides an error message using the ID', () => {
-      expect(blockOrderError.message).to.be.eql('Block Order with ID fakeID was not found.')
-    })
-
-    it('sets a notFound parameter for easy checking', () => {
-      return expect(blockOrderError.notFound).to.be.true
     })
   })
 })

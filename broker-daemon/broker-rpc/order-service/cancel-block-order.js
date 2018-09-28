@@ -1,5 +1,6 @@
 const { PublicError } = require('grpc-methods')
-const { BlockOrder } = require('../../models')
+
+const { BlockOrderNotFoundError } = require('../../models/errors')
 
 /**
  * Cancels a block order in progress
@@ -20,7 +21,7 @@ async function cancelBlockOrder ({ params, logger, blockOrderWorker }) {
 
     return {}
   } catch (err) {
-    if (err instanceof BlockOrder.ERRORS.BlockOrderNotFoundError) {
+    if (err instanceof BlockOrderNotFoundError) {
       throw new PublicError(err.message, err)
     }
 

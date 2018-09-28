@@ -342,7 +342,7 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info('Creating order for BlockOrder', { blockOrderId: blockOrder.id })
 
-    const order = await OrderStateMachine.create(
+    const osm = await OrderStateMachine.create(
       {
         relayer,
         engines,
@@ -353,26 +353,27 @@ class BlockOrderWorker extends EventEmitter {
       { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
     )
 
-    // The events below tie into the StateMachine's lifecycle hooks for a OrderStateMachine
-    order.once('complete', async () => {
+    // We are hooking into the complete lifecycle event of an order state machine to trigger
+    // the completion of a blockorder
+    osm.once('complete', async () => {
       this.completeBlockOrder(blockOrder.id)
-        .then(() => order.removeAllListeners())
         .catch(e => {
-          this.logger.error(`BlockOrder failed to be completed from order, status is left active: ${blockOrder.id}`, { error: e.stack })
-          order.removeAllListeners()
+          this.logger.error(`BlockOrder failed to be completed from order`, { id: blockOrder.id, error: e.stack })
         })
+        .then(() => osm.removeAllListeners())
     })
 
-    order.once('reject', async () => {
-      this.failBlockOrder(blockOrder.id, order.error)
-        .then(() => order.removeAllListeners())
+    // We are hooking into the reject lifecycle event of an order state machine to trigger
+    // the failure of a blockorder
+    osm.once('reject', async () => {
+      this.failBlockOrder(blockOrder.id, osm.order.error)
         .catch(e => {
-          this.logger.error(`BlockOrder failed on setting a failed status from order, status is left active: ${blockOrder.id}`, { error: e.stack })
-          order.removeAllListeners()
+          this.logger.error(`BlockOrder failed on setting a failed status from order`, { id: blockOrder.id, error: e.stack })
         })
+        .then(() => osm.removeAllListeners())
     })
 
-    this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
+    this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: osm.order.orderId })
   }
 
   /**
@@ -427,23 +428,24 @@ class BlockOrderWorker extends EventEmitter {
         { fillAmount }
       )
 
-      // The events below tie into the StateMachine's lifecycle hooks for a OrderStateMachine
+      // We are hooking into the execute lifecycle event of a fill state machine to trigger
+      // the completion of a blockorder
       fsm.once('execute', () => {
         this.completeBlockOrder(blockOrder.id)
-          .then(() => fsm.removeAllListeners())
           .catch(e => {
-            this.logger.error(`BlockOrder failed to be completed from fill, status is left active: ${blockOrder.id}`, { error: e.stack })
-            fsm.removeAllListeners()
+            this.logger.error(`BlockOrder failed to be completed from fill`, { id: blockOrder.id, error: e.stack })
           })
+          .then(() => fsm.removeAllListeners())
       })
 
+      // We are hooking into the reject lifecycle event of a fill state machine to trigger
+      // the failure of a blockorder
       fsm.once('reject', () => {
         this.failBlockOrder(blockOrder.id, fsm.fill.error)
-          .then(() => fsm.removeAllListeners())
           .catch(e => {
-            this.logger.error(`BlockOrder failed on setting a failed status from fill, status is left active: ${blockOrder.id}`, { error: e.stack })
-            fsm.removeAllListeners()
+            this.logger.error(`BlockOrder failed on setting a failed status from fill`, { id: blockOrder.id, error: e.stack })
           })
+          .then(() => fsm.removeAllListeners())
       })
 
       return fsm

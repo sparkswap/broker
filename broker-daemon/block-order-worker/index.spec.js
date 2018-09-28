@@ -1047,7 +1047,10 @@ describe('BlockOrderWorker', () => {
       }
       order = {
         id: 'anotherId',
-        once: onceStub
+        once: onceStub,
+        order: {
+          orderId: 'orderid'
+        }
       }
       OrderStateMachine.create.resolves(order)
     })
