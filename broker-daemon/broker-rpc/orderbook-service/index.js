@@ -18,13 +18,13 @@ class OrderBookService {
     this.proto = loadProto(this.protoPath)
     this.logger = logger
 
-    this.definition = this.proto.OrderBookService.service
+    this.definition = this.proto.broker.rpc.OrderBookService.service
     this.serviceName = 'OrderBookService'
 
     const {
       WatchMarketResponse,
       GetOrderbookResponse
-    } = this.proto
+    } = this.proto.broker.rpc
 
     this.implementation = {
       watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks, auth }, { WatchMarketResponse }).register(),

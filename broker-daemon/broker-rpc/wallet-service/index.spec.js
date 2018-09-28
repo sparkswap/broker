@@ -27,17 +27,21 @@ describe('WalletService', () => {
     responseStub = sinon.stub()
     protoPath = 'example/path.proto'
     loadProtoStub = sinon.stub().returns({
-      WalletService: { service: sinon.stub() },
-      NewDepositAddressResponse: responseStub,
-      GetBalancesResponse: responseStub,
-      GetPaymentChannelNetworkAddressResponse: responseStub,
-      google: {
-        protobuf: {
-          Empty: responseStub
+      broker: {
+        rpc: {
+          WalletService: { service: sinon.stub() },
+          NewDepositAddressResponse: responseStub,
+          GetBalancesResponse: responseStub,
+          GetPaymentChannelNetworkAddressResponse: responseStub,
+          google: {
+            protobuf: {
+              Empty: responseStub
+            }
+          },
+          GetTradingCapacitiesResponse: responseStub,
+          WithdrawFundsResponse: responseStub
         }
-      },
-      GetTradingCapacitiesResponse: responseStub,
-      WithdrawFundsResponse: responseStub
+      }
     })
     auth = sinon.stub()
     logger = sinon.stub()
