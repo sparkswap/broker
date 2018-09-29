@@ -1,3 +1,23 @@
+const { Big } = require('../utils')
+const CONFIG = require('../config')
+
+/**
+ * Delimiter for MarketEvent keys
+ * @type {String}
+ * @constant
+ */
+const DELIMITER = ':'
+
+/**
+ * Lower bound for leveldb ranged queries
+ * @type {String}
+ * @constant
+ */
+const LOWER_BOUND = '\x00'
+
+/**
+ * Class representation from watchMarket events coming from the relayer.
+ */
 class MarketEvent {
   constructor ({ eventId, orderId, timestamp, eventType, sequence, ...payload }) {
     if (!Object.keys(this.constructor.TYPES).includes(eventType)) {
@@ -20,6 +40,48 @@ class MarketEvent {
   get value () {
     const { orderId, eventType, payload } = this
     return JSON.stringify({ orderId, eventType, ...payload })
+  }
+
+  /**
+   * Get the amount of the order - i.e. the number of common units of base currency
+   * @return {String} Decimal string of the amount
+   */
+  amount (baseSymbol) {
+    const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === baseSymbol)
+
+    return Big(this.payload.fillAmount).div(baseCurrencyConfig.quantumsPerCommon).toFixed(16)
+  }
+
+  /**
+   * Price of the order in common units for each currency
+   * @return {String} Decimal string of the price in common units
+   */
+  price (baseSymbol, counterSymbol) {
+    const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === baseSymbol)
+    const counterCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === counterSymbol)
+
+    const baseCommonAmount = Big(this.payload.baseAmount).div(baseCurrencyConfig.quantumsPerCommon)
+    const counterCommonAmount = Big(this.payload.counterAmount).div(counterCurrencyConfig.quantumsPerCommon)
+
+    return counterCommonAmount.div(baseCommonAmount).toFixed(16)
+  }
+
+  tradeInfo (marketName) {
+    const timestampInMilliseconds = parseInt(Big(this.timestamp).div(1000000).round(0))
+    const [baseSymbol, counterSymbol] = marketName.split('/')
+    const info = {
+      id: this.eventId,
+      timestamp: timestampInMilliseconds.toString(),
+      datetime: new Date(timestampInMilliseconds).toISOString(),
+      order: this.orderId,
+      symbol: marketName,
+      type: this.price ? 'limit' : 'market',
+      side: this.payload.side.toLowerCase() === 'bid' ? 'buy' : 'sell',
+      price: this.price(baseSymbol, counterSymbol),
+      amount: this.amount(baseSymbol)
+    }
+    info.info = JSON.stringify(info)
+    return info
   }
 
   serialize () {
@@ -48,6 +110,20 @@ class MarketEvent {
   static fromStorage (key, value) {
     const [timestamp, sequence, eventId] = key.split(this.sep)
     return new this({ timestamp, sequence, eventId, ...JSON.parse(value) })
+  }
+
+  /**
+   * Returns a range query for leveldb from a given timestamp
+   *
+   * @param {String} startTime - time in nanoseconds
+   * @return {Object} range
+   * @return {String} range.gte
+   *
+   */
+  static rangeFromTimestamp (startTime) {
+    return {
+      gte: `${startTime}${DELIMITER}${LOWER_BOUND}`
+    }
   }
 }
 

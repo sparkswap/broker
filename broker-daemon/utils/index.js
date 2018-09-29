@@ -8,6 +8,7 @@ const SublevelIndex = require('./sublevel-index')
 const convertBalance = require('./convert-balance')
 const nowInSeconds = require('./now-in-seconds')
 const createBasicAuth = require('./create-basic-auth')
+const nanoToDatetime = require('./nano-to-datetime')
 
 module.exports = {
   getRecords,
@@ -19,5 +20,6 @@ module.exports = {
   SublevelIndex,
   convertBalance,
   nowInSeconds,
-  createBasicAuth
+  createBasicAuth,
+  nanoToDatetime
 }

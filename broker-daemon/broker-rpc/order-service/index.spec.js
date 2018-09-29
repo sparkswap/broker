@@ -26,14 +26,18 @@ describe('OrderService', () => {
   beforeEach(() => {
     protoPath = 'fakePath'
     proto = {
-      OrderService: {
-        service: 'fakeService'
-      },
-      CreateBlockOrderResponse: sinon.stub(),
-      GetBlockOrderResponse: sinon.stub(),
-      GetBlockOrdersResponse: sinon.stub(),
-      TimeInForce: {
-        GTC: 0
+      broker: {
+        rpc: {
+          OrderService: {
+            service: 'fakeService'
+          },
+          CreateBlockOrderResponse: sinon.stub(),
+          GetBlockOrderResponse: sinon.stub(),
+          GetBlockOrdersResponse: sinon.stub(),
+          TimeInForce: {
+            GTC: 0
+          }
+        }
       }
     }
     logger = {
@@ -91,7 +95,7 @@ describe('OrderService', () => {
 
   it('assigns the definition', () => {
     expect(server).to.have.property('definition')
-    expect(server.definition).to.be.equal(proto.OrderService.service)
+    expect(server.definition).to.be.equal(proto.broker.rpc.OrderService.service)
   })
 
   it('creates a name', () => {
@@ -148,12 +152,12 @@ describe('OrderService', () => {
 
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('CreateBlockOrderResponse', proto.CreateBlockOrderResponse)
+      expect(callArgs[3]).to.have.property('CreateBlockOrderResponse', proto.broker.rpc.CreateBlockOrderResponse)
     })
 
     it('passes in the enum', () => {
       expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('TimeInForce', proto.TimeInForce)
+      expect(callArgs[3]).to.have.property('TimeInForce', proto.broker.rpc.TimeInForce)
     })
   })
 
@@ -200,7 +204,7 @@ describe('OrderService', () => {
 
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('GetBlockOrderResponse', proto.GetBlockOrderResponse)
+      expect(callArgs[3]).to.have.property('GetBlockOrderResponse', proto.broker.rpc.GetBlockOrderResponse)
     })
   })
 
@@ -289,7 +293,7 @@ describe('OrderService', () => {
 
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('GetBlockOrdersResponse', proto.GetBlockOrdersResponse)
+      expect(callArgs[3]).to.have.property('GetBlockOrdersResponse', proto.broker.rpc.GetBlockOrdersResponse)
     })
   })
 })

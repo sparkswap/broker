@@ -2,6 +2,8 @@ const { GrpcUnaryMethod } = require('grpc-methods')
 const { loadProto } = require('../../utils')
 
 const getSupportedMarkets = require('./get-supported-markets')
+const getMarketStats = require('./get-market-stats')
+const getTrades = require('./get-trades')
 
 class InfoService {
   constructor (protoPath, { logger, relayer, orderbooks }) {
@@ -9,15 +11,19 @@ class InfoService {
     this.proto = loadProto(this.protoPath)
     this.logger = logger
 
-    this.definition = this.proto.InfoService.service
+    this.definition = this.proto.broker.rpc.InfoService.service
     this.serviceName = 'InfoService'
 
     const {
-      GetSupportedMarketsResponse
-    } = this.proto
+      GetSupportedMarketsResponse,
+      GetMarketStatsResponse,
+      GetTradesResponse
+    } = this.proto.broker.rpc
 
     this.implementation = {
-      getSupportedMarkets: new GrpcUnaryMethod(getSupportedMarkets, this.messageId('getSupportedMarkets'), { logger, relayer, orderbooks }, { GetSupportedMarketsResponse }).register()
+      getSupportedMarkets: new GrpcUnaryMethod(getSupportedMarkets, this.messageId('getSupportedMarkets'), { logger, relayer, orderbooks }, { GetSupportedMarketsResponse }).register(),
+      getMarketStats: new GrpcUnaryMethod(getMarketStats, this.messageId('getMarketStats'), { logger, orderbooks }, { GetMarketStatsResponse }).register(),
+      getTrades: new GrpcUnaryMethod(getTrades, this.messageId('getTrades'), { logger, relayer, orderbooks }, { GetTradesResponse }).register()
     }
   }
 
