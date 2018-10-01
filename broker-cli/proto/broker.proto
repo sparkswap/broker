@@ -145,7 +145,6 @@ service AdminService {
   rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse) {
     option (google.api.http) = {
       get: "/v1/admin/healthcheck"
-      body: "*"
     };
   }
 }
@@ -503,7 +502,6 @@ service OrderService {
   rpc GetBlockOrder (GetBlockOrderRequest) returns (GetBlockOrderResponse) {
     option (google.api.http) = {
       get: "/v1/orders/{block_order_id}"
-      body: "*"
     };
   }
   /**
@@ -582,7 +580,6 @@ service OrderService {
   rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse) {
     option (google.api.http) = {
       get: "/v1/orders"
-      body: "*"
     };
   }
 }
@@ -762,7 +759,6 @@ service OrderBookService {
   rpc GetOrderbook (GetOrderbookRequest) returns (GetOrderbookResponse) {
     option (google.api.http) = {
       get: "/v1/orderbook"
-      body: "*"
     };
   }
 }
@@ -1002,7 +998,6 @@ service WalletService {
   rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse) {
     option (google.api.http) = {
       get: "/v1/wallet/balances"
-      body: "*"
     };
   }
   /**
@@ -1354,7 +1349,6 @@ service InfoService {
   rpc getSupportedMarkets (google.protobuf.Empty) returns (GetSupportedMarketsResponse) {
     option (google.api.http) = {
       get: "/v1/markets"
-      body: "*"
     };
   }
    /**
@@ -1410,7 +1404,6 @@ service InfoService {
   rpc getMarketStats (GetMarketStatsRequest) returns (GetMarketStatsResponse) {
     option (google.api.http) = {
       get: "/v1/market_stats"
-      body: "*"
     };
   }
   /**
@@ -1486,7 +1479,6 @@ service InfoService {
   rpc GetTrades (GetTradesRequest) returns (GetTradesResponse) {
     option (google.api.http) = {
       get: "/v1/trades"
-      body: "*"
     };
   }
 }

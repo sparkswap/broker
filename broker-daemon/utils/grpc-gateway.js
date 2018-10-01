@@ -1,9 +1,14 @@
+/**
+ * @author konsumer
+ * @see {@link https://github.com/konsumer/grpc-dynamic-gateway}
+ *
+ */
+
 const requiredGrpc = require('grpc')
 const express = require('express')
-const colors = require('chalk')
+require('colors')
 const fs = require('fs')
 const schema = require('protocol-buffers-schema')
-const colorize = require('json-colorizer')
 
 const supportedMethods = ['get', 'put', 'post', 'delete', 'patch'] // supported HTTP methods
 const paramRegex = /{(\w+)}/g // regex to find gRPC params in url
@@ -46,13 +51,13 @@ const middleware = (protoFiles, grpcLocation, credentials = requiredGrpc.credent
           if (m.options['google.api.http']) {
             supportedMethods.forEach(httpMethod => {
               if (m.options['google.api.http'][httpMethod]) {
-                if (debug) console.log(colors.green(httpMethod.toUpperCase()), colors.blue(m.options['google.api.http'][httpMethod]))
+                if (debug) console.log(httpMethod.toUpperCase().green, m.options['google.api.http'][httpMethod].blue)
                 router[httpMethod](convertUrl(m.options['google.api.http'][httpMethod]), (req, res) => {
                   const params = convertParams(req, m.options['google.api.http'][httpMethod])
                   const meta = convertHeaders(req.headers, grpc)
                   if (debug) {
                     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
-                    console.log(`GATEWAY: ${colors.yellow((new Date()).toISOString())} (${colors.cyan(ip)}): /${colors.blue(pkg.replace(/\./g, colors.white('.')))}.${colors.blue(svc)}/${colors.cyan(m.name)}(${colorize(params)})`)
+                    console.log(`GATEWAY: ${(new Date()).toISOString().yellow} (${ip.blue}): /${pkg.replace(/\./g, '.'.white).blue}.${svc.blue}/${m.name.blue}(${params})`)
                   }
 
                   try {
@@ -61,14 +66,14 @@ const middleware = (protoFiles, grpcLocation, credentials = requiredGrpc.credent
                       // TODO: PRIORITY:MEDIUM - improve error-handling
                       // TODO: PRIORITY:HIGH - double-check JSON mapping is identical to grpc-gateway
                       if (err) {
-                        console.error(colors.red(`${svc}.${m.name}`, err.message))
+                        console.error(`${svc}.${m.name}`.red, err.message.red)
                         console.trace()
                         return res.status(500).json({ code: err.code, message: err.message })
                       }
                       res.json(convertBody(ans, m.options['google.api.http'].body, m.options['google.api.http'][httpMethod]))
                     })
                   } catch (err) {
-                    console.error(colors.red(`${svc}.${m.name}: `, err.message))
+                    console.error(`${svc}.${m.name}: `.red, err.message.red)
                     console.trace()
                   }
                 })
