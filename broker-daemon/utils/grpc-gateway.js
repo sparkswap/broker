@@ -61,7 +61,6 @@ const middleware = (protoFiles, grpcLocation, credentials = requiredGrpc.credent
                   }
 
                   try {
-                    console.log('parammsssssssss', params)
                     getPkg(clients, pkg, false)[svc][lowerFirstChar(m.name)](params, meta, (err, ans) => {
                       // TODO: PRIORITY:MEDIUM - improve error-handling
                       // TODO: PRIORITY:HIGH - double-check JSON mapping is identical to grpc-gateway

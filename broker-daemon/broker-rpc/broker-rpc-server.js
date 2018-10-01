@@ -1,8 +1,6 @@
 const grpc = require('grpc')
 const path = require('path')
 const { readFileSync } = require('fs')
-const express = require('express')
-const bodyParser = require('body-parser')
 
 const AdminService = require('./admin-service')
 const OrderService = require('./order-service')
@@ -10,7 +8,7 @@ const OrderBookService = require('./orderbook-service')
 const WalletService = require('./wallet-service')
 const InfoService = require('./info-service')
 
-const { createBasicAuth, grpcGateway } = require('../utils')
+const { createBasicAuth, createHttpServer } = require('../utils')
 
 /**
  * @constant
@@ -70,7 +68,7 @@ class BrokerRPCServer {
     this.protoPath = path.resolve(BROKER_PROTO_PATH)
 
     this.server = new grpc.Server()
-    this.httpServer = this.configureHttpServer()
+    this.httpServer = createHttpServer(this.protoPath, DEFAULT_RPC_ADDRESS)
 
     this.adminService = new AdminService(this.protoPath, { logger, relayer, engines, auth: this.auth })
     this.server.addService(this.adminService.definition, this.adminService.implementation)
@@ -132,14 +130,6 @@ class BrokerRPCServer {
       }],
       false // checkClientCertificate: false (we don't use client certs)
     )
-  }
-
-  configureHttpServer () {
-    const app = express()
-    app.use(bodyParser.json())
-    app.use(bodyParser.urlencoded({ extended: false }))
-    app.use('/', grpcGateway([`/${this.protoPath}`], DEFAULT_RPC_ADDRESS))
-    return app
   }
 }
 

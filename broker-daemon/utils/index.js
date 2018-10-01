@@ -10,6 +10,7 @@ const nowInSeconds = require('./now-in-seconds')
 const createBasicAuth = require('./create-basic-auth')
 const nanoToDatetime = require('./nano-to-datetime')
 const grpcGateway = require('./grpc-gateway')
+const createHttpServer = require('./create-http-server')
 
 module.exports = {
   getRecords,
@@ -23,5 +24,6 @@ module.exports = {
   nowInSeconds,
   createBasicAuth,
   nanoToDatetime,
-  grpcGateway
+  grpcGateway,
+  createHttpServer
 }
