@@ -62,6 +62,7 @@ services:
     image: sparkswap_lnd_btc:latest
     depends_on:
       - btcd
+      - bitcoind
     ports:
       - '10113:9735'
     environment:
@@ -69,9 +70,13 @@ services:
       - RPC_PASS=${BTC_RPC_PASS}
       - RPC_HOST=${BTC_RPC_HOST}
       - NETWORK=${NETWORK}
-      - DEBUG=info
+      - DEBUG=trace
       - EXTERNAL_ADDRESS="${EXTERNAL_BTC_ADDRESS}:10113"
       - EXTPREIMAGE_HOST=sparkswapd:40369
+      # These are only needed if you use bitcoind for the node, otherwise
+      # you can ignore these values
+      - ZMQPUBRAWBLOCK=tcp://bitcoind:28333
+      - ZMQPUBRAWTX=tcp://bitcoind:28334
     volumes:
       - 'shared:/shared'
       - 'lnd_btc:/data'
@@ -134,7 +139,7 @@ services:
       - RPC_USER=${LTC_RPC_USER}
       - RPC_PASS=${LTC_RPC_PASS}
       - RPC_HOST=${LTC_RPC_HOST}
-      - NETWORK=${NETWORK}
+      - NETWORK=simnet
       - DEBUG=info
       - EXTERNAL_ADDRESS="${EXTERNAL_LTC_ADDRESS}:10114"
       - EXTPREIMAGE_HOST=sparkswapd:40369
@@ -155,7 +160,7 @@ services:
     environment:
       - RPC_USER=${LTC_RPC_USER}
       - RPC_PASS=${LTC_RPC_PASS}
-      - NETWORK=${NETWORK}
+      - NETWORK=simnet
       - DEBUG=info
       - DATA_DIR=/data
       - LOG_DIR=/data
