@@ -286,7 +286,7 @@ class BlockOrderWorker extends EventEmitter {
    * @todo What should we do if this method fails, but the order itself is completed?
    * @param {String} blockOrderId
    */
-  async completeBlockOrder (blockOrderId) {
+  async checkBlockOrderCompletion (blockOrderId) {
     this.logger.info('Attempting to put block order in a completed state', { id: blockOrderId })
 
     const blockOrder = await this.getBlockOrder(blockOrderId)
@@ -304,12 +304,12 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.debug('Current total filled amount: ', { totalFilled, blockOrderAmount: blockOrder.baseAmount })
 
     const stillBeingFilled = totalFilled.lt(blockOrder.baseAmount)
-    const activeOrders = blockOrder.openOrders.some(osm => osm.order.active)
-    const activeFills = blockOrder.fills.some(fsm => fsm.fill.active)
 
-    if (!activeOrders && !activeFills && !stillBeingFilled) {
-      // An order is only completed if all orders underneath the blockorder are out of
-      // an `ACTIVE` state and it is entirely filled
+    // An order is only completed if all orders underneath the blockorder are out of
+    // an `ACTIVE` state and it is entirely filled, however we only check if the order is
+    // filled here.
+    // TODO: check to make sure that blockorder is not in a weird state before completing
+    if (!stillBeingFilled) {
       blockOrder.complete()
       await promisify(this.store.put)(blockOrder.key, blockOrder.value)
       this.logger.info('Moved block order to completed state', { blockOrderId })
@@ -356,7 +356,7 @@ class BlockOrderWorker extends EventEmitter {
     // We are hooking into the complete lifecycle event of an order state machine to trigger
     // the completion of a blockorder
     osm.once('complete', async () => {
-      this.completeBlockOrder(blockOrder.id)
+      this.checkBlockOrderCompletion(blockOrder.id)
         .catch(e => {
           this.logger.error(`BlockOrder failed to be completed from order`, { id: blockOrder.id, error: e.stack })
         })
@@ -370,7 +370,9 @@ class BlockOrderWorker extends EventEmitter {
         .catch(e => {
           this.logger.error(`BlockOrder failed on setting a failed status from order`, { id: blockOrder.id, error: e.stack })
         })
-        .then(() => osm.removeAllListeners())
+        .then(() => {
+          return osm.removeAllListeners()
+        })
     })
 
     this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: osm.order.orderId })
@@ -431,7 +433,7 @@ class BlockOrderWorker extends EventEmitter {
       // We are hooking into the execute lifecycle event of a fill state machine to trigger
       // the completion of a blockorder
       fsm.once('execute', () => {
-        this.completeBlockOrder(blockOrder.id)
+        this.checkBlockOrderCompletion(blockOrder.id)
           .catch(e => {
             this.logger.error(`BlockOrder failed to be completed from fill`, { id: blockOrder.id, error: e.stack })
           })
