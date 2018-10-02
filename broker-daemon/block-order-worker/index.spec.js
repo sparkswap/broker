@@ -923,9 +923,11 @@ describe('BlockOrderWorker', () => {
     let orders
     let targetDepth
     let onceStub
+    let removeAllListenersStub
 
     beforeEach(() => {
       onceStub = sinon.stub()
+      removeAllListenersStub = sinon.stub()
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       blockOrder = {
         id: 'fakeId',
@@ -940,7 +942,9 @@ describe('BlockOrderWorker', () => {
       }
       fill = {
         id: 'anotherId',
-        once: onceStub
+        once: onceStub,
+        removeAllListeners: removeAllListenersStub,
+        fill: {}
       }
       FillStateMachine.create.resolves(fill)
       orders = [
@@ -1015,14 +1019,62 @@ describe('BlockOrderWorker', () => {
       expect(FillStateMachine.create).to.have.been.calledWith(sinon.match({ engines }))
     })
 
-    it('registers an event on a fill for fill execution', async () => {
-      await worker._fillOrders(blockOrder, orders, targetDepth)
-      expect(onceStub).to.have.been.calledWith('execute', sinon.match.func)
+    describe('execute event', () => {
+      let blockOrderCompleteStub
+
+      beforeEach(() => {
+        blockOrderCompleteStub = sinon.stub().resolves(true)
+        worker.checkBlockOrderCompletion = blockOrderCompleteStub
+      })
+
+      beforeEach(async () => {
+        await worker._fillOrders(blockOrder, orders, targetDepth)
+      })
+
+      it('registers an event on an order for order completion', async () => {
+        expect(onceStub).to.have.been.calledWith('execute', sinon.match.func)
+      })
+
+      it('attempts to complete a block order', async () => {
+        await onceStub.args[0][1]()
+        expect(blockOrderCompleteStub).to.have.been.calledOnce()
+      })
+
+      it('catches an exception if checkBlockOrderCompletion fails', async () => {
+        blockOrderCompleteStub.rejects()
+        await onceStub.args[0][1]()
+        expect(blockOrderCompleteStub).to.have.been.calledOnce()
+        expect(loggerErrorStub).to.have.been.calledWith(sinon.match('BlockOrder failed'), sinon.match.any)
+      })
     })
 
-    it('registers an event on a fill for fill rejection', async () => {
-      await worker._fillOrders(blockOrder, orders, targetDepth)
-      expect(onceStub).to.have.been.calledWith('reject', sinon.match.func)
+    describe('reject event', () => {
+      let failBlockOrderStub
+
+      beforeEach(() => {
+        failBlockOrderStub = sinon.stub().resolves(true)
+        worker.failBlockOrder = failBlockOrderStub
+      })
+
+      beforeEach(async () => {
+        await worker._fillOrders(blockOrder, orders, targetDepth)
+      })
+
+      it('registers an event on an order for order rejection', async () => {
+        expect(onceStub).to.have.been.calledWith('reject', sinon.match.func)
+      })
+
+      it('fails a block order if the call is rejected', async () => {
+        await onceStub.args[1][1]()
+        expect(failBlockOrderStub).to.have.been.calledOnce()
+      })
+
+      it('catches an exception if failBlockOrder fails', async () => {
+        failBlockOrderStub.rejects()
+        await onceStub.args[1][1]()
+        expect(failBlockOrderStub).to.have.been.calledOnce()
+        expect(loggerErrorStub).to.have.been.calledWith(sinon.match('BlockOrder failed'), sinon.match.any)
+      })
     })
   })
 
