@@ -20,7 +20,7 @@
     "ci-test": "npm run format && npm test",
     "start-sparkswapd": "pm2-docker pm2.json --watch",
     "validate-config": "standard ~/.sparkswap.js",
-    "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp ./broker-daemon/proto/broker.proto ./broker-cli/proto/broker.proto"
+    "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp -r ./broker-daemon/proto/ ./broker-cli/proto/"
   },
   "bin": {
     "sparkswapd": "./broker-daemon/bin/sparkswapd",
