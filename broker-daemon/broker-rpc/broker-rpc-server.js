@@ -26,7 +26,14 @@ const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
  */
 const IS_PRODUCTION = (process.env.NODE_ENV === 'production')
 
-const HTTP_PORT = 27591
+/**
+ * Port for express httpserver to listen on
+ *
+ * @constant
+ * @type {String}
+ * @default
+ */
+const HTTP_PORT = '27592'
 
 /**
  * Default host and port for the BrokerRPCServer to listen on
