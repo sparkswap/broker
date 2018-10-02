@@ -26,7 +26,7 @@ class WalletService {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
     this.logger = logger
-    this.definition = this.proto.WalletService.service
+    this.definition = this.proto.broker.rpc.WalletService.service
     this.serviceName = 'WalletService'
     this.engines = engines
 
@@ -41,7 +41,7 @@ class WalletService {
           Empty: EmptyResponse
         }
       }
-    } = this.proto
+    } = this.proto.broker.rpc
 
     this.implementation = {
       newDepositAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engines, auth }, { NewDepositAddressResponse }).register(),

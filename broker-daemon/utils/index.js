@@ -8,6 +8,9 @@ const SublevelIndex = require('./sublevel-index')
 const convertBalance = require('./convert-balance')
 const nowInSeconds = require('./now-in-seconds')
 const createBasicAuth = require('./create-basic-auth')
+const nanoToDatetime = require('./nano-to-datetime')
+const grpcGateway = require('./grpc-gateway')
+const createHttpServer = require('./create-http-server')
 
 module.exports = {
   getRecords,
@@ -19,5 +22,8 @@ module.exports = {
   SublevelIndex,
   convertBalance,
   nowInSeconds,
-  createBasicAuth
+  createBasicAuth,
+  nanoToDatetime,
+  grpcGateway,
+  createHttpServer
 }

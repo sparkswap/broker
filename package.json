@@ -20,7 +20,7 @@
     "ci-test": "npm run format && npm test",
     "start-sparkswapd": "pm2-docker pm2.json --watch",
     "validate-config": "standard ~/.sparkswap.js",
-    "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp ./broker-daemon/proto/broker.proto ./broker-cli/proto/broker.proto"
+    "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp -r ./broker-daemon/proto/ ./broker-cli/proto/"
   },
   "bin": {
     "sparkswapd": "./broker-daemon/bin/sparkswapd",
@@ -45,10 +45,12 @@
   "dependencies": {
     "big-integer": "1.6.28",
     "big.js": "5.1.2",
+    "body-parser": "1.18.3",
     "caporal": "0.10.0",
     "cli-table": "0.3.1",
     "colors": "1.2.4",
     "compare-versions": "3.1.0",
+    "express": "4.16.3",
     "generate-safe-id": "1.0.2",
     "grpc": "1.11.3",
     "grpc-caller": "0.5.0",
@@ -61,6 +63,7 @@
     "nano-seconds": "1.2.2",
     "pm2": "2.10.3",
     "prettyjson": "1.2.1",
+    "protocol-buffers-schema": "3.3.2",
     "through2": "2.0.3",
     "validator": "10.2.0",
     "window-size": "1.1.0",

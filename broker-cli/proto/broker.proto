@@ -45,6 +45,8 @@
  * ```
  */
 syntax = "proto3";
+package broker.rpc;
+import "google/api/annotations.proto";
 
 // import "google/protobuf/empty.proto";
 // normally we would us the above import statement, but the node.js grpc doesn't import
@@ -140,7 +142,11 @@ service AdminService {
    * }
    * ```
    */
-  rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
+  rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse) {
+    option (google.api.http) = {
+      get: "/v1/admin/healthcheck"
+    };
+  }
 }
 
 /**
@@ -443,7 +449,12 @@ service OrderService {
    * ```
    *
    */
-  rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse);
+  rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse) {
+    option (google.api.http) = {
+      post: "/v1/orders/{block_order_id}"
+      body: "*"
+    };
+  }
   /**
    * GetBlockOrder returns information on a previously placed block order. It should be used to check on the status of placed block orders.
    *
@@ -488,7 +499,11 @@ service OrderService {
    *   fills: [] }
    * ```
    */
-  rpc GetBlockOrder (GetBlockOrderRequest) returns (GetBlockOrderResponse);
+  rpc GetBlockOrder (GetBlockOrderRequest) returns (GetBlockOrderResponse) {
+    option (google.api.http) = {
+      get: "/v1/orders/{block_order_id}"
+    };
+  }
   /**
    * CancelBlockOrder cancels a previously placed block order.
    * If the block order is already completed, or consists only of orders that are already being filled (either by this Broker or a counterparty), this will have no effect, as the Broker is bound to complete those orders or else lose their deposit.
@@ -507,7 +522,12 @@ service OrderService {
    *
    * > The above command will cancel the block order, but has no output.
    */
-  rpc CancelBlockOrder (CancelBlockOrderRequest) returns (google.protobuf.Empty);
+  rpc CancelBlockOrder (CancelBlockOrderRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      delete: "/v1/orders/{block_order_id}"
+      body: "*"
+    };
+  }
   /**
    * GetBlockOrders returns information on all of the block orders placed in a single market, like `BTC/LTC`.
    * It does not include complete information, such as the underlying orders and fills on the SparkSwap Relayer, or the amount of the order that has been filled. For that, use [GetBlockOrder](#getblockorder).
@@ -557,7 +577,11 @@ service OrderService {
    * └─────────────────────────────────────────────┴───────┴──────────────────┴──────────────────┴──────┴──────────┘
    * ```
    */
-  rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse);
+  rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse) {
+    option (google.api.http) = {
+      get: "/v1/orders"
+    };
+  }
 }
 
 /**
@@ -732,8 +756,11 @@ service OrderBookService {
    *   datetime: '2018-09-20T16:27:28.0733219Z' }
    * ```
    */
-  rpc GetOrderbook (GetOrderbookRequest) returns (GetOrderbookResponse);
-
+  rpc GetOrderbook (GetOrderbookRequest) returns (GetOrderbookResponse) {
+    option (google.api.http) = {
+      get: "/v1/orderbook"
+    };
+  }
 }
 
 /**
@@ -911,7 +938,12 @@ service WalletService {
    * sb1qsakedujs4exdq5dz2cpldcph6hlvf82l8mn8uk
    * ```
    */
-  rpc NewDepositAddress (NewDepositAddressRequest) returns (NewDepositAddressResponse);
+  rpc NewDepositAddress (NewDepositAddressRequest) returns (NewDepositAddressResponse) {
+    option (google.api.http) = {
+      post: "/v1/wallet/address"
+      body: "*"
+    };
+  }
   /**
    * GetBalances retrieves the balance in all currency in wallets managed by Payment Channel Network nodes for this Broker.
    *
@@ -963,7 +995,11 @@ service WalletService {
    * └──────────┴──────────────────────────────────┴──────────────────────────────────┘
    * ```
    */
-  rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse);
+  rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse) {
+    option (google.api.http) = {
+      get: "/v1/wallet/balances"
+    };
+  }
   /**
    * Commit opens a channel with the Relayer with the given amount of currency on the Broker's side, and requests that the Relayer open a channel to the Broker with the inverse currency of equivalent amount on the Relayer's side.
    * This allows the Broker to trade in the market, since it has an outgoing channel and an incoming channel.
@@ -998,7 +1034,12 @@ service WalletService {
    * > sparkswap wallet commit LTC --market BTC/LTC
    * ```
    */
-  rpc Commit (CommitRequest) returns (google.protobuf.Empty);
+  rpc Commit (CommitRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/wallet/commit"
+      body: "*"
+    };
+  }
   /**
    * ReleaseChannels closes all the channels on the given market.
    * If you pass in `BTC/LTC` as the market to releaseChannels, closeChannels will be called on both the BTC and LTC engines. If channels were closed,
@@ -1017,7 +1058,12 @@ service WalletService {
    * > sparkswap wallet release --market BTC/LTC
    * ```
    */
-  rpc ReleaseChannels (ReleaseChannelsRequest) returns (google.protobuf.Empty);
+  rpc ReleaseChannels (ReleaseChannelsRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/wallet/release"
+      body: "*"
+    };
+  }
   /**
    * GetPaymentChannelNetworkAddress retrieves the Payment Channel Network Address for the given currency.
    *
@@ -1130,7 +1176,12 @@ service WalletService {
    * Successfully withdrew 2 BTC from your wallet! { id: '66a581f618ee68dde53142c55e924d56cd2b2c169be5b374bc810ac692fb17fd' }
    * ```
    */
-  rpc WithdrawFunds (WithdrawFundsRequest) returns (WithdrawFundsResponse);
+  rpc WithdrawFunds (WithdrawFundsRequest) returns (WithdrawFundsResponse) {
+    option (google.api.http) = {
+      post: "/v1/wallet/withdraw"
+      body: "*"
+    };
+  }
 }
 
 /**
@@ -1205,6 +1256,48 @@ message GetMarketStatsResponse {
 }
 
 /**
+ * Parameters to retrieve a list of trades within a specified time frame on a given market
+ */
+message GetTradesRequest {
+  string market = 1;
+  string since = 2;
+  int64 limit = 3;
+}
+
+/**
+ * Trade exposes all relevant information about a filled order
+ */
+message Trade {
+  // id of the trade
+  string id = 1;
+  // Unix timestamp in milliseconds the trade was created
+  string timestamp = 2;
+  // ISO8601 datetime in milliseconds the trade was created
+  string datetime = 3;
+  // order id
+  string order = 4;
+  // market name the trade was executed on
+  string symbol = 5;
+  // order type, 'market', 'limit' or undefined/None/null
+  string type = 6;
+  // direction of the trade, 'buy' or 'sell'
+  string side = 7;
+  // float price in quote currency
+  string price = 8;
+  // amount of base currency
+  string amount = 9;
+  // the original decoded JSON as is
+  string info = 10;
+}
+
+/**
+ * Contains information about all trades on sparkswap
+ */
+message GetTradesResponse {
+  repeated Trade trades = 1;
+}
+
+/**
  * The InfoService gets information about the state of the markets, currencies, transactions.
  *
  * ```javascript
@@ -1253,7 +1346,11 @@ service InfoService {
    *       active: true } ] }
    * ```
    */
-  rpc getSupportedMarkets (google.protobuf.Empty) returns (GetSupportedMarketsResponse);
+  rpc getSupportedMarkets (google.protobuf.Empty) returns (GetSupportedMarketsResponse) {
+    option (google.api.http) = {
+      get: "/v1/markets"
+    };
+  }
    /**
    * getMarketStats returns statistics (price ticker information) for a particular market/symbol for a period of the last 24 hours
    *
@@ -1304,5 +1401,84 @@ service InfoService {
    *   "counterVolume": "1207.398" }
    * ```
    */
-  rpc getMarketStats (GetMarketStatsRequest) returns (GetMarketStatsResponse);
+  rpc getMarketStats (GetMarketStatsRequest) returns (GetMarketStatsResponse) {
+    option (google.api.http) = {
+      get: "/v1/market_stats"
+    };
+  }
+  /**
+   * getTrades returns detailed information about trades from a given time range.
+   *
+   * ```javascript
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * infoService.getTrades(
+   *   {
+   *     market: 'BTC/LTC', // trading BTC and LTC
+   *     since: '2018-09-20T18:58:07.866Z', // only retrieve records since this date
+   *     limit: 10, // retrieve first 10 records
+   *   }, { deadline }, (err, { trades }) => {
+   *   if (err) return console.error(err)
+   *   console.log({ trades })
+   * }))
+   * ```
+   *
+   * ```shell
+   * > sparkswap info trades 2018-09-20T18:58:07.866Z 50 --market BTC/LTC
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * { trades:
+   *  [ { id: 'yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm',
+   *    timestamp: '1537526431834',
+   *    datetime: '2018-09-21T10:40:31.034Z',
+   *    order: 'tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg',
+   *    symbol: 'BTC/LTC',
+   *    type: 'limit',
+   *    side: 'buy',
+   *    price: '0.0010000000000000',
+   *    amount: '400.000000000000',
+   *    info: '{"id":"yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm","timestamp":"1537526431834","datetime":"2018-09-21T10:40:31.034Z","order":"tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg","symbol":"BTC/LTC","type":"limit","side":"buy","price":"0.0010000000000000","amount":"400.000000000000"}' },
+   *   { id: 'd4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP',
+   *    timestamp: '1537527538513',
+   *    datetime: '2018-09-21T10:58:58.513Z',
+   *    order: 'W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt',
+   *    symbol: 'BTC/LTC',
+   *    type: 'limit',
+   *    side: 'sell',
+   *    price: '0.1000000000000000',
+   *    amount: '50.000000000000000',
+   *    info: '{"id":"d4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP","timestamp":"1537527538513","datetime":"2018-09-21T10:58:58.513Z","order":"W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt","symbol":"BTC/LTC","type":"limit","side":"sell","price":"0.1000000000000000","amount":"50.000000000000000"}' } ] }
+   * ```
+   *
+   * ```shell
+   * { trades:
+   *  [ { id: 'yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm',
+   *    timestamp: '1537526431834',
+   *    datetime: '2018-09-21T10:40:31.034Z',
+   *    order: 'tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg',
+   *    symbol: 'BTC/LTC',
+   *    type: 'limit',
+   *    side: 'buy',
+   *    price: '0.0010000000000000',
+   *    amount: '400.000000000000',
+   *    info: '{"id":"yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm","timestamp":"1537526431834","datetime":"2018-09-21T10:40:31.034Z","order":"tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg","symbol":"BTC/LTC","type":"limit","side":"buy","price":"0.0010000000000000","amount":"400.000000000000"}' },
+   *   { id: 'd4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP',
+   *    timestamp: '1537527538513',
+   *    datetime: '2018-09-21T10:58:58.513Z',
+   *    order: 'W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt',
+   *    symbol: 'BTC/LTC',
+   *    type: 'limit',
+   *    side: 'sell',
+   *    price: '0.1000000000000000',
+   *    amount: '50.000000000000000',
+   *    info: '{"id":"d4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP","timestamp":"1537527538513","datetime":"2018-09-21T10:58:58.513Z","order":"W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt","symbol":"BTC/LTC","type":"limit","side":"sell","price":"0.1000000000000000","amount":"50.000000000000000"}' } ] }
+   * ```
+   */
+  rpc GetTrades (GetTradesRequest) returns (GetTradesResponse) {
+    option (google.api.http) = {
+      get: "/v1/trades"
+    };
+  }
 }
