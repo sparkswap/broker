@@ -61,7 +61,7 @@ services:
   lnd_btc:
     image: sparkswap_lnd_btc:latest
     depends_on:
-      - btcd
+      - bitcoind
     ports:
       - '10113:9735'
     environment:
@@ -72,6 +72,8 @@ services:
       - DEBUG=info
       - EXTERNAL_ADDRESS="${EXTERNAL_BTC_ADDRESS}:10113"
       - EXTPREIMAGE_HOST=sparkswapd:40369
+      - ZMQPUBRAWBLOCK=tcp://bitcoind:28333
+      - ZMQPUBRAWTX=tcp://bitcoind:28334
     volumes:
       - 'shared:/shared'
       - 'lnd_btc:/data'
@@ -81,8 +83,8 @@ services:
       options:
         max-size: 50m
 
-  btcd:
-    image: sparkswap_btcd:latest
+  bitcoind:
+    image: sparkswap_bitcoind:latest
     volumes:
       - shared:/shared
       - bitcoin:/data
@@ -90,11 +92,8 @@ services:
       - RPC_USER=${BTC_RPC_USER}
       - RPC_PASS=${BTC_RPC_PASS}
       - NETWORK=${NETWORK}
-      - DEBUG=info
+      - DEBUG=debug
       - DATA_DIR=/data
-      - LOG_DIR=/data
-      - RPC_KEY=/secure/rpc.key
-      - RPC_CERT=/shared/rpc-btc.cert
       - RPC_LISTEN=0.0.0.0
       - "MINING_ADDRESS=$MINING_ADDRESS"
     networks:
@@ -102,22 +101,23 @@ services:
     logging:
       options:
         max-size: 50m
-    entrypoint: ["./start-btcd.sh"]
 
   lnd_ltc:
     image: sparkswap_lnd_ltc:latest
     ports:
       - '10114:9735'
     depends_on:
-      - ltcd
+      - litecoind
     environment:
       - RPC_USER=${LTC_RPC_USER}
       - RPC_PASS=${LTC_RPC_PASS}
       - RPC_HOST=${LTC_RPC_HOST}
       - NETWORK=${NETWORK}
-      - DEBUG=info
+      - DEBUG=trace
       - EXTERNAL_ADDRESS="${EXTERNAL_LTC_ADDRESS}:10114"
       - EXTPREIMAGE_HOST=sparkswapd:40369
+      - ZMQPUBRAWBLOCK=tcp://litecoind:28333
+      - ZMQPUBRAWTX=tcp://litecoind:28334
     volumes:
       - 'shared:/shared'
       - 'lnd_ltc:/data'
@@ -127,8 +127,8 @@ services:
       options:
         max-size: 50m
 
-  ltcd:
-    image: sparkswap_ltcd:latest
+  litecoind:
+    image: sparkswap_litecoind:latest
     volumes:
       - shared:/shared
       - litecoin:/data
@@ -136,11 +136,8 @@ services:
       - RPC_USER=${LTC_RPC_USER}
       - RPC_PASS=${LTC_RPC_PASS}
       - NETWORK=${NETWORK}
-      - DEBUG=info
+      - DEBUG=debug
       - DATA_DIR=/data
-      - LOG_DIR=/data
-      - RPC_KEY=/secure/rpc.key
-      - RPC_CERT=/shared/rpc-ltc.cert
       - RPC_LISTEN=0.0.0.0
       - "MINING_ADDRESS=$MINING_ADDRESS"
     networks:
@@ -148,7 +145,6 @@ services:
     logging:
       options:
         max-size: 50m
-    entrypoint: ["./start-ltcd.sh"]
 
 
 volumes:
