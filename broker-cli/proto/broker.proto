@@ -451,7 +451,7 @@ service OrderService {
    */
   rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse) {
     option (google.api.http) = {
-      post: "/v1/orders/{block_order_id}"
+      post: "/v1/orders"
       body: "*"
     };
   }
