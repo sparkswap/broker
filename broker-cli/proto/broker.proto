@@ -296,8 +296,10 @@ message BlockOrder {
   TimeInForce time_in_force = 5;
   // Current status of the block order.
   BlockOrderStatus status = 6;
-  // Timestamp in nano-seconds
+  // BlockOrder creation unix timestamp in nanoseconds
   string timestamp = 7;
+  // BlockOrder creation ISO8601 datetime in nanoseconds
+  string datetime = 8;
 }
 
 /**
