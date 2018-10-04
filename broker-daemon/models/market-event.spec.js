@@ -311,7 +311,7 @@ describe('MarketEvent', () => {
       nanoDatetime = ['1537526431', '834233900']
       nanoTypeStub = sinon.stub().returns(nanoDatetime)
 
-      revert = MarketEvent.__set__('nanoTimestampToNanoType', nanoTypeStub)
+      revert = MarketEvent.__set__('timestampToNano', nanoTypeStub)
     })
 
     beforeEach(() => {
