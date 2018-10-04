@@ -1286,8 +1286,6 @@ message Trade {
   string price = 8;
   // amount of base currency
   string amount = 9;
-  // the original decoded JSON as is
-  string info = 10;
 }
 
 /**

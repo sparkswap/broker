@@ -1,4 +1,6 @@
-const { Big } = require('../utils')
+const nano = require('nano-seconds')
+
+const { Big, nanoTimestampToNanoType } = require('../utils')
 const CONFIG = require('../config')
 
 /**
@@ -63,16 +65,23 @@ class MarketEvent {
     const baseCommonAmount = Big(this.payload.baseAmount).div(baseCurrencyConfig.quantumsPerCommon)
     const counterCommonAmount = Big(this.payload.counterAmount).div(counterCurrencyConfig.quantumsPerCommon)
 
+    console.log(this.payload)
+    console.log(this.payload)
+
+    if (baseCommonAmount.eq(0)) {
+      return Big(0).toString()
+    }
+
     return counterCommonAmount.div(baseCommonAmount).toFixed(16)
   }
 
   tradeInfo (marketName) {
-    const timestampInMilliseconds = parseInt(Big(this.timestamp).div(1000000).round(0))
     const [baseSymbol, counterSymbol] = marketName.split('/')
+    const nanostamp = nanoTimestampToNanoType(this.timestamp)
     const info = {
       id: this.eventId,
-      timestamp: timestampInMilliseconds.toString(),
-      datetime: new Date(timestampInMilliseconds).toISOString(),
+      timestamp: this.timestamp,
+      datetime: nano.toISOString(nanostamp),
       order: this.orderId,
       symbol: marketName,
       type: this.price ? 'limit' : 'market',
@@ -80,7 +89,6 @@ class MarketEvent {
       price: this.price(baseSymbol, counterSymbol),
       amount: this.amount(baseSymbol)
     }
-    info.info = JSON.stringify(info)
     return info
   }
 
