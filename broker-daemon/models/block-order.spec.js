@@ -174,6 +174,7 @@ describe('BlockOrder', () => {
         amount: '10000',
         price: '100',
         timeInForce: 'GTC',
+        timestamp: 'timestamp',
         status: 'ACTIVE'
       }
       CONFIG = {
