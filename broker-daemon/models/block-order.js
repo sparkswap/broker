@@ -149,7 +149,15 @@ class BlockOrder {
    * @return {String} Stringified JSON object
    */
   get value () {
-    const { marketName, side, amount, price, timeInForce, status } = this
+    const {
+      marketName,
+      side,
+      amount,
+      price,
+      timeInForce,
+      timestamp,
+      status
+    } = this
 
     return JSON.stringify({
       marketName,
@@ -157,6 +165,7 @@ class BlockOrder {
       amount: amount.toString(),
       price: price ? price.toString() : null,
       timeInForce,
+      timestamp,
       status
     })
   }

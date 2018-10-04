@@ -331,6 +331,10 @@ message GetBlockOrderResponse {
   }
   // Time restriction for this block order.
   TimeInForce time_in_force = 15;
+  // BlockOrder creation unix timestamp in nanoseconds
+  string timestamp = 16;
+  // BlockOrder creation ISO8601 datetime in nanoseconds
+  string datetime = 17;
 
   // Amount of the block order that has been filled, in common units for a currency (e.g. bitcoins for BTC) represented as a decimal string (e.g. `'0.10'`)
   string fill_amount = 20;
