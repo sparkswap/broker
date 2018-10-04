@@ -1270,9 +1270,9 @@ message GetTradesRequest {
 message Trade {
   // id of the trade
   string id = 1;
-  // Unix timestamp in milliseconds the trade was created
+  // Trade creation unix timestamp in nanoseconds
   string timestamp = 2;
-  // ISO8601 datetime in milliseconds the trade was created
+  // Trade creation ISO8601 datetime in nanoseconds
   string datetime = 3;
   // order id
   string order = 4;
