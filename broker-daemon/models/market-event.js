@@ -65,13 +65,6 @@ class MarketEvent {
     const baseCommonAmount = Big(this.payload.baseAmount).div(baseCurrencyConfig.quantumsPerCommon)
     const counterCommonAmount = Big(this.payload.counterAmount).div(counterCurrencyConfig.quantumsPerCommon)
 
-    console.log(this.payload)
-    console.log(this.payload)
-
-    if (baseCommonAmount.eq(0)) {
-      return Big(0).toString()
-    }
-
     return counterCommonAmount.div(baseCommonAmount).toFixed(16)
   }
 
