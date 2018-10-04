@@ -4,10 +4,11 @@
  * @type {Integer}
  * @default
  */
-const NANO_SECOND_SPLIT_INDEX = 9
+const MILLISECONDS_INDEX = 9
 
 /**
- * Converts a nano-second timestamp to a `nano` array that can be used w/ the
+ * Converts a nanosecond timestamp to a nanoseconds array
+ *
  * `nano-seconds` library. A `nano` array is defined as:
  * [ 'timestamp (10)', 'milliseconds (3), nanoseconds (6)']
  *
@@ -17,9 +18,9 @@ const NANO_SECOND_SPLIT_INDEX = 9
 function nanoTimestampToNanoType (timestamp) {
   return [
     // First portion is the timestamp that includes year/month/day/seconds
-    timestamp.substring(0, timestamp.length - NANO_SECOND_SPLIT_INDEX),
+    timestamp.substring(0, timestamp.length - MILLISECONDS_INDEX),
     // Second portion is the < seconds portion that includes milliseconds/nanoseconds
-    timestamp.substring(timestamp.length - NANO_SECOND_SPLIT_INDEX, timestamp.length)
+    timestamp.substring(timestamp.length - MILLISECONDS_INDEX, timestamp.length)
   ]
 }
 

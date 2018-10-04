@@ -11,7 +11,7 @@ const createBasicAuth = require('./create-basic-auth')
 const nanoToDatetime = require('./nano-to-datetime')
 const grpcGateway = require('./grpc-gateway')
 const createHttpServer = require('./create-http-server')
-const nanoTimestampToNanoType = require('./nano-timestamp-to-nano-type')
+const timestampToNano = require('./timestamp-to-nano')
 
 module.exports = {
   getRecords,
@@ -27,5 +27,5 @@ module.exports = {
   nanoToDatetime,
   grpcGateway,
   createHttpServer,
-  nanoTimestampToNanoType
+  timestampToNano
 }

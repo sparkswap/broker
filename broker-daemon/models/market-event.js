@@ -1,6 +1,6 @@
 const nano = require('nano-seconds')
 
-const { Big, nanoTimestampToNanoType } = require('../utils')
+const { Big, timestampToNano } = require('../utils')
 const CONFIG = require('../config')
 
 /**
@@ -77,7 +77,7 @@ class MarketEvent {
 
   tradeInfo (marketName) {
     const [baseSymbol, counterSymbol] = marketName.split('/')
-    const nanostamp = nanoTimestampToNanoType(this.timestamp)
+    const nanostamp = timestampToNano(this.timestamp)
     const info = {
       id: this.eventId,
       timestamp: this.timestamp,

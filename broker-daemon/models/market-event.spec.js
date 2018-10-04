@@ -308,7 +308,7 @@ describe('MarketEvent', () => {
       timestamp = '1537526431834233900'
       eventType = MarketEvent.TYPES.PLACED
       payload = { baseAmount: '1000', counterAmount: '100000', fillAmount: '1000', side: 'BID' }
-      nanoDatetime = [1537526431, 834233900]
+      nanoDatetime = ['1537526431', '834233900']
       nanoTypeStub = sinon.stub().returns(nanoDatetime)
 
       revert = MarketEvent.__set__('nanoTimestampToNanoType', nanoTypeStub)
