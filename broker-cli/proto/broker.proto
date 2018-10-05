@@ -451,7 +451,7 @@ service OrderService {
    */
   rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse) {
     option (google.api.http) = {
-      post: "/v1/orders/{block_order_id}"
+      post: "/v1/orders"
       body: "*"
     };
   }
@@ -1259,8 +1259,11 @@ message GetMarketStatsResponse {
  * Parameters to retrieve a list of trades within a specified time frame on a given market
  */
 message GetTradesRequest {
+  // Market to retrieve updates for, e.g. `'BTC/LTC'`.
   string market = 1;
+  // Starting date for the results. ISO8601
   string since = 2;
+  // int64 number to limit results
   int64 limit = 3;
 }
 
@@ -1270,14 +1273,14 @@ message GetTradesRequest {
 message Trade {
   // id of the trade
   string id = 1;
-  // Unix timestamp in milliseconds the trade was created
+  // Trade creation unix timestamp in nanoseconds
   string timestamp = 2;
-  // ISO8601 datetime in milliseconds the trade was created
+  // Trade creation ISO8601 datetime in nanoseconds
   string datetime = 3;
   // order id
   string order = 4;
-  // market name the trade was executed on
-  string symbol = 5;
+  // market name the trade was executed on e.g. BTC/LTC
+  string market = 5;
   // order type, 'market', 'limit' or undefined/None/null
   string type = 6;
   // direction of the trade, 'buy' or 'sell'
@@ -1286,8 +1289,6 @@ message Trade {
   string price = 8;
   // amount of base currency
   string amount = 9;
-  // the original decoded JSON as is
-  string info = 10;
 }
 
 /**
@@ -1434,7 +1435,7 @@ service InfoService {
    *    timestamp: '1537526431834',
    *    datetime: '2018-09-21T10:40:31.034Z',
    *    order: 'tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg',
-   *    symbol: 'BTC/LTC',
+   *    market: 'BTC/LTC',
    *    type: 'limit',
    *    side: 'buy',
    *    price: '0.0010000000000000',
@@ -1444,7 +1445,7 @@ service InfoService {
    *    timestamp: '1537527538513',
    *    datetime: '2018-09-21T10:58:58.513Z',
    *    order: 'W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt',
-   *    symbol: 'BTC/LTC',
+   *    market: 'BTC/LTC',
    *    type: 'limit',
    *    side: 'sell',
    *    price: '0.1000000000000000',
@@ -1458,7 +1459,7 @@ service InfoService {
    *    timestamp: '1537526431834',
    *    datetime: '2018-09-21T10:40:31.034Z',
    *    order: 'tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg',
-   *    symbol: 'BTC/LTC',
+   *    market: 'BTC/LTC',
    *    type: 'limit',
    *    side: 'buy',
    *    price: '0.0010000000000000',
@@ -1468,7 +1469,7 @@ service InfoService {
    *    timestamp: '1537527538513',
    *    datetime: '2018-09-21T10:58:58.513Z',
    *    order: 'W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt',
-   *    symbol: 'BTC/LTC',
+   *    market: 'BTC/LTC',
    *    type: 'limit',
    *    side: 'sell',
    *    price: '0.1000000000000000',

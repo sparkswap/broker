@@ -1,6 +1,7 @@
-const { expect } = require('test/test-helper')
+const path = require('path')
+const { expect, sinon, rewire } = require('test/test-helper')
 
-const MarketEvent = require('./market-event')
+const MarketEvent = rewire(path.resolve(__dirname, 'market-event'))
 
 describe('MarketEvent', () => {
   describe('::TYPES', () => {
@@ -291,27 +292,53 @@ describe('MarketEvent', () => {
   })
 
   describe('tradeInfo', () => {
+    let revert
+    let nanoTypeStub
+    let eventId
+    let orderId
+    let timestamp
+    let eventType
+    let payload
+    let event
+    let nanoDatetime
+
+    beforeEach(() => {
+      eventId = 'myid'
+      orderId = 'myorder'
+      timestamp = '1537526431834233900'
+      eventType = MarketEvent.TYPES.PLACED
+      payload = { baseAmount: '1000', counterAmount: '100000', fillAmount: '1000', side: 'BID' }
+      nanoDatetime = ['1537526431', '834233900']
+      nanoTypeStub = sinon.stub().returns(nanoDatetime)
+
+      revert = MarketEvent.__set__('timestampToNano', nanoTypeStub)
+    })
+
+    beforeEach(() => {
+      event = new MarketEvent({ eventId, orderId, timestamp, eventType, ...payload })
+    })
+
+    afterEach(() => {
+      revert()
+    })
+
+    it('converts a timestamp to a nano timestamp', () => {
+      event.tradeInfo('BTC/LTC')
+      expect(nanoTypeStub).to.have.been.calledWith(timestamp)
+    })
+
     it('returns info about a trade given a marketName', () => {
-      const eventId = 'myid'
-      const orderId = 'myorder'
-      const timestamp = '1537526431834233900'
-      const eventType = MarketEvent.TYPES.PLACED
-      const payload = { baseAmount: '1000', counterAmount: '100000', fillAmount: '1000', side: 'BID' }
-
-      const event = new MarketEvent({ eventId, orderId, timestamp, eventType, ...payload })
-
       expect(event.tradeInfo('BTC/LTC')).to.be.eql(
         {
           amount: '0.0000100000000000',
-          datetime: '2018-09-21T10:40:31.834Z',
+          timestamp: timestamp,
+          datetime: '2018-09-21T10:40:31.8342339Z',
           id: 'myid',
           order: 'myorder',
           price: '100.0000000000000000',
           side: 'buy',
-          symbol: 'BTC/LTC',
-          timestamp: '1537526431834',
-          type: 'limit',
-          info: '{"id":"myid","timestamp":"1537526431834","datetime":"2018-09-21T10:40:31.834Z","order":"myorder","symbol":"BTC/LTC","type":"limit","side":"buy","price":"100.0000000000000000","amount":"0.0000100000000000"}'
+          market: 'BTC/LTC',
+          type: 'limit'
         }
       )
     })
