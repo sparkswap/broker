@@ -296,6 +296,10 @@ message BlockOrder {
   TimeInForce time_in_force = 5;
   // Current status of the block order.
   BlockOrderStatus status = 6;
+  // BlockOrder creation unix timestamp in nanoseconds
+  string timestamp = 7;
+  // BlockOrder creation ISO8601 datetime in nanoseconds
+  string datetime = 8;
 }
 
 /**
@@ -327,6 +331,10 @@ message GetBlockOrderResponse {
   }
   // Time restriction for this block order.
   TimeInForce time_in_force = 15;
+  // BlockOrder creation unix timestamp in nanoseconds
+  string timestamp = 16;
+  // BlockOrder creation ISO8601 datetime in nanoseconds
+  string datetime = 17;
 
   // Amount of the block order that has been filled, in common units for a currency (e.g. bitcoins for BTC) represented as a decimal string (e.g. `'0.10'`)
   string fill_amount = 20;
@@ -480,6 +488,8 @@ service OrderService {
    *   "amount": "0.0001",
    *   "isMarketOrder": true,
    *   "timeInForce": "GTC",
+   *   "timestamp": "1538676318030164300",
+   *   "datetime": "2018-09-21T10:40:31.8342339Z",
    *   "open_orders": [],
    *   "fills": []
    * }
@@ -494,6 +504,8 @@ service OrderService {
    *   isMarketOrder: true,
    *   limitPrice: '',
    *   timeInForce: 'GTC',
+   *   timestamp: '1538676318030164300',
+   *   datetime: '2018-09-21T10:40:31.8342339Z',
    *   fillAmount: '',
    *   openOrders: [],
    *   fills: [] }

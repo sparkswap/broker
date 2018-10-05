@@ -1,6 +1,7 @@
 const { promisify } = require('util')
+const nano = require('nano-seconds')
 
-const { Big } = require('../utils')
+const { Big, nanoToDatetime } = require('../utils')
 const CONFIG = require('../config')
 const { BlockOrderNotFoundError } = require('./errors')
 
@@ -19,11 +20,12 @@ class BlockOrder {
    * @param  {String} options.status      Block Order status
    * @return {BlockOrder}
    */
-  constructor ({ id, marketName, side, amount, price, timeInForce, status = BlockOrder.STATUSES.ACTIVE }) {
+  constructor ({ id, marketName, side, amount, price, timeInForce, timestamp, status = BlockOrder.STATUSES.ACTIVE }) {
     this.id = id
     this.marketName = marketName
     this.price = price ? Big(price) : null
     this.status = status
+    this.timestamp = timestamp || nano.toString()
 
     if (!this.baseCurrencyConfig) {
       throw new Error(`No currency configuration is available for ${this.baseSymbol}`)
@@ -55,6 +57,10 @@ class BlockOrder {
 
     this.openOrders = []
     this.fills = []
+  }
+
+  get datetime () {
+    return nanoToDatetime(this.timestamp)
   }
 
   /**
@@ -145,7 +151,15 @@ class BlockOrder {
    * @return {String} Stringified JSON object
    */
   get value () {
-    const { marketName, side, amount, price, timeInForce, status } = this
+    const {
+      marketName,
+      side,
+      amount,
+      price,
+      timeInForce,
+      timestamp,
+      status
+    } = this
 
     return JSON.stringify({
       marketName,
@@ -153,6 +167,7 @@ class BlockOrder {
       amount: amount.toString(),
       price: price ? price.toString() : null,
       timeInForce,
+      timestamp,
       status
     })
   }
@@ -227,6 +242,8 @@ class BlockOrder {
       amount: this.amount.toFixed(16),
       timeInForce: this.timeInForce,
       status: this.status,
+      timestamp: this.timestamp,
+      datetime: this.datetime,
       openOrders: openOrders,
       fills: fills
     }
@@ -247,6 +264,8 @@ class BlockOrder {
       side: this.side,
       amount: this.amount.toFixed(16),
       timeInForce: this.timeInForce,
+      timestamp: this.timestamp,
+      datetime: this.datetime,
       status: this.status
     }
 
@@ -267,14 +286,23 @@ class BlockOrder {
    * @return {BlockOrder}   BlockOrder instance
    */
   static fromStorage (key, value) {
-    const { marketName, side, amount, price, timeInForce, status } = JSON.parse(value)
+    const {
+      marketName,
+      side,
+      amount,
+      price,
+      timeInForce,
+      timestamp,
+      status
+    } = JSON.parse(value)
+
     const id = key
 
     if (!BlockOrder.STATUSES[status]) {
       throw new Error(`Block Order status of ${status} is invalid`)
     }
 
-    return new this({ id, marketName, side, amount, price, timeInForce, status })
+    return new this({ id, marketName, side, amount, price, timeInForce, timestamp, status })
   }
 
   /**

@@ -6,7 +6,7 @@ const BlockOrder = rewire(path.resolve(__dirname, 'block-order'))
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const { BlockOrderNotFoundError } = require('./errors')
 
-describe('BlockOrder', () => {
+describe.only('BlockOrder', () => {
   describe('::fromStorage', () => {
     it('defines a static method for creating block orders from storage', () => {
       expect(BlockOrder).itself.to.respondTo('fromStorage')
@@ -19,6 +19,7 @@ describe('BlockOrder', () => {
         amount: '10000',
         price: '100',
         timeInForce: 'GTC',
+        timestamp: '1234',
         status: 'ACTIVE'
       }
       const id = 'myid'
@@ -34,6 +35,7 @@ describe('BlockOrder', () => {
       expect(blockOrder.price.toString()).to.be.equal(params.price)
       expect(blockOrder).to.have.property('timeInForce', params.timeInForce)
       expect(blockOrder).to.have.property('status', params.status)
+      expect(blockOrder).to.have.property('timestamp', params.timestamp)
     })
 
     it('throws if it has an invalid status', () => {
@@ -129,8 +131,13 @@ describe('BlockOrder', () => {
 
   describe('new', () => {
     let params
+    let nanoStub
+    let timestamp
+    let revert
 
     beforeEach(() => {
+      timestamp = 'timestamp'
+      nanoStub = sinon.stub().returns(timestamp)
       params = {
         id: 'myid',
         marketName: 'BTC/LTC',
@@ -139,6 +146,11 @@ describe('BlockOrder', () => {
         price: '100',
         timeInForce: 'GTC'
       }
+      revert = BlockOrder.__set__('nano', { toString: nanoStub })
+    })
+
+    afterEach(() => {
+      revert()
     })
 
     it('assigns an id', () => {
@@ -217,15 +229,35 @@ describe('BlockOrder', () => {
 
       expect(blockOrder).to.have.property('status', 'ACTIVE')
     })
+
+    it('creates a timestamp', () => {
+      const blockOrder = new BlockOrder(params)
+      expect(blockOrder).to.have.property('timestamp', timestamp)
+      expect(nanoStub).to.have.been.calledOnce()
+    })
+
+    it('creates a timestamp from a property passed in through params', () => {
+      const newTimestamp = 'newtimestamp'
+      params.timestamp = newTimestamp
+      const blockOrder = new BlockOrder(params)
+      expect(blockOrder).to.not.have.property('timestamp', timestamp)
+      expect(blockOrder).to.have.property('timestamp', newTimestamp)
+      expect(nanoStub).to.not.have.been.calledOnce()
+    })
   })
 
   describe('instance', () => {
     let params
     let blockOrder
     let CONFIG
-    let revert
+    let nanoToDatetimeStub
+    let timestamp
+
+    let reverts = []
 
     beforeEach(() => {
+      timestamp = 'timestamp'
+      nanoToDatetimeStub = sinon.stub().returns(timestamp)
       params = {
         id: 'myid',
         marketName: 'BTC/LTC',
@@ -233,6 +265,7 @@ describe('BlockOrder', () => {
         amount: '10000',
         price: '100',
         timeInForce: 'GTC',
+        timestamp,
         status: 'ACTIVE'
       }
       CONFIG = {
@@ -252,13 +285,14 @@ describe('BlockOrder', () => {
         ]
       }
 
-      revert = BlockOrder.__set__('CONFIG', CONFIG)
+      reverts.push(BlockOrder.__set__('CONFIG', CONFIG))
+      reverts.push(BlockOrder.__set__('nanoToDatetime', nanoToDatetimeStub))
 
       blockOrder = new BlockOrder(params)
     })
 
     afterEach(() => {
-      revert()
+      reverts.forEach(r => r())
     })
 
     describe('#fail', () => {
@@ -587,6 +621,13 @@ describe('BlockOrder', () => {
         const serialized = blockOrder.serializeSummary()
 
         expect(serialized).to.have.property('status', params.status)
+      })
+    })
+
+    describe('get datetime', () => {
+      it('defines a datetime', () => {
+        expect(blockOrder).to.have.property('datetime')
+        expect(nanoToDatetimeStub).to.have.been.calledWith(timestamp)
       })
     })
 
