@@ -1,7 +1,9 @@
+const { promisify } = require('util')
 const nano = require('nano-seconds')
 
 const { Big, nanoToDatetime } = require('../utils')
 const CONFIG = require('../config')
+const { BlockOrderNotFoundError } = require('./errors')
 
 /**
  * @class Model representing Block Orders
@@ -175,8 +177,17 @@ class BlockOrder {
    * @return {BlockOrder} Modified block order instance
    */
   fail () {
+    // TODO: Do we need to fail the remaining orders that are tied to this block order in the ordersStore?
     this.status = BlockOrder.STATUSES.FAILED
+    return this
+  }
 
+  /**
+   * Move the block order to a completed status
+   * @return {BlockOrder} Modified block order instance
+   */
+  complete () {
+    this.status = BlockOrder.STATUSES.COMPLETED
     return this
   }
 
@@ -185,8 +196,8 @@ class BlockOrder {
    * @return {BlockOrder} Modified block order instance
    */
   cancel () {
+    // TODO: Do we need to cancel the remaining orders that are tied to this block order in the ordersStore?
     this.status = BlockOrder.STATUSES.CANCELLED
-
     return this
   }
 
@@ -269,6 +280,7 @@ class BlockOrder {
 
   /**
    * Re-instantiate a previously saved BlockOrder
+   *
    * @param  {String} key   Key used to retrieve the BlockOrder
    * @param  {String} value Value returned from leveldb
    * @return {BlockOrder}   BlockOrder instance
@@ -292,6 +304,30 @@ class BlockOrder {
 
     return new this({ id, marketName, side, amount, price, timeInForce, timestamp, status })
   }
+
+  /**
+   * Grab a block order from a given sublevel
+   *
+   * @param {Sublevel} store block order sublevel store
+   * @param {String} blockOrderId
+   * @return {BlockOrder} BlockOrder instance
+   * @throws {Error} store is null
+   * @throws {BlockOrderNotFoundError} block order could not be found
+   */
+  static async fromStore (store, blockOrderId) {
+    if (!store) throw new Error('[BlockOrder#fromStore] No store is defined')
+
+    try {
+      var value = await promisify(store.get)(blockOrderId)
+    } catch (e) {
+      if (e.notFound) {
+        throw new BlockOrderNotFoundError(blockOrderId, e)
+      }
+      throw e
+    }
+
+    return BlockOrder.fromStorage(blockOrderId, value)
+  }
 }
 
 BlockOrder.TIME_RESTRICTIONS = Object.freeze({
@@ -308,6 +344,10 @@ BlockOrder.STATUSES = Object.freeze({
   CANCELLED: 'CANCELLED',
   COMPLETED: 'COMPLETED',
   FAILED: 'FAILED'
+})
+
+BlockOrder.ERRORS = Object.freeze({
+  BlockOrderNotFoundError
 })
 
 module.exports = BlockOrder

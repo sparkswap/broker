@@ -1,5 +1,6 @@
 const { PublicError } = require('grpc-methods')
-const { BlockOrderNotFoundError } = require('../../block-order-worker/errors')
+
+const { BlockOrderNotFoundError } = require('../../models/errors')
 
 /**
  * Check on the status of a block order

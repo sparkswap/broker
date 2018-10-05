@@ -1,17 +1,17 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
 
+const { BlockOrderNotFoundError } = require('../../models/errors')
+
 const cancelBlockOrder = rewire(path.resolve(__dirname, 'cancel-block-order'))
 
 describe('cancelBlockOrder', () => {
   let PublicError
-  let BlockOrderNotFoundError
   let blockOrderWorker
   let blockOrder
 
   beforeEach(() => {
     PublicError = cancelBlockOrder.__get__('PublicError')
-    BlockOrderNotFoundError = cancelBlockOrder.__get__('BlockOrderNotFoundError')
 
     blockOrder = {
       serialize: sinon.stub()

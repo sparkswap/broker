@@ -4,6 +4,7 @@ const { sinon, rewire, delay, expect } = require('test/test-helper')
 const RelayerClient = rewire(path.resolve('broker-daemon', 'relayer', 'relayer-client'))
 
 describe('RelayerClient', () => {
+  let logger
   let createSslStub
   let createFromMetadataGeneratorStub
   let combineChannelCredentialsStub
@@ -26,7 +27,6 @@ describe('RelayerClient', () => {
     NEW_EVENT: 'NEW_EVENT',
     START_OF_EVENTS: 'START_OF_EVENTS'
   }
-  let logger
   let callerStub
 
   let relayerHost = 'localhost:1337'
@@ -37,6 +37,11 @@ describe('RelayerClient', () => {
   let ENABLE_SSL = true
 
   beforeEach(() => {
+    logger = {
+      debug: sinon.stub(),
+      info: sinon.stub(),
+      error: sinon.stub()
+    }
     identityIdentify = sinon.stub()
     Identity = {
       load: sinon.stub().returns({

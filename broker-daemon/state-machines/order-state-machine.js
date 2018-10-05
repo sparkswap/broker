@@ -1,16 +1,22 @@
 const safeid = require('generate-safe-id')
-const StateMachine = require('./state-machine')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
-const StateMachinePersistence = require('./plugins/persistence')
-const StateMachineRejection = require('./plugins/rejection')
-const StateMachineLogging = require('./plugins/logging')
+
 const { Order } = require('../models')
+
+const StateMachine = require('./state-machine')
+const {
+  StateMachinePersistence,
+  StateMachineRejection,
+  StateMachineLogging,
+  StateMachineEvents
+} = require('./plugins')
 
 /**
  * If Orders are saved in the database before they are created on the remote, they lack an ID
  * This string indicates an order that does not have an assigned remote ID
- * @type {String}
+ *
  * @constant
+ * @type {String}
  * @default
  */
 const UNASSIGNED_PREFIX = 'NO_ASSIGNED_ID_'
@@ -23,6 +29,7 @@ const OrderStateMachine = StateMachine.factory({
     new StateMachineHistory(),
     new StateMachineRejection(),
     new StateMachineLogging(),
+    new StateMachineEvents(),
     new StateMachinePersistence({
       /**
        * @type {StateMachinePersistence~KeyAccessor}
@@ -120,15 +127,15 @@ const OrderStateMachine = StateMachine.factory({
    * This function is effectively a constructor for the state machine
    * So we pass it all the objects we'll need later.
    *
+   * @param  {Object} options
    * @param  {sublevel}            options.store       Sublevel partition for storing this order in
    * @param  {Object}              options.logger
    * @param  {RelayerClient}       options.relayer
    * @param  {Map<String, Engine>} options.engines     Map of all available engines
-   * @param  {Function}            options.onRejection A function to handle rejections of the order
    * @return {Object}                                  Data to attach to the state machine
    */
-  data: function ({ store, logger, relayer, engines, onRejection = function () {} }) {
-    return { store, logger, relayer, engines, onRejection, order: {} }
+  data: function ({ store, logger, relayer, engines }) {
+    return { store, logger, relayer, engines, order: {} }
   },
   methods: {
     /**
@@ -139,6 +146,7 @@ const OrderStateMachine = StateMachine.factory({
      *
      * @param  {Object} lifecycle             Lifecycle object passed by javascript-state-machine
      * @param  {String} blockOrderid          Id of the block order that the order belongs to
+     * @param  {Object} options
      * @param  {String} options.side          Side of the market being taken (i.e. BID or ASK)
      * @param  {String} options.baseSymbol    Base symbol (e.g. BTC)
      * @param  {String} options.counterSymbol Counter symbol (e.g. LTC)
@@ -343,7 +351,7 @@ const OrderStateMachine = StateMachine.factory({
         throw new Error(`No engine available for ${symbol}`)
       }
 
-      // The below is potentially a very long-running operation, since the settlement
+      // The action below is a potentially very long-running operation, since the settlement
       // of the swap itself is highly variable.
       // TODO: restart monitoring when coming back from an offline state.
       const swapPreimage = await engine.getSettledSwapPreimage(swapHash)
@@ -354,6 +362,7 @@ const OrderStateMachine = StateMachine.factory({
       this.logger.debug(`Generated authorization for ${orderId}`, authorization)
       return this.relayer.makerService.completeOrder({ orderId, swapPreimage, authorization })
     },
+
     /**
      * Log errors from rejection
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
@@ -362,15 +371,7 @@ const OrderStateMachine = StateMachine.factory({
      */
     onBeforeReject: function (lifecycle, error) {
       this.logger.error(`Encountered error during transition, rejecting`, error)
-    },
-
-    /**
-     * Handle rejected state by calling a passed in handler
-     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
-     * @return {void}
-     */
-    onAfterReject: async function (lifecycle) {
-      this.onRejection(this.error)
+      this.order.error = error
     }
   }
 })
