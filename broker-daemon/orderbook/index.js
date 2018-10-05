@@ -55,9 +55,9 @@ class Orderbook {
 
   /**
    * Gets all trades for a specific timestamp
-   * @param  {String} since datetime lowerbound
-   * @param  {Integer} limit of records returned
-
+   *
+   * @param  {String} since - ISO8601 datetime lowerbound
+   * @param  {Integer} limit - limit of records returned
    * @return {Array<Object>} trades
    */
   async getTrades (since, limit) {

@@ -1,4 +1,6 @@
-const { Big } = require('../utils')
+const nano = require('nano-seconds')
+
+const { Big, timestampToNano } = require('../utils')
 const CONFIG = require('../config')
 
 /**
@@ -67,20 +69,19 @@ class MarketEvent {
   }
 
   tradeInfo (marketName) {
-    const timestampInMilliseconds = parseInt(Big(this.timestamp).div(1000000).round(0))
     const [baseSymbol, counterSymbol] = marketName.split('/')
+    const nanostamp = timestampToNano(this.timestamp)
     const info = {
       id: this.eventId,
-      timestamp: timestampInMilliseconds.toString(),
-      datetime: new Date(timestampInMilliseconds).toISOString(),
+      timestamp: this.timestamp,
+      datetime: nano.toISOString(nanostamp),
       order: this.orderId,
-      symbol: marketName,
+      market: marketName,
       type: this.price ? 'limit' : 'market',
       side: this.payload.side.toLowerCase() === 'bid' ? 'buy' : 'sell',
       price: this.price(baseSymbol, counterSymbol),
       amount: this.amount(baseSymbol)
     }
-    info.info = JSON.stringify(info)
     return info
   }
 
