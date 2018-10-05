@@ -331,13 +331,13 @@ describe('MarketEvent', () => {
       expect(event.tradeInfo('BTC/LTC')).to.be.eql(
         {
           amount: '0.0000100000000000',
+          timestamp: timestamp,
           datetime: '2018-09-21T10:40:31.8342339Z',
           id: 'myid',
           order: 'myorder',
           price: '100.0000000000000000',
           side: 'buy',
-          symbol: 'BTC/LTC',
-          timestamp: timestamp,
+          market: 'BTC/LTC',
           type: 'limit'
         }
       )

@@ -76,7 +76,7 @@ class MarketEvent {
       timestamp: this.timestamp,
       datetime: nano.toISOString(nanostamp),
       order: this.orderId,
-      symbol: marketName,
+      market: marketName,
       type: this.price ? 'limit' : 'market',
       side: this.payload.side.toLowerCase() === 'bid' ? 'buy' : 'sell',
       price: this.price(baseSymbol, counterSymbol),
