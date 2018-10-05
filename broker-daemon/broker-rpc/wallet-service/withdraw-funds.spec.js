@@ -61,7 +61,7 @@ describe('withdrawFunds', () => {
     it('makes a request to the engine to withdrawFunds to the address specified', () => {
       expect(btcEngine.withdrawFunds).to.have.been.calledWith(
         params.address,
-        Big(params.amount).times(100000000)
+        Big(params.amount).times(100000000).toString()
       )
     })
 
