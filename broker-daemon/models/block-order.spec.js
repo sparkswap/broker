@@ -103,8 +103,8 @@ describe('BlockOrder', () => {
       expect(BlockOrder).itself.to.respondTo('fromStore')
     })
 
-    it('throws an error if a passed in sublevel is not defined', () => {
-      expect(BlockOrder.fromStore()).to.eventually.be.rejectedWith('No leveldb store is defined')
+    it('throws an error if a store is not defined', () => {
+      return expect(BlockOrder.fromStore()).to.eventually.be.rejectedWith('No store is defined')
     })
 
     it('throws a BlockOrderNotFoundError if the record is not found', () => {

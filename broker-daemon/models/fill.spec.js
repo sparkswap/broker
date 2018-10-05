@@ -335,21 +335,6 @@ describe('Fill', () => {
       })
     })
 
-    describe('get active', () => {
-      it('defines a value getter for storage', () => {
-        expect(fill).to.have.property('active')
-      })
-
-      it('sets active to true if no preimage exists', () => {
-        expect(fill.active).to.be.true()
-      })
-
-      it('sets active to true if no preimage exists', () => {
-        fill.setExecuteParams({ makerAddress: 'MAKER' })
-        expect(fill.active).to.be.false()
-      })
-    })
-
     describe('#setCreatedParams', () => {
       let createdParams = {
         fillId: 'myid',

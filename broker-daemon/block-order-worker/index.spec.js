@@ -878,15 +878,15 @@ describe('BlockOrderWorker', () => {
         getBlockOrderStub = sinon.stub()
         blockOrderCompleteStub = sinon.stub()
         fillStateMachines = [
-          { order: { fillAmount: 100 } },
-          { order: { fillAmount: 200 } },
-          { order: { fillAmount: 300 } }
+          { fill: { fillAmount: 100 } },
+          { fill: { fillAmount: 200 } },
+          { fill: { fillAmount: 300 } }
         ]
         blockOrder = {
           id: '1234',
           baseAmount: 600,
-          fills: [],
-          openOrders: fillStateMachines,
+          fills: fillStateMachines,
+          openOrders: [],
           complete: blockOrderCompleteStub
         }
 
@@ -900,7 +900,7 @@ describe('BlockOrderWorker', () => {
         expect(blockOrderCompleteStub).to.have.been.calledOnce()
       })
 
-      it('does not complete a block order if order is still active', async () => {
+      it('does not complete a block order if block order is still being filled', async () => {
         const activeBlockOrder = {
           id: '1234',
           baseAmount: 600,
@@ -908,6 +908,72 @@ describe('BlockOrderWorker', () => {
           fills: [
             { fill: { fillAmount: 100 } }
           ]
+        }
+        getBlockOrderStub.returns(activeBlockOrder)
+        await worker.checkBlockOrderCompletion(blockOrder.id)
+        expect(blockOrderCompleteStub).to.not.have.been.calledOnce()
+      })
+    })
+
+    context('block order with fills/orders', () => {
+      let blockOrder
+      let getBlockOrderStub
+      let worker
+      let fillStateMachines
+      let orderStateMachines
+      let blockOrderCompleteStub
+
+      beforeEach(() => {
+        getBlockOrderStub = sinon.stub()
+        blockOrderCompleteStub = sinon.stub()
+        fillStateMachines = [
+          { fill: { fillAmount: 100 } },
+          { fill: { fillAmount: 200 } }
+        ]
+        orderStateMachines = [
+          { order: { fillAmount: 100 } },
+          { order: { fillAmount: 300 } }
+        ]
+        blockOrder = {
+          id: '1234',
+          baseAmount: 600,
+          fills: fillStateMachines,
+          openOrders: orderStateMachines,
+          complete: blockOrderCompleteStub
+        }
+
+        worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+        worker.blockOrder = blockOrder
+        worker.getBlockOrder = getBlockOrderStub.returns(blockOrder)
+      })
+
+      it('completes a block order', async () => {
+        await worker.checkBlockOrderCompletion(blockOrder.id)
+        expect(blockOrderCompleteStub).to.have.been.calledOnce()
+      })
+
+      it('does not complete a block order if block order is still being filled through fills', async () => {
+        const activeBlockOrder = {
+          id: '1234',
+          baseAmount: 700,
+          openOrders: orderStateMachines,
+          fills: [
+            { fill: { fillAmount: 100 } }
+          ]
+        }
+        getBlockOrderStub.returns(activeBlockOrder)
+        await worker.checkBlockOrderCompletion(blockOrder.id)
+        expect(blockOrderCompleteStub).to.not.have.been.calledOnce()
+      })
+
+      it('does not complete a block order if block order is still being filled through orders', async () => {
+        const activeBlockOrder = {
+          id: '1234',
+          baseAmount: 700,
+          openOrders: [
+            { order: { fillAmount: 100 } }
+          ],
+          fills: fillStateMachines
         }
         getBlockOrderStub.returns(activeBlockOrder)
         await worker.checkBlockOrderCompletion(blockOrder.id)

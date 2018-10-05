@@ -287,7 +287,7 @@ class BlockOrder {
    * @throws {BlockOrderNotFoundError} block order could not be found
    */
   static async fromStore (store, blockOrderId) {
-    if (!store) throw new Error('[BlockOrder#fromStore] No leveldb store is defined')
+    if (!store) throw new Error('[BlockOrder#fromStore] No store is defined')
 
     try {
       var value = await promisify(store.get)(blockOrderId)

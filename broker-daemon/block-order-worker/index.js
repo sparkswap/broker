@@ -370,9 +370,7 @@ class BlockOrderWorker extends EventEmitter {
         .catch(e => {
           this.logger.error(`BlockOrder failed on setting a failed status from order`, { id: blockOrder.id, error: e.stack })
         })
-        .then(() => {
-          return osm.removeAllListeners()
-        })
+        .then(() => osm.removeAllListeners())
     })
 
     this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: osm.order.orderId })
