@@ -110,7 +110,7 @@ class BrokerRPCServer {
 
     this.httpServer.listen(HTTP_PORT, () => {
       const protocol = this.disableAuth ? 'http' : 'https'
-      console.log(`Listening on ${protocol}://0.0.0.0:${HTTP_PORT}`)
+      this.logger.info(`Listening on ${protocol}://0.0.0.0:${HTTP_PORT}`)
     })
   }
 

@@ -310,6 +310,13 @@ describe('BrokerRPCServer', () => {
     it('starts a http server', () => {
       expect(server.httpServer.listen).to.have.been.calledOnce()
     })
+
+    it('throws an error if disableAuth is true and the server is in production', () => {
+      const revert = BrokerRPCServer.__set__('IS_PRODUCTION', true)
+      server.disableAuth = true
+      expect(() => server.listen(host)).to.throw('Cannot disable TLS in production')
+      revert()
+    })
   })
 
   describe('#createCredentials', () => {
