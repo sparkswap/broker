@@ -357,13 +357,6 @@ describe('BrokerRPCServer', () => {
       expect(loggerWarnStub).to.have.been.calledWith(sinon.match('DISABLE_AUTH is set to TRUE'))
     })
 
-    it('throws an error if disableAuth is true and the server is in production', () => {
-      const revert = BrokerRPCServer.__set__('IS_PRODUCTION', true)
-      server.disableAuth = true
-      expect(() => server.createCredentials()).to.throw('Cannot disable SSL in production')
-      revert()
-    })
-
     it('reads a private key path for ssl generation', () => {
       server.createCredentials()
       expect(fileSyncStub).to.have.been.calledWith(privKeyPath)

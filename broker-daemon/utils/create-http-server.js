@@ -35,7 +35,7 @@ function createHttpServer (protoPath, rpcAddress, { disableAuth = false, privKey
 
     // If the RPC address we use for daemon is set to a default route (0.0.0.0)
     // then we want to make sure that we are instead making a request w/ grpc-gateway
-    // to local host since 0.0.0.0 would be an invalid address w/ the current certificate
+    // to local host since 0.0.0.0 would be an invalid address w/ the current cert
     // setup
     if (rpcAddress.includes('0.0.0.0')) {
       rpcAddress = rpcAddress.replace('0.0.0.0', 'localhost')

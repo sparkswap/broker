@@ -29,6 +29,14 @@ describe('createBasicAuth', () => {
     expect(res).to.be.undefined()
   })
 
+  it('errors if no authorization token is available', () => {
+    const metadata = {}
+    const rpcUser = 'sparkswap'
+    const rpcPass = 'sparkswap'
+    grpcAuthHandler = createBasicAuth(rpcUser, rpcPass)
+    return expect(grpcAuthHandler({ metadata, logger })).to.eventually.be.rejectedWith(PublicError)
+  })
+
   it('does not error if credentials are verified', async () => {
     const rpcUser = 'sparkswap'
     const rpcPass = 'sparkswap'

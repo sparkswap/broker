@@ -23,6 +23,12 @@ function createBasicAuth (rpcUser, rpcPass, disableAuth = false) {
 
     // Example basic auth token: 'Basic YWRtaW46cGFzc3dvcmQ='
     const { authorization: authToken } = metadata
+
+    if (!authToken) {
+      logger.debug('Basic Authentication has failed. No auth token could be found')
+      throw new PublicError('Basic Authentication Failed, please check your authorization credentials')
+    }
+
     const [scheme, base64Token] = authToken.split(' ')
 
     logger.debug('Received auth token', { scheme, base64Token })
@@ -36,7 +42,7 @@ function createBasicAuth (rpcUser, rpcPass, disableAuth = false) {
     // grpc-method handles the authorization middleware
     if (username !== rpcUser || password !== rpcPass) {
       logger.debug('Basic Authentication has failed. Username/Password did not match')
-      throw new PublicError('Basic Authentication Failed, please check the clis user/pass credentials')
+      throw new PublicError('Basic Authentication Failed, please check your authorization credentials')
     }
   }
 }
