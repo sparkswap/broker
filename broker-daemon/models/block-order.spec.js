@@ -6,7 +6,7 @@ const BlockOrder = rewire(path.resolve(__dirname, 'block-order'))
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const { BlockOrderNotFoundError } = require('./errors')
 
-describe.only('BlockOrder', () => {
+describe('BlockOrder', () => {
   describe('::fromStorage', () => {
     it('defines a static method for creating block orders from storage', () => {
       expect(BlockOrder).itself.to.respondTo('fromStorage')
