@@ -1,7 +1,7 @@
-const safeid = require('generate-safe-id')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 
 const { Order } = require('../models')
+const { generateId } = require('../utils')
 
 const StateMachine = require('./state-machine')
 const {
@@ -39,7 +39,7 @@ const OrderStateMachine = StateMachine.factory({
       key: function (key) {
         // this only defines a getter - it will be set by the `order` setter
         if (!key) {
-          return this.order.key || `${UNASSIGNED_PREFIX}${safeid()}`
+          return this.order.key || `${UNASSIGNED_PREFIX}${generateId()}`
         }
       },
       additionalFields: {
