@@ -1,13 +1,13 @@
 const EventEmitter = require('events')
 const { promisify } = require('util')
-const safeid = require('generate-safe-id')
 
 const { BlockOrder, Order, Fill } = require('../models')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const {
   Big,
   getRecords,
-  SublevelIndex
+  SublevelIndex,
+  generateId
 } = require('../utils')
 
 /**
@@ -69,7 +69,7 @@ class BlockOrderWorker extends EventEmitter {
    * @return {String}                     ID for the created Block Order
    */
   async createBlockOrder ({ marketName, side, amount, price, timeInForce }) {
-    const id = safeid()
+    const id = generateId()
 
     const orderbook = this.orderbooks.get(marketName)
 

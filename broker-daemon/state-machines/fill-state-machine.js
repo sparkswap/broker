@@ -1,7 +1,7 @@
-const safeid = require('generate-safe-id')
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 
 const { Fill } = require('../models')
+const { generateId } = require('../utils')
 
 const StateMachine = require('./state-machine')
 const {
@@ -38,7 +38,7 @@ const FillStateMachine = StateMachine.factory({
       key: function (key) {
         // this only defines a getter - it will be set by the `fill` setter
         if (!key) {
-          return this.fill.key || `${UNASSIGNED_PREFIX}${safeid()}`
+          return this.fill.key || `${UNASSIGNED_PREFIX}${generateId()}`
         }
       },
       additionalFields: {
