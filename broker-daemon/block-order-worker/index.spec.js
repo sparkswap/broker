@@ -5,7 +5,7 @@ const { expect, rewire, sinon } = require('test/test-helper')
 const BlockOrderWorker = rewire(path.resolve(__dirname))
 
 describe('BlockOrderWorker', () => {
-  let safeid
+  let generateId
   let BlockOrder
   let Order
   let Fill
@@ -24,8 +24,8 @@ describe('BlockOrderWorker', () => {
 
   beforeEach(() => {
     loggerErrorStub = sinon.stub()
-    safeid = sinon.stub()
-    BlockOrderWorker.__set__('safeid', safeid)
+    generateId = sinon.stub()
+    BlockOrderWorker.__set__('generateId', generateId)
 
     BlockOrder = sinon.stub()
     BlockOrder.STATUSES = {
@@ -265,7 +265,7 @@ describe('BlockOrderWorker', () => {
 
     it('creates an id', async () => {
       const fakeId = 'myfake'
-      safeid.returns(fakeId)
+      generateId.returns(fakeId)
 
       const params = {
         marketName: 'BTC/LTC',
@@ -280,7 +280,7 @@ describe('BlockOrderWorker', () => {
 
     it('creates a block order', async () => {
       const fakeId = 'myfake'
-      safeid.returns(fakeId)
+      generateId.returns(fakeId)
 
       const params = {
         marketName: 'BTC/LTC',
@@ -317,7 +317,7 @@ describe('BlockOrderWorker', () => {
 
     it('starts working a block order', async () => {
       const fakeId = 'myfake'
-      safeid.returns(fakeId)
+      generateId.returns(fakeId)
 
       const params = {
         marketName: 'BTC/LTC',
@@ -332,7 +332,7 @@ describe('BlockOrderWorker', () => {
 
     it('fails a block order if working a block order is unsuccessful', async () => {
       const fakeId = 'myfake'
-      safeid.returns(fakeId)
+      generateId.returns(fakeId)
 
       const params = {
         marketName: 'BTC/LTC',

@@ -12,6 +12,7 @@ const nanoToDatetime = require('./nano-to-datetime')
 const grpcGateway = require('./grpc-gateway')
 const createHttpServer = require('./create-http-server')
 const timestampToNano = require('./timestamp-to-nano')
+const generateId = require('./generate-id')
 
 module.exports = {
   getRecords,
@@ -27,5 +28,6 @@ module.exports = {
   nanoToDatetime,
   grpcGateway,
   createHttpServer,
-  timestampToNano
+  timestampToNano,
+  generateId
 }
