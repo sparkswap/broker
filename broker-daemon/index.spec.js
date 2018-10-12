@@ -120,8 +120,7 @@ describe('broker daemon', () => {
     disableAuth = false
     relayerOptions = {
       relayerCertPath: '/fake/path',
-      relayerRpcHost: 'fakehost',
-      disableRelayerAuth: false
+      relayerRpcHost: 'fakehost'
     }
 
     brokerDaemonOptions = {
@@ -156,12 +155,6 @@ describe('broker daemon', () => {
   it('throws for unrecognized engine types', () => {
     brokerDaemonOptions.engines.BTC.type = 'LIT'
     expect(() => new BrokerDaemon(brokerDaemonOptions)).to.throw('Unknown engine type')
-  })
-
-  it('disables relayer client auth', () => {
-    brokerDaemonOptions.relayerOptions.disableRelayerAuth = true
-    brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
-    expect(RelayerClient).to.have.been.calledWith(sinon.match.any, sinon.match({ disableAuth: true }), sinon.match.any)
   })
 
   describe('daemon properties', () => {

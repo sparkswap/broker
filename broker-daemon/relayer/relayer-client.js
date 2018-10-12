@@ -19,19 +19,6 @@ consoleLogger.debug = console.log.bind(console)
 const RELAYER_PROTO_PATH = './proto/relayer.proto'
 
 /**
- * Insecure stub of Identity to be used when auth is disabled
- * @return {Object}
- */
-function insecureIdentity (logger = consoleLogger) {
-  return {
-    authorize (id) {
-      logger.warn(`Not signing authorization for access to ${id}: DISABLE_RELAYER_AUTH is set to true`)
-      return {}
-    }
-  }
-}
-
-/**
  * Interface for daemon to interact with a SparkSwap Relayer
  *
  * @author SparkSwap
@@ -50,25 +37,19 @@ class RelayerClient {
    * @param {String}  relayerOpts.certPath Absolute path to the root certificate for the Relayer
    * @param {Logger}  logger
    */
-  constructor ({ privKeyPath, pubKeyPath }, { certPath, host = 'localhost:28492', disableAuth = false }, logger = consoleLogger) {
+  constructor ({ privKeyPath, pubKeyPath }, { certPath, host = 'localhost:28492' }, logger = consoleLogger) {
     this.logger = logger
     this.address = host
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
 
-    if (disableAuth) {
-      this.logger.warn('WARNING: SSL is not enabled and no credentials will be passed to the Relayer. This is only suitable for use in development.')
-      this.identity = insecureIdentity(this.logger)
-      this.credentials = credentials.createInsecure()
-    } else {
-      this.identity = Identity.load(privKeyPath, pubKeyPath)
-      const channelCredentials = credentials.createSsl(readFileSync(certPath))
-      // `service_url` in the line below is defined by the grpc lib, so we need to tell eslint to ignore snake case
-      // eslint-disable-next-line
-      const callCredentials = credentials.createFromMetadataGenerator(({ service_url }, callback) => {
-        callback(null, this.identity.identify())
-      })
-      this.credentials = credentials.combineChannelCredentials(channelCredentials, callCredentials)
-    }
+    this.identity = Identity.load(privKeyPath, pubKeyPath)
+    const channelCredentials = credentials.createSsl(readFileSync(certPath))
+    // `service_url` in the line below is defined by the grpc lib, so we need to tell eslint to ignore snake case
+    // eslint-disable-next-line
+    const callCredentials = credentials.createFromMetadataGenerator(({ service_url }, callback) => {
+      callback(null, this.identity.identify())
+    })
+    this.credentials = credentials.combineChannelCredentials(channelCredentials, callCredentials)
 
     this.makerService = caller(this.address, this.proto.MakerService, this.credentials)
     this.takerService = caller(this.address, this.proto.TakerService, this.credentials)
