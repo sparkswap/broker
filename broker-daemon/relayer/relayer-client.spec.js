@@ -374,17 +374,4 @@ describe('RelayerClient', () => {
       expect(store.put).to.have.been.calledWith(MarketEvent.prototype.key, MarketEvent.prototype.value)
     })
   })
-
-  describe('insecureIdentity', () => {
-    let insecureIdentity
-
-    beforeEach(() => {
-      insecureIdentity = RelayerClient.__get__('insecureIdentity')
-    })
-
-    it('creates an insecure identity', () => {
-      const res = insecureIdentity(logger)
-      expect(res).to.have.property('authorize')
-    })
-  })
 })
