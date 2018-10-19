@@ -5,6 +5,7 @@
  */
 
 const requiredGrpc = require('grpc')
+const protoLoader = require('@grpc/proto-loader')
 const express = require('express')
 require('colors')
 const fs = require('fs')
@@ -35,7 +36,16 @@ const middleware = (protoFiles, grpcLocation, credentials = requiredGrpc.credent
     }
     return value
   })
-  const protos = protoFiles.map(p => include ? grpc.load({ file: p, root: include }) : grpc.load(p))
+
+  const protos = protoFiles.map((p) => {
+    let packageDefinition
+    if (include) {
+      packageDefinition = protoLoader.loadSync(p, { includeDirs: [include] })
+    } else {
+      packageDefinition = protoLoader.loadSync(p)
+    }
+    grpc.loadPackageDefinition(packageDefinition)
+  })
   protoFiles
     .map(p => `${include}/${p}`)
     .map(p => schema.parse(fs.readFileSync(p)))

@@ -1,12 +1,12 @@
 const fs = require('fs')
 const grpc = require('grpc')
+const protoLoader = require('@grpc/proto-loader')
 
-const PROTO_FILE_TYPE = 'proto'
 const PROTO_OPTIONS = {
-  convertFieldsToCamelCase: true,
-  binaryAsBase64: true,
-  longsAsStrings: true,
-  enumsAsStrings: true
+  longs: String,
+  enums: String,
+  defaults: true,
+  oneofs: true
 }
 
 /**
@@ -21,7 +21,8 @@ function loadGrpcProto (protoPath) {
     throw new Error(`Proto does not exist at ${protoPath}. please run 'npm run build'`)
   }
 
-  return grpc.load(protoPath, PROTO_FILE_TYPE, PROTO_OPTIONS)
+  const packageDefinition = protoLoader.loadSync(protoPath, PROTO_OPTIONS)
+  return grpc.loadPackageDefinition(packageDefinition)
 }
 
 module.exports = loadGrpcProto

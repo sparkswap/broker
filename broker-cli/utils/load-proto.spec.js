@@ -1,36 +1,44 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
 
-const loadProto = rewire(path.resolve(__dirname, 'load-proto'))
+const loadProtoPath = path.resolve(__dirname, 'load-proto')
+const loadProto = rewire(loadProtoPath)
 
 describe('loadGrpcProto', () => {
   let fs
   let protoPath
-  let loadSpy
+  let loadStub
+  let loadSyncStub
+  let definition
 
   let revertFs
   let revertGrpc
+  let revertGrpcLoader
 
   afterEach(() => {
     revertFs()
     revertGrpc()
+    revertGrpcLoader()
   })
 
   beforeEach(() => {
-    loadSpy = sinon.spy()
+    loadStub = sinon.stub()
+    definition = sinon.stub()
+    loadSyncStub = sinon.stub().returns(definition)
     protoPath = 'broker.proto'
     fs = { existsSync: () => protoPath }
 
     revertFs = loadProto.__set__('fs', fs)
-    revertGrpc = loadProto.__set__('grpc', { load: loadSpy })
+    revertGrpc = loadProto.__set__('grpc', { loadPackageDefinition: loadStub })
+    revertGrpcLoader = loadProto.__set__('protoLoader', { loadSync: loadSyncStub })
   })
 
   it('calls an fs to get public key info', () => {
-    const fileType = loadProto.__get__('PROTO_FILE_TYPE')
     const options = loadProto.__get__('PROTO_OPTIONS')
     loadProto(protoPath)
 
-    expect(loadSpy).to.have.been.calledWith(protoPath, fileType, options)
+    expect(loadSyncStub).to.have.been.calledWith(protoPath, options)
+    expect(loadStub).to.have.been.calledWith(definition)
   })
 
   describe('fs failure', () => {

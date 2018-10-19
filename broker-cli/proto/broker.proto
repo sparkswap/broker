@@ -31,12 +31,13 @@
  * // The remainder of the docs assumes this setup step.
  * const grpc = require('grpc')
  * const PROTO_OPTIONS = {
- *   convertFieldsToCamelCase: true,
- *   binaryAsBase64: true,
- *   longsAsStrings: true,
- *   enumsAsStrings: true
+ *  longs: String,
+ *  enums: String,
+ *  defaults: true,
+ *  oneofs: true
  * }
- * const brokerProto = grpc.load('/path/to/broker.proto', 'proto', PROTO_OPTIONS)
+ * const packageDefinition = protoLoader.loadSync('/path/to/broker.proto', PROTO_OPTIONS)
+ * const brokerProto = grpc.loadPackageDefinition(packageDefinition)
  * ```
  *
  * ```shell

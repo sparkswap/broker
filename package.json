@@ -43,6 +43,7 @@
   },
   "homepage": "https://github.com/sparkswap/broker#readme",
   "dependencies": {
+    "@grpc/proto-loader": "0.3.0",
     "big-integer": "1.6.28",
     "big.js": "5.1.2",
     "body-parser": "1.18.3",
