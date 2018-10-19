@@ -743,11 +743,9 @@ describe('OrderStateMachine', () => {
 
   describe('#reject', () => {
     let osm
-    let onRejection
 
     beforeEach(async () => {
-      onRejection = sinon.stub()
-      osm = new OrderStateMachine({ store, logger, relayer, engines, onRejection })
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
       await osm.goto('created')
       osm.order = {
         key: 'fakeKey',
@@ -782,14 +780,6 @@ describe('OrderStateMachine', () => {
 
       expect(store.put).to.have.been.calledOnce()
       expect(store.put).to.have.been.calledWith(sinon.match(/^NO_ASSIGNED_ID\S+$/))
-    })
-
-    it('calls an onRejection function', async () => {
-      const err = new Error('fake')
-      await osm.reject(err)
-
-      expect(onRejection).to.have.been.calledOnce()
-      expect(onRejection).to.have.been.calledWith(err)
     })
   })
 

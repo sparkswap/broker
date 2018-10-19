@@ -130,20 +130,6 @@ describe('sparkswapd', () => {
     expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ relayerOptions: { relayerCertPath } }))
   })
 
-  it('provides a flag for relayer auth', () => {
-    argv.push('--disable-relayer-auth')
-
-    sparkswapd(argv)
-
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ relayerOptions: { disableRelayerAuth: true } }))
-  })
-
-  it('disables relayer auth unless the flag is provided', () => {
-    sparkswapd(argv)
-
-    expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ relayerOptions: { disableRelayerAuth: undefined } }))
-  })
-
   it('provides the markets', () => {
     const markets = 'BTC/LTC,ABC/XYZ'
     argv.push('--markets')

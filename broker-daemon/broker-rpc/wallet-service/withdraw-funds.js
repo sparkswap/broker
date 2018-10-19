@@ -30,7 +30,7 @@ async function withdrawFunds ({ params, relayer, logger, engines }, { WithdrawFu
 
   try {
     logger.info(`Attempting to withdraw ${amount} ${symbol} from wallet to ${address}`)
-    const txid = await engine.withdrawFunds(address, amountInSat)
+    const txid = await engine.withdrawFunds(address, amountInSat.toString())
     logger.info(`Successfully withdrew ${amount} ${symbol} from wallet to ${address}, transaction id: ${txid}`)
     return new WithdrawFundsResponse({txid})
   } catch (err) {

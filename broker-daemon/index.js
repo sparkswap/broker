@@ -91,14 +91,13 @@ class BrokerDaemon {
    * @param {Object} opts.relayerOptions
    * @param {String} opts.relayerOptions.relayerRpcHost - Host and port for the Relayer RPC
    * @param {String} opts.relayerOptions.certPath - Absolute path to the root certificate for the relayer
-   * @param {Boolean} [relayerOptions.disableRelayerAuth=false] - Disable SSL encryption and message signing in communications with the Relayer. DEVELOPMENT ONLY.
    * @return {BrokerDaemon}
    */
   constructor ({ privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {} }) {
     if (!privIdKeyPath) throw new Error('Private Key path is required to create a BrokerDaemon')
     if (!pubIdKeyPath) throw new Error('Public Key path is required to create a BrokerDaemon')
 
-    const { relayerRpcHost, relayerCertPath, disableRelayerAuth = false } = relayerOptions
+    const { relayerRpcHost, relayerCertPath } = relayerOptions
     this.idKeyPath = {
       privKeyPath: privIdKeyPath,
       pubKeyPath: pubIdKeyPath
@@ -116,7 +115,7 @@ class BrokerDaemon {
     this.logger = logger
     this.store = sublevel(level(this.dataDir))
     this.eventHandler = new EventEmitter()
-    this.relayer = new RelayerClient(this.idKeyPath, { host: this.relayerRpcHost, certPath: this.relayerCertPath, disableAuth: disableRelayerAuth }, this.logger)
+    this.relayer = new RelayerClient(this.idKeyPath, { host: this.relayerRpcHost, certPath: this.relayerCertPath }, this.logger)
 
     this.engines = new Map(Object.entries(engines || {}).map(([ symbol, engineConfig ]) => {
       return [ symbol, createEngineFromConfig(symbol, engines[symbol], { logger: this.logger }) ]

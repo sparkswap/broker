@@ -75,7 +75,6 @@ program
       relayerCertPath,
       idPrivkeyPath: privIdKeyPath,
       idPubkeyPath: pubIdKeyPath,
-      disableRelayerAuth,
       disableAuth,
       rpcPrivkeyPath: privRpcKeyPath,
       rpcPubkeyPath: pubRpcKeyPath,
@@ -114,8 +113,7 @@ program
       rpcPass,
       relayerOptions: {
         relayerRpcHost,
-        relayerCertPath,
-        disableRelayerAuth
+        relayerCertPath
       }
     }
     return new BrokerDaemon(brokerOptions).initialize()

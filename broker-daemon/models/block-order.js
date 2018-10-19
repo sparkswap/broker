@@ -1,5 +1,9 @@
-const { Big } = require('../utils')
+const { promisify } = require('util')
+const nano = require('nano-seconds')
+
+const { Big, nanoToDatetime } = require('../utils')
 const CONFIG = require('../config')
+const { BlockOrderNotFoundError } = require('./errors')
 
 /**
  * @class Model representing Block Orders
@@ -16,11 +20,12 @@ class BlockOrder {
    * @param  {String} options.status      Block Order status
    * @return {BlockOrder}
    */
-  constructor ({ id, marketName, side, amount, price, timeInForce, status = BlockOrder.STATUSES.ACTIVE }) {
+  constructor ({ id, marketName, side, amount, price, timeInForce, timestamp, status = BlockOrder.STATUSES.ACTIVE }) {
     this.id = id
     this.marketName = marketName
     this.price = price ? Big(price) : null
     this.status = status
+    this.timestamp = timestamp || nano.toString()
 
     if (!this.baseCurrencyConfig) {
       throw new Error(`No currency configuration is available for ${this.baseSymbol}`)
@@ -52,6 +57,10 @@ class BlockOrder {
 
     this.openOrders = []
     this.fills = []
+  }
+
+  get datetime () {
+    return nanoToDatetime(this.timestamp)
   }
 
   /**
@@ -142,7 +151,15 @@ class BlockOrder {
    * @return {String} Stringified JSON object
    */
   get value () {
-    const { marketName, side, amount, price, timeInForce, status } = this
+    const {
+      marketName,
+      side,
+      amount,
+      price,
+      timeInForce,
+      timestamp,
+      status
+    } = this
 
     return JSON.stringify({
       marketName,
@@ -150,6 +167,7 @@ class BlockOrder {
       amount: amount.toString(),
       price: price ? price.toString() : null,
       timeInForce,
+      timestamp,
       status
     })
   }
@@ -159,8 +177,17 @@ class BlockOrder {
    * @return {BlockOrder} Modified block order instance
    */
   fail () {
+    // TODO: Do we need to fail the remaining orders that are tied to this block order in the ordersStore?
     this.status = BlockOrder.STATUSES.FAILED
+    return this
+  }
 
+  /**
+   * Move the block order to a completed status
+   * @return {BlockOrder} Modified block order instance
+   */
+  complete () {
+    this.status = BlockOrder.STATUSES.COMPLETED
     return this
   }
 
@@ -169,8 +196,8 @@ class BlockOrder {
    * @return {BlockOrder} Modified block order instance
    */
   cancel () {
+    // TODO: Do we need to cancel the remaining orders that are tied to this block order in the ordersStore?
     this.status = BlockOrder.STATUSES.CANCELLED
-
     return this
   }
 
@@ -215,6 +242,8 @@ class BlockOrder {
       amount: this.amount.toFixed(16),
       timeInForce: this.timeInForce,
       status: this.status,
+      timestamp: this.timestamp,
+      datetime: this.datetime,
       openOrders: openOrders,
       fills: fills
     }
@@ -235,6 +264,8 @@ class BlockOrder {
       side: this.side,
       amount: this.amount.toFixed(16),
       timeInForce: this.timeInForce,
+      timestamp: this.timestamp,
+      datetime: this.datetime,
       status: this.status
     }
 
@@ -249,19 +280,53 @@ class BlockOrder {
 
   /**
    * Re-instantiate a previously saved BlockOrder
+   *
    * @param  {String} key   Key used to retrieve the BlockOrder
    * @param  {String} value Value returned from leveldb
    * @return {BlockOrder}   BlockOrder instance
    */
   static fromStorage (key, value) {
-    const { marketName, side, amount, price, timeInForce, status } = JSON.parse(value)
+    const {
+      marketName,
+      side,
+      amount,
+      price,
+      timeInForce,
+      timestamp,
+      status
+    } = JSON.parse(value)
+
     const id = key
 
     if (!BlockOrder.STATUSES[status]) {
       throw new Error(`Block Order status of ${status} is invalid`)
     }
 
-    return new this({ id, marketName, side, amount, price, timeInForce, status })
+    return new this({ id, marketName, side, amount, price, timeInForce, timestamp, status })
+  }
+
+  /**
+   * Grab a block order from a given sublevel
+   *
+   * @param {Sublevel} store block order sublevel store
+   * @param {String} blockOrderId
+   * @return {BlockOrder} BlockOrder instance
+   * @throws {Error} store is null
+   * @throws {BlockOrderNotFoundError} block order could not be found
+   */
+  static async fromStore (store, blockOrderId) {
+    if (!store) throw new Error('[BlockOrder#fromStore] No store is defined')
+
+    try {
+      var value = await promisify(store.get)(blockOrderId)
+    } catch (e) {
+      if (e.notFound) {
+        throw new BlockOrderNotFoundError(blockOrderId, e)
+      }
+      throw e
+    }
+
+    return BlockOrder.fromStorage(blockOrderId, value)
   }
 }
 
@@ -279,6 +344,10 @@ BlockOrder.STATUSES = Object.freeze({
   CANCELLED: 'CANCELLED',
   COMPLETED: 'COMPLETED',
   FAILED: 'FAILED'
+})
+
+BlockOrder.ERRORS = Object.freeze({
+  BlockOrderNotFoundError
 })
 
 module.exports = BlockOrder

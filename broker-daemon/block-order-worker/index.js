@@ -1,10 +1,14 @@
 const EventEmitter = require('events')
 const { promisify } = require('util')
-const safeid = require('generate-safe-id')
+
 const { BlockOrder, Order, Fill } = require('../models')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
-const { BlockOrderNotFoundError } = require('./errors')
-const { Big, getRecords, SublevelIndex } = require('../utils')
+const {
+  Big,
+  getRecords,
+  SublevelIndex,
+  generateId
+} = require('../utils')
 
 /**
  * @class Create and work Block Orders
@@ -12,6 +16,7 @@ const { Big, getRecords, SublevelIndex } = require('../utils')
 class BlockOrderWorker extends EventEmitter {
   /**
    * Create a new BlockOrderWorker instance
+   *
    * @param  {Map<String, Orderbook>} options.orderbooks Collection of all active Orderbooks
    * @param  {sublevel}               options.store      Sublevel in which to store block orders and child orders
    * @param  {Object}                 options.logger
@@ -21,6 +26,7 @@ class BlockOrderWorker extends EventEmitter {
    */
   constructor ({ orderbooks, store, logger, relayer, engines }) {
     super()
+
     this.orderbooks = orderbooks
     this.store = store
     this.ordersStore = store.sublevel('orders')
@@ -41,14 +47,6 @@ class BlockOrderWorker extends EventEmitter {
       // only index orders that have a swap hash defined
       filterOrdersWithHash
     )
-
-    this.on('BlockOrder:create', async (blockOrder) => {
-      try {
-        await this.workBlockOrder(blockOrder)
-      } catch (err) {
-        this.failBlockOrder(blockOrder.id, err)
-      }
-    })
   }
 
   /**
@@ -60,7 +58,9 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
-   * Create a new block order
+   * Creates a new block order and registers events for all orders under a block order
+   *
+   * @param {Object} options
    * @param  {String} options.marketName  Name of the market to creat the block order in (e.g. BTC/LTC)
    * @param  {String} options.side        Side of the market to take (e.g. BID or ASK)
    * @param  {String} options.amount      Amount of base currency (in base units) to transact
@@ -69,7 +69,7 @@ class BlockOrderWorker extends EventEmitter {
    * @return {String}                     ID for the created Block Order
    */
   async createBlockOrder ({ marketName, side, amount, price, timeInForce }) {
-    const id = safeid()
+    const id = generateId()
 
     const orderbook = this.orderbooks.get(marketName)
 
@@ -91,7 +91,11 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
 
-    this.emit('BlockOrder:create', blockOrder)
+    // Start working the block order asynchronously to prevent blocking the creation
+    // of 'other' block orders
+    this.workBlockOrder(blockOrder).catch(err => {
+      this.failBlockOrder(blockOrder.id, err)
+    })
 
     return id
   }
@@ -104,19 +108,7 @@ class BlockOrderWorker extends EventEmitter {
   async getBlockOrder (blockOrderId) {
     this.logger.info('Getting block order', { id: blockOrderId })
 
-    let value
-
-    try {
-      value = await promisify(this.store.get)(blockOrderId)
-    } catch (e) {
-      if (e.notFound) {
-        throw new BlockOrderNotFoundError(blockOrderId, e)
-      } else {
-        throw e
-      }
-    }
-
-    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+    const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
 
     const { logger } = this
     const openOrders = await OrderStateMachine.getAll(
@@ -146,17 +138,7 @@ class BlockOrderWorker extends EventEmitter {
   async cancelBlockOrder (blockOrderId) {
     this.logger.info('Cancelling block order ', { id: blockOrderId })
 
-    try {
-      var value = await promisify(this.store.get)(blockOrderId)
-    } catch (e) {
-      if (e.notFound) {
-        throw new BlockOrderNotFoundError(blockOrderId, e)
-      } else {
-        throw e
-      }
-    }
-
-    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+    const blockOrder = BlockOrder.fromStore(this.store, blockOrderId)
 
     const orders = await getRecords(
       this.ordersStore,
@@ -198,8 +180,6 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info('Moved block order to cancelled state', { id: blockOrder.id })
 
-    this.emit('BlockOrder:cancel', blockOrder)
-
     return blockOrder
   }
 
@@ -222,25 +202,11 @@ class BlockOrderWorker extends EventEmitter {
    * @return {void}
    */
   async failBlockOrder (blockOrderId, err) {
-    // TODO: expose the stack trace of err because it is hard to troubleshoot without it
-    this.logger.error('Error encountered while working block', { id: blockOrderId, error: err.message })
+    this.logger.error('Error encountered while working block', { id: blockOrderId, error: err.stack })
     this.logger.info('Moving block order to failed state', { id: blockOrderId })
 
     // TODO: move status to its own sublevel so it can be updated atomically
-
-    try {
-      var value = await promisify(this.store.get)(blockOrderId)
-    } catch (e) {
-      // TODO: throw here? what's the protocol?
-      if (e.notFound) {
-        this.logger.error('Attempted to move a block order to a failed state that does not exist', { id: blockOrderId })
-      } else {
-        this.logger.error('Error while retrieving block order to move it to a failed state', { id: blockOrderId, error: e.message })
-        throw e
-      }
-    }
-
-    const blockOrder = BlockOrder.fromStorage(blockOrderId, value)
+    const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
 
     // TODO: fail the remaining orders that are tied to this block order in the ordersStore?
     blockOrder.fail()
@@ -248,8 +214,6 @@ class BlockOrderWorker extends EventEmitter {
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
     this.logger.info('Moved block order to failed state', { id: blockOrderId })
-
-    this.emit('BlockOrder:fail', blockOrder)
   }
 
   /**
@@ -286,6 +250,7 @@ class BlockOrderWorker extends EventEmitter {
     const { orders, depth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString() })
 
     if (Big(depth).lt(targetDepth)) {
+      this.logger.error(`Insufficient depth in ${blockOrder.inverseSide} to fill ${targetDepth.toString()}`, { depth, targetDepth })
       throw new Error(`Insufficient depth in ${blockOrder.inverseSide} to fill ${targetDepth.toString()}`)
     }
 
@@ -317,6 +282,43 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
+   * Move a block order to a completed state if all orders have been completed
+   * @todo What should we do if this method fails, but the order itself is completed?
+   * @param {String} blockOrderId
+   */
+  async checkBlockOrderCompletion (blockOrderId) {
+    this.logger.info('Attempting to put block order in a completed state', { id: blockOrderId })
+
+    const blockOrder = await this.getBlockOrder(blockOrderId)
+
+    // check the fillamount on each collection of state machines from the block order
+    // and make sure that either is equal to how much we are trying to fill.
+    let totalFilled = Big(0)
+    totalFilled = blockOrder.fills.reduce((acc, fsm) => acc.plus(fsm.fill.fillAmount), totalFilled)
+    totalFilled = blockOrder.openOrders.reduce((acc, osm) => {
+      // If the order has not been filled yet, then the `fillAmount` will be undefined
+      // so we instead default to 0
+      return acc.plus(osm.order.fillAmount || 0)
+    }, totalFilled)
+
+    this.logger.debug('Current total filled amount: ', { totalFilled, blockOrderAmount: blockOrder.baseAmount })
+
+    const stillBeingFilled = totalFilled.lt(blockOrder.baseAmount)
+
+    // An order is only completed if all orders underneath the blockorder are out of
+    // an `ACTIVE` state and it is entirely filled, however we only check if the order is
+    // filled here.
+    // TODO: check to make sure that blockorder is not in a weird state before completing
+    if (!stillBeingFilled) {
+      blockOrder.complete()
+      await promisify(this.store.put)(blockOrder.key, blockOrder.value)
+      this.logger.info('Moved block order to completed state', { blockOrderId })
+    } else {
+      this.logger.debug('Block order is not ready to be completed', { blockOrderId })
+    }
+  }
+
+  /**
    * Place an order for a block order of a given amount
    * @param  {BlockOrder} blockOrder Block Order to place an order on behalf of
    * @param  {String} amount     Int64 amount, in base currency's base units to place the order for
@@ -340,21 +342,38 @@ class BlockOrderWorker extends EventEmitter {
 
     this.logger.info('Creating order for BlockOrder', { blockOrderId: blockOrder.id })
 
-    const order = await OrderStateMachine.create(
+    const osm = await OrderStateMachine.create(
       {
         relayer,
         engines,
         logger,
-        store,
-        onRejection: (err) => {
-          this.failBlockOrder(blockOrder.id, err)
-        }
+        store
       },
       blockOrder.id,
       { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
     )
 
-    this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: order.orderId })
+    // We are hooking into the complete lifecycle event of an order state machine to trigger
+    // the completion of a blockorder
+    osm.once('complete', async () => {
+      this.checkBlockOrderCompletion(blockOrder.id)
+        .catch(e => {
+          this.logger.error(`BlockOrder failed to be completed from order`, { id: blockOrder.id, error: e.stack })
+        })
+        .then(() => osm.removeAllListeners())
+    })
+
+    // We are hooking into the reject lifecycle event of an order state machine to trigger
+    // the failure of a blockorder
+    osm.once('reject', async () => {
+      this.failBlockOrder(blockOrder.id, osm.order.error)
+        .catch(e => {
+          this.logger.error(`BlockOrder failed on setting a failed status from order`, { id: blockOrder.id, error: e.stack })
+        })
+        .then(() => osm.removeAllListeners())
+    })
+
+    this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: osm.order.orderId })
   }
 
   /**
@@ -383,7 +402,7 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No engine available for ${counterSymbol}`)
     }
 
-    const promisedFills = orders.map((order, index) => {
+    const promisedFills = orders.map(async (order) => {
       const depthRemaining = targetDepth.minus(currentDepth)
 
       // if we have already reached our target depth, create no further fills
@@ -397,21 +416,39 @@ class BlockOrderWorker extends EventEmitter {
       // track our current depth so we know what to fill on the next order
       currentDepth = currentDepth.plus(fillAmount)
 
-      return FillStateMachine.create(
+      const fsm = await FillStateMachine.create(
         {
           relayer,
           engines,
           logger,
-          store,
-          onRejection: (err) => {
-            // TODO: continue working the order after individual fills fail
-            this.failBlockOrder(blockOrder.id, err)
-          }
+          store
         },
         blockOrder.id,
         order,
         { fillAmount }
       )
+
+      // We are hooking into the execute lifecycle event of a fill state machine to trigger
+      // the completion of a blockorder
+      fsm.once('execute', () => {
+        this.checkBlockOrderCompletion(blockOrder.id)
+          .catch(e => {
+            this.logger.error(`BlockOrder failed to be completed from fill`, { id: blockOrder.id, error: e.stack })
+          })
+          .then(() => fsm.removeAllListeners())
+      })
+
+      // We are hooking into the reject lifecycle event of a fill state machine to trigger
+      // the failure of a blockorder
+      fsm.once('reject', () => {
+        this.failBlockOrder(blockOrder.id, fsm.fill.error)
+          .catch(e => {
+            this.logger.error(`BlockOrder failed on setting a failed status from fill`, { id: blockOrder.id, error: e.stack })
+          })
+          .then(() => fsm.removeAllListeners())
+      })
+
+      return fsm
     })
 
     // filter out null values, they are orders we decided not to fill

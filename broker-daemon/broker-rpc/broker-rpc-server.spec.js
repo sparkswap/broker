@@ -19,6 +19,10 @@ describe('BrokerRPCServer', () => {
   let pathResolve
   let protoPath
   let engines
+  let httpServer
+  let grpcGateway
+  let router
+  let httpServerStub
 
   beforeEach(() => {
     adminService = {
@@ -63,6 +67,15 @@ describe('BrokerRPCServer', () => {
     BrokerRPCServer.__set__('grpc', {
       Server: rpcServer
     })
+
+    router = function router (req, res, next) {
+      router.handle(req, res, next)
+    }
+    httpServerStub = {listen: sinon.stub()}
+    httpServer = sinon.stub().returns(httpServerStub)
+    grpcGateway = sinon.stub().returns(router)
+    BrokerRPCServer.__set__('grpcGateway', grpcGateway)
+    BrokerRPCServer.__set__('createHttpServer', httpServer)
 
     engines = new Map()
 
@@ -128,6 +141,17 @@ describe('BrokerRPCServer', () => {
       expect(rpcServer).to.have.been.calledWithNew()
       expect(server).to.have.property('server')
       expect(server.server).to.be.equal(instanceServer)
+    })
+
+    it('creates an http server', () => {
+      const server = new BrokerRPCServer()
+      const rpcAddress = BrokerRPCServer.__get__('DEFAULT_RPC_ADDRESS')
+      console.log(server.protoPath)
+      expect(rpcServer).to.have.been.calledOnce()
+      expect(rpcServer).to.have.been.calledWithNew()
+      expect(server).to.have.property('httpServer')
+      expect(httpServer).to.have.been.calledWith(server.protoPath, rpcAddress)
+      expect(server.httpServer).to.be.equal(httpServerStub)
     })
 
     it('creates a admin service', () => {
@@ -264,6 +288,7 @@ describe('BrokerRPCServer', () => {
         bind: bindStub,
         start: serverStub
       }
+      server.httpServer = {listen: sinon.stub()}
     })
 
     beforeEach(() => {
@@ -280,6 +305,17 @@ describe('BrokerRPCServer', () => {
 
     it('starts a server', () => {
       expect(serverStub).to.have.been.calledOnce()
+    })
+
+    it('starts a http server', () => {
+      expect(server.httpServer.listen).to.have.been.calledOnce()
+    })
+
+    it('throws an error if disableAuth is true and the server is in production', () => {
+      const revert = BrokerRPCServer.__set__('IS_PRODUCTION', true)
+      server.disableAuth = true
+      expect(() => server.listen(host)).to.throw('Cannot disable TLS in production')
+      revert()
     })
   })
 
@@ -326,13 +362,6 @@ describe('BrokerRPCServer', () => {
       server.disableAuth = true
       server.createCredentials()
       expect(loggerWarnStub).to.have.been.calledWith(sinon.match('DISABLE_AUTH is set to TRUE'))
-    })
-
-    it('throws an error if disableAuth is true and the server is in production', () => {
-      const revert = BrokerRPCServer.__set__('IS_PRODUCTION', true)
-      server.disableAuth = true
-      expect(() => server.createCredentials()).to.throw('Cannot disable SSL in production')
-      revert()
     })
 
     it('reads a private key path for ssl generation', () => {

@@ -8,7 +8,7 @@ const OrderBookService = require('./orderbook-service')
 const WalletService = require('./wallet-service')
 const InfoService = require('./info-service')
 
-const { createBasicAuth } = require('../utils')
+const { createBasicAuth, createHttpServer } = require('../utils')
 
 /**
  * @constant
@@ -26,6 +26,23 @@ const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
  */
 const IS_PRODUCTION = (process.env.NODE_ENV === 'production')
 
+/**
+ * Port for express httpserver to listen on
+ *
+ * @constant
+ * @type {String}
+ * @default
+ */
+const HTTP_PORT = '27592'
+
+/**
+ * Default host and port for the BrokerRPCServer to listen on
+ *
+ * @constant
+ * @type {String}
+ * @default
+ */
+const DEFAULT_RPC_ADDRESS = '0.0.0.0:27492'
 /**
  * @class User-facing gRPC server for controling the BrokerDaemon
  *
@@ -58,6 +75,7 @@ class BrokerRPCServer {
     this.protoPath = path.resolve(BROKER_PROTO_PATH)
 
     this.server = new grpc.Server()
+    this.httpServer = createHttpServer(this.protoPath, DEFAULT_RPC_ADDRESS, { disableAuth, privKeyPath, pubKeyPath, logger })
 
     this.adminService = new AdminService(this.protoPath, { logger, relayer, engines, auth: this.auth })
     this.server.addService(this.adminService.definition, this.adminService.implementation)
@@ -82,9 +100,18 @@ class BrokerRPCServer {
    * @returns {void}
    */
   listen (host) {
+    if (IS_PRODUCTION && this.disableAuth) {
+      throw new Error(`Cannot disable TLS in production. Set DISABLE_AUTH to FALSE.`)
+    }
+
     const rpcCredentials = this.createCredentials()
     this.server.bind(host, rpcCredentials)
     this.server.start()
+
+    this.httpServer.listen(HTTP_PORT, () => {
+      const protocol = this.disableAuth ? 'http' : 'https'
+      this.logger.info(`Listening on ${protocol}://0.0.0.0:${HTTP_PORT}`)
+    })
   }
 
   /**
@@ -93,10 +120,6 @@ class BrokerRPCServer {
    * @return {grpc.Credentials}
    */
   createCredentials () {
-    if (IS_PRODUCTION && this.disableAuth) {
-      throw new Error(`Cannot disable SSL in production. Set DISABLE_AUTH to FALSE.`)
-    }
-
     if (this.disableAuth) {
       this.logger.warn('DISABLE_AUTH is set to TRUE. Connections to the broker will be unencrypted. This is suitable only in development.')
       return grpc.ServerCredentials.createInsecure()
@@ -105,7 +128,7 @@ class BrokerRPCServer {
     const key = readFileSync(this.privKeyPath)
     const cert = readFileSync(this.pubKeyPath)
 
-    this.logger.debug(`Securing gRPC connections with SSL: key: ${this.privKeyPath}, cert: ${this.pubKeyPath}`)
+    this.logger.debug(`Securing gRPC connections with TLS: key: ${this.privKeyPath}, cert: ${this.pubKeyPath}`)
 
     return grpc.ServerCredentials.createSsl(
       null, // no root cert needed for server credentials
