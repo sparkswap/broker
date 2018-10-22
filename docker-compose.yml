@@ -96,7 +96,6 @@ services:
       - DEBUG=debug
       - DATA_DIR=/data
       - RPC_LISTEN=0.0.0.0
-      - "MINING_ADDRESS=$MINING_ADDRESS"
     networks:
       - broker
     logging:
@@ -140,7 +139,6 @@ services:
       - DEBUG=debug
       - DATA_DIR=/data
       - RPC_LISTEN=0.0.0.0
-      - "MINING_ADDRESS=$MINING_ADDRESS"
     networks:
       - broker
     logging:
