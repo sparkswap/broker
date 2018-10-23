@@ -24,6 +24,40 @@ services:
       # WARNING: only disable Relayer SSL/AUTH during development
       - DISABLE_RELAYER_AUTH=false
 
-volumes:
-  shared:
-  sparkswapd:
+  btcd:
+    image: sparkswap_btcd:latest
+    volumes:
+      - shared:/shared
+      - bitcoin:/data
+    environment:
+      - RPC_USER=${BTC_RPC_USER}
+      - RPC_PASS=${BTC_RPC_PASS}
+      - NETWORK=${NETWORK}
+      - DEBUG=info
+      - DATA_DIR=/data
+      - LOG_DIR=/data
+      - RPC_KEY=/secure/rpc.key
+      - RPC_CERT=/shared/rpc-btc.cert
+      - RPC_LISTEN=0.0.0.0
+    networks:
+      - broker
+    entrypoint: ["./start-btcd.sh"]
+
+  ltcd:
+    image: sparkswap_ltcd:latest
+    volumes:
+      - shared:/shared
+      - litecoin:/data
+    environment:
+      - RPC_USER=${LTC_RPC_USER}
+      - RPC_PASS=${LTC_RPC_PASS}
+      - NETWORK=${NETWORK}
+      - DEBUG=info
+      - DATA_DIR=/data
+      - LOG_DIR=/data
+      - RPC_KEY=/secure/rpc.key
+      - RPC_CERT=/shared/rpc-ltc.cert
+      - RPC_LISTEN=0.0.0.0
+    networks:
+      - broker
+    entrypoint: ["./start-ltcd.sh"]

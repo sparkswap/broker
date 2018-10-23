@@ -41,9 +41,9 @@ rm -rf ./proto/.git
 # for a local SimNet network
 if [ "$ARG" == "local" ]; then
   echo "Copying env simnet local file to .env"
-  cp ./.env-simnet-local-sample ./.env
+  cp ./.env-simnet-sample ./.env
   echo "Copying dev file to 'docker-compose.override.yml'"
-  cp ./docker-compose.dev.yml ./docker-compose.override.yml
+  cp ./docker-compose.simnet.yml ./docker-compose.override.yml
 elif [ "$ARG" == "regtest" ] || [ "$ARG" == "testnet" ] || [ $ARG == "mainnet" ]; then
   echo "Copying env $ARG local file to .env"
   cp ./.env-$ARG-sample ./.env
