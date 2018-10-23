@@ -93,7 +93,7 @@ services:
       - RPC_USER=${BTC_RPC_USER}
       - RPC_PASS=${BTC_RPC_PASS}
       - NETWORK=${NETWORK}
-      - DEBUG=debug
+      - DEBUG=info
       - DATA_DIR=/data
       - RPC_LISTEN=0.0.0.0
     networks:
@@ -136,7 +136,7 @@ services:
       - RPC_USER=${LTC_RPC_USER}
       - RPC_PASS=${LTC_RPC_PASS}
       - NETWORK=${NETWORK}
-      - DEBUG=debug
+      - DEBUG=info
       - DATA_DIR=/data
       - RPC_LISTEN=0.0.0.0
     networks:
