@@ -44,7 +44,7 @@ if [ "$ARG" == "local" ]; then
   cp ./.env-simnet-sample ./.env
   echo "Copying dev file to 'docker-compose.override.yml'"
   cp ./docker-compose.simnet.yml ./docker-compose.override.yml
-elif [ "$ARG" == "regtest" ] || [ "$ARG" == "testnet" ] || [ $ARG == "mainnet" ]; then
+elif [ "$ARG" == "regtest" ] || [ "$ARG" == "testnet" ]; then
   echo "Copying env $ARG local file to .env"
   cp ./.env-$ARG-sample ./.env
   echo "Copying $ARG dev file to 'docker-compose.override.yml'"
