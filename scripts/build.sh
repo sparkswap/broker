@@ -44,18 +44,13 @@ if [ "$ARG" == "local" ]; then
   cp ./.env-simnet-sample ./.env
   echo "Copying dev file to 'docker-compose.override.yml'"
   cp ./docker-compose.simnet.yml ./docker-compose.override.yml
-elif [ "$ARG" == "regtest" ] || [ "$ARG" == "testnet" ]; then
-  echo "Copying env $ARG local file to .env"
-  cp ./.env-$ARG-sample ./.env
-  echo "Copying $ARG dev file to 'docker-compose.override.yml'"
-  cp ./docker-compose.$ARG.yml ./docker-compose.override.yml
 elif [ -f docker-compose.override.yml ]; then
   # Let the user know that an override file exists which may mean that the user
   # will have settings they do not expect
   echo "A 'docker-compose.override.yml' file exists, but you are not using a supported"
   echo "environment: local or regtest"
   echo ""
-  echo "WARNING: This may add unwanted settings to the relayer that could effect how your daemon runs."
+  echo "WARNING: This may add unwanted settings to the broker that could effect how your daemon runs."
   echo ""
 fi
 
