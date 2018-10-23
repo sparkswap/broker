@@ -24,22 +24,6 @@ services:
       # WARNING: only disable Relayer SSL/AUTH during development
       - DISABLE_RELAYER_AUTH=false
 
-  lnd_btc
-    depends_on:
-      - bitcoind
-
-  lnd_ltc:
-    depends_on:
-      - litecoind
-
-  bitcoind:
-    ports:
-      - '18443:18443'
-
-  litecoind:
-    ports:
-      - '19443:19443'
-
 volumes:
   shared:
   sparkswapd:
