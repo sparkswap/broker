@@ -354,7 +354,7 @@ module.exports = (program) => {
     .help(`Available Commands: ${Object.values(SUPPORTED_COMMANDS).join(', ')}`)
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
-    .option('--rpc-address [address]', 'Location of the RPC server to use.', validations.isHost)
+    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .option('--wallet-address [address]', 'Address to send the coins to', validations.isHost)
     .action(async (args, opts, logger) => {

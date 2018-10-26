@@ -46,6 +46,7 @@
     "big-integer": "1.6.28",
     "big.js": "5.1.2",
     "body-parser": "1.18.3",
+    "caporal": "mattallty/Caporal.js#v1.0.0",
     "colors": "1.2.4",
     "express": "4.16.3",
     "grpc": "1.11.3",
@@ -61,6 +62,7 @@
     "pm2": "2.10.3",
     "protocol-buffers-schema": "3.3.2",
     "through2": "2.0.3",
+    "validator": "10.2.0",
     "winston": "3.0.0-rc6"
   },
   "devDependencies": {
