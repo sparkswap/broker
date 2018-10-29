@@ -55,6 +55,7 @@ const middleware = (protoFiles, grpcLocation, credentials = requiredGrpc.credent
                 router[httpMethod](convertUrl(m.options['google.api.http'][httpMethod]), (req, res) => {
                   const params = convertParams(req, m.options['google.api.http'][httpMethod])
                   const meta = convertHeaders(req.headers, grpc)
+
                   if (debug) {
                     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
                     console.log(`GATEWAY: ${(new Date()).toISOString().yellow} (${ip.blue}): /${pkg.replace(/\./g, '.'.white).blue}.${svc.blue}/${m.name.blue}(${params})`)
