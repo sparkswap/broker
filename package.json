@@ -15,7 +15,7 @@
     "dist-cli": "npm run broker-proto && bash ./scripts/publish-broker-cli.sh",
     "format": "standard --fix",
     "pretest": "npm run format; exit 0",
-    "test": "NODE_PATH=. mocha 'broker-cli/**/**/*.spec.js' 'broker-daemon/**/**/*.spec.js'",
+    "test": "NODE_PATH=. mocha 'broker-cli/{,!(node_modules)/**}/**/*.spec.js' 'broker-daemon/**/**/*.spec.js'",
     "coverage": "nyc npm test",
     "ci-test": "npm run format && npm test",
     "start-sparkswapd": "pm2-docker pm2.json --watch",
@@ -30,6 +30,10 @@
     "env": [
       "mocha",
       "chai"
+    ],
+    "ignore": [
+      "broker-cli/node_modules/*",
+      "node_modules/*"
     ]
   },
   "repository": {
