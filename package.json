@@ -1,8 +1,8 @@
 {
   "name": "broker",
   "version": "0.1.0-alpha-preview",
-  "description": "Broker software to interact with the Sparkswap Relayer ",
-  "main": "index.js",
+  "description": "Broker software to interact with the Sparkswap Relayer",
+  "main": "src/index.js",
   "config": {
     "project_name": "broker",
     "daemon": "sparkswapd"
@@ -15,7 +15,7 @@
     "dist-cli": "npm run broker-proto && bash ./scripts/publish-broker-cli.sh",
     "format": "standard --fix",
     "pretest": "npm run format; exit 0",
-    "test": "NODE_PATH=. mocha 'broker-cli/**/**/*.spec.js' 'broker-daemon/**/**/*.spec.js'",
+    "test": "NODE_PATH=. mocha 'broker-cli/{,!(node_modules)/**}/**/*.spec.js' 'broker-daemon/**/**/*.spec.js'",
     "coverage": "nyc npm test",
     "ci-test": "npm run format && npm test",
     "start-sparkswapd": "pm2-docker pm2.json --watch",
@@ -36,7 +36,7 @@
     "type": "git",
     "url": "git+https://github.com/sparkswap/broker.git"
   },
-  "author": "",
+  "author": "sparkswap",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/sparkswap/broker/issues"
