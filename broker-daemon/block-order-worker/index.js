@@ -138,7 +138,7 @@ class BlockOrderWorker extends EventEmitter {
   async cancelBlockOrder (blockOrderId) {
     this.logger.info('Cancelling block order ', { id: blockOrderId })
 
-    const blockOrder = BlockOrder.fromStore(this.store, blockOrderId)
+    const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
 
     const orders = await getRecords(
       this.ordersStore,
