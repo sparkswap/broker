@@ -75,14 +75,10 @@ class Index {
   range (opts = {}) {
     if (opts.gt) {
       opts.gt = `${opts.gt}${this.delimiter}${LOWER_BOUND}`
-    } else if (opts.gte) {
-      opts.gte = `${opts.gte}${this.delimiter}${LOWER_BOUND}`
     }
 
     if (opts.lt) {
       opts.lt = `${opts.lt}${this.delimiter}${UPPER_BOUND}`
-    } else if (opts.lte) {
-      opts.lte = `${opts.lte}${this.delimiter}${UPPER_BOUND}`
     }
 
     return opts
@@ -94,9 +90,7 @@ class Index {
    * @return {Readable}    Readable stream
    */
   createReadStream (opts) {
-    const optionsToUpdate = Object.assign({}, opts)
-    const updatedOptions = this.range(optionsToUpdate)
-    const stream = this._index.createReadStream(updatedOptions)
+    const stream = this._index.createReadStream(opts)
     // through2 - the lib used below - overrides function context to provide access to `this.push` to push
     // objects into the downstream stream. In order to get access to `#_isMarkedForDeletion`, we need to
     // reference the Index context in a local variable
