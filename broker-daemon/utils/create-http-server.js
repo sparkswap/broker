@@ -6,6 +6,7 @@ const fs = require('fs')
 const grpc = require('grpc')
 
 const grpcGateway = require('./grpc-gateway')
+const corsMiddleware = require('./enable-cors')
 
 /**
  * creates an express app/server with the given protopath and rpcAddress
@@ -18,12 +19,16 @@ const grpcGateway = require('./grpc-gateway')
  * @param {String} pubKeyPath
  * @return {ExpressApp}
  */
-function createHttpServer (protoPath, rpcAddress, { disableAuth = false, privKeyPath, pubKeyPath, logger }) {
+function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableCors = false, privKeyPath, pubKeyPath, logger }) {
   const app = express()
 
   app.use(helmet())
   app.use(bodyParser.json())
   app.use(bodyParser.urlencoded({ extended: false }))
+
+  if (enableCors) {
+    app.use(corsMiddleware())
+  }
 
   if (disableAuth) {
     app.use('/', grpcGateway([`/${protoPath}`], rpcAddress))

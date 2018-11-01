@@ -9,6 +9,7 @@ describe('createHttpServer', () => {
   let expressStub
   let bodyParserStub
   let grpcGatewayStub
+  let corsMiddlewareStub
   let express
   let options
 
@@ -25,10 +26,12 @@ describe('createHttpServer', () => {
       expressStub = { use: sinon.stub() }
       bodyParserStub = { json: sinon.stub(), urlencoded: sinon.stub() }
       grpcGatewayStub = sinon.stub().withArgs([`/${protoPath}`], rpcAddress)
+      corsMiddlewareStub = sinon.stub()
       express = sinon.stub().returns(expressStub)
       createHttpServer.__set__('express', express)
       createHttpServer.__set__('bodyParser', bodyParserStub)
       createHttpServer.__set__('grpcGateway', grpcGatewayStub)
+      createHttpServer.__set__('corsMiddleware', corsMiddlewareStub)
     })
 
     beforeEach(() => {
@@ -86,11 +89,13 @@ describe('createHttpServer', () => {
       expressStub = { use: sinon.stub() }
       bodyParserStub = { json: sinon.stub(), urlencoded: sinon.stub() }
       grpcGatewayStub = sinon.stub().withArgs([`/${protoPath}`], rpcAddress)
+      corsMiddlewareStub = sinon.stub()
       express = sinon.stub().returns(expressStub)
 
       createHttpServer.__set__('express', express)
       createHttpServer.__set__('bodyParser', bodyParserStub)
       createHttpServer.__set__('grpcGateway', grpcGatewayStub)
+      createHttpServer.__set__('corsMiddleware', corsMiddlewareStub)
       createHttpServer.__set__('grpc', {
         credentials: {
           createSsl: sinon.stub().returns(channelCredentialStub)
@@ -139,6 +144,40 @@ describe('createHttpServer', () => {
 
     it('returns an https app', () => {
       expect(createHttpServer(protoPath, rpcAddress, options)).to.eql(httpsApp)
+    })
+  })
+
+  describe('cors', () => {
+    let fakeCors = () => {}
+
+    beforeEach(() => {
+      options = {
+        disableAuth: true,
+        enableCors: true,
+        privKeyPath: 'priv-key',
+        pubKeyPath: 'pub-key',
+        logger: {}
+      }
+      protoPath = '/path/to/proto'
+      rpcAddress = '0.0.0.0:8080'
+      expressStub = { use: sinon.stub() }
+      bodyParserStub = { json: sinon.stub(), urlencoded: sinon.stub() }
+      grpcGatewayStub = sinon.stub().withArgs([`/${protoPath}`], rpcAddress)
+      corsMiddlewareStub = sinon.stub().returns(fakeCors)
+      express = sinon.stub().returns(expressStub)
+      createHttpServer.__set__('express', express)
+      createHttpServer.__set__('bodyParser', bodyParserStub)
+      createHttpServer.__set__('grpcGateway', grpcGatewayStub)
+      createHttpServer.__set__('corsMiddleware', corsMiddlewareStub)
+    })
+
+    beforeEach(() => {
+      createHttpServer(protoPath, rpcAddress, options)
+    })
+
+    it('adds cors to all routes', () => {
+      expect(corsMiddlewareStub).to.have.been.calledOnce()
+      expect(expressStub.use).to.have.been.calledWith(fakeCors)
     })
   })
 })
