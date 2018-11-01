@@ -1,6 +1,10 @@
+const EventEmitter = require('events')
+const { MarketEvent } = require('../models')
+const { migrateStore } = require('../utils')
+
 /**
  * @class Watch a relayer market and put the events into a data store
- * It emits two events: 
+ * It emits two events:
  * - `sync` when it is caught up to the market
  * - `end` when it is no longer connected to the market
  */
@@ -19,7 +23,7 @@ class MarketWatcher extends EventEmitter {
     this.store = store
     this.migrating = null
     this.logger = logger
-    this.RESPONSE_TYPES
+    this.RESPONSE_TYPES = RESPONSE_TYPES
 
     this.setupListeners()
   }
@@ -45,7 +49,7 @@ class MarketWatcher extends EventEmitter {
       this.emit('end', err)
     })
 
-    this.watcher.on('data', (repsonse) => {
+    this.watcher.on('data', (response) => {
       this.handleResponse(response)
     })
   }
@@ -93,7 +97,6 @@ class MarketWatcher extends EventEmitter {
       this.logger.debug(`Waiting for migration to finish before acting on new response`)
       await this.migrating
     }
-    return
   }
 
   /**
@@ -116,7 +119,7 @@ class MarketWatcher extends EventEmitter {
    */
   upToDate () {
     this.logger.debug(`Up to date with market`)
-    this.emit('sync')   
+    this.emit('sync')
   }
 }
 

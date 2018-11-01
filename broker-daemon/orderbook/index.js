@@ -26,7 +26,7 @@ class Orderbook {
     return this.marketName.split('/')[1]
   }
 
-  initialize () {
+  async initialize () {
     this.logger.info(`Initializing market ${this.marketName}...`)
     this.synced = false
 
@@ -47,7 +47,7 @@ class Orderbook {
     })
 
     watcher.on('end', (error) => {
-      this.logger.info(`Market ${this.marketName} unavailable, retrying in 5s` { error })
+      this.logger.info(`Market ${this.marketName} unavailable, retrying in 5s`, { error })
       setTimeout(() => {
         this.initialize()
       }, 5000)

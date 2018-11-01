@@ -1,5 +1,4 @@
 const path = require('path')
-const EventEmitter = require('events')
 const { readFileSync } = require('fs')
 const { credentials } = require('grpc')
 const caller = require('grpc-caller')
@@ -7,8 +6,7 @@ const caller = require('grpc-caller')
 const Identity = require('./identity')
 const MarketWatcher = require('./market-watcher')
 
-const { MarketEvent } = require('../models')
-const { loadProto, migrateStore } = require('../utils')
+const { loadProto } = require('../utils')
 
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
@@ -73,8 +71,6 @@ class RelayerClient {
    * @returns {EventEmitter} An event emitter that emits `sync` when the market is up to date and `end` when the stream ends (by error or otherwise)
    */
   watchMarket (store, { baseSymbol, counterSymbol, lastUpdated, sequence }) {
-    this.logger.info('Setting up market watcher', params)
-
     const RESPONSE_TYPES = this.proto.WatchMarketResponse.ResponseType
     const params = {
       baseSymbol,
@@ -83,9 +79,10 @@ class RelayerClient {
       sequence
     }
 
+    this.logger.info('Setting up market watcher', params)
     const watcher = this.orderbookService.watchMarket(params)
 
-    return new MarketWatcher(watcher, store, RESPONSE_TYPES, logger)
+    return new MarketWatcher(watcher, store, RESPONSE_TYPES, this.logger)
   }
 }
 
