@@ -37,7 +37,7 @@ class MarketWatcher extends EventEmitter {
 
     this.watcher.on('end', () => {
       this.logger.error('Remote ended stream')
-      this.emit('end')
+      this.emit('end', new Error('Remote ended stream'))
     })
 
     this.watcher.on('error', (err) => {

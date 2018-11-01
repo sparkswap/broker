@@ -26,26 +26,9 @@ class Orderbook {
     return this.marketName.split('/')[1]
   }
 
-  async initialize () {
+  initialize () {
     this.logger.info(`Initializing market ${this.marketName}...`)
-
-    const { baseSymbol, counterSymbol } = this
-    const { lastUpdated, sequence } = await this._lastUpdate()
-    const params = { baseSymbol, counterSymbol, lastUpdated, sequence }
-
-    await this.relayer.watchMarket(this.eventStore, params)
-
-    this.logger.debug(`Rebuilding indexes`)
-    await this.index.ensureIndex()
-    this.askIndex = await (new AskIndex(this.store)).ensureIndex()
-    this.bidIndex = await (new BidIndex(this.store)).ensureIndex()
-
-    return this.logger.info(`Market ${this.marketName} initialized.`)
-  }
-
-  trySync () {
     this.synced = false
-    this.emit('unsync')
 
     const { baseSymbol, counterSymbol } = this
     const { lastUpdated, sequence } = await this._lastUpdate()
@@ -60,12 +43,14 @@ class Orderbook {
       this.bidIndex = await (new BidIndex(this.store)).ensureIndex()
 
       this.synced = true
-      this.emit('sync')
+      this.logger.info(`Market ${this.marketName} initialized.`)
     })
 
-    watcher.on('end', () => {
-      watcher.removeAllListeners()
-      this.trySync()
+    watcher.on('end', (error) => {
+      this.logger.info(`Market ${this.marketName} unavailable, retrying in 5s` { error })
+      setTimeout(() => {
+        this.initialize()
+      }, 5000)
     })
   }
 
@@ -75,6 +60,7 @@ class Orderbook {
    * @returns {Promise<Array<MarketEventOrder>>} A promise that resolves an array of MarketEventOrder records
    */
   async all () {
+    this._assertSynced()
     this.logger.info(`Retrieving all records for ${this.marketName}`)
     return getRecords(this.store, MarketEventOrder.fromStorage.bind(MarketEventOrder))
   }
@@ -87,6 +73,7 @@ class Orderbook {
    * @return {Array<Object>} trades
    */
   async getTrades (since, limit) {
+    this._assertSynced()
     const params = {limit}
     if (since) {
       const sinceDate = new Date(since).toISOString()
@@ -110,6 +97,7 @@ class Orderbook {
    * @return {Promise<BestOrders>} A promise that resolves MarketEventOrders of the best priced orders
    */
   getBestOrders ({ side, depth, quantumPrice }) {
+    this._assertSynced()
     return new Promise((resolve, reject) => {
       this.logger.info(`Retrieving best priced from ${side} up to ${depth}`)
 
@@ -163,6 +151,7 @@ class Orderbook {
    * @returns {Array<MarketEventOrder>}
    */
   async getOrderbookEventsByTimestamp (timestamp) {
+    this._assertSynced()
     return getRecords(
       this.store,
       (key, value) => JSON.parse(value),
@@ -178,12 +167,24 @@ class Orderbook {
    * @returns {Array<MarketEventOrder>}
    */
   async getMarketEventsByTimestamp (timestamp) {
+    this._assertSynced()
     return getRecords(
       this.eventStore,
       (key, value) => JSON.parse(value),
       // Limits the query to gte to a specific timestamp
       MarketEvent.rangeFromTimestamp(timestamp)
     )
+  }
+
+  /**
+   * Ensures that the orderbook is synced before accessing it
+   * @return {void}
+   * @throws {Error} If Orderbook is not synced to Relayer
+   */
+  _assertSynced () {
+    if (!this.synced) {
+      throw new Error(`Cannot access Orderbook for ${this.marketName} until it is synced`)
+    }
   }
 
   /**
