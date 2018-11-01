@@ -416,7 +416,8 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No engine available for ${counterSymbol}`)
     }
 
-    const ordersByOrderId = await Promise.all(orders.map((order) => {
+    // These are the orders from the orders store where the orders being passed are actually market event orders
+    const ordersFromStore = await Promise.all(orders.map((order) => {
       const range = {
         gte: order.orderId,
         lte: order.orderId
@@ -424,10 +425,9 @@ class BlockOrderWorker extends EventEmitter {
       return getRecords(this.ordersByOrderId, Order.fromStorage.bind(Order), this.ordersByOrderId.range(range))
     }))
 
-    const ownOrderIds = ordersByOrderId.filter(order => order && order.length > 0).map(([order]) => order.orderId)
+    const ownOrderIds = ordersFromStore.filter(matchedOrders => matchedOrders && matchedOrders.length > 0).map(([order]) => order.orderId)
 
-    const promisedFills = []
-    for (let order of orders) {
+    const promisedFills = orders.map((order) => {
       const depthRemaining = targetDepth.minus(currentDepth)
 
       // if we have already reached our target depth, create no further fills
@@ -445,42 +445,52 @@ class BlockOrderWorker extends EventEmitter {
       // track our current depth so we know what to fill on the next order
       currentDepth = currentDepth.plus(fillAmount)
 
-      promisedFills.push(
-        FillStateMachine.create(
-          {
-            relayer,
-            engines,
-            logger,
-            store
-          },
-          blockOrder.id,
-          order,
-          { fillAmount }
-        ).then((fsm) => {
-          // We are hooking into the execute lifecycle event of a fill state machine to trigger
-          // the completion of a blockorder
-          fsm.once('execute', () => {
-            this.checkBlockOrderCompletion(blockOrder.id)
-              .catch(e => {
-                this.logger.error(`BlockOrder failed to be completed from fill`, { id: blockOrder.id, error: e.stack })
-              })
-              .then(() => fsm.removeAllListeners())
-          })
+      const fsm = FillStateMachine.create(
+        {
+          relayer,
+          engines,
+          logger,
+          store
+        },
+        blockOrder.id,
+        order,
+        { fillAmount }
+      ).then((fsm) => {
+        this.applyFsmListeners(fsm, blockOrder)
+      })
 
-          // We are hooking into the reject lifecycle event of a fill state machine to trigger
-          // the failure of a blockorder
-          fsm.once('reject', () => {
-            this.failBlockOrder(blockOrder.id, fsm.fill.error)
-              .catch(e => {
-                this.logger.error(`BlockOrder failed on setting a failed status from fill`, { id: blockOrder.id, error: e.stack })
-              })
-              .then(() => fsm.removeAllListeners())
-          })
-        })
-      )
-    }
+      return fsm
+    })
     // filter out null values, they are orders we decided not to fill
     return Promise.all(promisedFills.filter(promise => promise))
+  }
+
+  /**
+   * Applies listeners to the fill state machine
+   * @param  {Object<FillStateMachine>}   fill state machine to apply the listeners to
+   * @param  {Object<BlockOrder>}         blockOrder  BlockOrder that the orders are being filled on behalf of
+   * @return {Void}
+   */
+  applyFsmListeners (fsm, blockOrder) {
+    // We are hooking into the execute lifecycle event of a fill state machine to trigger
+    // the completion of a blockorder
+    fsm.once('execute', () => {
+      this.checkBlockOrderCompletion(blockOrder.id)
+        .catch(e => {
+          this.logger.error(`BlockOrder failed to be completed from fill`, { id: blockOrder.id, error: e.stack })
+        })
+        .then(() => fsm.removeAllListeners())
+    })
+
+    // We are hooking into the reject lifecycle event of a fill state machine to trigger
+    // the failure of a blockorder
+    fsm.once('reject', () => {
+      this.failBlockOrder(blockOrder.id, fsm.fill.error)
+        .catch(e => {
+          this.logger.error(`BlockOrder failed on setting a failed status from fill`, { id: blockOrder.id, error: e.stack })
+        })
+        .then(() => fsm.removeAllListeners())
+    })
   }
 }
 

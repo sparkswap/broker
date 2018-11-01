@@ -140,12 +140,18 @@ describe('BlockOrderWorker', () => {
       expect(worker).to.have.property('engines', engines)
     })
 
-    it('creates indices for the orders store by swaphash and orderId', async () => {
+    it('creates indices for the orders store', async () => {
       expect(SublevelIndex).to.have.been.calledTwice()
       expect(SublevelIndex).to.have.been.calledWithNew()
+    })
+
+    it('creates an index for the orders store by hash', async () => {
       expect(SublevelIndex).to.have.been.calledWith(secondLevel, 'ordersByHash')
       expect(worker).to.have.property('ordersByHash')
       expect(worker.ordersByHash).to.be.instanceOf(SublevelIndex)
+    })
+
+    it('creates an index for the orders store by hash', async () => {
       expect(SublevelIndex).to.have.been.calledWith(secondLevel, 'ordersByOrderId')
       expect(worker).to.have.property('ordersByOrderId')
       expect(worker.ordersByOrderId).to.be.instanceOf(SublevelIndex)
@@ -256,22 +262,27 @@ describe('BlockOrderWorker', () => {
 
   describe('initialize', () => {
     let worker
-    let ensureIndex
 
     beforeEach(() => {
-      ensureIndex = sinon.stub().resolves()
-      SublevelIndex.prototype.ensureIndex = ensureIndex
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.ordersByHash = { ensureIndex: sinon.stub().resolves() }
+      worker.ordersByOrderId = { ensureIndex: sinon.stub().resolves() }
     })
 
-    it('rebuilds the ordersByHash and ordersByOrderId indices', async () => {
+    it('rebuilds the ordersByHash index', async () => {
       await worker.initialize()
 
-      expect(ensureIndex).to.have.been.calledTwice()
+      expect(worker.ordersByHash.ensureIndex).to.have.been.calledOnce()
+    })
+
+    it('rebuilds the ordersByOrderId index', async () => {
+      await worker.initialize()
+
+      expect(worker.ordersByOrderId.ensureIndex).to.have.been.calledOnce()
     })
 
     it('waits for index rebuilding to complete', () => {
-      ensureIndex.rejects()
+      worker.ordersByHash.ensureIndex.rejects()
 
       return expect(worker.initialize()).to.eventually.be.rejectedWith(Error)
     })
