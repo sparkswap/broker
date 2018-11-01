@@ -1,8 +1,8 @@
 {
   "name": "broker",
   "version": "0.1.0-alpha-preview",
-  "description": "Broker software to interact with the Sparkswap Relayer ",
-  "main": "index.js",
+  "description": "Broker software to interact with the Sparkswap Relayer",
+  "main": "src/index.js",
   "config": {
     "project_name": "broker",
     "daemon": "sparkswapd"
@@ -40,7 +40,7 @@
     "type": "git",
     "url": "git+https://github.com/sparkswap/broker.git"
   },
-  "author": "",
+  "author": "sparkswap",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/sparkswap/broker/issues"

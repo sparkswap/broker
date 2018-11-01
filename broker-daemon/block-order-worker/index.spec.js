@@ -381,7 +381,7 @@ describe('BlockOrderWorker', () => {
         fail: sinon.stub()
       }
 
-      BlockOrder.fromStore.returns(fakeBlockOrder)
+      BlockOrder.fromStore.resolves(fakeBlockOrder)
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       fakeErr = new Error('fake')
       fakeId = 'myid'
@@ -432,7 +432,7 @@ describe('BlockOrderWorker', () => {
       store.get.callsArgWithAsync(1, null, blockOrder)
       OrderStateMachine.getAll.resolves(orders)
       FillStateMachine.getAll.resolves(fills)
-      BlockOrder.fromStore.returns({ id: blockOrderId })
+      BlockOrder.fromStore.resolves({ id: blockOrderId })
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
     })
 
@@ -500,7 +500,7 @@ describe('BlockOrderWorker', () => {
       ]
       store.get.callsArgWithAsync(1, null, blockOrder)
       blockOrderCancel = sinon.stub()
-      BlockOrder.fromStore.returns({
+      BlockOrder.fromStore.resolves({
         id: blockOrderId,
         cancel: blockOrderCancel,
         key: blockOrderKey,
