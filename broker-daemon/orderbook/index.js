@@ -178,10 +178,11 @@ class Orderbook {
 
   /**
    * Ensures that the orderbook is synced before accessing it
+   * @private
    * @return {void}
    * @throws {Error} If Orderbook is not synced to Relayer
    */
-  _assertSynced () {
+  assertSynced () {
     if (!this.synced) {
       throw new Error(`Cannot access Orderbook for ${this.marketName} until it is synced`)
     }
@@ -189,11 +190,11 @@ class Orderbook {
 
   /**
    * Gets the last record in an event store
-   *
+   * @private
    * @returns {MarketEvent}
    * @returns {Object} empty object if no record exists
    */
-  async _getLastRecord () {
+  async getLastRecord () {
     const [ lastEvent = {} ] = await getRecords(
       this.eventStore,
       MarketEvent.fromStorage.bind(MarketEvent),
@@ -207,18 +208,18 @@ class Orderbook {
 
   /**
    * Gets the last time this market was updated with data from the relayer
-   *
+   * @private
    * @returns {Object} res
    * @returns {String} [lastUpdated=0] - nanosecond timestamp
    * @returns {String} [sequence=0] - event version for a given timestamp
    */
-  async _lastUpdate () {
+  async lastUpdate () {
     this.logger.info(`Retrieving last update from store for ${this.marketName}`)
 
     const {
       timestamp: lastUpdated = '0',
       sequence = '0'
-    } = await this._getLastRecord()
+    } = await this.getLastRecord()
 
     return {
       lastUpdated,
