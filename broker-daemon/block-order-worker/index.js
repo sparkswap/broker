@@ -38,6 +38,9 @@ class BlockOrderWorker extends EventEmitter {
     const filterOrdersWithHash = (key, value) => !!Order.fromStorage(key, value).swapHash
     const getHashFromOrder = (key, value) => Order.fromStorage(key, value).swapHash
 
+    const filterOrdersWithOrderId = (key, value) => !!Order.fromStorage(key, value).orderId
+    const getOrderIdFromOrder = (key, value) => Order.fromStorage(key, value).orderId
+
     // create an index for the ordersStore so that orders can be retrieved by their swapHash
     this.ordersByHash = new SublevelIndex(
       this.ordersStore,
@@ -47,6 +50,16 @@ class BlockOrderWorker extends EventEmitter {
       // only index orders that have a swap hash defined
       filterOrdersWithHash
     )
+
+    // create an index for the ordersStore so that orders can be retrieved by their orderId
+    this.ordersByOrderId = new SublevelIndex(
+      this.ordersStore,
+      'ordersByOrderId',
+      // index by orderId
+      getOrderIdFromOrder,
+      // only index orders that have an orderId defined
+      filterOrdersWithOrderId
+    )
   }
 
   /**
@@ -55,6 +68,7 @@ class BlockOrderWorker extends EventEmitter {
    */
   async initialize () {
     await this.ordersByHash.ensureIndex()
+    await this.ordersByOrderId.ensureIndex()
   }
 
   /**
@@ -402,12 +416,27 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No engine available for ${counterSymbol}`)
     }
 
-    const promisedFills = orders.map(async (order) => {
+    const ordersByOrderId = await Promise.all(orders.map((order) => {
+      const range = {
+        gte: order.orderId,
+        lte: order.orderId
+      }
+      return getRecords(this.ordersByOrderId, Order.fromStorage.bind(Order), this.ordersByOrderId.range(range))
+    }))
+
+    const ownOrderIds = ordersByOrderId.filter(order => order && order.length > 0).map(([order]) => order.orderId)
+
+    const promisedFills = []
+    for (let order of orders) {
       const depthRemaining = targetDepth.minus(currentDepth)
 
       // if we have already reached our target depth, create no further fills
       if (depthRemaining.lte(0)) {
         return
+      }
+
+      if (ownOrderIds.includes(order.orderId)) {
+        throw new Error(`Cannot fill own order ${order.orderId}`)
       }
 
       // Take the smaller of the remaining desired depth or the base amount of the order
@@ -416,41 +445,40 @@ class BlockOrderWorker extends EventEmitter {
       // track our current depth so we know what to fill on the next order
       currentDepth = currentDepth.plus(fillAmount)
 
-      const fsm = await FillStateMachine.create(
-        {
-          relayer,
-          engines,
-          logger,
-          store
-        },
-        blockOrder.id,
-        order,
-        { fillAmount }
+      promisedFills.push(
+        FillStateMachine.create(
+          {
+            relayer,
+            engines,
+            logger,
+            store
+          },
+          blockOrder.id,
+          order,
+          { fillAmount }
+        ).then((fsm) => {
+          // We are hooking into the execute lifecycle event of a fill state machine to trigger
+          // the completion of a blockorder
+          fsm.once('execute', () => {
+            this.checkBlockOrderCompletion(blockOrder.id)
+              .catch(e => {
+                this.logger.error(`BlockOrder failed to be completed from fill`, { id: blockOrder.id, error: e.stack })
+              })
+              .then(() => fsm.removeAllListeners())
+          })
+
+          // We are hooking into the reject lifecycle event of a fill state machine to trigger
+          // the failure of a blockorder
+          fsm.once('reject', () => {
+            this.failBlockOrder(blockOrder.id, fsm.fill.error)
+              .catch(e => {
+                this.logger.error(`BlockOrder failed on setting a failed status from fill`, { id: blockOrder.id, error: e.stack })
+              })
+              .then(() => fsm.removeAllListeners())
+          })
+        })
       )
-
-      // We are hooking into the execute lifecycle event of a fill state machine to trigger
-      // the completion of a blockorder
-      fsm.once('execute', () => {
-        this.checkBlockOrderCompletion(blockOrder.id)
-          .catch(e => {
-            this.logger.error(`BlockOrder failed to be completed from fill`, { id: blockOrder.id, error: e.stack })
-          })
-          .then(() => fsm.removeAllListeners())
-      })
-
-      // We are hooking into the reject lifecycle event of a fill state machine to trigger
-      // the failure of a blockorder
-      fsm.once('reject', () => {
-        this.failBlockOrder(blockOrder.id, fsm.fill.error)
-          .catch(e => {
-            this.logger.error(`BlockOrder failed on setting a failed status from fill`, { id: blockOrder.id, error: e.stack })
-          })
-          .then(() => fsm.removeAllListeners())
-      })
-
-      return fsm
-    })
-
+    }
     // filter out null values, they are orders we decided not to fill
     return Promise.all(promisedFills.filter(promise => promise))
   }
