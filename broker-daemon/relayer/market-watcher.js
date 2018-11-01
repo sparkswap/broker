@@ -30,6 +30,7 @@ class MarketWatcher extends EventEmitter {
 
   /**
    * Set up the listeners on the watcher
+   * @private
    * @return {void}
    */
   setupListeners () {
@@ -56,6 +57,7 @@ class MarketWatcher extends EventEmitter {
 
   /**
    * Handle an inbound event from the Relayer
+   * @private
    * @param  {Object} response Response from the Relayer stream
    * @return {void}
    */
@@ -79,6 +81,7 @@ class MarketWatcher extends EventEmitter {
 
   /**
    * Delete every event in the store and set a promise on `migrating` that resolves once deletion is complete.
+   * @private
    * @return {Promise} Resolves when migration is complete
    */
   migrate () {
@@ -89,6 +92,7 @@ class MarketWatcher extends EventEmitter {
 
   /**
    * Helper promise to await to ensure that any migrations are complete before proceeding
+   * @private
    * @return {Promise} Resolves when there are no in-progress migrations
    */
   async migration () {
@@ -101,6 +105,7 @@ class MarketWatcher extends EventEmitter {
 
   /**
    * Store a market event
+   * @private
    * @param  {Object} response Response from the Relayer
    * @return {void}
    */
@@ -115,6 +120,7 @@ class MarketWatcher extends EventEmitter {
 
   /**
    * Emit an event when the watcher is up to date
+   * @private
    * @return {void}
    */
   upToDate () {
