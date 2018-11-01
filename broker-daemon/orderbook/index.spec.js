@@ -195,7 +195,7 @@ describe('Orderbook', () => {
     })
   })
 
-  describe('#lastUpdate', () => {
+  describe('#_lastUpdate', () => {
     let orderbook
     let getLastRecordStub
     let timestamp
@@ -212,26 +212,26 @@ describe('Orderbook', () => {
       })
 
       orderbook = new Orderbook(marketName, relayer, baseStore, logger)
-      orderbook.getLastRecord = getLastRecordStub
+      orderbook._getLastRecord = getLastRecordStub
     })
 
     it('grabs the last record from the orderbook', async () => {
-      await orderbook.lastUpdate()
+      await orderbook._lastUpdate()
       expect(getLastRecordStub)
     })
 
     it('returns lastUpdated timestamp', async () => {
-      const result = await orderbook.lastUpdate()
+      const result = await orderbook._lastUpdate()
       expect(result).to.have.property('lastUpdated', timestamp)
     })
 
     it('returns a sequence number', async () => {
-      const result = await orderbook.lastUpdate()
+      const result = await orderbook._lastUpdate()
       expect(result).to.have.property('sequence', sequence)
     })
   })
 
-  describe('#getLastRecord', () => {
+  describe('#_getLastRecord', () => {
     it('gets the timestamp of the last event', async () => {
       const marketName = 'XYZ/ABC'
       const orderbook = new Orderbook(marketName, relayer, baseStore, logger)
@@ -243,7 +243,7 @@ describe('Orderbook', () => {
       }
       getRecords.resolves([ lastEvent ])
 
-      const event = await orderbook.getLastRecord()
+      const event = await orderbook._getLastRecord()
 
       expect(getRecords).to.have.been.calledOnce()
       expect(getRecords).to.have.been.calledWith(eventStore, bound, sinon.match({ reverse: true, limit: 1 }))
@@ -256,7 +256,7 @@ describe('Orderbook', () => {
 
       getRecords.resolves([])
 
-      const event = await orderbook.getLastRecord()
+      const event = await orderbook._getLastRecord()
 
       expect(event).to.be.eql({})
     })

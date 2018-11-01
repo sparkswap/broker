@@ -30,7 +30,7 @@ class Orderbook {
     this.logger.info(`Initializing market ${this.marketName}...`)
 
     const { baseSymbol, counterSymbol } = this
-    const { lastUpdated, sequence } = await this.lastUpdate()
+    const { lastUpdated, sequence } = await this._lastUpdate()
     const params = { baseSymbol, counterSymbol, lastUpdated, sequence }
 
     await this.relayer.watchMarket(this.eventStore, params)
@@ -131,45 +131,6 @@ class Orderbook {
   }
 
   /**
-   * Gets the last record in an event store
-   *
-   * @returns {MarketEvent}
-   * @returns {Object} empty object if no record exists
-   */
-  async getLastRecord () {
-    const [ lastEvent = {} ] = await getRecords(
-      this.eventStore,
-      MarketEvent.fromStorage.bind(MarketEvent),
-      {
-        reverse: true,
-        limit: 1
-      }
-    )
-    return lastEvent
-  }
-
-  /**
-   * Gets the last time this market was updated with data from the relayer
-   *
-   * @returns {Object} res
-   * @returns {String} [lastUpdated=0] - nanosecond timestamp
-   * @returns {String} [sequence=0] - event version for a given timestamp
-   */
-  async lastUpdate () {
-    this.logger.info(`Retrieving last update from store for ${this.marketName}`)
-
-    const {
-      timestamp: lastUpdated = '0',
-      sequence = '0'
-    } = await this.getLastRecord()
-
-    return {
-      lastUpdated,
-      sequence
-    }
-  }
-
-  /**
    * Gets current orderbook events by timestamp
    *
    * @param {String} timestamp - timestamp in nano-seconds
@@ -197,6 +158,45 @@ class Orderbook {
       // Limits the query to gte to a specific timestamp
       MarketEvent.rangeFromTimestamp(timestamp)
     )
+  }
+
+  /**
+   * Gets the last record in an event store
+   *
+   * @returns {MarketEvent}
+   * @returns {Object} empty object if no record exists
+   */
+  async _getLastRecord () {
+    const [ lastEvent = {} ] = await getRecords(
+      this.eventStore,
+      MarketEvent.fromStorage.bind(MarketEvent),
+      {
+        reverse: true,
+        limit: 1
+      }
+    )
+    return lastEvent
+  }
+
+  /**
+   * Gets the last time this market was updated with data from the relayer
+   *
+   * @returns {Object} res
+   * @returns {String} [lastUpdated=0] - nanosecond timestamp
+   * @returns {String} [sequence=0] - event version for a given timestamp
+   */
+  async _lastUpdate () {
+    this.logger.info(`Retrieving last update from store for ${this.marketName}`)
+
+    const {
+      timestamp: lastUpdated = '0',
+      sequence = '0'
+    } = await this._getLastRecord()
+
+    return {
+      lastUpdated,
+      sequence
+    }
   }
 }
 
