@@ -1,9 +1,11 @@
 const path = require('path')
+const EventEmitter = require('events')
 const { readFileSync } = require('fs')
 const { credentials } = require('grpc')
 const caller = require('grpc-caller')
 
 const Identity = require('./identity')
+const MarketWatcher = require('./market-watcher')
 
 const { MarketEvent } = require('../models')
 const { loadProto, migrateStore } = require('../utils')
@@ -68,11 +70,12 @@ class RelayerClient {
    * @param {String} params.counterSymbol
    * @param {String} params.lastUpdated - nanosecond timestamp
    * @param {String} params.sequence
-   * @returns {Promise<void>} a promise that resolves when the market is up to date with the remote relayer
+   * @returns {EventEmitter} An event emitter that emits `sync` when the market is up to date and `end` when the stream ends (by error or otherwise)
    */
   watchMarket (store, { baseSymbol, counterSymbol, lastUpdated, sequence }) {
-    const RESPONSE_TYPES = this.proto.WatchMarketResponse.ResponseType
+    this.logger.info('Setting up market watcher', params)
 
+    const RESPONSE_TYPES = this.proto.WatchMarketResponse.ResponseType
     const params = {
       baseSymbol,
       counterSymbol,
@@ -80,69 +83,9 @@ class RelayerClient {
       sequence
     }
 
-    return new Promise(async (resolve, reject) => {
-      this.logger.info('Setting up market watcher', params)
+    const watcher = this.orderbookService.watchMarket(params)
 
-      try {
-        const watcher = this.orderbookService.watchMarket(params)
-
-        // We set this value to be a promise when we are migrating the database.
-        // if we were to continue processing before deletion is finished, we could
-        // inadvertently delete new events added to the store.
-        let migrating
-
-        watcher.on('end', () => {
-          this.logger.error('Remote ended stream', params)
-          // TODO: retry stream?
-          throw new Error(`Remote relayer ended stream for ${baseSymbol}/${counterSymbol}`)
-        })
-
-        watcher.on('data', async (response) => {
-          // migrating is falsey (undefined) by default
-          if (migrating) {
-            this.logger.debug(`Waiting for migration to finish before acting on new response`)
-            await migrating
-          }
-
-          this.logger.debug(`response type is ${response.type}`)
-          if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
-            this.logger.debug(`Resolving because response type is: ${response.type}`)
-            return resolve()
-          }
-
-          if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.START_OF_EVENTS) {
-            this.logger.debug(`Removing existing orderbook events because response type is: ${response.type}`)
-
-            // this deletes every event in the store, and makes `migrating` a promise
-            // that resolves when deletion is complete, allowing other events to be processed.
-            migrating = migrateStore(store, store, (key) => { return { type: 'del', key } })
-            return
-          }
-
-          if (![RESPONSE_TYPES.EXISTING_EVENT, RESPONSE_TYPES.NEW_EVENT].includes(RESPONSE_TYPES[response.type])) {
-            return this.logger.debug(`Returning because response type is: ${response.type}`)
-          }
-
-          const { marketEvent } = response
-
-          this.logger.debug('Creating a market event', marketEvent)
-
-          const { key, value } = new MarketEvent(marketEvent)
-          store.put(key, value)
-        })
-
-        watcher.on('error', (err) => {
-          this.logger.error('Relayer watchMarket grpc failed', err)
-          process.exit(1)
-          reject(err)
-        })
-      // NOTE: This catch will NOT handle any errors that are thrown inside of `watcher`
-      // events. You must reject the promise in order to bubble-up any exceptions
-      } catch (e) {
-        this.logger.error('Error encountered while setting up stream')
-        return reject(e)
-      }
-    })
+    return new MarketWatcher(watcher, store, RESPONSE_TYPES, logger)
   }
 }
 

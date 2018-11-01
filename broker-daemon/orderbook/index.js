@@ -43,6 +43,32 @@ class Orderbook {
     return this.logger.info(`Market ${this.marketName} initialized.`)
   }
 
+  trySync () {
+    this.synced = false
+    this.emit('unsync')
+
+    const { baseSymbol, counterSymbol } = this
+    const { lastUpdated, sequence } = await this._lastUpdate()
+    const params = { baseSymbol, counterSymbol, lastUpdated, sequence }
+
+    const watcher = this.relayer.watchMarket(this.eventStore, params)
+
+    watcher.on('sync', async () => {
+      this.logger.debug(`Rebuilding indexes`)
+      await this.index.ensureIndex()
+      this.askIndex = await (new AskIndex(this.store)).ensureIndex()
+      this.bidIndex = await (new BidIndex(this.store)).ensureIndex()
+
+      this.synced = true
+      this.emit('sync')
+    })
+
+    watcher.on('end', () => {
+      watcher.removeAllListeners()
+      this.trySync()
+    })
+  }
+
   /**
    * Returns all records in the current orderbook
    *
