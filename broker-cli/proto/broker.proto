@@ -728,7 +728,7 @@ service OrderBookService {
    *
    * ```shell
    * Market: BTC/LTC                                                                                                                            Ϟ SparkSwap Broker
-   *                                                                                                                                           v0.1.0-alpha-preview
+   *                                                                                                                                           v0.2.0-alpha-preview
    *                                                                                                                                           http://sparkswap.com
    *
    * ┌──────────────────────────────────────────────────────────────────────────────┬──────────────────────────────────────────────────────────────────────────────┐
