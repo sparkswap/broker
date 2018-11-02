@@ -1,5 +1,5 @@
 const path = require('path')
-const { sinon, rewire, delay, expect } = require('test/test-helper')
+const { sinon, rewire, expect } = require('test/test-helper')
 
 const RelayerClient = rewire(path.resolve('broker-daemon', 'relayer', 'relayer-client'))
 
@@ -211,7 +211,6 @@ describe('RelayerClient', () => {
     let params
     let watchMarket
     let stream
-    let migrateStore
 
     beforeEach(() => {
       stream = {

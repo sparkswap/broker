@@ -16,6 +16,7 @@ class Orderbook {
     this.index = new OrderbookIndex(store, this.eventStore, this.marketName)
     this.store = this.index.store
     this.logger = logger
+    this.synced = false
   }
 
   get baseSymbol () {
@@ -31,7 +32,7 @@ class Orderbook {
     this.synced = false
 
     const { baseSymbol, counterSymbol } = this
-    const { lastUpdated, sequence } = await this._lastUpdate()
+    const { lastUpdated, sequence } = await this.lastUpdate()
     const params = { baseSymbol, counterSymbol, lastUpdated, sequence }
 
     const watcher = this.relayer.watchMarket(this.eventStore, params)

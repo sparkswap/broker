@@ -124,6 +124,13 @@ describe('Orderbook', () => {
       expect(orderbook.logger).to.be.equal(console)
     })
 
+    it('defaults synced status to false', () => {
+      const marketName = 'XYZ/ABC'
+      const orderbook = new Orderbook(marketName, relayer, baseStore)
+
+      expect(orderbook.synced).to.be.false()
+    })
+
     it('creates an event store', () => {
       const marketName = 'XYZ/ABC'
       const orderbook = new Orderbook(marketName, relayer, baseStore, logger)
@@ -152,7 +159,8 @@ describe('Orderbook', () => {
     let marketName
     let orderbook
     let lastUpdated
-    let lastEvent
+    let sequence
+    let watcher
 
     beforeEach(async () => {
       baseSymbol = 'XYZ'
@@ -161,37 +169,110 @@ describe('Orderbook', () => {
       orderbook = new Orderbook(marketName, relayer, baseStore, logger)
 
       lastUpdated = '1232142343'
-      lastEvent = {
-        timestamp: lastUpdated
+      sequence = '1'
+
+      orderbook.lastUpdate = sinon.stub()
+      orderbook.lastUpdate.resolves({
+        lastUpdated,
+        sequence
+      })
+
+      watcher = {
+        on: sinon.stub()
       }
 
-      getRecords.resolves([ lastEvent ])
-      relayer.watchMarket.resolves()
+      relayer.watchMarket.returns(watcher)
 
       await orderbook.initialize()
     })
 
-    it('watches the market on initialization', async () => {
+    it('sets the synced status to false', () => {
+      expect(orderbook.synced).to.be.false()
+    })
+
+    it('watches the market on initialization', () => {
       expect(relayer.watchMarket).to.have.been.calledOnce()
-      expect(relayer.watchMarket).to.have.been.calledWith(eventStore, sinon.match({ baseSymbol, counterSymbol, lastUpdated }))
+      expect(relayer.watchMarket).to.have.been.calledWith(eventStore, sinon.match({ baseSymbol, counterSymbol, lastUpdated, sequence }))
     })
 
-    it('sets up the orderbook index', () => {
-      expect(OrderbookIndex.prototype.ensureIndex).to.have.been.calledOnce()
+    describe('watcher syncs', () => {
+      beforeEach(async () => {
+        const onSync = watcher.on.withArgs('sync').args[0][1]
+
+        await onSync()
+      })
+
+      it('sets up the orderbook index', () => {
+        expect(OrderbookIndex.prototype.ensureIndex).to.have.been.calledOnce()
+      })
+
+      it('sets up an ask index', () => {
+        expect(AskIndex).to.have.been.calledOnce()
+        expect(AskIndex).to.have.been.calledWithNew()
+        expect(AskIndex).to.have.been.calledWith(orderbookStore)
+        expect(AskIndex.prototype.ensureIndex).to.have.been.calledOnce()
+      })
+
+      it('sets up a bid index', () => {
+        expect(BidIndex).to.have.been.calledOnce()
+        expect(BidIndex).to.have.been.calledWithNew()
+        expect(BidIndex).to.have.been.calledWith(orderbookStore)
+        expect(BidIndex.prototype.ensureIndex).to.have.been.calledOnce()
+      })
+
+      it('sets the synced status to true', () => {
+        expect(orderbook.synced).to.be.true()
+      })
     })
 
-    it('sets up an ask index', () => {
-      expect(AskIndex).to.have.been.calledOnce()
-      expect(AskIndex).to.have.been.calledWithNew()
-      expect(AskIndex).to.have.been.calledWith(orderbookStore)
-      expect(AskIndex.prototype.ensureIndex).to.have.been.calledOnce()
+    describe('watcher ends', () => {
+      let timeoutStub
+
+      beforeEach(() => {
+        orderbook.initialize = sinon.stub()
+        timeoutStub = sinon.stub()
+
+        Orderbook.__set__('setTimeout', timeoutStub)
+
+        const onEnd = watcher.on.withArgs('end').args[0][1]
+
+        onEnd()
+      })
+
+      it('sets a 5 second timeout', () => {
+        expect(timeoutStub).to.have.been.calledOnce()
+        expect(timeoutStub).to.have.been.calledWith(sinon.match.func, 5000)
+      })
+
+      it('re-initializes after the timeout', () => {
+        const timeoutFunc = timeoutStub.args[0][0]
+
+        timeoutFunc()
+
+        expect(orderbook.initialize).to.have.been.calledOnce()
+      })
+    })
+  })
+
+  describe('#assertSynced', () => {
+    let orderbook
+
+    beforeEach(() => {
+      const marketName = 'XYZ/ABC'
+
+      orderbook = new Orderbook(marketName, relayer, baseStore, logger)
     })
 
-    it('sets up a bid index', () => {
-      expect(BidIndex).to.have.been.calledOnce()
-      expect(BidIndex).to.have.been.calledWithNew()
-      expect(BidIndex).to.have.been.calledWith(orderbookStore)
-      expect(BidIndex.prototype.ensureIndex).to.have.been.calledOnce()
+    it('throws if the orderbook is not synced', () => {
+      orderbook.synced = false
+
+      expect(() => orderbook.assertSynced()).to.throw()
+    })
+
+    it('does not throw if the orderbook is synced', () => {
+      orderbook.synced = true
+
+      expect(() => orderbook.assertSynced()).not.to.throw()
     })
   })
 
@@ -263,17 +344,31 @@ describe('Orderbook', () => {
   })
 
   describe('#all', () => {
-    it('returns all the orders', async () => {
+    let orderbook
+    let bound
+    let orders
+    let retrieved
+
+    beforeEach(async () => {
       const marketName = 'XYZ/ABC'
-      const orderbook = new Orderbook(marketName, relayer, baseStore, logger)
-      const bound = 'mybind'
+      orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+
+      orderbook.assertSynced = sinon.stub()
+
+      bound = 'mybind'
       MarketEventOrderFromStorageBind.returns(bound)
 
-      const orders = []
+      orders = []
       getRecords.resolves(orders)
 
-      const retrieved = await orderbook.all()
+      retrieved = await orderbook.all()
+    })
 
+    it('makes sure the orderbook is synced', () => {
+      expect(orderbook.assertSynced).to.have.been.calledOnce()
+    })
+
+    it('returns all the orders', () => {
       expect(getRecords).to.have.been.calledOnce()
       expect(getRecords).to.have.been.calledWith(orderbookStore, bound)
       expect(retrieved).to.be.equal(orders)
@@ -289,6 +384,7 @@ describe('Orderbook', () => {
 
     beforeEach(() => {
       orderbook = new Orderbook('XYZ/ABC', relayer, baseStore, logger)
+      orderbook.assertSynced = sinon.stub()
       stream = {
         on: sinon.stub(),
         unpipe: sinon.stub(),
@@ -341,6 +437,12 @@ describe('Orderbook', () => {
 
         process.nextTick(nextOrder)
       })
+    })
+
+    it('makes sure the orderbook is synced', () => {
+      orderbook.getBestOrders({ side: 'ASK', depth: '100' })
+
+      expect(orderbook.assertSynced).to.have.been.calledOnce()
     })
 
     it('rejects if using an invalid side', () => {
@@ -446,6 +548,7 @@ describe('Orderbook', () => {
       limit = 5
       getRecordsStub = sinon.stub()
       orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+      orderbook.assertSynced = sinon.stub()
       bound = 'mybind'
       EventFromStorageBind.returns(bound)
       revert = Orderbook.__set__('getRecords', getRecordsStub)
@@ -453,6 +556,11 @@ describe('Orderbook', () => {
 
     afterEach(() => {
       revert()
+    })
+
+    it('makes sure the orderbook is synced', async () => {
+      await orderbook.getTrades(timestamp, limit)
+      expect(orderbook.assertSynced).to.have.been.calledOnce()
     })
 
     it('does not add a lowerbound if no since date is provided', async () => {
@@ -487,6 +595,7 @@ describe('Orderbook', () => {
       timestamp = 'fake nano timestamp'
       getRecordsStub = sinon.stub()
       orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+      orderbook.assertSynced = sinon.stub()
       revert = Orderbook.__set__('getRecords', getRecordsStub)
     })
 
@@ -496,6 +605,10 @@ describe('Orderbook', () => {
 
     afterEach(() => {
       revert()
+    })
+
+    it('makes sure the orderbook is synced', () => {
+      expect(orderbook.assertSynced).to.have.been.calledOnce()
     })
 
     it('calls get records with a timestamp', () => {
@@ -520,6 +633,7 @@ describe('Orderbook', () => {
       timestamp = 'fake nano timestamp'
       getRecordsStub = sinon.stub()
       orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+      orderbook.assertSynced = sinon.stub()
 
       revert = Orderbook.__set__('getRecords', getRecordsStub)
     })
@@ -530,6 +644,10 @@ describe('Orderbook', () => {
 
     afterEach(() => {
       revert()
+    })
+
+    it('makes sure the orderbook is synced', () => {
+      expect(orderbook.assertSynced).to.have.been.calledOnce()
     })
 
     it('calls get records with a timestamp', () => {

@@ -1,5 +1,5 @@
 const path = require('path')
-const { sinon, rewire, delay, expect } = require('test/test-helper')
+const { sinon, rewire, expect } = require('test/test-helper')
 
 const MarketWatcher = rewire(path.resolve(__dirname, 'market-watcher.js'))
 
@@ -17,6 +17,7 @@ describe('MarketWatcher', () => {
   }
   let onStub
   let emitStub
+  let removeAllListenersStub
 
   beforeEach(() => {
     logger = {
