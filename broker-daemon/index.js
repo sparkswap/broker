@@ -8,7 +8,7 @@ const Orderbook = require('./orderbook')
 const BlockOrderWorker = require('./block-order-worker')
 const BrokerRPCServer = require('./broker-rpc/broker-rpc-server')
 const InterchainRouter = require('./interchain-router')
-const { logger } = require('./utils')
+const { logger, exponentialBackoff } = require('./utils')
 const CONFIG = require('./config')
 
 /**
@@ -170,17 +170,10 @@ class BrokerDaemon {
           this.logger.info(`Initializing BlockOrderWorker`)
           await this.blockOrderWorker.initialize()
           this.logger.info('BlockOrderWorker initialized')
-        })(),
-        ...Array.from(this.engines, async ([ symbol, engine ]) => {
-          this.logger.info(`Validating engine configuration for ${symbol}`)
-          try {
-            await engine.validateNodeConfig()
-          } catch (e) {
-            throw new Error(`Engine for ${symbol} failed to validate: ${e.message || e.details}`)
-          }
-          this.logger.info(`Validated engine configuration for ${symbol}`)
-        })
+        })()
       ])
+
+      this.validateEngines()
 
       this.rpcServer.listen(this.rpcAddress)
       this.logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
@@ -233,6 +226,18 @@ class BrokerDaemon {
 
     this.orderbooks.set(marketName, new Orderbook(marketName, this.relayer, this.store.sublevel(marketName), this.logger))
     return this.orderbooks.get(marketName).initialize()
+  }
+
+  async validateEngines () {
+    await Promise.all(Array.from(this.engines, async ([ symbol, engine ]) => {
+      try {
+        this.logger.info(`Validating engine configuration for ${symbol}`)
+        await engine.validateNodeConfig()
+        this.logger.info(`Validated engine configuration for ${symbol}`)
+      } catch (e) {
+        await exponentialBackoff(async () => engine.validateNodeConfig(), 10, 1000, () => console.log(`Validated engine configuration for ${symbol}`))
+      }
+    }))
   }
 }
 
