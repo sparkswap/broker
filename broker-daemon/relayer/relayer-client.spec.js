@@ -13,6 +13,7 @@ describe('RelayerClient', () => {
   let Identity
   let identityIdentify
   let MarketEvent
+  let MarketWatcher
   let loadProto
   let proto
   let MakerService
@@ -58,6 +59,9 @@ describe('RelayerClient', () => {
 
     MarketEvent = sinon.stub()
     RelayerClient.__set__('MarketEvent', MarketEvent)
+
+    MarketWatcher = sinon.stub()
+    RelayerClient.__set__('MarketWatcher', MarketWatcher)
 
     MakerService = sinon.stub()
     TakerService = sinon.stub()
@@ -227,19 +231,6 @@ describe('RelayerClient', () => {
         lastUpdated: '123',
         sequence: '0'
       }
-
-      MarketEvent.prototype.key = 'key'
-      MarketEvent.prototype.value = 'value'
-
-      migrateStore = sinon.stub().resolves()
-
-      RelayerClient.__set__('migrateStore', migrateStore)
-    })
-
-    it('returns a promise', () => {
-      const watcher = relayer.watchMarket(store, params)
-
-      expect(watcher).to.be.a('promise')
     })
 
     it('creates a watchMarket stream', () => {
@@ -249,129 +240,16 @@ describe('RelayerClient', () => {
       expect(watchMarket).to.have.been.calledWith(params)
     })
 
-    it('errors out when stream creation fails', () => {
-      watchMarket.throws(new Error('fake error'))
-
-      return expect(relayer.watchMarket(store, params)).to.eventually.be.rejectedWith(Error)
-    })
-
-    it('listens for events on the watchMarket stream', async () => {
+    it('creates a market watcher', () => {
       relayer.watchMarket(store, params)
 
-      await delay(10)
-
-      expect(stream.on).to.have.been.calledThrice()
-      expect(stream.on).to.have.been.calledWith('data')
-      expect(stream.on).to.have.been.calledWith('end')
-      expect(stream.on).to.have.been.calledWith('error')
+      expect(MarketWatcher).to.have.been.calledOnce()
+      expect(MarketWatcher).to.have.been.calledWithNew()
+      expect(MarketWatcher).to.have.been.calledWith(stream, store, ResponseType, logger)
     })
 
-    it('throws if the relayer ends the stream', async () => {
-      try {
-        stream.on.withArgs('end').callsFake((evt, fn) => {
-          fn()
-        })
-
-        await relayer.watchMarket(store, params)
-      } catch (e) {
-        expect(e.toString()).to.include('Remote relayer ended stream')
-      }
-    })
-
-    it('resolves when existing events are done', async () => {
-      const fakeDone = { type: ResponseType.EXISTING_EVENTS_DONE }
-      stream.on.withArgs('data').callsFake(async (evt, fn) => {
-        await delay(10)
-        fn(fakeDone)
-      })
-
-      return relayer.watchMarket(store, params)
-    })
-
-    it('deletes the store when facing the start of events', async () => {
-      const fakeNew = { type: ResponseType.START_OF_EVENTS }
-      const fakeDone = { type: ResponseType.EXISTING_EVENTS_DONE }
-
-      stream.on.withArgs('data').callsFake(async (evt, fn) => {
-        await delay(10)
-        fn(fakeNew)
-        await delay(10)
-        fn(fakeDone)
-      })
-
-      await relayer.watchMarket(store, params)
-
-      expect(migrateStore).to.have.been.calledOnce()
-      expect(migrateStore).to.have.been.calledWith(store, store, sinon.match.func)
-
-      const migrator = migrateStore.args[0][2]
-
-      expect(migrator('hello')).to.be.eql({ type: 'del', key: 'hello' })
-    })
-
-    it('waits for migrating to be done before processing more events', async () => {
-      const fakeNew = { type: ResponseType.START_OF_EVENTS }
-      const fakeResponse = { type: ResponseType.EXISTING_EVENT, marketEvent: 'fakeEvent' }
-      const fakeDone = { type: ResponseType.EXISTING_EVENTS_DONE }
-
-      let callCount
-
-      migrateStore.callsFake(() => { return delay(15) })
-
-      stream.on.withArgs('data').callsFake(async (evt, fn) => {
-        await delay(10)
-        fn(fakeNew)
-        await delay(10)
-        fn(fakeResponse)
-        await delay(1)
-
-        callCount = store.put.callCount
-
-        fn(fakeDone)
-      })
-
-      await relayer.watchMarket(store, params)
-
-      expect(callCount).to.be.a('number')
-      expect(callCount).to.be.eql(0)
-    })
-
-    it('puts existing events into the store', async () => {
-      const fakeResponse = { type: ResponseType.EXISTING_EVENT, marketEvent: 'fakeEvent' }
-      const fakeDone = { type: ResponseType.EXISTING_EVENTS_DONE }
-      stream.on.withArgs('data').callsFake(async (evt, fn) => {
-        await delay(10)
-        fn(fakeResponse)
-        await delay(10)
-        fn(fakeDone)
-      })
-
-      await relayer.watchMarket(store, params)
-
-      expect(MarketEvent).to.have.been.calledOnce()
-      expect(MarketEvent).to.have.been.calledWithNew()
-      expect(MarketEvent).to.have.been.calledWith(fakeResponse.marketEvent)
-      expect(store.put).to.have.been.calledOnce()
-      expect(store.put).to.have.been.calledWith(MarketEvent.prototype.key, MarketEvent.prototype.value)
-    })
-
-    it('puts new events into the store', async () => {
-      const fakeResponse = { type: ResponseType.EXISTING_EVENT, marketEvent: 'fakeEvent' }
-      const fakeDone = { type: ResponseType.EXISTING_EVENTS_DONE }
-      stream.on.withArgs('data').callsFake(async (evt, fn) => {
-        await delay(10)
-        fn(fakeResponse)
-        await delay(10)
-        fn(fakeDone)
-      })
-
-      await relayer.watchMarket(store, params)
-
-      expect(MarketEvent).to.have.been.calledOnce()
-      expect(MarketEvent).to.have.been.calledWithNew()
-      expect(MarketEvent).to.have.been.calledWith(fakeResponse.marketEvent)
-      expect(store.put).to.have.been.calledOnce()
-      expect(store.put).to.have.been.calledWith(MarketEvent.prototype.key, MarketEvent.prototype.value)
+    it('returns the market watcher', () => {
+      expect(relayer.watchMarket(store, params)).to.be.an.instanceOf(MarketWatcher)
     })
   })
 })

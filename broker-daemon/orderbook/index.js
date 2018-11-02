@@ -60,7 +60,7 @@ class Orderbook {
    * @returns {Promise<Array<MarketEventOrder>>} A promise that resolves an array of MarketEventOrder records
    */
   async all () {
-    this._assertSynced()
+    this.assertSynced()
     this.logger.info(`Retrieving all records for ${this.marketName}`)
     return getRecords(this.store, MarketEventOrder.fromStorage.bind(MarketEventOrder))
   }
@@ -73,7 +73,7 @@ class Orderbook {
    * @return {Array<Object>} trades
    */
   async getTrades (since, limit) {
-    this._assertSynced()
+    this.assertSynced()
     const params = {limit}
     if (since) {
       const sinceDate = new Date(since).toISOString()
@@ -97,7 +97,7 @@ class Orderbook {
    * @return {Promise<BestOrders>} A promise that resolves MarketEventOrders of the best priced orders
    */
   getBestOrders ({ side, depth, quantumPrice }) {
-    this._assertSynced()
+    this.assertSynced()
     return new Promise((resolve, reject) => {
       this.logger.info(`Retrieving best priced from ${side} up to ${depth}`)
 
@@ -151,7 +151,7 @@ class Orderbook {
    * @returns {Array<MarketEventOrder>}
    */
   async getOrderbookEventsByTimestamp (timestamp) {
-    this._assertSynced()
+    this.assertSynced()
     return getRecords(
       this.store,
       (key, value) => JSON.parse(value),
@@ -167,7 +167,7 @@ class Orderbook {
    * @returns {Array<MarketEventOrder>}
    */
   async getMarketEventsByTimestamp (timestamp) {
-    this._assertSynced()
+    this.assertSynced()
     return getRecords(
       this.eventStore,
       (key, value) => JSON.parse(value),
