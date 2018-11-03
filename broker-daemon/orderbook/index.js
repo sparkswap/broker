@@ -8,6 +8,8 @@ const nano = require('nano-seconds')
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
 
+const RETRY_WATCHMARKET = 5000
+
 class Orderbook {
   constructor (marketName, relayer, store, logger = consoleLogger) {
     this.marketName = marketName
@@ -48,10 +50,10 @@ class Orderbook {
     })
 
     watcher.on('end', (error) => {
-      this.logger.info(`Market ${this.marketName} unavailable, retrying in 5s`, { error })
+      this.logger.info(`Market ${this.marketName} unavailable, retrying in ${RETRY_WATCHMARKET}ms`, { error })
       setTimeout(() => {
         this.initialize()
-      }, 5000)
+      }, RETRY_WATCHMARKET)
     })
   }
 
