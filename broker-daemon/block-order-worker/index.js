@@ -110,8 +110,6 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
 
-    const { logger } = this
-
     const orders = await getRecords(
       this.ordersStore,
       (key, value) => {
