@@ -55,7 +55,6 @@ describe('BlockOrderWorker', () => {
 
     OrderStateMachine = sinon.stub()
     OrderStateMachine.create = sinon.stub()
-    OrderStateMachine.getAll = sinon.stub()
     OrderStateMachine.STATES = {
       NONE: 'none',
       CREATED: 'created',
@@ -65,7 +64,6 @@ describe('BlockOrderWorker', () => {
 
     FillStateMachine = sinon.stub()
     FillStateMachine.create = sinon.stub()
-    FillStateMachine.getAll = sinon.stub()
     FillStateMachine.STATES = {
       NONE: 'none',
       CREATED: 'created',
@@ -361,18 +359,12 @@ describe('BlockOrderWorker', () => {
     })
     let blockOrderId = 'fakeId'
     let fakeBlockOrder
-    let orders = [
-      {
-        id: 'someId'
-      }
-    ]
     let fakeErr
     let fakeId
 
     beforeEach(() => {
       store.get.callsArgWithAsync(1, null, blockOrder)
       store.put.callsArgAsync(2)
-      OrderStateMachine.getAll.resolves(orders)
 
       fakeBlockOrder = {
         id: blockOrderId,
