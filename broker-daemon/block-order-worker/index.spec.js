@@ -55,7 +55,6 @@ describe('BlockOrderWorker', () => {
 
     OrderStateMachine = sinon.stub()
     OrderStateMachine.create = sinon.stub()
-    OrderStateMachine.getAll = sinon.stub()
     OrderStateMachine.STATES = {
       NONE: 'none',
       CREATED: 'created',
@@ -65,7 +64,6 @@ describe('BlockOrderWorker', () => {
 
     FillStateMachine = sinon.stub()
     FillStateMachine.create = sinon.stub()
-    FillStateMachine.getAll = sinon.stub()
     FillStateMachine.STATES = {
       NONE: 'none',
       CREATED: 'created',
@@ -361,18 +359,12 @@ describe('BlockOrderWorker', () => {
     })
     let blockOrderId = 'fakeId'
     let fakeBlockOrder
-    let orders = [
-      {
-        id: 'someId'
-      }
-    ]
     let fakeErr
     let fakeId
 
     beforeEach(() => {
       store.get.callsArgWithAsync(1, null, blockOrder)
       store.put.callsArgAsync(2)
-      OrderStateMachine.getAll.resolves(orders)
 
       fakeBlockOrder = {
         id: blockOrderId,
@@ -409,6 +401,9 @@ describe('BlockOrderWorker', () => {
   })
 
   describe('getBlockOrder', () => {
+    let getRecords
+    let fillsStore
+    let ordersStore
     let worker
     let blockOrder = JSON.stringify({
       marketName: 'BTC/LTC',
@@ -429,11 +424,23 @@ describe('BlockOrderWorker', () => {
     ]
 
     beforeEach(() => {
+      getRecords = sinon.stub()
+      BlockOrderWorker.__set__('getRecords', getRecords)
+
+      ordersStore = {
+        put: sinon.stub()
+      }
+      fillsStore = {
+        put: sinon.stub()
+      }
+      store.sublevel.withArgs('orders').returns(ordersStore)
+      store.sublevel.withArgs('fills').returns(fillsStore)
       store.get.callsArgWithAsync(1, null, blockOrder)
-      OrderStateMachine.getAll.resolves(orders)
-      FillStateMachine.getAll.resolves(fills)
       BlockOrder.fromStore.resolves({ id: blockOrderId })
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+
+      getRecords.withArgs(ordersStore).resolves(orders)
+      getRecords.withArgs(fillsStore).resolves(fills)
     })
 
     it('retrieves a block order from the store', async () => {
@@ -453,9 +460,32 @@ describe('BlockOrderWorker', () => {
 
       expect(Order.rangeForBlockOrder).to.have.been.calledOnce()
       expect(Order.rangeForBlockOrder).to.have.been.calledWith(bO.id)
-      expect(OrderStateMachine.getAll).to.have.been.calledOnce()
-      expect(OrderStateMachine.getAll).to.have.been.calledWith(sinon.match({ store: secondLevel }), fakeRange)
+      expect(getRecords).to.have.been.calledTwice()
+      expect(getRecords).to.have.been.calledWith(ordersStore, sinon.match.func, fakeRange)
       expect(bO).to.have.property('openOrders', orders)
+    })
+
+    it('inflates orders', async () => {
+      const fakeId = 'myid'
+      const fakeKey = 'mykey'
+      const fakeOrder = 'someorder'
+      const fakeState = 'somestate'
+      const fakeValue = JSON.stringify({
+        order: fakeOrder,
+        state: fakeState
+      })
+      const inflatedOrder = 'lol'
+      Order.fromObject.returns(inflatedOrder)
+
+      await worker.getBlockOrder(fakeId)
+
+      const eachOrder = getRecords.withArgs(ordersStore).args[0][1]
+
+      const inflated = eachOrder(fakeKey, fakeValue)
+      expect(Order.fromObject).to.have.been.calledOnce()
+      expect(Order.fromObject).to.have.been.calledWith(fakeKey, fakeOrder)
+      expect(inflated).to.have.property('order', inflatedOrder)
+      expect(inflated).to.have.property('state', fakeState)
     })
 
     it('retrieves all fills associated with a block order', async () => {
@@ -467,9 +497,32 @@ describe('BlockOrderWorker', () => {
 
       expect(Fill.rangeForBlockOrder).to.have.been.calledOnce()
       expect(Fill.rangeForBlockOrder).to.have.been.calledWith(bO.id)
-      expect(FillStateMachine.getAll).to.have.been.calledOnce()
-      expect(FillStateMachine.getAll).to.have.been.calledWith(sinon.match({ store: secondLevel }), fakeRange)
+      expect(getRecords).to.have.been.calledTwice()
+      expect(getRecords).to.have.been.calledWith(fillsStore, sinon.match.func, fakeRange)
       expect(bO).to.have.property('fills', fills)
+    })
+
+    it('inflates fills', async () => {
+      const fakeId = 'myid'
+      const fakeKey = 'mykey'
+      const fakeFill = 'someorder'
+      const fakeState = 'somestate'
+      const fakeValue = JSON.stringify({
+        fill: fakeFill,
+        state: fakeState
+      })
+      const inflatedFill = 'lol'
+      Fill.fromObject.returns(inflatedFill)
+
+      await worker.getBlockOrder(fakeId)
+
+      const eachFill = getRecords.withArgs(fillsStore).args[0][1]
+
+      const inflated = eachFill(fakeKey, fakeValue)
+      expect(Fill.fromObject).to.have.been.calledOnce()
+      expect(Fill.fromObject).to.have.been.calledWith(fakeKey, fakeFill)
+      expect(inflated).to.have.property('fill', inflatedFill)
+      expect(inflated).to.have.property('state', fakeState)
     })
   })
 
