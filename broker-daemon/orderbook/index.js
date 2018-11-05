@@ -51,6 +51,8 @@ class Orderbook {
 
     watcher.on('end', (error) => {
       this.logger.info(`Market ${this.marketName} unavailable, retrying in ${RETRY_WATCHMARKET}ms`, { error })
+
+      // TODO: exponential backoff?
       setTimeout(() => {
         this.initialize()
       }, RETRY_WATCHMARKET)
