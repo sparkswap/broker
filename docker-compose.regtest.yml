@@ -3,8 +3,6 @@
 # sparkswap Broker-CLI and Broker-Daemon
 # https://sparkswap.com
 #
-# Production file to remove volume mounts from docker-compose
-#
 ##########################################
 
 version: '2.4'
@@ -25,6 +23,24 @@ services:
     environment:
       # WARNING: only disable Relayer SSL/AUTH during development
       - DISABLE_RELAYER_AUTH=false
+
+  lnd_btc:
+    depends_on:
+      - bitcoind
+
+  lnd_ltc:
+    depends_on:
+      - litecoind
+
+  bitcoind:
+    environment:
+      - CONNECT_HOST=host.docker.internal
+      - CONNECT_PORT=18666
+
+  litecoind:
+    environment:
+      - CONNECT_HOST=host.docker.internal
+      - CONNECT_PORT=19666
 
 volumes:
   shared:
