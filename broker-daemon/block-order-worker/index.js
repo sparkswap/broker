@@ -111,20 +111,30 @@ class BlockOrderWorker extends EventEmitter {
     const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
 
     const { logger } = this
-    const openOrders = await OrderStateMachine.getAll(
-      { store: this.ordersStore, logger },
+
+    const orders = await getRecords(
+      this.ordersStore,
+      (key, value) => {
+        const { order, state } = JSON.parse(value)
+        return { order: Order.fromObject(key, order), state }
+      },
       // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
       // its prefix range.
       Order.rangeForBlockOrder(blockOrder.id)
     )
-    const fills = await FillStateMachine.getAll(
-      { store: this.fillsStore, logger },
+
+    const fills = await getRecords(
+      this.fillsStore,
+      (key, value) => {
+        const { fill, state } = JSON.parse(value)
+        return { fill: Fill.fromObject(key, fill), state }
+      },
       // limit the fills we retrieve to those that belong to this blockOrder, i.e. those that are in
       // its prefix range.
       Fill.rangeForBlockOrder(blockOrder.id)
     )
 
-    blockOrder.openOrders = openOrders
+    blockOrder.openOrders = orders
     blockOrder.fills = fills
 
     return blockOrder
