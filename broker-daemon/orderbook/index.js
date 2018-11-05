@@ -8,9 +8,26 @@ const nano = require('nano-seconds')
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
 
+/**
+ * Time, in milliseconds, between tries to get the market events from
+ * the Relayer.
+ * @constant
+ * @type {Number}
+ */
 const RETRY_WATCHMARKET = 5000
 
+/**
+ * @class Current state of the orderbook in a particular market
+ */
 class Orderbook {
+  /**
+   * Create a new orderbook for a given market
+   * @param  {String}        marketName Name of the market to track, e.g. `BTC/LTC`
+   * @param  {RelayerClient} relayer    Client to connect to the Relayer
+   * @param  {Sublevel}      store      Sublevel-compatible data store
+   * @param  {Object}        logger     
+   * @return {Orderbook}
+   */
   constructor (marketName, relayer, store, logger = consoleLogger) {
     this.marketName = marketName
     this.relayer = relayer
@@ -29,6 +46,12 @@ class Orderbook {
     return this.marketName.split('/')[1]
   }
 
+  /**
+   * Initialize the orderbook by syncing its state to the Relayer and indexing
+   * the orders.
+   * Also includes retry logic if the Relayer fails.
+   * @return {void}
+   */
   async initialize () {
     this.logger.info(`Initializing market ${this.marketName}...`)
     this.synced = false
