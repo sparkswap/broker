@@ -39,10 +39,26 @@ const DEFAULT_DATA_DIR = '~/.sparkswap/data'
 const DEFAULT_INTERCHAIN_ROUTER_ADDRESS = '0.0.0.0:40369'
 
 /**
- * Default host and port that the Relayer is set up on
+ * Attempts to retry validating an engine
  *
  * @constant
  * @type {String}
+ */
+const EXPONENTIAL_BACKOFF_ATTEMPTS = 10
+
+/**
+ * Delay in each retry attempt to validating an engine
+ *
+ * @constant
+ * @type {Integer} milliseconds
+ */
+const EXPONENTIAL_BACKOFF_DELAY = 1000
+
+/**
+ * Default host and port that the Relayer is set up on
+ *
+ * @constant
+ * @type {Integer}
  * @default
  */
 const DEFAULT_RELAYER_HOST = 'localhost:28492'
@@ -230,13 +246,9 @@ class BrokerDaemon {
 
   async validateEngines () {
     await Promise.all(Array.from(this.engines, async ([ symbol, engine ]) => {
-      try {
-        this.logger.info(`Validating engine configuration for ${symbol}`)
-        await engine.validateNodeConfig()
-        this.logger.info(`Validated engine configuration for ${symbol}`)
-      } catch (e) {
-        await exponentialBackoff(async () => engine.validateNodeConfig(), 10, 1000, () => console.log(`Validated engine configuration for ${symbol}`))
-      }
+      this.logger.info(`Validating engine configuration for ${symbol}`)
+      exponentialBackoff(() => { return engine.validateNodeConfig() }, EXPONENTIAL_BACKOFF_ATTEMPTS, EXPONENTIAL_BACKOFF_DELAY)
+      this.logger.info(`Validated engine configuration for ${symbol}`)
     }))
   }
 }

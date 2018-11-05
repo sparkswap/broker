@@ -1,21 +1,23 @@
-async function exponentialBackoff (callFunction, attempts, delay, callback) {
-  try {
-    var res = await callFunction()
-  } catch (e) {
-    console.log(e)
-  }
+const { logger } = require('./logger')
 
-  if (res) {
-    callback(res)
-  } else {
-    if (attempts > 0) {
-      setTimeout(function () {
-        exponentialBackoff(callFunction, --attempts, delay * 2, callback)
-      }, delay)
-    } else {
-      console.log(`${callFunction} failed`)
-    }
-  }
+function exponentialBackoff (callFunction, attempts, delay) {
+  callFunction()
+    .catch(function (error) {
+      logger.error(error)
+    })
+    .then((res) => {
+      if (res) {
+        return res
+      } else {
+        if (attempts > 0) {
+          setTimeout(function () {
+            exponentialBackoff(callFunction, --attempts, delay * 2)
+          }, delay)
+        } else {
+          logger.error(`${callFunction} failed`)
+        }
+      }
+    })
 }
 
 module.exports = exponentialBackoff
