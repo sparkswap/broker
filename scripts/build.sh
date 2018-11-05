@@ -41,18 +41,18 @@ rm -rf ./proto/.git
 # for a local SimNet network
 if [ "$ARG" == "local" ]; then
   echo "Copying env simnet local file to .env"
-  cp ./.env-simnet-local-sample ./.env
+  cp ./.env-simnet-sample ./.env
   echo "Copying dev file to 'docker-compose.override.yml'"
-  cp ./docker-compose.dev.yml ./docker-compose.override.yml
-# If the build is not local AND the override exists for whatever reason,
-# we should delete the file to not mess w/ the build
+  cp ./docker-compose.simnet.yml ./docker-compose.override.yml
 elif [ -f docker-compose.override.yml ]; then
-  echo "Deleting local docker-compose.override.yml file"
-  rm -f ./docker-compose.override.yml
+  # Let the user know that an override file exists which may mean that the user
+  # will have settings they do not expect
+  echo "A 'docker-compose.override.yml' file exists, but you are not using a supported"
+  echo "environment: local or regtest"
+  echo ""
+  echo "WARNING: This may add unwanted settings to the broker that could effect how your daemon runs."
+  echo ""
 fi
 
-# If we want to build images with the command then we can use
-if [ "$ARG" != "no-docker" ]; then
-  echo "Building broker docker images"
-  EXTERNAL_ADDRESS=$EXTERNAL_ADDRESS npm run build-images
-fi
+echo "Building broker docker images"
+EXTERNAL_ADDRESS=$EXTERNAL_ADDRESS npm run build-images
