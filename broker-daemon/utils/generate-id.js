@@ -16,9 +16,9 @@ function generateId () {
  */
 function urlEncode (base64Str) {
   return base64Str
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
 }
 
 module.exports = generateId
