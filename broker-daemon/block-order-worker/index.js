@@ -347,11 +347,13 @@ class BlockOrderWorker extends EventEmitter {
 
     // if the fill for this order isn't for the entire order, re-place the remainder
     osm.once('execute', async () => {
+      this.logger.debug(`Order ${osm.order.orderId} has been filled, re-placing the remainder`)
       try {
-        const remainingBaseAmount = Big(blockOrder.baseAmount).minus(blockOrder.fillAmount)
+        const remainingBaseAmount = Big(osm.order.baseAmount).minus(osm.order.fillAmount)
         // if there is no remaining base amount (i.e. the entire order was filled)
         // take no action as the block order completion is handled in the `on('complete')` listener
         if (remainingBaseAmount.gt(0)) {
+          this.logger.debug(`Re-placing an order for ${remainingBaseAmount.toString()} for Block Order ${blockOrder.id}`)
           await this.workBlockOrder(blockOrder, remainingBaseAmount)
         }
       } catch (e) {
@@ -380,7 +382,8 @@ class BlockOrderWorker extends EventEmitter {
    */
   async _placeOrder (blockOrder, baseAmount) {
     // order params
-    const { baseSymbol, counterSymbol, side, counterAmount } = blockOrder
+    const { baseSymbol, counterSymbol, side, quantumPrice } = blockOrder
+    const counterAmount = Big(baseAmount).times(quantumPrice).round(0).toString()
 
     // state machine params
     const { relayer, engines, logger } = this

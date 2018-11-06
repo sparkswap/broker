@@ -1058,7 +1058,7 @@ describe('BlockOrderWorker', () => {
       blockOrder.marketName = 'BTC/XYZ'
       blockOrder.counterSymbol = 'XYZ'
 
-      return expect(worker._placeOrder(blockOrder, orders, targetDepth)).to.eventually.be.rejectedWith('No engine available')
+      return expect(worker._fillOrders(blockOrder, orders, targetDepth)).to.eventually.be.rejectedWith('No engine available')
     })
 
     it('creates FillStateMachines for each fill', async () => {
@@ -1198,7 +1198,6 @@ describe('BlockOrderWorker', () => {
         side: 'BID',
         amount: Big('0.000000100'),
         baseAmount: '100',
-        fillAmount: '90',
         counterAmount: '100000',
         price: Big('1000'),
         timeInForce: 'GTC'
@@ -1207,7 +1206,9 @@ describe('BlockOrderWorker', () => {
         id: 'anotherId',
         once: onceStub,
         order: {
-          orderId: 'orderid'
+          orderId: 'orderid',
+          baseAmount: '100',
+          fillAmount: '90'
         },
         removeAllListeners: removeAllListenersStub
       }
@@ -1264,7 +1265,7 @@ describe('BlockOrderWorker', () => {
       })
 
       it('does not work the block order if the order was completely filled', async () => {
-        blockOrder.fillAmount = '100'
+        order.order.fillAmount = '100'
         await executeListener()
         expect(workBlockOrderStub).to.not.have.been.calledOnce()
       })
@@ -1328,6 +1329,7 @@ describe('BlockOrderWorker', () => {
         amount: Big('0.000000100'),
         baseAmount: '100',
         counterAmount: '100000',
+        quantumPrice: '1000',
         price: Big('1000'),
         timeInForce: 'GTC'
       }
@@ -1379,9 +1381,9 @@ describe('BlockOrderWorker', () => {
     })
 
     it('uses the block order price to translate to counter amount', async () => {
-      await worker._placeOrder(blockOrder, '100')
+      await worker._placeOrder(blockOrder, '50')
 
-      expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match({ counterAmount: '100000' }))
+      expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match({ counterAmount: '50000' }))
     })
 
     it('provides the ordersStore the OrderStateMachine', async () => {
