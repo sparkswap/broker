@@ -138,12 +138,21 @@ describe('BlockOrderWorker', () => {
       expect(worker).to.have.property('engines', engines)
     })
 
-    it('creates an index for the orders store', async () => {
-      expect(SublevelIndex).to.have.been.calledOnce()
+    it('creates indices for the orders store', async () => {
+      expect(SublevelIndex).to.have.been.calledTwice()
       expect(SublevelIndex).to.have.been.calledWithNew()
+    })
+
+    it('creates an index for the orders store by hash', async () => {
       expect(SublevelIndex).to.have.been.calledWith(secondLevel, 'ordersByHash')
       expect(worker).to.have.property('ordersByHash')
       expect(worker.ordersByHash).to.be.instanceOf(SublevelIndex)
+    })
+
+    it('creates an index for the orders store by hash', async () => {
+      expect(SublevelIndex).to.have.been.calledWith(secondLevel, 'ordersByOrderId')
+      expect(worker).to.have.property('ordersByOrderId')
+      expect(worker.ordersByOrderId).to.be.instanceOf(SublevelIndex)
     })
 
     it('indexes the orders store by swap hash', async () => {
@@ -196,26 +205,82 @@ describe('BlockOrderWorker', () => {
       expect(Order.fromStorage).to.have.been.calledWith(fakeKey, fakeValue)
       expect(filtered).to.be.equal(false)
     })
+
+    it('indexes the orders store by order id', async () => {
+      const getValue = SublevelIndex.args[1][2]
+
+      const fakeKey = 'mykey'
+      const fakeValue = 'myvalue'
+      const fakeOrder = {
+        orderId: 'fakeOrderId'
+      }
+      Order.fromStorage.returns(fakeOrder)
+
+      const indexValue = getValue(fakeKey, fakeValue)
+
+      expect(Order.fromStorage).to.have.been.calledOnce()
+      expect(Order.fromStorage).to.have.been.calledWith(fakeKey, fakeValue)
+      expect(indexValue).to.be.equal(fakeOrder.orderId)
+    })
+
+    it('indexes the orders that have a orderId', async () => {
+      const filter = SublevelIndex.args[1][3]
+
+      const fakeKey = 'mykey'
+      const fakeValue = 'myvalue'
+      const fakeOrder = {
+        orderId: 'fakeOrderId'
+      }
+      Order.fromStorage.returns(fakeOrder)
+
+      const filtered = filter(fakeKey, fakeValue)
+
+      expect(Order.fromStorage).to.have.been.calledOnce()
+      expect(Order.fromStorage).to.have.been.calledWith(fakeKey, fakeValue)
+      expect(filtered).to.be.equal(true)
+    })
+
+    it('does not index the orders that do not have an orderId', async () => {
+      const filter = SublevelIndex.args[1][3]
+
+      const fakeKey = 'mykey'
+      const fakeValue = 'myvalue'
+      const fakeOrder = {
+        orderId: undefined
+      }
+      Order.fromStorage.returns(fakeOrder)
+
+      const filtered = filter(fakeKey, fakeValue)
+
+      expect(Order.fromStorage).to.have.been.calledOnce()
+      expect(Order.fromStorage).to.have.been.calledWith(fakeKey, fakeValue)
+      expect(filtered).to.be.equal(false)
+    })
   })
 
   describe('initialize', () => {
     let worker
-    let ensureIndex
 
     beforeEach(() => {
-      ensureIndex = sinon.stub().resolves()
-      SublevelIndex.prototype.ensureIndex = ensureIndex
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.ordersByHash = { ensureIndex: sinon.stub().resolves() }
+      worker.ordersByOrderId = { ensureIndex: sinon.stub().resolves() }
     })
 
     it('rebuilds the ordersByHash index', async () => {
       await worker.initialize()
 
-      expect(ensureIndex).to.have.been.calledOnce()
+      expect(worker.ordersByHash.ensureIndex).to.have.been.calledOnce()
+    })
+
+    it('rebuilds the ordersByOrderId index', async () => {
+      await worker.initialize()
+
+      expect(worker.ordersByOrderId.ensureIndex).to.have.been.calledOnce()
     })
 
     it('waits for index rebuilding to complete', () => {
-      ensureIndex.rejects()
+      worker.ordersByHash.ensureIndex.rejects()
 
       return expect(worker.initialize()).to.eventually.be.rejectedWith(Error)
     })
@@ -1043,11 +1108,21 @@ describe('BlockOrderWorker', () => {
     let targetDepth
     let onceStub
     let removeAllListenersStub
+    let getRecords
+    let ordersByOrderId
 
     beforeEach(() => {
       onceStub = sinon.stub()
       removeAllListenersStub = sinon.stub()
+      getRecords = sinon.stub()
+      Order.fromStorage = {
+        bind: sinon.stub()
+      }
+      ordersByOrderId = { range: sinon.stub() }
+      getRecords = sinon.stub().resolves([])
+      BlockOrderWorker.__set__('getRecords', getRecords)
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.ordersByOrderId = ordersByOrderId
       blockOrder = {
         id: 'fakeId',
         marketName: 'BTC/LTC',
@@ -1078,6 +1153,13 @@ describe('BlockOrderWorker', () => {
       blockOrder.counterSymbol = 'XYZ'
 
       return expect(worker._placeOrder(blockOrder, orders, targetDepth)).to.eventually.be.rejectedWith('No engine available')
+    })
+
+    it('throws if the order being filled is the users own order', () => {
+      getRecords.resolves([{orderId: '1'}])
+      const worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.ordersByOrderId = ordersByOrderId
+      return expect(worker._fillOrders(blockOrder, orders, targetDepth)).to.eventually.be.rejectedWith(`Cannot fill own order 1`)
     })
 
     it('creates FillStateMachines for each fill', async () => {
