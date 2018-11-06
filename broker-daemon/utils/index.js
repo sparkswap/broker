@@ -14,6 +14,7 @@ const createHttpServer = require('./create-http-server')
 const timestampToNano = require('./timestamp-to-nano')
 const generateId = require('./generate-id')
 const exponentialBackoff = require('./exponential-backoff')
+const delay = require('./delay')
 
 module.exports = {
   getRecords,
@@ -31,5 +32,6 @@ module.exports = {
   createHttpServer,
   timestampToNano,
   generateId,
-  exponentialBackoff
+  exponentialBackoff,
+  delay
 }

@@ -1,23 +1,19 @@
-const { logger } = require('./logger')
+const logger = require('./logger')
+const delay = require('./delay')
 
-function exponentialBackoff (callFunction, attempts, delay) {
-  callFunction()
-    .catch(function (error) {
-      logger.error(error)
-    })
-    .then((res) => {
-      if (res) {
-        return res
-      } else {
-        if (attempts > 0) {
-          setTimeout(function () {
-            exponentialBackoff(callFunction, --attempts, delay * 2)
-          }, delay)
-        } else {
-          logger.error(`${callFunction} failed`)
-        }
-      }
-    })
+async function exponentialBackoff (callFunction, attempts, delayTime) {
+  try {
+    var res = callFunction()
+  } catch (error) {
+    logger.error(`Error (${error}) with ${callFunction}, retry attempts left: ${attempts}`)
+    if (attempts > 0) {
+      await delay(delayTime)
+      exponentialBackoff(callFunction, --attempts, delayTime * 2)
+    } else {
+      logger.error(`Error (${error}) with ${callFunction}, no retry attempts left`)
+    }
+  }
+  return res
 }
 
 module.exports = exponentialBackoff

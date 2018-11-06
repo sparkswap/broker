@@ -245,11 +245,17 @@ class BrokerDaemon {
   }
 
   async validateEngines () {
-    await Promise.all(Array.from(this.engines, async ([ symbol, engine ]) => {
-      this.logger.info(`Validating engine configuration for ${symbol}`)
-      exponentialBackoff(() => { return engine.validateNodeConfig() }, EXPONENTIAL_BACKOFF_ATTEMPTS, EXPONENTIAL_BACKOFF_DELAY)
+    this.engines.forEach(async (engine, symbol) => {
+      try {
+        this.logger.info(`Validating engine configuration for ${symbol}`)
+        await exponentialBackoff(() => { engine.validateNodeConfig() }, EXPONENTIAL_BACKOFF_ATTEMPTS, EXPONENTIAL_BACKOFF_DELAY)
+      } catch (e) {
+        this.logger.error(`Failed to validate engine for ${symbol}, error: ${e}`)
+        return
+      }
+
       this.logger.info(`Validated engine configuration for ${symbol}`)
-    }))
+    })
   }
 }
 
