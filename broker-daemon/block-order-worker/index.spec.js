@@ -1250,11 +1250,11 @@ describe('BlockOrderWorker', () => {
       beforeEach(() => {
         workBlockOrderStub = sinon.stub().resolves()
         worker.workBlockOrder = workBlockOrderStub
-        executeListener = onceStub.withArgs('execute').args[0][1]
+        executeListener = onceStub.withArgs('before:execute').args[0][1]
       })
 
       it('registers an event on an order for order execution', async () => {
-        expect(onceStub).to.have.been.calledWith('execute', sinon.match.func)
+        expect(onceStub).to.have.been.calledWith('before:execute', sinon.match.func)
       })
 
       it('works the block order with the remaining base amount', async () => {

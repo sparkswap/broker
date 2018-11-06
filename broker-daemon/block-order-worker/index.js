@@ -346,7 +346,7 @@ class BlockOrderWorker extends EventEmitter {
     })
 
     // if the fill for this order isn't for the entire order, re-place the remainder
-    osm.once('execute', async () => {
+    osm.once('before:execute', async () => {
       this.logger.debug(`Order ${osm.order.orderId} has been filled, re-placing the remainder`)
       try {
         const remainingBaseAmount = Big(osm.order.baseAmount).minus(osm.order.fillAmount)
