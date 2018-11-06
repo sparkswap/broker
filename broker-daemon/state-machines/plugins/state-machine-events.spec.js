@@ -44,6 +44,17 @@ describe('StateMachineEvents', () => {
       onAfterTransition(lifecycle)
       expect(emitStub).to.have.been.calledWith(lifecycle.transition)
     })
+
+    it('should have property onBeforeTransition', () => {
+      expect(observers).to.have.property('onBeforeTransition')
+    })
+
+    it('should emit an event before each transition', () => {
+      const lifecycle = { transition: 'start' }
+      const { onBeforeTransition } = observers
+      onBeforeTransition(lifecycle)
+      expect(emitStub).to.have.been.calledWith(`before:${lifecycle.transition}`)
+    })
   })
 
   describe('methods', () => {
