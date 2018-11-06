@@ -324,8 +324,13 @@ describe('BlockOrderWorker', () => {
         price: '100',
         timeInForce: 'GTC'
       }
+
+      BlockOrder.prototype.baseAmount = '1000000000000'
+
       await worker.createBlockOrder(params)
       expect(workBlockOrderStub).to.have.been.calledOnce()
+      expect(workBlockOrderStub).to.have.been.calledWith(sinon.match.instanceOf(BlockOrder))
+      expect(workBlockOrderStub.args[0][1].toString()).to.be.eql('1000000000000')
     })
 
     it('fails a block order if working a block order is unsuccessful', async () => {
@@ -661,26 +666,13 @@ describe('BlockOrderWorker', () => {
   describe('#workBlockOrder', () => {
     let worker
     let blockOrder
-    let order
 
     beforeEach(() => {
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       blockOrder = {
-        id: 'fakeId',
         marketName: 'BTC/LTC',
-        baseSymbol: 'BTC',
-        counterSymbol: 'LTC',
-        side: 'BID',
-        amount: Big('100'),
-        price: Big('1000'),
-        baseAmount: '0.0000001000000000',
-        counterAmount: '0.0001000000000000',
-        quantumPrice: '1000.00000000000000000'
+        price: Big('1000')
       }
-      order = {
-        id: 'anotherId'
-      }
-      OrderStateMachine.create.resolves(order)
     })
 
     it('errors if the market is not supported', () => {
@@ -688,26 +680,26 @@ describe('BlockOrderWorker', () => {
       blockOrder.baseSymbol = 'ABC'
       blockOrder.counterSymbol = 'XYZ'
 
-      expect(worker.workBlockOrder(blockOrder)).to.be.rejectedWith(Error)
+      expect(worker.workBlockOrder(blockOrder, Big('100'))).to.be.rejectedWith(Error)
     })
 
     it('sends market orders to #workMarketBlockOrder', async () => {
       blockOrder.price = null
       worker.workMarketBlockOrder = sinon.stub().resolves()
 
-      await worker.workBlockOrder(blockOrder)
+      await worker.workBlockOrder(blockOrder, Big('100'))
 
       expect(worker.workMarketBlockOrder).to.have.been.calledOnce()
-      expect(worker.workMarketBlockOrder).to.have.been.calledWith(blockOrder)
+      expect(worker.workMarketBlockOrder).to.have.been.calledWith(blockOrder, Big('100'))
     })
 
     it('sends limit orders to #workLimitBlockOrder', async () => {
       worker.workLimitBlockOrder = sinon.stub().resolves()
 
-      await worker.workBlockOrder(blockOrder)
+      await worker.workBlockOrder(blockOrder, Big('100'))
 
       expect(worker.workLimitBlockOrder).to.have.been.calledOnce()
-      expect(worker.workLimitBlockOrder).to.have.been.calledWith(blockOrder)
+      expect(worker.workLimitBlockOrder).to.have.been.calledWith(blockOrder, Big('100'))
     })
   })
 
@@ -728,11 +720,7 @@ describe('BlockOrderWorker', () => {
         counterSymbol: 'LTC',
         side: 'BID',
         inverseSide: 'ASK',
-        amount: Big('100'),
-        baseAmount: '100000000000',
-        price: Big('1000'),
         timeInForce: 'GTC',
-        counterAmount: '100000000000000',
         quantumPrice: '1000.00000000000000000'
       }
       order = {
@@ -751,14 +739,14 @@ describe('BlockOrderWorker', () => {
     })
 
     it('gets the best orders from the orderbook', async () => {
-      await worker.workLimitBlockOrder(blockOrder)
+      await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
 
       expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledOnce()
       expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledWith(sinon.match({ side: 'ASK', depth: '100000000000', quantumPrice: '1000.00000000000000000' }))
     })
 
     it('fills as many orders as possible at the given price or better', async () => {
-      await worker.workLimitBlockOrder(blockOrder)
+      await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
 
       expect(worker._fillOrders).to.have.been.calledOnce()
       expect(worker._fillOrders.args[0][0]).to.be.eql(blockOrder)
@@ -767,7 +755,7 @@ describe('BlockOrderWorker', () => {
     })
 
     it('places an order for the remaining amount', async () => {
-      await worker.workLimitBlockOrder(blockOrder)
+      await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
 
       expect(worker._placeOrder).to.have.been.calledOnce()
       expect(worker._placeOrder.args[0][0]).to.be.eql(blockOrder)
@@ -781,7 +769,7 @@ describe('BlockOrderWorker', () => {
         depth: '190000000000'
       })
 
-      await worker.workLimitBlockOrder(blockOrder)
+      await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
 
       expect(worker._fillOrders.args[0][1]).to.have.lengthOf(2)
       expect(worker._placeOrder).to.not.have.been.called()
@@ -797,15 +785,8 @@ describe('BlockOrderWorker', () => {
     beforeEach(() => {
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       blockOrder = {
-        id: 'fakeId',
         marketName: 'BTC/LTC',
-        baseSymbol: 'BTC',
-        counterSymbol: 'LTC',
-        side: 'BID',
-        inverseSide: 'ASK',
-        amount: Big('0.000000100'),
-        baseAmount: '100',
-        price: null
+        inverseSide: 'ASK'
       }
 
       worker._fillOrders = sinon.stub()
@@ -822,7 +803,7 @@ describe('BlockOrderWorker', () => {
     })
 
     it('gets the best orders from the orderbook', async () => {
-      await worker.workMarketBlockOrder(blockOrder)
+      await worker.workMarketBlockOrder(blockOrder, Big('100'))
 
       expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledOnce()
       expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledWith(sinon.match({ side: 'ASK', depth: '100' }))
@@ -834,11 +815,11 @@ describe('BlockOrderWorker', () => {
         depth: '0'
       })
 
-      return expect(worker.workMarketBlockOrder(blockOrder)).to.eventually.rejectedWith('Insufficient depth in ASK to fill 100')
+      return expect(worker.workMarketBlockOrder(blockOrder, Big('100'))).to.eventually.rejectedWith('Insufficient depth in ASK to fill 100')
     })
 
     it('fills the orders to the given depth', async () => {
-      await worker.workMarketBlockOrder(blockOrder)
+      await worker.workMarketBlockOrder(blockOrder, Big('100'))
 
       expect(worker._fillOrders).to.have.been.calledOnce()
       expect(worker._fillOrders.args[0][0]).to.be.eql(blockOrder)

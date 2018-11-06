@@ -93,7 +93,7 @@ class BlockOrderWorker extends EventEmitter {
 
     // Start working the block order asynchronously to prevent blocking the creation
     // of 'other' block orders
-    this.workBlockOrder(blockOrder).catch(err => {
+    this.workBlockOrder(blockOrder, Big(blockOrder.baseAmount)).catch(err => {
       this.failBlockOrder(blockOrder.id, err)
     })
 
@@ -226,10 +226,11 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * work a block order that gets created
-   * @param  {BlockOrder} blockOrder Block Order to work
+   * @param  {BlockOrder} blockOrder  Block Order to work
+   * @param  {Big}        targetDepth Depth, in base currency, to reach with this work
    * @return {void}
    */
-  async workBlockOrder (blockOrder) {
+  async workBlockOrder (blockOrder, targetDepth) {
     this.logger.info('Working block order', { blockOrderId: blockOrder.id })
 
     const orderbook = this.orderbooks.get(blockOrder.marketName)
@@ -240,20 +241,20 @@ class BlockOrderWorker extends EventEmitter {
 
     if (!blockOrder.price) {
       // block orders without prices are Market orders and take the best available price
-      await this.workMarketBlockOrder(blockOrder)
+      await this.workMarketBlockOrder(blockOrder, targetDepth)
     } else {
-      await this.workLimitBlockOrder(blockOrder)
+      await this.workLimitBlockOrder(blockOrder, targetDepth)
     }
   }
 
   /**
    * Work market block order
-   * @param  {BlockOrder} blockOrder BlockOrder without a limit price, i.e. a market order
+   * @param  {BlockOrder} blockOrder  BlockOrder without a limit price, i.e. a market order
+   * @param  {Big}        targetDepth Depth, in base currency, to reach with this work
    * @return {void}
    */
-  async workMarketBlockOrder (blockOrder) {
+  async workMarketBlockOrder (blockOrder, targetDepth) {
     const orderbook = this.orderbooks.get(blockOrder.marketName)
-    const targetDepth = Big(blockOrder.baseAmount)
 
     const { orders, depth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString() })
 
@@ -268,16 +269,16 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Work limit block order
    * @todo make limit orders more sophisticated than just sending a single limit order to the relayer
-   * @param  {BlockOrder} blockOrder BlockOrder with a limit price
+   * @param  {BlockOrder} blockOrder  BlockOrder with a limit price
+   * @param  {Big}        targetDepth Depth, in base currency, to reach with this work
    * @return {void}
    */
-  async workLimitBlockOrder (blockOrder) {
+  async workLimitBlockOrder (blockOrder, targetDepth) {
     if (blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.GTC) {
       throw new Error('Only Good-til-cancelled limit orders are currently supported.')
     }
 
     const orderbook = this.orderbooks.get(blockOrder.marketName)
-    const targetDepth = Big(blockOrder.baseAmount)
 
     // fill as many orders at our price or better
     const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString(), quantumPrice: blockOrder.quantumPrice })
