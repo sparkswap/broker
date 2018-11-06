@@ -86,27 +86,6 @@ class Order {
   }
 
   /**
-   * Alias for `fillAmount`
-   * @return {String} Amount, represented as an integer in the base currency's smallest unit, that the order is filled with
-   */
-  get baseFillAmount () {
-    return this.fillAmount
-  }
-
-  /**
-   * Amount, in the counter currency's base units that will be filled in this fill
-   * @return {String} Amount, represented as an integer in the counter currency's smallest unit, that the order willb e fille with
-   */
-  get counterFillAmount () {
-    const baseAmount = Big(this.baseAmount)
-    const counterAmount = Big(this.counterAmount)
-    const fillAmount = Big(this.fillAmount)
-
-    // since we are dealing in the smallest units, we want an integer
-    return counterAmount.times(fillAmount).div(baseAmount).round(0).toString()
-  }
-
-  /**
    * Get the symbol of the currency we will receive inbound if the order is completed
    * @return {String} Currency symbol
    */

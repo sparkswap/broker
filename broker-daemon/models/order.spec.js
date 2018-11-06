@@ -250,20 +250,6 @@ describe('Order', () => {
       })
     })
 
-    describe('amount getters', () => {
-      beforeEach(() => {
-        order.fillAmount = '9000'
-      })
-
-      it('defines a baseFillAmount getter', () => {
-        expect(order).to.have.property('baseFillAmount', '9000')
-      })
-
-      it('defines a counterFillAmount getter', () => {
-        expect(order).to.have.property('counterFillAmount', '90000')
-      })
-    })
-
     describe('get key', () => {
       it('defines a key getter', () => {
         const fakeId = 'fakeId'
