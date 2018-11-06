@@ -327,6 +327,39 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
+   * Applies listeners to a created OrderStateMachine
+   * @private
+   * @param  {OrderStateMachine} osm        State machine to apply listeners to
+   * @param  {BlockOrder} blockOrder Block Order associated with the state machine
+   * @return {OrderStateMachine}
+   */
+  applyOsmListeners (osm, blockOrder) {
+    // We are hooking into the complete lifecycle event of an order state machine to trigger
+    // the completion of a blockorder
+    osm.once('complete', async () => {
+      try {
+        await this.checkBlockOrderCompletion(blockOrder.id)
+      } catch (e) {
+        this.logger.error(`BlockOrder failed to be completed from order`, { id: blockOrder.id, error: e.stack })
+      }
+      osm.removeAllListeners()
+    })
+
+    // We are hooking into the reject lifecycle event of an order state machine to trigger
+    // the failure of a blockorder
+    osm.once('reject', async () => {
+      try {
+        await this.failBlockOrder(blockOrder.id, osm.order.error)
+      } catch (e) {
+        this.logger.error(`BlockOrder failed on setting a failed status from order`, { id: blockOrder.id, error: e.stack })
+      }
+      osm.removeAllListeners()
+    })
+
+    return osm
+  }
+
+  /**
    * Place an order for a block order of a given amount
    * @param  {BlockOrder} blockOrder Block Order to place an order on behalf of
    * @param  {String} amount     Int64 amount, in base currency's base units to place the order for
@@ -361,25 +394,7 @@ class BlockOrderWorker extends EventEmitter {
       { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
     )
 
-    // We are hooking into the complete lifecycle event of an order state machine to trigger
-    // the completion of a blockorder
-    osm.once('complete', async () => {
-      this.checkBlockOrderCompletion(blockOrder.id)
-        .catch(e => {
-          this.logger.error(`BlockOrder failed to be completed from order`, { id: blockOrder.id, error: e.stack })
-        })
-        .then(() => osm.removeAllListeners())
-    })
-
-    // We are hooking into the reject lifecycle event of an order state machine to trigger
-    // the failure of a blockorder
-    osm.once('reject', async () => {
-      this.failBlockOrder(blockOrder.id, osm.order.error)
-        .catch(e => {
-          this.logger.error(`BlockOrder failed on setting a failed status from order`, { id: blockOrder.id, error: e.stack })
-        })
-        .then(() => osm.removeAllListeners())
-    })
+    this.applyOsmListeners(osm, blockOrder)
 
     this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: osm.order.orderId })
   }

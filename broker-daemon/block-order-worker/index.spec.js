@@ -1197,17 +1197,18 @@ describe('BlockOrderWorker', () => {
     })
   })
 
-  describe('#_placeOrder', () => {
+  describe('#applyOsmListeners', () => {
     let worker
     let blockOrder
     let order
     let onceStub
     let removeAllListenersStub
 
-    beforeEach(() => {
+    beforeEach(async () => {
       onceStub = sinon.stub()
       removeAllListenersStub = sinon.stub()
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+
       blockOrder = {
         id: 'fakeId',
         marketName: 'BTC/LTC',
@@ -1227,6 +1228,88 @@ describe('BlockOrderWorker', () => {
           orderId: 'orderid'
         },
         removeAllListeners: removeAllListenersStub
+      }
+
+      await worker.applyOsmListeners(order, blockOrder)
+    })
+
+    describe('complete event', () => {
+      let blockOrderCompleteStub
+
+      beforeEach(() => {
+        blockOrderCompleteStub = sinon.stub().resolves(true)
+        worker.checkBlockOrderCompletion = blockOrderCompleteStub
+      })
+
+      it('registers an event on an order for order completion', async () => {
+        expect(onceStub).to.have.been.calledWith('complete', sinon.match.func)
+      })
+
+      it('attempts to complete a block order', async () => {
+        await onceStub.args[0][1]()
+        expect(blockOrderCompleteStub).to.have.been.calledOnce()
+      })
+
+      it('catches an exception if checkBlockOrderCompletion fails', async () => {
+        blockOrderCompleteStub.rejects()
+        await onceStub.args[0][1]()
+        expect(blockOrderCompleteStub).to.have.been.calledOnce()
+        expect(loggerErrorStub).to.have.been.calledWith(sinon.match('BlockOrder failed'), sinon.match.any)
+      })
+    })
+
+    describe('reject event', () => {
+      let failBlockOrderStub
+
+      beforeEach(() => {
+        failBlockOrderStub = sinon.stub().resolves(true)
+        worker.failBlockOrder = failBlockOrderStub
+      })
+
+      it('registers an event on an order for order rejection', async () => {
+        expect(onceStub).to.have.been.calledWith('reject', sinon.match.func)
+      })
+
+      it('fails a block order if the call is rejected', async () => {
+        await onceStub.args[1][1]()
+        expect(failBlockOrderStub).to.have.been.calledOnce()
+      })
+
+      it('catches an exception if failBlockOrder fails', async () => {
+        failBlockOrderStub.rejects()
+        await onceStub.args[1][1]()
+        expect(failBlockOrderStub).to.have.been.calledOnce()
+        expect(loggerErrorStub).to.have.been.calledWith(sinon.match('BlockOrder failed'), sinon.match.any)
+      })
+    })
+  })
+
+  describe('#_placeOrder', () => {
+    let worker
+    let blockOrder
+    let order
+
+    beforeEach(() => {
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.applyOsmListeners = sinon.stub()
+
+      blockOrder = {
+        id: 'fakeId',
+        marketName: 'BTC/LTC',
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        side: 'BID',
+        amount: Big('0.000000100'),
+        baseAmount: '100',
+        counterAmount: '100000',
+        price: Big('1000'),
+        timeInForce: 'GTC'
+      }
+      order = {
+        id: 'anotherId',
+        order: {
+          orderId: 'orderid'
+        }
       }
       OrderStateMachine.create.resolves(order)
     })
@@ -1293,62 +1376,11 @@ describe('BlockOrderWorker', () => {
       expect(OrderStateMachine.create).to.have.been.calledWith(sinon.match({ engines }))
     })
 
-    describe('complete event', () => {
-      let blockOrderCompleteStub
+    it('applies listeners to the OrderStateMachine', async () => {
+      await worker._placeOrder(blockOrder, '100')
 
-      beforeEach(() => {
-        blockOrderCompleteStub = sinon.stub().resolves(true)
-        worker.checkBlockOrderCompletion = blockOrderCompleteStub
-      })
-
-      beforeEach(async () => {
-        await worker._placeOrder(blockOrder, '100')
-      })
-
-      it('registers an event on an order for order completion', async () => {
-        expect(onceStub).to.have.been.calledWith('complete', sinon.match.func)
-      })
-
-      it('attempts to complete a block order', async () => {
-        await onceStub.args[0][1]()
-        expect(blockOrderCompleteStub).to.have.been.calledOnce()
-      })
-
-      it('catches an exception if checkBlockOrderCompletion fails', async () => {
-        blockOrderCompleteStub.rejects()
-        await onceStub.args[0][1]()
-        expect(blockOrderCompleteStub).to.have.been.calledOnce()
-        expect(loggerErrorStub).to.have.been.calledWith(sinon.match('BlockOrder failed'), sinon.match.any)
-      })
-    })
-
-    describe('reject event', () => {
-      let failBlockOrderStub
-
-      beforeEach(() => {
-        failBlockOrderStub = sinon.stub().resolves(true)
-        worker.failBlockOrder = failBlockOrderStub
-      })
-
-      beforeEach(async () => {
-        await worker._placeOrder(blockOrder, '100')
-      })
-
-      it('registers an event on an order for order rejection', async () => {
-        expect(onceStub).to.have.been.calledWith('reject', sinon.match.func)
-      })
-
-      it('fails a block order if the call is rejected', async () => {
-        await onceStub.args[1][1]()
-        expect(failBlockOrderStub).to.have.been.calledOnce()
-      })
-
-      it('catches an exception if failBlockOrder fails', async () => {
-        failBlockOrderStub.rejects()
-        await onceStub.args[1][1]()
-        expect(failBlockOrderStub).to.have.been.calledOnce()
-        expect(loggerErrorStub).to.have.been.calledWith(sinon.match('BlockOrder failed'), sinon.match.any)
-      })
+      expect(worker.applyOsmListeners).to.have.been.calledOnce()
+      expect(worker.applyOsmListeners).to.have.been.calledWith(order, blockOrder)
     })
   })
 
