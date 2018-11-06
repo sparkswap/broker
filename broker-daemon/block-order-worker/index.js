@@ -300,7 +300,7 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = await this.getBlockOrder(blockOrderId)
 
-    // check the fillamount on each collection of state machines from the block order
+    // check the fillAmount on each collection of state machines from the block order
     // and make sure that either is equal to how much we are trying to fill.
     let totalFilled = Big(0)
     totalFilled = blockOrder.fills.reduce((acc, fsm) => acc.plus(fsm.fill.fillAmount), totalFilled)
@@ -335,8 +335,7 @@ class BlockOrderWorker extends EventEmitter {
    * @return {OrderStateMachine}
    */
   applyOsmListeners (osm, blockOrder) {
-    // We are hooking into the complete lifecycle event of an order state machine to trigger
-    // the completion of a blockorder
+    // Try to complete the entire block order once an underlying order completes
     osm.once('complete', async () => {
       try {
         await this.checkBlockOrderCompletion(blockOrder.id)
@@ -346,8 +345,21 @@ class BlockOrderWorker extends EventEmitter {
       osm.removeAllListeners()
     })
 
-    // We are hooking into the reject lifecycle event of an order state machine to trigger
-    // the failure of a blockorder
+    // if the fill for this order isn't for the entire order, re-place the remainder
+    osm.once('execute', async () => {
+      try {
+        const remainingBaseAmount = Big(blockOrder.baseAmount).minus(blockOrder.fillAmount)
+        // if there is no remaining base amount (i.e. the entire order was filled)
+        // take no action as the block order completion is handled in the `on('complete')` listener
+        if (remainingBaseAmount.gt(0)) {
+          await this.workBlockOrder(blockOrder, remainingBaseAmount)
+        }
+      } catch (e) {
+        this.failBlockOrder(blockOrder.id, e)
+      }
+    })
+
+    // reject the entire block order if an underlying order fails
     osm.once('reject', async () => {
       try {
         await this.failBlockOrder(blockOrder.id, osm.order.error)
