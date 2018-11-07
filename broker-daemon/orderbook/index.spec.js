@@ -151,9 +151,76 @@ describe('Orderbook', () => {
       expect(orderbook.index).to.be.an.instanceOf(OrderbookIndex)
       expect(orderbook.store).to.be.eql(orderbookStore)
     })
+
+    it('creates an ask index', () => {
+      const marketName = 'XYZ/ABC'
+      const orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+
+      expect(AskIndex).to.have.been.calledOnce()
+      expect(AskIndex).to.have.been.calledWithNew()
+      expect(AskIndex).to.have.been.calledWith(orderbookStore)
+      expect(orderbook.askIndex).to.be.an.instanceOf(AskIndex)
+    })
+
+    it('creates a bid index', () => {
+      const marketName = 'XYZ/ABC'
+      const orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+
+      expect(BidIndex).to.have.been.calledOnce()
+      expect(BidIndex).to.have.been.calledWithNew()
+      expect(BidIndex).to.have.been.calledWith(orderbookStore)
+      expect(orderbook.bidIndex).to.be.an.instanceOf(BidIndex)
+    })
   })
 
   describe('#initialize', () => {
+    let baseSymbol
+    let counterSymbol
+    let marketName
+    let orderbook
+
+    beforeEach(async () => {
+      baseSymbol = 'XYZ'
+      counterSymbol = 'ABAC'
+      marketName = `${baseSymbol}/${counterSymbol}`
+      orderbook = new Orderbook(marketName, relayer, baseStore, logger)
+
+      orderbook.watchMarket = sinon.stub().resolves()
+      orderbook.index = {
+        ensureIndex: sinon.stub().resolves()
+      }
+      orderbook.bidIndex = {
+        ensureIndex: sinon.stub().resolves()
+      }
+      orderbook.askIndex = {
+        ensureIndex: sinon.stub().resolves()
+      }
+
+      await orderbook.initialize()
+    })
+
+    it('sets the synced status to false', () => {
+      expect(orderbook.synced).to.be.false()
+    })
+
+    it('sets up the orderbook index', () => {
+      expect(orderbook.index.ensureIndex).to.have.been.calledOnce()
+    })
+
+    it('sets up the ask index', () => {
+      expect(orderbook.askIndex.ensureIndex).to.have.been.calledOnce()
+    })
+
+    it('sets up the bid index', () => {
+      expect(orderbook.bidIndex.ensureIndex).to.have.been.calledOnce()
+    })
+
+    it('watches the market on initialization', () => {
+      expect(orderbook.watchMarket).to.have.been.calledOnce()
+    })
+  })
+
+  describe('#watchMarket', () => {
     let baseSymbol
     let counterSymbol
     let marketName
@@ -183,11 +250,7 @@ describe('Orderbook', () => {
 
       relayer.watchMarket.returns(watcher)
 
-      await orderbook.initialize()
-    })
-
-    it('sets the synced status to false', () => {
-      expect(orderbook.synced).to.be.false()
+      await orderbook.watchMarket()
     })
 
     it('watches the market on initialization', () => {
@@ -202,24 +265,6 @@ describe('Orderbook', () => {
         await onSync()
       })
 
-      it('sets up the orderbook index', () => {
-        expect(OrderbookIndex.prototype.ensureIndex).to.have.been.calledOnce()
-      })
-
-      it('sets up an ask index', () => {
-        expect(AskIndex).to.have.been.calledOnce()
-        expect(AskIndex).to.have.been.calledWithNew()
-        expect(AskIndex).to.have.been.calledWith(orderbookStore)
-        expect(AskIndex.prototype.ensureIndex).to.have.been.calledOnce()
-      })
-
-      it('sets up a bid index', () => {
-        expect(BidIndex).to.have.been.calledOnce()
-        expect(BidIndex).to.have.been.calledWithNew()
-        expect(BidIndex).to.have.been.calledWith(orderbookStore)
-        expect(BidIndex.prototype.ensureIndex).to.have.been.calledOnce()
-      })
-
       it('sets the synced status to true', () => {
         expect(orderbook.synced).to.be.true()
       })
@@ -229,7 +274,7 @@ describe('Orderbook', () => {
       let timeoutStub
 
       beforeEach(() => {
-        orderbook.initialize = sinon.stub()
+        orderbook.watchMarket = sinon.stub()
         timeoutStub = sinon.stub()
 
         Orderbook.__set__('setTimeout', timeoutStub)
@@ -249,7 +294,7 @@ describe('Orderbook', () => {
 
         timeoutFunc()
 
-        expect(orderbook.initialize).to.have.been.calledOnce()
+        expect(orderbook.watchMarket).to.have.been.calledOnce()
       })
     })
   })
