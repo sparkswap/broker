@@ -40,7 +40,8 @@ const SUPPORTED_COMMANDS = Object.freeze({
   NETWORK_ADDRESS: 'network-address',
   NETWORK_STATUS: 'network-status',
   RELEASE: 'release',
-  WITHDRAW: 'withdraw'
+  WITHDRAW: 'withdraw',
+  CREATE: 'create'
 })
 
 /**
@@ -348,6 +349,43 @@ async function withdraw (args, opts, logger) {
   }
 }
 
+/**
+ * create
+ *
+ * ex: `sparkswap wallet create`
+ *
+ * @function
+ * @param {Object} args
+ * @param {String} args.symbol
+ * @param {Object} opts
+ * @param {Logger} logger
+ * @return {Void}
+ */
+async function create (args, opts, logger) {
+  const { symbol } = args
+  const { rpcAddress = null } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+
+    const password = await askQuestion(`Please enter a password: `)
+    const confirmPass = await askQuestion(`Please confirm password: `)
+
+    if (password !== confirmPass) {
+      return logger.error('Passwords did not match, please try again')
+    }
+
+    const cipherSeed = await client.walletService.createWallet({ symbol, password })
+
+    logger.info('IMPORTANT')
+    logger.info('Please copy down cipher seed as we will not be able to recover this informtion')
+    logger.info('')
+    logger.info(cipherSeed)
+  } catch (e) {
+    logger.error(handleError(e))
+  }
+}
+
 module.exports = (program) => {
   program
     .command('wallet', 'Commands to handle a wallet instance')
@@ -419,6 +457,16 @@ module.exports = (program) => {
           args.address = walletAddress
 
           return withdraw(args, opts, logger)
+        case SUPPORTED_COMMANDS.CREATE:
+          symbol = symbol.toUpperCase()
+
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
+            throw new Error(`Provided symbol is not a valid currency for the exchange`)
+          }
+
+          args.symbol = symbol
+
+          return create(args, opts, logger)
       }
     })
     .command(`wallet ${SUPPORTED_COMMANDS.BALANCE}`, 'Current daemon wallet balance')
