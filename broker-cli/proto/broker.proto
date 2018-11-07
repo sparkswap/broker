@@ -917,6 +917,21 @@ message WithdrawFundsResponse {
 }
 
 /**
+ * Request to create a wallet
+ */
+message CreateWalletRequest {
+  // Currency of wallet
+  Symbol symbol = 1;
+  // Password for the wallet
+  string password = 2;
+}
+
+message CreateWalletResponse {
+  // Array of cipher seed strings
+  repeated string cipher_seeds = 1;
+}
+
+/**
  * The WalletService is for interacting with the wallets managed by the Broker on behalf of the user.
  *
  * It is used primarily during set up (e.g. making deposits) of a Broker.
@@ -1191,6 +1206,34 @@ service WalletService {
   rpc WithdrawFunds (WithdrawFundsRequest) returns (WithdrawFundsResponse) {
     option (google.api.http) = {
       post: "/v1/wallet/withdraw"
+      body: "*"
+    };
+  }
+
+  /**
+   * CreateWallet creates a wallet within an engine. This RPC is used as a 'first-use' setup
+   *
+   * ```javascript
+   * const { walletSeed } = await walletService.withdrawFunds({ symbol: 'BTC', password: 'your-secure-password')
+   * console.log(walletSeed)
+   * ```
+   * > The above command will print an array of 24 strings:
+   *
+   * ```javascript
+   * ['banana', 'ralph' ...]
+   * ```
+   *
+   * ```shell
+   * > sparkswap wallet create BTC
+   * ```
+   *
+   * ```shell
+   * ['banana', 'ralph' ...]
+   * ```
+   */
+  rpc CreateWallet (CreateWalletRequest) returns (CreateWalletResponse) {
+    option (google.api.http) = {
+      post: "/v1/wallet/create"
       body: "*"
     };
   }
