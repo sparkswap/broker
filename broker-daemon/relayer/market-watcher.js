@@ -64,6 +64,8 @@ class MarketWatcher extends EventEmitter {
   async handleResponse (response) {
     const { RESPONSE_TYPES } = this
 
+    // TODO: I don't think this will work well if there is more than one event queued since they all
+    // rely so heavily on ordering.
     await this.migration()
 
     this.logger.debug(`response type is ${response.type}`)
