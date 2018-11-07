@@ -2,6 +2,13 @@ const logger = require('./logger')
 const delay = require('./delay')
 
 /**
+ * How much to delay each retry by
+ *
+ * @constant
+ * @type {Integer} milliseconds
+ */
+const DELAY_MULTIPLIER = 1.5
+/**
  * Calls a function repeatedly until success or throws if it fails on final retry
  *
  * @param {Function} function to be called
@@ -17,7 +24,7 @@ async function exponentialBackoff (callFunction, attempts, delayTime) {
     logger.error(`Error with ${callFunction}, retry attempts left: ${attempts}, error: ${error}`)
     if (attempts > 0) {
       await delay(delayTime)
-      res = await exponentialBackoff(callFunction, --attempts, delayTime * 2)
+      res = await exponentialBackoff(callFunction, --attempts, delayTime * DELAY_MULTIPLIER)
     } else {
       throw new Error(error, `Error with ${callFunction}, no retry attempts left`)
     }

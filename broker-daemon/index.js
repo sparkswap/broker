@@ -44,7 +44,7 @@ const DEFAULT_INTERCHAIN_ROUTER_ADDRESS = '0.0.0.0:40369'
  * @constant
  * @type {String}
  */
-const EXPONENTIAL_BACKOFF_ATTEMPTS = 10
+const EXPONENTIAL_BACKOFF_ATTEMPTS = 24
 
 /**
  * Delay in each retry attempt to validating an engine
@@ -52,7 +52,7 @@ const EXPONENTIAL_BACKOFF_ATTEMPTS = 10
  * @constant
  * @type {Integer} milliseconds
  */
-const EXPONENTIAL_BACKOFF_DELAY = 1000
+const EXPONENTIAL_BACKOFF_DELAY = 5000
 
 /**
  * Default host and port that the Relayer is set up on
