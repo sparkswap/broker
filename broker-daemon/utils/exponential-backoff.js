@@ -1,16 +1,25 @@
 const logger = require('./logger')
 const delay = require('./delay')
 
+/**
+ * Calls a function repeatedly until success or throws if it fails on final retry
+ *
+ * @param {Function} function to be called
+ * @param {Integer} attempts left
+ * @param {Integer} delayTime in milliseconds between calls
+
+ * @return {Promise}
+ */
 async function exponentialBackoff (callFunction, attempts, delayTime) {
   try {
-    var res = callFunction()
+    var res = await callFunction()
   } catch (error) {
-    logger.error(`Error (${error}) with ${callFunction}, retry attempts left: ${attempts}`)
+    logger.error(`Error with ${callFunction}, retry attempts left: ${attempts}, error: ${error}`)
     if (attempts > 0) {
       await delay(delayTime)
-      exponentialBackoff(callFunction, --attempts, delayTime * 2)
+      res = await exponentialBackoff(callFunction, --attempts, delayTime * 2)
     } else {
-      logger.error(`Error (${error}) with ${callFunction}, no retry attempts left`)
+      throw new Error(error, `Error with ${callFunction}, no retry attempts left`)
     }
   }
   return res

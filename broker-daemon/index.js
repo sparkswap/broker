@@ -189,6 +189,8 @@ class BrokerDaemon {
         })()
       ])
 
+      // This will run in the background. It is implemented with exponential backoff so
+      // the validation will be retried on the engine until successful or until final failure.
       this.validateEngines()
 
       this.rpcServer.listen(this.rpcAddress)
@@ -244,6 +246,13 @@ class BrokerDaemon {
     return this.orderbooks.get(marketName).initialize()
   }
 
+  /**
+   * Validates engines
+   * We do not await this function because we want the validations to run in the background.
+   * It can take time for the engines to be ready, so we use exponential backoff to retry validation
+   * for a period of time, until it is either successful or there is actually something wrong.
+   * @returns {<void>}
+   */
   async validateEngines () {
     this.engines.forEach(async (engine, symbol) => {
       try {
