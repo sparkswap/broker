@@ -107,7 +107,7 @@ class BlockOrderWorker extends EventEmitter {
 
     // Start working the block order asynchronously to prevent blocking the creation
     // of 'other' block orders
-    this.workBlockOrder(blockOrder).catch(err => {
+    this.workBlockOrder(blockOrder, Big(blockOrder.baseAmount)).catch(err => {
       this.failBlockOrder(blockOrder.id, err)
     })
 
@@ -240,10 +240,11 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * work a block order that gets created
-   * @param  {BlockOrder} blockOrder Block Order to work
+   * @param  {BlockOrder} blockOrder  Block Order to work
+   * @param  {Big}        targetDepth Depth, in base currency, to reach with this work
    * @return {void}
    */
-  async workBlockOrder (blockOrder) {
+  async workBlockOrder (blockOrder, targetDepth) {
     this.logger.info('Working block order', { blockOrderId: blockOrder.id })
 
     const orderbook = this.orderbooks.get(blockOrder.marketName)
@@ -254,20 +255,20 @@ class BlockOrderWorker extends EventEmitter {
 
     if (!blockOrder.price) {
       // block orders without prices are Market orders and take the best available price
-      await this.workMarketBlockOrder(blockOrder)
+      await this.workMarketBlockOrder(blockOrder, targetDepth)
     } else {
-      await this.workLimitBlockOrder(blockOrder)
+      await this.workLimitBlockOrder(blockOrder, targetDepth)
     }
   }
 
   /**
    * Work market block order
-   * @param  {BlockOrder} blockOrder BlockOrder without a limit price, i.e. a market order
+   * @param  {BlockOrder} blockOrder  BlockOrder without a limit price, i.e. a market order
+   * @param  {Big}        targetDepth Depth, in base currency, to reach with this work
    * @return {void}
    */
-  async workMarketBlockOrder (blockOrder) {
+  async workMarketBlockOrder (blockOrder, targetDepth) {
     const orderbook = this.orderbooks.get(blockOrder.marketName)
-    const targetDepth = Big(blockOrder.baseAmount)
 
     const { orders, depth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString() })
 
@@ -282,16 +283,16 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Work limit block order
    * @todo make limit orders more sophisticated than just sending a single limit order to the relayer
-   * @param  {BlockOrder} blockOrder BlockOrder with a limit price
+   * @param  {BlockOrder} blockOrder  BlockOrder with a limit price
+   * @param  {Big}        targetDepth Depth, in base currency, to reach with this work
    * @return {void}
    */
-  async workLimitBlockOrder (blockOrder) {
+  async workLimitBlockOrder (blockOrder, targetDepth) {
     if (blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.GTC) {
       throw new Error('Only Good-til-cancelled limit orders are currently supported.')
     }
 
     const orderbook = this.orderbooks.get(blockOrder.marketName)
-    const targetDepth = Big(blockOrder.baseAmount)
 
     // fill as many orders at our price or better
     const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString(), quantumPrice: blockOrder.quantumPrice })
@@ -313,7 +314,7 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = await this.getBlockOrder(blockOrderId)
 
-    // check the fillamount on each collection of state machines from the block order
+    // check the fillAmount on each collection of state machines from the block order
     // and make sure that either is equal to how much we are trying to fill.
     let totalFilled = Big(0)
     totalFilled = blockOrder.fills.reduce((acc, fsm) => acc.plus(fsm.fill.fillAmount), totalFilled)
@@ -341,6 +342,53 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
+   * Applies listeners to a created OrderStateMachine
+   * @private
+   * @param  {OrderStateMachine} osm        State machine to apply listeners to
+   * @param  {BlockOrder} blockOrder Block Order associated with the state machine
+   * @return {OrderStateMachine}
+   */
+  applyOsmListeners (osm, blockOrder) {
+    // Try to complete the entire block order once an underlying order completes
+    osm.once('complete', async () => {
+      try {
+        await this.checkBlockOrderCompletion(blockOrder.id)
+      } catch (e) {
+        this.logger.error(`BlockOrder failed to be completed from order`, { id: blockOrder.id, error: e.stack })
+      }
+      osm.removeAllListeners()
+    })
+
+    // if the fill for this order isn't for the entire order, re-place the remainder
+    osm.once('before:execute', async () => {
+      this.logger.debug(`Order ${osm.order.orderId} has been filled, re-placing the remainder`)
+      try {
+        const remainingBaseAmount = Big(osm.order.baseAmount).minus(osm.order.fillAmount)
+        // if there is no remaining base amount (i.e. the entire order was filled)
+        // take no action as the block order completion is handled in the `on('complete')` listener
+        if (remainingBaseAmount.gt(0)) {
+          this.logger.debug(`Re-placing an order for ${remainingBaseAmount.toString()} for Block Order ${blockOrder.id}`)
+          await this.workBlockOrder(blockOrder, remainingBaseAmount)
+        }
+      } catch (e) {
+        this.failBlockOrder(blockOrder.id, e)
+      }
+    })
+
+    // reject the entire block order if an underlying order fails
+    osm.once('reject', async () => {
+      try {
+        await this.failBlockOrder(blockOrder.id, osm.order.error)
+      } catch (e) {
+        this.logger.error(`BlockOrder failed on setting a failed status from order`, { id: blockOrder.id, error: e.stack })
+      }
+      osm.removeAllListeners()
+    })
+
+    return osm
+  }
+
+  /**
    * Place an order for a block order of a given amount
    * @param  {BlockOrder} blockOrder Block Order to place an order on behalf of
    * @param  {String} amount     Int64 amount, in base currency's base units to place the order for
@@ -348,7 +396,8 @@ class BlockOrderWorker extends EventEmitter {
    */
   async _placeOrder (blockOrder, baseAmount) {
     // order params
-    const { baseSymbol, counterSymbol, side, counterAmount } = blockOrder
+    const { baseSymbol, counterSymbol, side, quantumPrice } = blockOrder
+    const counterAmount = Big(baseAmount).times(quantumPrice).round(0).toString()
 
     // state machine params
     const { relayer, engines, logger } = this
@@ -375,25 +424,7 @@ class BlockOrderWorker extends EventEmitter {
       { side, baseSymbol, counterSymbol, baseAmount, counterAmount }
     )
 
-    // We are hooking into the complete lifecycle event of an order state machine to trigger
-    // the completion of a blockorder
-    osm.once('complete', async () => {
-      this.checkBlockOrderCompletion(blockOrder.id)
-        .catch(e => {
-          this.logger.error(`BlockOrder failed to be completed from order`, { id: blockOrder.id, error: e.stack })
-        })
-        .then(() => osm.removeAllListeners())
-    })
-
-    // We are hooking into the reject lifecycle event of an order state machine to trigger
-    // the failure of a blockorder
-    osm.once('reject', async () => {
-      this.failBlockOrder(blockOrder.id, osm.order.error)
-        .catch(e => {
-          this.logger.error(`BlockOrder failed on setting a failed status from order`, { id: blockOrder.id, error: e.stack })
-        })
-        .then(() => osm.removeAllListeners())
-    })
+    this.applyOsmListeners(osm, blockOrder)
 
     this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: osm.order.orderId })
   }
