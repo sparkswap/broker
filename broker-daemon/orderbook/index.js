@@ -51,7 +51,6 @@ class Orderbook {
   /**
    * Initialize the orderbook by syncing its state to the Relayer and indexing
    * the orders.
-   * Also includes retry logic if the Relayer fails.
    * @return {Promise}
    */
   async initialize () {
@@ -67,7 +66,7 @@ class Orderbook {
   }
 
   /**
-   * Sync orderbook state with the Relayer
+   * Sync orderbook state with the Relayer and retry when it fails
    * @private
    * @return {Promise} Resolves when market is being watched (not necessarily when it is synced)
    */
