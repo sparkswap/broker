@@ -16,7 +16,6 @@ const DELAY_MULTIPLIER = 1.5
  * @param {Integer} delayTime in milliseconds between calls
  * @param {Object} logOptions if you want to pass information to log in the error log
 
-
  * @return {Promise}
  */
 async function exponentialBackoff (callFunction, attempts, delayTime, logOptions = {}) {
