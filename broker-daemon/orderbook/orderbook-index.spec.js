@@ -157,6 +157,13 @@ describe('OrderbookIndex', () => {
 
     beforeEach(() => {
       orderbookIndex = new OrderbookIndex(baseStore, eventStore, marketName)
+      orderbookIndex._removeHook = sinon.stub()
+    })
+
+    it('removes any previous hooks', async () => {
+      await orderbookIndex._clearIndex()
+
+      expect(orderbookIndex._removeHook).to.have.been.calledOnce()
     })
 
     it('deletes the store through a self migration', async () => {

@@ -240,7 +240,7 @@ class Index {
    * @return {void}
    */
   _addIndexHook () {
-    this.store.pre((dbOperation, add) => {
+    this._removeHook = this.store.pre((dbOperation, add) => {
       const { key, value, type } = dbOperation
 
       if (type === 'put' && this.filter(key, value)) {
@@ -256,6 +256,10 @@ class Index {
    * @return {Promise<void>} Resolves when the database is cleared
    */
   _clearIndex () {
+    // reset the hook if it already exists
+    if (this._removeHook) {
+      this._removeHook()
+    }
     return migrateStore(this._index, this._index, (key) => ({ type: 'del', key, prefix: this._index }))
   }
 
