@@ -14,15 +14,17 @@ const DELAY_MULTIPLIER = 1.5
  * @param {Function} function to be called
  * @param {Integer} attempts left
  * @param {Integer} delayTime in milliseconds between calls
+ * @param {Object} logOptions if you want to pass information to log in the error log
+
 
  * @return {Promise}
  */
-async function exponentialBackoff (callFunction, attempts, delayTime) {
+async function exponentialBackoff (callFunction, attempts, delayTime, logOptions = {}) {
   try {
     var res = await callFunction()
   } catch (error) {
-    logger.error(`Error with ${callFunction}, retry attempts left: ${attempts}, error: ${error}`)
     if (attempts > 0) {
+      logger.error(`Error calling ${callFunction}. Retrying in ${delayTime / 1000} seconds, attempts left: ${attempts - 1}`, logOptions)
       await delay(delayTime)
       res = await exponentialBackoff(callFunction, --attempts, delayTime * DELAY_MULTIPLIER)
     } else {

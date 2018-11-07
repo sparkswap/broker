@@ -447,7 +447,16 @@ describe('broker daemon', () => {
       expect(exponentialBackoff).to.have.been.calledWith(
         sinon.match.func,
         attempts,
-        delay)
+        delay,
+        {symbol: 'BTC'}
+      )
+
+      expect(exponentialBackoff).to.have.been.calledWith(
+        sinon.match.func,
+        attempts,
+        delay,
+        {symbol: 'LTC'}
+      )
     })
   })
 
