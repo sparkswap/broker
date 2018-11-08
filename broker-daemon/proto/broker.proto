@@ -1211,16 +1211,29 @@ service WalletService {
   }
 
   /**
-   * CreateWallet creates a wallet within an engine. This RPC is used as a 'first-use' setup
+   * CreateWallet creates a wallet within an engine. This RPC is used as during a 'first-use'
+   * setup.
+   *
+   * When a broker daemon is first getting setup, no crypto-wallets will exist on any of
+   * the provided engines. It is the user's responsiblity to create a wallet for each currency
+   * and to save the backup information (password and cipher seeds) that are used and returned
+   * from this method.
    *
    * ```javascript
-   * const { walletSeed } = await walletService.withdrawFunds({ symbol: 'BTC', password: 'your-secure-password')
-   * console.log(walletSeed)
+   * const { cipherSeeds } = await walletService.withdrawFunds({ symbol: 'BTC', password: 'your-secure-password')
+   * console.log(cipherSeeds)
    * ```
-   * > The above command will print an array of 24 strings:
+   * > The above command will print:
    *
    * ```javascript
-   * ['banana', 'ralph' ...]
+   * > Please enter a password:
+   * > Please confirm password:
+   * IMPORTANT
+   * Please make a copy of your cipher seeds as we will not be able to recover this informtion
+   *
+   * [ 'your',
+   *   'cipher'
+   *    ... ]
    * ```
    *
    * ```shell
@@ -1228,7 +1241,14 @@ service WalletService {
    * ```
    *
    * ```shell
-   * ['banana', 'ralph' ...]
+   * > Please enter a password:
+   * > Please confirm password:
+   * IMPORTANT
+   * Please make a copy of your cipher seeds as we will not be able to recover this informtion
+   *
+   * [ 'your',
+   *   'cipher'
+   *    ... ]
    * ```
    */
   rpc CreateWallet (CreateWalletRequest) returns (CreateWalletResponse) {

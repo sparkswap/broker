@@ -368,19 +368,25 @@ async function create (args, opts, logger) {
   try {
     const client = new BrokerDaemonClient(rpcAddress)
 
-    const password = await askQuestion(`Please enter a password: `)
-    const confirmPass = await askQuestion(`Please confirm password: `)
+    const password = await askQuestion(`Please enter a password:`, { silent: true })
+    const confirmPass = await askQuestion(`Please confirm password:`, { silent: true })
 
-    if (password !== confirmPass) {
-      return logger.error('Passwords did not match, please try again')
+    // Enforce password requirements so that lnd will not error. The only
+    // enforcement is longer than 8 characters in length
+    if (password.length < 8) {
+      return logger.error('Error: Password length must be greater than 8 characters'.red)
     }
 
-    const cipherSeed = await client.walletService.createWallet({ symbol, password })
+    if (password !== confirmPass) {
+      return logger.error('Error: Passwords did not match, please try again'.red)
+    }
+
+    const { cipherSeeds } = await client.walletService.createWallet({ symbol, password })
 
     logger.info('IMPORTANT')
-    logger.info('Please copy down cipher seed as we will not be able to recover this informtion')
+    logger.info('Please make a copy of your cipher seeds as we will not be able to recover this informtion')
     logger.info('')
-    logger.info(cipherSeed)
+    logger.info(cipherSeeds)
   } catch (e) {
     logger.error(handleError(e))
   }
@@ -486,4 +492,6 @@ module.exports = (program) => {
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .argument('<amount>', 'Amount of currency to commit to the relayer', validations.isDecimal)
     .option('--wallet-address', 'Address to send the coins to', validations.isHost)
+    .command(`wallet ${SUPPORTED_COMMANDS.CREATE}`, 'Create a wallet')
+    .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
 }

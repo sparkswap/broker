@@ -478,4 +478,73 @@ describe('cli wallet', () => {
       expect(logger.info).to.have.been.calledWith(`Successfully withdrew ${amount} ${symbol} from your wallet!`, { id: txid })
     })
   })
+
+  describe('create', () => {
+    let args
+    let opts
+    let logger
+    let daemonStub
+    let createWalletStub
+    let seeds
+    let errorStub
+    let askQuestionStub
+    let symbol
+    let infoStub
+
+    const create = program.__get__('create')
+
+    beforeEach(() => {
+      errorStub = sinon.stub()
+      infoStub = sinon.stub()
+      askQuestionStub = sinon.stub()
+      symbol = 'BTC'
+      args = {
+        symbol
+      }
+      opts = {}
+      logger = {
+        info: infoStub,
+        error: errorStub
+      }
+      seeds = ['my', 'seeds']
+
+      createWalletStub = sinon.stub().returns({ cipherSeeds: seeds })
+      daemonStub = sinon.stub()
+      daemonStub.prototype.walletService = {
+        createWallet: createWalletStub
+      }
+
+      program.__set__('BrokerDaemonClient', daemonStub)
+      program.__set__('askQuestion', askQuestionStub)
+    })
+
+    it('logs an error if password length does not match requirements', async () => {
+      const password = 'dan'
+      askQuestionStub.onFirstCall().resolves(password)
+      askQuestionStub.onSecondCall().resolves(password)
+      await create(args, opts, logger)
+      expect(errorStub).to.have.been.calledWith(sinon.match('Password length must be'))
+    })
+
+    it('logs an error if passwords do not match', async () => {
+      askQuestionStub.onFirstCall().resolves('realpassword')
+      askQuestionStub.onSecondCall().resolves('relpassword')
+      await create(args, opts, logger)
+      expect(errorStub).to.have.been.calledWith(sinon.match('Passwords did not match'))
+    })
+
+    it('creates a wallet', async () => {
+      const password = 'password'
+      askQuestionStub.resolves(password)
+      await create(args, opts, logger)
+      expect(createWalletStub).to.have.been.calledWith({ symbol, password })
+    })
+
+    it('outputs a cipher seed', async () => {
+      const password = 'password'
+      askQuestionStub.resolves(password)
+      await create(args, opts, logger)
+      expect(infoStub).to.have.been.calledWith(seeds)
+    })
+  })
 })

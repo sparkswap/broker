@@ -25,7 +25,7 @@ class Orderbook {
    * @param  {String}        marketName Name of the market to track, e.g. `BTC/LTC`
    * @param  {RelayerClient} relayer    Client to connect to the Relayer
    * @param  {Sublevel}      store      Sublevel-compatible data store
-   * @param  {Object}        logger     
+   * @param  {Object}        logger
    * @return {Orderbook}
    */
   constructor (marketName, relayer, store, logger = consoleLogger) {
