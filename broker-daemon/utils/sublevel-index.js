@@ -240,7 +240,7 @@ class Index {
    * @return {void}
    */
   _addIndexHook () {
-    this._removeHook = this.store.pre((dbOperation, add) => {
+    const indexHook = (dbOperation, add) => {
       const { key, value, type } = dbOperation
 
       if (type === 'put' && this.filter(key, value)) {
@@ -248,7 +248,11 @@ class Index {
       } else if (type === 'del') {
         this._removeFromIndex(key)
       }
-    })
+    }
+
+    // `.pre` adds a hook for before a `put` in the `store`, and returns
+    // a function to remove that same hook.
+    this._removeHook = this.store.pre(indexHook)
   }
 
   /**
