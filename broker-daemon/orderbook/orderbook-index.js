@@ -49,6 +49,10 @@ class OrderbookIndex {
    * @return {Promise} resolves when the index is cleared
    */
   _clearIndex () {
+    // remove any previously applied hooks
+    if (this._removeHook) {
+      this._removeHook()
+    }
     return migrateStore(this.store, this.store, (key) => { return { type: 'del', key } })
   }
 
@@ -64,13 +68,17 @@ class OrderbookIndex {
    * Create a hook for new events added to the store to modify the orderbook
    */
   _addIndexHook () {
-    this.eventStore.pre((dbOperation, add) => {
+    const indexHook = (dbOperation, add) => {
       if (dbOperation.type !== 'put') {
         return
       }
 
       add(this._addToIndexOperation(dbOperation.key, dbOperation.value))
-    })
+    }
+
+    // `.pre` adds a hook for before a `put` in the eventStore, and returns
+    // a function to remove that same hook.
+    this._removeHook = this.eventStore.pre(indexHook)
   }
 }
 
