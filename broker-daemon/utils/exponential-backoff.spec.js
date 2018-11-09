@@ -18,7 +18,7 @@ describe('exponentialBackoff', () => {
     attempts = 2
     delayTime = 100
     logger = { error: sinon.stub() }
-    delay = sinon.stub()
+    delay = sinon.stub().resolves()
     logOptions = {info: 'info'}
     exponentialBackoff.__set__('logger', logger)
     exponentialBackoff.__set__('delay', delay)
@@ -36,14 +36,44 @@ describe('exponentialBackoff', () => {
   })
 
   it('retries the callFunction if there was an error and there are still retries left', async () => {
-    callFunction = sinon.stub().rejects('Error')
-    try {
-      await exponentialBackoff(callFunction, attempts, delayTime, logOptions)
-      expect(logger.error).to.have.been.called()
-      expect(delay).to.have.been.calledWith(delayTime)
-      expect(callFunction).to.have.been.calledThrice()
-    } catch (error) {
-      expect(error.message).to.eql('Error')
-    }
+    callFunction = sinon.stub()
+    callFunction.onCall(0).rejects('Error')
+    callFunction.onCall(1).resolves()
+    await exponentialBackoff(callFunction, attempts, delayTime, logOptions)
+    expect(logger.error).to.have.been.called()
+    expect(delay).to.have.been.calledWith(delayTime)
+    expect(callFunction).to.have.been.calledTwice()
+  })
+
+  it('calls the callFunction', async () => {
+    callFunction = sinon.stub()
+    callFunction.onCall(0).rejects('Error')
+    callFunction.onCall(1).resolves()
+    await exponentialBackoff(callFunction, attempts, delayTime, logOptions)
+
+    expect(delay.getCall(0).calledBefore(callFunction.getCall(1))).to.be.true()
+  })
+
+  it('callFunction only gets called after delay resolves', async () => {
+    callFunction = sinon.stub()
+    callFunction.onCall(0).rejects('Error')
+    callFunction.onCall(1).resolves()
+
+    let resolveDelay
+    delay.callsFake((ms) => {
+      return new Promise((resolve, reject) => {
+        resolveDelay = resolve
+      })
+    })
+
+    exponentialBackoff(callFunction, attempts, delayTime, logOptions)
+
+    setImmediate(() => {
+      expect(callFunction).to.have.been.calledOnce()
+
+      resolveDelay()
+
+      setImmediate(() => expect(callFunction).to.have.been.calledTwice())
+    })
   })
 })
