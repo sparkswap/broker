@@ -1,6 +1,7 @@
 const EventEmitter = require('events')
+const { promisify } = require('util')
 const { MarketEvent } = require('../models')
-const { migrateStore } = require('../utils')
+const { migrateStore, eachRecord, checksum } = require('../utils')
 
 /**
  * @class Watch a relayer market and put the events into a data store
@@ -26,6 +27,10 @@ class MarketWatcher extends EventEmitter {
     this.RESPONSE_TYPES = RESPONSE_TYPES
 
     this.setupListeners()
+
+    // initialize the checksum and hold off on processing
+    // events until it is complete
+    this.migrating = this.createChecksum()
   }
 
   /**
@@ -35,10 +40,13 @@ class MarketWatcher extends EventEmitter {
    */
   setupListeners () {
     // Tear down listeners when the watcher completes
-    this.on('end', () => {
-      this.removeAllListeners()
+    const removeWatcherListeners = () => {
       this.watcher.removeAllListeners()
-    })
+      this.removeListener('end', removeWatcherListeners)
+      this.removeListener('error', removeWatcherListeners)
+    }
+    this.on('end', removeWatcherListeners)
+    this.on('error', removeWatcherListeners)
 
     this.watcher.on('end', () => {
       this.logger.error('Remote ended stream')
@@ -52,6 +60,21 @@ class MarketWatcher extends EventEmitter {
 
     this.watcher.on('data', (response) => {
       this.handleResponse(response)
+    })
+  }
+
+  /**
+   * Create a new checksum by processing all market events in the data store
+   * @todo does it make sense to build this off the index so we don't have
+   * to process every event in the store?
+   * @return {Promise} Resolves when the checksum is built
+   */
+  createChecksum () {
+    this.checksum = checksum()
+
+    return eachRecord(this.store, (key, value) => {
+      const marketEvent = MarketEvent.fromStorage(key, value)
+      this.checksum.process(marketEvent.orderId)
     })
   }
 
@@ -73,12 +96,14 @@ class MarketWatcher extends EventEmitter {
 
     this.logger.debug(`response type is ${response.type}`)
 
-    if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
-      this.upToDate()
-    } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.START_OF_EVENTS) {
+    if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.START_OF_EVENTS) {
       this.migrate()
-    } else if ([RESPONSE_TYPES.EXISTING_EVENT, RESPONSE_TYPES.NEW_EVENT].includes(RESPONSE_TYPES[response.type])) {
+    } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENT) {
       this.createMarketEvent(response)
+    } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
+      this.upToDate(response)
+    } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.NEW_EVENT) {
+      this.createAndChecksumMarketEvent(response)
     } else {
       this.logger.debug(`Unknown response type: ${response.type}`)
     }
@@ -109,18 +134,49 @@ class MarketWatcher extends EventEmitter {
   }
 
   /**
+   * Store a market event and validate its checksum
+   * @private
+   * @param  {Object} response             Response from the Relayer
+   * @param  {Object} response.marketEvent Market Event to be created
+   * @param  {String} response.checksum    Base64 String of the checksum of the orderbook after this event is processed
+   * @return {void}
+   */
+  createAndChecksumMarketEvent ({ marketEvent, checksum }) {
+    this.createMarketEvent({ marketEvent })
+
+    // we don't wait for `createMarketEvent` to return
+    // before validating the checksum as there could have
+    // been another event processed in the meantime
+    this.validateChecksum(checksum)
+  }
+
+  /**
    * Store a market event
    * @private
    * @param  {Object} response Response from the Relayer
-   * @return {void}
+   * @param  {Object} response.marketEvent Market Event to be created
+   * @return {Promise<void>}
    */
-  createMarketEvent (response) {
-    const { marketEvent } = response
-
+  async createMarketEvent ({ marketEvent }) {
     this.logger.debug('Creating a market event', marketEvent)
+    const { key, value, orderId } = new MarketEvent(marketEvent)
 
-    const { key, value } = new MarketEvent(marketEvent)
-    this.store.put(key, value)
+    // add the market event to the checksum before storing,
+    // and remove it if storing fails so that our checksum
+    // is always optimistically up-to-date.
+    this.logger.debug('Adding market event to local checksum', { orderId })
+    this.checksum.process(orderId)
+
+    try {
+      await promisify(this.store.put)(key, value)
+    } catch (e) {
+      // remove from the checksum if we weren't able to
+      // persist from the event so that we can detect
+      // being in a bad state.
+      this.logger.debug('Saving market event failed, removing from checksum', { orderId })
+      this.checksum.process(orderId)
+      this.emit('error', e)
+    }
   }
 
   /**
@@ -128,9 +184,31 @@ class MarketWatcher extends EventEmitter {
    * @private
    * @return {void}
    */
-  upToDate () {
-    this.logger.debug(`Up to date with market`)
-    this.emit('sync')
+  upToDate ({ checksum }) {
+    if (this.validateChecksum(checksum)) {
+      this.logger.debug('Up to date with market')
+      this.emit('sync')
+    }
+  }
+
+  /**
+   * Validate that a given checksum matches our internal
+   * checksum, and trigger a re-sync if it does not
+   * @private
+   * @param  {String}  checksum Base64 string of the bytes of a checksum
+   * @return {Boolean}          TRUE if the checksum matches, otherwise FALSE
+   */
+  validateChecksum (checksum) {
+    this.logger.debug('Validating checksum', { checksum })
+
+    if (!this.checksum.check(Buffer.from(checksum, 'base64'))) {
+      // TODO: do we need to remove events from the db?
+      this.logger.error('Checksums did not match, invalidating')
+      this.emit('error', new Error('[MarketWatcher]: Checksum mismatch'))
+      return false
+    }
+
+    return true
   }
 }
 

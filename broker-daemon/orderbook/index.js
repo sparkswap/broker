@@ -68,29 +68,44 @@ class Orderbook {
   /**
    * Sync orderbook state with the Relayer and retry when it fails
    * @private
-   * @return {Promise} Resolves when market is being watched (not necessarily when it is synced)
+   * @param {Object}   options
+   * @param {Boolean}  options.flush Whether or not to flush our current copy of the orderbook or try to update it
+   * @return {Promise}               Resolves when market is being watched (not necessarily when it is synced)
    */
-  async watchMarket () {
+  async watchMarket ({ flush = false } = {}) {
     this.logger.debug(`Watching market ${this.marketName}...`)
 
     const { baseSymbol, counterSymbol } = this
-    const { lastUpdated, sequence } = await this.lastUpdate()
-    const params = { baseSymbol, counterSymbol, lastUpdated, sequence }
+    const params = { baseSymbol, counterSymbol }
+
+    // If we are re-using our current orderbook, find the last event we know about
+    // and use that to request future events.
+    if (!flush) {
+      const { lastUpdated, sequence } = await this.lastUpdate()
+      params.lastUpdated = lastUpdated
+      params.sequence = sequence
+    }
 
     const watcher = this.relayer.watchMarket(this.eventStore, params)
 
-    watcher.on('sync', async () => {
+    watcher.once('sync', async () => {
       this.synced = true
       this.logger.info(`Market ${this.marketName} synced.`)
     })
 
-    watcher.on('end', (error) => {
+    watcher.once('end', (error) => {
       this.logger.info(`Market ${this.marketName} unavailable, retrying in ${RETRY_WATCHMARKET}ms`, { error })
 
       // TODO: exponential backoff?
       setTimeout(() => {
         this.watchMarket()
       }, RETRY_WATCHMARKET)
+    })
+
+    watcher.once('error', (error) => {
+      this.logger.info(`Market ${this.marketName} encountered sync'ing error, re-building`, { error })
+
+      this.watchMarket({ flush: true })
     })
   }
 
@@ -226,6 +241,10 @@ class Orderbook {
     if (!this.synced) {
       throw new Error(`Cannot access Orderbook for ${this.marketName} until it is synced`)
     }
+  }
+
+  async getChecksum () {
+
   }
 
   /**
