@@ -251,12 +251,12 @@ class BrokerDaemon {
    * We do not await this function because we want the validations to run in the background.
    * It can take time for the engines to be ready, so we use exponential backoff to retry validation
    * for a period of time, until it is either successful or there is actually something wrong.
-   * @returns {<void>}
+   * @returns {void}
    */
   async validateEngines () {
     this.engines.forEach(async (engine, symbol) => {
       try {
-        await exponentialBackoff(() => { engine.validateNodeConfig() }, EXPONENTIAL_BACKOFF_ATTEMPTS, EXPONENTIAL_BACKOFF_DELAY, {symbol})
+        await exponentialBackoff(() => { return engine.validateNodeConfig() }, EXPONENTIAL_BACKOFF_ATTEMPTS, EXPONENTIAL_BACKOFF_DELAY, {symbol})
       } catch (e) {
         this.logger.error(`Failed to validate engine for ${symbol}, error: ${e}`)
         return

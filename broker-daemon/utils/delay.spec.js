@@ -12,8 +12,20 @@ describe('delay', () => {
     delay.__set__('setTimeout', setTimeout)
   })
 
-  it('calls the call function', async () => {
+  it('calls setTimeout with the callFunction and delay time', async () => {
     await delay(delayTime)
-    expect(setTimeout).to.have.been.called()
+    expect(setTimeout).to.have.been.calledWith(sinon.match.func, delayTime)
+  })
+
+  it('calls the callFunction after setTimeout resolves', async () => {
+    let isResolved = false
+
+    delay(delayTime).then(() => {
+      isResolved = true
+    })
+
+    expect(isResolved).to.be.false()
+    setTimeout.args[0][0]()
+    setImmediate(() => expect(isResolved).to.be.true())
   })
 })

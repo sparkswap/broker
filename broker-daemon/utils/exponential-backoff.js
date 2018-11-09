@@ -23,9 +23,10 @@ async function exponentialBackoff (callFunction, attempts, delayTime, logOptions
     var res = await callFunction()
   } catch (error) {
     if (attempts > 0) {
-      logger.error(`Error calling ${callFunction}. Retrying in ${delayTime / 1000} seconds, attempts left: ${attempts - 1}`, logOptions)
+      const attemptsLeft = attempts - 1
+      logger.error(`Error calling ${callFunction}. Retrying in ${delayTime / 1000} seconds, attempts left: ${attemptsLeft}`, logOptions)
       await delay(delayTime)
-      res = await exponentialBackoff(callFunction, --attempts, delayTime * DELAY_MULTIPLIER)
+      res = await exponentialBackoff(callFunction, attemptsLeft, delayTime * DELAY_MULTIPLIER)
     } else {
       throw new Error(error, `Error with ${callFunction}, no retry attempts left`)
     }

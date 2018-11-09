@@ -430,18 +430,24 @@ describe('broker daemon', () => {
       delay = BrokerDaemon.__get__('EXPONENTIAL_BACKOFF_DELAY')
     })
 
-    it('passes engine validation to exponential backoff for each engine', () => {
+    it('validates the node config on each engine', () => {
       brokerDaemon.validateEngines()
 
       const validateBtcEngine = exponentialBackoff.args[0][0]
-      validateBtcEngine()
+      const btcEngineRes = validateBtcEngine()
 
       expect(btcEngine.validateNodeConfig).to.have.been.called()
+      expect(btcEngineRes).to.be.instanceOf(Promise)
 
       const validateLtcEngine = exponentialBackoff.args[1][0]
-      validateLtcEngine()
+      const ltcEngineRes = validateLtcEngine()
 
       expect(ltcEngine.validateNodeConfig).to.have.been.called()
+      expect(ltcEngineRes).to.be.instanceOf(Promise)
+    })
+
+    it('validates the engines in exponentialBackoff to allow for retries', () => {
+      brokerDaemon.validateEngines()
 
       expect(exponentialBackoff).to.have.been.calledTwice()
       expect(exponentialBackoff).to.have.been.calledWith(
