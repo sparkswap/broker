@@ -103,7 +103,11 @@ class MarketWatcher extends EventEmitter {
     } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
       this.upToDate(response)
     } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.NEW_EVENT) {
-      this.createAndChecksumMarketEvent(response)
+      this.createMarketEvent(response)
+
+      // we don't wait for `createMarketEvent` to return
+      // before validating the checksum so as to avoid a race condition.
+      this.validateChecksum(response.checksum)
     } else {
       this.logger.debug(`Unknown response type: ${response.type}`)
     }
@@ -134,23 +138,6 @@ class MarketWatcher extends EventEmitter {
   }
 
   /**
-   * Store a market event and validate its checksum
-   * @private
-   * @param  {Object} response             Response from the Relayer
-   * @param  {Object} response.marketEvent Market Event to be created
-   * @param  {String} response.checksum    Base64 String of the checksum of the orderbook after this event is processed
-   * @return {void}
-   */
-  createAndChecksumMarketEvent ({ marketEvent, checksum }) {
-    this.createMarketEvent({ marketEvent })
-
-    // we don't wait for `createMarketEvent` to return
-    // before validating the checksum as there could have
-    // been another event processed in the meantime
-    this.validateChecksum(checksum)
-  }
-
-  /**
    * Store a market event
    * @private
    * @param  {Object} response Response from the Relayer
@@ -161,20 +148,19 @@ class MarketWatcher extends EventEmitter {
     this.logger.debug('Creating a market event', marketEvent)
     const { key, value, orderId } = new MarketEvent(marketEvent)
 
-    // add the market event to the checksum before storing,
-    // and remove it if storing fails so that our checksum
-    // is always optimistically up-to-date.
+    // add the market event to the checksum before storing
+    // so that it is optimistically up to date and can be validated
+    // without race conditions. If it fails to save, we will nuke
+    // the entire sync.
     this.logger.debug('Adding market event to local checksum', { orderId })
     this.checksum.process(orderId)
 
     try {
       await promisify(this.store.put)(key, value)
     } catch (e) {
-      // remove from the checksum if we weren't able to
-      // persist from the event so that we can detect
-      // being in a bad state.
-      this.logger.debug('Saving market event failed, removing from checksum', { orderId })
-      this.checksum.process(orderId)
+      // if we weren't able to persist the event we won't be in a good
+      // state
+      this.logger.error('Saving market event failed, invalidating sync', { orderId })
       this.emit('error', e)
     }
   }
