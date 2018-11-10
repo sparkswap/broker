@@ -1,18 +1,13 @@
-function getRecords (store, eachRecord, params = {}) {
-  return new Promise((resolve, reject) => {
-    const stream = store.createReadStream(params)
-    const records = []
+const eachRecord = require('./each-record')
 
-    stream.on('error', reject)
+async function getRecords (store, fn, params = {}) {
+  const records = []
 
-    stream.on('end', () => {
-      resolve(records)
-    })
+  await eachRecord(store, (key, value) => {
+    records.push(fn(key, value))
+  }, params)
 
-    stream.on('data', ({ key, value }) => {
-      records.push(eachRecord(key, value))
-    })
-  })
+  return records
 }
 
 module.exports = getRecords

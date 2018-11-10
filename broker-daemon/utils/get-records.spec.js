@@ -1,85 +1,78 @@
-const { sinon, expect } = require('test/test-helper')
+const path = require('path')
+const { sinon, rewire, expect } = require('test/test-helper')
 
-const getRecords = require('./get-records')
+const getRecords = rewire(path.resolve(__dirname, 'get-records'))
 
 describe('getRecords', () => {
-  let store
-  let stream
   let eachRecord
+  let store
+  let fn
   let params
 
   beforeEach(() => {
-    stream = {
-      on: sinon.stub()
-    }
-    store = {
-      createReadStream: sinon.stub().returns(stream)
-    }
     eachRecord = sinon.stub()
+    eachRecord.resolves()
+
+    getRecords.__set__('eachRecord', eachRecord)
+
+    store = {}
+    fn = sinon.stub()
     params = {}
   })
 
   it('returns a promise', () => {
-    expect(getRecords(store, eachRecord, params)).to.be.a('promise')
+    expect(getRecords(store, fn, params)).to.be.instanceOf(Promise)
   })
 
-  it('creates a readstream from the store', () => {
-    getRecords(store, eachRecord, params)
-
-    expect(store.createReadStream).to.have.been.calledOnce()
-    expect(store.createReadStream).to.have.been.calledWith(sinon.match(params))
+  it('resolves an empty array if no records are processed', async () => {
+    expect(await getRecords(store, fn, params)).to.be.eql([])
   })
 
-  it('passes through params to the readstream', () => {
-    params = {
-      reverse: true
-    }
-
-    getRecords(store, eachRecord, params)
-    expect(store.createReadStream).to.have.been.calledWith(sinon.match(params))
-  })
-
-  it('sets an error handler', () => {
-    getRecords(store, eachRecord, params)
-
-    expect(stream.on).to.have.been.calledWith('error', sinon.match.func)
-  })
-
-  it('sets an end handler', () => {
-    getRecords(store, eachRecord, params)
-
-    expect(stream.on).to.have.been.calledWith('end', sinon.match.func)
-  })
-
-  it('sets an data handler', () => {
-    getRecords(store, eachRecord, params)
-
-    expect(stream.on).to.have.been.calledWith('data', sinon.match.func)
-  })
-
-  it('rejects on error', async () => {
-    stream.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
-    return expect(getRecords(store, eachRecord, params)).to.be.rejectedWith(Error)
-  })
-
-  it('resolves on end', async () => {
-    stream.on.withArgs('end').callsArgAsync(1)
-    expect(await getRecords(store, eachRecord, params)).to.be.eql([])
-  })
-
-  it('processes records through eachRecord', async () => {
-    const fakeRecord = { key: 'mykey', value: 'myvalue' }
-    const fakeProcessed = { hello: 'world' }
-    eachRecord.returns(fakeProcessed)
-
-    stream.on.withArgs('data').callsArgWithAsync(1, fakeRecord)
-    stream.on.withArgs('end').callsArgAsync(1)
-
-    const records = await getRecords(store, eachRecord, params)
+  it('uses eachRecord to process each record', async () => {
+    await getRecords(store, fn, params)
 
     expect(eachRecord).to.have.been.calledOnce()
-    expect(eachRecord).to.have.been.calledWith(sinon.match(fakeRecord.key), sinon.match(fakeRecord.value))
-    expect(records).to.have.lengthOf(1)
-    expect(records).to.be.eql([fakeProcessed])
+    expect(eachRecord).to.have.been.calledWith(store, sinon.match.func, params)
+  })
+
+  it('processes each record', async () => {
+    const fakeRecords = [
+      { key: 'key1', value: 'val1' },
+      { key: 'key2', value: 'val2' }
+    ]
+
+    eachRecord.callsFake((store, fn) => {
+      fakeRecords.forEach(({ key, value }) => {
+        fn(key, value)
+      })
+    })
+
+    await getRecords(store, fn, params)
+
+    expect(fn).to.have.been.calledTwice()
+    expect(fn).to.have.been.calledWith('key1', 'val1')
+    expect(fn).to.have.been.calledWith('key2', 'val2')
+  })
+
+  it('returns the processed records', async () => {
+    const fakeRecords = [
+      { key: 'key1', value: 'val1' },
+      { key: 'key2', value: 'val2' }
+    ]
+
+    fn.withArgs('key1', 'val1').returns('record1')
+    fn.withArgs('key2', 'val2').returns('record2')
+
+    eachRecord.callsFake((store, fn) => {
+      fakeRecords.forEach(({ key, value }) => {
+        fn(key, value)
+      })
+    })
+
+    const records = await getRecords(store, fn, params)
+
+    expect(records).to.have.lengthOf(2)
+    expect(records[0]).to.be.eql('record1')
+    expect(records[1]).to.be.eql('record2')
   })
 })
