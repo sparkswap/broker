@@ -234,10 +234,6 @@ class Orderbook {
     }
   }
 
-  async getChecksum () {
-
-  }
-
   /**
    * Gets the last record in an event store
    * @private
