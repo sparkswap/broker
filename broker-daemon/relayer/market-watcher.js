@@ -34,6 +34,16 @@ class MarketWatcher extends EventEmitter {
   }
 
   /**
+   * Delete every event in the store and set a promise on `migrating` that resolves once deletion is complete.
+   * @return {Promise} Resolves when migration is complete
+   */
+  migrate () {
+    this.logger.debug(`Removing existing orderbook events as part of migration`)
+    this.migrating = migrateStore(this.store, this.store, (key) => { return { type: 'del', key } })
+    return this.migrating
+  }
+
+  /**
    * Set up the listeners on the watcher
    * @private
    * @return {void}
@@ -111,17 +121,6 @@ class MarketWatcher extends EventEmitter {
     } else {
       this.logger.debug(`Unknown response type: ${response.type}`)
     }
-  }
-
-  /**
-   * Delete every event in the store and set a promise on `migrating` that resolves once deletion is complete.
-   * @private
-   * @return {Promise} Resolves when migration is complete
-   */
-  migrate () {
-    this.logger.debug(`Removing existing orderbook events as part of migration`)
-    this.migrating = migrateStore(this.store, this.store, (key) => { return { type: 'del', key } })
-    return this.migrating
   }
 
   /**

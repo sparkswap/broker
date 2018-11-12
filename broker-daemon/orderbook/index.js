@@ -68,23 +68,14 @@ class Orderbook {
   /**
    * Sync orderbook state with the Relayer and retry when it fails
    * @private
-   * @param {Object}   options
-   * @param {Boolean}  options.flush Whether or not to flush our current copy of the orderbook or try to update it
    * @return {Promise}               Resolves when market is being watched (not necessarily when it is synced)
    */
-  async watchMarket ({ flush = false } = {}) {
+  async watchMarket () {
     this.logger.debug(`Watching market ${this.marketName}...`)
 
     const { baseSymbol, counterSymbol } = this
-    const params = { baseSymbol, counterSymbol }
-
-    // If we are re-using our current orderbook, find the last event we know about
-    // and use that to request future events.
-    if (!flush) {
-      const { lastUpdated, sequence } = await this.lastUpdate()
-      params.lastUpdated = lastUpdated
-      params.sequence = sequence
-    }
+    const { lastUpdated, sequence } = await this.lastUpdate()
+    const params = { baseSymbol, counterSymbol, lastUpdated, sequence }
 
     const watcher = this.relayer.watchMarket(this.eventStore, params)
 
@@ -102,10 +93,10 @@ class Orderbook {
       }, RETRY_WATCHMARKET)
     })
 
-    watcher.once('error', (error) => {
+    watcher.once('error', async (error) => {
       this.logger.info(`Market ${this.marketName} encountered sync'ing error, re-building`, { error })
-
-      this.watchMarket({ flush: true })
+      await watcher.migrate()
+      this.watchMarket()
     })
   }
 
