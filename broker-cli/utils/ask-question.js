@@ -19,7 +19,7 @@ const CARRIAGE_RETURN = '\r'
  * @type {String}
  * @default
  */
-const END_OF_TRASMISSION = '\u0004'
+const END_OF_TRANSMISSION = '\u0004'
 
 /**
  * Helper function for stdin that suppresses a user's input from being displayed
@@ -34,7 +34,7 @@ function suppressInput (message, char) {
   switch (input) {
     case NEW_LINE:
     case CARRIAGE_RETURN:
-    case END_OF_TRASMISSION:
+    case END_OF_TRANSMISSION:
       process.stdin.pause()
       break
     default:

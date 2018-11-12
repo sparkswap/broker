@@ -57,7 +57,7 @@ describe('ask-question', () => {
     })
 
     it('pauses a stdin stream when receiving an end of transmission code', () => {
-      const endOfTransmission = askQuestion.__get__('END_OF_TRASMISSION')
+      const endOfTransmission = askQuestion.__get__('END_OF_TRANSMISSION')
       suppressInput(message, endOfTransmission)
       expect(stdinPauseStub).to.have.been.calledOnce()
     })
@@ -82,7 +82,7 @@ describe('ask-question', () => {
     })
   })
 
-  describe.only('askQuestion', () => {
+  describe('askQuestion', () => {
     const message = 'my message'
 
     let createInterfaceStub
@@ -94,7 +94,8 @@ describe('ask-question', () => {
     beforeEach(() => {
       rlStub = {
         close: sinon.stub(),
-        question: sinon.stub()
+        question: sinon.stub(),
+        history: []
       }
       stdinStub = {
         on: sinon.stub()
@@ -132,14 +133,23 @@ describe('ask-question', () => {
     })
 
     context('response', () => {
-      it('prompts the user with a message', async () => {
-        const call = askQuestion(message)
-        await call()
-        expect(rlStub.question).to.have.been.calledWith(sinon.match(message), sinon.)
+      it('prompts the user with a message', () => {
+        askQuestion(message)
+        expect(rlStub.question).to.have.been.calledWith(sinon.match(message), sinon.match.func)
       })
 
-      it('handles user input')
-      it('closes a stream if an error occurred')
+      it('closes a stream', () => {
+        askQuestion(message)
+        const call = rlStub.question.args[0][1]
+        call()
+        expect(rlStub.close).to.have.been.calledOnce()
+      })
+
+      it('closes a stream if an error occurred', () => {
+        rlStub.question.throws()
+        expect(askQuestion(message)).to.eventually.be.rejected()
+        expect(rlStub.close).to.have.been.calledOnce()
+      })
     })
   })
 })
