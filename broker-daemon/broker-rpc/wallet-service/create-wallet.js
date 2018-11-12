@@ -23,6 +23,17 @@ async function createWallet ({ logger, params, engines }, { CreateWalletResponse
   }
 
   const cipherSeeds = await engine.createWallet(password)
+
+  // We need to re-validate the node after wallet creation
+  // however, not sure how we should handle if the node is messed up
+  try {
+    await engine.validateNodeConfig()
+    logger.debug(`Engine for ${symbol} has been validated`)
+  } catch (e) {
+    logger.error('Error validating node', { error: e.stack })
+    throw new PublicError(`Error validating node for ${symbol}. Please check your broker logs`)
+  }
+
   return new CreateWalletResponse({ cipherSeeds })
 }
 
