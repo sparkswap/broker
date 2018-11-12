@@ -68,7 +68,7 @@ class Orderbook {
   /**
    * Sync orderbook state with the Relayer and retry when it fails
    * @private
-   * @return {Promise}               Resolves when market is being watched (not necessarily when it is synced)
+   * @return {Promise} Resolves when market is being watched (not necessarily when it is synced)
    */
   async watchMarket () {
     this.logger.debug(`Watching market ${this.marketName}...`)
