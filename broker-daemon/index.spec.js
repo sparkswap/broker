@@ -33,6 +33,7 @@ describe('broker daemon', () => {
   let brokerDaemonOptions
   let rpcUser
   let rpcPass
+  let exponentialBackoff
 
   beforeEach(() => {
     level = sinon.stub().returns('fake-level')
@@ -52,6 +53,7 @@ describe('broker daemon', () => {
       error: sinon.spy(),
       info: sinon.spy()
     }
+    exponentialBackoff = sinon.stub().resolves()
     LndEngine = sinon.stub()
     LndEngine.prototype.validateNodeConfig = sinon.stub().resolves()
     Orderbook = sinon.stub()
@@ -94,6 +96,7 @@ describe('broker daemon', () => {
     BrokerDaemon.__set__('BrokerRPCServer', rpcServer)
     BrokerDaemon.__set__('InterchainRouter', interchainRouter)
     BrokerDaemon.__set__('logger', logger)
+    BrokerDaemon.__set__('exponentialBackoff', exponentialBackoff)
 
     privRpcKeyPath = '/my/private/rpc/key/path'
     pubRpcKeyPath = '/my/public/rpc/key/path'
@@ -381,21 +384,10 @@ describe('broker daemon', () => {
     })
 
     it('validates the engines', async () => {
-      const btcEngine = {
-        validateNodeConfig: sinon.stub().resolves()
-      }
-      const ltcEngine = {
-        validateNodeConfig: sinon.stub().resolves()
-      }
-      brokerDaemon.engines = new Map([
-        [ 'BTC', btcEngine ],
-        [ 'LTC', ltcEngine ]
-      ])
-
+      brokerDaemon.validateEngines = sinon.stub().returns()
       await brokerDaemon.initialize()
 
-      expect(btcEngine.validateNodeConfig).to.have.been.calledOnce()
-      expect(ltcEngine.validateNodeConfig).to.have.been.calledOnce()
+      expect(brokerDaemon.validateEngines).to.have.been.calledOnce()
     })
 
     it('initializes markets', async () => {
@@ -411,6 +403,66 @@ describe('broker daemon', () => {
       await brokerDaemon.initialize()
 
       expect(BlockOrderWorker.prototype.initialize).to.have.been.calledOnce()
+    })
+  })
+
+  describe('#validateEngines', () => {
+    let attempts
+    let delay
+    let btcEngine
+    let ltcEngine
+
+    beforeEach(() => {
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+
+      btcEngine = {
+        validateNodeConfig: sinon.stub().resolves()
+      }
+      ltcEngine = {
+        validateNodeConfig: sinon.stub().resolves()
+      }
+      brokerDaemon.engines = new Map([
+        [ 'BTC', btcEngine ],
+        [ 'LTC', ltcEngine ]
+      ])
+
+      attempts = BrokerDaemon.__get__('EXPONENTIAL_BACKOFF_ATTEMPTS')
+      delay = BrokerDaemon.__get__('EXPONENTIAL_BACKOFF_DELAY')
+    })
+
+    it('validates the node config on each engine', () => {
+      brokerDaemon.validateEngines()
+
+      const validateBtcEngine = exponentialBackoff.args[0][0]
+      const btcEngineRes = validateBtcEngine()
+
+      expect(btcEngine.validateNodeConfig).to.have.been.called()
+      expect(btcEngineRes).to.be.instanceOf(Promise)
+
+      const validateLtcEngine = exponentialBackoff.args[1][0]
+      const ltcEngineRes = validateLtcEngine()
+
+      expect(ltcEngine.validateNodeConfig).to.have.been.called()
+      expect(ltcEngineRes).to.be.instanceOf(Promise)
+    })
+
+    it('validates the engines in exponentialBackoff to allow for retries', () => {
+      brokerDaemon.validateEngines()
+
+      expect(exponentialBackoff).to.have.been.calledTwice()
+      expect(exponentialBackoff).to.have.been.calledWith(
+        sinon.match.func,
+        attempts,
+        delay,
+        {symbol: 'BTC'}
+      )
+
+      expect(exponentialBackoff).to.have.been.calledWith(
+        sinon.match.func,
+        attempts,
+        delay,
+        {symbol: 'LTC'}
+      )
     })
   })
 
