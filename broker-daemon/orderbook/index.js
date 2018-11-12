@@ -34,6 +34,8 @@ class Orderbook {
     this.eventStore = store.sublevel('events')
     this.index = new OrderbookIndex(store, this.eventStore, this.marketName)
     this.store = this.index.store
+    this.askIndex = new AskIndex(this.store)
+    this.bidIndex = new BidIndex(this.store)
     this.logger = logger
     this.synced = false
   }
@@ -49,12 +51,27 @@ class Orderbook {
   /**
    * Initialize the orderbook by syncing its state to the Relayer and indexing
    * the orders.
-   * Also includes retry logic if the Relayer fails.
-   * @return {void}
+   * @return {Promise}
    */
   async initialize () {
     this.logger.info(`Initializing market ${this.marketName}...`)
     this.synced = false
+
+    this.logger.debug(`Rebuilding indexes`)
+    await this.index.ensureIndex()
+    await this.askIndex.ensureIndex()
+    await this.bidIndex.ensureIndex()
+
+    await this.watchMarket()
+  }
+
+  /**
+   * Sync orderbook state with the Relayer and retry when it fails
+   * @private
+   * @return {Promise} Resolves when market is being watched (not necessarily when it is synced)
+   */
+  async watchMarket () {
+    this.logger.debug(`Watching market ${this.marketName}...`)
 
     const { baseSymbol, counterSymbol } = this
     const { lastUpdated, sequence } = await this.lastUpdate()
@@ -63,13 +80,8 @@ class Orderbook {
     const watcher = this.relayer.watchMarket(this.eventStore, params)
 
     watcher.on('sync', async () => {
-      this.logger.debug(`Rebuilding indexes`)
-      await this.index.ensureIndex()
-      this.askIndex = await (new AskIndex(this.store)).ensureIndex()
-      this.bidIndex = await (new BidIndex(this.store)).ensureIndex()
-
       this.synced = true
-      this.logger.info(`Market ${this.marketName} initialized.`)
+      this.logger.info(`Market ${this.marketName} synced.`)
     })
 
     watcher.on('end', (error) => {
@@ -77,7 +89,7 @@ class Orderbook {
 
       // TODO: exponential backoff?
       setTimeout(() => {
-        this.initialize()
+        this.watchMarket()
       }, RETRY_WATCHMARKET)
     })
   }

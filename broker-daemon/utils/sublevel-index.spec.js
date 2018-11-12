@@ -439,10 +439,17 @@ describe('Index', () => {
 
     describe('#_addIndexHook', async () => {
       let preHook
+      let removeHook
 
       beforeEach(() => {
+        removeHook = sinon.stub()
+        store.pre.returns(removeHook)
         index._addIndexHook()
         preHook = store.pre.args[0][0]
+      })
+
+      it('saves a fn to remove the hook', () => {
+        expect(index._removeHook).to.be.equal(removeHook)
       })
 
       it('adds a pre hook to the source database', () => {
@@ -488,6 +495,13 @@ describe('Index', () => {
     })
 
     describe('#_clearIndex', () => {
+      it('removes any previous hooks', async () => {
+        index._removeHook = sinon.stub()
+        await index._clearIndex()
+
+        expect(index._removeHook).to.have.been.calledOnce()
+      })
+
       it('returns the promise from migrate store', () => {
         const fakePromise = 'fake'
         migrateStore.returns(fakePromise)

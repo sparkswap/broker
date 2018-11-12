@@ -64,6 +64,11 @@ class MarketWatcher extends EventEmitter {
   async handleResponse (response) {
     const { RESPONSE_TYPES } = this
 
+    // TODO: If more than one event is handled by this function during a migration,
+    // it's unclear if the order that they actually get processed in (e.g. via `createMarketEvent`)
+    // will be the same as the order in which they arrive.
+    // This could have some potential issues, particularly if, for example, a CANCELLED is processed
+    // before its corresponding PLACED.
     await this.migration()
 
     this.logger.debug(`response type is ${response.type}`)

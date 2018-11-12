@@ -17,7 +17,7 @@ class StateMachineEvents extends StateMachinePlugin {
   }
 
   /**
-   * Adds an event emition observer to all transition calls to allow for event passing
+   * Adds event emition observer to all transition calls to allow for event passing
    * to external workers (BlockOrderWorker)
    */
   get observers () {
@@ -25,6 +25,17 @@ class StateMachineEvents extends StateMachinePlugin {
 
     return {
       /**
+       * Emit an event before a transition (prefixed by 'before:')
+       * e.g. stateMachine.on('before:create')
+       * @param  {Object} lifecycle
+       * @return {void}
+       */
+      onBeforeTransition: function (lifecycle) {
+        plugin.eventHandler.emit(`before:${lifecycle.transition}`)
+      },
+      /**
+       * Emit an event after a transition
+       * (no prefix to use the same shorthand as javascript-state-machine)
        * @param {Object} lifecycle
        * @returns {void}
        */
