@@ -184,7 +184,7 @@ class MarketWatcher extends EventEmitter {
   validateChecksum (checksum) {
     this.logger.debug('Validating checksum', { checksum })
 
-    if (!this.checksum.check(Buffer.from(checksum, 'base64'))) {
+    if (!this.checksum.matches(Buffer.from(checksum, 'base64'))) {
       // TODO: do we need to remove events from the db?
       this.logger.error('Checksums did not match, invalidating')
       this.emit('error', new Error('[MarketWatcher]: Checksum mismatch'))

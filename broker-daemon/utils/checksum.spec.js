@@ -109,9 +109,9 @@ describe('checksum', () => {
         expect(chk.sum).to.have.length(32)
       })
 
-      it('provides a check function', () => {
-        expect(chk).to.have.property('check')
-        expect(chk.check).to.be.a('function')
+      it('provides a match function', () => {
+        expect(chk).to.have.property('matches')
+        expect(chk.matches).to.be.a('function')
       })
 
       it('provides a process function', () => {
@@ -145,17 +145,25 @@ describe('checksum', () => {
       })
     })
 
-    describe('check', () => {
+    describe('matches', () => {
       beforeEach(() => {
-        chk.sum = Buffer.from('glarp')
+        chk.sum = Buffer.from('4b26bc25cbb8fa69920f06e228155cf560621d4797f625d66b293d258bfa6fd8', 'hex')
+      })
+
+      it('throws if provided a non-buffer', () => {
+        expect(() => chk.matches('glarp')).to.throw()
+      })
+
+      it('throws if provided a buffer of the wrong length', () => {
+        expect(() => chk.matches(Buffer.alloc(0))).to.throw()
       })
 
       it('matches sums that match', () => {
-        expect(chk.check(Buffer.from('glarp'))).to.be.true()
+        expect(chk.matches(Buffer.from('4b26bc25cbb8fa69920f06e228155cf560621d4797f625d66b293d258bfa6fd8', 'hex'))).to.be.true()
       })
 
       it('does not match sums that do not match', () => {
-        expect(chk.check(Buffer.from('glorp'))).to.be.false()
+        expect(chk.matches(Buffer.from('92bcd48480eb4640b9888855c875310599db0bf07141b4d27666171d2458c438', 'hex'))).to.be.false()
       })
     })
   })
@@ -170,24 +178,24 @@ describe('checksum e2e', () => {
   })
 
   it('matches a zero checksum', () => {
-    expect(mysum.check(Buffer.alloc(32))).to.be.true()
+    expect(mysum.matches(Buffer.alloc(32))).to.be.true()
   })
 
   it('does not match when processing another item', () => {
-    expect(mysum.process('hello').check(Buffer.alloc(32))).to.be.false()
+    expect(mysum.process('hello').matches(Buffer.alloc(32))).to.be.false()
   })
 
   it('matches when processing the same item twice', () => {
-    expect(mysum.process('hello').process('hello').check(Buffer.alloc(32))).to.be.true()
+    expect(mysum.process('hello').process('hello').matches(Buffer.alloc(32))).to.be.true()
   })
 
   it('matches two separate checksums', () => {
-    expect(mysum.process('hello').check((new Checksum()).process('hello').sum)).to.be.true()
+    expect(mysum.process('hello').matches((new Checksum()).process('hello').sum)).to.be.true()
   })
 
   it('matches when processing multiple items', () => {
-    expect(mysum.process('hello').process('goodbye').check((new Checksum()).process('hello').sum)).to.be.false()
-    expect(mysum.check((new Checksum()).process('hello').process('goodbye').sum)).to.be.true()
-    expect(mysum.process('hello').check((new Checksum()).process('goodbye').sum)).to.be.true()
+    expect(mysum.process('hello').process('goodbye').matches((new Checksum()).process('hello').sum)).to.be.false()
+    expect(mysum.matches((new Checksum()).process('hello').process('goodbye').sum)).to.be.true()
+    expect(mysum.process('hello').matches((new Checksum()).process('goodbye').sum)).to.be.true()
   })
 })

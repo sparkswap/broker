@@ -58,8 +58,16 @@ class Checksum {
    * Check that the provided sum matches our calculated sum
    * @param  {Buffer}  sum Buffer of a checksum of equivalent length
    * @return {Boolean}     True if the checksums match, false otherwise
+   * @throws {Error} If sum is not a Buffer
+   * @throws {Error} If sum does not have the correct length
    */
-  check (sum) {
+  matches (sum) {
+    if (!Buffer.isBuffer(sum)) {
+      throw new Error(`Checksums can only be matched against Buffers`)
+    }
+    if (sum.length !== SHA256_BYTE_SIZE) {
+      throw new Error(`Checksums can only be matched against Buffers of length ${SHA256_BYTE_SIZE}`)
+    }
     return this.sum.equals(sum)
   }
 
