@@ -75,6 +75,7 @@ class MarketWatcher extends EventEmitter {
 
   /**
    * Create a new checksum by processing all market events in the data store
+   * @private
    * @todo does it make sense to build this off the index so we don't have
    * to process every event in the store?
    * @return {Promise} Resolves when the checksum is built
