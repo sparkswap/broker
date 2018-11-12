@@ -30,7 +30,7 @@ class MarketWatcher extends EventEmitter {
 
     // initialize the checksum and hold off on processing
     // events until it is complete
-    this.migrating = this.createChecksum()
+    this.creatingChecksum = this.createChecksum()
   }
 
   /**
@@ -102,7 +102,7 @@ class MarketWatcher extends EventEmitter {
     // will be the same as the order in which they arrive.
     // This could have some potential issues, particularly if, for example, a CANCELLED is processed
     // before its corresponding PLACED.
-    await this.migration()
+    await this.delayProcessing()
 
     this.logger.debug(`response type is ${response.type}`)
 
@@ -124,16 +124,13 @@ class MarketWatcher extends EventEmitter {
   }
 
   /**
-   * Helper promise to await to ensure that any migrations are complete before proceeding
+   * Helper promise to await to ensure that any outstanding promises are complete before proceeding
    * @private
-   * @return {Promise} Resolves when there are no in-progress migrations
+   * @return {Promise} Resolves when there are no in-progress promises
    */
-  async migration () {
-    // migrating is falsey (null) by default
-    if (this.migrating) {
-      this.logger.debug(`Waiting for migration to finish before acting on new response`)
-      await this.migrating
-    }
+  async delayProcessing () {
+    this.logger.debug(`Waiting for migration and checksum to finish before acting on new response`)
+    await Promise.all([this.migrating, this.creatingChecksum])
   }
 
   /**
