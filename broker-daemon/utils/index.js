@@ -14,7 +14,7 @@ const createHttpServer = require('./create-http-server')
 const timestampToNano = require('./timestamp-to-nano')
 const generateId = require('./generate-id')
 const eachRecord = require('./each-record')
-const checksum = require('./checksum')
+const Checksum = require('./checksum')
 
 module.exports = {
   getRecords,
@@ -33,5 +33,5 @@ module.exports = {
   timestampToNano,
   generateId,
   eachRecord,
-  checksum
+  Checksum
 }

@@ -1,7 +1,7 @@
 const EventEmitter = require('events')
 const { promisify } = require('util')
 const { MarketEvent } = require('../models')
-const { migrateStore, eachRecord, checksum } = require('../utils')
+const { migrateStore, eachRecord, Checksum } = require('../utils')
 
 /**
  * @class Watch a relayer market and put the events into a data store
@@ -80,7 +80,7 @@ class MarketWatcher extends EventEmitter {
    * @return {Promise} Resolves when the checksum is built
    */
   createChecksum () {
-    this.checksum = checksum()
+    this.checksum = new Checksum()
 
     return eachRecord(this.store, (key, value) => {
       const marketEvent = MarketEvent.fromStorage(key, value)

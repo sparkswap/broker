@@ -2,7 +2,7 @@ const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
 
 describe('checksum', () => {
-  const checksum = rewire(path.resolve(__dirname, 'checksum'))
+  const Checksum = rewire(path.resolve(__dirname, 'checksum'))
 
   describe('sha256', () => {
     let createHash
@@ -20,9 +20,9 @@ describe('checksum', () => {
       hash.update.returns(hash)
       createHash = sinon.stub().returns(hash)
 
-      checksum.__set__('createHash', createHash)
+      Checksum.__set__('createHash', createHash)
 
-      sha256 = checksum.__get__('sha256')
+      sha256 = Checksum.__get__('sha256')
       start = 'hello'
       end = 'goodbye'
 
@@ -53,7 +53,7 @@ describe('checksum', () => {
     let xor
 
     beforeEach(() => {
-      xor = checksum.__get__('xor')
+      xor = Checksum.__get__('xor')
 
       bufA = Buffer.from([0x0, 0x1, 0x2])
       bufB = Buffer.from([0x1, 0x2, 0x3, 0x4])
@@ -72,7 +72,7 @@ describe('checksum', () => {
     })
   })
 
-  describe('checksum', () => {
+  describe('Checksum', () => {
     let sha256Stub
     let shaReset
     let xorStub
@@ -83,14 +83,14 @@ describe('checksum', () => {
     beforeEach(() => {
       sha256Stub = sinon.stub()
 
-      shaReset = checksum.__set__('sha256', sha256Stub)
+      shaReset = Checksum.__set__('sha256', sha256Stub)
 
       xored = Buffer.from('hello world')
       xorStub = sinon.stub().returns(xored)
 
-      xorReset = checksum.__set__('xor', xorStub)
+      xorReset = Checksum.__set__('xor', xorStub)
 
-      chk = checksum()
+      chk = new Checksum()
     })
 
     afterEach(() => {
@@ -162,11 +162,11 @@ describe('checksum', () => {
 })
 
 describe('checksum e2e', () => {
-  const checksum = require('./checksum')
+  const Checksum = require('./checksum')
   let mysum
 
   beforeEach(() => {
-    mysum = checksum()
+    mysum = new Checksum()
   })
 
   it('matches a zero checksum', () => {
@@ -182,12 +182,12 @@ describe('checksum e2e', () => {
   })
 
   it('matches two separate checksums', () => {
-    expect(mysum.process('hello').check(checksum().process('hello').sum)).to.be.true()
+    expect(mysum.process('hello').check((new Checksum()).process('hello').sum)).to.be.true()
   })
 
   it('matches when processing multiple items', () => {
-    expect(mysum.process('hello').process('goodbye').check(checksum().process('hello').sum)).to.be.false()
-    expect(mysum.check(checksum().process('hello').process('goodbye').sum)).to.be.true()
-    expect(mysum.process('hello').check(checksum().process('goodbye').sum)).to.be.true()
+    expect(mysum.process('hello').process('goodbye').check((new Checksum()).process('hello').sum)).to.be.false()
+    expect(mysum.check((new Checksum()).process('hello').process('goodbye').sum)).to.be.true()
+    expect(mysum.process('hello').check((new Checksum()).process('goodbye').sum)).to.be.true()
   })
 })

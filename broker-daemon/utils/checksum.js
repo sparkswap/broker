@@ -34,27 +34,44 @@ function xor (a, b) {
 }
 
 /**
- * Create an updatable checksum of a set of data
- * @return {Object}
+ * @class An updatable checksum of a set of data.
+ * Checksum uses a XOR of SHA-256 hashes of given data elements, providing
+ * a checksum that can be easily added to and subtracted from.
  * @example
- * const mysum = checksum()
+ * const mysum = new Checksum()
  * mysum.check(sha256('hello')) // returns false
  * mysum.process('hello')
  * mysum.check(sha256('hello')) // returns true
  * mysum.process('hello')
  * mysum.check(sha256('hello')) // returns false
  */
-function checksum () {
-  return {
-    sum: Buffer.alloc(SHA256_BYTE_SIZE),
-    check (sum) {
-      return this.sum.equals(sum)
-    },
-    process (value) {
-      this.sum = xor(this.sum, sha256(value))
-      return this
-    }
+class Checksum {
+  /**
+   * Create a new checksum for a data set
+   * @return {Checksum} Initialized checksum with an empty data set
+   */
+  constructor () {
+    this.sum = Buffer.alloc(SHA256_BYTE_SIZE)
+  }
+
+  /**
+   * Check that the provided sum matches our calculated sum
+   * @param  {Buffer}  sum Buffer of a checksum of equivalent length
+   * @return {Boolean}     True if the checksums match, false otherwise
+   */
+  check (sum) {
+    return this.sum.equals(sum)
+  }
+
+  /**
+   * Add a value to, or remove a value from the data set
+   * @param  {String} value Value to add to or remove from the data set, e.g. a unique ID
+   * @return {Checksum}     Mutated checksum class, for easy chaining (e.g. mysum.process('a').process('b'))
+   */
+  process (value) {
+    this.sum = xor(this.sum, sha256(value))
+    return this
   }
 }
 
-module.exports = checksum
+module.exports = Checksum
