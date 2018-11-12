@@ -174,7 +174,7 @@ class BrokerDaemon {
         ...Array.from(this.engines, async ([ symbol, engine ]) => {
           this.logger.info(`Validating engine configuration for ${symbol}`)
           try {
-            await engine.validateNode()
+            await engine.validateNodeConfig()
           } catch (e) {
             this.logger.error(`Engine for ${symbol} failed to validate: ${e.message || e.details}`, { stack: e.stack })
             throw new Error(`Engine for ${symbol} failed to validate: ${e.message || e.details}`)

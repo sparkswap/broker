@@ -1,18 +1,46 @@
 const readline = require('readline')
 
+/**
+ * @constant
+ * @type {String}
+ * @default
+ */
+const NEW_LINE = '\n'
+
+/**
+ * @constant
+ * @type {String}
+ * @default
+ */
+const CARRIAGE_RETURN = '\r'
+
+/**
+ * @constant
+ * @type {String}
+ * @default
+ */
+const END_OF_TRASMISSION = '\u0004'
+
+/**
+ * Helper function for stdin that suppresses a user's input from being displayed
+ * through stdout
+ *
+ * @param {String} message
+ * @param {Buffer} char
+ */
 function suppressInput (message, char) {
-  const input = char + ''
+  const input = char.toString('utf8')
 
   switch (input) {
-    case '\n': // New line (line feed)
-    case '\r': // Carriage return
-    case '\u0004': // unicode for 'end of transmission'
+    case NEW_LINE:
+    case CARRIAGE_RETURN:
+    case END_OF_TRASMISSION:
       process.stdin.pause()
       break
     default:
       process.stdout.clearLine()
       readline.cursorTo(process.stdout, 0)
-      process.stdout.write(message + ' ')
+      process.stdout.write(`${message} `)
       break
   }
 }
@@ -40,7 +68,6 @@ function askQuestion (message, { silent = false } = {}) {
   return new Promise((resolve, reject) => {
     try {
       rl.question(`${message} `, (answer) => {
-        // I wonder if we still need this
         rl.history = rl.history.slice(1)
         rl.close()
         return resolve(answer)
