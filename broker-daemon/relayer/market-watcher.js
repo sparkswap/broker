@@ -27,10 +27,7 @@ class MarketWatcher extends EventEmitter {
     this.RESPONSE_TYPES = RESPONSE_TYPES
 
     this.setupListeners()
-
-    // initialize the checksum and hold off on processing
-    // events until it is complete
-    this.creatingChecksum = this.createChecksum()
+    this.createChecksum()
   }
 
   /**
@@ -74,7 +71,9 @@ class MarketWatcher extends EventEmitter {
   }
 
   /**
-   * Create a new checksum by processing all market events in the data store
+   * Create a new checksum by processing all market events in the data store.
+   * It assigns its promise to the value `creatingChecksum` to delay processing
+   * until it's complete.
    * @private
    * @todo does it make sense to build this off the index so we don't have
    * to process every event in the store?
@@ -83,10 +82,12 @@ class MarketWatcher extends EventEmitter {
   createChecksum () {
     this.checksum = new Checksum()
 
-    return eachRecord(this.store, (key, value) => {
+    this.creatingChecksum = eachRecord(this.store, (key, value) => {
       const marketEvent = MarketEvent.fromStorage(key, value)
       this.checksum.process(marketEvent.orderId)
     })
+
+    return this.creatingChecksum
   }
 
   /**
