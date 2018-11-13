@@ -55,6 +55,7 @@ describe('broker daemon', () => {
     }
     exponentialBackoff = sinon.stub().resolves()
     LndEngine = sinon.stub()
+    LndEngine.prototype.validateNodeConfig = sinon.stub().resolves()
     Orderbook = sinon.stub()
     Orderbook.prototype.initialize = sinon.stub()
     BlockOrderWorker = sinon.stub()
@@ -382,6 +383,13 @@ describe('broker daemon', () => {
       expect(interchainRouterListenSpy).to.have.been.calledWith(brokerDaemon.interchainRouterAddress)
     })
 
+    it('validates the engines', async () => {
+      brokerDaemon.validateEngines = sinon.stub().returns()
+      await brokerDaemon.initialize()
+
+      expect(brokerDaemon.validateEngines).to.have.been.calledOnce()
+    })
+
     it('initializes markets', async () => {
       brokerDaemon.initializeMarkets = sinon.stub().resolves()
 
@@ -395,6 +403,66 @@ describe('broker daemon', () => {
       await brokerDaemon.initialize()
 
       expect(BlockOrderWorker.prototype.initialize).to.have.been.calledOnce()
+    })
+  })
+
+  describe('#validateEngines', () => {
+    let attempts
+    let delay
+    let btcEngine
+    let ltcEngine
+
+    beforeEach(() => {
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+
+      btcEngine = {
+        validateNodeConfig: sinon.stub().resolves()
+      }
+      ltcEngine = {
+        validateNodeConfig: sinon.stub().resolves()
+      }
+      brokerDaemon.engines = new Map([
+        [ 'BTC', btcEngine ],
+        [ 'LTC', ltcEngine ]
+      ])
+
+      attempts = BrokerDaemon.__get__('EXPONENTIAL_BACKOFF_ATTEMPTS')
+      delay = BrokerDaemon.__get__('EXPONENTIAL_BACKOFF_DELAY')
+    })
+
+    it('validates the node config on each engine', () => {
+      brokerDaemon.validateEngines()
+
+      const validateBtcEngine = exponentialBackoff.args[0][0]
+      const btcEngineRes = validateBtcEngine()
+
+      expect(btcEngine.validateNodeConfig).to.have.been.called()
+      expect(btcEngineRes).to.be.instanceOf(Promise)
+
+      const validateLtcEngine = exponentialBackoff.args[1][0]
+      const ltcEngineRes = validateLtcEngine()
+
+      expect(ltcEngine.validateNodeConfig).to.have.been.called()
+      expect(ltcEngineRes).to.be.instanceOf(Promise)
+    })
+
+    it('validates the engines in exponentialBackoff to allow for retries', () => {
+      brokerDaemon.validateEngines()
+
+      expect(exponentialBackoff).to.have.been.calledTwice()
+      expect(exponentialBackoff).to.have.been.calledWith(
+        sinon.match.func,
+        attempts,
+        delay,
+        {symbol: 'BTC'}
+      )
+
+      expect(exponentialBackoff).to.have.been.calledWith(
+        sinon.match.func,
+        attempts,
+        delay,
+        {symbol: 'LTC'}
+      )
     })
   })
 
