@@ -8,7 +8,7 @@ const Orderbook = require('./orderbook')
 const BlockOrderWorker = require('./block-order-worker')
 const BrokerRPCServer = require('./broker-rpc/broker-rpc-server')
 const InterchainRouter = require('./interchain-router')
-const { logger, exponentialBackoff } = require('./utils')
+const { logger } = require('./utils')
 const CONFIG = require('./config')
 
 /**
@@ -37,22 +37,6 @@ const DEFAULT_DATA_DIR = '~/.sparkswap/data'
  * @default
  */
 const DEFAULT_INTERCHAIN_ROUTER_ADDRESS = '0.0.0.0:40369'
-
-/**
- * Attempts to retry validating an engine
- *
- * @constant
- * @type {String}
- */
-const EXPONENTIAL_BACKOFF_ATTEMPTS = 24
-
-/**
- * Delay in each retry attempt to validating an engine
- *
- * @constant
- * @type {Integer} milliseconds
- */
-const EXPONENTIAL_BACKOFF_DELAY = 5000
 
 /**
  * Default host and port that the Relayer is set up on
@@ -189,10 +173,6 @@ class BrokerDaemon {
         })()
       ])
 
-      // This will run in the background. It is implemented with exponential backoff so
-      // the validation will be retried on the engine until successful or until final failure.
-      this.validateEngines()
-
       this.rpcServer.listen(this.rpcAddress)
       this.logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
 
@@ -244,26 +224,6 @@ class BrokerDaemon {
 
     this.orderbooks.set(marketName, new Orderbook(marketName, this.relayer, this.store.sublevel(marketName), this.logger))
     return this.orderbooks.get(marketName).initialize()
-  }
-
-  /**
-   * Validates engines
-   * We do not await this function because we want the validations to run in the background.
-   * It can take time for the engines to be ready, so we use exponential backoff to retry validation
-   * for a period of time, until it is either successful or there is actually something wrong.
-   * @returns {void}
-   */
-  async validateEngines () {
-    this.engines.forEach(async (engine, symbol) => {
-      try {
-        await exponentialBackoff(() => { return engine.validateNodeConfig() }, EXPONENTIAL_BACKOFF_ATTEMPTS, EXPONENTIAL_BACKOFF_DELAY, {symbol})
-      } catch (e) {
-        this.logger.error(`Failed to validate engine for ${symbol}, error: ${e}`)
-        return
-      }
-
-      this.logger.info(`Validated engine configuration for ${symbol}`)
-    })
   }
 }
 
