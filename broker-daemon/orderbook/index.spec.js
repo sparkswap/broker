@@ -245,7 +245,9 @@ describe('Orderbook', () => {
       })
 
       watcher = {
-        on: sinon.stub()
+        once: sinon.stub(),
+        migrate: sinon.stub(),
+        removeListener: sinon.stub()
       }
 
       relayer.watchMarket.returns(watcher)
@@ -258,11 +260,23 @@ describe('Orderbook', () => {
       expect(relayer.watchMarket).to.have.been.calledWith(eventStore, sinon.match({ baseSymbol, counterSymbol, lastUpdated, sequence }))
     })
 
-    describe('watcher syncs', () => {
-      beforeEach(async () => {
-        const onSync = watcher.on.withArgs('sync').args[0][1]
+    it('sets a sync listener', () => {
+      expect(watcher.once).to.have.been.calledWith('sync', sinon.match.func)
+    })
 
-        await onSync()
+    xit('sets an end listener', () => {
+      expect(watcher.once).to.have.been.calledWith('end', sinon.match.func)
+    })
+
+    xit('sets an error listener', () => {
+      expect(watcher.once).to.have.been.calledWith('error', sinon.match.func)
+    })
+
+    describe('watcher syncs', () => {
+      beforeEach(() => {
+        const onSync = watcher.once.withArgs('sync').args[0][1]
+
+        onSync()
       })
 
       it('sets the synced status to true', () => {
@@ -279,9 +293,21 @@ describe('Orderbook', () => {
 
         Orderbook.__set__('setTimeout', timeoutStub)
 
-        const onEnd = watcher.on.withArgs('end').args[0][1]
+        const onEnd = watcher.once.withArgs('end').args[0][1]
 
         onEnd()
+      })
+
+      it('sets the synced status to false', () => {
+        expect(orderbook.synced).to.be.false()
+      })
+
+      it('removes the sync listener', () => {
+        expect(watcher.removeListener).to.have.been.calledWith('sync', sinon.match.func)
+      })
+
+      it('removes the error listener', () => {
+        expect(watcher.removeListener).to.have.been.calledWith('error', sinon.match.func)
       })
 
       it('sets a 5 second timeout', () => {
@@ -295,6 +321,66 @@ describe('Orderbook', () => {
         timeoutFunc()
 
         expect(orderbook.watchMarket).to.have.been.calledOnce()
+      })
+    })
+
+    describe('watcher errors', () => {
+      let onError
+
+      beforeEach(() => {
+        orderbook.watchMarket = sinon.stub()
+        onError = watcher.once.withArgs('error').args[0][1]
+      })
+
+      it('sets the synced status to false', () => {
+        onError()
+
+        expect(orderbook.synced).to.be.false()
+      })
+
+      it('removes the sync listener', () => {
+        onError()
+
+        expect(watcher.removeListener).to.have.been.calledWith('sync', sinon.match.func)
+      })
+
+      it('removes the end listener', () => {
+        onError()
+
+        expect(watcher.removeListener).to.have.been.calledWith('end', sinon.match.func)
+      })
+
+      it('migrates the watcher', () => {
+        onError()
+
+        expect(watcher.migrate).to.have.been.calledOnce()
+      })
+
+      it('retries watching the market', async () => {
+        watcher.migrate.resolves()
+        await onError()
+
+        expect(orderbook.watchMarket).to.have.been.calledOnce()
+      })
+
+      it('waits for migration to be complete before re-watching the market', () => {
+        let migrateResolve
+        const fakePromise = new Promise((resolve) => {
+          migrateResolve = resolve
+        })
+        watcher.migrate.returns(fakePromise)
+
+        onError()
+
+        setImmediate(() => {
+          expect(orderbook.watchMarket).to.not.have.been.called()
+
+          migrateResolve()
+
+          setImmediate(() => {
+            expect(orderbook.watchMarket).to.have.been.calledOnce()
+          })
+        })
       })
     })
   })

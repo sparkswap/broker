@@ -79,25 +79,51 @@ class Orderbook {
 
     const watcher = this.relayer.watchMarket(this.eventStore, params)
 
-    watcher.once('sync', async () => {
+    /**
+     * Handle sync events from the watcher by updating internal state
+     * @return {void}
+     */
+    const onWatcherSync = () => {
       this.synced = true
       this.logger.info(`Market ${this.marketName} synced.`)
-    })
+    }
 
-    watcher.once('end', (error) => {
+    /**
+     * Handle end events from the watcher by retrying
+     * @param  {Error} error
+     * @return {void}
+     */
+    const onWatcherEnd = (error) => {
+      this.synced = false
+      watcher.removeListener('sync', onWatcherSync)
+      watcher.removeListener('error', onWatcherError)
+
       this.logger.info(`Market ${this.marketName} unavailable, retrying in ${RETRY_WATCHMARKET}ms`, { error })
-
       // TODO: exponential backoff?
       setTimeout(() => {
         this.watchMarket()
       }, RETRY_WATCHMARKET)
-    })
+    }
 
-    watcher.once('error', async (error) => {
+    /**
+     * Handle error events from the watcher by clearing our store and retrying
+     * @param  {Error} error
+     * @return {Promise<void>}
+     */
+    const onWatcherError = async (error) => {
+      this.synced = false
+
+      watcher.removeListener('sync', onWatcherSync)
+      watcher.removeListener('end', onWatcherEnd)
+
       this.logger.info(`Market ${this.marketName} encountered sync'ing error, re-building`, { error })
       await watcher.migrate()
       this.watchMarket()
-    })
+    }
+
+    watcher.once('sync', onWatcherSync)
+    watcher.once('end', onWatcherEnd)
+    watcher.once('error', onWatcherError)
   }
 
   /**
