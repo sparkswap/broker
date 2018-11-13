@@ -207,7 +207,7 @@ async function networkAddress (args, opts, logger) {
 
     logger.info(paymentChannelNetworkAddress)
   } catch (e) {
-    logger.error(e)
+    logger.error(handleError(e))
   }
 }
 
@@ -252,7 +252,7 @@ async function networkStatus (args, opts, logger) {
     logger.info(` ${market.bold.white}`)
     logger.info(statusTable.toString())
   } catch (e) {
-    logger.error(e)
+    logger.error(handleError(e))
   }
 }
 
