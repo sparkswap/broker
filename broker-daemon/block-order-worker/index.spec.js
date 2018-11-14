@@ -1230,29 +1230,75 @@ describe('BlockOrderWorker', () => {
       })
     })
 
-    describe('reject event', () => {
+    describe.only('reject event', () => {
       let failBlockOrderStub
 
       beforeEach(() => {
+        fill = {
+          id: 'anotherId',
+          once: onceStub,
+          removeAllListeners: removeAllListenersStub,
+          fill: {
+            fillAmount: '100',
+            error: {
+              metadata: new Map([['invalidOrderStatus', ['true']]])
+            }
+          }
+        }
+        FillStateMachine.create.resolves(fill)
         failBlockOrderStub = sinon.stub().resolves(true)
         worker.failBlockOrder = failBlockOrderStub
       })
 
-      beforeEach(async () => {
-        await worker._fillOrders(blockOrder, orders, targetDepth)
-      })
-
       it('registers an event on an order for order rejection', async () => {
+        await worker._fillOrders(blockOrder, orders, targetDepth)
         expect(onceStub).to.have.been.calledWith('reject', sinon.match.func)
       })
 
-      it('fails a block order if the call is rejected', async () => {
+      it('removes all listeners if the call is rejected', async () => {
+        await worker._fillOrders(blockOrder, orders, targetDepth)
+        worker.workBlockOrder = sinon.stub().resolves(true)
+        await onceStub.args[1][1]()
+        expect(fill.removeAllListeners).to.have.been.calledOnce()
+      })
+
+      it('reworks a blockOrder if the order was already filled', async () => {
+        await worker._fillOrders(blockOrder, orders, targetDepth)
+        worker.workBlockOrder = sinon.stub().resolves(true)
+        await onceStub.args[1][1]()
+        expect(worker.workBlockOrder).to.have.been.calledWith(blockOrder, Big('100'))
+      })
+
+      it('fails a block order if the call is rejected and the order was not already filled', async () => {
+        fill = {
+          id: 'anotherId',
+          once: onceStub,
+          removeAllListeners: removeAllListenersStub,
+          fill: {
+            fillAmount: '100',
+            error: { message: 'Insufficient Funds' }
+          }
+        }
+        FillStateMachine.create.resolves(fill)
+        await worker._fillOrders(blockOrder, orders, targetDepth)
         await onceStub.args[1][1]()
         expect(failBlockOrderStub).to.have.been.calledOnce()
+        expect(failBlockOrderStub).to.have.been.calledWith(blockOrder.id, fill.fill.error)
       })
 
       it('catches an exception if failBlockOrder fails', async () => {
+        fill = {
+          id: 'anotherId',
+          once: onceStub,
+          removeAllListeners: removeAllListenersStub,
+          fill: {
+            fillAmount: '100',
+            error: { message: 'Insufficient Funds' }
+          }
+        }
+        FillStateMachine.create.resolves(fill)
         failBlockOrderStub.rejects()
+        await worker._fillOrders(blockOrder, orders, targetDepth)
         await onceStub.args[1][1]()
         expect(failBlockOrderStub).to.have.been.calledOnce()
         expect(loggerErrorStub).to.have.been.calledWith(sinon.match('BlockOrder failed'), sinon.match.any)

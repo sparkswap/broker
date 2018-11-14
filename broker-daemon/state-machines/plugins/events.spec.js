@@ -2,21 +2,35 @@ const path = require('path')
 const { expect, sinon, rewire } = require('test/test-helper')
 
 const StateMachineEvents = rewire(path.resolve(__dirname, 'events'))
+const StateMachine = require('../state-machine')
 
 describe('StateMachineEvents', () => {
-  describe('constructor', () => {
-    it('has an event handler', () => {
-      const sme = new StateMachineEvents()
-      expect(sme).to.have.property('eventHandler')
+  describe('init', () => {
+    let stateMachine
+    let Machine
+
+    before(() => {
+      Machine = StateMachine.factory({
+        plugins: [
+          new StateMachineEvents()
+        ]
+      })
+
+      stateMachine = new Machine()
+    })
+
+    it('should set an eventHandler on the instance of the state machine', () => {
+      expect(stateMachine).to.have.property('eventHandler')
     })
   })
 
   describe('observers', () => {
     let emitStub
     let removeListenersStub
-    let stateMachine
-    let observers
     let eventEmitterStub
+    let stateMachineEvents
+    let Machine
+    let stateMachine
 
     beforeEach(() => {
       emitStub = sinon.stub()
@@ -26,33 +40,31 @@ describe('StateMachineEvents', () => {
       eventEmitterStub.prototype.removeAllListeners = removeListenersStub
 
       StateMachineEvents.__set__('EventEmitter', eventEmitterStub)
-
-      stateMachine = new StateMachineEvents()
-    })
-
-    beforeEach(() => {
-      observers = stateMachine.observers
+      stateMachineEvents = new StateMachineEvents()
+      Machine = StateMachine.factory()
+      stateMachine = new Machine()
+      stateMachineEvents.init(stateMachine)
     })
 
     it('should have property onAfterTransition', () => {
-      expect(observers).to.have.property('onAfterTransition')
+      expect(stateMachineEvents.observers).to.have.property('onAfterTransition')
     })
 
     it('should emit an event on each transition', () => {
       const lifecycle = { transition: 'start' }
-      const { onAfterTransition } = observers
-      onAfterTransition(lifecycle)
+      const { onAfterTransition } = stateMachineEvents.observers
+      onAfterTransition.call(stateMachine, lifecycle)
       expect(emitStub).to.have.been.calledWith(lifecycle.transition)
     })
 
     it('should have property onBeforeTransition', () => {
-      expect(observers).to.have.property('onBeforeTransition')
+      expect(stateMachineEvents.observers).to.have.property('onBeforeTransition')
     })
 
     it('should emit an event before each transition', () => {
       const lifecycle = { transition: 'start' }
-      const { onBeforeTransition } = observers
-      onBeforeTransition(lifecycle)
+      const { onBeforeTransition } = stateMachineEvents.observers
+      onBeforeTransition.call(stateMachine, lifecycle)
       expect(emitStub).to.have.been.calledWith(`before:${lifecycle.transition}`)
     })
   })
@@ -63,6 +75,8 @@ describe('StateMachineEvents', () => {
     let methods
     let eventEmitterStub
     let removeAllListenersStub
+    let stateMachineEvents
+    let Machine
 
     beforeEach(() => {
       onceStub = sinon.stub()
@@ -73,11 +87,11 @@ describe('StateMachineEvents', () => {
 
       StateMachineEvents.__set__('EventEmitter', eventEmitterStub)
 
-      stateMachine = new StateMachineEvents()
-    })
-
-    beforeEach(() => {
-      methods = stateMachine.methods
+      stateMachineEvents = new StateMachineEvents()
+      Machine = StateMachine.factory()
+      stateMachine = new Machine()
+      stateMachineEvents.init(stateMachine)
+      methods = stateMachineEvents.methods
     })
 
     it('should have property once', () => {
@@ -89,7 +103,7 @@ describe('StateMachineEvents', () => {
         const cb = sinon.stub()
         const type = 'cancel'
         const { once: stateMachineEventsOnce } = methods
-        stateMachineEventsOnce(type, cb)
+        stateMachineEventsOnce.call(stateMachine, type, cb)
         expect(onceStub).to.have.been.calledWith(type, cb)
       })
     })
@@ -97,7 +111,7 @@ describe('StateMachineEvents', () => {
     describe('#removeAllListeners', () => {
       it('should call an event emitters method', () => {
         const { removeAllListeners: stateMachineEventsRemove } = methods
-        stateMachineEventsRemove()
+        stateMachineEventsRemove.call(stateMachine)
         expect(removeAllListenersStub).to.have.been.calledOnce()
       })
     })

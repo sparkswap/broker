@@ -12,9 +12,8 @@ class StateMachineEvents extends StateMachinePlugin {
    */
 
   /**
-   * Check that the instance has a valid StateMachinePersistence~Store
+   * Set the event handler on the instance
    * @param  {Object} instance State machine instance being initialized
-   * @param  {StateMachinePersistence~Store} instance.store Compatible store
    * @return {void}
    */
   init (instance) {
