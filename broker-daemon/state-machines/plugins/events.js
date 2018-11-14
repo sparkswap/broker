@@ -10,10 +10,16 @@ class StateMachineEvents extends StateMachinePlugin {
    * Setup for configuration of StateMachineEvents plugin
    * @returns {StateMachineEvents}
    */
-  constructor () {
-    super()
 
-    this.eventHandler = new EventEmitter()
+  /**
+   * Check that the instance has a valid StateMachinePersistence~Store
+   * @param  {Object} instance State machine instance being initialized
+   * @param  {StateMachinePersistence~Store} instance.store Compatible store
+   * @return {void}
+   */
+  init (instance) {
+    super.init(instance)
+    instance.eventHandler = new EventEmitter()
   }
 
   /**
@@ -21,8 +27,6 @@ class StateMachineEvents extends StateMachinePlugin {
    * to external workers (BlockOrderWorker)
    */
   get observers () {
-    const plugin = this
-
     return {
       /**
        * Emit an event before a transition (prefixed by 'before:')
@@ -31,7 +35,7 @@ class StateMachineEvents extends StateMachinePlugin {
        * @return {void}
        */
       onBeforeTransition: function (lifecycle) {
-        plugin.eventHandler.emit(`before:${lifecycle.transition}`)
+        this.eventHandler.emit(`before:${lifecycle.transition}`)
       },
       /**
        * Emit an event after a transition
@@ -40,7 +44,7 @@ class StateMachineEvents extends StateMachinePlugin {
        * @returns {void}
        */
       onAfterTransition: function (lifecycle) {
-        plugin.eventHandler.emit(lifecycle.transition)
+        this.eventHandler.emit(lifecycle.transition)
       }
     }
   }
@@ -49,11 +53,13 @@ class StateMachineEvents extends StateMachinePlugin {
    * Alias methods on a StateMachine for event handling
    */
   get methods () {
-    const { eventHandler } = this
-
     return {
-      once: (type, cb) => eventHandler.once(type, cb),
-      removeAllListeners: () => eventHandler.removeAllListeners()
+      once: function (type, cb) {
+        this.eventHandler.once(type, cb)
+      },
+      removeAllListeners: function () {
+        this.eventHandler.removeAllListeners()
+      }
     }
   }
 }

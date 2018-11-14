@@ -1,7 +1,7 @@
 const StateMachinePersistence = require('./persistence')
 const StateMachineRejection = require('./rejection')
 const StateMachineLogging = require('./logging')
-const StateMachineEvents = require('./state-machine-events')
+const StateMachineEvents = require('./events')
 
 module.exports = {
   StateMachinePersistence,

@@ -524,11 +524,14 @@ class BlockOrderWorker extends EventEmitter {
     // We are hooking into the reject lifecycle event of a fill state machine to trigger
     // the failure of a blockorder
     fsm.once('reject', () => {
-      this.failBlockOrder(blockOrder.id, fsm.fill.error)
-        .catch(e => {
+      fsm.removeAllListeners()
+      if (fsm.fill.error.metadata && fsm.fill.error.metadata.get('invalidOrderStatus')) {
+        this.workBlockOrder(blockOrder, Big(fsm.fill.fillAmount))
+      } else {
+        this.failBlockOrder(blockOrder.id, fsm.fill.error).catch(e => {
           this.logger.error(`BlockOrder failed on setting a failed status from fill`, { id: blockOrder.id, error: e.stack })
         })
-        .then(() => fsm.removeAllListeners())
+      }
     })
   }
 }
