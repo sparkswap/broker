@@ -264,11 +264,11 @@ describe('Orderbook', () => {
       expect(watcher.once).to.have.been.calledWith('sync', sinon.match.func)
     })
 
-    xit('sets an end listener', () => {
+    it('sets an end listener', () => {
       expect(watcher.once).to.have.been.calledWith('end', sinon.match.func)
     })
 
-    xit('sets an error listener', () => {
+    it('sets an error listener', () => {
       expect(watcher.once).to.have.been.calledWith('error', sinon.match.func)
     })
 
