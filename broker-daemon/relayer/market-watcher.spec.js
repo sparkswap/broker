@@ -18,9 +18,11 @@ describe('MarketWatcher', () => {
     START_OF_EVENTS: 'START_OF_EVENTS'
   }
   let setupListeners
-  let createChecksum
+  let populateChecksum
+  let delayProcessingFor
   let setupListenersStub
-  let createChecksumStub
+  let populateChecksumStub
+  let delayProcessingForStub
   let onStub
   let emitStub
   let removeListenerStub
@@ -54,21 +56,25 @@ describe('MarketWatcher', () => {
     MarketWatcher.__set__('Checksum', Checksum)
     MarketWatcher.__set__('eachRecord', eachRecord)
 
-    createChecksum = MarketWatcher.prototype.createChecksum
+    populateChecksum = MarketWatcher.prototype.populateChecksum
     setupListeners = MarketWatcher.prototype.setupListeners
-    createChecksumStub = sinon.stub()
+    delayProcessingFor = MarketWatcher.prototype.delayProcessingFor
+    populateChecksumStub = sinon.stub()
     setupListenersStub = sinon.stub()
+    delayProcessingForStub = sinon.stub()
 
-    MarketWatcher.prototype.createChecksum = createChecksumStub
+    MarketWatcher.prototype.populateChecksum = populateChecksumStub
     MarketWatcher.prototype.setupListeners = setupListenersStub
+    MarketWatcher.prototype.delayProcessingFor = delayProcessingForStub
     MarketWatcher.prototype.on = onStub
     MarketWatcher.prototype.emit = emitStub
     MarketWatcher.prototype.removeListener = removeListenerStub
   })
 
   afterEach(() => {
-    MarketWatcher.prototype.createChecksum = createChecksum
+    MarketWatcher.prototype.populateChecksum = populateChecksum
     MarketWatcher.prototype.setupListeners = setupListeners
+    MarketWatcher.prototype.delayProcessingFor = delayProcessingFor
   })
 
   describe('new', () => {
@@ -94,9 +100,10 @@ describe('MarketWatcher', () => {
       expect(mw).to.have.property('RESPONSE_TYPES', RESPONSE_TYPES)
     })
 
-    it('creates a falsey value for migrating', () => {
-      expect(mw).to.have.property('migrating')
-      expect(mw.migrating).to.be.null()
+    it('creates a Set to track promises to delay processing for', () => {
+      expect(mw).to.have.property('finishBeforeProcessing')
+      expect(mw.finishBeforeProcessing).to.be.an.instanceOf(Set)
+      expect(mw.finishBeforeProcessing.size).to.be.eql(0)
     })
 
     it('sets up listeners', () => {
@@ -105,8 +112,14 @@ describe('MarketWatcher', () => {
     })
 
     it('creates a checksum', () => {
-      expect(createChecksumStub).to.have.been.calledOnce()
-      expect(createChecksumStub).to.have.been.calledOn(mw)
+      expect(Checksum).to.have.been.calledOnce()
+      expect(Checksum).to.have.been.calledWithNew()
+      expect(mw.checksum).to.be.an.instanceOf(Checksum)
+    })
+
+    it('populates the checksum', () => {
+      expect(populateChecksumStub).to.have.been.calledOnce()
+      expect(populateChecksumStub).to.have.been.calledOn(mw)
     })
   })
 
@@ -182,18 +195,12 @@ describe('MarketWatcher', () => {
     })
   })
 
-  describe('#createChecksum', () => {
+  describe('#populateChecksum', () => {
     let mw
 
     beforeEach(() => {
-      MarketWatcher.prototype.createChecksum = createChecksum
+      MarketWatcher.prototype.populateChecksum = populateChecksum
       mw = new MarketWatcher(watcher, store, RESPONSE_TYPES, logger)
-    })
-
-    it('initializes a checksum', () => {
-      expect(Checksum).to.have.been.calledOnce()
-      expect(Checksum).to.have.been.calledWithNew()
-      expect(mw.checksum).to.be.an.instanceOf(Checksum)
     })
 
     it('processes each record in the store', () => {
@@ -218,18 +225,12 @@ describe('MarketWatcher', () => {
       expect(mw.checksum.process).to.have.been.calledWith(event.orderId)
     })
 
-    it('assigns its promise to an internal property', () => {
+    it('delays processing for its promise', () => {
       const fakePromise = new Promise(() => {})
       eachRecord.returns(fakePromise)
-      mw.createChecksum()
+      mw.populateChecksum()
 
-      expect(mw).to.have.property('creatingChecksum', fakePromise)
-    })
-
-    it('returns its promise', () => {
-      const fakePromise = new Promise(() => {})
-      eachRecord.returns(fakePromise)
-      expect(mw.createChecksum()).to.be.eql(fakePromise)
+      expect(mw.delayProcessingFor).to.have.been.calledWith(fakePromise)
     })
   })
 
@@ -352,12 +353,29 @@ describe('MarketWatcher', () => {
       expect(migration(fakeKey)).to.be.eql({ type: 'del', key: fakeKey })
     })
 
-    it('assigns the promise for deletion to the `migrating` property', () => {
-      expect(mw.migrating).to.be.eql(fakePromise)
+    it('delays processing until its promise is completed', () => {
+      expect(mw.delayProcessingFor).to.have.been.calledWith(fakePromise)
     })
 
     it('returns the promise for deletion', () => {
       expect(migrate).to.be.eql(fakePromise)
+    })
+  })
+
+  describe('#delayProcessingFor', () => {
+    let mw
+
+    beforeEach(() => {
+      mw = new MarketWatcher(watcher, store, RESPONSE_TYPES, logger)
+      mw.delayProcessingFor = delayProcessingFor
+    })
+
+    it('adds promises to the set', () => {
+      const fakePromise = 'mypromise'
+      mw.delayProcessingFor(fakePromise)
+
+      expect(mw.finishBeforeProcessing.size).to.be.eql(1)
+      expect(mw.finishBeforeProcessing.has(fakePromise)).to.be.eql(true)
     })
   })
 
@@ -368,78 +386,86 @@ describe('MarketWatcher', () => {
       mw = new MarketWatcher(watcher, store, RESPONSE_TYPES, logger)
     })
 
-    it('waits for the checksum to be built before returning', async () => {
-      let waited = false
+    it('waits for all promises in the set to be complete before running', async () => {
+      let waitedOnce = false
+      let waitedTwice = false
 
-      mw.creatingChecksum = new Promise((resolve) => {
+      mw.finishBeforeProcessing.add(new Promise((resolve) => {
         setTimeout(() => {
-          waited = true
+          waitedOnce = true
           resolve()
         }, 10)
-      })
+      }))
 
-      await mw.delayProcessing()
-
-      expect(waited).to.be.true()
-    })
-
-    it('returns immediately if the checksum is built', async () => {
-      let waited = false
-
-      mw.creatingChecksum = new Promise((resolve) => {
-        resolve()
-      })
-
-      setTimeout(() => {
-        waited = true
-      }, 10)
-
-      await mw.delayProcessing()
-
-      expect(waited).to.be.false()
-    })
-
-    it('returns immediately if a migration has not started', async () => {
-      let waited = false
-
-      setTimeout(() => {
-        waited = true
-      }, 10)
-
-      await mw.delayProcessing()
-
-      expect(waited).to.be.false()
-    })
-
-    it('waits for migration to be done before returning', async () => {
-      let waited = false
-
-      mw.migrating = new Promise((resolve) => {
+      mw.finishBeforeProcessing.add(new Promise((resolve) => {
         setTimeout(() => {
-          waited = true
+          waitedTwice = true
           resolve()
         }, 10)
-      })
+      }))
 
       await mw.delayProcessing()
 
-      expect(waited).to.be.true()
+      expect(waitedOnce).to.be.true()
+      expect(waitedTwice).to.be.true()
     })
 
-    it('returns immediately if a migration has ended', async () => {
+    it('returns immediately if all promises are resolved', async () => {
       let waited = false
 
-      mw.migrating = new Promise((resolve) => {
+      mw.finishBeforeProcessing.add(new Promise((resolve) => {
         resolve()
-      })
+      }))
 
-      setTimeout(() => {
+      setImmediate(() => {
         waited = true
-      }, 10)
+      })
 
       await mw.delayProcessing()
 
       expect(waited).to.be.false()
+    })
+
+    it('returns immediately if the set is empty', async () => {
+      let waited = false
+
+      setImmediate(() => {
+        waited = true
+      })
+
+      await mw.delayProcessing()
+
+      expect(waited).to.be.false()
+    })
+
+    it('removes resolved promises from the set on completion', async () => {
+      mw.finishBeforeProcessing.add(new Promise((resolve) => {
+        resolve()
+      }))
+
+      expect(mw.finishBeforeProcessing.size).to.be.eql(1)
+
+      await mw.delayProcessing()
+
+      expect(mw.finishBeforeProcessing.size).to.be.eql(0)
+    })
+
+    xit('does not remove unresolved promises from the set', () => {
+      mw.finishBeforeProcessing.add(new Promise((resolve) => {
+        resolve()
+      }))
+
+      expect(mw.finishBeforeProcessing.size).to.be.eql(1)
+
+      mw.delayProcessing().then(() => {
+        // the second promise should still be in the set since
+        // it was added after we started waiting on the set
+        expect(mw.finishBeforeProcessing.size).to.be.eql(1)
+      })
+
+      mw.finishBeforeProcessing.add(new Promise(() => {}))
+
+      expect(mw.finishBeforeProcessing.size).to.be.eql(2)
     })
   })
 
