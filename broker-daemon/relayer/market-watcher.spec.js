@@ -450,22 +450,25 @@ describe('MarketWatcher', () => {
       expect(mw.finishBeforeProcessing.size).to.be.eql(0)
     })
 
-    xit('does not remove unresolved promises from the set', () => {
-      mw.finishBeforeProcessing.add(new Promise((resolve) => {
+    it('does not remove unresolved promises from the set', () => {
+      const initialPromise = new Promise((resolve) => {
         resolve()
-      }))
+      })
+      const secondPromise = new Promise(() => {})
 
-      expect(mw.finishBeforeProcessing.size).to.be.eql(1)
+      mw.finishBeforeProcessing.add(initialPromise)
 
       mw.delayProcessing().then(() => {
         // the second promise should still be in the set since
         // it was added after we started waiting on the set
-        expect(mw.finishBeforeProcessing.size).to.be.eql(1)
+        expect(mw.finishBeforeProcessing.has(initialPromise)).to.be.false()
+        expect(mw.finishBeforeProcessing.has(secondPromise)).to.be.true()
       })
 
-      mw.finishBeforeProcessing.add(new Promise(() => {}))
+      mw.finishBeforeProcessing.add(secondPromise)
 
-      expect(mw.finishBeforeProcessing.size).to.be.eql(2)
+      expect(mw.finishBeforeProcessing.has(initialPromise)).to.be.true()
+      expect(mw.finishBeforeProcessing.has(secondPromise)).to.be.true()
     })
   })
 
