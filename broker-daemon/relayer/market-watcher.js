@@ -22,22 +22,23 @@ class MarketWatcher extends EventEmitter {
     super()
     this.watcher = watcher
     this.store = store
-    this.migrating = null
     this.logger = logger
     this.RESPONSE_TYPES = RESPONSE_TYPES
+    this.finishBeforeProcessing = new Set()
 
     this.setupListeners()
     this.createChecksum()
   }
 
   /**
-   * Delete every event in the store and set a promise on `migrating` that resolves once deletion is complete.
-   * @return {Promise} Resolves when migration is complete
+   * Delete every event in the store and delay further event processing until its complete
+   * @return {Promise} resolves when migration is complete
    */
   migrate () {
     this.logger.debug(`Removing existing orderbook events as part of migration`)
-    this.migrating = migrateStore(this.store, this.store, (key) => { return { type: 'del', key } })
-    return this.migrating
+    const migration = migrateStore(this.store, this.store, (key) => { return { type: 'del', key } })
+    this.delayProcessingFor(migration)
+    return migration
   }
 
   /**
@@ -72,22 +73,21 @@ class MarketWatcher extends EventEmitter {
 
   /**
    * Create a new checksum by processing all market events in the data store.
-   * It assigns its promise to the value `creatingChecksum` to delay processing
-   * until it's complete.
+   * It delays further processing of events until the checksum is built.
    * @private
    * @todo does it make sense to build this off the index so we don't have
    * to process every event in the store?
-   * @return {Promise} Resolves when the checksum is built
+   * @return {void}
    */
   createChecksum () {
     this.checksum = new Checksum()
 
-    this.creatingChecksum = eachRecord(this.store, (key, value) => {
+    const checksumPopulation = eachRecord(this.store, (key, value) => {
       const marketEvent = MarketEvent.fromStorage(key, value)
       this.checksum.process(marketEvent.orderId)
     })
 
-    return this.creatingChecksum
+    this.delayProcessingFor(checksumPopulation)
   }
 
   /**
@@ -126,13 +126,26 @@ class MarketWatcher extends EventEmitter {
   }
 
   /**
+   * Add a promise to the set of promises to wait to complete
+   * @private
+   * @param  {Promise} promise Promise that should be `await`ed before continuing processing of events
+   * @return {void}
+   */
+  delayProcessingFor (promise) {
+    this.finishBeforeProcessing.add(promise)
+  }
+
+  /**
    * Helper promise to await to ensure that any outstanding promises are complete before proceeding
    * @private
    * @return {Promise} Resolves when there are no in-progress promises
    */
   async delayProcessing () {
-    this.logger.debug(`Waiting for migration and checksum to finish before acting on new response`)
-    await Promise.all([this.migrating, this.creatingChecksum])
+    this.logger.debug(`Waiting for promises to resolve before acting on new response`)
+    const promises = Array.from(this.finishBeforeProcessing)
+    await Promise.all(promises)
+    // clean up our finishBeforeProcessing by removing these resolved promises
+    promises.forEach(promise => this.finishBeforeProcessing.delete(promise))
   }
 
   /**
