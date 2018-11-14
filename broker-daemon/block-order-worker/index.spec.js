@@ -1230,7 +1230,7 @@ describe('BlockOrderWorker', () => {
       })
     })
 
-    describe.only('reject event', () => {
+    describe('reject event', () => {
       let failBlockOrderStub
 
       beforeEach(() => {
