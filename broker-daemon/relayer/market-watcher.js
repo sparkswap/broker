@@ -1,6 +1,7 @@
 const EventEmitter = require('events')
+const { promisify } = require('util')
 const { MarketEvent } = require('../models')
-const { migrateStore } = require('../utils')
+const { migrateStore, eachRecord, Checksum } = require('../utils')
 
 /**
  * @class Watch a relayer market and put the events into a data store
@@ -21,11 +22,24 @@ class MarketWatcher extends EventEmitter {
     super()
     this.watcher = watcher
     this.store = store
-    this.migrating = null
     this.logger = logger
     this.RESPONSE_TYPES = RESPONSE_TYPES
+    this.finishBeforeProcessing = new Set()
+    this.checksum = new Checksum()
 
+    this.populateChecksum()
     this.setupListeners()
+  }
+
+  /**
+   * Delete every event in the store and delay further event processing until its complete
+   * @return {Promise} resolves when migration is complete
+   */
+  migrate () {
+    this.logger.debug(`Removing existing orderbook events as part of migration`)
+    const migration = migrateStore(this.store, this.store, (key) => { return { type: 'del', key } })
+    this.delayProcessingFor(migration)
+    return migration
   }
 
   /**
@@ -35,10 +49,13 @@ class MarketWatcher extends EventEmitter {
    */
   setupListeners () {
     // Tear down listeners when the watcher completes
-    this.on('end', () => {
-      this.removeAllListeners()
+    const removeWatcherListeners = () => {
       this.watcher.removeAllListeners()
-    })
+      this.removeListener('end', removeWatcherListeners)
+      this.removeListener('error', removeWatcherListeners)
+    }
+    this.on('end', removeWatcherListeners)
+    this.on('error', removeWatcherListeners)
 
     this.watcher.on('end', () => {
       this.logger.error('Remote ended stream')
@@ -56,6 +73,23 @@ class MarketWatcher extends EventEmitter {
   }
 
   /**
+   * Populate a new checksum by processing all market events in the data store.
+   * It delays further processing of events until the checksum is built.
+   * @private
+   * @todo does it make sense to build this off the index so we don't have
+   * to process every event in the store?
+   * @return {void}
+   */
+  populateChecksum () {
+    const checksumPopulation = eachRecord(this.store, (key, value) => {
+      const marketEvent = MarketEvent.fromStorage(key, value)
+      this.checksum.process(marketEvent.orderId)
+    })
+
+    this.delayProcessingFor(checksumPopulation)
+  }
+
+  /**
    * Handle an inbound event from the Relayer
    * @private
    * @param  {Object} response Response from the Relayer stream
@@ -69,58 +103,76 @@ class MarketWatcher extends EventEmitter {
     // will be the same as the order in which they arrive.
     // This could have some potential issues, particularly if, for example, a CANCELLED is processed
     // before its corresponding PLACED.
-    await this.migration()
+    await this.delayProcessing()
 
     this.logger.debug(`response type is ${response.type}`)
 
-    if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
-      this.upToDate()
-    } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.START_OF_EVENTS) {
+    if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.START_OF_EVENTS) {
       this.migrate()
-    } else if ([RESPONSE_TYPES.EXISTING_EVENT, RESPONSE_TYPES.NEW_EVENT].includes(RESPONSE_TYPES[response.type])) {
+    } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENT) {
       this.createMarketEvent(response)
+    } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
+      this.upToDate(response)
+    } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.NEW_EVENT) {
+      this.createMarketEvent(response)
+
+      // we don't wait for `createMarketEvent` to return
+      // before validating the checksum so as to avoid a race condition.
+      this.validateChecksum(response.checksum)
     } else {
       this.logger.debug(`Unknown response type: ${response.type}`)
     }
   }
 
   /**
-   * Delete every event in the store and set a promise on `migrating` that resolves once deletion is complete.
+   * Add a promise to the set of promises to wait to complete
    * @private
-   * @return {Promise} Resolves when migration is complete
+   * @param  {Promise} promise Promise that should be `await`ed before continuing processing of events
+   * @return {void}
    */
-  migrate () {
-    this.logger.debug(`Removing existing orderbook events as part of migration`)
-    this.migrating = migrateStore(this.store, this.store, (key) => { return { type: 'del', key } })
-    return this.migrating
+  delayProcessingFor (promise) {
+    this.finishBeforeProcessing.add(promise)
   }
 
   /**
-   * Helper promise to await to ensure that any migrations are complete before proceeding
+   * Helper promise to await to ensure that any outstanding promises are complete before proceeding
    * @private
-   * @return {Promise} Resolves when there are no in-progress migrations
+   * @return {Promise} Resolves when there are no in-progress promises
    */
-  async migration () {
-    // migrating is falsey (null) by default
-    if (this.migrating) {
-      this.logger.debug(`Waiting for migration to finish before acting on new response`)
-      await this.migrating
-    }
+  async delayProcessing () {
+    this.logger.debug(`Waiting for promises to resolve before acting on new response`)
+    const promises = Array.from(this.finishBeforeProcessing)
+    await Promise.all(promises)
+    // clean up our finishBeforeProcessing by removing these resolved promises
+    promises.forEach(promise => this.finishBeforeProcessing.delete(promise))
   }
 
   /**
    * Store a market event
    * @private
    * @param  {Object} response Response from the Relayer
-   * @return {void}
+   * @param  {Object} response.marketEvent Market Event to be created
+   * @return {Promise<void>}
    */
-  createMarketEvent (response) {
-    const { marketEvent } = response
-
+  async createMarketEvent ({ marketEvent }) {
     this.logger.debug('Creating a market event', marketEvent)
+    const { key, value, orderId } = new MarketEvent(marketEvent)
 
-    const { key, value } = new MarketEvent(marketEvent)
-    this.store.put(key, value)
+    // add the market event to the checksum before storing
+    // so that it is optimistically up to date and can be validated
+    // without race conditions. If it fails to save, we will nuke
+    // the entire sync.
+    this.logger.debug('Adding market event to local checksum', { orderId })
+    this.checksum.process(orderId)
+
+    try {
+      await promisify(this.store.put)(key, value)
+    } catch (e) {
+      // if we weren't able to persist the event we won't be in a good
+      // state
+      this.logger.error('Saving market event failed, invalidating sync', { orderId })
+      this.emit('error', e)
+    }
   }
 
   /**
@@ -128,9 +180,31 @@ class MarketWatcher extends EventEmitter {
    * @private
    * @return {void}
    */
-  upToDate () {
-    this.logger.debug(`Up to date with market`)
-    this.emit('sync')
+  upToDate ({ checksum }) {
+    if (this.validateChecksum(checksum)) {
+      this.logger.debug('Up to date with market')
+      this.emit('sync')
+    }
+  }
+
+  /**
+   * Validate that a given checksum matches our internal
+   * checksum, and trigger a re-sync if it does not
+   * @private
+   * @param  {String}  checksum Base64 string of the bytes of a checksum
+   * @return {Boolean}          TRUE if the checksum matches, otherwise FALSE
+   */
+  validateChecksum (checksum) {
+    this.logger.debug('Validating checksum', { checksum })
+
+    if (!this.checksum.matches(Buffer.from(checksum, 'base64'))) {
+      // TODO: do we need to remove events from the db?
+      this.logger.error('Checksums did not match, invalidating')
+      this.emit('error', new Error('[MarketWatcher]: Checksum mismatch'))
+      return false
+    }
+
+    return true
   }
 }
 
