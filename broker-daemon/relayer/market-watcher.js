@@ -25,9 +25,10 @@ class MarketWatcher extends EventEmitter {
     this.logger = logger
     this.RESPONSE_TYPES = RESPONSE_TYPES
     this.finishBeforeProcessing = new Set()
+    this.checksum = new Checksum()
 
+    this.populateChecksum()
     this.setupListeners()
-    this.createChecksum()
   }
 
   /**
@@ -72,16 +73,14 @@ class MarketWatcher extends EventEmitter {
   }
 
   /**
-   * Create a new checksum by processing all market events in the data store.
+   * Populate a new checksum by processing all market events in the data store.
    * It delays further processing of events until the checksum is built.
    * @private
    * @todo does it make sense to build this off the index so we don't have
    * to process every event in the store?
    * @return {void}
    */
-  createChecksum () {
-    this.checksum = new Checksum()
-
+  populateChecksum () {
     const checksumPopulation = eachRecord(this.store, (key, value) => {
       const marketEvent = MarketEvent.fromStorage(key, value)
       this.checksum.process(marketEvent.orderId)
