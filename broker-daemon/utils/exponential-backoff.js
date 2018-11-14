@@ -6,8 +6,28 @@ const delay = require('./delay')
  *
  * @constant
  * @type {Integer} milliseconds
+ * @default
  */
 const DELAY_MULTIPLIER = 1.5
+
+/**
+ * Max attempts for retries during exponential backoff
+ *
+ * @constant
+ * @type {String}
+ * @default
+ */
+const EXPONENTIAL_BACKOFF_ATTEMPTS = 24
+
+/**
+ * Delay, in milliseconds, for each retry attempt
+ *
+ * @constant
+ * @type {Integer} milliseconds
+ * @default
+ */
+const EXPONENTIAL_BACKOFF_DELAY = 5000
+
 /**
  * Calls a function repeatedly until success or throws if it fails on final retry
  *
@@ -18,7 +38,7 @@ const DELAY_MULTIPLIER = 1.5
 
  * @return {Promise}
  */
-async function exponentialBackoff (callFunction, attempts, delayTime, logOptions = {}) {
+async function exponentialBackoff (callFunction, attempts = EXPONENTIAL_BACKOFF_ATTEMPTS, delayTime = EXPONENTIAL_BACKOFF_DELAY, logOptions = {}) {
   try {
     var res = await callFunction()
   } catch (error) {
