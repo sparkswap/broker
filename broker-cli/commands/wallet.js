@@ -381,12 +381,14 @@ async function create (args, opts, logger) {
       return logger.error('Error: Passwords did not match, please try again'.red)
     }
 
-    const { cipherSeeds } = await client.walletService.createWallet({ symbol, password })
+    const { recoverySeed } = await client.walletService.createWallet({ symbol, password })
 
-    logger.info('IMPORTANT')
-    logger.info('Please make a copy of your cipher seeds as we will not be able to recover this informtion')
+    logger.info('IMPORTANT: Please make a copy of the recovery seed below as you WILL NOT')
+    logger.info('be able to recover this information again. We recommend that you write')
+    logger.info('down all the secret words, and re-confirm the order they are written down')
     logger.info('')
-    logger.info(cipherSeeds)
+    logger.info('')
+    logger.info(recoverySeed)
   } catch (e) {
     logger.error(handleError(e))
   }

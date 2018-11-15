@@ -508,7 +508,7 @@ describe('cli wallet', () => {
       }
       seeds = ['my', 'seeds']
 
-      createWalletStub = sinon.stub().returns({ cipherSeeds: seeds })
+      createWalletStub = sinon.stub().returns({ recoverySeed: seeds })
       daemonStub = sinon.stub()
       daemonStub.prototype.walletService = {
         createWallet: createWalletStub

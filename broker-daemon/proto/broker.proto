@@ -927,8 +927,8 @@ message CreateWalletRequest {
 }
 
 message CreateWalletResponse {
-  // Array of cipher seed strings
-  repeated string cipher_seeds = 1;
+  // 24 length Array of recovery seed words
+  repeated string recovery_seed = 1;
 }
 
 /**
@@ -1220,8 +1220,8 @@ service WalletService {
    * from this method.
    *
    * ```javascript
-   * const { cipherSeeds } = await walletService.withdrawFunds({ symbol: 'BTC', password: 'your-secure-password')
-   * console.log(cipherSeeds)
+   * const { recoverySeed } = await walletService.withdrawFunds({ symbol: 'BTC', password: 'your-secure-password')
+   * console.log(recoverySeed)
    * ```
    * > The above command will print:
    *
