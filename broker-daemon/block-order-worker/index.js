@@ -101,6 +101,24 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
 
+    // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
+    if (blockOrder.side === BlockOrder.SIDES['BID']) {
+      const counterEngine = this.engines.get(blockOrder.counterSymbol)
+      const amountInChannel = await counterEngine.getTotalChannelBalance()
+      if (Big(amountInChannel).lt(blockOrder.counterAmount)) {
+        throw new Error(`Insufficient funds in ${blockOrder.counterSymbol} channel to create order`)
+      }
+    }
+
+    // If the user tries to place an order for more than they hold in the base engine channel, throw an error
+    if (blockOrder.side === BlockOrder.SIDES['ASK']) {
+      const baseEngine = this.engines.get(blockOrder.baseSymbol)
+      const amountInChannel = await baseEngine.getTotalChannelBalance()
+      if (Big(amountInChannel).lt(blockOrder.baseAmount)) {
+        throw new Error(`Insufficient funds in ${blockOrder.baseSymbol} channel to create order`)
+      }
+    }
+
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
     this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
