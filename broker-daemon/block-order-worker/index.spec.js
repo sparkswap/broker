@@ -293,12 +293,26 @@ describe('BlockOrderWorker', () => {
     let btcEngine
     let ltcEngine
     let blockOrderStub
+    let relayerBaseAddress
+    let relayerCounterAddress
 
     beforeEach(() => {
       workBlockOrderStub = sinon.stub().resolves()
       failBlockOrderStub = sinon.stub()
-      ltcEngine = { getTotalChannelBalance: sinon.stub().resolves('10000000000') }
-      btcEngine = { getTotalChannelBalance: sinon.stub().resolves('10000000000') }
+      ltcEngine = { isBalanceSufficient: sinon.stub() }
+      btcEngine = { isBalanceSufficient: sinon.stub() }
+      relayerCounterAddress = 'bolt:tttasdf'
+      relayerBaseAddress = 'bolt:asdf1234'
+      relayer.paymentChannelNetworkService = {
+        getAddress: sinon.stub()
+      }
+      relayer.paymentChannelNetworkService.getAddress.withArgs({symbol: 'LTC'}).resolves({address: relayerCounterAddress})
+      relayer.paymentChannelNetworkService.getAddress.withArgs({symbol: 'BTC'}).resolves({address: relayerBaseAddress})
+
+      ltcEngine.isBalanceSufficient.withArgs(relayerCounterAddress, Big('2000000000')).resolves(true)
+      btcEngine.isBalanceSufficient.withArgs(relayerBaseAddress, Big('2000000000'), {outbound: false}).resolves(true)
+      ltcEngine.isBalanceSufficient.withArgs(relayerCounterAddress, Big('2000000000'), {outbound: false}).resolves(true)
+      btcEngine.isBalanceSufficient.withArgs(relayerBaseAddress, Big('2000000000')).resolves(true)
       engines = new Map([ ['BTC', btcEngine], ['LTC', ltcEngine] ])
       blockOrderStub = {
         counterSymbol: 'LTC',
@@ -307,13 +321,11 @@ describe('BlockOrderWorker', () => {
         baseAmount: '2000000000',
         key: 'myKey',
         value: 'myValue',
-        side: 'BID'
+        side: 'BID',
+        isBid: sinon.stub().returns(true),
+        isAsk: sinon.stub().returns(false)
       }
       BlockOrder = sinon.stub().returns(blockOrderStub)
-      BlockOrder.SIDES = {
-        BID: 'BID',
-        ASK: 'ASK'
-      }
       BlockOrderWorker.__set__('BlockOrder', BlockOrder)
 
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
@@ -388,10 +400,22 @@ describe('BlockOrderWorker', () => {
         price: '100',
         timeInForce: 'GTC'
       }
-      const ltcEngine = { getTotalChannelBalance: sinon.stub().resolves('100000000') }
-      engines.set('LTC', ltcEngine)
+      ltcEngine.isBalanceSufficient.withArgs(relayerCounterAddress, Big('2000000000')).resolves(false)
 
-      return expect(worker.createBlockOrder(params)).to.be.rejectedWith('Insufficient funds in LTC channel to create order')
+      return expect(worker.createBlockOrder(params)).to.be.rejectedWith('Insufficient funds in outbound LTC channel to create order')
+    })
+
+    it('throws if the order is a bid and the baseAmount is greater than the amount the relayer has in the base channel', () => {
+      const params = {
+        marketName: 'BTC/LTC',
+        side: 'BID',
+        amount: '10000',
+        price: '100',
+        timeInForce: 'GTC'
+      }
+      btcEngine.isBalanceSufficient.withArgs(relayerBaseAddress, Big('2000000000'), {outbound: false}).resolves(false)
+
+      return expect(worker.createBlockOrder(params)).to.be.rejectedWith('Insufficient funds in inbound BTC channel to create order')
     })
 
     it('throws if the order is an ask and the baseAmount is greater than the amount they have in the base channel', () => {
@@ -402,11 +426,28 @@ describe('BlockOrderWorker', () => {
         price: '100',
         timeInForce: 'GTC'
       }
-      blockOrderStub.side = 'ASK'
-      const btcEngine = { getTotalChannelBalance: sinon.stub().resolves('100000000') }
-      engines.set('BTC', btcEngine)
+      blockOrderStub.isAsk.returns(true)
+      blockOrderStub.isBid.returns(false)
 
-      return expect(worker.createBlockOrder(params)).to.be.rejectedWith('Insufficient funds in BTC channel to create order')
+      btcEngine.isBalanceSufficient.withArgs(relayerBaseAddress, Big('2000000000')).resolves(false)
+
+      return expect(worker.createBlockOrder(params)).to.be.rejectedWith('Insufficient funds in outbound BTC channel to create order')
+    })
+
+    it('throws if the order is an ask and the counterAmount is greater than the amount the relayer has in the counter channel', () => {
+      const params = {
+        marketName: 'BTC/LTC',
+        side: 'ASK',
+        amount: '10000',
+        price: '100',
+        timeInForce: 'GTC'
+      }
+      blockOrderStub.isAsk.returns(true)
+      blockOrderStub.isBid.returns(false)
+
+      ltcEngine.isBalanceSufficient.withArgs(relayerCounterAddress, Big('2000000000'), {outbound: false}).resolves(false)
+
+      return expect(worker.createBlockOrder(params)).to.be.rejectedWith('Insufficient funds in inbound LTC channel to create order')
     })
 
     it('saves a block order in the store', async () => {

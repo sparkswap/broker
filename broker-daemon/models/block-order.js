@@ -173,6 +173,22 @@ class BlockOrder {
   }
 
   /**
+   * get boolean for if the blockOrder is a bid
+   * @return {Boolean}
+   */
+  get isBid () {
+    return this.side === BlockOrder.SIDES.BID
+  }
+
+  /**
+  * get boolean for if the blockOrder is an ask
+  * @return {Boolean}
+   */
+  get isAsk () {
+    return this.side === BlockOrder.SIDES.ASK
+  }
+
+  /**
    * Move the block order to a failed status
    * @return {BlockOrder} Modified block order instance
    */

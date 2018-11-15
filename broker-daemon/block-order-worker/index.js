@@ -100,22 +100,39 @@ class BlockOrderWorker extends EventEmitter {
     }
 
     const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
+    const baseEngine = this.engines.get(blockOrder.baseSymbol)
+    const counterEngine = this.engines.get(blockOrder.counterSymbol)
+    const { address: counterSymbolAddress } = await this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.counterSymbol})
+    const { address: baseSymbolAddress } = await this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.baseSymbol})
 
-    // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
-    if (blockOrder.side === BlockOrder.SIDES['BID']) {
-      const counterEngine = this.engines.get(blockOrder.counterSymbol)
-      const amountInChannel = await counterEngine.getTotalChannelBalance()
-      if (Big(amountInChannel).lt(blockOrder.counterAmount)) {
-        throw new Error(`Insufficient funds in ${blockOrder.counterSymbol} channel to create order`)
+    if (blockOrder.isBid) {
+      const outboundBalanceIsSufficient = await counterEngine.isBalanceSufficient(counterSymbolAddress, Big(blockOrder.counterAmount))
+
+      // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
+      if (!outboundBalanceIsSufficient) {
+        throw new Error(`Insufficient funds in outbound ${blockOrder.counterSymbol} channel to create order`)
+      }
+
+      const inboundBalanceIsSufficient = await baseEngine.isBalanceSufficient(baseSymbolAddress, Big(blockOrder.baseAmount), {outbound: false})
+      // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
+      if (!inboundBalanceIsSufficient) {
+        throw new Error(`Insufficient funds in inbound ${blockOrder.baseSymbol} channel to create order`)
       }
     }
 
-    // If the user tries to place an order for more than they hold in the base engine channel, throw an error
-    if (blockOrder.side === BlockOrder.SIDES['ASK']) {
-      const baseEngine = this.engines.get(blockOrder.baseSymbol)
-      const amountInChannel = await baseEngine.getTotalChannelBalance()
-      if (Big(amountInChannel).lt(blockOrder.baseAmount)) {
-        throw new Error(`Insufficient funds in ${blockOrder.baseSymbol} channel to create order`)
+    if (blockOrder.isAsk) {
+      const outboundBalanceIsSufficient = await baseEngine.isBalanceSufficient(baseSymbolAddress, Big(blockOrder.baseAmount))
+
+      // If the user tries to place an order for more than they hold in the base engine channel, throw an error
+      if (!outboundBalanceIsSufficient) {
+        throw new Error(`Insufficient funds in outbound ${blockOrder.baseSymbol} channel to create order`)
+      }
+
+      const inboundBalanceIsSufficient = await counterEngine.isBalanceSufficient(counterSymbolAddress, Big(blockOrder.counterAmount), {outbound: false})
+
+      // If the user tries to place an order and the relayer does not have the funds to complete in the counter channel, throw an error
+      if (!inboundBalanceIsSufficient) {
+        throw new Error(`Insufficient funds in inbound ${blockOrder.counterSymbol} channel to create order`)
       }
     }
 
