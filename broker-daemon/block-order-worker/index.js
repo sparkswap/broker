@@ -11,6 +11,12 @@ const {
 } = require('../utils')
 
 /**
+ * metadata flag returned if order was not a state to be filled
+ * @type {String}
+ * @constant
+ */
+const ORDER_NOT_PLACED = 'invalidOrderStatus'
+/**
  * @class Create and work Block Orders
  */
 class BlockOrderWorker extends EventEmitter {
@@ -521,11 +527,14 @@ class BlockOrderWorker extends EventEmitter {
         .then(() => fsm.removeAllListeners())
     })
 
-    // We are hooking into the reject lifecycle event of a fill state machine to trigger
-    // the failure of a blockorder
+    /**
+     * We are hooking into the reject lifecycle event of a fill state machine to trigger the failure of a blockorder.
+     * If the error comes back with metadata where invalidOrderStatus is true, it means that the order the fillStateMachine
+     * attempted to fill was not in a state to be filled and we should rework the blockOrder
+     */
     fsm.once('reject', () => {
       fsm.removeAllListeners()
-      if (fsm.fill.error.metadata && fsm.fill.error.metadata.get('invalidOrderStatus')) {
+      if (fsm.fill.error.metadata && fsm.fill.error.metadata.get(ORDER_NOT_PLACED)) {
         this.workBlockOrder(blockOrder, Big(fsm.fill.fillAmount))
       } else {
         this.failBlockOrder(blockOrder.id, fsm.fill.error).catch(e => {

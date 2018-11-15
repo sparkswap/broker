@@ -1262,14 +1262,14 @@ describe('BlockOrderWorker', () => {
         expect(fill.removeAllListeners).to.have.been.calledOnce()
       })
 
-      it('reworks a blockOrder if the order was already filled', async () => {
+      it('reworks a blockOrder if the order is not in a state to be filled', async () => {
         await worker._fillOrders(blockOrder, orders, targetDepth)
         worker.workBlockOrder = sinon.stub().resolves(true)
         await onceStub.args[1][1]()
         expect(worker.workBlockOrder).to.have.been.calledWith(blockOrder, Big('100'))
       })
 
-      it('fails a block order if the call is rejected and the order was not already filled', async () => {
+      it('fails a block order if the call is rejected for reason other than the order is in the wrong state', async () => {
         fill = {
           id: 'anotherId',
           once: onceStub,

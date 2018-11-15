@@ -34,7 +34,8 @@ class StateMachineEvents extends StateMachinePlugin {
        * @return {void}
        */
       onBeforeTransition: function (lifecycle) {
-        this.eventHandler.emit(`before:${lifecycle.transition}`)
+        const stateMachineInstance = this
+        stateMachineInstance.eventHandler.emit(`before:${lifecycle.transition}`)
       },
       /**
        * Emit an event after a transition
@@ -43,7 +44,8 @@ class StateMachineEvents extends StateMachinePlugin {
        * @returns {void}
        */
       onAfterTransition: function (lifecycle) {
-        this.eventHandler.emit(lifecycle.transition)
+        const stateMachineInstance = this
+        stateMachineInstance.eventHandler.emit(lifecycle.transition)
       }
     }
   }
@@ -54,10 +56,12 @@ class StateMachineEvents extends StateMachinePlugin {
   get methods () {
     return {
       once: function (type, cb) {
-        this.eventHandler.once(type, cb)
+        const stateMachineInstance = this
+        stateMachineInstance.eventHandler.once(type, cb)
       },
       removeAllListeners: function () {
-        this.eventHandler.removeAllListeners()
+        const stateMachineInstance = this
+        stateMachineInstance.eventHandler.removeAllListeners()
       }
     }
   }
