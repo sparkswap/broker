@@ -80,8 +80,8 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
     return send({ permanentError: err.message })
   }
 
-  const { inboundSymbol, inboundAmount, outboundSymbol, outboundAmount, takerAddress } = order
-  const [ expectedSymbol, actualSymbol, expectedAmount, actualAmount ] = [ inboundSymbol, symbol, inboundAmount, amount ]
+  const { inboundSymbol, inboundFillAmount, outboundSymbol, outboundFillAmount, takerAddress } = order
+  const [ expectedSymbol, actualSymbol, expectedAmount, actualAmount ] = [ inboundSymbol, symbol, inboundFillAmount, amount ]
 
   if (expectedSymbol !== actualSymbol) {
     const err = `Wrong currency paid in for ${swapHash}. Expected ${expectedSymbol}, found ${actualSymbol}`
@@ -117,7 +117,7 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
   }
 
   logger.debug(`Sending payment to ${takerAddress} to translate swap ${swapHash}`)
-  const { paymentPreimage, permanentError } = await outboundEngine.translateSwap(takerAddress, swapHash, outboundAmount, timeLockDelta)
+  const { paymentPreimage, permanentError } = await outboundEngine.translateSwap(takerAddress, swapHash, outboundFillAmount, timeLockDelta)
 
   if (permanentError) {
     logger.error(permanentError)
