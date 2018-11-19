@@ -100,6 +100,43 @@ class BlockOrderWorker extends EventEmitter {
     }
 
     const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
+    const baseEngine = this.engines.get(blockOrder.baseSymbol)
+    const counterEngine = this.engines.get(blockOrder.counterSymbol)
+    const [{address: counterSymbolAddress}, {address: baseSymbolAddress}] = await Promise.all([
+      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.counterSymbol}),
+      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.baseSymbol})
+    ])
+
+    if (blockOrder.isBid) {
+      const outboundBalanceIsSufficient = await counterEngine.isBalanceSufficient(counterSymbolAddress, blockOrder.counterAmount)
+
+      // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
+      if (!outboundBalanceIsSufficient) {
+        throw new Error(`Insufficient funds in outbound ${blockOrder.counterSymbol} channel to create order`)
+      }
+
+      const inboundBalanceIsSufficient = await baseEngine.isBalanceSufficient(baseSymbolAddress, blockOrder.baseAmount, {outbound: false})
+      // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
+      if (!inboundBalanceIsSufficient) {
+        throw new Error(`Insufficient funds in inbound ${blockOrder.baseSymbol} channel to create order`)
+      }
+    }
+
+    if (blockOrder.isAsk) {
+      const outboundBalanceIsSufficient = await baseEngine.isBalanceSufficient(baseSymbolAddress, blockOrder.baseAmount)
+
+      // If the user tries to place an order for more than they hold in the base engine channel, throw an error
+      if (!outboundBalanceIsSufficient) {
+        throw new Error(`Insufficient funds in outbound ${blockOrder.baseSymbol} channel to create order`)
+      }
+
+      const inboundBalanceIsSufficient = await counterEngine.isBalanceSufficient(counterSymbolAddress, blockOrder.counterAmount, {outbound: false})
+
+      // If the user tries to place an order and the relayer does not have the funds to complete in the counter channel, throw an error
+      if (!inboundBalanceIsSufficient) {
+        throw new Error(`Insufficient funds in inbound ${blockOrder.counterSymbol} channel to create order`)
+      }
+    }
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 

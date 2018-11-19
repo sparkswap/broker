@@ -687,5 +687,27 @@ describe('BlockOrder', () => {
         expect(blockOrder).to.have.property('quantumPrice', '100.0000000000000000')
       })
     })
+
+    describe('get isBid', () => {
+      it('returns true if blockOrder is a bid', () => {
+        expect(blockOrder).to.have.property('isBid', true)
+      })
+
+      it('returns false if blockOrder is not a bid', () => {
+        blockOrder.side = 'ASK'
+        expect(blockOrder).to.have.property('isBid', false)
+      })
+    })
+
+    describe('get isAsk', () => {
+      it('returns true if blockOrder is an ask', () => {
+        blockOrder.side = 'ASK'
+        expect(blockOrder).to.have.property('isAsk', true)
+      })
+
+      it('returns false if blockOrder is not an ask', () => {
+        expect(blockOrder).to.have.property('isAsk', false)
+      })
+    })
   })
 })
