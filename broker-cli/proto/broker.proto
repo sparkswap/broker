@@ -944,6 +944,16 @@ message CreateWalletResponse {
 }
 
 /**
+ * Request to unlock a wallet for a specific currency
+ */
+message UnlockWalletRequest {
+  // Currency of wallet
+  string symbol = 1;
+  // Password for the wallet
+  string password = 2;
+}
+
+/**
  * The WalletService is for interacting with the wallets managed by the Broker on behalf of the user.
  *
  * It is used primarily during set up (e.g. making deposits) of a Broker.
@@ -1264,6 +1274,38 @@ service WalletService {
   rpc CreateWallet (CreateWalletRequest) returns (CreateWalletResponse) {
     option (google.api.http) = {
       post: "/v1/wallet/create"
+      body: "*"
+    };
+  }
+
+  /**
+   * UnlockWallet sends an unlock rpc command to the engine to allow funds to be used
+   * in the event that the broker has been taken offline -> online
+   *
+   * This RPC will be required after every restart if each engines wallet has been
+   * initialized. If you need to create a wallet for daemon, please refer to `CreateWallet`
+   *
+   * ```javascript
+   * await walletService.unlockWallet({ symbol: 'BTC', password: 'your-secure-password')
+   * ```
+   *
+   * ```shell
+   * > sparkswap wallet unlock BTC
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * {}
+   * ```
+   *
+   * ```shell
+   * Successfully Unlocked Wallet! You can now use your <symbol> engine
+   * ```
+   */
+  rpc UnlockWallet (UnlockWalletRequest) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/wallet/unlock"
       body: "*"
     };
   }
