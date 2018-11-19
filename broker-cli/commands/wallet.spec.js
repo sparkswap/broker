@@ -518,14 +518,6 @@ describe('cli wallet', () => {
       program.__set__('askQuestion', askQuestionStub)
     })
 
-    it('logs an error if password length does not match requirements', async () => {
-      const password = 'dan'
-      askQuestionStub.onFirstCall().resolves(password)
-      askQuestionStub.onSecondCall().resolves(password)
-      await create(args, opts, logger)
-      expect(errorStub).to.have.been.calledWith(sinon.match('Password length must be'))
-    })
-
     it('logs an error if passwords do not match', async () => {
       askQuestionStub.onFirstCall().resolves('realpassword')
       askQuestionStub.onSecondCall().resolves('relpassword')

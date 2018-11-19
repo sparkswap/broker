@@ -371,12 +371,6 @@ async function create (args, opts, logger) {
     const password = await askQuestion(`Please enter a password:`, { silent: true })
     const confirmPass = await askQuestion(`Please confirm password:`, { silent: true })
 
-    // Enforce password requirements so that lnd will not error. The only
-    // enforcement is longer than 8 characters in length
-    if (password.length < 8) {
-      return logger.error('Error: Password length must be greater than 8 characters'.red)
-    }
-
     if (password !== confirmPass) {
       return logger.error('Error: Passwords did not match, please try again'.red)
     }
@@ -457,7 +451,7 @@ module.exports = (program) => {
           const { walletAddress } = opts
 
           if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
-            throw new Error(`Provided symbol is not a valid currency for the exchange`)
+            throw new Error(`Provided symbol is not a valid currency for the broker`)
           }
 
           args.symbol = symbol
@@ -469,7 +463,7 @@ module.exports = (program) => {
           symbol = symbol.toUpperCase()
 
           if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
-            throw new Error(`Provided symbol is not a valid currency for the exchange`)
+            throw new Error(`Provided symbol is not a valid currency for the broker`)
           }
 
           args.symbol = symbol
