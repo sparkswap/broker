@@ -6,12 +6,12 @@ const { PublicError } = require('grpc-methods')
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Logger} request.logger
  * @param {Object<String>} request.params
- * @param {String} request.params.symbol
- * @param {String} request.params.password
+ * @param {String} request.params.symbol - currency symbol of the wallet e.g. `BTC`
+ * @param {String} request.params.password - password for the newly created wallet
  * @param {Map<Engine>} request.engines
  * @param {Object} responses
  * @param {Function} responses.CreateWalletResponse
- * @return {NewDepositAddressResponse}
+ * @return {CreateWalletResponse}
  */
 async function createWallet ({ logger, params, engines }, { CreateWalletResponse }) {
   const { symbol, password } = params

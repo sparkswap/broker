@@ -1244,12 +1244,6 @@ service WalletService {
    * > The above command will print:
    *
    * ```javascript
-   * > Please enter a password:
-   * > Please confirm password:
-   * IMPORTANT: Please make a copy of the recovery seed below as you WILL NOT
-   * be able to recover this information again. We recommend that you write
-   * down all the secret words, and re-confirm the order they are written down
-   *
    * [ 'your',
    *   'cipher'
    *    ... ]
@@ -1258,8 +1252,9 @@ service WalletService {
    * ```shell
    * > Please enter a password:
    * > Please confirm password:
-   * IMPORTANT
-   * Please make a copy of your cipher seeds as we will not be able to recover this informtion
+   * IMPORTANT: Please make a copy of the recovery seed below as you WILL NOT
+   * be able to recover this information again. We recommend that you write
+   * down all the secret words, and re-confirm the order they are written down
    *
    * [ 'your',
    *   'cipher'
