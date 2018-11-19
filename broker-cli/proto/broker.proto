@@ -926,6 +926,18 @@ message CreateWalletRequest {
   string password = 2;
 }
 
+/**
+ * CreateWallet response that contains wallet backup information.
+ *
+ * The returned array is a recovery seed that a broker can use to recover funds
+ * from their crypto wallet in the cause of fatal error or loss of data.
+ *
+ * The information returned from this response should be kept private, as any user
+ * could potentially use this info to steal your on-chain funds.
+ *
+ * When this information is returned, make sure to write it down and store it
+ * in a safe place.
+ */
 message CreateWalletResponse {
   // 24 length Array of recovery seed words
   repeated string recovery_seed = 1;
