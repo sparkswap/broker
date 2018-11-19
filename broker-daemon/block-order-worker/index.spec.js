@@ -309,10 +309,10 @@ describe('BlockOrderWorker', () => {
       relayer.paymentChannelNetworkService.getAddress.withArgs({symbol: 'LTC'}).resolves({address: relayerCounterAddress})
       relayer.paymentChannelNetworkService.getAddress.withArgs({symbol: 'BTC'}).resolves({address: relayerBaseAddress})
 
-      ltcEngine.isBalanceSufficient.withArgs(relayerCounterAddress, Big('2000000000')).resolves(true)
-      btcEngine.isBalanceSufficient.withArgs(relayerBaseAddress, Big('2000000000'), {outbound: false}).resolves(true)
-      ltcEngine.isBalanceSufficient.withArgs(relayerCounterAddress, Big('2000000000'), {outbound: false}).resolves(true)
-      btcEngine.isBalanceSufficient.withArgs(relayerBaseAddress, Big('2000000000')).resolves(true)
+      ltcEngine.isBalanceSufficient.withArgs(relayerCounterAddress, '2000000000').resolves(true)
+      btcEngine.isBalanceSufficient.withArgs(relayerBaseAddress, '2000000000', {outbound: false}).resolves(true)
+      ltcEngine.isBalanceSufficient.withArgs(relayerCounterAddress, '2000000000', {outbound: false}).resolves(true)
+      btcEngine.isBalanceSufficient.withArgs(relayerBaseAddress, '2000000000').resolves(true)
       engines = new Map([ ['BTC', btcEngine], ['LTC', ltcEngine] ])
       blockOrderStub = {
         counterSymbol: 'LTC',
@@ -400,7 +400,7 @@ describe('BlockOrderWorker', () => {
         price: '100',
         timeInForce: 'GTC'
       }
-      ltcEngine.isBalanceSufficient.withArgs(relayerCounterAddress, Big('2000000000')).resolves(false)
+      ltcEngine.isBalanceSufficient.withArgs(relayerCounterAddress, '2000000000').resolves(false)
 
       return expect(worker.createBlockOrder(params)).to.be.rejectedWith('Insufficient funds in outbound LTC channel to create order')
     })
@@ -413,7 +413,7 @@ describe('BlockOrderWorker', () => {
         price: '100',
         timeInForce: 'GTC'
       }
-      btcEngine.isBalanceSufficient.withArgs(relayerBaseAddress, Big('2000000000'), {outbound: false}).resolves(false)
+      btcEngine.isBalanceSufficient.withArgs(relayerBaseAddress, '2000000000', {outbound: false}).resolves(false)
 
       return expect(worker.createBlockOrder(params)).to.be.rejectedWith('Insufficient funds in inbound BTC channel to create order')
     })
@@ -429,7 +429,7 @@ describe('BlockOrderWorker', () => {
       blockOrderStub.isAsk.returns(true)
       blockOrderStub.isBid.returns(false)
 
-      btcEngine.isBalanceSufficient.withArgs(relayerBaseAddress, Big('2000000000')).resolves(false)
+      btcEngine.isBalanceSufficient.withArgs(relayerBaseAddress, '2000000000').resolves(false)
 
       return expect(worker.createBlockOrder(params)).to.be.rejectedWith('Insufficient funds in outbound BTC channel to create order')
     })
@@ -445,7 +445,7 @@ describe('BlockOrderWorker', () => {
       blockOrderStub.isAsk.returns(true)
       blockOrderStub.isBid.returns(false)
 
-      ltcEngine.isBalanceSufficient.withArgs(relayerCounterAddress, Big('2000000000'), {outbound: false}).resolves(false)
+      ltcEngine.isBalanceSufficient.withArgs(relayerCounterAddress, '2000000000', {outbound: false}).resolves(false)
 
       return expect(worker.createBlockOrder(params)).to.be.rejectedWith('Insufficient funds in inbound LTC channel to create order')
     })
