@@ -127,7 +127,9 @@ describe('Order', () => {
         makerBaseAddress: 'bolt:123019230jasofdij',
         makerCounterAddress: 'bolt:65433455asdfasdf',
         feePaymentRequest: 'myrequest',
-        depositPaymentRequest: 'yourrequest'
+        feeRequired: true,
+        depositPaymentRequest: 'yourrequest',
+        depositRequired: true
       }
       const blockOrderId = 'blockid'
       const orderId = 'myid'
@@ -138,7 +140,9 @@ describe('Order', () => {
       expect(order).to.have.property('blockOrderId', blockOrderId)
       expect(order).to.have.property('orderId', orderId)
       expect(order).to.have.property('feePaymentRequest', params.feePaymentRequest)
+      expect(order).to.have.property('feeRequired', params.feeRequired)
       expect(order).to.have.property('depositPaymentRequest', params.depositPaymentRequest)
+      expect(order).to.have.property('depositRequired', params.depositRequired)
     })
   })
 
@@ -305,7 +309,9 @@ describe('Order', () => {
       it('defines a getter for retrieving a plain object', () => {
         const valueObject = Object.assign({
           feePaymentRequest: undefined,
+          feeRequired: undefined,
           depositPaymentRequest: undefined,
+          depositRequired: undefined,
           swapHash: undefined,
           fillAmount: undefined,
           takerAddress: undefined
@@ -372,7 +378,9 @@ describe('Order', () => {
       let createdParams = {
         orderId: 'myid',
         feePaymentRequest: 'myrequest',
-        depositPaymentRequest: 'yourrequest'
+        feeRequired: true,
+        depositPaymentRequest: 'yourrequest',
+        depositRequired: true
       }
 
       it('updates the object with the params from creating on the relayer', () => {
@@ -380,14 +388,18 @@ describe('Order', () => {
 
         expect(order).to.have.property('orderId', createdParams.orderId)
         expect(order).to.have.property('feePaymentRequest', createdParams.feePaymentRequest)
+        expect(order).to.have.property('feeRequired', createdParams.feeRequired)
         expect(order).to.have.property('depositPaymentRequest', createdParams.depositPaymentRequest)
+        expect(order).to.have.property('depositRequired', createdParams.depositRequired)
       })
 
       it('includes the updated params with the saved value', () => {
         order.setCreatedParams(createdParams)
 
         expect(order.value).to.include(`"feePaymentRequest":"${createdParams.feePaymentRequest}"`)
+        expect(order.value).to.include(`"feeRequired":"${createdParams.feeRequired}"`)
         expect(order.value).to.include(`"depositPaymentRequest":"${createdParams.depositPaymentRequest}"`)
+        expect(order.value).to.include(`"depositRequired":"${createdParams.depositRequired}"`)
       })
     })
 

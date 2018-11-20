@@ -169,8 +169,21 @@ const OrderStateMachine = StateMachine.factory({
       this.order.makerBaseAddress = await baseEngine.getPaymentChannelNetworkAddress()
       this.order.makerCounterAddress = await counterEngine.getPaymentChannelNetworkAddress()
 
-      const { orderId, feePaymentRequest, depositPaymentRequest } = await this.relayer.makerService.createOrder(this.order.paramsForCreate)
-      this.order.setCreatedParams({ orderId, feePaymentRequest, depositPaymentRequest })
+      const {
+        orderId,
+        feePaymentRequest,
+        feeRequired,
+        depositPaymentRequest,
+        depositRequired
+      } = await this.relayer.makerService.createOrder(this.order.paramsForCreate)
+
+      this.order.setCreatedParams({
+        orderId,
+        feePaymentRequest,
+        feeRequired,
+        depositPaymentRequest,
+        depositRequired
+      })
 
       this.logger.info(`Created order ${this.order.orderId} on the relayer`)
     },
