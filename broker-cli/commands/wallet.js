@@ -398,6 +398,7 @@ async function create (args, opts, logger) {
  * @param {Object} args
  * @param {String} args.symbol
  * @param {Object} opts
+ * @param {String} [opts.rpcAddress=null]
  * @param {Logger} logger
  * @return {Void}
  */

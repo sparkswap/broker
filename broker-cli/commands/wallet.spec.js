@@ -539,4 +539,59 @@ describe('cli wallet', () => {
       expect(infoStub).to.have.been.calledWith(seeds)
     })
   })
+
+  describe('unlock', () => {
+    let args
+    let opts
+    let logger
+    let daemonStub
+    let errorStub
+    let askQuestionStub
+    let symbol
+    let infoStub
+    let unlockWalletStub
+
+    const unlock = program.__get__('unlock')
+    const password = 'my-password'
+
+    beforeEach(() => {
+      unlockWalletStub = sinon.stub()
+      errorStub = sinon.stub()
+      infoStub = sinon.stub()
+      askQuestionStub = sinon.stub().resolves(password)
+      daemonStub = sinon.stub().returns({
+        walletService: {
+          unlockWallet: unlockWalletStub
+        }
+      })
+      symbol = 'BTC'
+      args = {
+        symbol
+      }
+      opts = {}
+      logger = {
+        info: infoStub,
+        error: errorStub
+      }
+
+      program.__set__('BrokerDaemonClient', daemonStub)
+      program.__set__('askQuestion', askQuestionStub)
+    })
+
+    beforeEach(async () => {
+      await unlock(args, opts, logger)
+    })
+
+    it('create a broker daemon client', () => {
+      expect(daemonStub).to.have.been.calledOnce()
+    })
+
+    it('asks the user for a wallet password', () => {
+      expect(askQuestionStub).to.have.been.calledWith(sinon.match.string, sinon.match({ silent: true }))
+    })
+
+    it('calls unlock wallet', () => {
+      expect(unlockWalletStub).to.have.been.calledWith(sinon.match({ symbol, password }))
+    })
+  })
 })
