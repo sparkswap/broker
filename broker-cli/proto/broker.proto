@@ -1282,8 +1282,8 @@ service WalletService {
    * UnlockWallet sends an unlock rpc command to the engine to allow funds to be used
    * in the event that the broker has been taken offline -> online
    *
-   * This RPC will be required after every restart if each engines wallet has been
-   * initialized. If you need to create a wallet for daemon, please refer to `CreateWallet`
+   * This RPC will be required after every application restart, if each engine's wallet has been
+   * created. If you need to create a wallet for daemon, please refer to `CreateWallet`
    *
    * ```javascript
    * await walletService.unlockWallet({ symbol: 'BTC', password: 'your-secure-password')
@@ -1300,7 +1300,7 @@ service WalletService {
    * ```
    *
    * ```shell
-   * Successfully Unlocked Wallet! You can now use your <symbol> engine
+   * Successfully Unlocked <symbol> Wallet!
    * ```
    */
   rpc UnlockWallet (UnlockWalletRequest) returns (google.protobuf.Empty) {
