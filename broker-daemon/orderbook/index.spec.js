@@ -356,6 +356,16 @@ describe('Orderbook', () => {
         expect(watcher.migrate).to.have.been.calledOnce()
       })
 
+      it('resets the orderbook index', async () => {
+        watcher.migrate.resolves()
+        await onError()
+
+        const ensureIndex = OrderbookIndex.prototype.ensureIndex
+
+        expect(ensureIndex).to.have.been.calledOnce()
+        expect(ensureIndex).to.have.been.calledOn(orderbook.index)
+      })
+
       it('retries watching the market', async () => {
         watcher.migrate.resolves()
         await onError()
