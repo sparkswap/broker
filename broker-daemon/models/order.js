@@ -125,6 +125,22 @@ class Order {
   }
 
   /**
+   * Get the symbol of the currency we will receive inbound if the order is completed
+   * @return {String} Currency symbol
+   */
+  get inboundAmount () {
+    return this.side === Order.SIDES.BID ? this.baseAmount : this.counterAmount
+  }
+
+  /**
+   * Get the symbol of the currency we will send outbound if the order is completed
+   * @return {String} Currency symbol
+   */
+  get outboundAmount () {
+    return this.side === Order.SIDES.BID ? this.counterAmount : this.baseAmount
+  }
+
+  /**
    * Get the amount (as an integer in its currency's smallest units) that we will receive inbound for this order
    * @return {String} 64-bit integer represented as a string
    */
@@ -302,7 +318,7 @@ class Order {
 
     // instantiate with the correct set of params
     const order = new this(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, makerBaseAddress, makerCounterAddress })
-
+    console.log('order', order)
     const { feePaymentRequest, depositPaymentRequest, swapHash, fillAmount, takerAddress } = otherParams
 
     // add any (white-listed) leftover params into the object

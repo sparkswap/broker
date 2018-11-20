@@ -1,7 +1,7 @@
 const EventEmitter = require('events')
 const { promisify } = require('util')
 
-const { BlockOrder, Order, Fill } = require('../models')
+const { BlockOrder, Order } = require('../models')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const {
   Big,
@@ -99,43 +99,38 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No engine available for ${orderbook.counterSymbol}.`)
     }
 
-    const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
-    const baseEngine = this.engines.get(blockOrder.baseSymbol)
-    const counterEngine = this.engines.get(blockOrder.counterSymbol)
-    const [{address: counterSymbolAddress}, {address: baseSymbolAddress}] = await Promise.all([
-      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.counterSymbol}),
-      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.baseSymbol})
-    ])
+    const blockOrders = await this.getBlockOrders(marketName)
 
-    if (blockOrder.isBid) {
-      const outboundBalanceIsSufficient = await counterEngine.isBalanceSufficient(counterSymbolAddress, blockOrder.counterAmount)
-
-      // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
-      if (!outboundBalanceIsSufficient) {
-        throw new Error(`Insufficient funds in outbound ${blockOrder.counterSymbol} channel to create order`)
-      }
-
-      const inboundBalanceIsSufficient = await baseEngine.isBalanceSufficient(baseSymbolAddress, blockOrder.baseAmount, {outbound: false})
-      // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
-      if (!inboundBalanceIsSufficient) {
-        throw new Error(`Insufficient funds in inbound ${blockOrder.baseSymbol} channel to create order`)
-      }
+    const blockOrdersForSide = blockOrders.filter(blockOrder => blockOrder.side === side)
+    let activeOutboundAmount = Big(0)
+    let activeInboundAmount = Big(0)
+    for (let blockOrder of blockOrdersForSide) {
+      await blockOrder.populateOrders(this.ordersStore)
+      await blockOrder.populateFills(this.fillsStore)
+      activeOutboundAmount = activeOutboundAmount.plus(blockOrder.activeOutboundAmount)
+      activeInboundAmount = activeInboundAmount.plus(blockOrder.activeInboundAmount)
     }
 
-    if (blockOrder.isAsk) {
-      const outboundBalanceIsSufficient = await baseEngine.isBalanceSufficient(baseSymbolAddress, blockOrder.baseAmount)
+    const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
+    const outboundEngine = this.engines.get(blockOrder.outboundSymbol)
+    const inboundEngine = this.engines.get(blockOrder.inboundSymbol)
+    const [{address: outboundAddress}, {address: inboundAddress}] = await Promise.all([
+      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.outboundSymbol}),
+      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.inboundSymbol})
+    ])
 
-      // If the user tries to place an order for more than they hold in the base engine channel, throw an error
-      if (!outboundBalanceIsSufficient) {
-        throw new Error(`Insufficient funds in outbound ${blockOrder.baseSymbol} channel to create order`)
-      }
+    const outboundBalanceIsSufficient = await outboundEngine.isBalanceSufficient(outboundAddress, Big(blockOrder.outboundAmount).plus(activeOutboundAmount))
 
-      const inboundBalanceIsSufficient = await counterEngine.isBalanceSufficient(counterSymbolAddress, blockOrder.counterAmount, {outbound: false})
+    // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
+    if (!outboundBalanceIsSufficient) {
+      throw new Error(`Insufficient funds in outbound ${blockOrder.counterSymbol} channel to create order`)
+    }
 
-      // If the user tries to place an order and the relayer does not have the funds to complete in the counter channel, throw an error
-      if (!inboundBalanceIsSufficient) {
-        throw new Error(`Insufficient funds in inbound ${blockOrder.counterSymbol} channel to create order`)
-      }
+    const inboundBalanceIsSufficient = await inboundEngine.isBalanceSufficient(inboundAddress, Big(blockOrder.inboundAmount).plus(activeInboundAmount), {outbound: false})
+    // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
+
+    if (!inboundBalanceIsSufficient) {
+      throw new Error(`Insufficient funds in inbound ${blockOrder.baseSymbol} channel to create order`)
     }
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
@@ -161,30 +156,8 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
 
-    const orders = await getRecords(
-      this.ordersStore,
-      (key, value) => {
-        const { order, state } = JSON.parse(value)
-        return { order: Order.fromObject(key, order), state }
-      },
-      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
-      // its prefix range.
-      Order.rangeForBlockOrder(blockOrder.id)
-    )
-
-    const fills = await getRecords(
-      this.fillsStore,
-      (key, value) => {
-        const { fill, state } = JSON.parse(value)
-        return { fill: Fill.fromObject(key, fill), state }
-      },
-      // limit the fills we retrieve to those that belong to this blockOrder, i.e. those that are in
-      // its prefix range.
-      Fill.rangeForBlockOrder(blockOrder.id)
-    )
-
-    blockOrder.openOrders = orders
-    blockOrder.fills = fills
+    await blockOrder.populateOrders(this.ordersStore)
+    await blockOrder.populateFills(this.fillsStore)
 
     return blockOrder
   }
@@ -231,7 +204,7 @@ class BlockOrderWorker extends EventEmitter {
       throw e
     }
 
-    this.logger.info(`Cancelled ${orders.length} underlying orders for ${blockOrder.id}`)
+    this.logger.info(`Cancelled ${openOrders.length} underlying orders for ${blockOrder.id}`)
 
     blockOrder.cancel()
 
@@ -350,17 +323,7 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info('Attempting to put block order in a completed state', { id: blockOrderId })
 
     const blockOrder = await this.getBlockOrder(blockOrderId)
-
-    // check the fillAmount on each collection of state machines from the block order
-    // and make sure that either is equal to how much we are trying to fill.
-    let totalFilled = Big(0)
-    totalFilled = blockOrder.fills.reduce((acc, fsm) => acc.plus(fsm.fill.fillAmount), totalFilled)
-    totalFilled = blockOrder.openOrders.reduce((acc, osm) => {
-      // If the order has not been filled yet, then the `fillAmount` will be undefined
-      // so we instead default to 0
-      return acc.plus(osm.order.fillAmount || 0)
-    }, totalFilled)
-
+    const totalFilled = blockOrder.amountCommitted
     this.logger.debug('Current total filled amount: ', { totalFilled, blockOrderAmount: blockOrder.baseAmount })
 
     const stillBeingFilled = totalFilled.lt(blockOrder.baseAmount)
