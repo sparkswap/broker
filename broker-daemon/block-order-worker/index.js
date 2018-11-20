@@ -1,7 +1,7 @@
 const EventEmitter = require('events')
 const { promisify } = require('util')
 
-const { BlockOrder, Order, Fill } = require('../models')
+const { BlockOrder, Order } = require('../models')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const {
   Big,
@@ -161,30 +161,8 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
 
-    const orders = await getRecords(
-      this.ordersStore,
-      (key, value) => {
-        const { order, state } = JSON.parse(value)
-        return { order: Order.fromObject(key, order), state }
-      },
-      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
-      // its prefix range.
-      Order.rangeForBlockOrder(blockOrder.id)
-    )
-
-    const fills = await getRecords(
-      this.fillsStore,
-      (key, value) => {
-        const { fill, state } = JSON.parse(value)
-        return { fill: Fill.fromObject(key, fill), state }
-      },
-      // limit the fills we retrieve to those that belong to this blockOrder, i.e. those that are in
-      // its prefix range.
-      Fill.rangeForBlockOrder(blockOrder.id)
-    )
-
-    blockOrder.openOrders = orders
-    blockOrder.fills = fills
+    await blockOrder.populateOrders(this.ordersStore)
+    await blockOrder.populateFills(this.fillsStore)
 
     return blockOrder
   }
@@ -198,18 +176,9 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info('Cancelling block order ', { id: blockOrderId })
 
     const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
+    await blockOrder.populateOrders(this.ordersStore)
 
-    const orders = await getRecords(
-      this.ordersStore,
-      (key, value) => {
-        const { order, state } = JSON.parse(value)
-        return { order: Order.fromObject(key, order), state }
-      },
-      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
-      // its prefix range.
-      Order.rangeForBlockOrder(blockOrder.id)
-    )
-
+    const orders = blockOrder.orders
     this.logger.info(`Found ${orders.length} orders associated with Block Order ${blockOrder.id}`)
 
     // filter for only orders we can cancel
@@ -231,7 +200,7 @@ class BlockOrderWorker extends EventEmitter {
       throw e
     }
 
-    this.logger.info(`Cancelled ${orders.length} underlying orders for ${blockOrder.id}`)
+    this.logger.info(`Cancelled ${openOrders.length} underlying orders for ${blockOrder.id}`)
 
     blockOrder.cancel()
 
@@ -355,7 +324,7 @@ class BlockOrderWorker extends EventEmitter {
     // and make sure that either is equal to how much we are trying to fill.
     let totalFilled = Big(0)
     totalFilled = blockOrder.fills.reduce((acc, fsm) => acc.plus(fsm.fill.fillAmount), totalFilled)
-    totalFilled = blockOrder.openOrders.reduce((acc, osm) => {
+    totalFilled = blockOrder.orders.reduce((acc, osm) => {
       // If the order has not been filled yet, then the `fillAmount` will be undefined
       // so we instead default to 0
       return acc.plus(osm.order.fillAmount || 0)

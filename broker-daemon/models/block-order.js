@@ -1,9 +1,11 @@
 const { promisify } = require('util')
 const nano = require('nano-seconds')
 
-const { Big, nanoToDatetime } = require('../utils')
+const { Big, nanoToDatetime, getRecords } = require('../utils')
 const CONFIG = require('../config')
 const { BlockOrderNotFoundError } = require('./errors')
+const Order = require('./order')
+const Fill = require('./fill')
 
 /**
  * @class Model representing Block Orders
@@ -55,7 +57,7 @@ class BlockOrder {
       throw new Error(`Amount is too precise for ${this.baseSymbol}`)
     }
 
-    this.openOrders = []
+    this.orders = []
     this.fills = []
   }
 
@@ -217,6 +219,36 @@ class BlockOrder {
     return this
   }
 
+  async populateOrders (store) {
+    const orders = await getRecords(
+      store,
+      (key, value) => {
+        const { order, state } = JSON.parse(value)
+        return { order: Order.fromObject(key, order), state }
+      },
+      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
+      // its prefix range.
+      Order.rangeForBlockOrder(this.id)
+    )
+
+    return orders
+  }
+
+  async populateFills (store) {
+    const fills = await getRecords(
+      store,
+      (key, value) => {
+        const { fill, state } = JSON.parse(value)
+        return { order: Order.fromObject(key, fill), state }
+      },
+      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
+      // its prefix range.
+      Fill.rangeForBlockOrder(this.id)
+    )
+
+    return fills
+  }
+
   /**
    * serialize a block order for transmission via grpc
    * @return {Object} Object to be serialized into a GRPC message
@@ -225,7 +257,7 @@ class BlockOrder {
     const baseAmountFactor = this.baseCurrencyConfig.quantumsPerCommon
     const counterAmountFactor = this.counterCurrencyConfig.quantumsPerCommon
 
-    const openOrders = this.openOrders.map(({ order, state, error }) => {
+    const openOrders = this.orders.map(({ order, state, error }) => {
       const baseCommonAmount = Big(order.baseAmount).div(baseAmountFactor)
       const counterCommonAmount = Big(order.counterAmount).div(counterAmountFactor)
 
