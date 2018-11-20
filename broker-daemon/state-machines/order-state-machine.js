@@ -1,7 +1,7 @@
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 
 const { Order } = require('../models')
-const { generateId } = require('../utils')
+const { generateId, payInvoice } = require('../utils')
 
 const StateMachine = require('./state-machine')
 const {
@@ -217,33 +217,24 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onBeforePlace: async function (lifecycle) {
-      const { feePaymentRequest, depositPaymentRequest, orderId, outboundSymbol } = this.order
-
-      if (!feePaymentRequest) throw new Error('Cant pay invoices because fee invoice does not exist')
-      if (!depositPaymentRequest) throw new Error('Cant pay invoices because deposit invoice does not exist')
-
-      this.logger.debug(`Attempting to pay fees for order: ${orderId}`)
+      const {
+        feePaymentRequest,
+        feeRequired,
+        depositPaymentRequest,
+        depositRequired,
+        orderId,
+        outboundSymbol
+      } = this.order
 
       const outboundEngine = this.engines.get(outboundSymbol)
       if (!outboundEngine) {
         throw new Error(`No engine available for ${outboundSymbol}`)
       }
 
-      const [feeRefundPaymentRequest, depositRefundPaymentRequest] = await Promise.all([
-        outboundEngine.createRefundInvoice(feePaymentRequest),
-        outboundEngine.createRefundInvoice(depositPaymentRequest),
-        outboundEngine.payInvoice(feePaymentRequest),
-        outboundEngine.payInvoice(depositPaymentRequest)
+      const [ feeRefundPaymentRequest, depositRefundPaymentRequest ] = await Promise.all([
+        payInvoice(feeRequired, feePaymentRequest, outboundEngine, this.logger, 'fee', orderId),
+        payInvoice(depositRequired, depositPaymentRequest, outboundEngine, this.logger, 'deposit', orderId)
       ])
-
-      this.logger.info('Received response for successful payment')
-
-      this.logger.debug('Response from engine', {
-        feeRefundPaymentRequest,
-        depositRefundPaymentRequest
-      })
-
-      this.logger.info(`Successfully paid fees for order: ${orderId}`)
 
       const authorization = this.relayer.identity.authorize(orderId)
       this.logger.debug(`Generated authorization for ${orderId}`, authorization)
