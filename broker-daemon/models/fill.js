@@ -132,6 +132,22 @@ class Fill {
       outboundSymbol
     } = this
 
+    if (feeRequired && !feePaymentRequest) {
+      throw new Error(`paramsForFill: feePaymentRequest is required.`)
+    }
+
+    if (depositRequired && !depositPaymentRequest) {
+      throw new Error(`paramsForFill: depositPaymentRequest is required.`)
+    }
+
+    if (!fillId) {
+      throw new Error(`paramsForFill: fillId is required.`)
+    }
+
+    if (!outboundSymbol) {
+      throw new Error(`paramsForFill: outboundSymbol is required.`)
+    }
+
     return {
       feePaymentRequest,
       feeRequired,

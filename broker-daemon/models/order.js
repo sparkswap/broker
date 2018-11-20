@@ -179,6 +179,46 @@ class Order {
   }
 
   /**
+   * Params required to place an order on the relayer
+   * @return {Object} Object of parameters the relayer expects
+   */
+  get paramsForPlace () {
+    const {
+      feePaymentRequest,
+      feeRequired,
+      depositPaymentRequest,
+      depositRequired,
+      orderId,
+      outboundSymbol
+    } = this
+
+    if (feeRequired && !feePaymentRequest) {
+      throw new Error(`paramsForPlace: feePaymentRequest is missing.`)
+    }
+
+    if (depositRequired && !depositPaymentRequest) {
+      throw new Error(`paramsForPlace: depositPaymentRequest is missing.`)
+    }
+
+    if (!orderId) {
+      throw new Error(`paramsForPlace: orderId is missing.`)
+    }
+
+    if (!outboundSymbol) {
+      throw new Error(`paramsForPlace: outboundSymbol is missing.`)
+    }
+
+    return {
+      feePaymentRequest,
+      feeRequired,
+      depositPaymentRequest,
+      depositRequired,
+      orderId,
+      outboundSymbol
+    }
+  }
+ 
+  /**
    * Params required to prepare a swap in  an engine
    * @return {Object} Object of parameters the engine expects
    */

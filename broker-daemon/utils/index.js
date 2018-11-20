@@ -17,6 +17,7 @@ const exponentialBackoff = require('./exponential-backoff')
 const delay = require('./delay')
 const eachRecord = require('./each-record')
 const Checksum = require('./checksum')
+const payInvoice = require('./pay-invoice')
 
 module.exports = {
   getRecords,
@@ -37,5 +38,6 @@ module.exports = {
   exponentialBackoff,
   delay,
   eachRecord,
-  Checksum
+  Checksum,
+  payInvoice
 }

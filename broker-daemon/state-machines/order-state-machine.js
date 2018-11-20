@@ -224,7 +224,7 @@ const OrderStateMachine = StateMachine.factory({
         depositRequired,
         orderId,
         outboundSymbol
-      } = this.order
+      } = this.paramsForPlace
 
       const outboundEngine = this.engines.get(outboundSymbol)
       if (!outboundEngine) {
