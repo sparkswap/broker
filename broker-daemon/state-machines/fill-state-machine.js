@@ -1,7 +1,7 @@
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 
 const { Fill } = require('../models')
-const { generateId } = require('../utils')
+const { generateId, payInvoice } = require('../utils')
 
 const StateMachine = require('./state-machine')
 const {
@@ -200,33 +200,24 @@ const FillStateMachine = StateMachine.factory({
      * @return {Promise}          romise that rejects if filling on the relayer fails
      */
     onBeforeFillOrder: async function (lifecycle) {
-      const { feePaymentRequest, depositPaymentRequest, fillId, outboundSymbol } = this.fill
-
-      if (!feePaymentRequest) throw new Error('Cant pay invoices because fee invoice does not exist')
-      if (!depositPaymentRequest) throw new Error('Cant pay invoices because deposit invoice does not exist')
-
-      this.logger.debug(`Attempting to pay fees for fill: ${fillId}`)
+      const {
+        feePaymentRequest,
+        feeRequired,
+        depositPaymentRequest,
+        depositRequired,
+        fillId,
+        outboundSymbol
+      } = this.fill.paramsForFill
 
       const outboundEngine = this.engines.get(outboundSymbol)
       if (!outboundEngine) {
-        throw new Error(`No engine avialable for ${outboundSymbol}`)
+        throw new Error(`No engine available for ${outboundSymbol}`)
       }
 
-      const [feeRefundPaymentRequest, depositRefundPaymentRequest] = await Promise.all([
-        outboundEngine.createRefundInvoice(feePaymentRequest),
-        outboundEngine.createRefundInvoice(depositPaymentRequest),
-        outboundEngine.payInvoice(feePaymentRequest),
-        outboundEngine.payInvoice(depositPaymentRequest)
+      const [ feeRefundPaymentRequest, depositRefundPaymentRequest ] = await Promise.all([
+        payInvoice(feeRequired, feePaymentRequest, outboundEngine, this.logger, 'fee', fillId),
+        payInvoice(depositRequired, depositPaymentRequest, outboundEngine, this.logger, 'deposit', fillId)
       ])
-
-      this.logger.info('Received response for successful payment')
-
-      this.logger.debug('Response from engine', {
-        feeRefundPaymentRequest,
-        depositRefundPaymentRequest
-      })
-
-      this.logger.info(`Successfully paid fees for fill: ${fillId}`)
 
       const authorization = this.relayer.identity.authorize(fillId)
       this.logger.debug(`Generated authorization for ${fillId}`, authorization)
