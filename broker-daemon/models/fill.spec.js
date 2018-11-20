@@ -69,7 +69,9 @@ describe('Fill', () => {
           fillAmount: '9000',
           swapHash: 'asdfasdf',
           feePaymentRequest: 'myrequest',
-          depositPaymentRequest: 'yourrequest'
+          feeRequired: true,
+          depositPaymentRequest: 'yourrequest',
+          depositRequired: true
         }
       }
       const blockOrderId = 'blockid'
@@ -80,7 +82,9 @@ describe('Fill', () => {
 
       expect(fill).to.have.property('fillId', fillId)
       expect(fill).to.have.property('feePaymentRequest', params.fill.feePaymentRequest)
+      expect(fill).to.have.property('feeRequired', params.fill.feeRequired)
       expect(fill).to.have.property('depositPaymentRequest', params.fill.depositPaymentRequest)
+      expect(fill).to.have.property('depositRequired', params.fill.depositRequired)
     })
   })
 
@@ -133,7 +137,9 @@ describe('Fill', () => {
         fillAmount: '9000',
         swapHash: 'asdfasdf',
         feePaymentRequest: 'myrequest',
-        depositPaymentRequest: 'yourrequest'
+        feeRequired: true,
+        depositPaymentRequest: 'yourrequest',
+        depositRequired: true
       }
       const blockOrderId = 'blockid'
       const fillId = 'myid'
@@ -143,7 +149,9 @@ describe('Fill', () => {
 
       expect(fill).to.have.property('fillId', fillId)
       expect(fill).to.have.property('feePaymentRequest', params.feePaymentRequest)
+      expect(fill).to.have.property('feeRequired', params.feeRequired)
       expect(fill).to.have.property('depositPaymentRequest', params.depositPaymentRequest)
+      expect(fill).to.have.property('depositRequired', params.depositRequired)
     })
   })
 
@@ -317,6 +325,25 @@ describe('Fill', () => {
       })
     })
 
+    describe('get paramsForFill', () => {
+      it('defines a getter for params required to create a fill on the relayer', () => {
+        let createdParams = {
+          fillId: 'myid',
+          feePaymentRequest: 'myrequest',
+          depositPaymentRequest: 'yourrequest'
+        }
+        fill.setCreatedParams(createdParams)
+
+        expect(fill).to.have.property('paramsForFill')
+        expect(fill.paramsForFill).to.be.eql({
+          fillId: createdParams.fillId,
+          feePaymentRequest: createdParams.feePaymentRequest,
+          depositPaymentRequest: createdParams.depositPaymentRequest,
+          outboundSymbol: order.baseSymbol
+        })
+      })
+    })
+
     describe('get paramsForSwap', () => {
       it('defines a getter for params required to execute a swap with the engine', () => {
         const fakeSwapHash = 'hello'
@@ -339,7 +366,9 @@ describe('Fill', () => {
       let createdParams = {
         fillId: 'myid',
         feePaymentRequest: 'myrequest',
-        depositPaymentRequest: 'yourrequest'
+        feeRequired: true,
+        depositPaymentRequest: 'yourrequest',
+        depositRequired: true
       }
 
       it('updates the object with the params from creating on the relayer', () => {
@@ -347,14 +376,18 @@ describe('Fill', () => {
 
         expect(fill).to.have.property('fillId', createdParams.fillId)
         expect(fill).to.have.property('feePaymentRequest', createdParams.feePaymentRequest)
+        expect(fill).to.have.property('feeRequired', createdParams.feeRequired)
         expect(fill).to.have.property('depositPaymentRequest', createdParams.depositPaymentRequest)
+        expect(fill).to.have.property('depositRequired', createdParams.depositRequired)
       })
 
       it('includes the updated params with the saved value', () => {
         fill.setCreatedParams(createdParams)
 
         expect(fill.value).to.include(`"feePaymentRequest":"${createdParams.feePaymentRequest}"`)
+        expect(fill.value).to.include(`"feeRequired":"${createdParams.feeRequired}"`)
         expect(fill.value).to.include(`"depositPaymentRequest":"${createdParams.depositPaymentRequest}"`)
+        expect(fill.value).to.include(`"depositRequired":"${createdParams.depositRequired}"`)
       })
     })
 
