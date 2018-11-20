@@ -3,7 +3,7 @@ const { expect, rewire, sinon } = require('test/test-helper')
 
 const unlockWallet = rewire(path.resolve(__dirname, 'unlock-wallet'))
 
-describe.only('unlock-wallet', () => {
+describe('unlock-wallet', () => {
   let symbol
   let password
   let engines
