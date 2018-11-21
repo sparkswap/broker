@@ -90,6 +90,14 @@ message HealthCheckResponse {
 }
 
 /**
+ * GetIdentityResponse provides the Public Key of the BrokerDaemon
+ */
+message GetIdentityResponse {
+  // The public key of the BrokerDaemon used to authenticate interactions with the Relayer
+  string public_key = 1;
+}
+
+/**
  * The AdminService performs administrative tasks on the BrokerDaemon.
  *
  * ```javascript
@@ -145,6 +153,38 @@ service AdminService {
   rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse) {
     option (google.api.http) = {
       get: "/v1/admin/healthcheck"
+    };
+  }
+
+  /**
+   * GetIdentity returns the Public Key the BrokerDaemon uses to interact with the Relayer.
+   *
+   * ```javascript
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * adminService.getIdentity({}, { deadline }, (err, { publicKey }) => {
+   *   if (err) return console.error(err)
+   *   console.log({ publicKey })
+   * })
+   * ```
+   *
+   * ```shell
+   * > sparkswap id
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * {
+   *   "publicKey": ""
+   * }
+   * ```
+   *
+   * ```shell
+   * ```
+   */
+  rpc GetIdentity (google.protobuf.Empty) returns (GetIdentityResponse) {
+    option (google.api.http) = {
+      get: "/v1/admin/identity"
     };
   }
 }
