@@ -1,13 +1,12 @@
 const BrokerDaemonClient = require('../broker-daemon-client')
-const { ENUMS, validations, handleError } = require('../utils')
-const { STATUS_CODES } = ENUMS
+const { validations, handleError } = require('../utils')
 
 /**
- * sparkswap healthcheck
+ * sparkswap id
  *
- * Tests the broker and engine connection for the cli
+ * Get the BrokerDaemon's Identity
  *
- * ex: `sparkswap healthcheck`
+ * ex: `sparkswap id`
  *
  * @param {Object} args
  * @param {Object} opts
