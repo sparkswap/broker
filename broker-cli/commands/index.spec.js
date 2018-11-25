@@ -47,7 +47,6 @@ describe('broker index', () => {
     expect(infoCommand).to.not.be.undefined()
   })
 
-
   it('defines identityCommand', () => {
     expect(identityCommand).to.not.be.null()
     expect(identityCommand).to.not.be.undefined()
