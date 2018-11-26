@@ -682,6 +682,50 @@ describe('BlockOrder', () => {
       })
     })
 
+    describe('get outboundAmount', () => {
+      it('gets outboundAmount correctly if order is a bid', () => {
+        expect(blockOrder).to.have.property('outboundAmount', '100000000000000')
+      })
+
+      it('gets outboundAmount correctly if order is an ask', () => {
+        blockOrder.side = 'ASK'
+        expect(blockOrder).to.have.property('outboundAmount', '1000000000000')
+      })
+    })
+
+    describe('get inboundAmount', () => {
+      it('gets inboundAmount correctly if order is a bid', () => {
+        expect(blockOrder).to.have.property('inboundAmount', '1000000000000')
+      })
+
+      it('gets inboundAmount correctly if order is an ask', () => {
+        blockOrder.side = 'ASK'
+        expect(blockOrder).to.have.property('inboundAmount', '100000000000000')
+      })
+    })
+
+    describe('get inboundSymbol', () => {
+      it('gets inboundSymbol correctly if order is a bid', () => {
+        expect(blockOrder).to.have.property('inboundSymbol', 'BTC')
+      })
+
+      it('gets inboundSymbol correctly if order is an ask', () => {
+        blockOrder.side = 'ASK'
+        expect(blockOrder).to.have.property('inboundSymbol', 'LTC')
+      })
+    })
+
+    describe('get outboundSymbol', () => {
+      it('gets outboundSymbol correctly if order is a bid', () => {
+        expect(blockOrder).to.have.property('outboundSymbol', 'LTC')
+      })
+
+      it('gets outboundSymbol correctly if order is an ask', () => {
+        blockOrder.side = 'ASK'
+        expect(blockOrder).to.have.property('outboundSymbol', 'BTC')
+      })
+    })
+
     describe('get quantumPrice', () => {
       it('calculates the quantumPrice', () => {
         expect(blockOrder).to.have.property('quantumPrice', '100.0000000000000000')
