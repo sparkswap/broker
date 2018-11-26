@@ -161,9 +161,10 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
 
-    await blockOrder.populateOrders(this.ordersStore)
-    await blockOrder.populateFills(this.fillsStore)
-
+    await Promise.all([
+      blockOrder.populateOrders(this.ordersStore),
+      blockOrder.populateFills(this.fillsStore)
+    ])
     return blockOrder
   }
 

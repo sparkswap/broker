@@ -231,7 +231,7 @@ class BlockOrder {
       Order.rangeForBlockOrder(this.id)
     )
 
-    return orders
+    this.orders = orders
   }
 
   async populateFills (store) {
@@ -239,14 +239,14 @@ class BlockOrder {
       store,
       (key, value) => {
         const { fill, state } = JSON.parse(value)
-        return { order: Order.fromObject(key, fill), state }
+        return { fill: Fill.fromObject(key, fill), state }
       },
       // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
       // its prefix range.
       Fill.rangeForBlockOrder(this.id)
     )
 
-    return fills
+    this.fills = fills
   }
 
   /**
@@ -257,7 +257,7 @@ class BlockOrder {
     const baseAmountFactor = this.baseCurrencyConfig.quantumsPerCommon
     const counterAmountFactor = this.counterCurrencyConfig.quantumsPerCommon
 
-    const openOrders = this.orders.map(({ order, state, error }) => {
+    const orders = this.orders.map(({ order, state, error }) => {
       const baseCommonAmount = Big(order.baseAmount).div(baseAmountFactor)
       const counterCommonAmount = Big(order.counterAmount).div(counterAmountFactor)
 
@@ -292,7 +292,7 @@ class BlockOrder {
       status: this.status,
       timestamp: this.timestamp,
       datetime: this.datetime,
-      openOrders: openOrders,
+      orders,
       fills: fills
     }
 
