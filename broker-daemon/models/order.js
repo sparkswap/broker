@@ -109,7 +109,7 @@ class Order {
   }
 
   /**
-   * Get the symbol of the currency we will receive inbound if the order is completed
+   * Get the symbol of the currency we will receive inbound
    * @return {String} Currency symbol
    */
   get inboundSymbol () {
@@ -117,7 +117,7 @@ class Order {
   }
 
   /**
-   * Get the symbol of the currency we will send outbound if the order is completed
+   * Get the symbol of the currency we will send outbound
    * @return {String} Currency symbol
    */
   get outboundSymbol () {
@@ -125,7 +125,7 @@ class Order {
   }
 
   /**
-   * Get the symbol of the currency we will receive inbound if the order is completed
+   * Get the symbol of the currency we will receive inbound
    * @return {String} Currency symbol
    */
   get inboundAmount () {
@@ -133,7 +133,7 @@ class Order {
   }
 
   /**
-   * Get the symbol of the currency we will send outbound if the order is completed
+   * Get the symbol of the currency we will send outbound
    * @return {String} Currency symbol
    */
   get outboundAmount () {

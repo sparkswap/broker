@@ -133,33 +133,33 @@ class BlockOrder {
   }
 
   /**
-   * Convenience getter for baseAmount
-   * @return {String} String representation of the amount of currency to be transacted in base currency's smallest unit
-   */
+  * Convenience getter for outboundAmount
+  * @return {String} String representation of the amount of currency we will send outbound for the order
+  */
   get outboundAmount () {
     return this.isBid ? this.counterAmount : this.baseAmount
   }
 
   /**
-   * Convenience getter for counterAmount calculated using the block order price
-   * @return {String} String representation of the amount of currency to be transacted in counter currency's smallest unit
-   */
+  * Convenience getter for inboundAmount
+  * @return {String} String representation of the amount of currency we will receive inbound for the order
+  */
   get inboundAmount () {
     return this.isBid ? this.baseAmount : this.counterAmount
   }
 
   /**
-   * Get the symbol of the currency we will receive inbound if the order is completed
-   * @return {String} Currency symbol
-   */
+  * Get the symbol of the currency we will receive inbound
+  * @return {String} Currency symbol
+  */
   get inboundSymbol () {
     return this.isBid ? this.baseSymbol : this.counterSymbol
   }
 
   /**
-   * Get the symbol of the currency we will send outbound if the order is completed
-   * @return {String} Currency symbol
-   */
+  * Get the symbol of the currency we will send outbound
+  * @return {String} Currency symbol
+  */
   get outboundSymbol () {
     return this.isBid ? this.counterSymbol : this.baseSymbol
   }
