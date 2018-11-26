@@ -318,6 +318,7 @@ class Order {
 
     // instantiate with the correct set of params
     const order = new this(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, makerBaseAddress, makerCounterAddress })
+
     const { feePaymentRequest, depositPaymentRequest, swapHash, fillAmount, takerAddress } = otherParams
 
     // add any (white-listed) leftover params into the object
