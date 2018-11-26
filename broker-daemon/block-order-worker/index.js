@@ -174,12 +174,9 @@ class BlockOrderWorker extends EventEmitter {
     const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
     await blockOrder.populateOrders(this.ordersStore)
 
-    const orders = blockOrder.orders
-    this.logger.info(`Found ${orders.length} orders associated with Block Order ${blockOrder.id}`)
+    this.logger.info(`Found ${blockOrder.orders.length} orders associated with Block Order ${blockOrder.id}`)
 
-    // filter for only orders we can cancel
-    const { CREATED, PLACED } = OrderStateMachine.STATES
-    const openOrders = orders.filter(({ state }) => state === CREATED || state === PLACED)
+    const openOrders = blockOrder.openOrders
 
     this.logger.info(`Found ${openOrders.length} orders in a state to be cancelled for Block order ${blockOrder.id}`)
 

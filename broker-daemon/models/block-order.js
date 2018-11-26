@@ -217,31 +217,36 @@ class BlockOrder {
     return this.orders.filter(order => [CREATED, PLACED, EXECUTING].includes(order.state))
   }
 
+  get openOrders () {
+    const { CREATED, PLACED } = OrderStateMachine.STATES
+    return this.orders.filter(order => [CREATED, PLACED].includes(order.state))
+  }
+
   get activeOutboundAmount () {
-    const activeOrderAmount = this.activeOrders.reduce((acc, order) => {
+    const activeOrderAmount = this.activeOrders.reduce((acc, {order}) => {
       if (order.state === OrderStateMachine.STATES.EXECUTING) {
-        return acc.plus(order.order.outboundFillAmount)
+        return acc.plus(order.outboundFillAmount)
       } else {
-        return acc.plus(order.order.outboundAmount)
+        return acc.plus(order.outboundAmount)
       }
     }, Big(0))
-    const activeFillAmount = this.activeFills.reduce((acc, fill) => {
-      return acc.plus(fill.fill.outboundAmount)
+    const activeFillAmount = this.activeFills.reduce((acc, {fill}) => {
+      return acc.plus(fill.outboundAmount)
     }, Big(0))
 
     return activeOrderAmount.plus(activeFillAmount)
   }
 
   get activeInboundAmount () {
-    const activeOrderAmount = this.activeOrders.reduce((acc, order) => {
+    const activeOrderAmount = this.activeOrders.reduce((acc, {order}) => {
       if (order.state === OrderStateMachine.STATES.EXECUTING) {
-        return acc.plus(order.order.inboundFillAmount)
+        return acc.plus(order.inboundFillAmount)
       } else {
-        return acc.plus(order.order.inboundAmount)
+        return acc.plus(order.inboundAmount)
       }
     }, Big(0))
-    const activeFillAmount = this.activeFills.reduce((acc, fill) => {
-      return fill.order.inboundAmount
+    const activeFillAmount = this.activeFills.reduce((acc, {fill}) => {
+      return fill.inboundAmount
     }, Big(0))
 
     return activeOrderAmount.plus(activeFillAmount)
@@ -292,10 +297,6 @@ class BlockOrder {
     return this
   }
 
-  /**
-   * Move the block order to a cancelled status
-   * @return {BlockOrder} Modified block order instance
-   */
   async populateOrders (store) {
     const orders = await getRecords(
       store,
@@ -310,10 +311,6 @@ class BlockOrder {
     this.orders = orders
   }
 
-  /**
-   * Move the block order to a cancelled status
-   * @return {BlockOrder} Modified block order instance
-   */
   async populateFills (store) {
     const fills = await getRecords(
       store,
