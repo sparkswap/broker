@@ -11,10 +11,14 @@ describe('OrderStateMachine', () => {
   let relayer
   let engines
   let getPaymentChannelNetworkAddressStub
+  let payInvoiceStub
 
   beforeEach(() => {
     Order = sinon.stub()
     OrderStateMachine.__set__('Order', Order)
+
+    payInvoiceStub = sinon.stub()
+    OrderStateMachine.__set__('payInvoice', payInvoiceStub)
 
     store = {
       sublevel: sinon.stub(),
@@ -338,20 +342,20 @@ describe('OrderStateMachine', () => {
   describe('#place', () => {
     let fakeOrder
     let osm
-    let payInvoiceStub
     let createRefundInvoiceStub
     let placeOrderStub
     let placeOrderStreamStub
     let invoice
     let feePaymentRequest
+    let feeRequired
     let depositPaymentRequest
+    let depositRequired
     let orderId
     let outboundSymbol
 
     beforeEach(async () => {
       invoice = '1234'
-      payInvoiceStub = sinon.stub()
-      createRefundInvoiceStub = sinon.stub().returns(invoice)
+      payInvoiceStub.returns(invoice)
       placeOrderStreamStub = {
         on: sinon.stub(),
         removeListener: sinon.stub()
@@ -362,8 +366,18 @@ describe('OrderStateMachine', () => {
       orderId = '1234'
       outboundSymbol = 'BTC'
 
-      fakeOrder = { feePaymentRequest, depositPaymentRequest, orderId, outboundSymbol }
-      engines = new Map([['BTC', { payInvoice: payInvoiceStub, createRefundInvoice: createRefundInvoiceStub }]])
+      fakeOrder = {
+        orderId,
+        paramsForPlace: {
+          feePaymentRequest,
+          feeRequired,
+          depositPaymentRequest,
+          depositRequired,
+          orderId,
+          outboundSymbol
+        }
+      }
+      engines = new Map([['BTC', 'fakeBtcEngine']])
       relayer = {
         makerService: {
           placeOrder: placeOrderStub
@@ -380,28 +394,18 @@ describe('OrderStateMachine', () => {
     })
 
     it('throws if no engine is available', () => {
-      osm.order.outboundSymbol = 'ABC'
+      osm.order.paramsForPlace.outboundSymbol = 'ABC'
       return expect(osm.place()).to.eventually.be.rejectedWith('No engine available')
     })
 
     it('pays a fee invoice', async () => {
       await osm.place()
-      expect(payInvoiceStub).to.have.been.calledWith(feePaymentRequest)
+      expect(payInvoiceStub).to.have.been.calledWith(feeRequired, feePaymentRequest, engines.get('BTC'))
     })
 
     it('pays a deposit invoice', async () => {
       await osm.place()
-      expect(payInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
-    })
-
-    it('creates a deposit refund invoice', async () => {
-      await osm.place()
-      expect(createRefundInvoiceStub).to.have.been.calledWith(feePaymentRequest)
-    })
-
-    it('pays a fee refund invoice', async () => {
-      await osm.place()
-      expect(createRefundInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
+      expect(payInvoiceStub).to.have.been.calledWith(depositRequired, depositPaymentRequest, engines.get('BTC'))
     })
 
     it('creates an authorization for the order', async () => {
@@ -419,16 +423,6 @@ describe('OrderStateMachine', () => {
         orderId,
         authorization: fakeAuth
       }))
-    })
-
-    it('errors if a feePaymentRequest isnt available on an order', async () => {
-      osm.order = {}
-      return expect(osm.place()).to.eventually.be.rejectedWith('Cant pay invoices because fee')
-    })
-
-    it('errors if a feePaymentRequest isnt available on an order', async () => {
-      osm.order = { feePaymentRequest }
-      return expect(osm.place()).to.eventually.be.rejectedWith('Cant pay invoices because deposit')
     })
 
     it('rejects on error from the relayer place order hook', async () => {
