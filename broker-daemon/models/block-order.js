@@ -371,7 +371,7 @@ class BlockOrder {
       status: this.status,
       timestamp: this.timestamp,
       datetime: this.datetime,
-      openOrders: orders,
+      orders,
       fills: fills
     }
 

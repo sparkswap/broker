@@ -156,9 +156,10 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
 
-    await blockOrder.populateOrders(this.ordersStore)
-    await blockOrder.populateFills(this.fillsStore)
-
+    await Promise.all([
+      blockOrder.populateOrders(this.ordersStore),
+      blockOrder.populateFills(this.fillsStore)
+    ])
     return blockOrder
   }
 
@@ -171,18 +172,9 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info('Cancelling block order ', { id: blockOrderId })
 
     const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
+    await blockOrder.populateOrders(this.ordersStore)
 
-    const orders = await getRecords(
-      this.ordersStore,
-      (key, value) => {
-        const { order, state } = JSON.parse(value)
-        return { order: Order.fromObject(key, order), state }
-      },
-      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
-      // its prefix range.
-      Order.rangeForBlockOrder(blockOrder.id)
-    )
-
+    const orders = blockOrder.orders
     this.logger.info(`Found ${orders.length} orders associated with Block Order ${blockOrder.id}`)
 
     // filter for only orders we can cancel
@@ -323,7 +315,17 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info('Attempting to put block order in a completed state', { id: blockOrderId })
 
     const blockOrder = await this.getBlockOrder(blockOrderId)
-    const totalFilled = blockOrder.amountCommitted
+
+    // check the fillAmount on each collection of state machines from the block order
+    // and make sure that either is equal to how much we are trying to fill.
+    let totalFilled = Big(0)
+    totalFilled = blockOrder.fills.reduce((acc, fsm) => acc.plus(fsm.fill.fillAmount), totalFilled)
+    totalFilled = blockOrder.orders.reduce((acc, osm) => {
+      // If the order has not been filled yet, then the `fillAmount` will be undefined
+      // so we instead default to 0
+      return acc.plus(osm.order.fillAmount || 0)
+    }, totalFilled)
+
     this.logger.debug('Current total filled amount: ', { totalFilled, blockOrderAmount: blockOrder.baseAmount })
 
     const stillBeingFilled = totalFilled.lt(blockOrder.baseAmount)
