@@ -557,46 +557,28 @@ describe('BlockOrderWorker', () => {
   })
 
   describe('getBlockOrder', () => {
-    let getRecords
     let fillsStore
     let ordersStore
     let worker
-    let blockOrder = JSON.stringify({
-      marketName: 'BTC/LTC',
-      side: 'BID',
-      amount: '100',
-      price: '1000'
-    })
+    let blockOrder
     let blockOrderId = 'fakeId'
-    let orders = [
-      {
-        id: 'someId'
-      }
-    ]
-    let fills = [
-      {
-        id: 'anotherid'
-      }
-    ]
 
     beforeEach(() => {
-      getRecords = sinon.stub()
-      BlockOrderWorker.__set__('getRecords', getRecords)
-
       ordersStore = {
         put: sinon.stub()
       }
       fillsStore = {
         put: sinon.stub()
       }
+      blockOrder = {
+        id: blockOrderId,
+        populateFills: sinon.stub().resolves(),
+        populateOrders: sinon.stub().resolves()
+      }
       store.sublevel.withArgs('orders').returns(ordersStore)
       store.sublevel.withArgs('fills').returns(fillsStore)
-      store.get.callsArgWithAsync(1, null, blockOrder)
-      BlockOrder.fromStore.resolves({ id: blockOrderId })
+      BlockOrder.fromStore.resolves(blockOrder)
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
-
-      getRecords.withArgs(ordersStore).resolves(orders)
-      getRecords.withArgs(fillsStore).resolves(fills)
     })
 
     it('retrieves a block order from the store', async () => {
@@ -607,78 +589,27 @@ describe('BlockOrderWorker', () => {
       expect(BlockOrder.fromStore).to.have.been.calledWith(store)
     })
 
-    it('retrieves all open orders associated with a block order', async () => {
-      const fakeRange = 'myrange'
+    it('populates orders associated with the blockOrder', async () => {
       const fakeId = 'myid'
-      Order.rangeForBlockOrder.returns(fakeRange)
-
-      const bO = await worker.getBlockOrder(fakeId)
-
-      expect(Order.rangeForBlockOrder).to.have.been.calledOnce()
-      expect(Order.rangeForBlockOrder).to.have.been.calledWith(bO.id)
-      expect(getRecords).to.have.been.calledTwice()
-      expect(getRecords).to.have.been.calledWith(ordersStore, sinon.match.func, fakeRange)
-      expect(bO).to.have.property('openOrders', orders)
-    })
-
-    it('inflates orders', async () => {
-      const fakeId = 'myid'
-      const fakeKey = 'mykey'
-      const fakeOrder = 'someorder'
-      const fakeState = 'somestate'
-      const fakeValue = JSON.stringify({
-        order: fakeOrder,
-        state: fakeState
-      })
-      const inflatedOrder = 'lol'
-      Order.fromObject.returns(inflatedOrder)
-
       await worker.getBlockOrder(fakeId)
 
-      const eachOrder = getRecords.withArgs(ordersStore).args[0][1]
-
-      const inflated = eachOrder(fakeKey, fakeValue)
-      expect(Order.fromObject).to.have.been.calledOnce()
-      expect(Order.fromObject).to.have.been.calledWith(fakeKey, fakeOrder)
-      expect(inflated).to.have.property('order', inflatedOrder)
-      expect(inflated).to.have.property('state', fakeState)
+      expect(blockOrder.populateOrders).to.have.been.calledOnce()
+      expect(blockOrder.populateOrders).to.have.been.calledWith(ordersStore)
     })
 
-    it('retrieves all fills associated with a block order', async () => {
-      const fakeRange = 'myrange'
+    it('populates fills associated with the blockOrder', async () => {
       const fakeId = 'myid'
-      Fill.rangeForBlockOrder.returns(fakeRange)
-
-      const bO = await worker.getBlockOrder(fakeId)
-
-      expect(Fill.rangeForBlockOrder).to.have.been.calledOnce()
-      expect(Fill.rangeForBlockOrder).to.have.been.calledWith(bO.id)
-      expect(getRecords).to.have.been.calledTwice()
-      expect(getRecords).to.have.been.calledWith(fillsStore, sinon.match.func, fakeRange)
-      expect(bO).to.have.property('fills', fills)
-    })
-
-    it('inflates fills', async () => {
-      const fakeId = 'myid'
-      const fakeKey = 'mykey'
-      const fakeFill = 'someorder'
-      const fakeState = 'somestate'
-      const fakeValue = JSON.stringify({
-        fill: fakeFill,
-        state: fakeState
-      })
-      const inflatedFill = 'lol'
-      Fill.fromObject.returns(inflatedFill)
-
       await worker.getBlockOrder(fakeId)
 
-      const eachFill = getRecords.withArgs(fillsStore).args[0][1]
+      expect(blockOrder.populateFills).to.have.been.calledOnce()
+      expect(blockOrder.populateFills).to.have.been.calledWith(fillsStore)
+    })
 
-      const inflated = eachFill(fakeKey, fakeValue)
-      expect(Fill.fromObject).to.have.been.calledOnce()
-      expect(Fill.fromObject).to.have.been.calledWith(fakeKey, fakeFill)
-      expect(inflated).to.have.property('fill', inflatedFill)
-      expect(inflated).to.have.property('state', fakeState)
+    it('returns the blockOrder', async () => {
+      const fakeId = 'myid'
+      const res = await worker.getBlockOrder(fakeId)
+
+      expect(res).to.eql(blockOrder)
     })
   })
 
@@ -695,7 +626,6 @@ describe('BlockOrderWorker', () => {
     let blockOrderKey = blockOrderId
     let blockOrderValue = blockOrder
     let orders
-    let getRecords
     let identityStub
 
     beforeEach(() => {
@@ -707,18 +637,16 @@ describe('BlockOrderWorker', () => {
           state: 'created'
         }
       ]
-      store.get.callsArgWithAsync(1, null, blockOrder)
       blockOrderCancel = sinon.stub()
       BlockOrder.fromStore.resolves({
         id: blockOrderId,
         cancel: blockOrderCancel,
         key: blockOrderKey,
-        value: blockOrderValue
+        value: blockOrderValue,
+        populateOrders: sinon.stub().resolves(),
+        orders
       })
-      getRecords = sinon.stub().resolves(orders)
       identityStub = sinon.stub()
-
-      BlockOrderWorker.__set__('getRecords', getRecords)
 
       relayer.makerService = {
         cancelOrder: sinon.stub().resolves()
@@ -736,19 +664,6 @@ describe('BlockOrderWorker', () => {
 
       expect(BlockOrder.fromStore).to.have.been.calledOnce()
       expect(BlockOrder.fromStore).to.have.been.calledWith(store, fakeId)
-    })
-
-    it('retrieves all open orders associated with a block order', async () => {
-      const fakeRange = 'myrange'
-      const fakeId = 'myid'
-      Order.rangeForBlockOrder.returns(fakeRange)
-
-      const bO = await worker.cancelBlockOrder(fakeId)
-
-      expect(Order.rangeForBlockOrder).to.have.been.calledOnce()
-      expect(Order.rangeForBlockOrder).to.have.been.calledWith(bO.id)
-      expect(getRecords).to.have.been.calledOnce()
-      expect(getRecords).to.have.been.calledWith(secondLevel, sinon.match.func, fakeRange)
     })
 
     it('cancels all of the orders on the relayer', async () => {
@@ -990,12 +905,12 @@ describe('BlockOrderWorker', () => {
         blockOrder = {
           id: '1234',
           fills: [],
-          openOrders: []
+          orders: []
         }
 
         worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
         worker.blockOrder = blockOrder
-        worker.getBlockOrder = getBlockOrderStub.returns(blockOrder)
+        worker.getBlockOrder = getBlockOrderStub.resolves(blockOrder)
       })
 
       it('gets a block order by id', async () => {
@@ -1004,7 +919,7 @@ describe('BlockOrderWorker', () => {
       })
     })
 
-    context('block order with openOrders', () => {
+    context('block order with orders', () => {
       let blockOrder
       let getBlockOrderStub
       let worker
@@ -1023,7 +938,7 @@ describe('BlockOrderWorker', () => {
           id: '1234',
           baseAmount: 600,
           fills: [],
-          openOrders: orderStateMachines,
+          orders: orderStateMachines,
           complete: blockOrderCompleteStub
         }
 
@@ -1042,7 +957,7 @@ describe('BlockOrderWorker', () => {
           id: '1234',
           baseAmount: 600,
           fills: [],
-          openOrders: [
+          orders: [
             { order: { fillAmount: 100 } }
           ]
         }
@@ -1071,7 +986,7 @@ describe('BlockOrderWorker', () => {
           id: '1234',
           baseAmount: 600,
           fills: fillStateMachines,
-          openOrders: [],
+          orders: [],
           complete: blockOrderCompleteStub
         }
 
@@ -1089,7 +1004,7 @@ describe('BlockOrderWorker', () => {
         const activeBlockOrder = {
           id: '1234',
           baseAmount: 600,
-          openOrders: [],
+          orders: [],
           fills: [
             { fill: { fillAmount: 100 } }
           ]
@@ -1123,7 +1038,7 @@ describe('BlockOrderWorker', () => {
           id: '1234',
           baseAmount: 600,
           fills: fillStateMachines,
-          openOrders: orderStateMachines,
+          orders: orderStateMachines,
           complete: blockOrderCompleteStub
         }
 
@@ -1141,7 +1056,7 @@ describe('BlockOrderWorker', () => {
         const activeBlockOrder = {
           id: '1234',
           baseAmount: 700,
-          openOrders: orderStateMachines,
+          orders: orderStateMachines,
           fills: [
             { fill: { fillAmount: 100 } }
           ]
@@ -1155,7 +1070,7 @@ describe('BlockOrderWorker', () => {
         const activeBlockOrder = {
           id: '1234',
           baseAmount: 700,
-          openOrders: [
+          orders: [
             { order: { fillAmount: 100 } }
           ],
           fills: fillStateMachines
