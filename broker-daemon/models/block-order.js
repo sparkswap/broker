@@ -130,6 +130,38 @@ class BlockOrder {
   }
 
   /**
+  * Convenience getter for outboundAmount
+  * @return {String} String representation of the amount of currency we will send outbound for the order
+  */
+  get outboundAmount () {
+    return this.isBid ? this.counterAmount : this.baseAmount
+  }
+
+  /**
+  * Convenience getter for inboundAmount
+  * @return {String} String representation of the amount of currency we will receive inbound for the order
+  */
+  get inboundAmount () {
+    return this.isBid ? this.baseAmount : this.counterAmount
+  }
+
+  /**
+  * Get the symbol of the currency we will receive inbound if the order is completed
+  * @return {String} Currency symbol
+  */
+  get inboundSymbol () {
+    return this.isBid ? this.baseSymbol : this.counterSymbol
+  }
+
+  /**
+  * Get the symbol of the currency we will send outbound if the order is completed
+  * @return {String} Currency symbol
+  */
+  get outboundSymbol () {
+    return this.isBid ? this.counterSymbol : this.baseSymbol
+  }
+
+  /**
    * Price of an order expressed in terms of the smallest unit of each currency
    * @return {String} Decimal of the price expressed as a string with 16 decimal places
    */

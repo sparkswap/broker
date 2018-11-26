@@ -125,6 +125,22 @@ class Order {
   }
 
   /**
+   * Get the symbol of the currency we will receive inbound if the order is completed
+   * @return {String} Currency symbol
+   */
+  get inboundAmount () {
+    return this.side === Order.SIDES.BID ? this.baseAmount : this.counterAmount
+  }
+
+  /**
+   * Get the symbol of the currency we will send outbound if the order is completed
+   * @return {String} Currency symbol
+   */
+  get outboundAmount () {
+    return this.side === Order.SIDES.BID ? this.counterAmount : this.baseAmount
+  }
+
+  /**
    * Get the amount (as an integer in its currency's smallest units) that we will receive inbound for this order
    * @return {String} 64-bit integer represented as a string
    */
