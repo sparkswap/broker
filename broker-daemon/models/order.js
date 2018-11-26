@@ -180,7 +180,10 @@ class Order {
 
   /**
    * Params required to place an order on the relayer
-   * @return {Object} Object of parameters the relayer expects
+   * It includes parameters for the payment requests for fees and deposits
+   * which are used to pay fees prior to placing an order rather than
+   * actually sent to the relayer.
+   * @return {Object} Object of parameters need to place an order
    */
   get paramsForPlace () {
     const {
@@ -217,7 +220,7 @@ class Order {
       outboundSymbol
     }
   }
- 
+
   /**
    * Params required to prepare a swap in  an engine
    * @return {Object} Object of parameters the engine expects

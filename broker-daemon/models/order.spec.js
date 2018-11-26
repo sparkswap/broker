@@ -336,6 +336,38 @@ describe('Order', () => {
       })
     })
 
+    describe('get paramsForPlace', () => {
+      it('defines a getter for params required to create an order on the relayer', () => {
+        const feePaymentRequest = 'asodfijasodifj'
+        const feeRequired = false
+        const depositPaymentRequest = 'asdfoijasdofij'
+        const depositRequired = true
+        const orderId = 'myid'
+
+        Object.assign(order, {
+          feePaymentRequest,
+          feeRequired,
+          depositPaymentRequest,
+          depositRequired,
+          orderId
+        })
+
+        expect(order).to.have.property('paramsForPlace')
+        expect(order.paramsForPlace).to.be.eql({
+          feePaymentRequest,
+          feeRequired,
+          depositPaymentRequest,
+          depositRequired,
+          orderId,
+          outboundSymbol: params.counterSymbol
+        })
+      })
+
+      it('throws an error if a param is missing', () => {
+        expect(() => order.paramsForPlace).to.throw()
+      })
+    })
+
     describe('get paramsForPrepareSwap', () => {
       it('defines a getter for params required to prepare a swap in an engine', () => {
         const swapHash = 'asoifdjaofj02309832'
@@ -397,9 +429,9 @@ describe('Order', () => {
         order.setCreatedParams(createdParams)
 
         expect(order.value).to.include(`"feePaymentRequest":"${createdParams.feePaymentRequest}"`)
-        expect(order.value).to.include(`"feeRequired":"${createdParams.feeRequired}"`)
+        expect(order.value).to.include(`"feeRequired":${createdParams.feeRequired}`)
         expect(order.value).to.include(`"depositPaymentRequest":"${createdParams.depositPaymentRequest}"`)
-        expect(order.value).to.include(`"depositRequired":"${createdParams.depositRequired}"`)
+        expect(order.value).to.include(`"depositRequired":${createdParams.depositRequired}`)
       })
     })
 

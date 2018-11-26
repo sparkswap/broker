@@ -287,7 +287,9 @@ describe('Fill', () => {
       it('defines a getter for retrieving a plain object', () => {
         const valueObject = Object.assign({
           feePaymentRequest: undefined,
+          feeRequired: undefined,
           depositPaymentRequest: undefined,
+          depositRequired: undefined,
           swapHash: undefined,
           makerAddress: undefined
         }, params, { order })
@@ -330,7 +332,9 @@ describe('Fill', () => {
         let createdParams = {
           fillId: 'myid',
           feePaymentRequest: 'myrequest',
-          depositPaymentRequest: 'yourrequest'
+          feeRequired: true,
+          depositPaymentRequest: 'yourrequest',
+          depositRequired: false
         }
         fill.setCreatedParams(createdParams)
 
@@ -338,7 +342,9 @@ describe('Fill', () => {
         expect(fill.paramsForFill).to.be.eql({
           fillId: createdParams.fillId,
           feePaymentRequest: createdParams.feePaymentRequest,
+          feeRequired: createdParams.feeRequired,
           depositPaymentRequest: createdParams.depositPaymentRequest,
+          depositRequired: createdParams.depositRequired,
           outboundSymbol: order.baseSymbol
         })
       })
@@ -385,9 +391,9 @@ describe('Fill', () => {
         fill.setCreatedParams(createdParams)
 
         expect(fill.value).to.include(`"feePaymentRequest":"${createdParams.feePaymentRequest}"`)
-        expect(fill.value).to.include(`"feeRequired":"${createdParams.feeRequired}"`)
+        expect(fill.value).to.include(`"feeRequired":${createdParams.feeRequired}`)
         expect(fill.value).to.include(`"depositPaymentRequest":"${createdParams.depositPaymentRequest}"`)
-        expect(fill.value).to.include(`"depositRequired":"${createdParams.depositRequired}"`)
+        expect(fill.value).to.include(`"depositRequired":${createdParams.depositRequired}`)
       })
     })
 
