@@ -2,6 +2,7 @@ const BrokerDaemonClient = require('../../broker-daemon-client')
 const Table = require('cli-table')
 const { ENUMS: { ORDER_TYPES }, handleError } = require('../../utils')
 require('colors')
+const size = require('window-size')
 
 /**
  * Prints table of the users orders
@@ -11,9 +12,12 @@ require('colors')
  * @returns {Void}
  */
 function createUI (market, orders) {
+  const windowWidth = size.get().width
+  const unitWidth = Math.floor(windowWidth / 16)
+
   const orderTable = new Table({
     head: ['Order ID', 'Side', 'Amount', 'Limit Price', 'Time', 'Status'],
-    colWidths: [45, 7, 18, 18, 6, 10],
+    colWidths: [5 * unitWidth, unitWidth, 3 * unitWidth, 3 * unitWidth, unitWidth, 2 * unitWidth],
     style: { head: ['gray'] }
   })
 

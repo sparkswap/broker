@@ -42,7 +42,7 @@ const DEFAULT_INTERCHAIN_ROUTER_ADDRESS = '0.0.0.0:40369'
  * Default host and port that the Relayer is set up on
  *
  * @constant
- * @type {String}
+ * @type {Integer}
  * @default
  */
 const DEFAULT_RELAYER_HOST = 'localhost:28492'
@@ -170,17 +170,12 @@ class BrokerDaemon {
           this.logger.info(`Initializing BlockOrderWorker`)
           await this.blockOrderWorker.initialize()
           this.logger.info('BlockOrderWorker initialized')
-        })(),
-        ...Array.from(this.engines, async ([ symbol, engine ]) => {
-          this.logger.info(`Validating engine configuration for ${symbol}`)
-          try {
-            await engine.validateNodeConfig()
-          } catch (e) {
-            throw new Error(`Engine for ${symbol} failed to validate: ${e.message || e.details}`)
-          }
-          this.logger.info(`Validated engine configuration for ${symbol}`)
-        })
+        })()
       ])
+
+      // This will run in the background. It is implemented with exponential backoff so
+      // the validation will be retried on the engine until successful or until final failure.
+      this.validateEngines()
 
       this.rpcServer.listen(this.rpcAddress)
       this.logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
@@ -233,6 +228,17 @@ class BrokerDaemon {
 
     this.orderbooks.set(marketName, new Orderbook(marketName, this.relayer, this.store.sublevel(marketName), this.logger))
     return this.orderbooks.get(marketName).initialize()
+  }
+
+  /**
+   * Validates engines
+   * We do not await this function because we want the validations to run in the background.
+   * It can take time for the engines to be ready, so we use exponential backoff to retry validation
+   * for a period of time, until it is either successful or there is actually something wrong.
+   * @returns {void}
+   */
+  validateEngines () {
+    this.engines.forEach((engine, _) => engine.validateEngine())
   }
 }
 

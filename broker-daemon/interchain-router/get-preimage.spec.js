@@ -18,10 +18,10 @@ describe('getPreimage', () => {
   beforeEach(() => {
     order = {
       inboundSymbol: 'BTC',
-      inboundAmount: '1000000',
+      inboundFillAmount: '1000000',
       swapHash: 'as09fdjasdf09ja0dsf==',
       outboundSymbol: 'LTC',
-      outboundAmount: '10000000',
+      outboundFillAmount: '10000000',
       takerAddress: 'bolt:9128734923874'
     }
 
@@ -132,7 +132,7 @@ describe('getPreimage', () => {
     await getPreimage(({ params, send, ordersByHash, engines }))
 
     expect(engines.get('LTC').translateSwap).to.have.been.calledOnce()
-    expect(engines.get('LTC').translateSwap).to.have.been.calledWith(order.takerAddress, params.paymentHash, order.outboundAmount, '600000')
+    expect(engines.get('LTC').translateSwap).to.have.been.calledWith(order.takerAddress, params.paymentHash, order.outboundFillAmount, '600000')
   })
 
   it('returns permanentError if the outbound engine returns one', async () => {

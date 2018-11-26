@@ -366,51 +366,62 @@ describe('broker daemon', () => {
   describe('#initialize', () => {
     beforeEach(() => {
       brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      brokerDaemon.validateEngines = sinon.stub().returns()
+      brokerDaemon.initializeMarkets = sinon.stub().resolves()
     })
 
-    it('starts a grpc server', async () => {
+    beforeEach(async () => {
       await brokerDaemon.initialize()
+    })
+
+    it('starts a gRPC server', () => {
       expect(rpcListenStub).to.have.been.calledOnce()
       expect(rpcListenStub).to.have.been.calledWith(rpcAddress)
     })
 
-    it('starts the interchain router', async () => {
-      await brokerDaemon.initialize()
+    it('starts the interchain router', () => {
       expect(interchainRouterListenSpy).to.have.been.calledOnce()
       expect(interchainRouterListenSpy).to.have.been.calledWith(brokerDaemon.interchainRouterAddress)
     })
 
-    it('validates the engines', async () => {
-      const btcEngine = {
-        validateNodeConfig: sinon.stub().resolves()
-      }
-      const ltcEngine = {
-        validateNodeConfig: sinon.stub().resolves()
-      }
-      brokerDaemon.engines = new Map([
-        [ 'BTC', btcEngine ],
-        [ 'LTC', ltcEngine ]
-      ])
-
-      await brokerDaemon.initialize()
-
-      expect(btcEngine.validateNodeConfig).to.have.been.calledOnce()
-      expect(ltcEngine.validateNodeConfig).to.have.been.calledOnce()
+    it('validates the engines', () => {
+      expect(brokerDaemon.validateEngines).to.have.been.calledOnce()
     })
 
-    it('initializes markets', async () => {
-      brokerDaemon.initializeMarkets = sinon.stub().resolves()
-
-      await brokerDaemon.initialize()
-
+    it('initializes markets', () => {
       expect(brokerDaemon.initializeMarkets).to.have.been.calledOnce()
       expect(brokerDaemon.initializeMarkets).to.have.been.calledWith(marketNames)
     })
 
     it('initializes the block order worker', async () => {
-      await brokerDaemon.initialize()
-
       expect(BlockOrderWorker.prototype.initialize).to.have.been.calledOnce()
+    })
+  })
+
+  describe('#validateEngines', () => {
+    let btcEngine
+    let ltcEngine
+
+    beforeEach(() => {
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+
+      btcEngine = {
+        validateEngine: sinon.stub().resolves()
+      }
+      ltcEngine = {
+        validateEngine: sinon.stub().resolves()
+      }
+      brokerDaemon.engines = new Map([
+        [ 'BTC', btcEngine ],
+        [ 'LTC', ltcEngine ]
+      ])
+    })
+
+    it('validates the node config on each engine', () => {
+      brokerDaemon.validateEngines()
+
+      expect(btcEngine.validateEngine).to.have.been.called()
+      expect(ltcEngine.validateEngine).to.have.been.called()
     })
   })
 

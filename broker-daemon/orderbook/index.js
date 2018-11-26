@@ -8,14 +8,36 @@ const nano = require('nano-seconds')
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
 
+/**
+ * Time, in milliseconds, between tries to get the market events from
+ * the Relayer.
+ * @constant
+ * @type {Number}
+ */
+const RETRY_WATCHMARKET = 5000
+
+/**
+ * @class Current state of the orderbook in a particular market
+ */
 class Orderbook {
+  /**
+   * Create a new orderbook for a given market
+   * @param  {String}        marketName Name of the market to track, e.g. `BTC/LTC`
+   * @param  {RelayerClient} relayer    Client to connect to the Relayer
+   * @param  {Sublevel}      store      Sublevel-compatible data store
+   * @param  {Object}        logger
+   * @return {Orderbook}
+   */
   constructor (marketName, relayer, store, logger = consoleLogger) {
     this.marketName = marketName
     this.relayer = relayer
     this.eventStore = store.sublevel('events')
     this.index = new OrderbookIndex(store, this.eventStore, this.marketName)
     this.store = this.index.store
+    this.askIndex = new AskIndex(this.store)
+    this.bidIndex = new BidIndex(this.store)
     this.logger = logger
+    this.synced = false
   }
 
   get baseSymbol () {
@@ -26,21 +48,82 @@ class Orderbook {
     return this.marketName.split('/')[1]
   }
 
+  /**
+   * Initialize the orderbook by syncing its state to the Relayer and indexing
+   * the orders.
+   * @return {Promise}
+   */
   async initialize () {
     this.logger.info(`Initializing market ${this.marketName}...`)
+    this.synced = false
+
+    this.logger.debug(`Rebuilding indexes`)
+    await this.index.ensureIndex()
+    await this.askIndex.ensureIndex()
+    await this.bidIndex.ensureIndex()
+
+    await this.watchMarket()
+  }
+
+  /**
+   * Sync orderbook state with the Relayer and retry when it fails
+   * @private
+   * @return {Promise} Resolves when market is being watched (not necessarily when it is synced)
+   */
+  async watchMarket () {
+    this.logger.debug(`Watching market ${this.marketName}...`)
 
     const { baseSymbol, counterSymbol } = this
     const { lastUpdated, sequence } = await this.lastUpdate()
     const params = { baseSymbol, counterSymbol, lastUpdated, sequence }
 
-    await this.relayer.watchMarket(this.eventStore, params)
+    const watcher = this.relayer.watchMarket(this.eventStore, params)
 
-    this.logger.debug(`Rebuilding indexes`)
-    await this.index.ensureIndex()
-    this.askIndex = await (new AskIndex(this.store)).ensureIndex()
-    this.bidIndex = await (new BidIndex(this.store)).ensureIndex()
+    /**
+     * Handle sync events from the watcher by updating internal state
+     * @return {void}
+     */
+    const onWatcherSync = () => {
+      this.synced = true
+      this.logger.info(`Market ${this.marketName} synced.`)
+    }
 
-    return this.logger.info(`Market ${this.marketName} initialized.`)
+    /**
+     * Handle end events from the watcher by retrying
+     * @param  {Error} error
+     * @return {void}
+     */
+    const onWatcherEnd = (error) => {
+      this.synced = false
+      watcher.removeListener('sync', onWatcherSync)
+      watcher.removeListener('error', onWatcherError)
+
+      this.logger.info(`Market ${this.marketName} unavailable, retrying in ${RETRY_WATCHMARKET}ms`, { error })
+      // TODO: exponential backoff?
+      setTimeout(() => {
+        this.watchMarket()
+      }, RETRY_WATCHMARKET)
+    }
+
+    /**
+     * Handle error events from the watcher by clearing our store and retrying
+     * @param  {Error} error
+     * @return {Promise<void>}
+     */
+    const onWatcherError = async (error) => {
+      this.synced = false
+
+      watcher.removeListener('sync', onWatcherSync)
+      watcher.removeListener('end', onWatcherEnd)
+
+      this.logger.info(`Market ${this.marketName} encountered sync'ing error, re-building`, { error })
+      await watcher.migrate()
+      this.watchMarket()
+    }
+
+    watcher.once('sync', onWatcherSync)
+    watcher.once('end', onWatcherEnd)
+    watcher.once('error', onWatcherError)
   }
 
   /**
@@ -49,6 +132,7 @@ class Orderbook {
    * @returns {Promise<Array<MarketEventOrder>>} A promise that resolves an array of MarketEventOrder records
    */
   async all () {
+    this.assertSynced()
     this.logger.info(`Retrieving all records for ${this.marketName}`)
     return getRecords(this.store, MarketEventOrder.fromStorage.bind(MarketEventOrder))
   }
@@ -61,6 +145,7 @@ class Orderbook {
    * @return {Array<Object>} trades
    */
   async getTrades (since, limit) {
+    this.assertSynced()
     const params = {limit}
     if (since) {
       const sinceDate = new Date(since).toISOString()
@@ -84,6 +169,7 @@ class Orderbook {
    * @return {Promise<BestOrders>} A promise that resolves MarketEventOrders of the best priced orders
    */
   getBestOrders ({ side, depth, quantumPrice }) {
+    this.assertSynced()
     return new Promise((resolve, reject) => {
       this.logger.info(`Retrieving best priced from ${side} up to ${depth}`)
 
@@ -131,8 +217,52 @@ class Orderbook {
   }
 
   /**
-   * Gets the last record in an event store
+   * Gets current orderbook events by timestamp
    *
+   * @param {String} timestamp - timestamp in nano-seconds
+   * @returns {Array<MarketEventOrder>}
+   */
+  async getOrderbookEventsByTimestamp (timestamp) {
+    this.assertSynced()
+    return getRecords(
+      this.store,
+      (key, value) => JSON.parse(value),
+      // Limits the query to gte to a specific timestamp
+      MarketEvent.rangeFromTimestamp(timestamp)
+    )
+  }
+
+  /**
+   * Gets MarketEvents by timestamp
+   *
+   * @param {String} timestamp - timestamp in nano-seconds
+   * @returns {Array<MarketEventOrder>}
+   */
+  async getMarketEventsByTimestamp (timestamp) {
+    this.assertSynced()
+    return getRecords(
+      this.eventStore,
+      (key, value) => JSON.parse(value),
+      // Limits the query to gte to a specific timestamp
+      MarketEvent.rangeFromTimestamp(timestamp)
+    )
+  }
+
+  /**
+   * Ensures that the orderbook is synced before accessing it
+   * @private
+   * @return {void}
+   * @throws {Error} If Orderbook is not synced to Relayer
+   */
+  assertSynced () {
+    if (!this.synced) {
+      throw new Error(`Cannot access Orderbook for ${this.marketName} until it is synced`)
+    }
+  }
+
+  /**
+   * Gets the last record in an event store
+   * @private
    * @returns {MarketEvent}
    * @returns {Object} empty object if no record exists
    */
@@ -150,7 +280,7 @@ class Orderbook {
 
   /**
    * Gets the last time this market was updated with data from the relayer
-   *
+   * @private
    * @returns {Object} res
    * @returns {String} [lastUpdated=0] - nanosecond timestamp
    * @returns {String} [sequence=0] - event version for a given timestamp
@@ -167,36 +297,6 @@ class Orderbook {
       lastUpdated,
       sequence
     }
-  }
-
-  /**
-   * Gets current orderbook events by timestamp
-   *
-   * @param {String} timestamp - timestamp in nano-seconds
-   * @returns {Array<MarketEventOrder>}
-   */
-  async getOrderbookEventsByTimestamp (timestamp) {
-    return getRecords(
-      this.store,
-      (key, value) => JSON.parse(value),
-      // Limits the query to gte to a specific timestamp
-      MarketEvent.rangeFromTimestamp(timestamp)
-    )
-  }
-
-  /**
-   * Gets MarketEvents by timestamp
-   *
-   * @param {String} timestamp - timestamp in nano-seconds
-   * @returns {Array<MarketEventOrder>}
-   */
-  async getMarketEventsByTimestamp (timestamp) {
-    return getRecords(
-      this.eventStore,
-      (key, value) => JSON.parse(value),
-      // Limits the query to gte to a specific timestamp
-      MarketEvent.rangeFromTimestamp(timestamp)
-    )
   }
 }
 

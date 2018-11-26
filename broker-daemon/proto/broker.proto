@@ -728,7 +728,7 @@ service OrderBookService {
    *
    * ```shell
    * Market: BTC/LTC                                                                                                                            Ϟ SparkSwap Broker
-   *                                                                                                                                           v0.1.0-alpha-preview
+   *                                                                                                                                           v0.2.0-alpha-preview
    *                                                                                                                                           http://sparkswap.com
    *
    * ┌──────────────────────────────────────────────────────────────────────────────┬──────────────────────────────────────────────────────────────────────────────┐
@@ -914,6 +914,33 @@ message WithdrawFundsRequest {
 message WithdrawFundsResponse {
   // transaction id of the withdrawal
   string txid = 1;
+}
+
+/**
+ * Request to create a wallet for a specific currency
+ */
+message CreateWalletRequest {
+  // Currency of wallet
+  string symbol = 1;
+  // Password for the wallet
+  string password = 2;
+}
+
+/**
+ * CreateWallet response that contains wallet backup information.
+ *
+ * The returned array is a recovery seed that a broker can use to recover funds
+ * from their crypto wallet in the cause of fatal error or loss of data.
+ *
+ * The information returned from this response should be kept private, as any user
+ * could potentially use this info to steal your on-chain funds.
+ *
+ * When this information is returned, make sure to write it down and store it
+ * in a safe place.
+ */
+message CreateWalletResponse {
+  // 24 length Array of recovery seed words
+  repeated string recovery_seed = 1;
 }
 
 /**
@@ -1174,14 +1201,15 @@ service WalletService {
    * const { txid } = await walletService.withdrawFunds({ symbol: 'BTC', amount: '2', address: 'asdfasdf' })
    * console.log(txid)
    * ```
+   *
+   * ```shell
+   * > sparkswap wallet withdraw BTC 10 --wallet-address asdfadf
+   * ```
+   *
    * > The above command will print:
    *
    * ```javascript
    * '66a581f618ee68dde53142c55e924d56cd2b2c169be5b374bc810ac692fb17fd'
-   * ```
-   *
-   * ```shell
-   * > sparkswap wallet withdraw BTC 10 --wallet-address asdfadf
    * ```
    *
    * ```shell
@@ -1191,6 +1219,51 @@ service WalletService {
   rpc WithdrawFunds (WithdrawFundsRequest) returns (WithdrawFundsResponse) {
     option (google.api.http) = {
       post: "/v1/wallet/withdraw"
+      body: "*"
+    };
+  }
+
+  /**
+   * CreateWallet creates a wallet within an engine. This RPC is used as during a 'first-use'
+   * setup.
+   *
+   * When a broker daemon is first getting setup, no crypto-wallets will exist on any of
+   * the provided engines. It is the user's responsiblity to create a wallet for each currency
+   * and to save the backup information (password and cipher seeds) that are used and returned
+   * from this method.
+   *
+   * ```javascript
+   * const { recoverySeed } = await walletService.withdrawFunds({ symbol: 'BTC', password: 'your-secure-password')
+   * console.log(recoverySeed)
+   * ```
+   *
+   * ```shell
+   * > sparkswap wallet create BTC
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * [ 'your',
+   *   'cipher'
+   *    ... ]
+   * ```
+   *
+   * ```shell
+   * > Please enter a password:
+   * > Please confirm password:
+   * IMPORTANT: Please make a copy of the recovery seed below as you WILL NOT
+   * be able to recover this information again. We recommend that you write
+   * down all the secret words, and re-confirm the order they are written down
+   *
+   * [ 'your',
+   *   'cipher'
+   *    ... ]
+   * ```
+   */
+  rpc CreateWallet (CreateWalletRequest) returns (CreateWalletResponse) {
+    option (google.api.http) = {
+      post: "/v1/wallet/create"
       body: "*"
     };
   }

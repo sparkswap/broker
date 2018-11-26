@@ -1,0 +1,63 @@
+##########################################
+#
+# sparkswap Broker-CLI and Broker-Daemon
+# https://sparkswap.com
+#
+##########################################
+
+version: '2.4'
+
+services:
+  sparkswapd:
+    image: sparkswap_sparkswapd:latest
+    depends_on:
+      - lnd_btc
+      - lnd_ltc
+    volumes:
+      - './broker-daemon:/home/app/broker-daemon/'
+      # TODO: This can be removed once utils are moved to a shared repo or into
+      # the broker-daemon itself. broker-daemon relies on these utils for ./broker-daemon/bin/sparkswapd
+      - './broker-cli/utils:/home/app/broker-cli/utils/'
+      - './proto:/home/app/proto/'
+      - './scripts:/home/app/scripts/'
+    environment:
+      # WARNING: only disable Relayer SSL/AUTH during development
+      - DISABLE_RELAYER_AUTH=false
+
+  btcd:
+    image: sparkswap_btcd:latest
+    volumes:
+      - shared:/shared
+      - bitcoin:/data
+    environment:
+      - RPC_USER=${BTC_RPC_USER}
+      - RPC_PASS=${BTC_RPC_PASS}
+      - NETWORK=${NETWORK}
+      - DEBUG=info
+      - DATA_DIR=/data
+      - LOG_DIR=/data
+      - RPC_KEY=/secure/rpc.key
+      - RPC_CERT=/shared/rpc-btc.cert
+      - RPC_LISTEN=0.0.0.0
+    networks:
+      - broker
+    entrypoint: ["./start-btcd.sh"]
+
+  ltcd:
+    image: sparkswap_ltcd:latest
+    volumes:
+      - shared:/shared
+      - litecoin:/data
+    environment:
+      - RPC_USER=${LTC_RPC_USER}
+      - RPC_PASS=${LTC_RPC_PASS}
+      - NETWORK=${NETWORK}
+      - DEBUG=info
+      - DATA_DIR=/data
+      - LOG_DIR=/data
+      - RPC_KEY=/secure/rpc.key
+      - RPC_CERT=/shared/rpc-ltc.cert
+      - RPC_LISTEN=0.0.0.0
+    networks:
+      - broker
+    entrypoint: ["./start-ltcd.sh"]

@@ -40,7 +40,8 @@ const SUPPORTED_COMMANDS = Object.freeze({
   NETWORK_ADDRESS: 'network-address',
   NETWORK_STATUS: 'network-status',
   RELEASE: 'release',
-  WITHDRAW: 'withdraw'
+  WITHDRAW: 'withdraw',
+  CREATE: 'create'
 })
 
 /**
@@ -207,7 +208,7 @@ async function networkAddress (args, opts, logger) {
 
     logger.info(paymentChannelNetworkAddress)
   } catch (e) {
-    logger.error(e)
+    logger.error(handleError(e))
   }
 }
 
@@ -252,7 +253,7 @@ async function networkStatus (args, opts, logger) {
     logger.info(` ${market.bold.white}`)
     logger.info(statusTable.toString())
   } catch (e) {
-    logger.error(e)
+    logger.error(handleError(e))
   }
 }
 
@@ -348,6 +349,45 @@ async function withdraw (args, opts, logger) {
   }
 }
 
+/**
+ * create
+ *
+ * ex: `sparkswap wallet create`
+ *
+ * @function
+ * @param {Object} args
+ * @param {String} args.symbol
+ * @param {Object} opts
+ * @param {Logger} logger
+ * @return {Void}
+ */
+async function create (args, opts, logger) {
+  const { symbol } = args
+  const { rpcAddress = null } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+
+    const password = await askQuestion(`Please enter a password:`, { silent: true })
+    const confirmPass = await askQuestion(`Please confirm password:`, { silent: true })
+
+    if (password !== confirmPass) {
+      return logger.error('Error: Passwords did not match, please try again'.red)
+    }
+
+    const { recoverySeed } = await client.walletService.createWallet({ symbol, password })
+
+    logger.info('IMPORTANT: Please make a copy of the recovery seed below as you WILL NOT')
+    logger.info('be able to recover this information again. We recommend that you write')
+    logger.info('down all the secret words, and re-confirm the order they are written down')
+    logger.info('')
+    logger.info('')
+    logger.info(recoverySeed)
+  } catch (e) {
+    logger.error(handleError(e))
+  }
+}
+
 module.exports = (program) => {
   program
     .command('wallet', 'Commands to handle a wallet instance')
@@ -411,7 +451,7 @@ module.exports = (program) => {
           const { walletAddress } = opts
 
           if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
-            throw new Error(`Provided symbol is not a valid currency for the exchange`)
+            throw new Error(`Provided symbol is not a valid currency for the broker`)
           }
 
           args.symbol = symbol
@@ -419,6 +459,16 @@ module.exports = (program) => {
           args.address = walletAddress
 
           return withdraw(args, opts, logger)
+        case SUPPORTED_COMMANDS.CREATE:
+          symbol = symbol.toUpperCase()
+
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
+            throw new Error(`Provided symbol is not a valid currency for the broker`)
+          }
+
+          args.symbol = symbol
+
+          return create(args, opts, logger)
       }
     })
     .command(`wallet ${SUPPORTED_COMMANDS.BALANCE}`, 'Current daemon wallet balance')
@@ -438,4 +488,6 @@ module.exports = (program) => {
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .argument('<amount>', 'Amount of currency to commit to the relayer', validations.isDecimal)
     .option('--wallet-address <wallet-address>', 'Address to send the coins to', validations.isHost)
+    .command(`wallet ${SUPPORTED_COMMANDS.CREATE}`, 'Create a wallet')
+    .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
 }

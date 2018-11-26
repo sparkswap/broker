@@ -13,6 +13,10 @@ const grpcGateway = require('./grpc-gateway')
 const createHttpServer = require('./create-http-server')
 const timestampToNano = require('./timestamp-to-nano')
 const generateId = require('./generate-id')
+const exponentialBackoff = require('./exponential-backoff')
+const delay = require('./delay')
+const eachRecord = require('./each-record')
+const Checksum = require('./checksum')
 
 module.exports = {
   getRecords,
@@ -29,5 +33,9 @@ module.exports = {
   grpcGateway,
   createHttpServer,
   timestampToNano,
-  generateId
+  generateId,
+  exponentialBackoff,
+  delay,
+  eachRecord,
+  Checksum
 }

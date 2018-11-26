@@ -545,9 +545,9 @@ describe('OrderStateMachine', () => {
     let orderId
     let swapHash
     let inboundSymbol
-    let inboundAmount
+    let inboundFillAmount
     let outboundSymbol
-    let outboundAmount
+    let outboundFillAmount
     let engine
 
     beforeEach(async () => {
@@ -556,22 +556,22 @@ describe('OrderStateMachine', () => {
       orderId = '1234'
       swapHash = '0q9wudf09asdf'
       inboundSymbol = 'LTC'
-      inboundAmount = '10000'
+      inboundFillAmount = '10000'
       outboundSymbol = 'BTC'
-      outboundAmount = '100'
+      outboundFillAmount = '100'
 
       fakeOrder = {
         orderId,
         swapHash,
-        inboundAmount,
+        inboundFillAmount,
         inboundSymbol,
         outboundSymbol,
-        outboundAmount,
+        outboundFillAmount,
         paramsForPrepareSwap: {
           orderId,
           swapHash,
           symbol: inboundSymbol,
-          amount: inboundAmount
+          amount: inboundFillAmount
         }
       }
       engine = { prepareSwap: prepareSwapStub }
@@ -598,7 +598,7 @@ describe('OrderStateMachine', () => {
       await osm.execute()
 
       expect(prepareSwapStub).to.have.been.calledOnce()
-      expect(prepareSwapStub).to.have.been.calledWith(orderId, swapHash, inboundAmount)
+      expect(prepareSwapStub).to.have.been.calledWith(orderId, swapHash, inboundFillAmount)
     })
 
     it('authorizes the request', async () => {
@@ -831,78 +831,6 @@ describe('OrderStateMachine', () => {
       expect(osm.state).to.be.equal('created')
       expect(store.put).to.have.been.calledOnce()
       expect(store.put).to.have.been.calledWith(fakeKey, sinon.match('"state":"created"'))
-    })
-  })
-
-  describe('::getAll', () => {
-    let fakeRecords
-    let fakeOrder
-    let state
-    let store
-    let logger
-
-    beforeEach(() => {
-      state = 'created'
-
-      fakeRecords = [ ['fakeKey', JSON.stringify({
-        order: { my: 'object' },
-        state
-      })] ]
-
-      store = {
-        put: sinon.stub(),
-        get: sinon.stub(),
-        createReadStream: sinon.stub().callsFake(() => {
-          return {
-            on: async function (event, fn) {
-              if (event === 'data') {
-                for (var i = 0; i < fakeRecords.length; i++) {
-                  await delay(5)
-                  fn({ key: fakeRecords[i][0], value: fakeRecords[i][1] })
-                }
-              } else if (event === 'end') {
-                await delay(fakeRecords.length * 5 + 5)
-                fn()
-              }
-            }
-          }
-        })
-      }
-
-      logger = {
-        info: sinon.stub(),
-        debug: sinon.stub(),
-        error: sinon.stub()
-      }
-
-      fakeOrder = 'myorder'
-      Order.fromObject = sinon.stub().returns(fakeOrder)
-    })
-
-    it('gets all records from the store', async () => {
-      await OrderStateMachine.getAll({ store, logger })
-
-      expect(store.createReadStream).to.have.been.calledOnce()
-    })
-
-    it('instantiates an OrderStateMachine for each record', async () => {
-      const osms = await OrderStateMachine.getAll({ store, logger })
-
-      expect(osms).to.have.lengthOf(1)
-      expect(osms[0]).to.be.instanceOf(OrderStateMachine)
-    })
-
-    it('moves the OrderStateMachine to the correct state', async () => {
-      const osms = await OrderStateMachine.getAll({ store, logger })
-
-      expect(osms).to.have.lengthOf(1)
-      expect(osms[0]).to.have.property('state', state)
-    })
-
-    it('assigns the order to the state machine', async () => {
-      const osms = await OrderStateMachine.getAll({ store, logger })
-
-      expect(osms[0].order).to.be.eql(fakeOrder)
     })
   })
 
