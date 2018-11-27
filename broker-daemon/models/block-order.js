@@ -1,11 +1,12 @@
 const { promisify } = require('util')
 const nano = require('nano-seconds')
+const Order = require('./order')
+const Fill = require('./fill')
 
 const { Big, nanoToDatetime, getRecords } = require('../utils')
 const CONFIG = require('../config')
 const { BlockOrderNotFoundError } = require('./errors')
-const Order = require('./order')
-const Fill = require('./fill')
+const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 
 /**
  * @class Model representing Block Orders
@@ -206,6 +207,21 @@ class BlockOrder {
     })
   }
 
+  get activeFills () {
+    const { CREATED, FILLED } = FillStateMachine.STATES
+    return this.fills.filter(fill => [CREATED, FILLED].includes(fill.state))
+  }
+
+  get activeOrders () {
+    const { CREATED, PLACED, EXECUTING } = OrderStateMachine.STATES
+    return this.orders.filter(order => [CREATED, PLACED, EXECUTING].includes(order.state))
+  }
+
+  get openOrders () {
+    const { CREATED, PLACED } = OrderStateMachine.STATES
+    return this.orders.filter(order => [CREATED, PLACED].includes(order.state))
+  }
+
   /**
    * get boolean for if the blockOrder is a bid
    * @return {Boolean}
@@ -251,18 +267,47 @@ class BlockOrder {
     return this
   }
 
+  activeOutboundAmount () {
+    const activeOrderAmount = this.activeOrders.reduce((acc, {order, state}) => {
+      if (state === OrderStateMachine.STATES.EXECUTING) {
+        return acc.plus(order.outboundFillAmount)
+      } else {
+        return acc.plus(order.outboundAmount)
+      }
+    }, Big(0))
+    const activeFillAmount = this.activeFills.reduce((acc, {fill}) => {
+      return acc.plus(fill.outboundAmount)
+    }, Big(0))
+
+    return activeOrderAmount.plus(activeFillAmount)
+  }
+
+  activeInboundAmount () {
+    const activeOrderAmount = this.activeOrders.reduce((acc, {order, state}) => {
+      if (state === OrderStateMachine.STATES.EXECUTING) {
+        return acc.plus(order.inboundFillAmount)
+      } else {
+        return acc.plus(order.inboundAmount)
+      }
+    }, Big(0))
+    const activeFillAmount = this.activeFills.reduce((acc, {fill}) => {
+      return acc.plus(fill.inboundAmount)
+    }, Big(0))
+
+    return activeOrderAmount.plus(activeFillAmount)
+  }
+
   async populateOrders (store) {
     const orders = await getRecords(
       store,
       (key, value) => {
-        const { order, state } = JSON.parse(value)
-        return { order: Order.fromObject(key, order), state }
+        const { order, state, error } = JSON.parse(value)
+        return { order: Order.fromObject(key, order), state, error }
       },
       // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
       // its prefix range.
       Order.rangeForBlockOrder(this.id)
     )
-
     this.orders = orders
   }
 
@@ -270,14 +315,13 @@ class BlockOrder {
     const fills = await getRecords(
       store,
       (key, value) => {
-        const { fill, state } = JSON.parse(value)
-        return { fill: Fill.fromObject(key, fill), state }
+        const { fill, state, error } = JSON.parse(value)
+        return { fill: Fill.fromObject(key, fill), state, error }
       },
-      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
+      // limit the fills we retrieve to those that belong to this blockOrder, i.e. those that are in
       // its prefix range.
       Fill.rangeForBlockOrder(this.id)
     )
-
     this.fills = fills
   }
 
