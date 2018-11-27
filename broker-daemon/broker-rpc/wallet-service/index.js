@@ -9,6 +9,7 @@ const getTradingCapacities = require('./get-trading-capacities')
 const releaseChannels = require('./release-channels')
 const withdrawFunds = require('./withdraw-funds')
 const createWallet = require('./create-wallet')
+const unlockWallet = require('./unlock-wallet')
 
 /**
  * WalletService provides interactions with an engine's crypto wallet
@@ -53,7 +54,8 @@ class WalletService {
       getTradingCapacities: new GrpcUnaryMethod(getTradingCapacities, this.messageId('getTradingCapacities'), { logger, engines, orderbooks, auth }, { GetTradingCapacitiesResponse }).register(),
       releaseChannels: new GrpcUnaryMethod(releaseChannels, this.messageId('releaseChannels'), { logger, engines, orderbooks, auth }, { EmptyResponse }).register(),
       withdrawFunds: new GrpcUnaryMethod(withdrawFunds, this.messageId('withdrawFunds'), { logger, engines, auth }, { WithdrawFundsResponse }).register(),
-      createWallet: new GrpcUnaryMethod(createWallet, this.messageId('createWallet'), { logger, engines, auth }, { CreateWalletResponse }).register()
+      createWallet: new GrpcUnaryMethod(createWallet, this.messageId('createWallet'), { logger, engines, auth }, { CreateWalletResponse }).register(),
+      unlockWallet: new GrpcUnaryMethod(unlockWallet, this.messageId('unlockWallet'), { logger, engines, auth }, { EmptyResponse }).register()
     }
   }
 

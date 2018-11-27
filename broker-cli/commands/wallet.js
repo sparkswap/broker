@@ -41,7 +41,8 @@ const SUPPORTED_COMMANDS = Object.freeze({
   NETWORK_STATUS: 'network-status',
   RELEASE: 'release',
   WITHDRAW: 'withdraw',
-  CREATE: 'create'
+  CREATE: 'create',
+  UNLOCK: 'unlock'
 })
 
 /**
@@ -350,7 +351,7 @@ async function withdraw (args, opts, logger) {
 }
 
 /**
- * create
+ * Create a wallet
  *
  * ex: `sparkswap wallet create`
  *
@@ -383,6 +384,33 @@ async function create (args, opts, logger) {
     logger.info('')
     logger.info('')
     logger.info(recoverySeed)
+  } catch (e) {
+    logger.error(handleError(e))
+  }
+}
+
+/**
+ * Unlock a wallet
+ *
+ * ex: `sparkswap wallet unlock`
+ *
+ * @function
+ * @param {Object} args
+ * @param {String} args.symbol
+ * @param {Object} opts
+ * @param {String} [opts.rpcAddress=null]
+ * @param {Logger} logger
+ * @return {Void}
+ */
+async function unlock (args, opts, logger) {
+  const { symbol } = args
+  const { rpcAddress = null } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+    const password = await askQuestion(`Enter the wallet password:`, { silent: true })
+    await client.walletService.unlockWallet({ symbol, password })
+    logger.info(`Successfully Unlocked ${symbol.toUpperCase()} Wallet!`.green)
   } catch (e) {
     logger.error(handleError(e))
   }
@@ -469,6 +497,16 @@ module.exports = (program) => {
           args.symbol = symbol
 
           return create(args, opts, logger)
+        case SUPPORTED_COMMANDS.UNLOCK:
+          symbol = symbol.toUpperCase()
+
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
+            throw new Error(`Provided symbol is not a valid currency for the broker`)
+          }
+
+          args.symbol = symbol
+
+          return unlock(args, opts, logger)
       }
     })
     .command(`wallet ${SUPPORTED_COMMANDS.BALANCE}`, 'Current daemon wallet balance')
@@ -489,5 +527,7 @@ module.exports = (program) => {
     .argument('<amount>', 'Amount of currency to commit to the relayer', validations.isDecimal)
     .option('--wallet-address <wallet-address>', 'Address to send the coins to', validations.isHost)
     .command(`wallet ${SUPPORTED_COMMANDS.CREATE}`, 'Create a wallet')
+    .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
+    .command(`wallet ${SUPPORTED_COMMANDS.UNLOCK}`, 'Unlock a wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
 }
