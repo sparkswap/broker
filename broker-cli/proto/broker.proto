@@ -132,14 +132,10 @@ service AdminService {
    * ```
    *
    * ```shell
-   * HealthCheck: {
-   *   "engines": {
-   *     "BTC": "OK",
-   *     "LTC": "OK"
-   *   },
-   *   "relayerStatus": "OK",
-   *   "daemonStatus": "OK"
-   * }
+   * Engine status for BTC: OK
+   * Engine status for LTC: OK
+   * Relayer Status: OK
+   * Daemon Status: OK
    * ```
    */
   rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse) {
