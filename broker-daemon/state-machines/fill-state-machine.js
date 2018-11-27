@@ -167,7 +167,13 @@ const FillStateMachine = StateMachine.factory({
       const swapHash = await inboundEngine.createSwapHash(this.fill.order.orderId, inboundAmount)
       this.fill.setSwapHash(swapHash)
 
-      const { fillId, feePaymentRequest, depositPaymentRequest } = await this.relayer.takerService.createFill(this.fill.paramsForCreate)
+      const { fillId, feePaymentRequest, depositPaymentRequest, orderStatusError } = await this.relayer.takerService.createFill(this.fill.paramsForCreate)
+
+      if (orderStatusError) {
+        this.logger.error('Could not fill order, order was not in a good state', { orderStatusError })
+        throw new Error(orderStatusError)
+      }
+
       this.fill.setCreatedParams({ fillId, feePaymentRequest, depositPaymentRequest })
 
       this.logger.info(`Created fill ${this.fill.fillId} on the relayer`)
@@ -230,8 +236,12 @@ const FillStateMachine = StateMachine.factory({
 
       const authorization = this.relayer.identity.authorize(fillId)
       this.logger.debug(`Generated authorization for ${fillId}`, authorization)
-      await this.relayer.takerService.fillOrder({ fillId, feeRefundPaymentRequest, depositRefundPaymentRequest, authorization })
+      const { orderStatusError } = await this.relayer.takerService.fillOrder({ fillId, feeRefundPaymentRequest, depositRefundPaymentRequest, authorization })
 
+      if (orderStatusError) {
+        this.logger.error('Could not fill order, order was not in a good state', { orderStatusError })
+        throw new Error(orderStatusError)
+      }
       this.logger.info(`Filled order ${fillId} on the relayer`)
     },
 
