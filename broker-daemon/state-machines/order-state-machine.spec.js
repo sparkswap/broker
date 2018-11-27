@@ -545,9 +545,9 @@ describe('OrderStateMachine', () => {
     let orderId
     let swapHash
     let inboundSymbol
-    let inboundAmount
+    let inboundFillAmount
     let outboundSymbol
-    let outboundAmount
+    let outboundFillAmount
     let engine
 
     beforeEach(async () => {
@@ -556,22 +556,22 @@ describe('OrderStateMachine', () => {
       orderId = '1234'
       swapHash = '0q9wudf09asdf'
       inboundSymbol = 'LTC'
-      inboundAmount = '10000'
+      inboundFillAmount = '10000'
       outboundSymbol = 'BTC'
-      outboundAmount = '100'
+      outboundFillAmount = '100'
 
       fakeOrder = {
         orderId,
         swapHash,
-        inboundAmount,
+        inboundFillAmount,
         inboundSymbol,
         outboundSymbol,
-        outboundAmount,
+        outboundFillAmount,
         paramsForPrepareSwap: {
           orderId,
           swapHash,
           symbol: inboundSymbol,
-          amount: inboundAmount
+          amount: inboundFillAmount
         }
       }
       engine = { prepareSwap: prepareSwapStub }
@@ -598,7 +598,7 @@ describe('OrderStateMachine', () => {
       await osm.execute()
 
       expect(prepareSwapStub).to.have.been.calledOnce()
-      expect(prepareSwapStub).to.have.been.calledWith(orderId, swapHash, inboundAmount)
+      expect(prepareSwapStub).to.have.been.calledWith(orderId, swapHash, inboundFillAmount)
     })
 
     it('authorizes the request', async () => {

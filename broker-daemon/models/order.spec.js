@@ -232,7 +232,31 @@ describe('Order', () => {
       order = new Order(blockOrderId, params)
     })
 
+    describe('fill getters', () => {
+      beforeEach(() => {
+        order.fillAmount = '9000'
+      })
+
+      it('defines an alias for fillAmount', () => {
+        expect(order).to.have.property('baseFillAmount', '9000')
+      })
+
+      it('defines a converter to the counter amount for the fill', () => {
+        expect(order).to.have.property('counterFillAmount', '90000')
+      })
+
+      it('throws if trying to access the counterFillAmount without a fillAmount', () => {
+        order.fillAmount = null
+
+        expect(() => order.counterFillAmount).to.throw()
+      })
+    })
+
     describe('inbound/outbound getters', () => {
+      beforeEach(() => {
+        order.fillAmount = '9000'
+      })
+
       it('defines an inbound symbol getter', () => {
         expect(order).to.have.property('inboundSymbol', params.baseSymbol)
       })
@@ -247,6 +271,26 @@ describe('Order', () => {
 
       it('defines an outbound amount getter', () => {
         expect(order).to.have.property('outboundAmount', params.counterAmount)
+      })
+
+      it('defines an inbound fill amount getter', () => {
+        expect(order).to.have.property('inboundFillAmount', '9000')
+      })
+
+      it('throws if trying to use the inbound fill amount without a fill amount', () => {
+        order.fillAmount = null
+
+        expect(() => order.inboundFillAmount).to.throw()
+      })
+
+      it('defines an outbound fill amount getter', () => {
+        expect(order).to.have.property('outboundFillAmount', '90000')
+      })
+
+      it('throws if trying to use the outbound fill amount without a fill amount', () => {
+        order.fillAmount = null
+
+        expect(() => order.outboundFillAmount).to.throw()
       })
     })
 
@@ -297,15 +341,16 @@ describe('Order', () => {
     describe('get paramsForPrepareSwap', () => {
       it('defines a getter for params required to prepare a swap in an engine', () => {
         const swapHash = 'asoifdjaofj02309832'
+        const fillAmount = '9000'
         const fakeId = 'myid'
-        Object.assign(order, { swapHash, orderId: fakeId })
+        Object.assign(order, { swapHash, orderId: fakeId, fillAmount })
 
         expect(order).to.have.property('paramsForPrepareSwap')
         expect(order.paramsForPrepareSwap).to.be.eql({
           orderId: fakeId,
           swapHash: swapHash,
           symbol: params.baseSymbol,
-          amount: params.baseAmount
+          amount: fillAmount
         })
       })
 

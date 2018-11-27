@@ -1,9 +1,11 @@
 const { promisify } = require('util')
 const nano = require('nano-seconds')
 
-const { Big, nanoToDatetime } = require('../utils')
+const { Big, nanoToDatetime, getRecords } = require('../utils')
 const CONFIG = require('../config')
 const { BlockOrderNotFoundError } = require('./errors')
+const Order = require('./order')
+const Fill = require('./fill')
 
 /**
  * @class Model representing Block Orders
@@ -55,7 +57,7 @@ class BlockOrder {
       throw new Error(`Amount is too precise for ${this.baseSymbol}`)
     }
 
-    this.openOrders = []
+    this.orders = []
     this.fills = []
   }
 
@@ -130,6 +132,38 @@ class BlockOrder {
   }
 
   /**
+  * Convenience getter for outboundAmount
+  * @return {String} String representation of the amount of currency we will send outbound for the order
+  */
+  get outboundAmount () {
+    return this.isBid ? this.counterAmount : this.baseAmount
+  }
+
+  /**
+  * Convenience getter for inboundAmount
+  * @return {String} String representation of the amount of currency we will receive inbound for the order
+  */
+  get inboundAmount () {
+    return this.isBid ? this.baseAmount : this.counterAmount
+  }
+
+  /**
+  * Get the symbol of the currency we will receive inbound
+  * @return {String} Currency symbol
+  */
+  get inboundSymbol () {
+    return this.isBid ? this.baseSymbol : this.counterSymbol
+  }
+
+  /**
+  * Get the symbol of the currency we will send outbound
+  * @return {String} Currency symbol
+  */
+  get outboundSymbol () {
+    return this.isBid ? this.counterSymbol : this.baseSymbol
+  }
+
+  /**
    * Price of an order expressed in terms of the smallest unit of each currency
    * @return {String} Decimal of the price expressed as a string with 16 decimal places
    */
@@ -173,6 +207,22 @@ class BlockOrder {
   }
 
   /**
+   * get boolean for if the blockOrder is a bid
+   * @return {Boolean}
+   */
+  get isBid () {
+    return this.side === BlockOrder.SIDES.BID
+  }
+
+  /**
+  * get boolean for if the blockOrder is an ask
+  * @return {Boolean}
+   */
+  get isAsk () {
+    return this.side === BlockOrder.SIDES.ASK
+  }
+
+  /**
    * Move the block order to a failed status
    * @return {BlockOrder} Modified block order instance
    */
@@ -201,6 +251,36 @@ class BlockOrder {
     return this
   }
 
+  async populateOrders (store) {
+    const orders = await getRecords(
+      store,
+      (key, value) => {
+        const { order, state } = JSON.parse(value)
+        return { order: Order.fromObject(key, order), state }
+      },
+      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
+      // its prefix range.
+      Order.rangeForBlockOrder(this.id)
+    )
+
+    this.orders = orders
+  }
+
+  async populateFills (store) {
+    const fills = await getRecords(
+      store,
+      (key, value) => {
+        const { fill, state } = JSON.parse(value)
+        return { fill: Fill.fromObject(key, fill), state }
+      },
+      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
+      // its prefix range.
+      Fill.rangeForBlockOrder(this.id)
+    )
+
+    this.fills = fills
+  }
+
   /**
    * serialize a block order for transmission via grpc
    * @return {Object} Object to be serialized into a GRPC message
@@ -209,7 +289,7 @@ class BlockOrder {
     const baseAmountFactor = this.baseCurrencyConfig.quantumsPerCommon
     const counterAmountFactor = this.counterCurrencyConfig.quantumsPerCommon
 
-    const openOrders = this.openOrders.map(({ order, state, error }) => {
+    const orders = this.orders.map(({ order, state, error }) => {
       const baseCommonAmount = Big(order.baseAmount).div(baseAmountFactor)
       const counterCommonAmount = Big(order.counterAmount).div(counterAmountFactor)
 
@@ -244,7 +324,7 @@ class BlockOrder {
       status: this.status,
       timestamp: this.timestamp,
       datetime: this.datetime,
-      openOrders: openOrders,
+      orders,
       fills: fills
     }
 

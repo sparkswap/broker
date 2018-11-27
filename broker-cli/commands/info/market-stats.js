@@ -11,7 +11,7 @@ const { handleError } = require('../../utils')
  * @param {Logger} logger
  */
 async function marketStats (opts, logger) {
-  const { market, rpcAddress = null } = opts
+  const { market, rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)

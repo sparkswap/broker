@@ -86,7 +86,30 @@ class Order {
   }
 
   /**
-   * Get the symbol of the currency we will receive inbound if the order is completed
+   * Alias for .fillAmount that pairs better with `counterFillAmount`
+   * @return {String} 64-bit integer represented as a string
+   */
+  get baseFillAmount () {
+    return this.fillAmount
+  }
+
+  /**
+   * Get the amount of the order's fill in the counter currency's smallest unit
+   * @return {String} 64-bit integer represented as a string
+   */
+  get counterFillAmount () {
+    if (!this.fillAmount) {
+      throw new Error(`Cannot calculate counterFillAmount without a fillAmount`)
+    }
+
+    const counterFillAmount = Big(this.counterAmount).div(this.baseAmount).times(this.fillAmount)
+
+    // we are dealing in integer units, so we round
+    return counterFillAmount.round(0).toString()
+  }
+
+  /**
+   * Get the symbol of the currency we will receive inbound
    * @return {String} Currency symbol
    */
   get inboundSymbol () {
@@ -94,7 +117,7 @@ class Order {
   }
 
   /**
-   * Get the symbol of the currency we will send outbound if the order is completed
+   * Get the symbol of the currency we will send outbound
    * @return {String} Currency symbol
    */
   get outboundSymbol () {
@@ -102,19 +125,43 @@ class Order {
   }
 
   /**
-   * Get the amount (as an integer in its currency's smallest units) that we will receive inbound if this order were to be completely filled
-   * @return {String} 64-bit integer represented as a string
+   * Get the symbol of the currency we will receive inbound
+   * @return {String} Currency symbol
    */
   get inboundAmount () {
     return this.side === Order.SIDES.BID ? this.baseAmount : this.counterAmount
   }
 
   /**
-   * Get the amount (as an integer in its currency's smallest units) that we will send outbound if this order were to be completely filled
-   * @return {String} 64-bit integer represented as a string
+   * Get the symbol of the currency we will send outbound
+   * @return {String} Currency symbol
    */
   get outboundAmount () {
     return this.side === Order.SIDES.BID ? this.counterAmount : this.baseAmount
+  }
+
+  /**
+   * Get the amount (as an integer in its currency's smallest units) that we will receive inbound for this order
+   * @return {String} 64-bit integer represented as a string
+   */
+  get inboundFillAmount () {
+    if (!this.fillAmount) {
+      throw new Error(`Cannot calculate inboundFillAmount without a fillAmount`)
+    }
+
+    return this.side === Order.SIDES.BID ? this.baseFillAmount : this.counterFillAmount
+  }
+
+  /**
+   * Get the amount (as an integer in its currency's smallest units) that we will send outbound for this order
+   * @return {String} 64-bit integer represented as a string
+   */
+  get outboundFillAmount () {
+    if (!this.fillAmount) {
+      throw new Error(`Cannot calculate outboundFillAmount without a fillAmount`)
+    }
+
+    return this.side === Order.SIDES.BID ? this.counterFillAmount : this.baseFillAmount
   }
 
   /**
@@ -132,7 +179,7 @@ class Order {
    * @return {Object} Object of parameters the engine expects
    */
   get paramsForPrepareSwap () {
-    const { orderId, swapHash, inboundSymbol, inboundAmount } = this
+    const { orderId, swapHash, inboundSymbol, inboundFillAmount } = this
 
     if (!orderId) {
       throw new Error(`paramsForGetPreimage: orderId is missing.`)
@@ -143,11 +190,11 @@ class Order {
     if (!inboundSymbol) {
       throw new Error(`paramsForGetPreimage: inboundSymbol is missing.`)
     }
-    if (!inboundAmount) {
-      throw new Error(`paramsForGetPreimage: inboundAmount is missing.`)
+    if (!inboundFillAmount) {
+      throw new Error(`paramsForGetPreimage: inboundFillAmount is missing.`)
     }
 
-    return { orderId, swapHash, symbol: inboundSymbol, amount: inboundAmount }
+    return { orderId, swapHash, symbol: inboundSymbol, amount: inboundFillAmount }
   }
 
   get paramsForGetPreimage () {

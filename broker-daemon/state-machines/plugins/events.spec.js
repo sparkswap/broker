@@ -1,7 +1,7 @@
 const path = require('path')
 const { expect, sinon, rewire } = require('test/test-helper')
 
-const StateMachineEvents = rewire(path.resolve(__dirname, 'events'))
+const StateMachineEvents = rewire(path.resolve(__dirname, 'state-machine-events'))
 const StateMachine = require('../state-machine')
 
 describe('StateMachineEvents', () => {
