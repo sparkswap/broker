@@ -248,6 +248,8 @@ const OrderStateMachine = StateMachine.factory({
         this.logger.debug(`Skipping paying deposit invoice for ${orderId}, not required`)
       }
 
+      // Note that if the fee or deposit is not required the corresponding refund payment
+      // requests will be undefined as they will be `await`ing an undefined promise
       const [
         feeRefundPaymentRequest,
         depositRefundPaymentRequest
