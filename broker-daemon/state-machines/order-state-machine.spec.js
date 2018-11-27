@@ -342,7 +342,6 @@ describe('OrderStateMachine', () => {
   describe('#place', () => {
     let fakeOrder
     let osm
-    let createRefundInvoiceStub
     let placeOrderStub
     let placeOrderStreamStub
     let invoice
