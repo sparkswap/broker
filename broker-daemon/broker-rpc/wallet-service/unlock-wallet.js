@@ -19,7 +19,7 @@ async function unlockWallet ({ logger, params, engines }, { EmptyResponse }) {
 
   if (!engine) {
     logger.error(`Could not find engine: ${symbol}`)
-    throw new PublicError(`Unable to create wallet for engine: ${symbol}`)
+    throw new PublicError(`Unable to unlock wallet. No engine available for ${symbol}`)
   }
 
   await engine.unlockWallet(password)

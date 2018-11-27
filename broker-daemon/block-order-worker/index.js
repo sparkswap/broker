@@ -1,7 +1,7 @@
 const EventEmitter = require('events')
 const { promisify } = require('util')
 
-const { BlockOrder, Order, Fill } = require('../models')
+const { BlockOrder, Order } = require('../models')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const {
   Big,
@@ -99,43 +99,27 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No engine available for ${orderbook.counterSymbol}.`)
     }
 
+    const { activeOutboundAmount, activeInboundAmount } = await this.calculateActiveFunds(marketName, side)
+
     const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
-    const baseEngine = this.engines.get(blockOrder.baseSymbol)
-    const counterEngine = this.engines.get(blockOrder.counterSymbol)
-    const [{address: counterSymbolAddress}, {address: baseSymbolAddress}] = await Promise.all([
-      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.counterSymbol}),
-      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.baseSymbol})
+    const outboundEngine = this.engines.get(blockOrder.outboundSymbol)
+    const inboundEngine = this.engines.get(blockOrder.inboundSymbol)
+    const [{address: outboundAddress}, {address: inboundAddress}] = await Promise.all([
+      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.outboundSymbol}),
+      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.inboundSymbol})
     ])
 
-    if (blockOrder.isBid) {
-      const outboundBalanceIsSufficient = await counterEngine.isBalanceSufficient(counterSymbolAddress, blockOrder.counterAmount)
+    const outboundBalanceIsSufficient = await outboundEngine.isBalanceSufficient(outboundAddress, Big(blockOrder.outboundAmount).plus(activeOutboundAmount))
 
-      // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
-      if (!outboundBalanceIsSufficient) {
-        throw new Error(`Insufficient funds in outbound ${blockOrder.counterSymbol} channel to create order`)
-      }
-
-      const inboundBalanceIsSufficient = await baseEngine.isBalanceSufficient(baseSymbolAddress, blockOrder.baseAmount, {outbound: false})
-      // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
-      if (!inboundBalanceIsSufficient) {
-        throw new Error(`Insufficient funds in inbound ${blockOrder.baseSymbol} channel to create order`)
-      }
+    // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
+    if (!outboundBalanceIsSufficient) {
+      throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channel to create order`)
     }
 
-    if (blockOrder.isAsk) {
-      const outboundBalanceIsSufficient = await baseEngine.isBalanceSufficient(baseSymbolAddress, blockOrder.baseAmount)
-
-      // If the user tries to place an order for more than they hold in the base engine channel, throw an error
-      if (!outboundBalanceIsSufficient) {
-        throw new Error(`Insufficient funds in outbound ${blockOrder.baseSymbol} channel to create order`)
-      }
-
-      const inboundBalanceIsSufficient = await counterEngine.isBalanceSufficient(counterSymbolAddress, blockOrder.counterAmount, {outbound: false})
-
-      // If the user tries to place an order and the relayer does not have the funds to complete in the counter channel, throw an error
-      if (!inboundBalanceIsSufficient) {
-        throw new Error(`Insufficient funds in inbound ${blockOrder.counterSymbol} channel to create order`)
-      }
+    const inboundBalanceIsSufficient = await inboundEngine.isBalanceSufficient(inboundAddress, Big(blockOrder.inboundAmount).plus(activeInboundAmount), {outbound: false})
+    // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
+    if (!inboundBalanceIsSufficient) {
+      throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order`)
     }
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
@@ -152,6 +136,29 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
+   * Adds up active/committed funds in inbound and outbound orders/fills
+   *
+   * @param {String} marketName  Name of the market to creat the block order in (e.g. BTC/LTC)
+   * @param {String} side        Side of the market to take (e.g. BID or ASK)
+   * @return {Object} contains activeOutboundAmount and activeInboundAmount of orders/fills
+   */
+  async calculateActiveFunds (marketName, side) {
+    const blockOrders = await this.getBlockOrders(marketName)
+
+    const blockOrdersForSide = blockOrders.filter(blockOrder => blockOrder.side === side)
+    let activeOutboundAmount = Big(0)
+    let activeInboundAmount = Big(0)
+    for (let blockOrder of blockOrdersForSide) {
+      await blockOrder.populateOrders(this.ordersStore)
+      await blockOrder.populateFills(this.fillsStore)
+      activeOutboundAmount = activeOutboundAmount.plus(blockOrder.activeOutboundAmount())
+      activeInboundAmount = activeInboundAmount.plus(blockOrder.activeInboundAmount())
+    }
+
+    return { activeOutboundAmount, activeInboundAmount }
+  }
+
+  /**
    * Get an existing block order
    * @param  {String} blockOrderId ID of the block order
    * @return {BlockOrder}
@@ -161,31 +168,10 @@ class BlockOrderWorker extends EventEmitter {
 
     const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
 
-    const orders = await getRecords(
-      this.ordersStore,
-      (key, value) => {
-        const { order, state } = JSON.parse(value)
-        return { order: Order.fromObject(key, order), state }
-      },
-      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
-      // its prefix range.
-      Order.rangeForBlockOrder(blockOrder.id)
-    )
-
-    const fills = await getRecords(
-      this.fillsStore,
-      (key, value) => {
-        const { fill, state } = JSON.parse(value)
-        return { fill: Fill.fromObject(key, fill), state }
-      },
-      // limit the fills we retrieve to those that belong to this blockOrder, i.e. those that are in
-      // its prefix range.
-      Fill.rangeForBlockOrder(blockOrder.id)
-    )
-
-    blockOrder.openOrders = orders
-    blockOrder.fills = fills
-
+    await Promise.all([
+      blockOrder.populateOrders(this.ordersStore),
+      blockOrder.populateFills(this.fillsStore)
+    ])
     return blockOrder
   }
 
@@ -198,23 +184,11 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info('Cancelling block order ', { id: blockOrderId })
 
     const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
+    await blockOrder.populateOrders(this.ordersStore)
 
-    const orders = await getRecords(
-      this.ordersStore,
-      (key, value) => {
-        const { order, state } = JSON.parse(value)
-        return { order: Order.fromObject(key, order), state }
-      },
-      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
-      // its prefix range.
-      Order.rangeForBlockOrder(blockOrder.id)
-    )
+    this.logger.info(`Found ${blockOrder.orders.length} orders associated with Block Order ${blockOrder.id}`)
 
-    this.logger.info(`Found ${orders.length} orders associated with Block Order ${blockOrder.id}`)
-
-    // filter for only orders we can cancel
-    const { CREATED, PLACED } = OrderStateMachine.STATES
-    const openOrders = orders.filter(({ state }) => state === CREATED || state === PLACED)
+    const openOrders = blockOrder.openOrders
 
     this.logger.info(`Found ${openOrders.length} orders in a state to be cancelled for Block order ${blockOrder.id}`)
 
@@ -231,7 +205,7 @@ class BlockOrderWorker extends EventEmitter {
       throw e
     }
 
-    this.logger.info(`Cancelled ${orders.length} underlying orders for ${blockOrder.id}`)
+    this.logger.info(`Cancelled ${openOrders.length} underlying orders for ${blockOrder.id}`)
 
     blockOrder.cancel()
 
@@ -355,7 +329,7 @@ class BlockOrderWorker extends EventEmitter {
     // and make sure that either is equal to how much we are trying to fill.
     let totalFilled = Big(0)
     totalFilled = blockOrder.fills.reduce((acc, fsm) => acc.plus(fsm.fill.fillAmount), totalFilled)
-    totalFilled = blockOrder.openOrders.reduce((acc, osm) => {
+    totalFilled = blockOrder.orders.reduce((acc, osm) => {
       // If the order has not been filled yet, then the `fillAmount` will be undefined
       // so we instead default to 0
       return acc.plus(osm.order.fillAmount || 0)

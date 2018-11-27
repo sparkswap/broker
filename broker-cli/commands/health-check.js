@@ -16,7 +16,7 @@ const { STATUS_CODES } = ENUMS
  */
 
 async function healthCheck (args, opts, logger) {
-  const { rpcAddress = null } = opts
+  const { rpcAddress } = opts
 
   try {
     const client = await new BrokerDaemonClient(rpcAddress)
@@ -49,6 +49,6 @@ async function healthCheck (args, opts, logger) {
 module.exports = (program) => {
   program
     .command('healthcheck', 'Checks the connection between Broker and the Exchange')
-    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
     .action(healthCheck)
 }

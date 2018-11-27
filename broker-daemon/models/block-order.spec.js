@@ -3,7 +3,6 @@ const { expect, sinon, rewire } = require('test/test-helper')
 const { Big } = require('../utils')
 
 const BlockOrder = rewire(path.resolve(__dirname, 'block-order'))
-const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const { BlockOrderNotFoundError } = require('./errors')
 
 describe('BlockOrder', () => {
@@ -252,6 +251,8 @@ describe('BlockOrder', () => {
     let CONFIG
     let nanoToDatetimeStub
     let timestamp
+    let Order
+    let Fill
 
     let reverts = []
 
@@ -284,6 +285,18 @@ describe('BlockOrder', () => {
           }
         ]
       }
+      Order = {
+        fromObject: sinon.stub(),
+        fromStorage: sinon.stub(),
+        rangeForBlockOrder: sinon.stub()
+      }
+      BlockOrder.__set__('Order', Order)
+
+      Fill = {
+        fromObject: sinon.stub(),
+        rangeForBlockOrder: sinon.stub()
+      }
+      BlockOrder.__set__('Fill', Fill)
 
       reverts.push(BlockOrder.__set__('CONFIG', CONFIG))
       reverts.push(BlockOrder.__set__('nanoToDatetime', nanoToDatetimeStub))
@@ -372,92 +385,80 @@ describe('BlockOrder', () => {
         expect(serialized).to.have.property('status', params.status)
       })
 
-      describe('openOrders', () => {
+      describe('orders', () => {
         let osm
 
         beforeEach(() => {
-          osm = OrderStateMachine.fromStore({
-            logger: {
-              info: sinon.stub(),
-              debug: sinon.stub(),
-              error: sinon.stub()
+          osm = {
+            order: {
+              orderId: 'mykey',
+              baseSymbol: 'BTC',
+              counterSymbol: 'XYZ',
+              side: 'BID',
+              baseAmount: '1000',
+              counterAmount: '10000',
+              makerAddress: 'bolt:1231243fasdf',
+              feePaymentRequest: 'lnbcasodifjoija',
+              depositPaymentRequest: 'lnbcaosdifjaosdfj'
             },
-            store: {
-              get: sinon.stub(),
-              put: sinon.stub(),
-              createReadStream: sinon.stub()
-            }
-          }, { key: 'blockid:mykey',
-            value: JSON.stringify({
-              order: {
-                baseSymbol: 'BTC',
-                counterSymbol: 'XYZ',
-                side: 'BID',
-                baseAmount: '1000',
-                counterAmount: '10000',
-                makerAddress: 'bolt:1231243fasdf',
-                feePaymentRequest: 'lnbcasodifjoija',
-                depositPaymentRequest: 'lnbcaosdifjaosdfj'
-              },
-              state: 'created',
-              history: []
-            })})
+            state: 'created'
+          }
         })
 
-        it('assigns an empty array if openOrders is not defined', () => {
+        it('assigns an empty array if orders is not defined', () => {
           const serialized = blockOrder.serialize()
 
-          expect(serialized).to.have.property('openOrders')
-          expect(serialized.openOrders).to.be.eql([])
+          expect(serialized).to.have.property('orders')
+          expect(serialized.orders).to.be.eql([])
         })
 
         it('serializes all of the orders', () => {
-          blockOrder.openOrders = [ osm ]
+          blockOrder.orders = [ osm ]
 
           const serialized = blockOrder.serialize()
 
-          expect(serialized.openOrders).to.have.lengthOf(1)
+          expect(serialized.orders).to.have.lengthOf(1)
         })
 
         it('serializes the order id', () => {
-          blockOrder.openOrders = [ osm ]
+          blockOrder.orders = [ osm ]
 
           const serialized = blockOrder.serialize()
 
-          expect(serialized.openOrders[0]).to.have.property('orderId', 'mykey')
+          expect(serialized.orders[0]).to.have.property('orderId', 'mykey')
         })
 
         it('serializes the amount into common units', () => {
-          blockOrder.openOrders = [ osm ]
+          blockOrder.orders = [ osm ]
 
           const serialized = blockOrder.serialize()
 
-          expect(serialized.openOrders[0]).to.have.property('amount', '0.0000100000000000')
+          expect(serialized.orders[0]).to.have.property('amount', '0.0000100000000000')
         })
 
         it('converts the price', () => {
-          blockOrder.openOrders = [ osm ]
+          blockOrder.orders = [ osm ]
 
           const serialized = blockOrder.serialize()
 
-          expect(serialized.openOrders[0]).to.have.property('price')
-          expect(serialized.openOrders[0].price).to.be.eql('10.0000000000000000')
+          expect(serialized.orders[0]).to.have.property('price')
+          expect(serialized.orders[0].price).to.be.eql('10.0000000000000000')
         })
 
         it('serializes the state of the order', () => {
-          blockOrder.openOrders = [ osm ]
+          blockOrder.orders = [ osm ]
 
           const serialized = blockOrder.serialize()
 
-          expect(serialized.openOrders[0]).to.have.property('orderStatus', 'CREATED')
+          expect(serialized.orders[0]).to.have.property('orderStatus', 'CREATED')
         })
 
         it('returns an undefined value for orderError for a successful order', () => {
-          blockOrder.openOrders = [ osm ]
+          blockOrder.orders = [ osm ]
 
           const serialized = blockOrder.serialize()
 
-          expect(serialized.openOrders[0]).to.have.property('orderError', undefined)
+          expect(serialized.orders[0]).to.have.property('orderError', undefined)
         })
       })
 
@@ -465,35 +466,25 @@ describe('BlockOrder', () => {
         let fsm
 
         beforeEach(() => {
-          fsm = FillStateMachine.fromStore({
-            logger: {
-              info: sinon.stub(),
-              debug: sinon.stub(),
-              error: sinon.stub()
-            },
-            store: {
-              get: sinon.stub(),
-              put: sinon.stub(),
-              createReadStream: sinon.stub()
-            }
-          }, { key: 'blockid:mykey',
-            value: JSON.stringify({
-              fill: {
-                order: {
-                  orderId: 'otherkey',
-                  baseSymbol: 'BTC',
-                  counterSymbol: 'XYZ',
-                  side: 'BID',
-                  baseAmount: '1000',
-                  counterAmount: '10000'
-                },
-                fillAmount: '900',
-                feePaymentRequest: 'lnbcasodifjoija',
-                depositPaymentRequest: 'lnbcaosdifjaosdfj'
+          fsm = {
+            fill: {
+              order: {
+                orderId: 'otherkey',
+                baseSymbol: 'BTC',
+                counterSymbol: 'XYZ',
+                side: 'BID',
+                baseAmount: '1000',
+                counterAmount: '10000'
               },
-              state: 'created',
-              history: []
-            })})
+              fillId: 'mykey',
+              fillAmount: '900',
+              counterFillAmount: '9000',
+              makerAddress: 'bolt:1231243fasdf',
+              feePaymentRequest: 'lnbcasodifjoija',
+              depositPaymentRequest: 'lnbcaosdifjaosdfj'
+            },
+            state: 'created'
+          }
         })
 
         it('assigns an empty array if fills is not defined', () => {
@@ -682,6 +673,213 @@ describe('BlockOrder', () => {
       })
     })
 
+    describe('get outboundAmount', () => {
+      it('gets outboundAmount correctly if order is a bid', () => {
+        expect(blockOrder).to.have.property('outboundAmount', '100000000000000')
+      })
+
+      it('gets outboundAmount correctly if order is an ask', () => {
+        blockOrder.side = 'ASK'
+        expect(blockOrder).to.have.property('outboundAmount', '1000000000000')
+      })
+    })
+
+    describe('get inboundAmount', () => {
+      it('gets inboundAmount correctly if order is a bid', () => {
+        expect(blockOrder).to.have.property('inboundAmount', '1000000000000')
+      })
+
+      it('gets inboundAmount correctly if order is an ask', () => {
+        blockOrder.side = 'ASK'
+        expect(blockOrder).to.have.property('inboundAmount', '100000000000000')
+      })
+    })
+
+    describe('get inboundSymbol', () => {
+      it('gets inboundSymbol correctly if order is a bid', () => {
+        expect(blockOrder).to.have.property('inboundSymbol', 'BTC')
+      })
+
+      it('gets inboundSymbol correctly if order is an ask', () => {
+        blockOrder.side = 'ASK'
+        expect(blockOrder).to.have.property('inboundSymbol', 'LTC')
+      })
+    })
+
+    describe('get outboundSymbol', () => {
+      it('gets outboundSymbol correctly if order is a bid', () => {
+        expect(blockOrder).to.have.property('outboundSymbol', 'LTC')
+      })
+
+      it('gets outboundSymbol correctly if order is an ask', () => {
+        blockOrder.side = 'ASK'
+        expect(blockOrder).to.have.property('outboundSymbol', 'BTC')
+      })
+    })
+
+    describe('get activeFills', () => {
+      let fills
+      let createdFill
+      let filledFill
+      let noneFill
+
+      beforeEach(() => {
+        createdFill = { state: 'created' }
+        filledFill = { state: 'filled' }
+        noneFill = { state: 'none' }
+
+        fills = [createdFill, filledFill, noneFill]
+      })
+
+      it('returns fills only in created or filled states', () => {
+        blockOrder.fills = fills
+        expect(blockOrder.activeFills).to.eql([createdFill, filledFill])
+      })
+    })
+
+    describe('get orders in certain state', () => {
+      let orders
+      let createdOrder
+      let placedOrder
+      let noneOrder
+      let executingOrder
+      let cancelledOrder
+
+      beforeEach(() => {
+        createdOrder = { state: 'created' }
+        placedOrder = { state: 'placed' }
+        noneOrder = { state: 'none' }
+        executingOrder = { state: 'executing' }
+        cancelledOrder = { state: 'cancelled' }
+
+        orders = [createdOrder, placedOrder, noneOrder, executingOrder, cancelledOrder]
+      })
+
+      it('activeOrders returns orders in created, placed, executing states', () => {
+        blockOrder.orders = orders
+        expect(blockOrder.activeOrders).to.eql([createdOrder, placedOrder, executingOrder])
+      })
+
+      it('openOrders returns orders in created, placed states', () => {
+        blockOrder.orders = orders
+        expect(blockOrder.openOrders).to.eql([createdOrder, placedOrder])
+      })
+    })
+
+    describe('activeOutboundAmount', () => {
+      let orders
+      let fills
+      let createdOrder
+      let placedOrder
+      let executingOrder
+      let createdFill
+      let filledFill
+
+      beforeEach(() => {
+        createdOrder = { order: { outboundAmount: '5000' }, state: 'created' }
+        placedOrder = { order: { outboundAmount: '1000' }, state: 'placed' }
+        executingOrder = { order: { outboundFillAmount: '2000' }, state: 'executing' }
+        createdFill = { fill: { outboundAmount: '3000' }, state: 'created' }
+        filledFill = { fill: { outboundAmount: '6000' }, state: 'filled' }
+        orders = [createdOrder, placedOrder, executingOrder]
+        fills = [createdFill, filledFill]
+      })
+
+      it('adds order.outboundFillAmount if the order is in an executing state', () => {
+        orders = [executingOrder]
+        blockOrder.orders = orders
+        const outboundAmount = blockOrder.activeOutboundAmount()
+        expect(outboundAmount).to.eql(Big('2000'))
+      })
+
+      it('adds order.outboundAmount if the order is not in an executing state', () => {
+        orders = [createdOrder, placedOrder]
+        blockOrder.orders = orders
+        blockOrder.activeOutboundAmount()
+        const outboundAmount = blockOrder.activeOutboundAmount()
+        expect(outboundAmount).to.eql(Big('6000'))
+      })
+
+      it('adds all outbound order amounts', () => {
+        orders = [createdOrder, placedOrder, executingOrder]
+        blockOrder.orders = orders
+        blockOrder.fills = []
+        const outboundAmount = blockOrder.activeOutboundAmount()
+        expect(outboundAmount).to.eql(Big('8000'))
+      })
+
+      it('adds all outbound fills amounts', () => {
+        blockOrder.orders = []
+        blockOrder.fills = fills
+        const outboundAmount = blockOrder.activeOutboundAmount()
+        expect(outboundAmount).to.eql(Big('9000'))
+      })
+
+      it('returns sum of outbound order amounts and outbound fill amounts', () => {
+        blockOrder.orders = orders
+        blockOrder.fills = fills
+        const outboundAmount = blockOrder.activeOutboundAmount()
+        expect(outboundAmount).to.eql(Big('17000'))
+      })
+    })
+
+    describe('activeInboundAmount', () => {
+      let orders
+      let fills
+      let createdOrder
+      let placedOrder
+      let executingOrder
+      let createdFill
+      let filledFill
+
+      beforeEach(() => {
+        createdOrder = { order: { inboundAmount: '5000' }, state: 'created' }
+        placedOrder = { order: { inboundAmount: '1000' }, state: 'placed' }
+        executingOrder = { order: { inboundFillAmount: '2000' }, state: 'executing' }
+        createdFill = { fill: { inboundAmount: '3000' }, state: 'created' }
+        filledFill = { fill: { inboundAmount: '6000' }, state: 'filled' }
+        orders = [createdOrder, placedOrder, executingOrder]
+        fills = [createdFill, filledFill]
+      })
+
+      it('adds order.inboundFillAmount if the order is in an executing state', () => {
+        orders = [executingOrder]
+        blockOrder.orders = orders
+        const inboundAmount = blockOrder.activeInboundAmount()
+        expect(inboundAmount).to.eql(Big('2000'))
+      })
+
+      it('adds order.inboundAmount if the order is not in an executing state', () => {
+        orders = [createdOrder, placedOrder]
+        blockOrder.orders = orders
+        blockOrder.activeInboundAmount()
+        const inboundAmount = blockOrder.activeInboundAmount()
+        expect(inboundAmount).to.eql(Big('6000'))
+      })
+
+      it('adds all inbound order amounts', () => {
+        orders = [createdOrder, placedOrder, executingOrder]
+        blockOrder.orders = orders
+        blockOrder.fills = []
+        const inboundAmount = blockOrder.activeInboundAmount()
+        expect(inboundAmount).to.eql(Big('8000'))
+      })
+
+      it('adds all inbound fills amounts', () => {
+        blockOrder.orders = []
+        blockOrder.fills = fills
+        const inboundAmount = blockOrder.activeInboundAmount()
+        expect(inboundAmount).to.eql(Big('9000'))
+      })
+
+      it('returns sum of inbound order amounts and inbound fill amounts', () => {
+        blockOrder.orders = orders
+        blockOrder.fills = fills
+        const inboundAmount = blockOrder.activeInboundAmount()
+        expect(inboundAmount).to.eql(Big('17000'))
+      })
+    })
+
     describe('get quantumPrice', () => {
       it('calculates the quantumPrice', () => {
         expect(blockOrder).to.have.property('quantumPrice', '100.0000000000000000')
@@ -707,6 +905,118 @@ describe('BlockOrder', () => {
 
       it('returns false if blockOrder is not an ask', () => {
         expect(blockOrder).to.have.property('isAsk', false)
+      })
+    })
+
+    describe('populateOrders', () => {
+      let ordersStore
+      let getRecords
+      let orders = [
+        {
+          id: 'someId'
+        }
+      ]
+
+      beforeEach(() => {
+        ordersStore = {
+          put: sinon.stub()
+        }
+        getRecords = sinon.stub().resolves(orders)
+
+        getRecords.withArgs(ordersStore).resolves(orders)
+
+        BlockOrder.__set__('getRecords', getRecords)
+      })
+
+      it('retrieves all open orders associated with the block order', async () => {
+        const fakeRange = 'myrange'
+        Order.rangeForBlockOrder.returns(fakeRange)
+
+        await blockOrder.populateOrders(ordersStore)
+
+        expect(Order.rangeForBlockOrder).to.have.been.calledOnce()
+        expect(Order.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id)
+        expect(getRecords).to.have.been.calledOnce()
+        expect(getRecords).to.have.been.calledWith(ordersStore, sinon.match.func, fakeRange)
+        expect(blockOrder).to.have.property('orders', orders)
+      })
+
+      it('inflates orders', async () => {
+        const fakeKey = 'mykey'
+        const fakeOrder = 'someorder'
+        const fakeState = 'somestate'
+        const fakeValue = JSON.stringify({
+          order: fakeOrder,
+          state: fakeState
+        })
+        const inflatedOrder = 'lol'
+        Order.fromObject.returns(inflatedOrder)
+
+        await blockOrder.populateOrders(ordersStore)
+
+        const eachOrder = getRecords.withArgs(ordersStore).args[0][1]
+
+        const inflated = eachOrder(fakeKey, fakeValue)
+        expect(Order.fromObject).to.have.been.calledOnce()
+        expect(Order.fromObject).to.have.been.calledWith(fakeKey, fakeOrder)
+        expect(inflated).to.have.property('order', inflatedOrder)
+        expect(inflated).to.have.property('state', fakeState)
+      })
+    })
+
+    describe('populateFills', () => {
+      let fillsStore
+      let getRecords
+      let fills = [
+        {
+          id: 'someId'
+        }
+      ]
+
+      beforeEach(() => {
+        fillsStore = {
+          put: sinon.stub()
+        }
+        getRecords = sinon.stub().resolves(fills)
+
+        getRecords.withArgs(fillsStore).resolves(fills)
+
+        BlockOrder.__set__('getRecords', getRecords)
+      })
+
+      it('retrieves all fills associated with a block order', async () => {
+        const fakeRange = 'myrange'
+        Fill.rangeForBlockOrder.returns(fakeRange)
+
+        await blockOrder.populateFills(fillsStore)
+
+        expect(Fill.rangeForBlockOrder).to.have.been.calledOnce()
+        expect(Fill.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id)
+        expect(getRecords).to.have.been.calledOnce()
+        expect(getRecords).to.have.been.calledWith(fillsStore, sinon.match.func, fakeRange)
+        expect(blockOrder).to.have.property('fills', fills)
+      })
+
+      it('inflates fills', async () => {
+        const fakeKey = 'mykey'
+        const fakeFill = 'someorder'
+        const fakeState = 'somestate'
+        const fakeValue = JSON.stringify({
+          fill: fakeFill,
+          state: fakeState
+        })
+        const inflatedFill = 'lol'
+        Fill.fromObject.returns(inflatedFill)
+
+        await blockOrder.populateFills(fillsStore)
+
+        const eachFill = getRecords.withArgs(fillsStore).args[0][1]
+
+        const inflated = eachFill(fakeKey, fakeValue)
+        expect(Fill.fromObject).to.have.been.calledOnce()
+        expect(Fill.fromObject).to.have.been.calledWith(fakeKey, fakeFill)
+        expect(inflated).to.have.property('fill', inflatedFill)
+        expect(inflated).to.have.property('state', fakeState)
       })
     })
   })

@@ -18,7 +18,7 @@ const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
  */
 async function sell (args, opts, logger) {
   const { amount, price } = args
-  const { timeInForce, market, rpcAddress = null } = opts
+  const { timeInForce, market, rpcAddress } = opts
   const side = ORDER_TYPES.ASK
 
   const request = {
@@ -54,7 +54,7 @@ module.exports = (program) => {
     .argument('<amount>', 'Amount of counter currency to sell.', validations.isDecimal)
     .argument('[price]', 'Worst price that this order should be executed at. (If omitted, the market price will be used)', validations.isDecimal)
     .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
-    .option('-t, --time-in-force', 'Time in force policy for this order.', Object.keys(TIME_IN_FORCE), 'GTC')
-    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .option('--time-in-force [time-in-force]', 'Time in force policy for this order.', Object.keys(TIME_IN_FORCE), 'GTC')
+    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
     .action(sell)
 }
