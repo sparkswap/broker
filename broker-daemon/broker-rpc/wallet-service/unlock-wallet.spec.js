@@ -33,7 +33,7 @@ describe('unlock-wallet', () => {
 
   it('errors if engine could not be found', () => {
     params.symbol = 'LTC'
-    expect(unlockWallet({ logger, params, engines }, { EmptyResponse })).to.eventually.be.rejectedWith('Unable to create wallet')
+    return expect(unlockWallet({ logger, params, engines }, { EmptyResponse })).to.eventually.be.rejectedWith('Unable to unlock wallet')
   })
 
   it('logs an error if engine could not be found', async () => {
