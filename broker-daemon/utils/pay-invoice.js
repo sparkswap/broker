@@ -18,27 +18,3 @@ async function payInvoice (engine, paymentRequest) {
 }
 
 module.exports = payInvoice
-
-// async function payInvoice (engine, paymentRequest) {
-//   if (!required) {
-//     logger.debug(`Skipping payment for ${type} on ${publicId}, not required`)
-//     return
-//   }
-
-//   if (!paymentRequest) throw new Error(`Cant pay ${type} invoice because ${type} invoice does not exist`)
-
-//   logger.debug(`Attempting to pay ${type} for: ${publicId}`)
-
-//   const [ refundPaymentRequest ] = await Promise.all([
-//     engine.createRefundInvoice(paymentRequest),
-//     engine.payInvoice(paymentRequest)
-//   ])
-
-//   logger.debug(`Response from engine for ${type}`, {
-//     refundPaymentRequest
-//   })
-
-//   logger.info(`Paid ${type} for ${publicId}`)
-
-//   return refundPaymentRequest
-// }
