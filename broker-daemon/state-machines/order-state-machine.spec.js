@@ -354,13 +354,15 @@ describe('OrderStateMachine', () => {
 
     beforeEach(async () => {
       invoice = '1234'
-      payInvoiceStub.returns(invoice)
+      payInvoiceStub.resolves(invoice)
       placeOrderStreamStub = {
         on: sinon.stub(),
         removeListener: sinon.stub()
       }
       placeOrderStub = sinon.stub().returns(placeOrderStreamStub)
+      feeRequired = true
       feePaymentRequest = 'fee'
+      depositRequired = true
       depositPaymentRequest = 'deposit'
       orderId = '1234'
       outboundSymbol = 'BTC'
@@ -399,12 +401,26 @@ describe('OrderStateMachine', () => {
 
     it('pays a fee invoice', async () => {
       await osm.place()
-      expect(payInvoiceStub).to.have.been.calledWith(feeRequired, feePaymentRequest, engines.get('BTC'))
+      expect(payInvoiceStub).to.have.been.calledWith(engines.get('BTC'), feePaymentRequest)
+    })
+
+    it('skips a non-required fee invoice', async () => {
+      osm.order.paramsForPlace.feeRequired = false
+
+      await osm.place()
+      expect(payInvoiceStub).to.not.have.been.calledWith(engines.get('BTC'), feePaymentRequest)
     })
 
     it('pays a deposit invoice', async () => {
       await osm.place()
-      expect(payInvoiceStub).to.have.been.calledWith(depositRequired, depositPaymentRequest, engines.get('BTC'))
+      expect(payInvoiceStub).to.have.been.calledWith(engines.get('BTC'), depositPaymentRequest)
+    })
+
+    it('skips a non-required deposit invoice', async () => {
+      osm.order.paramsForPlace.depositRequired = false
+
+      await osm.place()
+      expect(payInvoiceStub).to.not.have.been.calledWith(engines.get('BTC'), depositPaymentRequest)
     })
 
     it('creates an authorization for the order', async () => {

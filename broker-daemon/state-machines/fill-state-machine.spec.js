@@ -337,7 +337,7 @@ describe('FillStateMachine', () => {
 
     beforeEach(async () => {
       invoice = '1234'
-      payInvoiceStub.returns(invoice)
+      payInvoiceStub.resolves(invoice)
       fillOrderStub = sinon.stub()
       subscribeExecuteStream = {
         on: sinon.stub(),
@@ -380,12 +380,26 @@ describe('FillStateMachine', () => {
 
     it('pays a fee invoice', async () => {
       await fsm.fillOrder()
-      expect(payInvoiceStub).to.have.been.calledWith(feeRequired, feePaymentRequest, engines.get('BTC'))
+      expect(payInvoiceStub).to.have.been.calledWith(engines.get('BTC'), feePaymentRequest)
+    })
+
+    it('skips a non-required fee invoice', async () => {
+      fsm.fill.paramsForFill.feeRequired = false
+
+      await fsm.fillOrder()
+      expect(payInvoiceStub).to.not.have.been.calledWith(engines.get('BTC'), feePaymentRequest)
     })
 
     it('pays a deposit invoice', async () => {
       await fsm.fillOrder()
-      expect(payInvoiceStub).to.have.been.calledWith(depositRequired, depositPaymentRequest, engines.get('BTC'))
+      expect(payInvoiceStub).to.have.been.calledWith(engines.get('BTC'), depositPaymentRequest)
+    })
+
+    it('skips a non-required deposit invoice', async () => {
+      fsm.fill.paramsForFill.depositRequired = false
+
+      await fsm.fillOrder()
+      expect(payInvoiceStub).to.not.have.been.calledWith(engines.get('BTC'), depositPaymentRequest)
     })
 
     it('authorizes the request', async () => {

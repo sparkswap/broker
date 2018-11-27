@@ -231,15 +231,40 @@ const OrderStateMachine = StateMachine.factory({
         throw new Error(`No engine available for ${outboundSymbol}`)
       }
 
-      const [ feeRefundPaymentRequest, depositRefundPaymentRequest ] = await Promise.all([
-        payInvoice(feeRequired, feePaymentRequest, outboundEngine, this.logger, 'fee', orderId),
-        payInvoice(depositRequired, depositPaymentRequest, outboundEngine, this.logger, 'deposit', orderId)
+      this.logger.debug(`Paying fee and deposit invoices for ${orderId}`)
+
+      let payFeeInvoice
+      let payDepositInvoice
+
+      if (feeRequired) {
+        payFeeInvoice = payInvoice(outboundEngine, feePaymentRequest)
+      } else {
+        this.logger.debug(`Skipping paying fee invoice for ${orderId}, not required`)
+      }
+
+      if (depositRequired) {
+        payDepositInvoice = payInvoice(outboundEngine, depositPaymentRequest)
+      } else {
+        this.logger.debug(`Skipping paying deposit invoice for ${orderId}, not required`)
+      }
+
+      const [
+        feeRefundPaymentRequest,
+        depositRefundPaymentRequest
+      ] = await Promise.all([
+        payFeeInvoice,
+        payDepositInvoice
       ])
 
       const authorization = this.relayer.identity.authorize(orderId)
       this.logger.debug(`Generated authorization for ${orderId}`, authorization)
       // NOTE: this method should NOT reject a promise, as that may prevent the state of the order from saving
-      const call = this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest, authorization })
+      const call = this.relayer.makerService.placeOrder({
+        orderId,
+        feeRefundPaymentRequest,
+        depositRefundPaymentRequest,
+        authorization
+      })
 
       // Stop listening to further events from the stream
       const finish = () => {

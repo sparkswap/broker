@@ -214,9 +214,29 @@ const FillStateMachine = StateMachine.factory({
         throw new Error(`No engine available for ${outboundSymbol}`)
       }
 
-      const [ feeRefundPaymentRequest, depositRefundPaymentRequest ] = await Promise.all([
-        payInvoice(feeRequired, feePaymentRequest, outboundEngine, this.logger, 'fee', fillId),
-        payInvoice(depositRequired, depositPaymentRequest, outboundEngine, this.logger, 'deposit', fillId)
+      this.logger.debug(`Paying fee and deposit invoices for ${fillId}`)
+
+      let payFeeInvoice
+      let payDepositInvoice
+
+      if (feeRequired) {
+        payFeeInvoice = payInvoice(outboundEngine, feePaymentRequest)
+      } else {
+        this.logger.debug(`Skipping paying fee invoice for ${fillId}, not required`)
+      }
+
+      if (depositRequired) {
+        payDepositInvoice = payInvoice(outboundEngine, depositPaymentRequest)
+      } else {
+        this.logger.debug(`Skipping paying deposit invoice for ${fillId}, not required`)
+      }
+
+      const [
+        feeRefundPaymentRequest,
+        depositRefundPaymentRequest
+      ] = await Promise.all([
+        payFeeInvoice,
+        payDepositInvoice
       ])
 
       const authorization = this.relayer.identity.authorize(fillId)
