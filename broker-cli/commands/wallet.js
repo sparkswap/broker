@@ -56,7 +56,7 @@ const SUPPORTED_COMMANDS = Object.freeze({
  * @return {Void}
  */
 async function balance (args, opts, logger) {
-  const { rpcAddress = null } = opts
+  const { rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -98,7 +98,7 @@ async function balance (args, opts, logger) {
  */
 async function newDepositAddress (args, opts, logger) {
   const { symbol } = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -126,7 +126,7 @@ async function newDepositAddress (args, opts, logger) {
  */
 async function commit (args, opts, logger) {
   const { symbol, amount } = args
-  const { rpcAddress = null, market } = opts
+  const { rpcAddress, market } = opts
   const currentCurrencyConfig = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol)
 
   try {
@@ -199,7 +199,7 @@ async function commit (args, opts, logger) {
  */
 async function networkAddress (args, opts, logger) {
   const { symbol } = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -226,7 +226,7 @@ async function networkAddress (args, opts, logger) {
  * @return {Void}
  */
 async function networkStatus (args, opts, logger) {
-  const { market, rpcAddress = null } = opts
+  const { market, rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -299,7 +299,7 @@ function formatBalance (balance, status) {
  * @return {Void}
  */
 async function release (args, opts, logger) {
-  const { rpcAddress = null, market } = opts
+  const { rpcAddress, market } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -333,7 +333,7 @@ async function release (args, opts, logger) {
  */
 async function withdraw (args, opts, logger) {
   const {symbol, address, amount} = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -394,7 +394,7 @@ module.exports = (program) => {
     .help(`Available Commands: ${Object.values(SUPPORTED_COMMANDS).join(', ')}`)
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
-    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .option('--wallet-address [address]', 'Address to send the coins to', validations.isHost)
     .action(async (args, opts, logger) => {
@@ -487,7 +487,7 @@ module.exports = (program) => {
     .command(`wallet ${SUPPORTED_COMMANDS.WITHDRAW}`, 'Withdraws specified amount of coin from wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .argument('<amount>', 'Amount of currency to commit to the relayer', validations.isDecimal)
-    .option('--wallet-address', 'Address to send the coins to', validations.isHost)
+    .option('--wallet-address <wallet-address>', 'Address to send the coins to', validations.isHost)
     .command(`wallet ${SUPPORTED_COMMANDS.CREATE}`, 'Create a wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
 }
