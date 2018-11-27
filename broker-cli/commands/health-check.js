@@ -1,6 +1,15 @@
 const BrokerDaemonClient = require('../broker-daemon-client')
-const { ENUMS, validations, handleError } = require('../utils')
-const { STATUS_CODES } = ENUMS
+const { validations, handleError } = require('../utils')
+
+/**
+ * @constant
+ * @type {Object<key, String>}
+ * @default
+ */
+const STATUS_CODES = Object.freeze({
+  OK: 'OK',
+  UNKNOWN: 'UNKNOWN'
+})
 
 /**
  * sparkswap healthcheck
@@ -16,39 +25,39 @@ const { STATUS_CODES } = ENUMS
  */
 
 async function healthCheck (args, opts, logger) {
-  const { rpcAddress = null } = opts
+  const { rpcAddress } = opts
 
   try {
     const client = await new BrokerDaemonClient(rpcAddress)
 
-    const { engineStatus, relayerStatus } = await client.adminService.healthCheck({})
+    const {
+      engineStatus = STATUS_CODES.UNKNOWN,
+      relayerStatus = STATUS_CODES.UNKNOWN
+    } = await client.adminService.healthCheck({})
 
-    // TODO: If `engineStatus` or `relayerStatus` is undefined, then we will not see
-    // a status
-    const res = {
-      engines: engineStatus.reduce((acc, { symbol, status }) => {
-        acc[symbol] = status
-        return acc
-      }, {}),
-      relayerStatus,
-      daemonStatus: STATUS_CODES.OK
-    }
+    engineStatus.forEach(({ symbol, status }) => {
+      if (status === STATUS_CODES.OK) {
+        logger.info(`Engine status for ${symbol}: ` + `${status}`.green)
+      } else {
+        logger.info(`Engine status for ${symbol}: ` + `${status}`.red)
+      }
+    })
 
-    logger.info(`HealthCheck: ${JSON.stringify(res, null, '  ')}`)
-  } catch (e) {
-    if (e.message === '14 UNAVAILABLE: Connect Failed') {
-      logger.error(handleError(e))
-    } else if (e.details) {
-      logger.error(e.details)
+    if (relayerStatus === STATUS_CODES.OK) {
+      logger.info('Relayer Status: ' + `${relayerStatus}`.green)
     } else {
-      logger.error(e)
+      logger.info('Relayer Status: ' + `${relayerStatus}`.red)
     }
+
+    logger.info('Daemon Status: ' + `${STATUS_CODES.OK}`.green)
+  } catch (e) {
+    logger.error(handleError(e))
   }
 };
 
 module.exports = (program) => {
   program
     .command('healthcheck', 'Checks the connection between Broker and the Exchange')
-    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
     .action(healthCheck)
 }

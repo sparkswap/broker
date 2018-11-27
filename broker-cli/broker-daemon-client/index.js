@@ -66,7 +66,7 @@ class BrokerDaemonClient {
 
     if (this.disableAuth) {
       // TODO: Eventually allow broker daemon client to use the cli's logger
-      console.warn('disableAuth is set to true. The CLI will try to connect to the daemon without ssl')
+      console.warn('`disableAuth` is set to true. The CLI will try to connect to the daemon without SSL/TLS'.yellow)
       this.credentials = grpc.credentials.createInsecure()
     } else {
       if (!this.username) throw new Error('No username is specified for authentication')

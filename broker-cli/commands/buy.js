@@ -20,7 +20,7 @@ const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
  */
 async function buy (args, opts, logger) {
   const { amount, price } = args
-  const { timeInForce, market, rpcAddress = null } = opts
+  const { timeInForce, market, rpcAddress } = opts
   const side = ORDER_TYPES.BID
 
   const request = {
@@ -51,7 +51,7 @@ module.exports = (program) => {
     .argument('<amount>', 'Amount of base currency to buy.', validations.isDecimal)
     .argument('[price]', 'Worst price that this order should be executed at. (If omitted, the market price will be used)', validations.isDecimal)
     .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
-    .option('-t, --time-in-force', `Time in force policy for this order. Available Options: ${Object.values(TIME_IN_FORCE).join(', ')}`, Object.values(TIME_IN_FORCE), TIME_IN_FORCE.GTC)
-    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .option('--time-in-force [time-in-force]', `Time in force policy for this order. Available Options: ${Object.values(TIME_IN_FORCE).join(', ')}`, Object.values(TIME_IN_FORCE), TIME_IN_FORCE.GTC)
+    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
     .action(buy)
 }
