@@ -99,7 +99,7 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No engine available for ${orderbook.counterSymbol}.`)
     }
 
-    const {activeOutboundAmount, activeInboundAmount} = await this.calculateActiveFunds(marketName, side)
+    const { activeOutboundAmount, activeInboundAmount } = await this.calculateActiveFunds(marketName, side)
 
     const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
     const outboundEngine = this.engines.get(blockOrder.outboundSymbol)
@@ -138,8 +138,9 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Adds up active/committed funds in inbound and outbound orders/fills
    *
-   * @param  {String} marketName  Name of the market to creat the block order in (e.g. BTC/LTC)
-   * @param  {String} side        Side of the market to take (e.g. BID or ASK)
+   * @param {String} marketName  Name of the market to creat the block order in (e.g. BTC/LTC)
+   * @param {String} side        Side of the market to take (e.g. BID or ASK)
+   * @return {Object} contains activeOutboundAmount and activeInboundAmount of orders/fills
    */
   async calculateActiveFunds (marketName, side) {
     const blockOrders = await this.getBlockOrders(marketName)
@@ -154,7 +155,7 @@ class BlockOrderWorker extends EventEmitter {
       activeInboundAmount = activeInboundAmount.plus(blockOrder.activeInboundAmount())
     }
 
-    return {activeOutboundAmount, activeInboundAmount}
+    return { activeOutboundAmount, activeInboundAmount }
   }
 
   /**
