@@ -11,12 +11,6 @@ const {
 } = require('../utils')
 
 /**
- * Error returned if order was not a state to be filled
- * @type {String}
- * @constant
- */
-const ORDER_NOT_PLACED = 'Order is not in state to be filled'
-/**
  * @class Create and work Block Orders
  */
 class BlockOrderWorker extends EventEmitter {
@@ -541,7 +535,8 @@ class BlockOrderWorker extends EventEmitter {
      */
     fsm.once('reject', () => {
       fsm.removeAllListeners()
-      if (fsm.fill.error.message === ORDER_NOT_PLACED) {
+      if (fsm.isRelayerError(fsm.fill.error.code)) {
+        this.logger.info(`Reworking block order due to: ${fsm.fill.error.message}`)
         this.workBlockOrder(blockOrder, Big(fsm.fill.fillAmount))
       } else {
         this.failBlockOrder(blockOrder.id, fsm.fill.error).catch(e => {

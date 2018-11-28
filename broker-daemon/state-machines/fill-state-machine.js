@@ -20,6 +20,9 @@ const {
  */
 const UNASSIGNED_PREFIX = 'NO_ASSIGNED_ID_'
 
+const FILL_ERRORS = {
+  ORDER_NOT_PLACED: 'ORDER_NOT_PLACED'
+}
 /**
  * @class Finite State Machine for managing fill lifecycle
  */
@@ -81,6 +84,9 @@ const FillStateMachine = StateMachine.factory({
           if (this.error) {
             return this.error.message
           }
+        },
+        isRelayerError: function (errorCode) {
+          return errorCode === FILL_ERRORS.ORDER_NOT_PLACED
         }
       }
     })
@@ -167,11 +173,11 @@ const FillStateMachine = StateMachine.factory({
       const swapHash = await inboundEngine.createSwapHash(this.fill.order.orderId, inboundAmount)
       this.fill.setSwapHash(swapHash)
 
-      const { fillId, feePaymentRequest, depositPaymentRequest, orderStatusError } = await this.relayer.takerService.createFill(this.fill.paramsForCreate)
+      const { fillId, feePaymentRequest, depositPaymentRequest, fillError } = await this.relayer.takerService.createFill(this.fill.paramsForCreate)
 
-      if (orderStatusError) {
-        this.logger.error('Could not fill order, order was not in a good state', { orderStatusError })
-        throw new Error(orderStatusError)
+      if (fillError) {
+        this.logger.error(`Encountered error with fill: ${fillError.message}`)
+        return this.reject(fillError)
       }
 
       this.fill.setCreatedParams({ fillId, feePaymentRequest, depositPaymentRequest })
@@ -236,12 +242,13 @@ const FillStateMachine = StateMachine.factory({
 
       const authorization = this.relayer.identity.authorize(fillId)
       this.logger.debug(`Generated authorization for ${fillId}`, authorization)
-      const { orderStatusError } = await this.relayer.takerService.fillOrder({ fillId, feeRefundPaymentRequest, depositRefundPaymentRequest, authorization })
+      const { fillError } = await this.relayer.takerService.fillOrder({ fillId, feeRefundPaymentRequest, depositRefundPaymentRequest, authorization })
 
-      if (orderStatusError) {
-        this.logger.error('Could not fill order, order was not in a good state', { orderStatusError })
-        throw new Error(orderStatusError)
+      if (fillError) {
+        this.logger.error(`Encountered error with fill: ${fillError.message}`)
+        return this.reject(fillError)
       }
+
       this.logger.info(`Filled order ${fillId} on the relayer`)
     },
 
