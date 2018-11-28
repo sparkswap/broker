@@ -1242,7 +1242,7 @@ describe('BlockOrderWorker', () => {
           fill: {
             fillAmount: '100'
           },
-          isRelayerError: sinon.stub().returns(true)
+          shouldRetry: sinon.stub().returns(true)
         }
         FillStateMachine.create.resolves(fill)
         failBlockOrderStub = sinon.stub().resolves(true)
@@ -1269,7 +1269,7 @@ describe('BlockOrderWorker', () => {
       })
 
       it('fails a block order if the call is rejected for reason other than the order is in the wrong state', async () => {
-        fill.isRelayerError.returns(false)
+        fill.shouldRetry.returns(false)
         FillStateMachine.create.resolves(fill)
         await worker._fillOrders(blockOrder, orders, targetDepth)
         await onceStub.args[1][1]()
@@ -1278,7 +1278,7 @@ describe('BlockOrderWorker', () => {
       })
 
       it('catches an exception if failBlockOrder fails', async () => {
-        fill.isRelayerError.returns(false)
+        fill.shouldRetry.returns(false)
         FillStateMachine.create.resolves(fill)
         failBlockOrderStub.rejects()
         await worker._fillOrders(blockOrder, orders, targetDepth)

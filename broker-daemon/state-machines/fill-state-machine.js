@@ -26,9 +26,9 @@ const UNASSIGNED_PREFIX = 'NO_ASSIGNED_ID_'
  * @constant
  * @default
  */
-const FILL_ERROR_CODES = {
+const FILL_ERROR_CODES = Object.freeze({
   ORDER_NOT_PLACED: 'ORDER_NOT_PLACED'
-}
+})
 
 /**
  * @class Finite State Machine for managing fill lifecycle
@@ -181,7 +181,7 @@ const FillStateMachine = StateMachine.factory({
 
       if (fillError) {
         this.logger.error(`Encountered error with fill: ${fillError.message}`)
-        return this.reject(fillError)
+        throw new Error(fillError.code)
       }
 
       this.fill.setCreatedParams({ fillId, feePaymentRequest, depositPaymentRequest })
@@ -250,7 +250,7 @@ const FillStateMachine = StateMachine.factory({
 
       if (fillError) {
         this.logger.error(`Encountered error with fill: ${fillError.message}`)
-        return this.reject(fillError)
+        throw new Error(fillError.code)
       }
 
       this.logger.info(`Filled order ${fillId} on the relayer`)
@@ -337,10 +337,11 @@ const FillStateMachine = StateMachine.factory({
     },
     /**
      * Returns true if there is a relayer error associated with the fill, false if not
+     * This is just a getter function, no transition associated
      * @return {Boolean}
      */
-    isRelayerError: function () {
-      return !!this.fill.error && this.fill.error.code === FILL_ERROR_CODES.ORDER_NOT_PLACED
+    shouldRetry: function () {
+      return !!this.fill.error && this.fill.error.message === FILL_ERROR_CODES.ORDER_NOT_PLACED
     }
   }
 })
