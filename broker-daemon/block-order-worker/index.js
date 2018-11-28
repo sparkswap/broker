@@ -532,14 +532,21 @@ class BlockOrderWorker extends EventEmitter {
         .then(() => fsm.removeAllListeners())
     })
 
-    // We are hooking into the reject lifecycle event of a fill state machine to trigger
-    // the failure of a blockorder
+    /**
+     * We are hooking into the reject lifecycle event of a fill state machine to trigger the failure of a blockorder.
+     * If the error comes back with an ORDER_NOT_PLACED, it means that the order the fillStateMachine
+     * attempted to fill was not in a state to be filled and we should rework the blockOrder
+     */
     fsm.once('reject', () => {
-      this.failBlockOrder(blockOrder.id, fsm.fill.error)
-        .catch(e => {
+      fsm.removeAllListeners()
+      if (fsm.shouldRetry()) {
+        this.logger.info('Reworking block order due to relayer error')
+        this.workBlockOrder(blockOrder, Big(fsm.fill.fillAmount))
+      } else {
+        this.failBlockOrder(blockOrder.id, fsm.fill.error).catch(e => {
           this.logger.error(`BlockOrder failed on setting a failed status from fill`, { id: blockOrder.id, error: e.stack })
         })
-        .then(() => fsm.removeAllListeners())
+      }
     })
   }
 }
