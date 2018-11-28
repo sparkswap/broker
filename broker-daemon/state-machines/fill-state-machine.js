@@ -20,9 +20,16 @@ const {
  */
 const UNASSIGNED_PREFIX = 'NO_ASSIGNED_ID_'
 
-const FILL_ERRORS = {
+/**
+ * Error codes that can come back from relayer
+ * @type {Object}
+ * @constant
+ * @default
+ */
+const FILL_ERROR_CODES = {
   ORDER_NOT_PLACED: 'ORDER_NOT_PLACED'
 }
+
 /**
  * @class Finite State Machine for managing fill lifecycle
  */
@@ -86,7 +93,7 @@ const FillStateMachine = StateMachine.factory({
           }
         },
         isRelayerError: function (errorCode) {
-          return errorCode === FILL_ERRORS.ORDER_NOT_PLACED
+          return errorCode === FILL_ERROR_CODES.ORDER_NOT_PLACED
         }
       }
     })
