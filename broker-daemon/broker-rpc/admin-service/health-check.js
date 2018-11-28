@@ -18,10 +18,11 @@ const STATUS_CODES = Object.freeze({
  * @return {String} res.status - an engine's status
  */
 async function getEngineStatus ([ symbol, engine ]) {
-  let status = STATUS_CODES.OK
+  let status
 
   try {
     await engine.isAvailable()
+    status = STATUS_CODES.OK
   } catch (e) {
     status = e.toString()
   }

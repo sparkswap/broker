@@ -2,6 +2,7 @@ const path = require('path')
 const grpc = require('grpc')
 const caller = require('grpc-caller')
 const { readFileSync } = require('fs')
+require('colors')
 
 const { loadConfig } = require('./config')
 const {
