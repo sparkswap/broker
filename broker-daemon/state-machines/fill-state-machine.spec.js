@@ -656,7 +656,8 @@ describe('FillStateMachine', () => {
 
     beforeEach(() => {
       fsm = new FillStateMachine({ store, logger, relayer, engines })
-      fakeFill = { error: { message: 'ORDER_NOT_PLACED' } }
+      const { ORDER_NOT_PLACED } = FillStateMachine.__get__('FILL_ERROR_CODES')
+      fakeFill = { error: { message: ORDER_NOT_PLACED } }
       fsm.fill = fakeFill
     })
 
