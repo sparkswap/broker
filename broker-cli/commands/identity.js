@@ -10,7 +10,7 @@ const { validations, handleError } = require('../utils')
  *
  * @param {Object} args
  * @param {Object} opts
- * @param {String} [rpcAddress] broker rpc address
+ * @param {String} [rpcAddress=null] broker rpc address
  * @param {Logger} logger
  */
 
@@ -31,6 +31,6 @@ async function getIdentity (args, opts, logger) {
 module.exports = (program) => {
   program
     .command('id', 'Gets the Public Key of the Broker Daemon')
-    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
     .action(getIdentity)
 }
