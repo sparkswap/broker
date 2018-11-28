@@ -535,8 +535,8 @@ class BlockOrderWorker extends EventEmitter {
      */
     fsm.once('reject', () => {
       fsm.removeAllListeners()
-      if (fsm.isRelayerError(fsm.fill.error.code)) {
-        this.logger.info(`Reworking block order due to: ${fsm.fill.error.message}`)
+      if (fsm.isRelayerError()) {
+        this.logger.info('Reworking block order due to relayer error')
         this.workBlockOrder(blockOrder, Big(fsm.fill.fillAmount))
       } else {
         this.failBlockOrder(blockOrder.id, fsm.fill.error).catch(e => {

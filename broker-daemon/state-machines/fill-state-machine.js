@@ -91,9 +91,6 @@ const FillStateMachine = StateMachine.factory({
           if (this.error) {
             return this.error.message
           }
-        },
-        isRelayerError: function (errorCode) {
-          return errorCode === FILL_ERROR_CODES.ORDER_NOT_PLACED
         }
       }
     })
@@ -337,6 +334,13 @@ const FillStateMachine = StateMachine.factory({
     onBeforeReject: function (lifecycle, error) {
       this.logger.error(`Encountered error during transition, rejecting`, error)
       this.fill.error = error
+    },
+    /**
+     * Returns true if there is a relayer error associated with the fill, false if not
+     * @return {Boolean}
+     */
+    isRelayerError: function () {
+      return !!this.fill.error && this.fill.error.code === FILL_ERROR_CODES.ORDER_NOT_PLACED
     }
   }
 })

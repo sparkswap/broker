@@ -267,6 +267,22 @@ describe('FillStateMachine', () => {
       expect(setCreatedParams).to.have.been.calledWith(sinon.match(createFillResponse))
     })
 
+    it('rejects if the relayer returns a fill error', async () => {
+      relayer.takerService.createFill.resolves({
+        fillError: {
+          code: 'ORDER_NOT_PLACED',
+          message: 'Order is not in a state to be filled'
+        }
+      })
+      fsm.reject = sinon.stub()
+
+      await fsm.create(blockOrderId, orderParams, fillParams)
+
+      expect(fsm.reject).to.have.been.calledOnce()
+      expect(fsm.reject.args[0][0]).to.have.property('message', 'Order is not in a state to be filled')
+      expect(fsm.reject.args[0][0]).to.have.property('code', 'ORDER_NOT_PLACED')
+    })
+
     it('saves a copy in the store', async () => {
       await fsm.create(blockOrderId, orderParams, fillParams)
 
@@ -335,7 +351,7 @@ describe('FillStateMachine', () => {
       invoice = '1234'
       payInvoiceStub = sinon.stub()
       createRefundInvoiceStub = sinon.stub().returns(invoice)
-      fillOrderStub = sinon.stub()
+      fillOrderStub = sinon.stub().resolves({})
       subscribeExecuteStream = {
         on: sinon.stub(),
         removeListener: sinon.stub()
@@ -401,6 +417,21 @@ describe('FillStateMachine', () => {
         fillId,
         authorization: fakeAuth
       })
+    })
+
+    it('rejects if the relayer returns a fill error', async () => {
+      relayer.takerService.fillOrder.resolves({
+        fillError: {
+          code: 'ORDER_NOT_PLACED',
+          message: 'Order is not in a state to be filled'
+        }
+      })
+      fsm.reject = sinon.stub()
+
+      await fsm.fillOrder()
+      expect(fsm.reject).to.have.been.calledOnce()
+      expect(fsm.reject.args[0][0]).to.have.property('message', 'Order is not in a state to be filled')
+      expect(fsm.reject.args[0][0]).to.have.property('code', 'ORDER_NOT_PLACED')
     })
 
     it('errors if a feePaymentRequest isnt available on the fill', () => {
@@ -623,6 +654,33 @@ describe('FillStateMachine', () => {
 
       expect(store.put).to.have.been.calledOnce()
       expect(store.put).to.have.been.calledWith(sinon.match(/^NO_ASSIGNED_ID_\S+$/))
+    })
+  })
+
+  describe('#isRelayerError', () => {
+    let fakeFill
+    let fsm
+
+    beforeEach(() => {
+      fsm = new FillStateMachine({ store, logger, relayer, engines })
+      fakeFill = { error: { code: 'ORDER_NOT_PLACED' } }
+      fsm.fill = fakeFill
+    })
+
+    it('returns true if the fsm error is a relayer error', async () => {
+      expect(fsm.isRelayerError()).to.be.true()
+    })
+
+    it('returns false if there are no errors associated with the fill', async () => {
+      fsm.fill.error = undefined
+
+      expect(fsm.isRelayerError()).to.be.false()
+    })
+
+    it('returns false if the error code does not match the relayer error code', async () => {
+      fsm.fill.error = { error: { code: 'NOT_RELAYER_ERROR' } }
+
+      expect(fsm.isRelayerError()).to.be.false()
     })
   })
 
