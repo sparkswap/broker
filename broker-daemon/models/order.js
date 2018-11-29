@@ -57,12 +57,16 @@ class Order {
    * Add parameters to the order from its creation on the Relayer
    * @param {String} options.orderId               Unique identifier for the order as assigned by the Relayer
    * @param {String} options.feePaymentRequest     Payment channel network payment request for the order fee
+   * @param {String} options.feeRequired           Whether the order fee is required
    * @param {String} options.depositPaymentRequest Payment channel network payment request for the order deposit
+   * @param {String} options.depositRequired       Whether the deposit is required
    */
-  setCreatedParams ({ orderId, feePaymentRequest, depositPaymentRequest }) {
+  setCreatedParams ({ orderId, feePaymentRequest, feeRequired, depositPaymentRequest, depositRequired }) {
     this.orderId = orderId
     this.feePaymentRequest = feePaymentRequest
+    this.feeRequired = feeRequired
     this.depositPaymentRequest = depositPaymentRequest
+    this.depositRequired = depositRequired
   }
 
   /**
@@ -169,9 +173,68 @@ class Order {
    * @return {Object} Object of parameters the relayer expects
    */
   get paramsForCreate () {
-    const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, makerBaseAddress, makerCounterAddress } = this
+    const {
+      baseSymbol,
+      counterSymbol,
+      side,
+      baseAmount,
+      counterAmount,
+      makerBaseAddress,
+      makerCounterAddress
+    } = this
 
-    return { baseSymbol, counterSymbol, side, baseAmount, counterAmount, makerBaseAddress, makerCounterAddress }
+    return {
+      baseSymbol,
+      counterSymbol,
+      side,
+      baseAmount,
+      counterAmount,
+      makerBaseAddress,
+      makerCounterAddress
+    }
+  }
+
+  /**
+   * Params required to place an order on the relayer
+   * It includes parameters for the payment requests for fees and deposits
+   * which are used to pay fees prior to placing an order rather than
+   * actually sent to the relayer.
+   * @return {Object} Object of parameters need to place an order
+   */
+  get paramsForPlace () {
+    const {
+      feePaymentRequest,
+      feeRequired,
+      depositPaymentRequest,
+      depositRequired,
+      orderId,
+      outboundSymbol
+    } = this
+
+    if (feeRequired && !feePaymentRequest) {
+      throw new Error(`paramsForPlace: feePaymentRequest is missing.`)
+    }
+
+    if (depositRequired && !depositPaymentRequest) {
+      throw new Error(`paramsForPlace: depositPaymentRequest is missing.`)
+    }
+
+    if (!orderId) {
+      throw new Error(`paramsForPlace: orderId is missing.`)
+    }
+
+    if (!outboundSymbol) {
+      throw new Error(`paramsForPlace: outboundSymbol is missing.`)
+    }
+
+    return {
+      feePaymentRequest,
+      feeRequired,
+      depositPaymentRequest,
+      depositRequired,
+      orderId,
+      outboundSymbol
+    }
   }
 
   /**
@@ -271,7 +334,9 @@ class Order {
       makerBaseAddress,
       makerCounterAddress,
       feePaymentRequest,
+      feeRequired,
       depositPaymentRequest,
+      depositRequired,
       swapHash,
       fillAmount,
       takerAddress
@@ -286,7 +351,9 @@ class Order {
       makerBaseAddress,
       makerCounterAddress,
       feePaymentRequest,
+      feeRequired,
       depositPaymentRequest,
+      depositRequired,
       swapHash,
       fillAmount,
       takerAddress
@@ -314,15 +381,49 @@ class Order {
     // and are separated by the delimiter (:)
     const [ blockOrderId, orderId ] = key.split(DELIMITER)
 
-    const { baseSymbol, counterSymbol, side, baseAmount, counterAmount, makerBaseAddress, makerCounterAddress, ...otherParams } = valueObject
+    const {
+      baseSymbol,
+      counterSymbol,
+      side,
+      baseAmount,
+      counterAmount,
+      makerBaseAddress,
+      makerCounterAddress,
+      ...otherParams
+    } = valueObject
 
     // instantiate with the correct set of params
-    const order = new this(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, makerBaseAddress, makerCounterAddress })
+    const order = new this(blockOrderId, {
+      baseSymbol,
+      counterSymbol,
+      side,
+      baseAmount,
+      counterAmount,
+      makerBaseAddress,
+      makerCounterAddress
+    })
 
-    const { feePaymentRequest, depositPaymentRequest, swapHash, fillAmount, takerAddress } = otherParams
+    const {
+      feePaymentRequest,
+      feeRequired,
+      depositPaymentRequest,
+      depositRequired,
+      swapHash,
+      fillAmount,
+      takerAddress
+    } = otherParams
 
     // add any (white-listed) leftover params into the object
-    Object.assign(order, { orderId, feePaymentRequest, depositPaymentRequest, swapHash, fillAmount, takerAddress })
+    Object.assign(order, {
+      orderId,
+      feePaymentRequest,
+      feeRequired,
+      depositPaymentRequest,
+      depositRequired,
+      swapHash,
+      fillAmount,
+      takerAddress
+    })
 
     return order
   }

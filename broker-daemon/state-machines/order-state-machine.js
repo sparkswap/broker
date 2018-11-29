@@ -1,7 +1,7 @@
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 
 const { Order } = require('../models')
-const { generateId } = require('../utils')
+const { generateId, payInvoice } = require('../utils')
 
 const StateMachine = require('./state-machine')
 const {
@@ -169,8 +169,21 @@ const OrderStateMachine = StateMachine.factory({
       this.order.makerBaseAddress = await baseEngine.getPaymentChannelNetworkAddress()
       this.order.makerCounterAddress = await counterEngine.getPaymentChannelNetworkAddress()
 
-      const { orderId, feePaymentRequest, depositPaymentRequest } = await this.relayer.makerService.createOrder(this.order.paramsForCreate)
-      this.order.setCreatedParams({ orderId, feePaymentRequest, depositPaymentRequest })
+      const {
+        orderId,
+        feePaymentRequest,
+        feeRequired,
+        depositPaymentRequest,
+        depositRequired
+      } = await this.relayer.makerService.createOrder(this.order.paramsForCreate)
+
+      this.order.setCreatedParams({
+        orderId,
+        feePaymentRequest,
+        feeRequired,
+        depositPaymentRequest,
+        depositRequired
+      })
 
       this.logger.info(`Created order ${this.order.orderId} on the relayer`)
     },
@@ -204,38 +217,56 @@ const OrderStateMachine = StateMachine.factory({
      * @return {void}
      */
     onBeforePlace: async function (lifecycle) {
-      const { feePaymentRequest, depositPaymentRequest, orderId, outboundSymbol } = this.order
-
-      if (!feePaymentRequest) throw new Error('Cant pay invoices because fee invoice does not exist')
-      if (!depositPaymentRequest) throw new Error('Cant pay invoices because deposit invoice does not exist')
-
-      this.logger.debug(`Attempting to pay fees for order: ${orderId}`)
+      const {
+        feePaymentRequest,
+        feeRequired,
+        depositPaymentRequest,
+        depositRequired,
+        orderId,
+        outboundSymbol
+      } = this.order.paramsForPlace
 
       const outboundEngine = this.engines.get(outboundSymbol)
       if (!outboundEngine) {
         throw new Error(`No engine available for ${outboundSymbol}`)
       }
 
-      const [feeRefundPaymentRequest, depositRefundPaymentRequest] = await Promise.all([
-        outboundEngine.createRefundInvoice(feePaymentRequest),
-        outboundEngine.createRefundInvoice(depositPaymentRequest),
-        outboundEngine.payInvoice(feePaymentRequest),
-        outboundEngine.payInvoice(depositPaymentRequest)
-      ])
+      this.logger.debug(`Paying fee and deposit invoices for ${orderId}`)
 
-      this.logger.info('Received response for successful payment')
+      let payFeeInvoice
+      let payDepositInvoice
 
-      this.logger.debug('Response from engine', {
+      if (feeRequired) {
+        payFeeInvoice = payInvoice(outboundEngine, feePaymentRequest)
+      } else {
+        this.logger.debug(`Skipping paying fee invoice for ${orderId}, not required`)
+      }
+
+      if (depositRequired) {
+        payDepositInvoice = payInvoice(outboundEngine, depositPaymentRequest)
+      } else {
+        this.logger.debug(`Skipping paying deposit invoice for ${orderId}, not required`)
+      }
+
+      // Note that if the fee or deposit is not required the corresponding refund payment
+      // requests will be undefined as they will be `await`ing an undefined promise
+      const [
         feeRefundPaymentRequest,
         depositRefundPaymentRequest
-      })
-
-      this.logger.info(`Successfully paid fees for order: ${orderId}`)
+      ] = await Promise.all([
+        payFeeInvoice,
+        payDepositInvoice
+      ])
 
       const authorization = this.relayer.identity.authorize(orderId)
       this.logger.debug(`Generated authorization for ${orderId}`, authorization)
       // NOTE: this method should NOT reject a promise, as that may prevent the state of the order from saving
-      const call = this.relayer.makerService.placeOrder({ orderId, feeRefundPaymentRequest, depositRefundPaymentRequest, authorization })
+      const call = this.relayer.makerService.placeOrder({
+        orderId,
+        feeRefundPaymentRequest,
+        depositRefundPaymentRequest,
+        authorization
+      })
 
       // Stop listening to further events from the stream
       const finish = () => {

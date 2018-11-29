@@ -1,7 +1,7 @@
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 
 const { Fill } = require('../models')
-const { generateId } = require('../utils')
+const { generateId, payInvoice } = require('../utils')
 
 const StateMachine = require('./state-machine')
 const {
@@ -216,33 +216,46 @@ const FillStateMachine = StateMachine.factory({
      * @return {Promise}          romise that rejects if filling on the relayer fails
      */
     onBeforeFillOrder: async function (lifecycle) {
-      const { feePaymentRequest, depositPaymentRequest, fillId, outboundSymbol } = this.fill
-
-      if (!feePaymentRequest) throw new Error('Cant pay invoices because fee invoice does not exist')
-      if (!depositPaymentRequest) throw new Error('Cant pay invoices because deposit invoice does not exist')
-
-      this.logger.debug(`Attempting to pay fees for fill: ${fillId}`)
+      const {
+        feePaymentRequest,
+        feeRequired,
+        depositPaymentRequest,
+        depositRequired,
+        fillId,
+        outboundSymbol
+      } = this.fill.paramsForFill
 
       const outboundEngine = this.engines.get(outboundSymbol)
       if (!outboundEngine) {
-        throw new Error(`No engine avialable for ${outboundSymbol}`)
+        throw new Error(`No engine available for ${outboundSymbol}`)
       }
 
-      const [feeRefundPaymentRequest, depositRefundPaymentRequest] = await Promise.all([
-        outboundEngine.createRefundInvoice(feePaymentRequest),
-        outboundEngine.createRefundInvoice(depositPaymentRequest),
-        outboundEngine.payInvoice(feePaymentRequest),
-        outboundEngine.payInvoice(depositPaymentRequest)
-      ])
+      this.logger.debug(`Paying fee and deposit invoices for ${fillId}`)
 
-      this.logger.info('Received response for successful payment')
+      let payFeeInvoice
+      let payDepositInvoice
 
-      this.logger.debug('Response from engine', {
+      if (feeRequired) {
+        payFeeInvoice = payInvoice(outboundEngine, feePaymentRequest)
+      } else {
+        this.logger.debug(`Skipping paying fee invoice for ${fillId}, not required`)
+      }
+
+      if (depositRequired) {
+        payDepositInvoice = payInvoice(outboundEngine, depositPaymentRequest)
+      } else {
+        this.logger.debug(`Skipping paying deposit invoice for ${fillId}, not required`)
+      }
+
+      // Note that if the fee or deposit is not required the corresponding refund payment
+      // requests will be undefined as they will be `await`ing an undefined promise
+      const [
         feeRefundPaymentRequest,
         depositRefundPaymentRequest
-      })
-
-      this.logger.info(`Successfully paid fees for fill: ${fillId}`)
+      ] = await Promise.all([
+        payFeeInvoice,
+        payDepositInvoice
+      ])
 
       const authorization = this.relayer.identity.authorize(fillId)
       this.logger.debug(`Generated authorization for ${fillId}`, authorization)

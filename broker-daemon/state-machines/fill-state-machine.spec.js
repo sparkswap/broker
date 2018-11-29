@@ -10,10 +10,14 @@ describe('FillStateMachine', () => {
   let logger
   let relayer
   let engines
+  let payInvoiceStub
 
   beforeEach(() => {
     Fill = sinon.stub()
     FillStateMachine.__set__('Fill', Fill)
+
+    payInvoiceStub = sinon.stub()
+    FillStateMachine.__set__('payInvoice', payInvoiceStub)
 
     store = {
       sublevel: sinon.stub(),
@@ -332,21 +336,20 @@ describe('FillStateMachine', () => {
   describe('#fillOrder', () => {
     let fakeFill
     let fsm
-    let payInvoiceStub
-    let createRefundInvoiceStub
     let fillOrderStub
     let subscribeExecuteStub
     let subscribeExecuteStream
     let invoice
     let feePaymentRequest
+    let feeRequired
     let depositPaymentRequest
+    let depositRequired
     let fillId
     let outboundSymbol
 
     beforeEach(async () => {
       invoice = '1234'
-      payInvoiceStub = sinon.stub()
-      createRefundInvoiceStub = sinon.stub().returns(invoice)
+      payInvoiceStub.resolves(invoice)
       fillOrderStub = sinon.stub().resolves({})
       subscribeExecuteStream = {
         on: sinon.stub(),
@@ -354,12 +357,23 @@ describe('FillStateMachine', () => {
       }
       subscribeExecuteStub = sinon.stub().returns(subscribeExecuteStream)
       feePaymentRequest = 'fee'
+      feeRequired = true
       depositPaymentRequest = 'deposit'
+      depositRequired = true
       fillId = '1234'
       outboundSymbol = 'BTC'
 
-      fakeFill = { feePaymentRequest, depositPaymentRequest, fillId, outboundSymbol }
-      engines.set('BTC', { payInvoice: payInvoiceStub, createRefundInvoice: createRefundInvoiceStub })
+      fakeFill = {
+        fillId,
+        paramsForFill: {
+          feePaymentRequest,
+          feeRequired,
+          depositPaymentRequest,
+          depositRequired,
+          fillId,
+          outboundSymbol
+        }
+      }
       relayer = {
         takerService: {
           fillOrder: fillOrderStub,
@@ -378,22 +392,26 @@ describe('FillStateMachine', () => {
 
     it('pays a fee invoice', async () => {
       await fsm.fillOrder()
-      expect(payInvoiceStub).to.have.been.calledWith(feePaymentRequest)
+      expect(payInvoiceStub).to.have.been.calledWith(engines.get('BTC'), feePaymentRequest)
+    })
+
+    it('skips a non-required fee invoice', async () => {
+      fsm.fill.paramsForFill.feeRequired = false
+
+      await fsm.fillOrder()
+      expect(payInvoiceStub).to.not.have.been.calledWith(engines.get('BTC'), feePaymentRequest)
     })
 
     it('pays a deposit invoice', async () => {
       await fsm.fillOrder()
-      expect(payInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
+      expect(payInvoiceStub).to.have.been.calledWith(engines.get('BTC'), depositPaymentRequest)
     })
 
-    it('creates a fee refund invoice', async () => {
-      await fsm.fillOrder()
-      expect(createRefundInvoiceStub).to.have.been.calledWith(feePaymentRequest)
-    })
+    it('skips a non-required deposit invoice', async () => {
+      fsm.fill.paramsForFill.depositRequired = false
 
-    it('creates a deposit refund invoice', async () => {
       await fsm.fillOrder()
-      expect(createRefundInvoiceStub).to.have.been.calledWith(depositPaymentRequest)
+      expect(payInvoiceStub).to.not.have.been.calledWith(engines.get('BTC'), depositPaymentRequest)
     })
 
     it('authorizes the request', async () => {
@@ -425,16 +443,6 @@ describe('FillStateMachine', () => {
       relayer.takerService.fillOrder.resolves(fillError)
 
       expect(fsm.fillOrder()).to.eventually.be.rejectedWith('ORDER_NOT_PLACED')
-    })
-
-    it('errors if a feePaymentRequest isnt available on the fill', () => {
-      fsm.fill = {}
-      return expect(fsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because fee')
-    })
-
-    it('errors if a feePaymentRequest isnt available on the fill', () => {
-      fsm.fill = { feePaymentRequest }
-      return expect(fsm.fillOrder()).to.eventually.be.rejectedWith('Cant pay invoices because deposit')
     })
 
     it('does not subscribe to executions for fills that fail', async () => {
