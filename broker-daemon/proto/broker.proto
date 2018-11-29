@@ -410,6 +410,24 @@ message GetBlockOrdersRequest {
 }
 
 /**
+ * All block orders in a given market.
+ */
+message GetActiveFundsResponse {
+  // A list of all block orders in the market.
+  string active_outbound_amount = 1;
+  string active_inbound_amount = 2;
+}
+
+/**
+ * Request to retrieve all block orders in a given market.
+ */
+message GetActiveFundsRequest {
+  // Market for which to retrieve block orders, expressed as a string separating two common symbols with a '/', e.g. `'BTC/LTC'`
+  string market = 1;
+  Side side = 2;
+}
+
+/**
  * The OrderService manages all trading activity on the Broker.
  * It is the primary way that users interact with the Broker on a day-to-day basis.
  *
@@ -630,6 +648,12 @@ service OrderService {
    * ```
    */
   rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse) {
+    option (google.api.http) = {
+      get: "/v1/orders"
+    };
+  }
+
+  rpc GetActiveFunds (GetActiveFundsRequest) returns (GetActiveFundsResponse) {
     option (google.api.http) = {
       get: "/v1/orders"
     };
