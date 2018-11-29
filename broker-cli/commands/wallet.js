@@ -214,6 +214,19 @@ async function networkAddress (args, opts, logger) {
 }
 
 /**
+ * Different network statuses
+ * @constant
+ * @type {Object}
+ * @default
+ */
+const NETWORK_STATUSES = Object.freeze({
+  AVAILABLE: 'AVAILABLE',
+  OUTSTANDING: 'OUTSTANDING',
+  PENDING: 'PENDING',
+  INACTIVE: 'INACTIVE'
+})
+
+/**
  * network-status
  *
  * ex: `sparkswap wallet network-status`
@@ -247,20 +260,20 @@ async function networkStatus (args, opts, logger) {
     const availableCounterReceiveCapacity = Big(counterSymbolCapacities.activeReceiveCapacity).minus(committedCounterReceiveCapacity)
 
     statusTable.push(['Available', '', ''])
-    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(availableBaseReceiveCapacity, 'active'), formatBalance(availableCounterSendCapacity, 'active')])
-    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(availableBaseSendCapacity, 'active'), formatBalance(availableCounterReceiveCapacity, 'active')])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(availableBaseReceiveCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(availableCounterSendCapacity, NETWORK_STATUSES.AVAILABLE)])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(availableBaseSendCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(availableCounterReceiveCapacity, NETWORK_STATUSES.AVAILABLE)])
 
     statusTable.push(['Outstanding', '', ''])
-    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(committedBaseReceiveCapacity, 'pending'), formatBalance(committedCounterSendCapacity, 'pending')])
-    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(committedBaseSendCapacity, 'pending'), formatBalance(committedCounterReceiveCapacity, 'pending')])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(committedBaseReceiveCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(committedCounterSendCapacity, NETWORK_STATUSES.OUTSTANDING)])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(committedBaseSendCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(committedCounterReceiveCapacity, NETWORK_STATUSES.OUTSTANDING)])
 
     statusTable.push(['Pending', '', ''])
-    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingReceiveCapacity, 'pending'), formatBalance(counterSymbolCapacities.pendingSendCapacity, 'pending')])
-    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingSendCapacity, 'pending'), formatBalance(counterSymbolCapacities.pendingReceiveCapacity, 'pending')])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingReceiveCapacity, NETWORK_STATUSES.PENDING), formatBalance(counterSymbolCapacities.pendingSendCapacity, NETWORK_STATUSES.PENDING)])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingSendCapacity, NETWORK_STATUSES.PENDING), formatBalance(counterSymbolCapacities.pendingReceiveCapacity, NETWORK_STATUSES.PENDING)])
 
     statusTable.push(['Inactive', '', ''])
-    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveReceiveCapacity, 'inactive'), formatBalance(counterSymbolCapacities.inactiveSendCapacity, 'inactive')])
-    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveSendCapacity, 'inactive'), formatBalance(counterSymbolCapacities.inactiveReceiveCapacity, 'inactive')])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveReceiveCapacity, NETWORK_STATUSES.INACTIVE), formatBalance(counterSymbolCapacities.inactiveSendCapacity, NETWORK_STATUSES.INACTIVE)])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveSendCapacity, NETWORK_STATUSES.INACTIVE), formatBalance(counterSymbolCapacities.inactiveReceiveCapacity, NETWORK_STATUSES.INACTIVE)])
 
     logger.info(` ${market.bold.white}`)
     logger.info(statusTable.toString())
@@ -282,11 +295,13 @@ function formatBalance (balance, status) {
   const fixedBalance = Big(balance).toFixed(16)
   if (Big(balance).gt(0)) {
     switch (status) {
-      case 'active':
+      case NETWORK_STATUSES.AVAILABLE:
         return fixedBalance.green
-      case 'pending':
+      case NETWORK_STATUSES.OUTSTANDING:
         return fixedBalance.yellow
-      case 'inactive':
+      case NETWORK_STATUSES.PENDING:
+        return fixedBalance.yellow
+      case NETWORK_STATUSES.INACTIVE:
         return fixedBalance.red
       default:
         return fixedBalance

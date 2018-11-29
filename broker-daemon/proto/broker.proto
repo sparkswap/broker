@@ -410,21 +410,22 @@ message GetBlockOrdersRequest {
 }
 
 /**
- * All block orders in a given market.
+ * Request to retrieve inbound and outbound amounts committed to orders and fills that have not been processed yet
+ */
+message GetActiveFundsRequest {
+  // Market for which to retrieve block orders, expressed as a string separating two common symbols with a '/', e.g. `'BTC/LTC'`
+  string market = 1;
+  // Side to add up amounts for
+  Side side = 2;
+}
+
+/**
+ * Inbound and outbound amounts committed to orders and fills that have not been processed yet
  */
 message GetActiveFundsResponse {
   // A list of all block orders in the market.
   string active_outbound_amount = 1;
   string active_inbound_amount = 2;
-}
-
-/**
- * Request to retrieve all block orders in a given market.
- */
-message GetActiveFundsRequest {
-  // Market for which to retrieve block orders, expressed as a string separating two common symbols with a '/', e.g. `'BTC/LTC'`
-  string market = 1;
-  Side side = 2;
 }
 
 /**
@@ -652,12 +653,61 @@ service OrderService {
       get: "/v1/orders"
     };
   }
-
-  rpc GetActiveFunds (GetActiveFundsRequest) returns (GetActiveFundsResponse) {
-    option (google.api.http) = {
-      get: "/v1/orders"
-    };
-  }
+  /**
+   * GetActiveFunds returns the funds that are committed to outbound and inbound orders that have not yet been processed.
+   *
+   * ```javascript
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * orderService.getActiveFunds({ market: 'BTC/LTC', side: 'BID' }, { deadline }, (err, { activeInboundAmount, activeOutboundAmount }) => {
+   *   if (err) return console.error(err)
+   *   console.log(activeInboundAmount, activeOutboundAmount)
+   * })
+   * ```
+   * * ```shell
+    * > sparkswap wallet network-status --market BTC/LTC
+    * ```
+    *
+    * > The above command will print:
+    *
+    * ```javascript
+    * {
+    *   "activeInboundAmount": "0.00008165",
+    *   "activeOutboundAmount": "0.16768165"
+    * }
+    * ```
+    *
+    * ```shell
+    * BTC/LTC
+    * ┌──────────────┬────────────────────────┬────────────────────────┐
+    * │              │ BTC Capacity           │ LTC Capacity           │
+    * ├──────────────┼────────────────────────┼────────────────────────┤
+    * │ Available    │                        │                        │
+    * ├──────────────┼────────────────────────┼────────────────────────┤
+    * │   Buy BTC    │ 0.0000380000000000     │ 0.0000000000000000     │
+    * ├──────────────┼────────────────────────┼────────────────────────┤
+    * │   Sell BTC   │ 0.1436436500000000     │ 10.0599490000000000    │
+    * ├──────────────┼────────────────────────┼────────────────────────┤
+    * │ Outstanding  │                        │                        │
+    * ├──────────────┼────────────────────────┼────────────────────────┤
+    * │   Buy BTC    │ 0.0027057000000000     │ 0.1674101500000000     │
+    * ├──────────────┼────────────────────────┼────────────────────────┤
+    * │   Sell BTC   │ 0.1676816500000000     │ 10.0659670000000000    │
+    * ├──────────────┼────────────────────────┼────────────────────────┤
+    * │ Pending      │                        │                        │
+    * ├──────────────┼────────────────────────┼────────────────────────┤
+    * │   Buy BTC    │ 0.0000000000000000     │ 0.0000000000000000     │
+    * ├──────────────┼────────────────────────┼────────────────────────┤
+    * │   Sell BTC   │ 0.0000000000000000     │ 0.0000000000000000     │
+    * ├──────────────┼────────────────────────┼────────────────────────┤
+    * │ Inactive     │                        │                        │
+    * ├──────────────┼────────────────────────┼────────────────────────┤
+    * │   Buy BTC    │ 0.0000000000000000     │ 0.0000000000000000     │
+    * ├──────────────┼────────────────────────┼────────────────────────┤
+    * │   Sell BTC   │ 0.0000000000000000     │ 0.0000000000000000     │
+    * └──────────────┴────────────────────────┴────────────────────────┘
+    * ```
+   */
+  rpc GetActiveFunds (GetActiveFundsRequest) returns (GetActiveFundsResponse);
 }
 
 /**
@@ -1246,7 +1296,13 @@ service WalletService {
    * ┌──────────────┬────────────────────────┬────────────────────────┐
    * │              │ BTC Capacity           │ LTC Capacity           │
    * ├──────────────┼────────────────────────┼────────────────────────┤
-   * │ Active       │                        │                        │
+   * │ Available    │                        │                        │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Buy BTC    │ 0.0000380000000000     │ 0.0000000000000000     │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Sell BTC   │ 0.1436436500000000     │ 10.0599490000000000    │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │ Outstanding  │                        │                        │
    * ├──────────────┼────────────────────────┼────────────────────────┤
    * │   Buy BTC    │ 0.0027057000000000     │ 0.1674101500000000     │
    * ├──────────────┼────────────────────────┼────────────────────────┤

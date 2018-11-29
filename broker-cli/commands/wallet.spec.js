@@ -177,6 +177,12 @@ describe('cli wallet', () => {
     let market
     let baseSymbolCapacities
     let counterSymbolCapacities
+    let getActiveFundsStub
+    let committedCounterSendCapacity
+    let committedBaseReceiveCapacity
+    let committedBaseSendCapacity
+    let committedCounterReceiveCapacity
+    let NETWORK_STATUSES
 
     const networkStatus = program.__get__('networkStatus')
     const formatBalance = program.__get__('formatBalance')
@@ -205,15 +211,26 @@ describe('cli wallet', () => {
         pendingSendCapacity: '0.000005'
       }
 
-      getTradingCapacitiesStub = sinon.stub().returns({baseSymbolCapacities, counterSymbolCapacities})
+      getTradingCapacitiesStub = sinon.stub().resolves({baseSymbolCapacities, counterSymbolCapacities})
+      getActiveFundsStub = sinon.stub().resolves()
+      committedCounterSendCapacity = '0.000001'
+      committedBaseReceiveCapacity = '0.000002'
+      committedBaseSendCapacity = '0.000003'
+      committedCounterReceiveCapacity = '0.000004'
+
+      getActiveFundsStub.withArgs({ market, side: 'BID' }).resolves({ activeOutboundAmount: committedCounterSendCapacity, activeInboundAmount: committedBaseReceiveCapacity })
+      getActiveFundsStub.withArgs({ market, side: 'ASK' }).resolves({ activeOutboundAmount: committedBaseSendCapacity, activeInboundAmount: committedCounterReceiveCapacity })
+
       tableStub = sinon.stub()
       tablePushStub = sinon.stub()
       tableStub.prototype.push = tablePushStub
       daemonStub = sinon.stub()
       daemonStub.prototype.walletService = { getTradingCapacities: getTradingCapacitiesStub }
+      daemonStub.prototype.orderService = { getActiveFunds: getActiveFundsStub }
 
       program.__set__('BrokerDaemonClient', daemonStub)
       program.__set__('Table', tableStub)
+      NETWORK_STATUSES = program.__get__('NETWORK_STATUSES')
     })
 
     beforeEach(async () => {
@@ -225,18 +242,45 @@ describe('cli wallet', () => {
       expect(getTradingCapacitiesStub).to.have.been.calledOnce()
     })
 
-    it('adds active header', () => {
-      const expectedResult = ['Active', '', '']
+    it('calls gets activeFunds for the market for both sides', () => {
+      expect(getActiveFundsStub).to.have.been.calledTwice()
+      expect(getActiveFundsStub).to.have.been.calledWith({market, side: 'BID'})
+      expect(getActiveFundsStub).to.have.been.calledTwice({market, side: 'ASK'})
+    })
+
+    it('adds available header', () => {
+      const expectedResult = ['Available', '', '']
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
 
     it('adds a correct active capacities for buying the base', () => {
-      const expectedResult = ['  Buy BTC', formatBalance('0.00001', 'active'), formatBalance('0.000001', 'active')]
+      const availableBaseReceive = Big(baseSymbolCapacities.activeReceiveCapacity).minus(committedBaseReceiveCapacity).toString()
+      const availableCounterSend = Big(counterSymbolCapacities.activeSendCapacity).minus(committedCounterSendCapacity).toString()
+
+      const expectedResult = ['  Buy BTC', formatBalance(availableBaseReceive, NETWORK_STATUSES.AVAILABLE), formatBalance(availableCounterSend, NETWORK_STATUSES.AVAILABLE)]
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
 
     it('adds a correct active capacities for selling the base', () => {
-      const expectedResult = ['  Sell BTC', formatBalance('0.000001', 'active'), formatBalance('0.00006', 'active')]
+      const availableBaseSend = Big(baseSymbolCapacities.activeSendCapacity).minus(committedBaseSendCapacity).toString()
+      const availableCounterReceive = Big(counterSymbolCapacities.activeReceiveCapacity).minus(committedCounterReceiveCapacity).toString()
+
+      const expectedResult = ['  Sell BTC', formatBalance(availableBaseSend, NETWORK_STATUSES.AVAILABLE), formatBalance(availableCounterReceive, NETWORK_STATUSES.AVAILABLE)]
+      expect(tablePushStub).to.have.been.calledWith(expectedResult)
+    })
+
+    it('adds outstanding header', () => {
+      const expectedResult = ['Outstanding', '', '']
+      expect(tablePushStub).to.have.been.calledWith(expectedResult)
+    })
+
+    it('adds a correct outstanding capacities for buying the base', () => {
+      const expectedResult = ['  Buy BTC', formatBalance(committedBaseReceiveCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(committedCounterSendCapacity, NETWORK_STATUSES.OUTSTANDING)]
+      expect(tablePushStub).to.have.been.calledWith(expectedResult)
+    })
+
+    it('adds a correct outstanding capacities for selling the base', () => {
+      const expectedResult = ['  Sell BTC', formatBalance(committedBaseSendCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(committedCounterReceiveCapacity, NETWORK_STATUSES.OUTSTANDING)]
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
 
@@ -246,12 +290,12 @@ describe('cli wallet', () => {
     })
 
     it('adds correct pending capacities for buying the base', () => {
-      const expectedResult = ['  Buy BTC', formatBalance('0.00001', 'pending'), formatBalance('0.000005', 'pending')]
+      const expectedResult = ['  Buy BTC', formatBalance('0.00001', NETWORK_STATUSES.PENDING), formatBalance('0.000005', NETWORK_STATUSES.PENDING)]
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
 
     it('adds correct pending capacities for selling the base', () => {
-      const expectedResult = ['  Sell BTC', formatBalance('0.000005', 'pending'), formatBalance('0.00001', 'pending')]
+      const expectedResult = ['  Sell BTC', formatBalance('0.000005', NETWORK_STATUSES.PENDING), formatBalance('0.00001', NETWORK_STATUSES.PENDING)]
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
 
@@ -261,33 +305,38 @@ describe('cli wallet', () => {
     })
 
     it('adds correct inactive capacities for buying the base', () => {
-      const expectedResult = ['  Buy BTC', formatBalance('0.00002', 'inactive'), formatBalance('0.000002', 'inactive')]
+      const expectedResult = ['  Buy BTC', formatBalance('0.00002', NETWORK_STATUSES.INACTIVE), formatBalance('0.000002', NETWORK_STATUSES.INACTIVE)]
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
 
     it('adds correct inactive capacities for selling the base', () => {
-      const expectedResult = ['  Sell BTC', formatBalance('0.000002', 'inactive'), formatBalance('0.00002', 'inactive')]
+      const expectedResult = ['  Sell BTC', formatBalance('0.000002', NETWORK_STATUSES.INACTIVE), formatBalance('0.00002', NETWORK_STATUSES.INACTIVE)]
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
   })
 
   describe('formatBalance', () => {
+    const NETWORK_STATUSES = program.__get__('NETWORK_STATUSES')
     const formatBalance = program.__get__('formatBalance')
 
     it('does not color the balance if the balance is 0', () => {
-      expect(formatBalance('0', 'active')).to.eql('0.0000000000000000')
+      expect(formatBalance('0', NETWORK_STATUSES.AVAILABLE)).to.eql('0.0000000000000000')
     })
 
     it('colors the balance green if the balance is greater than 0 and the status is active', () => {
-      expect(formatBalance('0.0002', 'active')).to.eql('0.0002000000000000'.green)
+      expect(formatBalance('0.0002', NETWORK_STATUSES.AVAILABLE)).to.eql('0.0002000000000000'.green)
+    })
+
+    it('colors the balance yellow if the balance is greater than 0 and the status is outstanding', () => {
+      expect(formatBalance('0.00003', NETWORK_STATUSES.OUTSTANDING)).to.eql('0.0000300000000000'.yellow)
     })
 
     it('colors the balance yellow if the balance is greater than 0 and the status is pending', () => {
-      expect(formatBalance('0.00003', 'pending')).to.eql('0.0000300000000000'.yellow)
+      expect(formatBalance('0.00003', NETWORK_STATUSES.PENDING)).to.eql('0.0000300000000000'.yellow)
     })
 
     it('colors the balance red if the balance is greater than 0 and the status is inactive', () => {
-      expect(formatBalance('0.004', 'inactive')).to.eql('0.0040000000000000'.red)
+      expect(formatBalance('0.004', NETWORK_STATUSES.INACTIVE)).to.eql('0.0040000000000000'.red)
     })
   })
 

@@ -158,7 +158,7 @@ const OrderStateMachine = StateMachine.factory({
     onBeforeCreate: async function (lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
       this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount })
       // TODO: figure out a way to cache the maker address instead of making a request
-      console.log('my order', this.order)
+
       const baseEngine = this.engines.get(this.order.baseSymbol)
       if (!baseEngine) {
         throw new Error(`No engine available for ${this.order.baseSymbol}`)
