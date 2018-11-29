@@ -445,8 +445,9 @@ module.exports = (program) => {
     .argument('[sub-arguments...]')
     .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
-    // We are required to add all options before the `action` portion the parameter
-    // will not be received in the `opts` object
+    // For each subcommand, we are required to add any `.options` before the `.action`
+    // hook has been added in caporal. If the option is omitted, the subcommand will
+    // not receive the variable in the `opts` object
     .option('--wallet-address [address]', 'used in sparkswap withdraw ONLY')
     .option('--force [force]', 'used in sparkswap release ONLY', null, false)
     .action(async (args, opts, logger) => {
