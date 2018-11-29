@@ -1,3 +1,5 @@
+require('colors')
+
 const BrokerDaemonClient = require('../broker-daemon-client')
 const { validations, handleError } = require('../utils')
 
