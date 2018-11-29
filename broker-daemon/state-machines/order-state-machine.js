@@ -1,6 +1,7 @@
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 
-const { Order } = require('../models')
+// We require order directly to avoid cycles with models index
+const Order = require('../models/order')
 const { generateId, payInvoice } = require('../utils')
 
 const StateMachine = require('./state-machine')

@@ -15,12 +15,14 @@
     "dist-cli": "npm run broker-proto && bash ./scripts/publish-broker-cli.sh",
     "format": "standard --fix",
     "pretest": "npm run format; exit 0",
-    "test": "NODE_PATH=. mocha 'broker-cli/{,!(node_modules)/**}/**/*.spec.js' 'broker-daemon/**/**/*.spec.js'",
+    "mocha-test": "NODE_PATH=. mocha 'broker-cli/{,!(node_modules)/**}/**/*.spec.js' 'broker-daemon/**/**/*.spec.js'",
+    "test": "npm run check-for-cycles && npm run mocha-test",
     "coverage": "nyc npm test",
     "ci-test": "npm run format && npm test",
     "start-sparkswapd": "pm2-docker pm2.json --watch",
     "validate-config": "standard ~/.sparkswap.js",
-    "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp -r ./broker-daemon/proto/ ./broker-cli/proto/"
+    "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp -r ./broker-daemon/proto/ ./broker-cli/proto/",
+    "check-for-cycles": "madge --circular broker-daemon/"
   },
   "bin": {
     "sparkswapd": "./broker-daemon/bin/sparkswapd",
@@ -58,7 +60,7 @@
     "level": "3.0.1",
     "level-live-stream": "1.4.12",
     "level-sublevel": "6.6.1",
-    "lnd-engine": "sparkswap/lnd-engine#5f12dc8b6b89f46e425a8cf93732308616e08584",
+    "lnd-engine": "sparkswap/lnd-engine#v0.2.1-alpha-preview",
     "nano-seconds": "1.2.2",
     "pm2": "2.10.3",
     "protocol-buffers-schema": "3.3.2",
@@ -73,6 +75,7 @@
     "dirty-chai": "2.0.1",
     "eslint": "4.19.1",
     "eslint-plugin-import": "2.11.0",
+    "madge": "3.3.0",
     "mocha": "5.1.1",
     "mock-require": "3.0.2",
     "nyc": "11.7.3",
