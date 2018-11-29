@@ -31,7 +31,9 @@ describe('health-check', () => {
         debug: sinon.stub()
       }
       HealthCheckResponse = sinon.stub()
-      engineStatusStub = sinon.stub().returns(statusOK)
+      engineStatusStub = sinon.stub()
+      engineStatusStub.onFirstCall().resolves({ symbol: 'BTC', status: statusOK })
+      engineStatusStub.onSecondCall().resolves({ symbol: 'LTC', status: statusOK })
       relayerStatusStub = sinon.stub().returns(statusOK)
 
       statusOK = healthCheck.__get__('STATUS_CODES').OK
@@ -50,7 +52,6 @@ describe('health-check', () => {
 
     it('calls getEngineStatus to retrieve engine health status', () => {
       expect(engineStatusStub).to.have.been.calledTwice()
-      expect(engineStatusStub).to.have.been.calledWith(engineStub)
     })
 
     it('calls relayer to retrieve relayer health status', () => {
@@ -66,6 +67,8 @@ describe('health-check', () => {
   })
 
   describe('getEngineStatus', () => {
+    const symbol = 'BTC'
+
     let getEngineStatus
     let engineStub
     let isAvailableStub
@@ -80,16 +83,16 @@ describe('health-check', () => {
       getEngineStatus = healthCheck.__get__('getEngineStatus')
     })
 
-    it('returns an OK if engine.isAvailable a successful call', async () => {
-      const res = await getEngineStatus(engineStub)
-      expect(res).to.eql(statusOK)
+    it('returns an OK response engine is available', async () => {
+      const res = await getEngineStatus([ symbol, engineStub ])
+      expect(res).to.eql({ symbol, status: statusOK })
     })
 
     it('returns an error if engine.isAvailable fails', async () => {
       const error = 'MY ERROR'
       isAvailableStub.throws(error)
-      const res = await getEngineStatus(engineStub)
-      expect(res).to.eql(error)
+      const res = await getEngineStatus([ symbol, engineStub ])
+      expect(res).to.eql({ symbol, status: error })
     })
   })
 
