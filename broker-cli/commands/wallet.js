@@ -320,7 +320,7 @@ async function release (args, opts, logger) {
     try {
       await client.walletService.releaseChannels({ market, force })
     } catch (e) {
-      logger.info(`Failed to release payment channels for ${market}`.red)
+      logger.error(`Failed to release payment channels for ${market}`.red)
 
       if (!force) {
         logger.info('You can force the release of funds using the `--force` option, however')
