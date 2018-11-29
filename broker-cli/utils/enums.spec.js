@@ -2,8 +2,7 @@ const { expect } = require('test/test-helper')
 
 const {
   TIME_IN_FORCE,
-  ORDER_TYPES,
-  STATUS_CODES
+  ORDER_TYPES
 } = require('./enums')
 
 describe('Validations', () => {
@@ -15,10 +14,5 @@ describe('Validations', () => {
   it('defines ORDER_TYPES', () => {
     expect(ORDER_TYPES).to.not.be.null()
     expect(ORDER_TYPES).to.not.be.undefined()
-  })
-
-  it('defines STATUS_CODES', () => {
-    expect(STATUS_CODES).to.not.be.null()
-    expect(STATUS_CODES).to.not.be.undefined()
   })
 })
