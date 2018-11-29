@@ -1148,7 +1148,7 @@ service WalletService {
    * > sparkswap wallet release --market BTC/LTC
    * ```
    *
-   * > Additionally, you can pass a `force` flag which will force close channels on the channels
+   * > Additionally, you can pass a `force` flag which will force close channels on a specific market
    *
    * ```javascript
    * walletService.releaseChannels( { market: 'BTC/LTC', force: true }, (err) => {
