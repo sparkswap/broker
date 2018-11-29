@@ -15,12 +15,14 @@
     "dist-cli": "npm run broker-proto && bash ./scripts/publish-broker-cli.sh",
     "format": "standard --fix",
     "pretest": "npm run format; exit 0",
-    "test": "NODE_PATH=. mocha 'broker-cli/{,!(node_modules)/**}/**/*.spec.js' 'broker-daemon/**/**/*.spec.js'",
+    "mocha-test": "NODE_PATH=. mocha 'broker-cli/{,!(node_modules)/**}/**/*.spec.js' 'broker-daemon/**/**/*.spec.js'",
+    "test": "npm run mocha-test && npm run check-for-cycles",
     "coverage": "nyc npm test",
     "ci-test": "npm run format && npm test",
     "start-sparkswapd": "pm2-docker pm2.json --watch",
     "validate-config": "standard ~/.sparkswap.js",
-    "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp -r ./broker-daemon/proto/ ./broker-cli/proto/"
+    "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp -r ./broker-daemon/proto/ ./broker-cli/proto/",
+    "check-for-cycles": "madge --circular broker-daemon/"
   },
   "bin": {
     "sparkswapd": "./broker-daemon/bin/sparkswapd",
@@ -73,6 +75,7 @@
     "dirty-chai": "2.0.1",
     "eslint": "4.19.1",
     "eslint-plugin-import": "2.11.0",
+    "madge": "3.3.0",
     "mocha": "5.1.1",
     "mock-require": "3.0.2",
     "nyc": "11.7.3",

@@ -1,6 +1,7 @@
 const StateMachineHistory = require('javascript-state-machine/lib/history')
 
-const { Fill } = require('../models')
+// We require fill directly to avoid cycles with models index
+const Fill = require('../models/fill')
 const { generateId, payInvoice } = require('../utils')
 
 const StateMachine = require('./state-machine')
