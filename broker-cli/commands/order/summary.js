@@ -49,7 +49,7 @@ function createUI (market, orders) {
  * @param {Logger} logger
  */
 async function summary (args, opts, logger) {
-  const { market, rpcAddress = null } = opts
+  const { market, rpcAddress } = opts
   const request = { market }
   try {
     const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)

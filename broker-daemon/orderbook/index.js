@@ -118,6 +118,7 @@ class Orderbook {
 
       this.logger.info(`Market ${this.marketName} encountered sync'ing error, re-building`, { error })
       await watcher.migrate()
+      await this.index.ensureIndex()
       this.watchMarket()
     }
 

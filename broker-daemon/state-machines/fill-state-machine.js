@@ -21,6 +21,16 @@ const {
 const UNASSIGNED_PREFIX = 'NO_ASSIGNED_ID_'
 
 /**
+ * Error codes that can come back from relayer
+ * @type {Object}
+ * @constant
+ * @default
+ */
+const FILL_ERROR_CODES = Object.freeze({
+  ORDER_NOT_PLACED: 'ORDER_NOT_PLACED'
+})
+
+/**
  * @class Finite State Machine for managing fill lifecycle
  */
 const FillStateMachine = StateMachine.factory({
@@ -167,7 +177,13 @@ const FillStateMachine = StateMachine.factory({
       const swapHash = await inboundEngine.createSwapHash(this.fill.order.orderId, inboundAmount)
       this.fill.setSwapHash(swapHash)
 
-      const { fillId, feePaymentRequest, depositPaymentRequest } = await this.relayer.takerService.createFill(this.fill.paramsForCreate)
+      const { fillId, feePaymentRequest, depositPaymentRequest, fillError } = await this.relayer.takerService.createFill(this.fill.paramsForCreate)
+
+      if (fillError) {
+        this.logger.error(`Encountered error with fill: ${fillError.message}`)
+        throw new Error(fillError.code)
+      }
+
       this.fill.setCreatedParams({ fillId, feePaymentRequest, depositPaymentRequest })
 
       this.logger.info(`Created fill ${this.fill.fillId} on the relayer`)
@@ -243,7 +259,12 @@ const FillStateMachine = StateMachine.factory({
 
       const authorization = this.relayer.identity.authorize(fillId)
       this.logger.debug(`Generated authorization for ${fillId}`, authorization)
-      await this.relayer.takerService.fillOrder({ fillId, feeRefundPaymentRequest, depositRefundPaymentRequest, authorization })
+      const { fillError } = await this.relayer.takerService.fillOrder({ fillId, feeRefundPaymentRequest, depositRefundPaymentRequest, authorization })
+
+      if (fillError) {
+        this.logger.error(`Encountered error with fill: ${fillError.message}`)
+        throw new Error(fillError.code)
+      }
 
       this.logger.info(`Filled order ${fillId} on the relayer`)
     },
@@ -326,6 +347,14 @@ const FillStateMachine = StateMachine.factory({
     onBeforeReject: function (lifecycle, error) {
       this.logger.error(`Encountered error during transition, rejecting`, error)
       this.fill.error = error
+    },
+    /**
+     * Returns true if there is a relayer error associated with the fill, false if not
+     * This is just a getter function, no transition associated
+     * @return {Boolean}
+     */
+    shouldRetry: function () {
+      return !!this.fill.error && this.fill.error.message === FILL_ERROR_CODES.ORDER_NOT_PLACED
     }
   }
 })

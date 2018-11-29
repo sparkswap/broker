@@ -269,6 +269,14 @@ describe('Order', () => {
         expect(order).to.have.property('outboundSymbol', params.counterSymbol)
       })
 
+      it('defines an inbound amount getter', () => {
+        expect(order).to.have.property('inboundAmount', params.baseAmount)
+      })
+
+      it('defines an outbound amount getter', () => {
+        expect(order).to.have.property('outboundAmount', params.counterAmount)
+      })
+
       it('defines an inbound fill amount getter', () => {
         expect(order).to.have.property('inboundFillAmount', '9000')
       })

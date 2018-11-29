@@ -13,7 +13,7 @@ const { handleError } = require('../../utils')
  */
 async function cancel (args, opts, logger) {
   const { blockOrderId } = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress } = opts
 
   const request = {
     blockOrderId

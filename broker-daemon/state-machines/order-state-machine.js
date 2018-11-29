@@ -426,7 +426,8 @@ OrderStateMachine.STATES = Object.freeze({
   NONE: 'none',
   CREATED: 'created',
   PLACED: 'placed',
-  CANCELLED: 'cancelled'
+  CANCELLED: 'cancelled',
+  EXECUTING: 'executing'
 })
 
 module.exports = OrderStateMachine

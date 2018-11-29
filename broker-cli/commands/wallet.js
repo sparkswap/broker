@@ -40,7 +40,9 @@ const SUPPORTED_COMMANDS = Object.freeze({
   NETWORK_ADDRESS: 'network-address',
   NETWORK_STATUS: 'network-status',
   RELEASE: 'release',
-  WITHDRAW: 'withdraw'
+  WITHDRAW: 'withdraw',
+  CREATE: 'create',
+  UNLOCK: 'unlock'
 })
 
 /**
@@ -55,7 +57,7 @@ const SUPPORTED_COMMANDS = Object.freeze({
  * @return {Void}
  */
 async function balance (args, opts, logger) {
-  const { rpcAddress = null } = opts
+  const { rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -97,7 +99,7 @@ async function balance (args, opts, logger) {
  */
 async function newDepositAddress (args, opts, logger) {
   const { symbol } = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -125,7 +127,7 @@ async function newDepositAddress (args, opts, logger) {
  */
 async function commit (args, opts, logger) {
   const { symbol, amount } = args
-  const { rpcAddress = null, market } = opts
+  const { rpcAddress, market } = opts
   const currentCurrencyConfig = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol)
 
   try {
@@ -198,7 +200,7 @@ async function commit (args, opts, logger) {
  */
 async function networkAddress (args, opts, logger) {
   const { symbol } = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -225,7 +227,7 @@ async function networkAddress (args, opts, logger) {
  * @return {Void}
  */
 async function networkStatus (args, opts, logger) {
-  const { market, rpcAddress = null } = opts
+  const { market, rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -298,7 +300,7 @@ function formatBalance (balance, status) {
  * @return {Void}
  */
 async function release (args, opts, logger) {
-  const { rpcAddress = null, market } = opts
+  const { rpcAddress, market } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -332,7 +334,7 @@ async function release (args, opts, logger) {
  */
 async function withdraw (args, opts, logger) {
   const {symbol, address, amount} = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -348,13 +350,79 @@ async function withdraw (args, opts, logger) {
   }
 }
 
+/**
+ * Create a wallet
+ *
+ * ex: `sparkswap wallet create`
+ *
+ * @function
+ * @param {Object} args
+ * @param {String} args.symbol
+ * @param {Object} opts
+ * @param {Logger} logger
+ * @return {Void}
+ */
+async function create (args, opts, logger) {
+  const { symbol } = args
+  const { rpcAddress = null } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+
+    const password = await askQuestion(`Please enter a password:`, { silent: true })
+    const confirmPass = await askQuestion(`Please confirm password:`, { silent: true })
+
+    if (password !== confirmPass) {
+      return logger.error('Error: Passwords did not match, please try again'.red)
+    }
+
+    const { recoverySeed } = await client.walletService.createWallet({ symbol, password })
+
+    logger.info('IMPORTANT: Please make a copy of the recovery seed below as you WILL NOT')
+    logger.info('be able to recover this information again. We recommend that you write')
+    logger.info('down all the secret words, and re-confirm the order they are written down')
+    logger.info('')
+    logger.info('')
+    logger.info(recoverySeed)
+  } catch (e) {
+    logger.error(handleError(e))
+  }
+}
+
+/**
+ * Unlock a wallet
+ *
+ * ex: `sparkswap wallet unlock`
+ *
+ * @function
+ * @param {Object} args
+ * @param {String} args.symbol
+ * @param {Object} opts
+ * @param {String} [opts.rpcAddress=null]
+ * @param {Logger} logger
+ * @return {Void}
+ */
+async function unlock (args, opts, logger) {
+  const { symbol } = args
+  const { rpcAddress = null } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+    const password = await askQuestion(`Enter the wallet password:`, { silent: true })
+    await client.walletService.unlockWallet({ symbol, password })
+    logger.info(`Successfully Unlocked ${symbol.toUpperCase()} Wallet!`.green)
+  } catch (e) {
+    logger.error(handleError(e))
+  }
+}
+
 module.exports = (program) => {
   program
     .command('wallet', 'Commands to handle a wallet instance')
     .help(`Available Commands: ${Object.values(SUPPORTED_COMMANDS).join(', ')}`)
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
-    .option('--rpc-address', 'Location of the RPC server to use.', validations.isHost)
+    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .option('--wallet-address [address]', 'Address to send the coins to', validations.isHost)
     .action(async (args, opts, logger) => {
@@ -411,7 +479,7 @@ module.exports = (program) => {
           const { walletAddress } = opts
 
           if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
-            throw new Error(`Provided symbol is not a valid currency for the exchange`)
+            throw new Error(`Provided symbol is not a valid currency for the broker`)
           }
 
           args.symbol = symbol
@@ -419,6 +487,26 @@ module.exports = (program) => {
           args.address = walletAddress
 
           return withdraw(args, opts, logger)
+        case SUPPORTED_COMMANDS.CREATE:
+          symbol = symbol.toUpperCase()
+
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
+            throw new Error(`Provided symbol is not a valid currency for the broker`)
+          }
+
+          args.symbol = symbol
+
+          return create(args, opts, logger)
+        case SUPPORTED_COMMANDS.UNLOCK:
+          symbol = symbol.toUpperCase()
+
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
+            throw new Error(`Provided symbol is not a valid currency for the broker`)
+          }
+
+          args.symbol = symbol
+
+          return unlock(args, opts, logger)
       }
     })
     .command(`wallet ${SUPPORTED_COMMANDS.BALANCE}`, 'Current daemon wallet balance')
@@ -437,5 +525,9 @@ module.exports = (program) => {
     .command(`wallet ${SUPPORTED_COMMANDS.WITHDRAW}`, 'Withdraws specified amount of coin from wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .argument('<amount>', 'Amount of currency to commit to the relayer', validations.isDecimal)
-    .option('--wallet-address', 'Address to send the coins to', validations.isHost)
+    .option('--wallet-address <wallet-address>', 'Address to send the coins to', validations.isHost)
+    .command(`wallet ${SUPPORTED_COMMANDS.CREATE}`, 'Create a wallet')
+    .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
+    .command(`wallet ${SUPPORTED_COMMANDS.UNLOCK}`, 'Unlock a wallet')
+    .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
 }

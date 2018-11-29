@@ -2,6 +2,7 @@ const { GrpcUnaryMethod } = require('grpc-methods')
 const { loadProto } = require('../../utils')
 
 const healthCheck = require('./health-check')
+const getIdentity = require('./get-identity')
 
 class AdminService {
   /**
@@ -21,11 +22,13 @@ class AdminService {
     this.serviceName = 'AdminService'
 
     const {
-      HealthCheckResponse
+      HealthCheckResponse,
+      GetIdentityResponse
     } = this.proto.broker.rpc
 
     this.implementation = {
-      healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer, engines, auth }, { HealthCheckResponse }).register()
+      healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer, engines, auth }, { HealthCheckResponse }).register(),
+      getIdentity: new GrpcUnaryMethod(getIdentity, this.messageId('getIdentity'), { logger, relayer, auth }, { GetIdentityResponse }).register()
     }
   }
 

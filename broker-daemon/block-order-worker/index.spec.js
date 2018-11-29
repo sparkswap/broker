@@ -290,12 +290,58 @@ describe('BlockOrderWorker', () => {
     let worker
     let workBlockOrderStub
     let failBlockOrderStub
+    let btcEngine
+    let ltcEngine
+    let blockOrderStub
+    let inboundAddress
+    let outboundAddress
+    let outboundSymbol
+    let inboundSymbol
+    let outboundAmount
+    let inboundAmount
+    let activeInboundAmount
+    let activeOutboundAmount
 
     beforeEach(() => {
       workBlockOrderStub = sinon.stub().resolves()
       failBlockOrderStub = sinon.stub()
+      ltcEngine = { isBalanceSufficient: sinon.stub() }
+      btcEngine = { isBalanceSufficient: sinon.stub() }
+      inboundAddress = 'bolt:tttasdf'
+      outboundAddress = 'bolt:asdf1234'
+      outboundAmount = '2000000000'
+      inboundAmount = '1000000000'
+      outboundSymbol = 'LTC'
+      inboundSymbol = 'BTC'
+      activeInboundAmount = Big('1000')
+      activeOutboundAmount = Big('3000')
+
+      relayer.paymentChannelNetworkService = {
+        getAddress: sinon.stub()
+      }
+      relayer.paymentChannelNetworkService.getAddress.withArgs({symbol: outboundSymbol}).resolves({address: outboundAddress})
+      relayer.paymentChannelNetworkService.getAddress.withArgs({symbol: inboundSymbol}).resolves({address: inboundAddress})
+
+      ltcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount)).resolves(true)
+      btcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), {outbound: false}).resolves(true)
+      ltcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount), {outbound: false}).resolves(true)
+      btcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(inboundAmount).plus(activeInboundAmount)).resolves(true)
+      engines = new Map([ ['BTC', btcEngine], ['LTC', ltcEngine] ])
+      blockOrderStub = {
+        key: 'myKey',
+        value: 'myValue',
+        side: 'BID',
+        baseAmount: '200000000',
+        outboundSymbol,
+        inboundSymbol,
+        outboundAmount,
+        inboundAmount
+      }
+      BlockOrder = sinon.stub().returns(blockOrderStub)
+      BlockOrderWorker.__set__('BlockOrder', BlockOrder)
 
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.calculateActiveFunds = sinon.stub().resolves({activeInboundAmount, activeOutboundAmount})
       worker.workBlockOrder = workBlockOrderStub
       worker.failBlockOrder = failBlockOrderStub
     })
@@ -359,11 +405,79 @@ describe('BlockOrderWorker', () => {
       expect(BlockOrder).to.have.been.calledWith({ id: fakeId, ...params })
     })
 
+    it('throws if the order is a bid and the outbound is greater than the amount they have in the outbound channel', () => {
+      const params = {
+        marketName: 'BTC/LTC',
+        side: 'BID',
+        amount: '10000',
+        price: '100',
+        timeInForce: 'GTC'
+      }
+
+      ltcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount)).resolves(false)
+
+      return expect(worker.createBlockOrder(params)).to.be.rejectedWith('Insufficient funds in outbound LTC channel to create order')
+    })
+
+    it('throws if the order is a bid and the inboundAmount is greater than the amount the relayer has in the inbound channel', () => {
+      const params = {
+        marketName: 'BTC/LTC',
+        side: 'BID',
+        amount: '10000',
+        price: '100',
+        timeInForce: 'GTC'
+      }
+      btcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), {outbound: false}).resolves(false)
+
+      return expect(worker.createBlockOrder(params)).to.be.rejectedWith('Insufficient funds in inbound BTC channel to create order')
+    })
+
+    it('throws if the order is an ask and the inboundAmount is greater than the amount they have in the inbound channel', () => {
+      const params = {
+        marketName: 'BTC/LTC',
+        side: 'ASK',
+        amount: '10000',
+        price: '100',
+        timeInForce: 'GTC'
+      }
+
+      blockOrderStub.outboundAmount = '1000000000'
+      blockOrderStub.inboundAmount = '2000000000'
+      blockOrderStub.outboundSymbol = 'BTC'
+      blockOrderStub.inboundSymbol = 'LTC'
+      outboundAddress = 'bolt:tttasdf'
+      inboundAddress = 'bolt:asdf1234'
+
+      ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), {outbound: false}).resolves(false)
+      btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(blockOrderStub.outboundAmount).plus(activeOutboundAmount)).resolves(true)
+
+      return expect(worker.createBlockOrder(params)).to.be.rejectedWith('Insufficient funds in inbound LTC channel to create order')
+    })
+
+    it('throws if the order is an ask and the outbound is greater than the amount the relayer has in the outbound channel', () => {
+      const params = {
+        marketName: 'BTC/LTC',
+        side: 'ASK',
+        amount: '10000',
+        price: '100',
+        timeInForce: 'GTC'
+      }
+      blockOrderStub.outboundAmount = '1000000000'
+      blockOrderStub.inboundAmount = '2000000000'
+      blockOrderStub.outboundSymbol = 'BTC'
+      blockOrderStub.inboundSymbol = 'LTC'
+      outboundAddress = 'bolt:tttasdf'
+      inboundAddress = 'bolt:asdf1234'
+
+      ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), {outbound: false}).resolves(true)
+      btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount)).resolves(false)
+
+      return expect(worker.createBlockOrder(params)).to.be.rejectedWith('Insufficient funds in outbound BTC channel to create order')
+    })
+
     it('saves a block order in the store', async () => {
-      const fakeKey = 'mykey'
-      const fakeValue = 'myvalue'
-      BlockOrder.prototype.key = fakeKey
-      BlockOrder.prototype.value = fakeValue
+      const fakeKey = 'myKey'
+      const fakeValue = 'myValue'
 
       const params = {
         marketName: 'BTC/LTC',
@@ -390,12 +504,9 @@ describe('BlockOrderWorker', () => {
         timeInForce: 'GTC'
       }
 
-      BlockOrder.prototype.baseAmount = '1000000000000'
-
       await worker.createBlockOrder(params)
       expect(workBlockOrderStub).to.have.been.calledOnce()
-      expect(workBlockOrderStub).to.have.been.calledWith(sinon.match.instanceOf(BlockOrder))
-      expect(workBlockOrderStub.args[0][1].toString()).to.be.eql('1000000000000')
+      expect(workBlockOrderStub).to.have.been.calledWith(blockOrderStub, Big(blockOrderStub.baseAmount))
     })
 
     it('fails a block order if working a block order is unsuccessful', async () => {
@@ -471,46 +582,28 @@ describe('BlockOrderWorker', () => {
   })
 
   describe('getBlockOrder', () => {
-    let getRecords
     let fillsStore
     let ordersStore
     let worker
-    let blockOrder = JSON.stringify({
-      marketName: 'BTC/LTC',
-      side: 'BID',
-      amount: '100',
-      price: '1000'
-    })
+    let blockOrder
     let blockOrderId = 'fakeId'
-    let orders = [
-      {
-        id: 'someId'
-      }
-    ]
-    let fills = [
-      {
-        id: 'anotherid'
-      }
-    ]
 
     beforeEach(() => {
-      getRecords = sinon.stub()
-      BlockOrderWorker.__set__('getRecords', getRecords)
-
       ordersStore = {
         put: sinon.stub()
       }
       fillsStore = {
         put: sinon.stub()
       }
+      blockOrder = {
+        id: blockOrderId,
+        populateFills: sinon.stub().resolves(),
+        populateOrders: sinon.stub().resolves()
+      }
       store.sublevel.withArgs('orders').returns(ordersStore)
       store.sublevel.withArgs('fills').returns(fillsStore)
-      store.get.callsArgWithAsync(1, null, blockOrder)
-      BlockOrder.fromStore.resolves({ id: blockOrderId })
+      BlockOrder.fromStore.resolves(blockOrder)
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
-
-      getRecords.withArgs(ordersStore).resolves(orders)
-      getRecords.withArgs(fillsStore).resolves(fills)
     })
 
     it('retrieves a block order from the store', async () => {
@@ -521,78 +614,27 @@ describe('BlockOrderWorker', () => {
       expect(BlockOrder.fromStore).to.have.been.calledWith(store)
     })
 
-    it('retrieves all open orders associated with a block order', async () => {
-      const fakeRange = 'myrange'
+    it('populates orders associated with the blockOrder', async () => {
       const fakeId = 'myid'
-      Order.rangeForBlockOrder.returns(fakeRange)
-
-      const bO = await worker.getBlockOrder(fakeId)
-
-      expect(Order.rangeForBlockOrder).to.have.been.calledOnce()
-      expect(Order.rangeForBlockOrder).to.have.been.calledWith(bO.id)
-      expect(getRecords).to.have.been.calledTwice()
-      expect(getRecords).to.have.been.calledWith(ordersStore, sinon.match.func, fakeRange)
-      expect(bO).to.have.property('openOrders', orders)
-    })
-
-    it('inflates orders', async () => {
-      const fakeId = 'myid'
-      const fakeKey = 'mykey'
-      const fakeOrder = 'someorder'
-      const fakeState = 'somestate'
-      const fakeValue = JSON.stringify({
-        order: fakeOrder,
-        state: fakeState
-      })
-      const inflatedOrder = 'lol'
-      Order.fromObject.returns(inflatedOrder)
-
       await worker.getBlockOrder(fakeId)
 
-      const eachOrder = getRecords.withArgs(ordersStore).args[0][1]
-
-      const inflated = eachOrder(fakeKey, fakeValue)
-      expect(Order.fromObject).to.have.been.calledOnce()
-      expect(Order.fromObject).to.have.been.calledWith(fakeKey, fakeOrder)
-      expect(inflated).to.have.property('order', inflatedOrder)
-      expect(inflated).to.have.property('state', fakeState)
+      expect(blockOrder.populateOrders).to.have.been.calledOnce()
+      expect(blockOrder.populateOrders).to.have.been.calledWith(ordersStore)
     })
 
-    it('retrieves all fills associated with a block order', async () => {
-      const fakeRange = 'myrange'
+    it('populates fills associated with the blockOrder', async () => {
       const fakeId = 'myid'
-      Fill.rangeForBlockOrder.returns(fakeRange)
-
-      const bO = await worker.getBlockOrder(fakeId)
-
-      expect(Fill.rangeForBlockOrder).to.have.been.calledOnce()
-      expect(Fill.rangeForBlockOrder).to.have.been.calledWith(bO.id)
-      expect(getRecords).to.have.been.calledTwice()
-      expect(getRecords).to.have.been.calledWith(fillsStore, sinon.match.func, fakeRange)
-      expect(bO).to.have.property('fills', fills)
-    })
-
-    it('inflates fills', async () => {
-      const fakeId = 'myid'
-      const fakeKey = 'mykey'
-      const fakeFill = 'someorder'
-      const fakeState = 'somestate'
-      const fakeValue = JSON.stringify({
-        fill: fakeFill,
-        state: fakeState
-      })
-      const inflatedFill = 'lol'
-      Fill.fromObject.returns(inflatedFill)
-
       await worker.getBlockOrder(fakeId)
 
-      const eachFill = getRecords.withArgs(fillsStore).args[0][1]
+      expect(blockOrder.populateFills).to.have.been.calledOnce()
+      expect(blockOrder.populateFills).to.have.been.calledWith(fillsStore)
+    })
 
-      const inflated = eachFill(fakeKey, fakeValue)
-      expect(Fill.fromObject).to.have.been.calledOnce()
-      expect(Fill.fromObject).to.have.been.calledWith(fakeKey, fakeFill)
-      expect(inflated).to.have.property('fill', inflatedFill)
-      expect(inflated).to.have.property('state', fakeState)
+    it('returns the blockOrder', async () => {
+      const fakeId = 'myid'
+      const res = await worker.getBlockOrder(fakeId)
+
+      expect(res).to.eql(blockOrder)
     })
   })
 
@@ -609,7 +651,6 @@ describe('BlockOrderWorker', () => {
     let blockOrderKey = blockOrderId
     let blockOrderValue = blockOrder
     let orders
-    let getRecords
     let identityStub
 
     beforeEach(() => {
@@ -621,18 +662,17 @@ describe('BlockOrderWorker', () => {
           state: 'created'
         }
       ]
-      store.get.callsArgWithAsync(1, null, blockOrder)
       blockOrderCancel = sinon.stub()
       BlockOrder.fromStore.resolves({
         id: blockOrderId,
         cancel: blockOrderCancel,
         key: blockOrderKey,
-        value: blockOrderValue
+        value: blockOrderValue,
+        populateOrders: sinon.stub().resolves(),
+        orders,
+        openOrders: orders
       })
-      getRecords = sinon.stub().resolves(orders)
       identityStub = sinon.stub()
-
-      BlockOrderWorker.__set__('getRecords', getRecords)
 
       relayer.makerService = {
         cancelOrder: sinon.stub().resolves()
@@ -650,19 +690,6 @@ describe('BlockOrderWorker', () => {
 
       expect(BlockOrder.fromStore).to.have.been.calledOnce()
       expect(BlockOrder.fromStore).to.have.been.calledWith(store, fakeId)
-    })
-
-    it('retrieves all open orders associated with a block order', async () => {
-      const fakeRange = 'myrange'
-      const fakeId = 'myid'
-      Order.rangeForBlockOrder.returns(fakeRange)
-
-      const bO = await worker.cancelBlockOrder(fakeId)
-
-      expect(Order.rangeForBlockOrder).to.have.been.calledOnce()
-      expect(Order.rangeForBlockOrder).to.have.been.calledWith(bO.id)
-      expect(getRecords).to.have.been.calledOnce()
-      expect(getRecords).to.have.been.calledWith(secondLevel, sinon.match.func, fakeRange)
     })
 
     it('cancels all of the orders on the relayer', async () => {
@@ -691,19 +718,6 @@ describe('BlockOrderWorker', () => {
       }
 
       throw new Error('Expected relayer cancellation to throw an error')
-    })
-
-    it('filters out orders not in a placed or created state', async () => {
-      const fakeId = 'myid'
-
-      orders.push({ order: { orderId: 'hello' }, state: 'rejected' })
-      orders.push({ order: { orderId: 'darkness' }, state: 'cancelled' })
-      orders.push({ order: { orderId: 'my old' }, state: 'filled' })
-      orders.push({ order: { orderId: 'friend' }, state: 'none' })
-
-      await worker.cancelBlockOrder(fakeId)
-      expect(relayer.makerService.cancelOrder).to.have.been.calledOnce()
-      expect(relayer.makerService.cancelOrder).to.have.been.calledWith(sinon.match({ orderId: orders[0].order.orderId }))
     })
 
     it('updates the block order to failed status', async () => {
@@ -765,6 +779,91 @@ describe('BlockOrderWorker', () => {
 
       expect(worker.workLimitBlockOrder).to.have.been.calledOnce()
       expect(worker.workLimitBlockOrder).to.have.been.calledWith(blockOrder, Big('100'))
+    })
+  })
+
+  describe('#calculateActiveFunds', () => {
+    let worker
+    let marketName
+    let side
+    let askStub
+    let bidStub
+    let anotherBidStub
+    let blockOrders
+    let blockOrdersStub
+
+    beforeEach(() => {
+      marketName = 'BTC/LTC'
+      side = 'BID'
+      askStub = {
+        side: 'ASK',
+        populateOrders: sinon.stub().resolves(),
+        populateFills: sinon.stub().resolves(),
+        activeOutboundAmount: sinon.stub().returns(Big('1000')),
+        activeInboundAmount: sinon.stub().returns(Big('1000'))
+      }
+      bidStub = {
+        side: 'BID',
+        populateOrders: sinon.stub().resolves(),
+        populateFills: sinon.stub().resolves(),
+        activeOutboundAmount: sinon.stub().returns(Big('3000')),
+        activeInboundAmount: sinon.stub().returns(Big('4000'))
+
+      }
+      anotherBidStub = {
+        side: 'BID',
+        populateOrders: sinon.stub().resolves(),
+        populateFills: sinon.stub().resolves(),
+        activeOutboundAmount: sinon.stub().returns(Big('5000')),
+        activeInboundAmount: sinon.stub().returns(Big('5000'))
+      }
+      blockOrders = [askStub, bidStub, anotherBidStub]
+      blockOrdersStub = sinon.stub().resolves(blockOrders)
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.getBlockOrders = blockOrdersStub
+    })
+
+    it('gets blockOrders for the market', async () => {
+      await worker.calculateActiveFunds(marketName, side)
+
+      expect(blockOrdersStub).to.have.been.calledOnce()
+      expect(blockOrdersStub).to.have.been.calledWith(marketName)
+    })
+
+    it('filters the blockOrders by side', async () => {
+      await worker.calculateActiveFunds(marketName, side)
+
+      expect(bidStub.populateOrders).to.have.been.calledOnce()
+      expect(bidStub.populateFills).to.have.been.calledOnce()
+      expect(anotherBidStub.populateOrders).to.have.been.calledOnce()
+      expect(anotherBidStub.populateFills).to.have.been.calledOnce()
+      expect(askStub.populateOrders).to.not.have.been.called()
+      expect(askStub.populateFills).to.not.have.been.called()
+    })
+
+    it('populates orders and fills on the blockOrder', async () => {
+      await worker.calculateActiveFunds(marketName, side)
+
+      expect(bidStub.populateOrders).to.have.been.calledOnce()
+      expect(bidStub.populateFills).to.have.been.calledOnce()
+      expect(anotherBidStub.populateOrders).to.have.been.calledOnce()
+      expect(anotherBidStub.populateFills).to.have.been.calledOnce()
+    })
+
+    it('gets the active inbound and outbound amounts each blockOrder', async () => {
+      await worker.calculateActiveFunds(marketName, side)
+
+      expect(bidStub.activeOutboundAmount).to.have.been.calledOnce()
+      expect(bidStub.activeInboundAmount).to.have.been.calledOnce()
+      expect(anotherBidStub.activeOutboundAmount).to.have.been.calledOnce()
+      expect(anotherBidStub.activeInboundAmount).to.have.been.calledOnce()
+    })
+
+    it('returns the active inbound and outbound amounts', async () => {
+      const res = await worker.calculateActiveFunds(marketName, side)
+
+      expect(res.activeOutboundAmount).to.eql(Big('8000'))
+      expect(res.activeInboundAmount).to.eql(Big('9000'))
     })
   })
 
@@ -904,12 +1003,12 @@ describe('BlockOrderWorker', () => {
         blockOrder = {
           id: '1234',
           fills: [],
-          openOrders: []
+          orders: []
         }
 
         worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
         worker.blockOrder = blockOrder
-        worker.getBlockOrder = getBlockOrderStub.returns(blockOrder)
+        worker.getBlockOrder = getBlockOrderStub.resolves(blockOrder)
       })
 
       it('gets a block order by id', async () => {
@@ -918,7 +1017,7 @@ describe('BlockOrderWorker', () => {
       })
     })
 
-    context('block order with openOrders', () => {
+    context('block order with orders', () => {
       let blockOrder
       let getBlockOrderStub
       let worker
@@ -937,7 +1036,7 @@ describe('BlockOrderWorker', () => {
           id: '1234',
           baseAmount: 600,
           fills: [],
-          openOrders: orderStateMachines,
+          orders: orderStateMachines,
           complete: blockOrderCompleteStub
         }
 
@@ -956,7 +1055,7 @@ describe('BlockOrderWorker', () => {
           id: '1234',
           baseAmount: 600,
           fills: [],
-          openOrders: [
+          orders: [
             { order: { fillAmount: 100 } }
           ]
         }
@@ -985,7 +1084,7 @@ describe('BlockOrderWorker', () => {
           id: '1234',
           baseAmount: 600,
           fills: fillStateMachines,
-          openOrders: [],
+          orders: [],
           complete: blockOrderCompleteStub
         }
 
@@ -1003,7 +1102,7 @@ describe('BlockOrderWorker', () => {
         const activeBlockOrder = {
           id: '1234',
           baseAmount: 600,
-          openOrders: [],
+          orders: [],
           fills: [
             { fill: { fillAmount: 100 } }
           ]
@@ -1037,7 +1136,7 @@ describe('BlockOrderWorker', () => {
           id: '1234',
           baseAmount: 600,
           fills: fillStateMachines,
-          openOrders: orderStateMachines,
+          orders: orderStateMachines,
           complete: blockOrderCompleteStub
         }
 
@@ -1055,7 +1154,7 @@ describe('BlockOrderWorker', () => {
         const activeBlockOrder = {
           id: '1234',
           baseAmount: 700,
-          openOrders: orderStateMachines,
+          orders: orderStateMachines,
           fills: [
             { fill: { fillAmount: 100 } }
           ]
@@ -1069,7 +1168,7 @@ describe('BlockOrderWorker', () => {
         const activeBlockOrder = {
           id: '1234',
           baseAmount: 700,
-          openOrders: [
+          orders: [
             { order: { fillAmount: 100 } }
           ],
           fills: fillStateMachines
@@ -1234,25 +1333,53 @@ describe('BlockOrderWorker', () => {
       let failBlockOrderStub
 
       beforeEach(() => {
+        fill = {
+          id: 'anotherId',
+          once: onceStub,
+          removeAllListeners: removeAllListenersStub,
+          fill: {
+            fillAmount: '100'
+          },
+          shouldRetry: sinon.stub().returns(true)
+        }
+        FillStateMachine.create.resolves(fill)
         failBlockOrderStub = sinon.stub().resolves(true)
         worker.failBlockOrder = failBlockOrderStub
       })
 
-      beforeEach(async () => {
-        await worker._fillOrders(blockOrder, orders, targetDepth)
-      })
-
       it('registers an event on an order for order rejection', async () => {
+        await worker._fillOrders(blockOrder, orders, targetDepth)
         expect(onceStub).to.have.been.calledWith('reject', sinon.match.func)
       })
 
-      it('fails a block order if the call is rejected', async () => {
+      it('removes all listeners if the call is rejected', async () => {
+        await worker._fillOrders(blockOrder, orders, targetDepth)
+        worker.workBlockOrder = sinon.stub().resolves(true)
+        await onceStub.args[1][1]()
+        expect(fill.removeAllListeners).to.have.been.calledOnce()
+      })
+
+      it('reworks a blockOrder if the order is not in a state to be filled', async () => {
+        await worker._fillOrders(blockOrder, orders, targetDepth)
+        worker.workBlockOrder = sinon.stub().resolves(true)
+        await onceStub.args[1][1]()
+        expect(worker.workBlockOrder).to.have.been.calledWith(blockOrder, Big('100'))
+      })
+
+      it('fails a block order if the call is rejected for reason other than the order is in the wrong state', async () => {
+        fill.shouldRetry.returns(false)
+        FillStateMachine.create.resolves(fill)
+        await worker._fillOrders(blockOrder, orders, targetDepth)
         await onceStub.args[1][1]()
         expect(failBlockOrderStub).to.have.been.calledOnce()
+        expect(failBlockOrderStub).to.have.been.calledWith(blockOrder.id, fill.fill.error)
       })
 
       it('catches an exception if failBlockOrder fails', async () => {
+        fill.shouldRetry.returns(false)
+        FillStateMachine.create.resolves(fill)
         failBlockOrderStub.rejects()
+        await worker._fillOrders(blockOrder, orders, targetDepth)
         await onceStub.args[1][1]()
         expect(failBlockOrderStub).to.have.been.calledOnce()
         expect(loggerErrorStub).to.have.been.calledWith(sinon.match('BlockOrder failed'), sinon.match.any)

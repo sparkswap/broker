@@ -21,6 +21,8 @@ describe('WalletService', () => {
   let orderbooks
   let releaseChannels
   let withdrawFunds
+  let createWallet
+  let unlockWallet
   let auth
 
   before(() => {
@@ -33,13 +35,14 @@ describe('WalletService', () => {
           NewDepositAddressResponse: responseStub,
           GetBalancesResponse: responseStub,
           GetPaymentChannelNetworkAddressResponse: responseStub,
+          GetTradingCapacitiesResponse: responseStub,
+          WithdrawFundsResponse: responseStub,
+          CreateWalletResponse: responseStub,
           google: {
             protobuf: {
               Empty: responseStub
             }
-          },
-          GetTradingCapacitiesResponse: responseStub,
-          WithdrawFundsResponse: responseStub
+          }
         }
       }
     })
@@ -53,6 +56,8 @@ describe('WalletService', () => {
     getTradingCapacities = sinon.stub()
     releaseChannels = sinon.stub()
     withdrawFunds = sinon.stub()
+    createWallet = sinon.stub()
+    unlockWallet = sinon.stub()
     balanceSpy = sinon.spy()
     commitSpy = sinon.spy()
     unaryMethodStub = sinon.stub()
@@ -68,6 +73,8 @@ describe('WalletService', () => {
     WalletService.__set__('getTradingCapacities', getTradingCapacities)
     WalletService.__set__('releaseChannels', releaseChannels)
     WalletService.__set__('withdrawFunds', withdrawFunds)
+    WalletService.__set__('createWallet', createWallet)
+    WalletService.__set__('unlockWallet', unlockWallet)
 
     wallet = new WalletService(protoPath, { logger, engines, relayer, orderbooks, auth })
   })
@@ -155,6 +162,28 @@ describe('WalletService', () => {
         expectedMessageId,
         { logger, engines, auth },
         { WithdrawFundsResponse: responseStub }
+      )
+    })
+
+    it('creates a unary method for createWallet', () => {
+      const expectedMessageId = '[WalletService:createWallet]'
+
+      expect(unaryMethodStub).to.have.been.calledWith(
+        createWallet,
+        expectedMessageId,
+        { logger, engines, auth },
+        { CreateWalletResponse: responseStub }
+      )
+    })
+
+    it('creates a unary method for unlockWallet', () => {
+      const expectedMessageId = '[WalletService:unlockWallet]'
+
+      expect(unaryMethodStub).to.have.been.calledWith(
+        unlockWallet,
+        expectedMessageId,
+        { logger, engines, auth },
+        { EmptyResponse: responseStub }
       )
     })
   })

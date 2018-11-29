@@ -113,7 +113,7 @@ class Order {
   }
 
   /**
-   * Get the symbol of the currency we will receive inbound if the order is completed
+   * Get the symbol of the currency we will receive inbound
    * @return {String} Currency symbol
    */
   get inboundSymbol () {
@@ -121,11 +121,27 @@ class Order {
   }
 
   /**
-   * Get the symbol of the currency we will send outbound if the order is completed
+   * Get the symbol of the currency we will send outbound
    * @return {String} Currency symbol
    */
   get outboundSymbol () {
     return this.side === Order.SIDES.BID ? this.counterSymbol : this.baseSymbol
+  }
+
+  /**
+   * Get the symbol of the currency we will receive inbound
+   * @return {String} Currency symbol
+   */
+  get inboundAmount () {
+    return this.side === Order.SIDES.BID ? this.baseAmount : this.counterAmount
+  }
+
+  /**
+   * Get the symbol of the currency we will send outbound
+   * @return {String} Currency symbol
+   */
+  get outboundAmount () {
+    return this.side === Order.SIDES.BID ? this.counterAmount : this.baseAmount
   }
 
   /**
