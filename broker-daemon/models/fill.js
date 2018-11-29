@@ -72,14 +72,18 @@ class Fill {
 
   /**
    * Add parameters to the fill from its creation on the Relayer
-   * @param {String} options.fillId                Unique identifier for the fill as assigned by the Relayer
-   * @param {String} options.feePaymentRequest     Payment channel network payment request for the fill fee
-   * @param {String} options.depositPaymentRequest Payment channel network payment request for the fill deposit
+   * @param {String}  options.fillId                Unique identifier for the fill as assigned by the Relayer
+   * @param {String}  options.feePaymentRequest     Payment channel network payment request for the fill fee
+   * @param {Boolean} options.feeRequired           Whether the fee is required
+   * @param {String}  options.depositPaymentRequest Payment channel network payment request for the fill deposit
+   * @param {Boolean} options.depositRequired       Whether the deposit is required
    */
-  setCreatedParams ({ fillId, feePaymentRequest, depositPaymentRequest }) {
+  setCreatedParams ({ fillId, feePaymentRequest, feeRequired, depositPaymentRequest, depositRequired }) {
     this.fillId = fillId
     this.feePaymentRequest = feePaymentRequest
+    this.feeRequired = feeRequired
     this.depositPaymentRequest = depositPaymentRequest
+    this.depositRequired = depositRequired
   }
 
   /**
@@ -95,9 +99,63 @@ class Fill {
    * @return {Object} Object of parameters the relayer expects
    */
   get paramsForCreate () {
-    const { fillAmount, swapHash, takerBaseAddress, takerCounterAddress, order: { orderId } } = this
+    const {
+      fillAmount,
+      swapHash,
+      takerBaseAddress,
+      takerCounterAddress,
+      order: {
+        orderId
+      }
+    } = this
 
-    return { fillAmount, orderId, swapHash, takerBaseAddress, takerCounterAddress }
+    return {
+      fillAmount,
+      orderId,
+      swapHash,
+      takerBaseAddress,
+      takerCounterAddress
+    }
+  }
+
+  /**
+   * Params required to fill an order on the relayer
+   * @return {Object} Object of parameters the relayer expects
+   */
+  get paramsForFill () {
+    const {
+      feePaymentRequest,
+      feeRequired,
+      depositPaymentRequest,
+      depositRequired,
+      fillId,
+      outboundSymbol
+    } = this
+
+    if (feeRequired && !feePaymentRequest) {
+      throw new Error(`paramsForFill: feePaymentRequest is required.`)
+    }
+
+    if (depositRequired && !depositPaymentRequest) {
+      throw new Error(`paramsForFill: depositPaymentRequest is required.`)
+    }
+
+    if (!fillId) {
+      throw new Error(`paramsForFill: fillId is required.`)
+    }
+
+    if (!outboundSymbol) {
+      throw new Error(`paramsForFill: outboundSymbol is required.`)
+    }
+
+    return {
+      feePaymentRequest,
+      feeRequired,
+      depositPaymentRequest,
+      depositRequired,
+      fillId,
+      outboundSymbol
+    }
   }
 
   /**
@@ -105,13 +163,23 @@ class Fill {
    * @return {Object} Object of parameters an engine expects
    */
   get paramsForSwap () {
-    const { makerAddress, swapHash, outboundSymbol, outboundAmount } = this
+    const {
+      makerAddress,
+      swapHash,
+      outboundSymbol,
+      outboundAmount
+    } = this
 
     if (![ makerAddress, swapHash, outboundSymbol, outboundAmount ].every(param => !!param)) {
       throw new Error('makerAddress, swapHash, outboundSymbol, outboundAmount are required params for execution')
     }
 
-    return { makerAddress, swapHash, symbol: outboundSymbol, amount: outboundAmount }
+    return {
+      makerAddress,
+      swapHash,
+      symbol: outboundSymbol,
+      amount: outboundAmount
+    }
   }
 
   /**
@@ -218,7 +286,9 @@ class Fill {
       fillAmount,
       swapHash,
       feePaymentRequest,
+      feeRequired,
       depositPaymentRequest,
+      depositRequired,
       makerAddress,
       takerBaseAddress,
       takerCounterAddress
@@ -236,7 +306,9 @@ class Fill {
       fillAmount,
       swapHash,
       feePaymentRequest,
+      feeRequired,
       depositPaymentRequest,
+      depositRequired,
       makerAddress,
       takerBaseAddress,
       takerCounterAddress
@@ -264,15 +336,58 @@ class Fill {
     // and are separated by the delimiter (:)
     const [ blockOrderId, fillId ] = key.split(DELIMITER)
 
-    const { order: { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, fillAmount, takerBaseAddress, takerCounterAddress, ...otherParams } = valueObject
+    const {
+      order: {
+        orderId,
+        baseSymbol,
+        counterSymbol,
+        side,
+        baseAmount,
+        counterAmount
+      },
+      fillAmount,
+      takerBaseAddress,
+      takerCounterAddress,
+      ...otherParams
+    } = valueObject
 
     // instantiate with the correct set of params
-    const fill = new this(blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerBaseAddress, takerCounterAddress })
+    const fill = new this(
+      blockOrderId,
+      {
+        orderId,
+        baseSymbol,
+        counterSymbol,
+        side,
+        baseAmount,
+        counterAmount
+      },
+      {
+        fillAmount,
+        takerBaseAddress,
+        takerCounterAddress
+      }
+    )
 
-    const { swapHash, feePaymentRequest, depositPaymentRequest, makerAddress } = otherParams
+    const {
+      swapHash,
+      feePaymentRequest,
+      feeRequired,
+      depositPaymentRequest,
+      depositRequired,
+      makerAddress
+    } = otherParams
 
     // add any (white-listed) leftover params into the object
-    Object.assign(fill, { fillId, swapHash, feePaymentRequest, depositPaymentRequest, makerAddress })
+    Object.assign(fill, {
+      fillId,
+      swapHash,
+      feePaymentRequest,
+      feeRequired,
+      depositPaymentRequest,
+      depositRequired,
+      makerAddress
+    })
 
     return fill
   }
