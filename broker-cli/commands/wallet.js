@@ -300,16 +300,37 @@ function formatBalance (balance, status) {
  * @return {Void}
  */
 async function release (args, opts, logger) {
-  const { rpcAddress, market } = opts
+  const { market } = args
+  const { rpcAddress, force } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
 
-    const answer = await askQuestion(`Are you sure you want to close all channels you have open on the ${market} market? (Y/N)`)
+    let question
+    if (force) {
+      question = `Are you sure you want to FORCE the release of all channels you have open on the ${market} market? (Y/N)`
+    } else {
+      question = `Are you sure you want to release all channels you have open on the ${market} market? (Y/N)`
+    }
+
+    const answer = await askQuestion(question)
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    await client.walletService.releaseChannels({market})
+    try {
+      await client.walletService.releaseChannels({ market, force })
+    } catch (e) {
+      logger.info(`Failed to release payment channels for ${market}`.red)
+
+      if (!force) {
+        logger.info('You can force the release of funds using the `--force` option, however')
+        logger.info('this has the potential to lock your funds for an extended period of time')
+        logger.info('and cost additional fees')
+      }
+
+      throw e
+    }
+
     logger.info(`Successfully closed channels on ${market} market!`)
   } catch (e) {
     logger.error(handleError(e))
@@ -424,7 +445,10 @@ module.exports = (program) => {
     .argument('[sub-arguments...]')
     .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
-    .option('--wallet-address [address]', 'Address to send the coins to', validations.isHost)
+    // We are required to add all options before the `action` portion the parameter
+    // will not be received in the `opts` object
+    .option('--wallet-address [address]', 'used in sparkswap withdraw ONLY')
+    .option('--force [force]', 'used in sparkswap release ONLY', null, false)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
       const { market } = opts
@@ -472,7 +496,7 @@ module.exports = (program) => {
           opts.market = validations.isMarketName(market)
           return networkStatus(args, opts, logger)
         case SUPPORTED_COMMANDS.RELEASE:
-          opts.market = validations.isMarketName(market)
+          args.market = validations.isMarketName(market)
           return release(args, opts, logger)
         case SUPPORTED_COMMANDS.WITHDRAW:
           symbol = symbol.toUpperCase()
@@ -521,7 +545,8 @@ module.exports = (program) => {
     .command(`wallet ${SUPPORTED_COMMANDS.NETWORK_STATUS}`, 'Payment Channel Network status for trading in different markets')
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .command(`wallet ${SUPPORTED_COMMANDS.RELEASE}`, 'Closes channels open on the specified market')
-    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
+    .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
+    .option('--force [force]', 'Relevant market name', null, false)
     .command(`wallet ${SUPPORTED_COMMANDS.WITHDRAW}`, 'Withdraws specified amount of coin from wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .argument('<amount>', 'Amount of currency to commit to the relayer', validations.isDecimal)
