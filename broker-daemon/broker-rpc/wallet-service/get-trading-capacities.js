@@ -3,8 +3,11 @@ const { Big } = require('../../utils')
 /**
  * Grabs the total balance and total channel balance from a specified engine
  *
- * @param {Array<symbol, engine>} SparkSwap Payment Channel Network Engine
- * @return {Object} including symbol and capactiies for sending and receiving in active, pending, and inactive channels
+ * @param {Engine} SparkSwap Payment Channel Network Engine
+ * @param {String} symbol
+ * @param {String} amount of outstanding send capacity for the given currency
+ * @param {String} amount of outstanding receive capacity for the given currency
+ * @return {Object} including symbol and available, pending, outstanding, and inactive capacties for sending and receiving
  */
 async function getCapacities (engine, symbol, outstandingSendCapacity, outstandingReceiveCapacity) {
   const divideBy = currencies.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
@@ -34,7 +37,7 @@ async function getCapacities (engine, symbol, outstandingSendCapacity, outstandi
 }
 
 /**
- * Grabs the remote and local capacities from the requested engines active, pending and inactive channels
+ * Grabs the remote and local capacities from the requested engines and orders/fills store available, pending, outstanding, and inactive channels
  *
  * @function
  * @param {GrpcUnaryMethod~request} request - request object
