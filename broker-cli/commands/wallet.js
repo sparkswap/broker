@@ -449,7 +449,7 @@ module.exports = (program) => {
     // hook has been added in caporal. If the option is omitted, the subcommand will
     // not receive the variable in the `opts` object
     .option('--wallet-address [address]', 'used in sparkswap withdraw ONLY')
-    .option('--force [force]', 'used in sparkswap release ONLY', null, false)
+    .option('--force', 'used in sparkswap release ONLY', null, false)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
       const { market } = opts

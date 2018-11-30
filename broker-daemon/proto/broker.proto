@@ -921,7 +921,7 @@ message CommitRequest {
 message ReleaseChannelsRequest {
   // Market to close channels on
   string market = 1;
-  // Force channels to close which may result in funds being locked for additional time and fees
+  // Force channels (active, inactive and pending) to close, which may result in funds being locked for additional time and fees
   bool force = 2;
 }
 
