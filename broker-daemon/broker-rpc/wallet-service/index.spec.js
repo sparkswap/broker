@@ -24,6 +24,7 @@ describe('WalletService', () => {
   let createWallet
   let unlockWallet
   let auth
+  let blockOrderWorker
 
   before(() => {
     responseStub = sinon.stub()
@@ -62,6 +63,7 @@ describe('WalletService', () => {
     commitSpy = sinon.spy()
     unaryMethodStub = sinon.stub()
     registerSpy = sinon.spy()
+    blockOrderWorker = sinon.stub()
     unaryMethodStub.prototype.register = registerSpy
 
     WalletService.__set__('loadProto', loadProtoStub)
@@ -76,7 +78,7 @@ describe('WalletService', () => {
     WalletService.__set__('createWallet', createWallet)
     WalletService.__set__('unlockWallet', unlockWallet)
 
-    wallet = new WalletService(protoPath, { logger, engines, relayer, orderbooks, auth })
+    wallet = new WalletService(protoPath, { logger, engines, relayer, orderbooks, auth, blockOrderWorker })
   })
 
   it('sets a protoPath', () => expect(wallet.protoPath).to.eql(protoPath))
@@ -138,7 +140,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         getTradingCapacities,
         expectedMessageId,
-        { logger, engines, orderbooks, auth },
+        { logger, engines, orderbooks, auth, blockOrderWorker },
         { GetTradingCapacitiesResponse: responseStub }
       )
     })

@@ -6,37 +6,30 @@ const { Big } = require('../../utils')
  * @param {Array<symbol, engine>} SparkSwap Payment Channel Network Engine
  * @return {Object} including symbol and capactiies for sending and receiving in active, pending, and inactive channels
  */
-async function getEngineTradingCapacities (engine) {
-  const [openChannelCapacities, pendingChannelCapacities] = await Promise.all([
+async function getCapacities (engine, symbol, outstandingSendCapacity, outstandingReceiveCapacity) {
+  const divideBy = currencies.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
+
+  const [
+    openChannelCapacities,
+    pendingChannelCapacities
+  ] = await Promise.all([
     engine.getOpenChannelCapacities(),
     engine.getPendingChannelCapacities()
   ])
 
   const activeChannelCapacities = openChannelCapacities.active
   const inactiveChannelCapacities = openChannelCapacities.inactive
-  return {
-    activeSendCapacity: Big(activeChannelCapacities.localBalance),
-    activeReceiveCapacity: Big(activeChannelCapacities.remoteBalance),
-    pendingSendCapacity: Big(pendingChannelCapacities.localBalance),
-    pendingReceiveCapacity: Big(pendingChannelCapacities.remoteBalance),
-    inactiveSendCapacity: Big(inactiveChannelCapacities.localBalance),
-    inactiveReceiveCapacity: Big(inactiveChannelCapacities.remoteBalance)
-  }
-}
-
-async function getAvailableAndOutstandingCapacities (blockOrderWorker, market, baseSymbolCapacities, counterSymbolCapacities) {
-  const { activeOutboundAmount: committedCounterSendCapacity, activeInboundAmount: committedBaseReceiveCapacity } = await blockOrderWorker.calculateActiveFunds(market, 'BID')
-  const { activeOutboundAmount: committedBaseSendCapacity, activeInboundAmount: committedCounterReceiveCapacity } = await blockOrderWorker.calculateActiveFunds(market, 'ASK')
 
   return {
-    baseAvailableReceiveCapacity: Big(baseSymbolCapacities.activeReceiveCapacity).minus(committedBaseReceiveCapacity),
-    baseAvailableSendCapacity: Big(baseSymbolCapacities.activeSendCapacity).minus(committedBaseSendCapacity),
-    counterAvailableSendCapacity: Big(counterSymbolCapacities.activeSendCapacity).minus(committedCounterSendCapacity),
-    counterAvailableReceiveCapacity: Big(counterSymbolCapacities.activeReceiveCapacity).minus(committedCounterReceiveCapacity),
-    baseOutstandingReceiveCapacity: Big(committedBaseReceiveCapacity),
-    baseOutstandingSendCapacity: Big(committedBaseSendCapacity),
-    counterOutstandingSendCapacity: Big(committedCounterSendCapacity),
-    counterOutstandingReceiveCapacity: Big(committedCounterReceiveCapacity)
+    symbol,
+    availableReceiveCapacity: Big(activeChannelCapacities.remoteBalance).minus(outstandingReceiveCapacity).div(divideBy).toString(),
+    availableSendCapacity: Big(activeChannelCapacities.localBalance).minus(outstandingSendCapacity).div(divideBy).toString(),
+    pendingSendCapacity: Big(pendingChannelCapacities.localBalance).div(divideBy).toString(),
+    pendingReceiveCapacity: Big(pendingChannelCapacities.remoteBalance).div(divideBy).toString(),
+    inactiveSendCapacity: Big(inactiveChannelCapacities.localBalance).div(divideBy).toString(),
+    inactiveReceiveCapacity: Big(inactiveChannelCapacities.remoteBalance).div(divideBy).toString(),
+    outstandingReceiveCapacity: Big(outstandingReceiveCapacity).div(divideBy).toString(),
+    outstandingSendCapacity: Big(outstandingSendCapacity).div(divideBy).toString()
   }
 }
 
@@ -71,39 +64,20 @@ async function getTradingCapacities ({ params, logger, engines, orderbooks, bloc
     throw new Error(`No engine available for ${counterSymbol}`)
   }
 
-  const [baseSymbolCapacities, counterSymbolCapacities] = await Promise.all([
-    getEngineTradingCapacities(baseEngine),
-    getEngineTradingCapacities(counterEngine)
+  const [
+    { activeOutboundAmount: committedCounterSendCapacity, activeInboundAmount: committedBaseReceiveCapacity },
+    { activeOutboundAmount: committedBaseSendCapacity, activeInboundAmount: committedCounterReceiveCapacity }
+  ] = await Promise.all([
+    blockOrderWorker.calculateActiveFunds(market, 'BID'),
+    blockOrderWorker.calculateActiveFunds(market, 'ASK')
   ])
 
-  const availableOutstandingCapacities = await getAvailableAndOutstandingCapacities(blockOrderWorker, market, baseSymbolCapacities, counterSymbolCapacities)
-  const baseDivideBy = currencies.find(({ symbol: configSymbol }) => configSymbol === baseSymbol).quantumsPerCommon
-  const counterDivideBy = currencies.find(({ symbol: configSymbol }) => configSymbol === counterSymbol).quantumsPerCommon
+  const [baseSymbolCapacities, counterSymbolCapacities] = await Promise.all([
+    getCapacities(baseEngine, baseSymbol, committedBaseSendCapacity, committedBaseReceiveCapacity),
+    getCapacities(counterEngine, counterSymbol, committedCounterSendCapacity, committedCounterReceiveCapacity)
+  ])
 
-  return new GetTradingCapacitiesResponse({
-    baseSymbolCapacities: {
-      symbol: baseSymbol,
-      pendingSendCapacity: Big(baseSymbolCapacities.pendingSendCapacity).div(baseDivideBy).toString(),
-      pendingReceiveCapacity: Big(baseSymbolCapacities.pendingReceiveCapacity).div(baseDivideBy).toString(),
-      inactiveSendCapacity: Big(baseSymbolCapacities.inactiveSendCapacity).div(baseDivideBy).toString(),
-      inactiveReceiveCapacity: Big(baseSymbolCapacities.inactiveReceiveCapacity).div(baseDivideBy).toString(),
-      availableSendCapacity: Big(availableOutstandingCapacities.baseAvailableSendCapacity).div(baseDivideBy).toString(),
-      availableReceiveCapacity: Big(availableOutstandingCapacities.baseAvailableReceiveCapacity).div(baseDivideBy).toString(),
-      outstandingSendCapacity: Big(availableOutstandingCapacities.baseOutstandingSendCapacity).div(baseDivideBy).toString(),
-      outstandingReceiveCapacity: Big(availableOutstandingCapacities.baseOutstandingReceiveCapacity).div(baseDivideBy).toString()
-    },
-    counterSymbolCapacities: {
-      symbol: counterSymbol,
-      pendingSendCapacity: Big(counterSymbolCapacities.pendingSendCapacity).div(counterDivideBy).toString(),
-      pendingReceiveCapacity: Big(counterSymbolCapacities.pendingReceiveCapacity).div(counterDivideBy).toString(),
-      inactiveSendCapacity: Big(counterSymbolCapacities.inactiveSendCapacity).div(counterDivideBy).toString(),
-      inactiveReceiveCapacity: Big(counterSymbolCapacities.inactiveReceiveCapacity).div(counterDivideBy).toString(),
-      availableSendCapacity: Big(availableOutstandingCapacities.counterAvailableSendCapacity).div(counterDivideBy).toString(),
-      availableReceiveCapacity: Big(availableOutstandingCapacities.counterAvailableReceiveCapacity).div(counterDivideBy).toString(),
-      outstandingSendCapacity: Big(availableOutstandingCapacities.counterOutstandingSendCapacity).div(counterDivideBy).toString(),
-      outstandingReceiveCapacity: Big(availableOutstandingCapacities.counterOutstandingReceiveCapacity).div(counterDivideBy).toString()
-    }
-  })
+  return new GetTradingCapacitiesResponse({ baseSymbolCapacities, counterSymbolCapacities })
 }
 
 module.exports = getTradingCapacities
