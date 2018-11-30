@@ -871,10 +871,6 @@ message GetBalancesResponse {
 message Capacity {
   // Currency of the balance.
   string symbol = 1;
-  // Total active amount a user can send in the currency. This is currently in base units (e.g. Satoshi/Litoshis)
-  string active_send_capacity = 2;
-  // Total active amount a user can receive in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
-  string active_receive_capacity = 3;
   // Total pending amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
   string pending_send_capacity = 4;
   // Total pending amount a user can receive in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
