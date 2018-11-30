@@ -177,11 +177,6 @@ describe('cli wallet', () => {
     let market
     let baseSymbolCapacities
     let counterSymbolCapacities
-    let getActiveFundsStub
-    let committedCounterSendCapacity
-    let committedBaseReceiveCapacity
-    let committedBaseSendCapacity
-    let committedCounterReceiveCapacity
     let NETWORK_STATUSES
 
     const networkStatus = program.__get__('networkStatus')
@@ -199,7 +194,11 @@ describe('cli wallet', () => {
         inactiveReceiveCapacity: '0.00002',
         inactiveSendCapacity: '0.000002',
         pendingReceiveCapacity: '0.00001',
-        pendingSendCapacity: '0.000005'
+        pendingSendCapacity: '0.000005',
+        availableReceiveCapacity: '0.00001',
+        availableSendCapacity: '0.000001',
+        outstandingReceiveCapacity: '0.00001',
+        outstandingSendCapacity: '0.000001'
       }
       counterSymbolCapacities = {
         symbol: 'LTC',
@@ -208,25 +207,20 @@ describe('cli wallet', () => {
         inactiveReceiveCapacity: '0.00002',
         inactiveSendCapacity: '0.000002',
         pendingReceiveCapacity: '0.00001',
-        pendingSendCapacity: '0.000005'
+        pendingSendCapacity: '0.000005',
+        availableReceiveCapacity: '0.00001',
+        availableSendCapacity: '0.000001',
+        outstandingReceiveCapacity: '0.00001',
+        outstandingSendCapacity: '0.000001'
       }
 
       getTradingCapacitiesStub = sinon.stub().resolves({baseSymbolCapacities, counterSymbolCapacities})
-      getActiveFundsStub = sinon.stub().resolves()
-      committedCounterSendCapacity = '0.000001'
-      committedBaseReceiveCapacity = '0.000002'
-      committedBaseSendCapacity = '0.000003'
-      committedCounterReceiveCapacity = '0.000004'
-
-      getActiveFundsStub.withArgs({ market, side: 'BID' }).resolves({ activeOutboundAmount: committedCounterSendCapacity, activeInboundAmount: committedBaseReceiveCapacity })
-      getActiveFundsStub.withArgs({ market, side: 'ASK' }).resolves({ activeOutboundAmount: committedBaseSendCapacity, activeInboundAmount: committedCounterReceiveCapacity })
 
       tableStub = sinon.stub()
       tablePushStub = sinon.stub()
       tableStub.prototype.push = tablePushStub
       daemonStub = sinon.stub()
       daemonStub.prototype.walletService = { getTradingCapacities: getTradingCapacitiesStub }
-      daemonStub.prototype.orderService = { getActiveFunds: getActiveFundsStub }
 
       program.__set__('BrokerDaemonClient', daemonStub)
       program.__set__('Table', tableStub)
@@ -242,30 +236,18 @@ describe('cli wallet', () => {
       expect(getTradingCapacitiesStub).to.have.been.calledOnce()
     })
 
-    it('calls gets activeFunds for the market for both sides', () => {
-      expect(getActiveFundsStub).to.have.been.calledTwice()
-      expect(getActiveFundsStub).to.have.been.calledWith({market, side: 'BID'})
-      expect(getActiveFundsStub).to.have.been.calledTwice({market, side: 'ASK'})
-    })
-
     it('adds available header', () => {
       const expectedResult = ['Available', '', '']
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
 
-    it('adds a correct active capacities for buying the base', () => {
-      const availableBaseReceive = Big(baseSymbolCapacities.activeReceiveCapacity).minus(committedBaseReceiveCapacity).toString()
-      const availableCounterSend = Big(counterSymbolCapacities.activeSendCapacity).minus(committedCounterSendCapacity).toString()
-
-      const expectedResult = ['  Buy BTC', formatBalance(availableBaseReceive, NETWORK_STATUSES.AVAILABLE), formatBalance(availableCounterSend, NETWORK_STATUSES.AVAILABLE)]
+    it('adds a correct available capacities for buying the base', () => {
+      const expectedResult = ['  Buy BTC', formatBalance(baseSymbolCapacities.availableReceiveCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(counterSymbolCapacities.availableSendCapacity, NETWORK_STATUSES.AVAILABLE)]
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
 
-    it('adds a correct active capacities for selling the base', () => {
-      const availableBaseSend = Big(baseSymbolCapacities.activeSendCapacity).minus(committedBaseSendCapacity).toString()
-      const availableCounterReceive = Big(counterSymbolCapacities.activeReceiveCapacity).minus(committedCounterReceiveCapacity).toString()
-
-      const expectedResult = ['  Sell BTC', formatBalance(availableBaseSend, NETWORK_STATUSES.AVAILABLE), formatBalance(availableCounterReceive, NETWORK_STATUSES.AVAILABLE)]
+    it('adds a correct available capacities for selling the base', () => {
+      const expectedResult = ['  Sell BTC', formatBalance(baseSymbolCapacities.availableSendCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(counterSymbolCapacities.availableReceiveCapacity, NETWORK_STATUSES.AVAILABLE)]
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
 
@@ -275,12 +257,12 @@ describe('cli wallet', () => {
     })
 
     it('adds a correct outstanding capacities for buying the base', () => {
-      const expectedResult = ['  Buy BTC', formatBalance(committedBaseReceiveCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(committedCounterSendCapacity, NETWORK_STATUSES.OUTSTANDING)]
+      const expectedResult = ['  Buy BTC', formatBalance(baseSymbolCapacities.outstandingReceiveCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(counterSymbolCapacities.outstandingSendCapacity, NETWORK_STATUSES.OUTSTANDING)]
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
 
     it('adds a correct outstanding capacities for selling the base', () => {
-      const expectedResult = ['  Sell BTC', formatBalance(committedBaseSendCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(committedCounterReceiveCapacity, NETWORK_STATUSES.OUTSTANDING)]
+      const expectedResult = ['  Sell BTC', formatBalance(baseSymbolCapacities.outstandingSendCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(counterSymbolCapacities.outstandingReceiveCapacity, NETWORK_STATUSES.OUTSTANDING)]
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
 

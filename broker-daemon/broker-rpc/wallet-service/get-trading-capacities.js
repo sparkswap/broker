@@ -6,7 +6,7 @@ const { Big } = require('../../utils')
  * @param {Array<symbol, engine>} SparkSwap Payment Channel Network Engine
  * @return {Object} including symbol and capactiies for sending and receiving in active, pending, and inactive channels
  */
-async function getEngineTradingCapacities ([symbol, engine]) {
+async function getEngineTradingCapacities (engine) {
   const [openChannelCapacities, pendingChannelCapacities] = await Promise.all([
     engine.getOpenChannelCapacities(),
     engine.getPendingChannelCapacities()
@@ -14,15 +14,13 @@ async function getEngineTradingCapacities ([symbol, engine]) {
 
   const activeChannelCapacities = openChannelCapacities.active
   const inactiveChannelCapacities = openChannelCapacities.inactive
-  const divideBy = currencies.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
   return {
-    symbol,
-    activeSendCapacity: Big(activeChannelCapacities.localBalance).div(divideBy).toString(),
-    activeReceiveCapacity: Big(activeChannelCapacities.remoteBalance).div(divideBy).toString(),
-    pendingSendCapacity: Big(pendingChannelCapacities.localBalance).div(divideBy).toString(),
-    pendingReceiveCapacity: Big(pendingChannelCapacities.remoteBalance).div(divideBy).toString(),
-    inactiveSendCapacity: Big(inactiveChannelCapacities.localBalance).div(divideBy).toString(),
-    inactiveReceiveCapacity: Big(inactiveChannelCapacities.remoteBalance).div(divideBy).toString()
+    activeSendCapacity: Big(activeChannelCapacities.localBalance),
+    activeReceiveCapacity: Big(activeChannelCapacities.remoteBalance),
+    pendingSendCapacity: Big(pendingChannelCapacities.localBalance),
+    pendingReceiveCapacity: Big(pendingChannelCapacities.remoteBalance),
+    inactiveSendCapacity: Big(inactiveChannelCapacities.localBalance),
+    inactiveReceiveCapacity: Big(inactiveChannelCapacities.remoteBalance)
   }
 }
 
@@ -38,7 +36,7 @@ async function getEngineTradingCapacities ([symbol, engine]) {
  * @param {function} responses.GetTradingCapacitiesResponse
  * @return {GetTradingCapacitiesResponse}
  */
-async function getTradingCapacities ({ params, logger, engines, orderbooks }, { GetTradingCapacitiesResponse }) {
+async function getTradingCapacities ({ params, logger, engines, orderbooks, blockOrderWorker }, { GetTradingCapacitiesResponse }) {
   const { market } = params
   const orderbook = orderbooks.get(market)
 
@@ -58,9 +56,36 @@ async function getTradingCapacities ({ params, logger, engines, orderbooks }, { 
   }
 
   const [baseSymbolCapacities, counterSymbolCapacities] = await Promise.all([
-    getEngineTradingCapacities([baseSymbol, baseEngine]),
-    getEngineTradingCapacities([counterSymbol, counterEngine])
+    getEngineTradingCapacities(baseEngine),
+    getEngineTradingCapacities(counterEngine)
   ])
+
+  const { activeOutboundAmount: committedCounterSendCapacity, activeInboundAmount: committedBaseReceiveCapacity } = await blockOrderWorker.calculateActiveFunds(market, 'BID')
+  const { activeOutboundAmount: committedBaseSendCapacity, activeInboundAmount: committedCounterReceiveCapacity } = await blockOrderWorker.calculateActiveFunds(market, 'ASK')
+
+  baseSymbolCapacities.availableReceiveCapacity = Big(baseSymbolCapacities.activeReceiveCapacity).minus(committedBaseReceiveCapacity)
+  baseSymbolCapacities.availableSendCapacity = Big(baseSymbolCapacities.activeSendCapacity).minus(committedBaseSendCapacity)
+  counterSymbolCapacities.availableSendCapacity = Big(counterSymbolCapacities.activeSendCapacity).minus(committedCounterSendCapacity)
+  counterSymbolCapacities.availableReceiveCapacity = Big(counterSymbolCapacities.activeReceiveCapacity).minus(committedCounterReceiveCapacity)
+
+  baseSymbolCapacities.outstandingReceiveCapacity = Big(committedBaseReceiveCapacity)
+  baseSymbolCapacities.outstandingSendCapacity = Big(committedBaseSendCapacity)
+  counterSymbolCapacities.outstandingSendCapacity = Big(committedCounterSendCapacity)
+  counterSymbolCapacities.outstandingReceiveCapacity = Big(committedCounterReceiveCapacity)
+
+  const baseDivideBy = currencies.find(({ symbol: configSymbol }) => configSymbol === baseSymbol).quantumsPerCommon
+  const counterDivideBy = currencies.find(({ symbol: configSymbol }) => configSymbol === counterSymbol).quantumsPerCommon
+
+  for (let [key, value] of Object.entries(baseSymbolCapacities)) {
+    baseSymbolCapacities[key] = Big(value).div(baseDivideBy).toString()
+  }
+
+  for (let [key, value] of Object.entries(counterSymbolCapacities)) {
+    counterSymbolCapacities[key] = Big(value).div(counterDivideBy).toString()
+  }
+
+  baseSymbolCapacities.symbol = baseSymbol
+  counterSymbolCapacities.symbol = counterSymbol
 
   return new GetTradingCapacitiesResponse({ baseSymbolCapacities, counterSymbolCapacities })
 }

@@ -245,8 +245,6 @@ async function networkStatus (args, opts, logger) {
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({market})
-    const { activeOutboundAmount: committedCounterSendCapacity, activeInboundAmount: committedBaseReceiveCapacity } = await client.orderService.getActiveFunds({ market, side: 'BID' })
-    const { activeOutboundAmount: committedBaseSendCapacity, activeInboundAmount: committedCounterReceiveCapacity } = await client.orderService.getActiveFunds({ market, side: 'ASK' })
 
     const statusTable = new Table({
       head: ['', `${baseSymbolCapacities.symbol.toUpperCase()} Capacity`, `${counterSymbolCapacities.symbol.toUpperCase()} Capacity`],
@@ -254,18 +252,13 @@ async function networkStatus (args, opts, logger) {
       style: { head: ['gray'] }
     })
 
-    const availableBaseReceiveCapacity = Big(baseSymbolCapacities.activeReceiveCapacity).minus(committedBaseReceiveCapacity)
-    const availableBaseSendCapacity = Big(baseSymbolCapacities.activeSendCapacity).minus(committedBaseSendCapacity)
-    const availableCounterSendCapacity = Big(counterSymbolCapacities.activeSendCapacity).minus(committedCounterSendCapacity)
-    const availableCounterReceiveCapacity = Big(counterSymbolCapacities.activeReceiveCapacity).minus(committedCounterReceiveCapacity)
-
     statusTable.push(['Available', '', ''])
-    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(availableBaseReceiveCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(availableCounterSendCapacity, NETWORK_STATUSES.AVAILABLE)])
-    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(availableBaseSendCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(availableCounterReceiveCapacity, NETWORK_STATUSES.AVAILABLE)])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.availableReceiveCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(counterSymbolCapacities.availableSendCapacity, NETWORK_STATUSES.AVAILABLE)])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.availableSendCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(counterSymbolCapacities.availableReceiveCapacity, NETWORK_STATUSES.AVAILABLE)])
 
     statusTable.push(['Outstanding', '', ''])
-    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(committedBaseReceiveCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(committedCounterSendCapacity, NETWORK_STATUSES.OUTSTANDING)])
-    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(committedBaseSendCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(committedCounterReceiveCapacity, NETWORK_STATUSES.OUTSTANDING)])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.outstandingReceiveCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(counterSymbolCapacities.outstandingSendCapacity, NETWORK_STATUSES.OUTSTANDING)])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.outstandingSendCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(counterSymbolCapacities.outstandingReceiveCapacity, NETWORK_STATUSES.OUTSTANDING)])
 
     statusTable.push(['Pending', '', ''])
     statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingReceiveCapacity, NETWORK_STATUSES.PENDING), formatBalance(counterSymbolCapacities.pendingSendCapacity, NETWORK_STATUSES.PENDING)])
