@@ -23,7 +23,9 @@ class WalletService {
    * @param {RelayerClient} options.relayer
    * @param {Map<String, LndEngine>} options.engines
    * @param {Function} options.auth
+   * @param {BlockOrderWorker} opts.blockOrderWorker
    */
+  // walletService takes in the BlockOrderWorker because getTradingCapacities needs to know about outstanding orders/fills
   constructor (protoPath, { logger, engines, relayer, orderbooks, blockOrderWorker, auth }) {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
