@@ -547,7 +547,7 @@ module.exports = (program) => {
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .command(`wallet ${SUPPORTED_COMMANDS.RELEASE}`, 'Closes channels open on the specified market')
     .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
-    .option('--force [force]', 'Relevant market name', null, false)
+    .option('--force', 'Relevant market name', null, false)
     .command(`wallet ${SUPPORTED_COMMANDS.WITHDRAW}`, 'Withdraws specified amount of coin from wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .argument('<amount>', 'Amount of currency to commit to the relayer', validations.isDecimal)
