@@ -11,7 +11,8 @@ const { Big } = require('../../utils')
 const BALANCE_PRECISION = 16
 
 /**
- * Grabs the total balance and total channel balance from a specified engine
+ * Grabs all balances from a specific engine (total and pending). If a particular
+ * engine is unavailable an empty response will be returned
  *
  * @param {Array<symbol, engine>} SparkSwap Payment Channel Network Engine
  * @param {Logger} logger
@@ -38,10 +39,15 @@ async function getEngineBalances ([symbol, engine], logger) {
       engine.getUncommittedPendingBalance()
     ])
   } catch (e) {
-    logger.error(`Failed to grab balances for ${symbol} engine`)
+    logger.error(`Failed to get balances for ${symbol} engine`)
     logger.error(e)
+
     return {
-      symbol
+      symbol,
+      totalChannelBalance: '',
+      totalPendingChannelBalance: '',
+      uncommittedBalance: '',
+      uncommittedPendingBalance: ''
     }
   }
 
@@ -75,15 +81,14 @@ async function getEngineBalances ([symbol, engine], logger) {
 async function getBalances ({ logger, engines }, { GetBalancesResponse }) {
   logger.info(`Checking wallet balances for ${engines.size} engines`)
 
-  // We convert the engines map to an array and run totalBalance commands
+  // We convert the engines map to an array and run balance engine commands
   // against each configuration.
   //
   // If an engine is unavailable or offline, we will still receive a response
   // however the values will be blank. This information will then need to be
   // handled by the consumer
-  const engineBalances = await Promise.all(Array.from(engines).map((engine) => {
-    return getEngineBalances(engine, logger)
-  }))
+  const enginePromises = Array.from(engines).map((engine) => getEngineBalances(engine, logger))
+  const engineBalances = await Promise.all(enginePromises)
 
   logger.debug('Received engine balances', { engineBalances })
 
