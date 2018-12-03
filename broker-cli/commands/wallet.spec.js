@@ -379,13 +379,16 @@ describe('cli wallet', () => {
     let daemonStub
     let releaseStub
     let askQuestionStub
+    let force
 
     const release = program.__get__('release')
 
     beforeEach(() => {
       rpcAddress = 'test:1337'
       market = 'BTC/LTC'
-      opts = { rpcAddress, market }
+      force = false
+      args = { market }
+      opts = { rpcAddress, force }
       releaseStub = sinon.stub().resolves({})
       askQuestionStub = sinon.stub().returns('Y')
       logger = { info: sinon.stub(), error: sinon.stub() }
@@ -401,12 +404,12 @@ describe('cli wallet', () => {
 
     it('calls the daemon to release channels in the given market', async () => {
       await release(args, opts, logger)
-      expect(releaseStub).to.have.been.calledWith({market})
+      expect(releaseStub).to.have.been.calledWith({ market, force })
     })
 
     it('asks the user if they are ok to release channels', async () => {
       await release(args, opts, logger)
-      expect(askQuestionStub).to.have.been.called()
+      expect(askQuestionStub).to.have.been.calledWith(sinon.match('Are you sure you want to release'))
     })
 
     it('returns early if the user does not agree to release channels', async () => {
@@ -418,6 +421,21 @@ describe('cli wallet', () => {
     it('logs the number of channels closed', async () => {
       await release(args, opts, logger)
       expect(logger.info).to.have.been.called()
+    })
+
+    context('force release of channels', () => {
+      beforeEach(async () => {
+        opts.force = true
+        await release(args, opts, logger)
+      })
+
+      it('asks the user if they are ok to FORCE release some channels', async () => {
+        expect(askQuestionStub).to.have.been.calledWith(sinon.match('Are you sure you want to FORCE the release'))
+      })
+
+      it('calls the daemon to force release channels in a given market', () => {
+        expect(releaseStub).to.have.been.calledWith({ market, force: true })
+      })
     })
   })
 
