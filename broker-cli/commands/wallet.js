@@ -92,6 +92,7 @@ async function balance (args, opts, logger) {
  *
  * @function
  * @param {Object} args
+ * @param {String} args.symbol - Currency of the deposit address
  * @param {Object} opts
  * @param {String} [opts.rpcAddress] broker rpc address
  * @param {Logger} logger
@@ -118,16 +119,17 @@ async function newDepositAddress (args, opts, logger) {
  *
  * @function
  * @param {Object} args
- * @param {Object} args.symbol
+ * @param {String} args.symbol - Currency of the balance to commit
+ * @param {String} args.amount
+ * @param {String} args.market - Market name e.g. BTC/LTC
  * @param {Object} opts
  * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.market] market to commit funds to
  * @param {Logger} logger
  * @return {Void}
  */
 async function commit (args, opts, logger) {
-  const { symbol, amount } = args
-  const { rpcAddress, market } = opts
+  const { symbol, amount, market } = args
+  const { rpcAddress } = opts
   const currentCurrencyConfig = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol)
 
   try {
@@ -192,7 +194,7 @@ async function commit (args, opts, logger) {
  *
  * @function
  * @param {Object} args
- * @param {Object} args.symbol
+ * @param {Object} args.symbol - Currency of the daemons network address
  * @param {Object} opts
  * @param {String} [opts.rpcAddress] broker rpc address
  * @param {Logger} logger
@@ -220,6 +222,7 @@ async function networkAddress (args, opts, logger) {
  *
  * @function
  * @param {Object} args
+ * @param {String} args.market - market name e.g. `BTC/LTC`
  * @param {Object} opts
  * @param {String} [opts.rpcAddress] broker rpc address
  * @param {String} [opts.market] market name
@@ -227,7 +230,8 @@ async function networkAddress (args, opts, logger) {
  * @return {Void}
  */
 async function networkStatus (args, opts, logger) {
-  const { market, rpcAddress } = opts
+  const { market } = args
+  const { rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -292,15 +296,15 @@ function formatBalance (balance, status) {
  *
  * @function
  * @param {Object} args
- * @param {Object} args.symbol
+ * @param {String} args.market - market name e.g. `BTC/LTC`
  * @param {Object} opts
  * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.market] market name, i.e BTC/LTC
  * @param {Logger} logger
  * @return {Void}
  */
 async function release (args, opts, logger) {
-  const { rpcAddress, market } = opts
+  const { market } = args
+  const { rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -324,11 +328,10 @@ async function release (args, opts, logger) {
  * @function
  * @param {Object} args
  * @param {String} args.symbol
- * @param {String} args.address
+ * @param {String} args.walletAddress - wallet address to move funds to
  * @param {String} args.amount
  * @param {Object} opts
  * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.walletAddress] wallet address to move funds to
  * @param {Logger} logger
  * @return {Void}
  */
@@ -364,7 +367,7 @@ async function withdraw (args, opts, logger) {
  */
 async function create (args, opts, logger) {
   const { symbol } = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -404,7 +407,7 @@ async function create (args, opts, logger) {
  */
 async function unlock (args, opts, logger) {
   const { symbol } = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -433,75 +436,74 @@ module.exports = (program) => {
       // for each command
       let [symbol = '', amount = ''] = subArguments
 
+      // This allows the user to either type in btc or ltc and have it corrected
+      // to the right symbol BTC or LTC respectively
+      symbol = symbol.toUpperCase()
+
+      // If a symbol was actually provided, we check if its supported
+      if (symbol !== '' && !Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
+        throw new Error(`Provided symbol is not a valid currency. Please see 'sparkswap ${command} --help' for supported symbols`)
+      }
+
       switch (command) {
         case SUPPORTED_COMMANDS.BALANCE:
           return balance(args, opts, logger)
         case SUPPORTED_COMMANDS.NEW_DEPOSIT_ADDRESS:
-          symbol = symbol.toUpperCase()
-
-          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
-            throw new Error(`Provided symbol is not a valid currency for new deposit address creation`)
-          }
-
           args.symbol = symbol
-
           return newDepositAddress(args, opts, logger)
         case SUPPORTED_COMMANDS.COMMIT:
-          symbol = symbol.toUpperCase()
+          if (!symbol) {
+            throw new Error(`Symbol must be provided to commit funds`)
+          }
 
-          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
-            throw new Error(`Provided symbol is not a valid currency for the exchange`)
+          // This will either return a valid amount OR it will throw an error
+          // for the user
+          if (amount) {
+            amount = validations.isDecimal(amount)
           }
 
           args.symbol = symbol
           args.amount = amount
-          opts.market = validations.isMarketName(market)
+          args.market = market
 
           return commit(args, opts, logger)
         case SUPPORTED_COMMANDS.NETWORK_ADDRESS:
-          symbol = symbol.toUpperCase()
-
-          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
-            throw new Error(`Provided symbol is not a valid currency to retrieve a public key`)
+          if (!symbol) {
+            throw new Error(`Must provide a symbol to retrieve a public key`)
           }
 
           args.symbol = symbol
 
           return networkAddress(args, opts, logger)
         case SUPPORTED_COMMANDS.NETWORK_STATUS:
-          opts.market = validations.isMarketName(market)
+          args.market = market
           return networkStatus(args, opts, logger)
         case SUPPORTED_COMMANDS.RELEASE:
-          opts.market = validations.isMarketName(market)
+          args.market = market
           return release(args, opts, logger)
         case SUPPORTED_COMMANDS.WITHDRAW:
-          symbol = symbol.toUpperCase()
-          const { walletAddress } = opts
-
-          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
-            throw new Error(`Provided symbol is not a valid currency for the broker`)
+          if (!symbol) {
+            throw new Error('Symbol must be provided')
           }
+
+          const { walletAddress } = opts
 
           args.symbol = symbol
           args.amount = amount
-          args.address = walletAddress
+          args.walletAddress = walletAddress
 
           return withdraw(args, opts, logger)
         case SUPPORTED_COMMANDS.CREATE:
-          symbol = symbol.toUpperCase()
-
-          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
-            throw new Error(`Provided symbol is not a valid currency for the broker`)
+          if (!symbol) {
+            throw new Error('Symbol must be provided')
           }
 
           args.symbol = symbol
 
           return create(args, opts, logger)
         case SUPPORTED_COMMANDS.UNLOCK:
-          symbol = symbol.toUpperCase()
-
-          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
-            throw new Error(`Provided symbol is not a valid currency for the broker`)
+          if (!symbol) {
+            throw new Error('Symbol must be provided')
           }
 
           args.symbol = symbol
@@ -514,18 +516,18 @@ module.exports = (program) => {
     .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`)
     .command(`wallet ${SUPPORTED_COMMANDS.COMMIT}`)
     .argument('<symbol>', `Supported currencies for the exchange: ${SUPPORTED_SYMBOLS.join('/')}`)
-    .argument('[amount]', 'Amount of currency to commit to the relayer', validations.isDecimal)
-    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
+    .argument('[amount]', 'Amount of currency to commit to the relayer')
+    .option('--market [marketName]', 'Relevant market name', null, null, true)
     .command(`wallet ${SUPPORTED_COMMANDS.NETWORK_ADDRESS}`, 'Payment Channel Network Public key for a given currency')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .command(`wallet ${SUPPORTED_COMMANDS.NETWORK_STATUS}`, 'Payment Channel Network status for trading in different markets')
-    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
+    .option('--market [marketName]', 'Relevant market name', null, null, true)
     .command(`wallet ${SUPPORTED_COMMANDS.RELEASE}`, 'Closes channels open on the specified market')
-    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
+    .option('--market [marketName]', 'Relevant market name', null, null, true)
     .command(`wallet ${SUPPORTED_COMMANDS.WITHDRAW}`, 'Withdraws specified amount of coin from wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
-    .argument('<amount>', 'Amount of currency to commit to the relayer', validations.isDecimal)
-    .option('--wallet-address <wallet-address>', 'Address to send the coins to', validations.isHost)
+    .argument('<amount>', 'Amount of currency to commit to the relayer')
+    .option('--wallet-address <wallet-address>', 'Address to send the coins to', null, null, true)
     .command(`wallet ${SUPPORTED_COMMANDS.CREATE}`, 'Create a wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .command(`wallet ${SUPPORTED_COMMANDS.UNLOCK}`, 'Unlock a wallet')
