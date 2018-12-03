@@ -1040,6 +1040,8 @@ service WalletService {
    * `totalPendingChannelBalance`, i.e. funds in channels that have finished the funding workflow and are waiting for confirmations for the funding txn, and
    * `uncommittedPendingBalance`, i.e funds in channels that are pending closure or unconfirmed unspent outputs under control of the wallet.
    *
+   * NOTE: If an engine is unavailable, the balances for the particular engine will be empty `''`
+   *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
    * walletService.getBalances({}, { deadline }, (err, { balances }) => {

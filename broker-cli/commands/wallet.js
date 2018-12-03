@@ -19,6 +19,13 @@ const ACCEPTED_ANSWERS = Object.freeze(['y', 'yes'])
 
 /**
  * @constant
+ * @type {String}
+ * @default
+ */
+const NOT_AVAILABLE = 'Not Available'
+
+/**
+ * @constant
  * @type {Array<string>}
  * @default
  */
@@ -69,12 +76,18 @@ async function balance (args, opts, logger) {
     })
 
     balances.forEach(({ symbol, uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance }) => {
+      totalChannelBalance = totalChannelBalance ? totalChannelBalance.green : NOT_AVAILABLE.yellow
+      uncommittedBalance = uncommittedBalance || NOT_AVAILABLE.yellow
+
+      // We fix all pending balances to 8 decimal places due to aesthetics. Since
+      // this balance should only be temporary, we do not care as much about precision
+      totalPendingChannelBalance = totalPendingChannelBalance ? ` (${Big(totalPendingChannelBalance).toFixed(8)})`.grey : ''
+      uncommittedPendingBalance = uncommittedPendingBalance ? ` (${Big(uncommittedPendingBalance).toFixed(8)})`.grey : ''
+
       balancesTable.push([
         symbol,
-        // We fix all pending balances to 8 decimal places due to aesthetics. Since
-        // this balance should only be temporary, we do not care as much about precision
-        `${totalChannelBalance.green}` + ` (${Big(totalPendingChannelBalance).toFixed(8)})`.grey,
-        uncommittedBalance + ` (${Big(uncommittedPendingBalance).toFixed(8)})`.grey
+        totalChannelBalance + totalPendingChannelBalance,
+        uncommittedBalance + uncommittedPendingBalance
       ])
     })
 

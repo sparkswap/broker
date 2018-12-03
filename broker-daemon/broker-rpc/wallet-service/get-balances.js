@@ -15,12 +15,12 @@ const BALANCE_PRECISION = 16
  *
  * @param {Array<symbol, engine>} SparkSwap Payment Channel Network Engine
  * @param {Logger} logger
- * @return {Array} res
+ * @return {Object} res
  * @return {String} res.symbol
- * @return {String} res.uncommittedBalance
- * @return {String} res.uncommittedPendingBalance
- * @return {String} res.totalChannelBalance
- * @return {String} res.totalPendingChannelBalance
+ * @return {String} res.uncommittedBalance - returns empty if unavailable
+ * @return {String} res.uncommittedPendingBalance - returns empty if unavailable
+ * @return {String} res.totalChannelBalance - returns empty if unavailable
+ * @return {String} res.totalPendingChannelBalance - returns empty if unavailable
  */
 async function getEngineBalances ([symbol, engine], logger) {
   const { quantumsPerCommon } = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol) || {}
@@ -30,12 +30,20 @@ async function getEngineBalances ([symbol, engine], logger) {
     throw new PublicError(`Currency not supported in ${symbol} configuration`)
   }
 
-  let [uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance] = await Promise.all([
-    engine.getUncommittedBalance(),
-    engine.getTotalChannelBalance(),
-    engine.getTotalPendingChannelBalance(),
-    engine.getUncommittedPendingBalance()
-  ])
+  try {
+    var [uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance] = await Promise.all([
+      engine.getUncommittedBalance(),
+      engine.getTotalChannelBalance(),
+      engine.getTotalPendingChannelBalance(),
+      engine.getUncommittedPendingBalance()
+    ])
+  } catch (e) {
+    logger.error(`Failed to grab balances for ${symbol} engine`)
+    logger.error(e)
+    return {
+      symbol
+    }
+  }
 
   logger.debug(`Received balances from ${symbol} engine`, { uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance })
 
@@ -68,7 +76,11 @@ async function getBalances ({ logger, engines }, { GetBalancesResponse }) {
   logger.info(`Checking wallet balances for ${engines.size} engines`)
 
   // We convert the engines map to an array and run totalBalance commands
-  // against each configuration
+  // against each configuration.
+  //
+  // If an engine is unavailable or offline, we will still receive a response
+  // however the values will be blank. This information will then need to be
+  // handled by the consumer
   const engineBalances = await Promise.all(Array.from(engines).map((engine) => {
     return getEngineBalances(engine, logger)
   }))
