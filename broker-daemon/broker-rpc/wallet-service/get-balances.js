@@ -39,8 +39,7 @@ async function getEngineBalances ([symbol, engine], logger) {
       engine.getUncommittedPendingBalance()
     ])
   } catch (e) {
-    logger.error(`Failed to get balances for ${symbol} engine`)
-    logger.error(e)
+    logger.error(`Failed to get balances for ${symbol} engine`, { error: e.toString() })
 
     return {
       symbol,

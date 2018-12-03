@@ -57,7 +57,6 @@ describe('get-balances', () => {
     let symbol
     let engine
     let getEngineBalances
-    let res
     let totalPendingChannelBalance
     let uncommittedPendingBalance
     let uncommittedPendingBalanceStub
@@ -93,19 +92,18 @@ describe('get-balances', () => {
       getBalances.__set__('currencyConfig', currencyConfig)
     })
 
-    beforeEach(async () => {
-      res = await getEngineBalances(engine, logger)
-    })
-
-    it('gets the total balance of an engine', () => {
+    it('gets the total balance of an engine', async () => {
+      await getEngineBalances(engine, logger)
       expect(uncommittedBalanceStub).to.have.been.calledOnce()
     })
 
-    it('gets the total channel balance of an engine', () => {
+    it('gets the total channel balance of an engine', async () => {
+      await getEngineBalances(engine, logger)
       expect(totalChannelBalanceStub).to.have.been.calledOnce()
     })
 
-    it('returns balances for an engine', () => {
+    it('returns balances for an engine', async () => {
+      const res = await getEngineBalances(engine, logger)
       expect(res).to.eql({
         symbol,
         uncommittedBalance: '0.0100000000000000',
@@ -118,6 +116,18 @@ describe('get-balances', () => {
     it('returns an error if a currencies config is not found', () => {
       engine = ['LTC', engineStub]
       return expect(getEngineBalances(engine, logger)).to.eventually.be.rejectedWith('Currency not supported')
+    })
+
+    it('returns empty values if an engine is not available', async () => {
+      uncommittedBalanceStub.rejects()
+      const res = await getEngineBalances(engine, logger)
+      expect(res).to.eql({
+        symbol,
+        uncommittedBalance: '',
+        totalChannelBalance: '',
+        totalPendingChannelBalance: '',
+        uncommittedPendingBalance: ''
+      })
     })
   })
 })
