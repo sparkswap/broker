@@ -239,6 +239,14 @@ class BlockOrder {
   }
 
   /**
+  * get boolean for if the blockOrder is an ask
+  * @return {Boolean}
+   */
+  get isInWorkableState () {
+    return this.status === BlockOrder.STATUSES.ACTIVE
+  }
+
+  /**
    * Move the block order to a failed status
    * @return {BlockOrder} Modified block order instance
    */

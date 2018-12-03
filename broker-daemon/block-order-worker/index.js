@@ -175,6 +175,25 @@ class BlockOrderWorker extends EventEmitter {
     return blockOrder
   }
 
+  async cancelOutstandingOrders (blockOrder) {
+    await blockOrder.populateOrders(this.ordersStore)
+
+    this.logger.info(`Found ${blockOrder.orders.length} orders associated with Block Order ${blockOrder.id}`)
+
+    const openOrders = blockOrder.openOrders
+
+    this.logger.info(`Found ${openOrders.length} orders in a state to be cancelled for Block order ${blockOrder.id}`)
+
+    await Promise.all(openOrders.map(({ order }) => {
+      const orderId = order.orderId
+      const authorization = this.relayer.identity.authorize(orderId)
+      this.logger.debug(`Generated authorization for ${orderId}`, authorization)
+      return this.relayer.makerService.cancelOrder({ orderId, authorization })
+    }))
+
+    this.logger.info(`Cancelled ${openOrders.length} underlying orders for ${blockOrder.id}`)
+  }
+
   /**
    * Cancel a block order in progress
    * @param  {String} blockOrderId Id of the block order to cancel
@@ -184,31 +203,17 @@ class BlockOrderWorker extends EventEmitter {
     this.logger.info('Cancelling block order ', { id: blockOrderId })
 
     const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
-    await blockOrder.populateOrders(this.ordersStore)
-
-    this.logger.info(`Found ${blockOrder.orders.length} orders associated with Block Order ${blockOrder.id}`)
-
-    const openOrders = blockOrder.openOrders
-
-    this.logger.info(`Found ${openOrders.length} orders in a state to be cancelled for Block order ${blockOrder.id}`)
 
     try {
-      await Promise.all(openOrders.map(({ order }) => {
-        const orderId = order.orderId
-        const authorization = this.relayer.identity.authorize(orderId)
-        this.logger.debug(`Generated authorization for ${orderId}`, authorization)
-        return this.relayer.makerService.cancelOrder({ orderId, authorization })
-      }))
+      await this.cancelOutstandingOrders()
     } catch (e) {
-      this.logger.error('Failed to cancel all orders for block order: ', { blockOrderId })
-      this.failBlockOrder(blockOrderId, e)
+      this.logger.error('Failed to cancel all orders for block order: ', { blockOrderId: blockOrder.id })
+      blockOrder.fail()
+      await promisify(this.store.put)(blockOrder.key, blockOrder.value)
       throw e
     }
 
-    this.logger.info(`Cancelled ${openOrders.length} underlying orders for ${blockOrder.id}`)
-
     blockOrder.cancel()
-
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
     this.logger.info('Moved block order to cancelled state', { id: blockOrder.id })
@@ -241,7 +246,12 @@ class BlockOrderWorker extends EventEmitter {
     // TODO: move status to its own sublevel so it can be updated atomically
     const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
 
-    // TODO: fail the remaining orders that are tied to this block order in the ordersStore?
+    try {
+      await this.cancelOutstandingOrders()
+    } catch (e) {
+      this.logger.error('Failed to cancel all orders for block order: ', { blockOrderId: blockOrder.id })
+    }
+
     blockOrder.fail()
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
@@ -257,6 +267,8 @@ class BlockOrderWorker extends EventEmitter {
    */
   async workBlockOrder (blockOrder, targetDepth) {
     this.logger.info('Working block order', { blockOrderId: blockOrder.id })
+
+    if (!blockOrder.isInWorkableState) throw new Error('BlockOrder is not in a state to be worked')
 
     const orderbook = this.orderbooks.get(blockOrder.marketName)
 
