@@ -449,7 +449,7 @@ module.exports = (program) => {
     // hook has been added in caporal. If the option is omitted, the subcommand will
     // not receive the variable in the `opts` object
     .option('--wallet-address [address]', 'used in sparkswap withdraw ONLY')
-    .option('--force', 'used in sparkswap release ONLY', null, false)
+    .option('--force', 'Force close all channels. This options is only used in the sparkswap release command', null, false)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
       const { market } = opts
@@ -547,7 +547,7 @@ module.exports = (program) => {
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .command(`wallet ${SUPPORTED_COMMANDS.RELEASE}`, 'Closes channels open on the specified market')
     .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
-    .option('--force', 'Relevant market name', null, false)
+    .option('--force', 'Force close all channels', null, false)
     .command(`wallet ${SUPPORTED_COMMANDS.WITHDRAW}`, 'Withdraws specified amount of coin from wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .argument('<amount>', 'Amount of currency to commit to the relayer', validations.isDecimal)
