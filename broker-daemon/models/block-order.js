@@ -239,7 +239,7 @@ class BlockOrder {
   }
 
   /**
-  * get boolean for if the blockOrder is an ask
+  * get boolean for if the blockOrder is an a state to be worked
   * @return {Boolean}
    */
   get isInWorkableState () {

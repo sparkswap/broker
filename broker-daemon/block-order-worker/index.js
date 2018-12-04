@@ -175,6 +175,11 @@ class BlockOrderWorker extends EventEmitter {
     return blockOrder
   }
 
+  /**
+   * Cancels all outstanding orders for the given block order
+   * @param {BlockOrder}
+   * @return {Void}
+   */
   async cancelOutstandingOrders (blockOrder) {
     await blockOrder.populateOrders(this.ordersStore)
 
@@ -268,7 +273,10 @@ class BlockOrderWorker extends EventEmitter {
   async workBlockOrder (blockOrder, targetDepth) {
     this.logger.info('Working block order', { blockOrderId: blockOrder.id })
 
-    if (!blockOrder.isInWorkableState) throw new Error('BlockOrder is not in a state to be worked')
+    if (!blockOrder.isInWorkableState) {
+      this.logger.info('BlockOrder is not in a state to be worked', { blockOrderId: blockOrder.id })
+      return
+    }
 
     const orderbook = this.orderbooks.get(blockOrder.marketName)
 
