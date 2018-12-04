@@ -925,6 +925,11 @@ message ReleaseChannelsRequest {
   bool force = 2;
 }
 
+message ReleaseChannelsResponse {
+  // Array of errors that may have occurred when releasing a specific market
+  repeated string errors = 1;
+}
+
 /**
  * Get the payment channel network address for a given currency.
  */
@@ -1161,7 +1166,7 @@ service WalletService {
    * ```
    *
    */
-  rpc ReleaseChannels (ReleaseChannelsRequest) returns (google.protobuf.Empty) {
+  rpc ReleaseChannels (ReleaseChannelsRequest) returns (ReleaseChannelsResponse) {
     option (google.api.http) = {
       post: "/v1/wallet/release"
       body: "*"

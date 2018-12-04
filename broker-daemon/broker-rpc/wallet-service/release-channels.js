@@ -12,9 +12,9 @@ const { PublicError } = require('grpc-methods')
  * @param {Engine} request.engines
  * @param {Map<Orderbook>} request.orderbooks
  * @param {Object} responses
- * @return {Object} empty object
+ * @return {Object} responses.ReleaseChannelsResponse
  */
-async function releaseChannels ({ params, logger, engines, orderbooks }, { EmptyResponse }) {
+async function releaseChannels ({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse }) {
   const { market, force } = params
 
   const orderbook = orderbooks.get(market)
@@ -34,13 +34,28 @@ async function releaseChannels ({ params, logger, engines, orderbooks }, { Empty
     throw new PublicError(`No engine available for ${counterSymbol}`)
   }
 
-  const channels = await baseEngine.closeChannels({ force })
-  logger.info(`Closed ${baseSymbol} channels`, { channels, force })
+  // We want to try and close channels for both the base and counter engine
+  // however if one of the engine calls fail, we would like to notify the user
+  // but still attempt to close the other side of the market
+  let errors = []
 
-  const counterChannels = await counterEngine.closeChannels({ force })
-  logger.info(`Closed ${counterSymbol} channels`, { counterChannels, force })
+  try {
+    const channels = await baseEngine.closeChannels({ force })
+    logger.info(`Closed ${baseSymbol} channels`, { channels, force })
+  } catch (e) {
+    logger.error(`Failed to close ${baseSymbol} channels`, { force })
+    errors.push(`Failed to release ${baseSymbol} channels. Reason: ${e}`)
+  }
 
-  return new EmptyResponse({})
+  try {
+    const counterChannels = await counterEngine.closeChannels({ force })
+    logger.info(`Closed ${counterSymbol} channels`, { counterChannels, force })
+  } catch (e) {
+    logger.error(`Failed to close ${counterSymbol} channels`, { force })
+    errors.push(`Failed to release ${counterSymbol} channels. Reason: ${e}`)
+  }
+
+  return new ReleaseChannelsResponse({ errors })
 }
 
 module.exports = releaseChannels
