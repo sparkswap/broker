@@ -210,7 +210,7 @@ class BlockOrderWorker extends EventEmitter {
     const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
 
     try {
-      await this.cancelOutstandingOrders()
+      await this.cancelOutstandingOrders(blockOrder)
     } catch (e) {
       this.logger.error('Failed to cancel all orders for block order: ', { blockOrderId: blockOrder.id, error: e })
       blockOrder.fail()
@@ -252,7 +252,7 @@ class BlockOrderWorker extends EventEmitter {
     const blockOrder = await BlockOrder.fromStore(this.store, blockOrderId)
 
     try {
-      await this.cancelOutstandingOrders()
+      await this.cancelOutstandingOrders(blockOrder)
     } catch (e) {
       this.logger.error('Failed to cancel all orders for block order: ', { blockOrderId: blockOrder.id, error: e })
     }

@@ -572,6 +572,7 @@ describe('BlockOrderWorker', () => {
       await worker.failBlockOrder(fakeId, fakeErr)
 
       expect(worker.cancelOutstandingOrders).to.have.been.calledOnce()
+      expect(worker.cancelOutstandingOrders).to.have.been.calledWith(fakeBlockOrder)
     })
 
     it('logs error if cancelling outstanding orders fails', async () => {
@@ -676,6 +677,7 @@ describe('BlockOrderWorker', () => {
     let orders
     let identityStub
     let blockOrderFail
+    let fakeBlockOrder
 
     beforeEach(() => {
       orders = [
@@ -688,7 +690,7 @@ describe('BlockOrderWorker', () => {
       ]
       blockOrderCancel = sinon.stub()
       blockOrderFail = sinon.stub()
-      BlockOrder.fromStore.resolves({
+      fakeBlockOrder = {
         id: blockOrderId,
         cancel: blockOrderCancel,
         key: blockOrderKey,
@@ -696,7 +698,8 @@ describe('BlockOrderWorker', () => {
         orders,
         openOrders: orders,
         fail: blockOrderFail
-      })
+      }
+      BlockOrder.fromStore.resolves(fakeBlockOrder)
       identityStub = sinon.stub()
 
       relayer.makerService = {
@@ -723,6 +726,7 @@ describe('BlockOrderWorker', () => {
       await worker.cancelBlockOrder(fakeId)
 
       expect(worker.cancelOutstandingOrders).to.have.been.calledOnce()
+      expect(worker.cancelOutstandingOrders).to.have.been.calledWith(fakeBlockOrder)
     })
 
     it('fails the block order if relayer cancellation fails', async () => {
