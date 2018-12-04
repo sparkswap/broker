@@ -43,7 +43,7 @@ async function releaseChannels ({ params, logger, engines, orderbooks }, { Relea
     const channels = await baseEngine.closeChannels({ force })
     logger.info(`Closed ${baseSymbol} channels`, { channels, force })
   } catch (e) {
-    logger.error(`Failed to close ${baseSymbol} channels`, { force })
+    logger.error(`Failed to close ${baseSymbol} channels`, { force, error: e.toString() })
     errors.push(`Failed to release ${baseSymbol} channels. Reason: ${e}`)
   }
 
@@ -51,7 +51,7 @@ async function releaseChannels ({ params, logger, engines, orderbooks }, { Relea
     const counterChannels = await counterEngine.closeChannels({ force })
     logger.info(`Closed ${counterSymbol} channels`, { counterChannels, force })
   } catch (e) {
-    logger.error(`Failed to close ${counterSymbol} channels`, { force })
+    logger.error(`Failed to close ${counterSymbol} channels`, { force, error: e.toString() })
     errors.push(`Failed to release ${counterSymbol} channels. Reason: ${e}`)
   }
 
