@@ -423,6 +423,14 @@ describe('cli wallet', () => {
       expect(logger.info).to.have.been.called()
     })
 
+    it('shows errors to the user if release channels returns them', async () => {
+      const error = 'Engine is locked'
+      const errors = [error]
+      releaseStub.resolves({ errors })
+      await release(args, opts, logger)
+      expect(logger.info).to.have.been.calledWith(error)
+    })
+
     context('force release of channels', () => {
       beforeEach(async () => {
         opts.force = true

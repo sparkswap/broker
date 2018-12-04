@@ -38,6 +38,7 @@ describe('WalletService', () => {
           GetTradingCapacitiesResponse: responseStub,
           WithdrawFundsResponse: responseStub,
           CreateWalletResponse: responseStub,
+          ReleaseChannelsResponse: responseStub,
           google: {
             protobuf: {
               Empty: responseStub
@@ -150,7 +151,7 @@ describe('WalletService', () => {
         releaseChannels,
         expectedMessageId,
         { logger, engines, orderbooks, auth },
-        { EmptyResponse: responseStub }
+        { ReleaseChannelsResponse: responseStub }
       )
     })
 

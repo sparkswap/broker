@@ -321,8 +321,8 @@ async function release (args, opts, logger) {
       const { errors } = await client.walletService.releaseChannels({ market, force })
 
       if (errors) {
-        logger.info(`Errors have occurred while trying to release channels for ${market}`.red)
-        errors.forEach(e => logger.info(`- ${e}`))
+        logger.info(`Errors have occurred while trying to release channels for ${market}:`.red)
+        errors.forEach(e => logger.info(e))
         logger.info('')
       }
 
