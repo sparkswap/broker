@@ -871,10 +871,6 @@ message GetBalancesResponse {
 message Capacity {
   // Currency of the balance.
   string symbol = 1;
-  // Total active amount a user can send in the currency. This is currently in base units (e.g. Satoshi/Litoshis)
-  string active_send_capacity = 2;
-  // Total active amount a user can receive in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
-  string active_receive_capacity = 3;
   // Total pending amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
   string pending_send_capacity = 4;
   // Total pending amount a user can receive in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
@@ -883,6 +879,14 @@ message Capacity {
   string inactive_send_capacity = 6;
   // Total inactive amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
   string inactive_receive_capacity = 7;
+  // Total available amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
+  string available_send_capacity = 8;
+  // Total available amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
+  string available_receive_capacity = 9;
+  // Total inbound outstanding amount. This is currently in base units (e.g. Satoshis/Litoshis)
+  string outstanding_send_capacity = 10;
+  // Total outbound outstanding amount. This is currently in base units (e.g. Satoshis/Litoshis)
+  string outstanding_receive_capacity = 11;
 }
 
 /**
@@ -1236,7 +1240,13 @@ service WalletService {
    * ┌──────────────┬────────────────────────┬────────────────────────┐
    * │              │ BTC Capacity           │ LTC Capacity           │
    * ├──────────────┼────────────────────────┼────────────────────────┤
-   * │ Active       │                        │                        │
+   * │ Available    │                        │                        │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Buy BTC    │ 0.0000380000000000     │ 0.0000000000000000     │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │   Sell BTC   │ 0.1436436500000000     │ 10.0599490000000000    │
+   * ├──────────────┼────────────────────────┼────────────────────────┤
+   * │ Outstanding  │                        │                        │
    * ├──────────────┼────────────────────────┼────────────────────────┤
    * │   Buy BTC    │ 0.0027057000000000     │ 0.1674101500000000     │
    * ├──────────────┼────────────────────────┼────────────────────────┤

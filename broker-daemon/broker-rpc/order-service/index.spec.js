@@ -34,6 +34,7 @@ describe('OrderService', () => {
           CreateBlockOrderResponse: sinon.stub(),
           GetBlockOrderResponse: sinon.stub(),
           GetBlockOrdersResponse: sinon.stub(),
+
           TimeInForce: {
             GTC: 0
           }
