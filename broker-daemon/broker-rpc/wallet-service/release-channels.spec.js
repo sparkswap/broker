@@ -6,7 +6,6 @@ const releaseChannels = rewire(path.resolve(__dirname, 'release-channels'))
 describe('releaseChannels', () => {
   let params
   let logger
-  let res
   let engines
   let orderbooks
   let baseEngineStub
@@ -29,7 +28,7 @@ describe('releaseChannels', () => {
 
   describe('release channels from a specific market', () => {
     beforeEach(async () => {
-      res = await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
+      await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
     })
 
     it('attempts to close channels on the base engine', async () => {
@@ -40,16 +39,15 @@ describe('releaseChannels', () => {
       expect(counterEngineStub.closeChannels).to.have.been.called()
     })
 
-    it('returns a ReleaseChannelsResponse', async () => {
-      expect(ReleaseChannelsResponse).to.have.been.called()
-      expect(res).to.be.eql({})
+    it('returns an empty ReleaseChannelsResponse', async () => {
+      expect(ReleaseChannelsResponse).to.have.been.calledWith({ errors: [] })
     })
   })
 
   describe('force releasing channels from a specific market', () => {
     beforeEach(async () => {
       params.force = true
-      res = await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
+      await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
     })
 
     it('force closes channels on the base engine', async () => {
@@ -81,6 +79,24 @@ describe('releaseChannels', () => {
       return expect(
         releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
       ).to.be.rejectedWith(PublicError, `No engine available for LTC`)
+    })
+  })
+
+  context('errors while trying to close base engine channels', () => {
+    it('returns an error in the response', async () => {
+      const error = 'BTC engine is locked'
+      baseEngineStub.closeChannels.rejects(error)
+      await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
+      expect(ReleaseChannelsResponse).to.have.been.calledWith({ errors: [sinon.match(error)] })
+    })
+  })
+
+  context('errors while trying to close counter engine channels', () => {
+    it('returns an error in the response', async () => {
+      const error = 'LTC engine is locked'
+      counterEngineStub.closeChannels.rejects(error)
+      await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
+      expect(ReleaseChannelsResponse).to.have.been.calledWith({ errors: [sinon.match(error)] })
     })
   })
 })
