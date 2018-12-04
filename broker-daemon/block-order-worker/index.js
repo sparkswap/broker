@@ -99,28 +99,7 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No engine available for ${orderbook.counterSymbol}.`)
     }
 
-    const { activeOutboundAmount, activeInboundAmount } = await this.calculateActiveFunds(marketName, side)
-
     const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
-    const outboundEngine = this.engines.get(blockOrder.outboundSymbol)
-    const inboundEngine = this.engines.get(blockOrder.inboundSymbol)
-    const [{address: outboundAddress}, {address: inboundAddress}] = await Promise.all([
-      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.outboundSymbol}),
-      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.inboundSymbol})
-    ])
-
-    const outboundBalanceIsSufficient = await outboundEngine.isBalanceSufficient(outboundAddress, Big(blockOrder.outboundAmount).plus(activeOutboundAmount))
-
-    // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
-    if (!outboundBalanceIsSufficient) {
-      throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channel to create order`)
-    }
-
-    const inboundBalanceIsSufficient = await inboundEngine.isBalanceSufficient(inboundAddress, Big(blockOrder.inboundAmount).plus(activeInboundAmount), {outbound: false})
-    // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
-    if (!inboundBalanceIsSufficient) {
-      throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order`)
-    }
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
@@ -156,6 +135,31 @@ class BlockOrderWorker extends EventEmitter {
     }
 
     return { activeOutboundAmount, activeInboundAmount }
+  }
+
+  async checkFundsAreSufficient (blockOrder) {
+    const { side, marketName, outboundSymbol, inboundSymbol, outboundAmount, inboundAmount } = blockOrder
+    const { activeOutboundAmount, activeInboundAmount } = await this.calculateActiveFunds(marketName, side)
+
+    const outboundEngine = this.engines.get(outboundSymbol)
+    const inboundEngine = this.engines.get(inboundSymbol)
+    const [{address: outboundAddress}, {address: inboundAddress}] = await Promise.all([
+      this.relayer.paymentChannelNetworkService.getAddress({symbol: outboundSymbol}),
+      this.relayer.paymentChannelNetworkService.getAddress({symbol: inboundSymbol})
+    ])
+
+    const outboundBalanceIsSufficient = await outboundEngine.isBalanceSufficient(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount))
+
+    // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
+    if (!outboundBalanceIsSufficient) {
+      throw new Error(`Insufficient funds in outbound ${outboundSymbol} channel to create order`)
+    }
+
+    const inboundBalanceIsSufficient = await inboundEngine.isBalanceSufficient(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), {outbound: false})
+    // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
+    if (!inboundBalanceIsSufficient) {
+      throw new Error(`Insufficient funds in inbound ${inboundSymbol} channel to create order`)
+    }
   }
 
   /**
@@ -422,6 +426,8 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No engine available for ${counterSymbol}`)
     }
 
+    await this.checkFundsAreSufficient(blockOrder)
+
     this.logger.info('Creating order for BlockOrder', { blockOrderId: blockOrder.id })
 
     const osm = await OrderStateMachine.create(
@@ -465,6 +471,8 @@ class BlockOrderWorker extends EventEmitter {
     if (!engines.has(counterSymbol)) {
       throw new Error(`No engine available for ${counterSymbol}`)
     }
+
+    await this.checkFundsAreSufficient(blockOrder)
 
     // These are the orders from the orders store where the orders being passed are actually market event orders
     const ordersFromStore = await Promise.all(orders.map((order) => {
