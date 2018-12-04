@@ -883,9 +883,9 @@ message Capacity {
   string available_send_capacity = 8;
   // Total available amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
   string available_receive_capacity = 9;
-  // Total outstanding amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
+  // Total inbound outstanding amount. This is currently in base units (e.g. Satoshis/Litoshis)
   string outstanding_send_capacity = 10;
-  // Total outstanding amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
+  // Total outbound outstanding amount. This is currently in base units (e.g. Satoshis/Litoshis)
   string outstanding_receive_capacity = 11;
 }
 

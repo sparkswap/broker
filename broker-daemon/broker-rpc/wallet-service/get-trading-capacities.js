@@ -1,5 +1,10 @@
 const { currencies } = require('../../config')
 const { Big } = require('../../utils')
+
+const SIDES = Object.freeze({
+  BID: 'BID',
+  ASK: 'ASK'
+})
 /**
  * Grabs the total balance and total channel balance from a specified engine
  *
@@ -10,7 +15,8 @@ const { Big } = require('../../utils')
  * @return {Object} including symbol and available, pending, outstanding, and inactive capacties for sending and receiving
  */
 async function getCapacities (engine, symbol, outstandingSendCapacity, outstandingReceiveCapacity) {
-  const divideBy = currencies.find(({ symbol: configSymbol }) => configSymbol === symbol).quantumsPerCommon
+  const { quantumsPerCommon: divideBy } = currencies.find(({ symbol: configSymbol }) => configSymbol === symbol) || {}
+  if (!divideBy) throw new Error(`Currency was not found when trying to get trading capacities: ${this.symbol}`)
 
   const [
     openChannelCapacities,
@@ -71,8 +77,8 @@ async function getTradingCapacities ({ params, logger, engines, orderbooks, bloc
     { activeOutboundAmount: committedCounterSendCapacity, activeInboundAmount: committedBaseReceiveCapacity },
     { activeOutboundAmount: committedBaseSendCapacity, activeInboundAmount: committedCounterReceiveCapacity }
   ] = await Promise.all([
-    blockOrderWorker.calculateActiveFunds(market, 'BID'),
-    blockOrderWorker.calculateActiveFunds(market, 'ASK')
+    blockOrderWorker.calculateActiveFunds(market, SIDES.BID),
+    blockOrderWorker.calculateActiveFunds(market, SIDES.ASK)
   ])
 
   const [baseSymbolCapacities, counterSymbolCapacities] = await Promise.all([
