@@ -574,24 +574,21 @@ describe('BlockOrderWorker', () => {
       expect(worker.cancelOutstandingOrders).to.have.been.calledOnce()
     })
 
-    // it('l', async () => {
-    //   const fakeError = new Error('myerror')
-    //   const fakeId = 'myid'
-    //
-    //   worker.cancelOutstandingOrders.rejects(fakeError)
-    //
-    //   try {
-    //     await worker.cancelBlockOrder(fakeId)
-    //   } catch (e) {
-    //     expect(blockOrderFail).to.have.been.calledOnce()
-    //     expect(store.put).to.have.been.calledOnce()
-    //     expect(store.put).to.have.been.calledWith(blockOrderKey, blockOrderValue)
-    //     expect(e).to.be.eql(fakeError)
-    //     return
-    //   }
-    //
-    //   throw new Error('Expected relayer cancellation to throw an error')
-    // })
+    it('logs error if cancelling outstanding orders fails', async () => {
+      const fakeError = new Error('myerror')
+      const fakeId = 'myid'
+
+      worker.cancelOutstandingOrders.rejects(fakeError)
+
+      try {
+        await worker.cancelBlockOrder(fakeId)
+      } catch (e) {
+        expect(logger.error).to.have.been.calledWith('Failed to cancel all orders for block order: ')
+        return
+      }
+
+      throw new Error('Expected relayer cancellation to throw an error')
+    })
 
     it('updates the block order to failed status', async () => {
       await worker.failBlockOrder(fakeId, fakeErr)

@@ -212,7 +212,7 @@ class BlockOrderWorker extends EventEmitter {
     try {
       await this.cancelOutstandingOrders()
     } catch (e) {
-      this.logger.error('Failed to cancel all orders for block order: ', { blockOrderId: blockOrder.id })
+      this.logger.error('Failed to cancel all orders for block order: ', { blockOrderId: blockOrder.id, error: e })
       blockOrder.fail()
       await promisify(this.store.put)(blockOrder.key, blockOrder.value)
       throw e
@@ -254,7 +254,7 @@ class BlockOrderWorker extends EventEmitter {
     try {
       await this.cancelOutstandingOrders()
     } catch (e) {
-      this.logger.error('Failed to cancel all orders for block order: ', { blockOrderId: blockOrder.id })
+      this.logger.error('Failed to cancel all orders for block order: ', { blockOrderId: blockOrder.id, error: e })
     }
 
     blockOrder.fail()
