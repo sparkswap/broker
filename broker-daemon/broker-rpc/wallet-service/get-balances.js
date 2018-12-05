@@ -73,58 +73,24 @@ async function getBalances ({ logger, engines }, { GetBalancesResponse }) {
   // however the values will be blank. This information will then need to be
   // handled by the consumer
   const enginePromises = Array.from(engines).map(async ([symbol, engine]) => {
-    let res = { symbol }
-
     try {
-      const balance = await getEngineBalances(symbol, engine, logger)
-      Object.assign(res, balance)
+      const balances = await getEngineBalances(symbol, engine, logger)
+
+      return {
+        symbol,
+        ...balances
+      }
     } catch (e) {
-      logger.error(`Failed to get engine balances for ${symbol}`)
-      res.error = e.toString()
-    }
+      logger.error(`Failed to get engine balances for ${symbol}`, { error: e.toString() })
 
-    return res
-  })
-
-  const balances = await Promise.all(enginePromises)
-
-  logger.debug('Received engine balances', { balances })
-
-  // We take the result from all engine balances and format/validate the information
-  // to the `Balance` message in the broker.proto
-  const engineBalances = balances.map((data) => {
-    const {
-      symbol,
-      error = '',
-      uncommittedBalance = '',
-      uncommittedPendingBalance = '',
-      totalChannelBalance = '',
-      totalPendingChannelBalance = ''
-    } = data
-
-    // If there is no symbol, then we will not be able to identify which currency
-    // information this belongs to which could lead to providing the consumer with
-    // incorrect data.
-    if (!symbol) {
-      throw new Error('Issue with balances payload. No symbol is available', data)
-    }
-
-    // If data is not available AND there is no error, then we are in a weird state
-    // and will not be able to provide the consumer of this service with correct
-    // balance information.
-    if (!error && !uncommittedBalance) {
-      throw new Error('Unexpected response for balance', data)
-    }
-
-    return {
-      symbol,
-      error,
-      uncommittedBalance,
-      totalChannelBalance,
-      totalPendingChannelBalance,
-      uncommittedPendingBalance
+      return {
+        symbol,
+        error: e.toString()
+      }
     }
   })
+
+  const engineBalances = await Promise.all(enginePromises)
 
   logger.debug('Returning engine balances response', { engineBalances })
 

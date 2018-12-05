@@ -57,7 +57,6 @@ describe('get-balances', () => {
       const expectedBalances = [
         sinon.match({
           symbol: 'BTC',
-          error: '',
           ...balance
         })
       ]
@@ -71,32 +70,10 @@ describe('get-balances', () => {
       const expectedBalances = [
         sinon.match({
           symbol: 'BTC',
-          error,
-          uncommittedBalance: '',
-          uncommittedPendingBalance: '',
-          totalChannelBalance: '',
-          totalPendingChannelBalance: ''
+          error
         })
       ]
       expect(GetBalancesResponse).to.have.been.calledWith({ balances: expectedBalances })
-    })
-
-    context('incorrect engine balance information', () => {
-      it('errors if a symbol is missing', () => {
-        const badEngines = new Map([['', engineStub]])
-        return expect(getBalances({ logger, engines: badEngines }, { GetBalancesResponse })).to.be.rejectedWith('No symbol is available')
-      })
-
-      it('errors if no data is present', () => {
-        balance = {
-          uncommittedBalance: '',
-          totalChannelBalance: '',
-          totalPendingChannelBalance: '',
-          uncommittedPendingBalance: ''
-        }
-        balancesStub.resolves(balance)
-        return expect(getBalances({ logger, engines }, { GetBalancesResponse })).to.be.rejectedWith('Unexpected response for balance')
-      })
     })
   })
 
