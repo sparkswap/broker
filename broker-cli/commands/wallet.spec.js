@@ -419,16 +419,41 @@ describe('cli wallet', () => {
     })
 
     it('shows errors to the user if release channels returns them', async () => {
-      const status = 'Engine is locked'
+      const status = 'FAILED'
       const symbol = 'BTC'
+      const error = 'Engine is locked'
       const channel = {
         symbol,
         status,
-        error: true
+        error: ''
       }
       releaseStub.resolves({ channels: [channel] })
       await release(args, opts, logger)
-      expect(logger.info).to.have.been.calledWith(sinon.match(symbol, status))
+      expect(logger.info).to.have.been.calledWith(sinon.match(symbol, status, error))
+    })
+
+    it('displays an informative message to user on errors', async () => {
+      const status = 'FAILED'
+      const symbol = 'BTC'
+      const error = 'Engine is locked'
+      const channel = { symbol, status, error }
+
+      releaseStub.resolves({ channels: [channel] })
+
+      await release(args, opts, logger)
+      expect(logger.info).to.have.been.calledWith(sinon.match('Errors have occurred'))
+    })
+
+    it('displays an informative message to user on errors if channels were not forced released', async () => {
+      const status = 'FAILED'
+      const symbol = 'BTC'
+      const error = 'Engine is locked'
+      const channel = { symbol, status, error }
+
+      releaseStub.resolves({ channels: [channel] })
+
+      await release(args, opts, logger)
+      expect(logger.info).to.have.been.calledWith(sinon.match('--force'))
     })
 
     context('force release of channels', () => {

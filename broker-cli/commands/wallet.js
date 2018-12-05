@@ -335,7 +335,7 @@ async function release (args, opts, logger) {
 
         if (error) {
           channelHasError = true
-          logger.info(`${symbol}: ` + status.red)
+          logger.info(`${symbol}: ` + `${status}: ${error}`.red)
         } else {
           logger.info(`${symbol}: ` + status.green)
         }

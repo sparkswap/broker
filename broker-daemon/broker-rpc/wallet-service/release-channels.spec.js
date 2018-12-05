@@ -40,39 +40,17 @@ describe('releaseChannels', () => {
       expect(counterEngineStub.closeChannels).to.have.been.called()
     })
 
-    it('returns an OK ReleaseChannelsResponse', async () => {
+    it('returns an successful ReleaseChannelsResponse', async () => {
       await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
       const expectedRes = {
         channels: []
       }
-      const { OK } = releaseChannels.__get__('RELEASE_STATUSES')
+      const { RELEASED } = releaseChannels.__get__('RELEASE_STATE')
       for (var entry of engines.entries()) {
         const [symbol] = entry
         expectedRes.channels.push({
           symbol,
-          error: false,
-          status: OK
-        })
-      }
-      expect(ReleaseChannelsResponse).to.have.been.calledWith(expectedRes)
-    })
-
-    it.only('returns a NO_ACTION ReleaseChannelsResponse if no channels are present', async () => {
-      baseEngineStub.closeChannels.resolves([])
-      counterEngineStub.closeChannels.resolves([])
-
-      await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
-
-      const expectedRes = {
-        channels: []
-      }
-      const { NO_ACTION } = releaseChannels.__get__('RELEASE_STATUSES')
-      for (var entry of engines.entries()) {
-        const [symbol] = entry
-        expectedRes.channels.push({
-          symbol,
-          error: false,
-          status: NO_ACTION
+          status: RELEASED
         })
       }
       expect(ReleaseChannelsResponse).to.have.been.calledWith(expectedRes)
@@ -119,14 +97,15 @@ describe('releaseChannels', () => {
 
   context('errors while trying to close base engine channels', () => {
     it('returns an error in the response', async () => {
-      const status = 'BTC engine is locked'
-      baseEngineStub.closeChannels.rejects(status)
+      const { RELEASED, FAILED } = releaseChannels.__get__('RELEASE_STATE')
+      const error = 'BTC engine is locked'
+      baseEngineStub.closeChannels.rejects(error)
       await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
 
       const expectedResponse = {
         channels: [
-          { symbol: 'BTC', error: true, status: sinon.match(status) },
-          { symbol: 'LTC', error: false, status: sinon.match.string }
+          { symbol: 'BTC', error, status: FAILED },
+          { symbol: 'LTC', status: RELEASED }
         ]
       }
       expect(ReleaseChannelsResponse).to.have.been.calledWith(expectedResponse)
