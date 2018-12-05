@@ -57,8 +57,25 @@ describe('get-balances', () => {
       const expectedBalances = [
         sinon.match({
           symbol: 'BTC',
-          error: undefined,
+          error: '',
           ...balance
+        })
+      ]
+      expect(GetBalancesResponse).to.have.been.calledWith({ balances: expectedBalances })
+    })
+
+    it('returns a blank payload if an engine is unavailable', async () => {
+      const error = 'Engine not available'
+      balancesStub.rejects(error)
+      await getBalances({ logger, engines }, { GetBalancesResponse })
+      const expectedBalances = [
+        sinon.match({
+          symbol: 'BTC',
+          error,
+          uncommittedBalance: '',
+          uncommittedPendingBalance: '',
+          totalChannelBalance: '',
+          totalPendingChannelBalance: ''
         })
       ]
       expect(GetBalancesResponse).to.have.been.calledWith({ balances: expectedBalances })

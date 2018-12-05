@@ -77,7 +77,7 @@ async function getBalances ({ logger, engines }, { GetBalancesResponse }) {
 
     try {
       const balance = await getEngineBalances(symbol, engine, logger)
-      res = Object.assign(res, balance)
+      Object.assign(res, balance)
     } catch (e) {
       logger.error(`Failed to get engine balances for ${symbol}`)
       res.error = e.toString()
@@ -95,25 +95,25 @@ async function getBalances ({ logger, engines }, { GetBalancesResponse }) {
   const engineBalances = balances.map((data) => {
     const {
       symbol,
-      error = undefined,
-      uncommittedBalance = undefined,
-      uncommittedPendingBalance = undefined,
-      totalChannelBalance = undefined,
-      totalPendingChannelBalance = undefined
+      error = '',
+      uncommittedBalance = '',
+      uncommittedPendingBalance = '',
+      totalChannelBalance = '',
+      totalPendingChannelBalance = ''
     } = data
 
     // If there is no symbol, then we will not be able to identify which currency
     // information this belongs to which could lead to providing the consumer with
     // incorrect data.
     if (!symbol) {
-      throw new Error('Issue with balances payload. No symbol is available', { data })
+      throw new Error('Issue with balances payload. No symbol is available', data)
     }
 
     // If data is not available AND there is no error, then we are in a weird state
     // and will not be able to provide the consumer of this service with correct
     // balance information.
     if (!error && !uncommittedBalance) {
-      throw new Error('Unexpected response for balance', { data })
+      throw new Error('Unexpected response for balance', data)
     }
 
     return {
