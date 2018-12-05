@@ -229,6 +229,19 @@ async function networkAddress (args, opts, logger) {
 }
 
 /**
+ * Different network statuses
+ * @constant
+ * @type {Object}
+ * @default
+ */
+const NETWORK_STATUSES = Object.freeze({
+  AVAILABLE: 'AVAILABLE',
+  OUTSTANDING: 'OUTSTANDING',
+  PENDING: 'PENDING',
+  INACTIVE: 'INACTIVE'
+})
+
+/**
  * network-status
  *
  * ex: `sparkswap wallet network-status`
@@ -254,17 +267,21 @@ async function networkStatus (args, opts, logger) {
       style: { head: ['gray'] }
     })
 
-    statusTable.push(['Active', '', ''])
-    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.activeReceiveCapacity, 'active'), formatBalance(counterSymbolCapacities.activeSendCapacity, 'active')])
-    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.activeSendCapacity, 'active'), formatBalance(counterSymbolCapacities.activeReceiveCapacity, 'active')])
+    statusTable.push(['Available', '', ''])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.availableReceiveCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(counterSymbolCapacities.availableSendCapacity, NETWORK_STATUSES.AVAILABLE)])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.availableSendCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(counterSymbolCapacities.availableReceiveCapacity, NETWORK_STATUSES.AVAILABLE)])
+
+    statusTable.push(['Outstanding', '', ''])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.outstandingReceiveCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(counterSymbolCapacities.outstandingSendCapacity, NETWORK_STATUSES.OUTSTANDING)])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.outstandingSendCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(counterSymbolCapacities.outstandingReceiveCapacity, NETWORK_STATUSES.OUTSTANDING)])
 
     statusTable.push(['Pending', '', ''])
-    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingReceiveCapacity, 'pending'), formatBalance(counterSymbolCapacities.pendingSendCapacity, 'pending')])
-    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingSendCapacity, 'pending'), formatBalance(counterSymbolCapacities.pendingReceiveCapacity, 'pending')])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingReceiveCapacity, NETWORK_STATUSES.PENDING), formatBalance(counterSymbolCapacities.pendingSendCapacity, NETWORK_STATUSES.PENDING)])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingSendCapacity, NETWORK_STATUSES.PENDING), formatBalance(counterSymbolCapacities.pendingReceiveCapacity, NETWORK_STATUSES.PENDING)])
 
     statusTable.push(['Inactive', '', ''])
-    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveReceiveCapacity, 'inactive'), formatBalance(counterSymbolCapacities.inactiveSendCapacity, 'inactive')])
-    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveSendCapacity, 'inactive'), formatBalance(counterSymbolCapacities.inactiveReceiveCapacity, 'inactive')])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveReceiveCapacity, NETWORK_STATUSES.INACTIVE), formatBalance(counterSymbolCapacities.inactiveSendCapacity, NETWORK_STATUSES.INACTIVE)])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveSendCapacity, NETWORK_STATUSES.INACTIVE), formatBalance(counterSymbolCapacities.inactiveReceiveCapacity, NETWORK_STATUSES.INACTIVE)])
 
     logger.info(` ${market.bold.white}`)
     logger.info(statusTable.toString())
@@ -286,11 +303,13 @@ function formatBalance (balance, status) {
   const fixedBalance = Big(balance).toFixed(16)
   if (Big(balance).gt(0)) {
     switch (status) {
-      case 'active':
+      case NETWORK_STATUSES.AVAILABLE:
         return fixedBalance.green
-      case 'pending':
+      case NETWORK_STATUSES.OUTSTANDING:
         return fixedBalance.yellow
-      case 'inactive':
+      case NETWORK_STATUSES.PENDING:
+        return fixedBalance.yellow
+      case NETWORK_STATUSES.INACTIVE:
         return fixedBalance.red
       default:
         return fixedBalance
@@ -315,16 +334,37 @@ function formatBalance (balance, status) {
  * @return {Void}
  */
 async function release (args, opts, logger) {
-  const { rpcAddress, market } = opts
+  const { market } = args
+  const { rpcAddress, force } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
 
-    const answer = await askQuestion(`Are you sure you want to close all channels you have open on the ${market} market? (Y/N)`)
+    let question
+    if (force) {
+      question = `Are you sure you want to FORCE the release of all channels you have open on the ${market} market? (Y/N)`
+    } else {
+      question = `Are you sure you want to release all channels you have open on the ${market} market? (Y/N)`
+    }
+
+    const answer = await askQuestion(question)
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    await client.walletService.releaseChannels({market})
+    try {
+      await client.walletService.releaseChannels({ market, force })
+    } catch (e) {
+      logger.error(`Failed to release payment channels for ${market}`.red)
+
+      if (!force) {
+        logger.info('You can force the release of funds using the `--force` option, however')
+        logger.info('this has the potential to lock your funds for an extended period of time')
+        logger.info('and cost additional fees')
+      }
+
+      throw e
+    }
+
     logger.info(`Successfully closed channels on ${market} market!`)
   } catch (e) {
     logger.error(handleError(e))
@@ -439,7 +479,11 @@ module.exports = (program) => {
     .argument('[sub-arguments...]')
     .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
-    .option('--wallet-address [address]', 'Address to send the coins to', validations.isHost)
+    // For each subcommand, we are required to add any `.options` before the `.action`
+    // hook has been added in caporal. If the option is omitted, the subcommand will
+    // not receive the variable in the `opts` object
+    .option('--wallet-address [address]', 'used in sparkswap withdraw ONLY')
+    .option('--force', 'Force close all channels. This options is only used in the sparkswap release command', null, false)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
       const { market } = opts
@@ -487,7 +531,7 @@ module.exports = (program) => {
           opts.market = validations.isMarketName(market)
           return networkStatus(args, opts, logger)
         case SUPPORTED_COMMANDS.RELEASE:
-          opts.market = validations.isMarketName(market)
+          args.market = validations.isMarketName(market)
           return release(args, opts, logger)
         case SUPPORTED_COMMANDS.WITHDRAW:
           symbol = symbol.toUpperCase()
@@ -536,7 +580,8 @@ module.exports = (program) => {
     .command(`wallet ${SUPPORTED_COMMANDS.NETWORK_STATUS}`, 'Payment Channel Network status for trading in different markets')
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .command(`wallet ${SUPPORTED_COMMANDS.RELEASE}`, 'Closes channels open on the specified market')
-    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
+    .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
+    .option('--force', 'Force close all channels', null, false)
     .command(`wallet ${SUPPORTED_COMMANDS.WITHDRAW}`, 'Withdraws specified amount of coin from wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .argument('<amount>', 'Amount of currency to commit to the relayer', validations.isDecimal)

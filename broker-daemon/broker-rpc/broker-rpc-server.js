@@ -86,7 +86,7 @@ class BrokerRPCServer {
     this.orderBookService = new OrderBookService(this.protoPath, { logger, relayer, orderbooks, auth: this.auth })
     this.server.addService(this.orderBookService.definition, this.orderBookService.implementation)
 
-    this.walletService = new WalletService(this.protoPath, { logger, engines, relayer, orderbooks, auth: this.auth })
+    this.walletService = new WalletService(this.protoPath, { logger, engines, relayer, orderbooks, blockOrderWorker, auth: this.auth })
     this.server.addService(this.walletService.definition, this.walletService.implementation)
 
     this.infoService = new InfoService(this.protoPath, { logger, engines, relayer, orderbooks })

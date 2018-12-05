@@ -5,6 +5,8 @@ const { PublicError } = require('grpc-methods')
  *
  * @param {Object} request - request object
  * @param {Object} request.params
+ * @param {String} request.params.market - Market name (e.g. BTC/LTC)
+ * @param {Boolean} request.params.force - if channels should be force closed
  * @param {RelayerClient} request.relayer
  * @param {Logger} request.logger
  * @param {Engine} request.engines
@@ -12,13 +14,14 @@ const { PublicError } = require('grpc-methods')
  * @param {Object} responses
  * @return {Object} empty object
  */
-async function releaseChannels ({ params, relayer, logger, engines, orderbooks }) {
-  const { market } = params
-  const orderbook = orderbooks.get(market)
+async function releaseChannels ({ params, logger, engines, orderbooks }, { EmptyResponse }) {
+  const { market, force } = params
 
+  const orderbook = orderbooks.get(market)
   if (!orderbook) {
     throw new PublicError(`${market} is not being tracked as a market.`)
   }
+
   const [ baseSymbol, counterSymbol ] = market.split('/')
 
   const baseEngine = engines.get(baseSymbol)
@@ -31,13 +34,13 @@ async function releaseChannels ({ params, relayer, logger, engines, orderbooks }
     throw new PublicError(`No engine available for ${counterSymbol}`)
   }
 
-  const channels = await baseEngine.closeChannels()
-  logger.info(`Closed ${baseSymbol} channels`, {channels})
+  const channels = await baseEngine.closeChannels({ force })
+  logger.info(`Closed ${baseSymbol} channels`, { channels, force })
 
-  const counterChannels = await counterEngine.closeChannels()
-  logger.info(`Closed ${counterSymbol} channels`, {counterChannels})
+  const counterChannels = await counterEngine.closeChannels({ force })
+  logger.info(`Closed ${counterSymbol} channels`, { counterChannels, force })
 
-  return {}
+  return new EmptyResponse({})
 }
 
 module.exports = releaseChannels
