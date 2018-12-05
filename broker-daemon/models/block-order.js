@@ -238,6 +238,10 @@ class BlockOrder {
     return this.side === BlockOrder.SIDES.ASK
   }
 
+  get isMarketOrder () {
+    return !!this.price
+  }
+
   /**
    * Move the block order to a failed status
    * @return {BlockOrder} Modified block order instance

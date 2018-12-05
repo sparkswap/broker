@@ -217,6 +217,27 @@ class Orderbook {
     })
   }
 
+  async getAveragePrice (orders, targetDepth) {
+    targetDepth = Big(targetDepth)
+    let currentDepth = Big('0')
+    const weightedPrice = orders.reduce((acc, order) => {
+      const depthRemaining = targetDepth.minus(currentDepth)
+
+      // if we have already reached our target depth, create no further fills
+      if (depthRemaining.lte(0)) {
+        return acc
+      }
+
+      // Take the smaller of the remaining desired depth or the base amount of the order
+      const fillAmount = depthRemaining.gt(order.baseAmount) ? order.baseAmount : depthRemaining.toString()
+      // track our current depth so we know what to fill on the next order
+      currentDepth = currentDepth.plus(fillAmount)
+      return acc.plus(order.price.times(fillAmount))
+    })
+
+    return Big(weightedPrice).div(targetDepth)
+  }
+
   /**
    * Gets current orderbook events by timestamp
    *

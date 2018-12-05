@@ -109,14 +109,40 @@ class BlockOrderWorker extends EventEmitter {
       this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.inboundSymbol})
     ])
 
-    const outboundBalanceIsSufficient = await outboundEngine.isBalanceSufficient(outboundAddress, Big(blockOrder.outboundAmount).plus(activeOutboundAmount))
+    let counterAmount
+    let outboundAmount
+    let inboundAmount
+    if (blockOrder.isMarketOrder) {
+      const { orders, depth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: Big(blockOrder.baseAmount).toString() })
+      counterAmount = await orderbook.getAveragePrice(orders, Big(depth))
+
+      if (blockOrder.isBid) {
+        outboundAmount = counterAmount
+        inboundAmount = blockOrder.inboundAmount
+      } else {
+        outboundAmount = blockOrder.outboundAmount
+        inboundAmount = counterAmount
+      }
+    } else {
+      outboundAmount = blockOrder.outboundAmount
+      inboundAmount = blockOrder.inboundAmount
+    }
+
+    if (blockOrder.isBid) {
+      outboundAmount = counterAmount
+      inboundAmount = blockOrder.inboundAmount
+    } else {
+      outboundAmount = blockOrder.outboundAmount
+      inboundAmount = counterAmount
+    }
+    const outboundBalanceIsSufficient = await outboundEngine.isBalanceSufficient(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount))
 
     // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
     if (!outboundBalanceIsSufficient) {
       throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channel to create order`)
     }
 
-    const inboundBalanceIsSufficient = await inboundEngine.isBalanceSufficient(inboundAddress, Big(blockOrder.inboundAmount).plus(activeInboundAmount), {outbound: false})
+    const inboundBalanceIsSufficient = await inboundEngine.isBalanceSufficient(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), {outbound: false})
     // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
     if (!inboundBalanceIsSufficient) {
       throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order`)
@@ -264,7 +290,7 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No orderbook is initialized for created order in the ${blockOrder.marketName} market.`)
     }
 
-    if (!blockOrder.price) {
+    if (blockOrder.isMarketOrder) {
       // block orders without prices are Market orders and take the best available price
       await this.workMarketBlockOrder(blockOrder, targetDepth)
     } else {
