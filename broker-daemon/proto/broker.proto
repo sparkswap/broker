@@ -925,9 +925,21 @@ message ReleaseChannelsRequest {
   bool force = 2;
 }
 
+/**
+ * Container for channel information
+ */
+message ReleasedChannel {
+  // Currency of the information
+  Symbol symbol = 1;
+  // Status of the channel
+  string status = 2;
+  // Tag to identify if the attempt to release a channel produced an error
+  bool error = 10;
+}
+
 message ReleaseChannelsResponse {
-  // Array of errors that may have occurred when releasing a specific market
-  repeated string errors = 1;
+  // Channel status information for channels that have attempted to be released
+  repeated ReleasedChannel channels = 1;
 }
 
 /**

@@ -318,23 +318,38 @@ async function release (args, opts, logger) {
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
     try {
-      const { errors } = await client.walletService.releaseChannels({ market, force })
+      let channelHasError = false
 
-      if (errors) {
+      const { channels = [] } = await client.walletService.releaseChannels({ market, force })
+
+      if (!channels) {
+        throw new Error('No information was retrieved from the daemon')
+      }
+
+      logger.info(`Released Market: ${market}`)
+
+      channels.forEach((channel) => {
+        const { symbol, hasError } = channel
+        let { status } = channel
+
+        if (hasError) {
+          channelHasError = true
+          logger.info(`${symbol}: ` + status.red)
+        } else {
+          logger.info(`${symbol}: ` + status.green)
+        }
+      })
+
+      if (channelHasError) {
         logger.info(`Errors have occurred while trying to release channels for ${market}:`.red)
-        errors.forEach(e => logger.info(e))
         logger.info('')
       }
 
-      if (errors && !force) {
+      if (channelHasError && !force) {
         logger.info('If the error above suggests an uncooperative closing of any channels on')
         logger.info('your daemon, you can force the release of funds using the `--force` option.')
         logger.info('Using `--force` has the potential to lock your funds for an extended')
         logger.info('period of time and cost additional fees')
-      }
-
-      if (!errors) {
-        logger.info(`Successfully closed channels on ${market} market!`)
       }
     } catch (e) {
       logger.error(`Failed to release payment channels for ${market}`.red)

@@ -1,5 +1,11 @@
 const { PublicError } = require('grpc-methods')
 
+const RELEASE_CHANNEL_STATUSES = Object.freeze({
+  OK: 'OK',
+  FAILED: 'FAILED',
+  NO_ACTION: 'NO ACTION'
+})
+
 /**
  * Grabs public lightning network information from relayer and opens a channel
  *
@@ -18,44 +24,58 @@ async function releaseChannels ({ params, logger, engines, orderbooks }, { Relea
   const { market, force } = params
 
   const orderbook = orderbooks.get(market)
+
   if (!orderbook) {
     throw new PublicError(`${market} is not being tracked as a market.`)
   }
 
-  const [ baseSymbol, counterSymbol ] = market.split('/')
+  const symbols = market.split('/')
 
-  const baseEngine = engines.get(baseSymbol)
-  if (!baseEngine) {
-    throw new PublicError(`No engine available for ${baseSymbol}`)
-  }
+  if (symbols.length > 2) throw new Error('we have an issa')
 
-  const counterEngine = engines.get(counterSymbol)
-  if (!counterEngine) {
-    throw new PublicError(`No engine available for ${counterSymbol}`)
-  }
+  const releaseChannelPromises = symbols.map(async (symbol) => {
+    const engine = engines.get(symbol)
+
+    if (!engine) throw new PublicError(`No engine available for ${symbol}`)
+
+    try {
+      const channels = await engine.closeChannels({ force })
+
+      logger.info(`Closed ${symbol} channels`, { channels, force })
+
+      let status = RELEASE_CHANNEL_STATUSES.OK
+
+      // If no channels were returned from the `closeChannels` call then we can
+      // assume that all funds have been released from this specific engine
+      if (channels) {
+        status = RELEASE_CHANNEL_STATUSES.NO_ACTION
+      }
+
+      return {
+        symbol,
+        status,
+        error: false
+      }
+    } catch (e) {
+      logger.error(`Failed to release channels for ${symbol}`, { force, error: e.toString() })
+
+      return {
+        symbol,
+        status: `${RELEASE_CHANNEL_STATUSES.FAILED}: ${e.toString()}`,
+        error: true
+      }
+    }
+  })
 
   // We want to try and close channels for both the base and counter engine
   // however if one of the engine calls fail, we would like to notify the user
   // but still attempt to close the other side of the market
-  let errors = []
+  //
+  // We will construct a channel payload which allows us to send detailed information
+  // to the consumer on the status of channels
+  const channels = await Promise.all(releaseChannelPromises)
 
-  try {
-    const channels = await baseEngine.closeChannels({ force })
-    logger.info(`Closed ${baseSymbol} channels`, { channels, force })
-  } catch (e) {
-    logger.error(`Failed to close ${baseSymbol} channels`, { force, error: e.toString() })
-    errors.push(`Failed to release ${baseSymbol} channels. Reason: ${e}`)
-  }
-
-  try {
-    const counterChannels = await counterEngine.closeChannels({ force })
-    logger.info(`Closed ${counterSymbol} channels`, { counterChannels, force })
-  } catch (e) {
-    logger.error(`Failed to close ${counterSymbol} channels`, { force, error: e.toString() })
-    errors.push(`Failed to release ${counterSymbol} channels. Reason: ${e}`)
-  }
-
-  return new ReleaseChannelsResponse({ errors })
+  return new ReleaseChannelsResponse({ channels })
 }
 
 module.exports = releaseChannels
