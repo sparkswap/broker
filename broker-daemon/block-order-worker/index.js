@@ -114,6 +114,10 @@ class BlockOrderWorker extends EventEmitter {
     let inboundAmount
     if (blockOrder.isMarketOrder) {
       const { orders, depth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: Big(blockOrder.baseAmount).toString() })
+      if (Big(depth).lt(blockOrder.baseAmount)) {
+        this.logger.error(`Insufficient depth`)
+        throw new Error(`Insufficient depth in ${blockOrder.inverseSide} to fill ${blockOrder.baseAmount.toString()}`)
+      }
       counterAmount = await orderbook.getAveragePrice(orders, Big(depth))
 
       if (blockOrder.isBid) {
@@ -128,13 +132,6 @@ class BlockOrderWorker extends EventEmitter {
       inboundAmount = blockOrder.inboundAmount
     }
 
-    if (blockOrder.isBid) {
-      outboundAmount = counterAmount
-      inboundAmount = blockOrder.inboundAmount
-    } else {
-      outboundAmount = blockOrder.outboundAmount
-      inboundAmount = counterAmount
-    }
     const outboundBalanceIsSufficient = await outboundEngine.isBalanceSufficient(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount))
 
     // If the user tries to place an order for more than they hold in the counter engine channel, throw an error

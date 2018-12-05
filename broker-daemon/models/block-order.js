@@ -239,7 +239,7 @@ class BlockOrder {
   }
 
   get isMarketOrder () {
-    return !!this.price
+    return !this.price
   }
 
   /**

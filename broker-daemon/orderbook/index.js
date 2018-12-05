@@ -233,7 +233,7 @@ class Orderbook {
       // track our current depth so we know what to fill on the next order
       currentDepth = currentDepth.plus(fillAmount)
       return acc.plus(order.price.times(fillAmount))
-    })
+    }, Big(0))
 
     return Big(weightedPrice).div(targetDepth)
   }
