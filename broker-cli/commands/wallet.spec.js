@@ -418,17 +418,17 @@ describe('cli wallet', () => {
       expect(releaseStub).to.not.have.been.called()
     })
 
-    it('logs the number of channels closed', async () => {
-      await release(args, opts, logger)
-      expect(logger.info).to.have.been.called()
-    })
-
     it('shows errors to the user if release channels returns them', async () => {
-      const error = 'Engine is locked'
-      const errors = [error]
-      releaseStub.resolves({ errors })
+      const status = 'Engine is locked'
+      const symbol = 'BTC'
+      const channel = {
+        symbol,
+        status,
+        error: true
+      }
+      releaseStub.resolves({ channels: [channel] })
       await release(args, opts, logger)
-      expect(logger.info).to.have.been.calledWith(error)
+      expect(logger.info).to.have.been.calledWith(sinon.match(symbol, status))
     })
 
     context('force release of channels', () => {

@@ -318,6 +318,8 @@ async function release (args, opts, logger) {
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
     try {
+      // We want to keep track if any returned channel had an error while attempting
+      // to be released so that we can display the proper error warnings below
       let channelHasError = false
 
       const { channels = [] } = await client.walletService.releaseChannels({ market, force })
@@ -329,10 +331,9 @@ async function release (args, opts, logger) {
       logger.info(`Released Market: ${market}`)
 
       channels.forEach((channel) => {
-        const { symbol, hasError } = channel
-        let { status } = channel
+        const { symbol, error, status } = channel
 
-        if (hasError) {
+        if (error) {
           channelHasError = true
           logger.info(`${symbol}: ` + status.red)
         } else {
@@ -341,15 +342,15 @@ async function release (args, opts, logger) {
       })
 
       if (channelHasError) {
-        logger.info(`Errors have occurred while trying to release channels for ${market}:`.red)
-        logger.info('')
+        logger.info(`\nErrors have occurred while trying to release channels for ${market}:`.red)
       }
 
       if (channelHasError && !force) {
         logger.info('If the error above suggests an uncooperative closing of any channels on')
         logger.info('your daemon, you can force the release of funds using the `--force` option.')
-        logger.info('Using `--force` has the potential to lock your funds for an extended')
-        logger.info('period of time and cost additional fees')
+        logger.info('')
+        logger.info('However, it is important to note that using `--force` has the potential to')
+        logger.info('lock your funds for an extended period of time and cost additional fees')
       }
     } catch (e) {
       logger.error(`Failed to release payment channels for ${market}`.red)
