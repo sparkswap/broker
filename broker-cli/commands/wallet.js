@@ -68,13 +68,28 @@ async function balance (args, opts, logger) {
       style: { head: ['gray'] }
     })
 
-    balances.forEach(({ symbol, uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance }) => {
+    balances.forEach((balance) => {
+      let {
+        symbol,
+        error = null,
+        totalChannelBalance,
+        totalPendingChannelBalance,
+        uncommittedBalance,
+        uncommittedPendingBalance
+      } = balance
+
+      totalChannelBalance = error ? 'Not Available'.yellow : totalChannelBalance.green
+      uncommittedBalance = error ? 'Not Available'.yellow : uncommittedBalance
+
+      // We fix all pending balances to 8 decimal places due to aesthetics. Since
+      // this balance should only be temporary, we do not care as much about precision
+      totalPendingChannelBalance = error ? '' : `(${Big(totalPendingChannelBalance).toFixed(8)})`.grey
+      uncommittedPendingBalance = error ? '' : `(${Big(uncommittedPendingBalance).toFixed(8)})`.grey
+
       balancesTable.push([
         symbol,
-        // We fix all pending balances to 8 decimal places due to aesthetics. Since
-        // this balance should only be temporary, we do not care as much about precision
-        `${totalChannelBalance.green}` + ` (${Big(totalPendingChannelBalance).toFixed(8)})`.grey,
-        uncommittedBalance + ` (${Big(uncommittedPendingBalance).toFixed(8)})`.grey
+        `${totalChannelBalance} ${totalPendingChannelBalance}`,
+        `${uncommittedBalance} ${uncommittedPendingBalance}`
       ])
     })
 
@@ -214,6 +229,19 @@ async function networkAddress (args, opts, logger) {
 }
 
 /**
+ * Different network statuses
+ * @constant
+ * @type {Object}
+ * @default
+ */
+const NETWORK_STATUSES = Object.freeze({
+  AVAILABLE: 'AVAILABLE',
+  OUTSTANDING: 'OUTSTANDING',
+  PENDING: 'PENDING',
+  INACTIVE: 'INACTIVE'
+})
+
+/**
  * network-status
  *
  * ex: `sparkswap wallet network-status`
@@ -239,17 +267,21 @@ async function networkStatus (args, opts, logger) {
       style: { head: ['gray'] }
     })
 
-    statusTable.push(['Active', '', ''])
-    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.activeReceiveCapacity, 'active'), formatBalance(counterSymbolCapacities.activeSendCapacity, 'active')])
-    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.activeSendCapacity, 'active'), formatBalance(counterSymbolCapacities.activeReceiveCapacity, 'active')])
+    statusTable.push(['Available', '', ''])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.availableReceiveCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(counterSymbolCapacities.availableSendCapacity, NETWORK_STATUSES.AVAILABLE)])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.availableSendCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(counterSymbolCapacities.availableReceiveCapacity, NETWORK_STATUSES.AVAILABLE)])
+
+    statusTable.push(['Outstanding', '', ''])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.outstandingReceiveCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(counterSymbolCapacities.outstandingSendCapacity, NETWORK_STATUSES.OUTSTANDING)])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.outstandingSendCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(counterSymbolCapacities.outstandingReceiveCapacity, NETWORK_STATUSES.OUTSTANDING)])
 
     statusTable.push(['Pending', '', ''])
-    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingReceiveCapacity, 'pending'), formatBalance(counterSymbolCapacities.pendingSendCapacity, 'pending')])
-    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingSendCapacity, 'pending'), formatBalance(counterSymbolCapacities.pendingReceiveCapacity, 'pending')])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingReceiveCapacity, NETWORK_STATUSES.PENDING), formatBalance(counterSymbolCapacities.pendingSendCapacity, NETWORK_STATUSES.PENDING)])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.pendingSendCapacity, NETWORK_STATUSES.PENDING), formatBalance(counterSymbolCapacities.pendingReceiveCapacity, NETWORK_STATUSES.PENDING)])
 
     statusTable.push(['Inactive', '', ''])
-    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveReceiveCapacity, 'inactive'), formatBalance(counterSymbolCapacities.inactiveSendCapacity, 'inactive')])
-    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveSendCapacity, 'inactive'), formatBalance(counterSymbolCapacities.inactiveReceiveCapacity, 'inactive')])
+    statusTable.push([`  Buy ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveReceiveCapacity, NETWORK_STATUSES.INACTIVE), formatBalance(counterSymbolCapacities.inactiveSendCapacity, NETWORK_STATUSES.INACTIVE)])
+    statusTable.push([`  Sell ${baseSymbolCapacities.symbol.toUpperCase()}`, formatBalance(baseSymbolCapacities.inactiveSendCapacity, NETWORK_STATUSES.INACTIVE), formatBalance(counterSymbolCapacities.inactiveReceiveCapacity, NETWORK_STATUSES.INACTIVE)])
 
     logger.info(` ${market.bold.white}`)
     logger.info(statusTable.toString())
@@ -271,11 +303,13 @@ function formatBalance (balance, status) {
   const fixedBalance = Big(balance).toFixed(16)
   if (Big(balance).gt(0)) {
     switch (status) {
-      case 'active':
+      case NETWORK_STATUSES.AVAILABLE:
         return fixedBalance.green
-      case 'pending':
+      case NETWORK_STATUSES.OUTSTANDING:
         return fixedBalance.yellow
-      case 'inactive':
+      case NETWORK_STATUSES.PENDING:
+        return fixedBalance.yellow
+      case NETWORK_STATUSES.INACTIVE:
         return fixedBalance.red
       default:
         return fixedBalance
