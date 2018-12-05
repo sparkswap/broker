@@ -116,7 +116,7 @@ class BlockOrderWorker extends EventEmitter {
       const { orders, depth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: Big(blockOrder.baseAmount).toString() })
       if (Big(depth).lt(blockOrder.baseAmount)) {
         this.logger.error(`Insufficient depth`)
-        throw new Error(`Insufficient depth in ${blockOrder.inverseSide} to fill ${blockOrder.baseAmount.toString()}`)
+        throw new Error(`Insufficient depth`)
       }
       counterAmount = await orderbook.getAveragePrice(orders, Big(depth))
 
