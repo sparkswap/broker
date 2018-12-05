@@ -855,6 +855,8 @@ message Balance {
   string total_pending_channel_balance = 4;
   // Balance in the listed currency that is currently in pending closing channels and unconfirmed wallet balance. This is currently in common units (e.g. 0.5 BTC)
   string uncommitted_pending_balance = 5;
+  // Error message if balances are not available
+  string error = 10;
 }
 
 /**

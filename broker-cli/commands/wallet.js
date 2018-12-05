@@ -68,14 +68,23 @@ async function balance (args, opts, logger) {
       style: { head: ['gray'] }
     })
 
-    balances.forEach(({ symbol, uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance }) => {
-      totalChannelBalance = totalChannelBalance ? totalChannelBalance.green : 'Not Available'.yellow
-      uncommittedBalance = uncommittedBalance || 'Not Available'.yellow
+    balances.forEach((balance) => {
+      let {
+        symbol,
+        error = null,
+        totalChannelBalance,
+        totalPendingChannelBalance,
+        uncommittedBalance,
+        uncommittedPendingBalance
+      } = balance
+
+      totalChannelBalance = error ? 'Not Available'.yellow : totalChannelBalance.green
+      uncommittedBalance = error ? 'Not Available'.yellow : uncommittedBalance
 
       // We fix all pending balances to 8 decimal places due to aesthetics. Since
       // this balance should only be temporary, we do not care as much about precision
-      totalPendingChannelBalance = totalPendingChannelBalance ? `(${Big(totalPendingChannelBalance).toFixed(8)})`.grey : ''
-      uncommittedPendingBalance = uncommittedPendingBalance ? `(${Big(uncommittedPendingBalance).toFixed(8)})`.grey : ''
+      totalPendingChannelBalance = error ? '' : `(${Big(totalPendingChannelBalance).toFixed(8)})`.grey
+      uncommittedPendingBalance = error ? '' : `(${Big(uncommittedPendingBalance).toFixed(8)})`.grey
 
       balancesTable.push([
         symbol,

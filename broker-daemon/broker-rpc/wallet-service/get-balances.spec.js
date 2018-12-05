@@ -19,32 +19,65 @@ describe('get-balances', () => {
     let engines
     let GetBalancesResponse
     let balancesStub
+    let balance
     let revert
 
     beforeEach(() => {
+      balance = {
+        uncommittedBalance: '0.0000000000000001',
+        totalChannelBalance: '0.0000000000000001',
+        totalPendingChannelBalance: '0.0000000000000001',
+        uncommittedPendingBalance: '0.0000000000000001'
+      }
       engineStub = sinon.stub()
-      engines = [ engineStub ]
-      balancesStub = sinon.stub().resolves(engineStub)
+      engines = new Map([['BTC', engineStub]])
+      balancesStub = sinon.stub().resolves(balance)
       GetBalancesResponse = sinon.stub()
 
       revert = getBalances.__set__('getEngineBalances', balancesStub)
     })
 
     beforeEach(async () => {
-      await getBalances({ logger, engines }, { GetBalancesResponse })
     })
 
     afterEach(() => {
       revert()
     })
 
-    it('gets the balances from a particular engine', () => {
+    it('gets the balances from a particular engine', async () => {
+      await getBalances({ logger, engines }, { GetBalancesResponse })
       expect(balancesStub).to.have.been.calledOnce()
-      expect(balancesStub).to.have.been.calledWith(engineStub)
+      expect(balancesStub).to.have.been.calledWith([sinon.match.string, engineStub], logger)
     })
 
-    it('returns all channel balances for the broker daemon', () => {
-      expect(GetBalancesResponse).to.have.been.calledWith({ balances: [engineStub] })
+    it('returns all balances for the broker daemon', async () => {
+      await getBalances({ logger, engines }, { GetBalancesResponse })
+      const expectedBalances = [
+        sinon.match({
+          symbol: 'BTC',
+          error: undefined,
+          ...balance
+        })
+      ]
+      expect(GetBalancesResponse).to.have.been.calledWith({ balances: expectedBalances })
+    })
+
+    context('incorrect engine balance information', () => {
+      it('errors if a symbol is missing', () => {
+        const badEngines = new Map([['', engineStub]])
+        return expect(getBalances({ logger, engines: badEngines }, { GetBalancesResponse })).to.be.rejectedWith('No symbol is available')
+      })
+
+      it('errors if no data is present', () => {
+        balance = {
+          uncommittedBalance: '',
+          totalChannelBalance: '',
+          totalPendingChannelBalance: '',
+          uncommittedPendingBalance: ''
+        }
+        balancesStub.resolves(balance)
+        return expect(getBalances({ logger, engines }, { GetBalancesResponse })).to.be.rejectedWith('Unexpected response for balance')
+      })
     })
   })
 
@@ -105,7 +138,6 @@ describe('get-balances', () => {
     it('returns balances for an engine', async () => {
       const res = await getEngineBalances(engine, logger)
       expect(res).to.eql({
-        symbol,
         uncommittedBalance: '0.0100000000000000',
         totalChannelBalance: '0.0001000000000000',
         totalPendingChannelBalance: '0.0000100000000000',
@@ -116,18 +148,6 @@ describe('get-balances', () => {
     it('returns an error if a currencies config is not found', () => {
       engine = ['LTC', engineStub]
       return expect(getEngineBalances(engine, logger)).to.eventually.be.rejectedWith('Currency not supported')
-    })
-
-    it('returns empty values if an engine is not available', async () => {
-      uncommittedBalanceStub.rejects()
-      const res = await getEngineBalances(engine, logger)
-      expect(res).to.eql({
-        symbol,
-        uncommittedBalance: '',
-        totalChannelBalance: '',
-        totalPendingChannelBalance: '',
-        uncommittedPendingBalance: ''
-      })
     })
   })
 })

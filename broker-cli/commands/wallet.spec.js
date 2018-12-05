@@ -100,6 +100,7 @@ describe('cli wallet', () => {
       logger = { info: sinon.stub(), error: sinon.stub() }
       btcBalance = {
         symbol,
+        error: '',
         uncommittedBalance: '0.0001000000000000',
         totalChannelBalance: '0.0000200000000000',
         totalPendingChannelBalance: '0.0000100000000000',
@@ -107,6 +108,7 @@ describe('cli wallet', () => {
       }
       ltcBalance = {
         symbol: 'LTC',
+        error: '',
         uncommittedBalance: '0.0000020000000000',
         totalChannelBalance: '0.0000020000000000',
         totalPendingChannelBalance: '0.0000050000000000',
@@ -162,12 +164,28 @@ describe('cli wallet', () => {
       expect(tablePushStub).to.have.been.calledTwice()
     })
 
+    it('throws an error for bad data', async () => {
+      const badLtcBalance = {
+        symbol: 'LTC',
+        error: '',
+        uncommittedBalance: '',
+        totalChannelBalance: '',
+        totalPendingChannelBalance: '',
+        uncommittedPendingBalance: ''
+      }
+      balances = [badLtcBalance]
+      walletBalanceStub.resolves({ balances })
+      await balance(args, opts, logger)
+      expect(logger.error).to.have.been.called()
+    })
+
     context('an unavailable engine', () => {
       let emptyLtcBalance
 
       beforeEach(() => {
         emptyLtcBalance = {
           symbol: 'LTC',
+          error: 'Something Happened',
           uncommittedBalance: '',
           totalChannelBalance: '',
           totalPendingChannelBalance: '',
@@ -182,7 +200,7 @@ describe('cli wallet', () => {
         await balance(args, opts, logger)
       })
 
-      it('adds a `Not Available` placeholder', () => {
+      it('adds a `Not Available` placeholder', async () => {
         const expectedResult = ['LTC', 'Not Available', 'Not Available']
         const result = tablePushStub.args[1][0]
 
