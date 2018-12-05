@@ -100,6 +100,7 @@ describe('cli wallet', () => {
       logger = { info: sinon.stub(), error: sinon.stub() }
       btcBalance = {
         symbol,
+        error: '',
         uncommittedBalance: '0.0001000000000000',
         totalChannelBalance: '0.0000200000000000',
         totalPendingChannelBalance: '0.0000100000000000',
@@ -107,6 +108,7 @@ describe('cli wallet', () => {
       }
       ltcBalance = {
         symbol: 'LTC',
+        error: '',
         uncommittedBalance: '0.0000020000000000',
         totalChannelBalance: '0.0000020000000000',
         totalPendingChannelBalance: '0.0000050000000000',
@@ -114,7 +116,7 @@ describe('cli wallet', () => {
       }
       balances = [btcBalance, ltcBalance]
 
-      walletBalanceStub = sinon.stub().returns({ balances })
+      walletBalanceStub = sinon.stub().resolves({ balances })
       tablePushStub = sinon.stub()
       tableStub = sinon.stub()
       tableStub.prototype.push = tablePushStub
@@ -125,16 +127,14 @@ describe('cli wallet', () => {
       program.__set__('Table', tableStub)
     })
 
-    beforeEach(async () => {
+    it('calls broker daemon for a wallet balance', async () => {
       await balance(args, opts, logger)
-    })
-
-    it('calls broker daemon for a wallet balance', () => {
       expect(daemonStub).to.have.been.calledWith(rpcAddress)
       expect(walletBalanceStub).to.have.been.calledOnce()
     })
 
-    it('adds a correct balance for BTC', () => {
+    it('adds a correct balance for BTC', async () => {
+      await balance(args, opts, logger)
       const expectedResult = ['BTC', '0.0000200000000000', '0.000100000000000']
       const result = tablePushStub.args[0][0]
       // Since the text in the result contains colors (non-TTY) we have to use
@@ -147,22 +147,70 @@ describe('cli wallet', () => {
       })
     })
 
-    it('adds a correct balance for LTC', () => {
+    it('adds a correct balance for LTC', async () => {
+      await balance(args, opts, logger)
       const expectedResult = ['LTC', '0.0000020000000000', '0.0000020000000000']
       const result = tablePushStub.args[1][0]
 
       // Since the text in the result contains colors (non-TTY) we have to use
       // an includes matcher instead of importing the color lib for testing.
-      //
-      // TODO: If this becomes an issue in the future, we can omit the code and cast
-      //       a color on the string
       result.forEach((r, i) => {
         expect(r).to.include(expectedResult[i])
       })
     })
 
-    it('adds balances to the cli table', () => {
+    it('adds balances to the cli table', async () => {
+      await balance(args, opts, logger)
       expect(tablePushStub).to.have.been.calledTwice()
+    })
+
+    it('throws an error for bad data', async () => {
+      const badLtcBalance = {
+        symbol: 'LTC',
+        error: '',
+        uncommittedBalance: '',
+        totalChannelBalance: '',
+        totalPendingChannelBalance: '',
+        uncommittedPendingBalance: ''
+      }
+      balances = [badLtcBalance]
+      walletBalanceStub.resolves({ balances })
+      await balance(args, opts, logger)
+      expect(logger.error).to.have.been.called()
+    })
+
+    context('an unavailable engine', () => {
+      let emptyLtcBalance
+
+      beforeEach(() => {
+        emptyLtcBalance = {
+          symbol: 'LTC',
+          error: 'Something Happened',
+          uncommittedBalance: '',
+          totalChannelBalance: '',
+          totalPendingChannelBalance: '',
+          uncommittedPendingBalance: ''
+        }
+        balances = [btcBalance, emptyLtcBalance]
+
+        walletBalanceStub.resolves({ balances })
+      })
+
+      beforeEach(async () => {
+        await balance(args, opts, logger)
+      })
+
+      it('adds a `Not Available` placeholder', async () => {
+        const expectedResult = ['LTC', 'Not Available', 'Not Available']
+        const result = tablePushStub.args[1][0]
+
+        // Since the text in the result contains colors (non-TTY) we have to use
+        // an includes matcher instead of importing the color lib for testing.
+        result.forEach((r, i) => {
+          expect(r).to.include(expectedResult[i])
+        })
+        expect(tablePushStub).to.have.been.calledTwice()
+      })
     })
   })
 
