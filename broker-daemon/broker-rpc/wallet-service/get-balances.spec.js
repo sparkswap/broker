@@ -46,8 +46,10 @@ describe('get-balances', () => {
 
     it('gets the balances from a particular engine', async () => {
       await getBalances({ logger, engines }, { GetBalancesResponse })
+      // The next line gets the first engine value
+      const [symbol, engine] = engines.entries().next().value
       expect(balancesStub).to.have.been.calledOnce()
-      expect(balancesStub).to.have.been.calledWith([sinon.match.string, engineStub], logger)
+      expect(balancesStub).to.have.been.calledWith(symbol, engine, logger)
     })
 
     it('returns all balances for the broker daemon', async () => {
@@ -88,7 +90,6 @@ describe('get-balances', () => {
     let totalChannelBalanceStub
     let engineStub
     let symbol
-    let engine
     let getEngineBalances
     let totalPendingChannelBalance
     let uncommittedPendingBalance
@@ -119,24 +120,23 @@ describe('get-balances', () => {
         getTotalPendingChannelBalance: totalPendingBalanceStub,
         getUncommittedPendingBalance: uncommittedPendingBalanceStub
       }
-      engine = [symbol, engineStub]
 
       getEngineBalances = getBalances.__get__('getEngineBalances')
       getBalances.__set__('currencyConfig', currencyConfig)
     })
 
     it('gets the total balance of an engine', async () => {
-      await getEngineBalances(engine, logger)
+      await getEngineBalances(symbol, engineStub, logger)
       expect(uncommittedBalanceStub).to.have.been.calledOnce()
     })
 
     it('gets the total channel balance of an engine', async () => {
-      await getEngineBalances(engine, logger)
+      await getEngineBalances(symbol, engineStub, logger)
       expect(totalChannelBalanceStub).to.have.been.calledOnce()
     })
 
     it('returns balances for an engine', async () => {
-      const res = await getEngineBalances(engine, logger)
+      const res = await getEngineBalances(symbol, engineStub, logger)
       expect(res).to.eql({
         uncommittedBalance: '0.0100000000000000',
         totalChannelBalance: '0.0001000000000000',
@@ -146,8 +146,8 @@ describe('get-balances', () => {
     })
 
     it('returns an error if a currencies config is not found', () => {
-      engine = ['LTC', engineStub]
-      return expect(getEngineBalances(engine, logger)).to.eventually.be.rejectedWith('Currency not supported')
+      const badSymbol = 'LTC'
+      return expect(getEngineBalances(badSymbol, engineStub, logger)).to.eventually.be.rejectedWith('Currency not supported')
     })
   })
 })

@@ -22,7 +22,7 @@ const BALANCE_PRECISION = 16
  * @return {String} res.totalChannelBalance
  * @return {String} res.totalPendingChannelBalance
  */
-async function getEngineBalances ([symbol, engine], logger) {
+async function getEngineBalances (symbol, engine, logger) {
   const { quantumsPerCommon } = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol) || {}
 
   if (!quantumsPerCommon) {
@@ -72,12 +72,11 @@ async function getBalances ({ logger, engines }, { GetBalancesResponse }) {
   // If an engine is unavailable or offline, we will still receive a response
   // however the values will be blank. This information will then need to be
   // handled by the consumer
-  const enginePromises = Array.from(engines).map(async (engine) => {
-    const [symbol, _] = engine // eslint-disable-line
+  const enginePromises = Array.from(engines).map(async ([symbol, engine]) => {
     let res = { symbol }
 
     try {
-      const balance = await getEngineBalances(engine, logger)
+      const balance = await getEngineBalances(symbol, engine, logger)
       res = Object.assign(res, balance)
     } catch (e) {
       logger.error(`Failed to get engine balances for ${symbol}`)
