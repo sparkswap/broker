@@ -99,27 +99,49 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No engine available for ${orderbook.counterSymbol}.`)
     }
 
+    const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
+    await this.checkFundsAreSufficient(blockOrder, orderbook)
+
+    await promisify(this.store.put)(blockOrder.key, blockOrder.value)
+
+    this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
+
+    // Start working the block order asynchronously to prevent blocking the creation
+    // of 'other' block orders
+    this.workBlockOrder(blockOrder, Big(blockOrder.baseAmount)).catch(err => {
+      this.failBlockOrder(blockOrder.id, err)
+    })
+
+    return id
+  }
+
+  /**
+   * Checks that there are valid inbound and outbound funds to place/fill the order
+   *
+   * @param {BlockOrder}
+   * @param {Orderbook}
+   * @return {Void}
+   * @throws {Error} If there are insufficient outbound or inbound funds
+   */
+  async checkFundsAreSufficient (blockOrder, orderbook) {
+    const { marketName, side, outboundSymbol, inboundSymbol } = blockOrder
     const { activeOutboundAmount, activeInboundAmount } = await this.calculateActiveFunds(marketName, side)
 
-    const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
-    const outboundEngine = this.engines.get(blockOrder.outboundSymbol)
-    const inboundEngine = this.engines.get(blockOrder.inboundSymbol)
+    const outboundEngine = this.engines.get(outboundSymbol)
+    const inboundEngine = this.engines.get(inboundSymbol)
     const [{address: outboundAddress}, {address: inboundAddress}] = await Promise.all([
-      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.outboundSymbol}),
-      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.inboundSymbol})
+      this.relayer.paymentChannelNetworkService.getAddress({symbol: outboundSymbol}),
+      this.relayer.paymentChannelNetworkService.getAddress({symbol: inboundSymbol})
     ])
 
     let counterAmount
     let outboundAmount
     let inboundAmount
+    // If the blockOrder is a market order we will not have a counterAmount and therefore will not be
+    // able to calculate if the funds in channels are sufficient. So we calculate an average price for this.
     if (blockOrder.isMarketOrder) {
-      const { orders, depth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: Big(blockOrder.baseAmount).toString() })
-      if (Big(depth).lt(blockOrder.baseAmount)) {
-        this.logger.error(`Insufficient depth`)
-        throw new Error(`Insufficient depth`)
-      }
-      counterAmount = await orderbook.getAveragePrice(orders, Big(depth))
-
+      const averageBaseAmount = await orderbook.getAveragePrice(blockOrder.inverseSide, blockOrder.baseAmount)
+      counterAmount = averageBaseAmount.times(blockOrder.counterCurrencyConfig.quantumsPerCommon).round(0).toString()
       if (blockOrder.isBid) {
         outboundAmount = counterAmount
         inboundAmount = blockOrder.inboundAmount
@@ -144,18 +166,6 @@ class BlockOrderWorker extends EventEmitter {
     if (!inboundBalanceIsSufficient) {
       throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order`)
     }
-
-    await promisify(this.store.put)(blockOrder.key, blockOrder.value)
-
-    this.logger.info(`Created and stored block order`, { blockOrderId: blockOrder.id })
-
-    // Start working the block order asynchronously to prevent blocking the creation
-    // of 'other' block orders
-    this.workBlockOrder(blockOrder, Big(blockOrder.baseAmount)).catch(err => {
-      this.failBlockOrder(blockOrder.id, err)
-    })
-
-    return id
   }
 
   /**
