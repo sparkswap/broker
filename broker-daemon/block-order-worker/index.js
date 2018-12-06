@@ -140,8 +140,8 @@ class BlockOrderWorker extends EventEmitter {
     // If the blockOrder is a market order we will not have a counterAmount and therefore will not be
     // able to calculate if the funds in channels are sufficient. So we calculate an average price for this.
     if (blockOrder.isMarketOrder) {
-      const averageBaseAmount = await orderbook.getAveragePrice(blockOrder.inverseSide, blockOrder.baseAmount)
-      counterAmount = averageBaseAmount.times(blockOrder.counterCurrencyConfig.quantumsPerCommon).round(0).toString()
+      const averagePrice = await orderbook.getAveragePrice(blockOrder.inverseSide, blockOrder.baseAmount)
+      counterAmount = averagePrice.times(blockOrder.amount).times(blockOrder.counterCurrencyConfig.quantumsPerCommon).round(0).toString()
       if (blockOrder.isBid) {
         outboundAmount = counterAmount
         inboundAmount = blockOrder.inboundAmount
