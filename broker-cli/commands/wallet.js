@@ -358,7 +358,7 @@ async function release (args, opts, logger) {
 
       const { channels = [] } = await client.walletService.releaseChannels({ market, force })
 
-      if (!channels) {
+      if (!channels.length) {
         throw new Error('No information was retrieved from the daemon')
       }
 
