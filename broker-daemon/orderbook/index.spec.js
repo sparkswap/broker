@@ -689,7 +689,7 @@ describe('Orderbook', () => {
 
     it('throws an error if there is not sufficient depth in the orderbook', () => {
       orderbook.getBestOrders.resolves({orders, depth: 8})
-      return expect(orderbook.getAveragePrice(side, targetDepth)).to.eventually.be.rejectedWith('Insufficient depth')
+      return expect(orderbook.getAveragePrice(side, targetDepth)).to.eventually.be.rejectedWith('Insufficient depth to find averagePrice')
     })
 
     it('returns the average weighted price', async () => {

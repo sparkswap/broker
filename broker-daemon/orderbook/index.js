@@ -226,8 +226,14 @@ class Orderbook {
   async getAveragePrice (side, targetDepth) {
     const { orders, depth } = await this.getBestOrders({ side, depth: targetDepth })
     if (Big(depth).lt(targetDepth)) {
-      this.logger.error(`Insufficient depth`)
-      throw new Error(`Insufficient depth`)
+      const params = {
+        market: this.marketName,
+        side: this.side,
+        depth,
+        targetDepth
+      }
+      this.logger.error('Insufficient depth to find averagePrice', params)
+      throw new Error('Insufficient depth to find averagePrice', params)
     }
     targetDepth = Big(targetDepth)
     let currentDepth = Big(0)

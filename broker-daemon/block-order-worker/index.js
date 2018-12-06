@@ -100,7 +100,7 @@ class BlockOrderWorker extends EventEmitter {
     }
 
     const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
-    await this.checkFundsAreSufficient(blockOrder, orderbook)
+    await this.checkFundsAreSufficient(blockOrder)
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
@@ -119,16 +119,23 @@ class BlockOrderWorker extends EventEmitter {
    * Checks that there are valid inbound and outbound funds to place/fill the order
    *
    * @param {BlockOrder}
-   * @param {Orderbook}
    * @return {Void}
    * @throws {Error} If there are insufficient outbound or inbound funds
    */
-  async checkFundsAreSufficient (blockOrder, orderbook) {
+  async checkFundsAreSufficient (blockOrder) {
     const { marketName, side, outboundSymbol, inboundSymbol } = blockOrder
     const { activeOutboundAmount, activeInboundAmount } = await this.calculateActiveFunds(marketName, side)
 
     const outboundEngine = this.engines.get(outboundSymbol)
     const inboundEngine = this.engines.get(inboundSymbol)
+
+    if (!outboundEngine) {
+      throw new Error(`No engine available for ${outboundSymbol}.`)
+    }
+
+    if (!inboundEngine) {
+      throw new Error(`No engine available for ${inboundSymbol}.`)
+    }
     const [{address: outboundAddress}, {address: inboundAddress}] = await Promise.all([
       this.relayer.paymentChannelNetworkService.getAddress({symbol: outboundSymbol}),
       this.relayer.paymentChannelNetworkService.getAddress({symbol: inboundSymbol})
@@ -140,13 +147,22 @@ class BlockOrderWorker extends EventEmitter {
     // If the blockOrder is a market order we will not have a counterAmount and therefore will not be
     // able to calculate if the funds in channels are sufficient. So we calculate an average price for this.
     if (blockOrder.isMarketOrder) {
+      const orderbook = this.orderbooks.get(blockOrder.marketName)
+
+      if (!orderbook) {
+        throw new Error(`${blockOrder.marketName} is not being tracked as a market. Configure sparkswapd to track ${blockOrder.marketName} using the MARKETS environment variable.`)
+      }
+      // averagePrice is the weighted average price of the best orders. This is in common units.
       const averagePrice = await orderbook.getAveragePrice(blockOrder.inverseSide, blockOrder.baseAmount)
+      // The counterAmount is calculated by multiplying the price of the order (in our case we have an approximation
+      // based on the weighted average of the depth of our order) by the amount of the order. This gets us the common counter amount.
+      // We then multiply this by the quantums per common amount for the counter currency to get the counterAmount in units of the counter currency.
       counterAmount = averagePrice.times(blockOrder.amount).times(blockOrder.counterCurrencyConfig.quantumsPerCommon).round(0).toString()
       if (blockOrder.isBid) {
         outboundAmount = counterAmount
-        inboundAmount = blockOrder.inboundAmount
+        inboundAmount = blockOrder.baseAmount
       } else {
-        outboundAmount = blockOrder.outboundAmount
+        outboundAmount = blockOrder.baseAmount
         inboundAmount = counterAmount
       }
     } else {

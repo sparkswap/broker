@@ -238,6 +238,10 @@ class BlockOrder {
     return this.side === BlockOrder.SIDES.ASK
   }
 
+  /**
+  * get boolean for if the blockOrder is a marketOrder
+  * @return {Boolean}
+   */
   get isMarketOrder () {
     return !this.price
   }
