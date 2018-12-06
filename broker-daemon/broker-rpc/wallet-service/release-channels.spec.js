@@ -28,30 +28,22 @@ describe('releaseChannels', () => {
 
   describe('release channels from a specific market', () => {
     beforeEach(async () => {
+      await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
     })
 
     it('attempts to close channels on the base engine', async () => {
-      await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
       expect(baseEngineStub.closeChannels).to.have.been.called()
     })
 
     it('attempts to close channels on the counter engine', async () => {
-      await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
       expect(counterEngineStub.closeChannels).to.have.been.called()
     })
 
-    it('returns an successful ReleaseChannelsResponse', async () => {
-      await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
-      const expectedRes = {
-        channels: []
-      }
+    it('returns a successful ReleaseChannelsResponse', async () => {
       const { RELEASED } = releaseChannels.__get__('RELEASE_STATE')
-      for (var entry of engines.entries()) {
-        const [symbol] = entry
-        expectedRes.channels.push({
-          symbol,
-          status: RELEASED
-        })
+      const expectedRes = {
+        base: { symbol: 'BTC', status: RELEASED },
+        counter: { symbol: 'LTC', status: RELEASED }
       }
       expect(ReleaseChannelsResponse).to.have.been.calledWith(expectedRes)
     })
@@ -98,15 +90,13 @@ describe('releaseChannels', () => {
   context('errors while trying to close base engine channels', () => {
     it('returns an error in the response', async () => {
       const { RELEASED, FAILED } = releaseChannels.__get__('RELEASE_STATE')
-      const error = 'BTC engine is locked'
+      const error = new Error('BTC engine is locked')
       baseEngineStub.closeChannels.rejects(error)
       await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
 
       const expectedResponse = {
-        channels: [
-          { symbol: 'BTC', error, status: FAILED },
-          { symbol: 'LTC', status: RELEASED }
-        ]
+        base: { symbol: 'BTC', error: error.message, status: FAILED },
+        counter: { symbol: 'LTC', status: RELEASED }
       }
       expect(ReleaseChannelsResponse).to.have.been.calledWith(expectedResponse)
     })

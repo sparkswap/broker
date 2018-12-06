@@ -506,33 +506,35 @@ describe('cli wallet', () => {
         status,
         error: ''
       }
-      releaseStub.resolves({ channels: [channel] })
+      releaseStub.resolves({ base: channel, counter: channel })
       await release(args, opts, logger)
       expect(logger.info).to.have.been.calledWith(sinon.match(symbol, status, error))
     })
 
-    it('displays an informative message to user on errors', async () => {
+    it('displays an informative message to user on errors if channels can be force released', async () => {
+      const { UNABLE_TO_CLOSE } = program.__get__('RELEASE_CHANNEL_ERRORS')
       const status = 'FAILED'
       const symbol = 'BTC'
-      const error = 'Engine is locked'
+      const error = UNABLE_TO_CLOSE
       const channel = { symbol, status, error }
 
-      releaseStub.resolves({ channels: [channel] })
+      releaseStub.resolves({ base: channel, counter: channel })
 
       await release(args, opts, logger)
-      expect(logger.info).to.have.been.calledWith(sinon.match('Errors have occurred'))
+      expect(logger.info).to.have.been.calledWith(sinon.match('Use \'--force\''))
     })
 
-    it('displays an informative message to user on errors if channels were not forced released', async () => {
+    it('displays a disclaimer to the user on errors if channels can be force released', async () => {
+      const { UNABLE_TO_CLOSE } = program.__get__('RELEASE_CHANNEL_ERRORS')
       const status = 'FAILED'
       const symbol = 'BTC'
-      const error = 'Engine is locked'
+      const error = UNABLE_TO_CLOSE
       const channel = { symbol, status, error }
 
-      releaseStub.resolves({ channels: [channel] })
+      releaseStub.resolves({ base: channel, counter: channel })
 
       await release(args, opts, logger)
-      expect(logger.info).to.have.been.calledWith(sinon.match('--force'))
+      expect(logger.info).to.have.been.calledWith(sinon.match('has the potential to lock your funds'))
     })
 
     context('force release of channels', () => {

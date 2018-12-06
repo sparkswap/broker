@@ -320,6 +320,16 @@ function formatBalance (balance, status) {
 }
 
 /**
+ * @constant
+ * @type {Object<key, String>}
+ * @default
+ */
+const RELEASE_CHANNEL_ERRORS = Object.freeze({
+  UNABLE_TO_CLOSE: 'unable to gracefully close channel',
+  ACTIVE_PAYMENT: 'cannot co-op close channel'
+})
+
+/**
  * release
  *
  * ex: `sparkswap wallet release`
@@ -354,38 +364,33 @@ async function release (args, opts, logger) {
     try {
       // We want to keep track if any returned channel had an error while attempting
       // to be released so that we can display the proper error warnings below
-      let channelHasError = false
+      let shouldForceRelease = false
 
-      const { channels = [] } = await client.walletService.releaseChannels({ market, force })
+      const { base, counter } = await client.walletService.releaseChannels({ market, force })
 
-      if (!channels.length) {
-        throw new Error('No information was retrieved from the daemon')
-      }
+      const marketSides = [base, counter]
 
-      logger.info(`Released Market: ${market}`)
+      marketSides.forEach((side) => {
+        const { symbol, status } = side
+        let { error = '' } = side
 
-      channels.forEach((channel) => {
-        const { symbol, error, status } = channel
+        if (error.includes(RELEASE_CHANNEL_ERRORS.UNABLE_TO_CLOSE) || error.includes(RELEASE_CHANNEL_ERRORS.ACTIVE_PAYMENT)) {
+          error = `Unable to release ${symbol}. Use '--force' and try again`
+          shouldForceRelease = true
+        }
 
         if (error) {
-          channelHasError = true
           logger.info(`${symbol}: ` + `${status}: ${error}`.red)
         } else {
           logger.info(`${symbol}: ` + status.green)
         }
+
+        if (shouldForceRelease && !force) {
+          logger.info('')
+          logger.info('NOTE: using `--force` has the potential to lock your funds for an'.yellow)
+          logger.info('extended period of time (24/48 hours) and can cost additional fees.'.yellow)
+        }
       })
-
-      if (channelHasError) {
-        logger.info(`\nErrors have occurred while trying to release channels for ${market}:`.red)
-      }
-
-      if (channelHasError && !force) {
-        logger.info('If the error above suggests an uncooperative closing of any channels on')
-        logger.info('your daemon, you can force the release of funds using the `--force` option.')
-        logger.info('')
-        logger.info('However, it is important to note that using `--force` has the potential to')
-        logger.info('lock your funds for an extended period of time and cost additional fees')
-      }
     } catch (e) {
       logger.error(`Failed to release payment channels for ${market}`.red)
       throw e
