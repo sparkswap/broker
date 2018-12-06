@@ -758,6 +758,7 @@ describe('BlockOrderWorker', () => {
 
       BlockOrder.fromStore.resolves(fakeBlockOrder)
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.cancelOutstandingOrders = sinon.stub().resolves()
       fakeErr = new Error('fake')
       fakeId = 'myid'
     })
@@ -767,6 +768,29 @@ describe('BlockOrderWorker', () => {
 
       expect(BlockOrder.fromStore).to.have.been.calledOnce()
       expect(BlockOrder.fromStore).to.have.been.calledWith(store, fakeId)
+    })
+
+    it('cancels outstanding orders associated with the block order', async () => {
+      await worker.failBlockOrder(fakeId, fakeErr)
+
+      expect(worker.cancelOutstandingOrders).to.have.been.calledOnce()
+      expect(worker.cancelOutstandingOrders).to.have.been.calledWith(fakeBlockOrder)
+    })
+
+    it('logs error if cancelling outstanding orders fails', async () => {
+      const fakeError = new Error('myerror')
+      const fakeId = 'myid'
+
+      worker.cancelOutstandingOrders.rejects(fakeError)
+
+      try {
+        await worker.cancelBlockOrder(fakeId)
+      } catch (e) {
+        expect(logger.error).to.have.been.calledWith('Failed to cancel all orders for block order: ')
+        return
+      }
+
+      throw new Error('Expected relayer cancellation to throw an error')
     })
 
     it('updates the block order to failed status', async () => {
@@ -854,6 +878,8 @@ describe('BlockOrderWorker', () => {
     let blockOrderValue = blockOrder
     let orders
     let identityStub
+    let blockOrderFail
+    let fakeBlockOrder
 
     beforeEach(() => {
       orders = [
@@ -865,15 +891,107 @@ describe('BlockOrderWorker', () => {
         }
       ]
       blockOrderCancel = sinon.stub()
-      BlockOrder.fromStore.resolves({
+      blockOrderFail = sinon.stub()
+      fakeBlockOrder = {
         id: blockOrderId,
         cancel: blockOrderCancel,
+        key: blockOrderKey,
+        value: blockOrderValue,
+        orders,
+        openOrders: orders,
+        fail: blockOrderFail
+      }
+      BlockOrder.fromStore.resolves(fakeBlockOrder)
+      identityStub = sinon.stub()
+
+      relayer.makerService = {
+        cancelOrder: sinon.stub().resolves()
+      }
+      relayer.identity = {
+        authorize: identityStub.returns('identity')
+      }
+
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.cancelOutstandingOrders = sinon.stub().resolves()
+    })
+
+    it('retrieves a block order from the store', async () => {
+      const fakeId = 'myid'
+      await worker.cancelBlockOrder(fakeId)
+
+      expect(BlockOrder.fromStore).to.have.been.calledOnce()
+      expect(BlockOrder.fromStore).to.have.been.calledWith(store, fakeId)
+    })
+
+    it('cancels outstanding orders on the relayer', async () => {
+      const fakeId = 'myid'
+      await worker.cancelBlockOrder(fakeId)
+
+      expect(worker.cancelOutstandingOrders).to.have.been.calledOnce()
+      expect(worker.cancelOutstandingOrders).to.have.been.calledWith(fakeBlockOrder)
+    })
+
+    it('fails the block order if relayer cancellation fails', async () => {
+      const fakeError = new Error('myerror')
+      const fakeId = 'myid'
+
+      worker.cancelOutstandingOrders.rejects(fakeError)
+
+      try {
+        await worker.cancelBlockOrder(fakeId)
+      } catch (e) {
+        expect(blockOrderFail).to.have.been.calledOnce()
+        expect(store.put).to.have.been.calledOnce()
+        expect(store.put).to.have.been.calledWith(blockOrderKey, blockOrderValue)
+        expect(e).to.be.eql(fakeError)
+        return
+      }
+
+      throw new Error('Expected relayer cancellation to throw an error')
+    })
+
+    it('updates the block order to cancelled status', async () => {
+      const fakeId = 'myid'
+      await worker.cancelBlockOrder(fakeId)
+
+      expect(blockOrderCancel).to.have.been.calledOnce()
+    })
+
+    it('saves the updated block order with the cancelled status', async () => {
+      const fakeId = 'myid'
+      await worker.cancelBlockOrder(fakeId)
+
+      expect(store.put).to.have.been.calledOnce()
+      expect(store.put).to.have.been.calledWith(blockOrderKey, blockOrderValue)
+    })
+  })
+
+  describe('#cancelOutstandingOrders', () => {
+    let worker
+    let blockOrder
+    let blockOrderId = 'fakeId'
+    let blockOrderKey = blockOrderId
+    let blockOrderValue = blockOrder
+    let orders
+    let identityStub
+
+    beforeEach(() => {
+      orders = [
+        {
+          order: {
+            orderId: 'someId'
+          },
+          state: 'created'
+        }
+      ]
+      blockOrder = {
+        id: blockOrderId,
         key: blockOrderKey,
         value: blockOrderValue,
         populateOrders: sinon.stub().resolves(),
         orders,
         openOrders: orders
-      })
+      }
       identityStub = sinon.stub()
 
       relayer.makerService = {
@@ -886,61 +1004,22 @@ describe('BlockOrderWorker', () => {
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
     })
 
-    it('retrieves a block order from the store', async () => {
-      const fakeId = 'myid'
-      await worker.cancelBlockOrder(fakeId)
-
-      expect(BlockOrder.fromStore).to.have.been.calledOnce()
-      expect(BlockOrder.fromStore).to.have.been.calledWith(store, fakeId)
-    })
-
-    it('cancels all of the orders on the relayer', async () => {
-      const fakeId = 'myid'
-
-      await worker.cancelBlockOrder(fakeId)
-
-      expect(relayer.makerService.cancelOrder).to.have.been.calledOnce()
-      expect(relayer.makerService.cancelOrder).to.have.been.calledWith(sinon.match({ orderId: orders[0].order.orderId }))
-    })
-
-    it('fails the block order if relayer cancellation fails', async () => {
-      const fakeError = new Error('myerror')
-      const fakeId = 'myid'
-
-      worker.failBlockOrder = sinon.stub()
-      relayer.makerService.cancelOrder.rejects(fakeError)
-
-      try {
-        await worker.cancelBlockOrder(fakeId)
-      } catch (e) {
-        expect(e).to.be.eql(fakeError)
-        expect(worker.failBlockOrder).to.have.been.calledOnce()
-        expect(worker.failBlockOrder).to.have.been.calledWith(fakeId, fakeError)
-        return
-      }
-
-      throw new Error('Expected relayer cancellation to throw an error')
-    })
-
-    it('updates the block order to failed status', async () => {
-      const fakeId = 'myid'
-      await worker.cancelBlockOrder(fakeId)
-
-      expect(blockOrderCancel).to.have.been.calledOnce()
-    })
-
-    it('saves the updated block order', async () => {
-      const fakeId = 'myid'
-      await worker.cancelBlockOrder(fakeId)
-
-      expect(store.put).to.have.been.calledOnce()
-      expect(store.put).to.have.been.calledWith(blockOrderKey, blockOrderValue)
+    it('populates orders for the blockOrder', async () => {
+      await worker.cancelOutstandingOrders(blockOrder)
+      expect(blockOrder.populateOrders).to.have.been.calledWith(worker.ordersStore)
     })
 
     it('authorizes the request', async () => {
       const orderId = orders[0].order.orderId
-      await worker.cancelBlockOrder(orderId)
+      await worker.cancelOutstandingOrders(blockOrder)
       expect(relayer.identity.authorize).to.have.been.calledWith(orderId)
+    })
+
+    it('cancels all of the orders on the relayer', async () => {
+      await worker.cancelOutstandingOrders(blockOrder)
+
+      expect(relayer.makerService.cancelOrder).to.have.been.calledOnce()
+      expect(relayer.makerService.cancelOrder).to.have.been.calledWith(sinon.match({ orderId: orders[0].order.orderId }))
     })
   })
 
@@ -952,8 +1031,20 @@ describe('BlockOrderWorker', () => {
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       blockOrder = {
         marketName: 'BTC/LTC',
-        price: Big('1000')
+        price: Big('1000'),
+        isInWorkableState: true
       }
+    })
+
+    it('returns early if blockOrder is not in a state to be worked', async () => {
+      blockOrder.isInWorkableState = false
+      worker.workMarketBlockOrder = sinon.stub().resolves()
+      worker.workLimitBlockOrder = sinon.stub().resolves()
+
+      await worker.workBlockOrder(blockOrder, Big('100'))
+
+      expect(worker.workMarketBlockOrder).to.not.have.been.called()
+      expect(worker.workLimitBlockOrder).to.not.have.been.called()
     })
 
     it('errors if the market is not supported', () => {

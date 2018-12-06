@@ -855,6 +855,8 @@ message Balance {
   string total_pending_channel_balance = 4;
   // Balance in the listed currency that is currently in pending closing channels and unconfirmed wallet balance. This is currently in common units (e.g. 0.5 BTC)
   string uncommitted_pending_balance = 5;
+  // Error message if balances are not available
+  string error = 10;
 }
 
 /**
@@ -1045,6 +1047,8 @@ service WalletService {
    * Balances are divided into `uncommittedBalance`, i.e. everything not in a channel, `totalChannelBalance` (i.e. everything in channels opened by the Payment Channel Network nodes),
    * `totalPendingChannelBalance`, i.e. funds in channels that have finished the funding workflow and are waiting for confirmations for the funding txn, and
    * `uncommittedPendingBalance`, i.e funds in channels that are pending closure or unconfirmed unspent outputs under control of the wallet.
+   *
+   * NOTE: If an engine is unavailable, the balances for the particular engine will be empty `''`
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)

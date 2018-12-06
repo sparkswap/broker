@@ -717,6 +717,16 @@ describe('BlockOrder', () => {
       })
     })
 
+    describe('get isInWorkableState', () => {
+      it('returns true if blockOrder is active', () => {
+        expect(blockOrder).to.have.property('isInWorkableState', true)
+      })
+
+      it('returns false if order is not active', () => {
+        blockOrder.status = 'CANCELLED'
+        expect(blockOrder).to.have.property('isInWorkableState', false)
+      })
+    })
     describe('get isMarketOrder', () => {
       it('gets true if block order is a market order', () => {
         blockOrder.price = null

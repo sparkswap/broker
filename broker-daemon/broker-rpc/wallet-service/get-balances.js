@@ -11,18 +11,18 @@ const { Big } = require('../../utils')
 const BALANCE_PRECISION = 16
 
 /**
- * Grabs the total balance and total channel balance from a specified engine
+ * Grabs all balances from a specific engine (total and pending). If a particular
+ * engine is unavailable an empty response will be returned
  *
  * @param {Array<symbol, engine>} SparkSwap Payment Channel Network Engine
  * @param {Logger} logger
- * @return {Array} res
- * @return {String} res.symbol
+ * @return {Object} res
  * @return {String} res.uncommittedBalance
  * @return {String} res.uncommittedPendingBalance
  * @return {String} res.totalChannelBalance
  * @return {String} res.totalPendingChannelBalance
  */
-async function getEngineBalances ([symbol, engine], logger) {
+async function getEngineBalances (symbol, engine, logger) {
   const { quantumsPerCommon } = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol) || {}
 
   if (!quantumsPerCommon) {
@@ -45,7 +45,6 @@ async function getEngineBalances ([symbol, engine], logger) {
   uncommittedPendingBalance = Big(uncommittedPendingBalance).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
 
   return {
-    symbol,
     uncommittedBalance,
     totalChannelBalance,
     totalPendingChannelBalance,
@@ -67,13 +66,33 @@ async function getEngineBalances ([symbol, engine], logger) {
 async function getBalances ({ logger, engines }, { GetBalancesResponse }) {
   logger.info(`Checking wallet balances for ${engines.size} engines`)
 
-  // We convert the engines map to an array and run totalBalance commands
-  // against each configuration
-  const engineBalances = await Promise.all(Array.from(engines).map((engine) => {
-    return getEngineBalances(engine, logger)
-  }))
+  // We convert the engines map to an array and run balance engine commands
+  // against each configuration.
+  //
+  // If an engine is unavailable or offline, we will still receive a response
+  // however the values will be blank. This information will then need to be
+  // handled by the consumer
+  const enginePromises = Array.from(engines).map(async ([symbol, engine]) => {
+    try {
+      const balances = await getEngineBalances(symbol, engine, logger)
 
-  logger.debug('Received engine balances', { engineBalances })
+      return {
+        symbol,
+        ...balances
+      }
+    } catch (e) {
+      logger.error(`Failed to get engine balances for ${symbol}`, { error: e.toString() })
+
+      return {
+        symbol,
+        error: e.toString()
+      }
+    }
+  })
+
+  const engineBalances = await Promise.all(enginePromises)
+
+  logger.debug('Returning engine balances response', { engineBalances })
 
   return new GetBalancesResponse({ balances: engineBalances })
 }
