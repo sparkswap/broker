@@ -320,16 +320,6 @@ function formatBalance (balance, status) {
 }
 
 /**
- * @constant
- * @type {Object<key, String>}
- * @default
- */
-const RELEASE_CHANNEL_ERRORS = Object.freeze({
-  UNABLE_TO_CLOSE: 'unable to gracefully close channel',
-  ACTIVE_PAYMENT: 'cannot co-op close channel'
-})
-
-/**
  * release
  *
  * ex: `sparkswap wallet release`
@@ -374,7 +364,7 @@ async function release (args, opts, logger) {
         const { symbol, status } = side
         let { error = '' } = side
 
-        if (error.includes(RELEASE_CHANNEL_ERRORS.UNABLE_TO_CLOSE) || error.includes(RELEASE_CHANNEL_ERRORS.ACTIVE_PAYMENT)) {
+        if (error.includes('Inactive/pending channels exist. You must use `force` to close')) {
           error = `Unable to release ${symbol}. Use '--force' and try again`
           shouldForceRelease = true
         }

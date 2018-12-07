@@ -512,10 +512,9 @@ describe('cli wallet', () => {
     })
 
     it('displays an informative message to user on errors if channels can be force released', async () => {
-      const { UNABLE_TO_CLOSE } = program.__get__('RELEASE_CHANNEL_ERRORS')
       const status = 'FAILED'
       const symbol = 'BTC'
-      const error = UNABLE_TO_CLOSE
+      const error = 'Inactive/pending channels exist. You must use `force` to close'
       const channel = { symbol, status, error }
 
       releaseStub.resolves({ base: channel, counter: channel })
@@ -525,10 +524,9 @@ describe('cli wallet', () => {
     })
 
     it('displays a disclaimer to the user on errors if channels can be force released', async () => {
-      const { UNABLE_TO_CLOSE } = program.__get__('RELEASE_CHANNEL_ERRORS')
       const status = 'FAILED'
       const symbol = 'BTC'
-      const error = UNABLE_TO_CLOSE
+      const error = 'Inactive/pending channels exist. You must use `force` to close'
       const channel = { symbol, status, error }
 
       releaseStub.resolves({ base: channel, counter: channel })
