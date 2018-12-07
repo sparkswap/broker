@@ -936,7 +936,7 @@ message ReleaseChannelsRequest {
  */
 message ReleasedCurrency {
   // Currency of the information
-  Symbol symbol = 1;
+  string symbol = 1;
   // Status of the channel. e.g. RELEASED or FAILED
   string status = 2;
   // Message that identifies an issue with a released channel. Only available if status of channel is not `RELEASED`

@@ -374,13 +374,13 @@ async function release (args, opts, logger) {
         } else {
           logger.info(`${symbol}: ` + status.green)
         }
-
-        if (shouldForceRelease && !force) {
-          logger.info('')
-          logger.info('NOTE: using `--force` has the potential to lock your funds for an'.yellow)
-          logger.info('extended period of time (24/48 hours) and can cost additional fees.'.yellow)
-        }
       })
+
+      if (shouldForceRelease && !force) {
+        logger.info('')
+        logger.info('NOTE: using `--force` has the potential to lock your funds for an'.yellow)
+        logger.info('extended period of time (24/48 hours) and can cost additional fees.'.yellow)
+      }
     } catch (e) {
       logger.error(`Failed to release payment channels for ${market}`.red)
       throw e
