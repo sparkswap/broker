@@ -102,7 +102,7 @@ const FillStateMachine = StateMachine.factory({
    */
   transitions: [
     /**
-     * create transition: the first transtion, from 'none' (the default state) to 'created'
+     * create transition: the first transition, from 'none' (the default state) to 'created'
      * @type {Object}
      */
     { name: 'create', from: 'none', to: 'created' },
@@ -159,17 +159,17 @@ const FillStateMachine = StateMachine.factory({
 
       const inboundEngine = this.engines.get(inboundSymbol)
       if (!inboundEngine) {
-        throw new Error(`No engine avialable for ${inboundEngine}`)
+        throw new Error(`No engine available for ${inboundEngine}`)
       }
 
       const baseEngine = this.engines.get(baseSymbol)
       if (!baseEngine) {
-        throw new Error(`No engine avialable for ${baseEngine}`)
+        throw new Error(`No engine available for ${baseEngine}`)
       }
 
       const counterEngine = this.engines.get(counterSymbol)
       if (!counterEngine) {
-        throw new Error(`No engine avialable for ${counterEngine}`)
+        throw new Error(`No engine available for ${counterEngine}`)
       }
 
       this.fill.takerBaseAddress = await baseEngine.getPaymentChannelNetworkAddress()
@@ -178,14 +178,27 @@ const FillStateMachine = StateMachine.factory({
       const swapHash = await inboundEngine.createSwapHash(this.fill.order.orderId, inboundAmount)
       this.fill.setSwapHash(swapHash)
 
-      const { fillId, feePaymentRequest, depositPaymentRequest, fillError } = await this.relayer.takerService.createFill(this.fill.paramsForCreate)
+      const {
+        fillId,
+        feePaymentRequest,
+        depositPaymentRequest,
+        feeRequired,
+        depositRequired,
+        fillError
+      } = await this.relayer.takerService.createFill(this.fill.paramsForCreate)
 
       if (fillError) {
         this.logger.error(`Encountered error with fill: ${fillError.message}`)
         throw new Error(fillError.code)
       }
 
-      this.fill.setCreatedParams({ fillId, feePaymentRequest, depositPaymentRequest })
+      this.fill.setCreatedParams({
+        fillId,
+        feePaymentRequest,
+        depositPaymentRequest,
+        feeRequired,
+        depositRequired
+      })
 
       this.logger.info(`Created fill ${this.fill.fillId} on the relayer`)
     },
@@ -214,7 +227,7 @@ const FillStateMachine = StateMachine.factory({
      * if filling on the Relayer fails.
      *
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
-     * @return {Promise}          romise that rejects if filling on the relayer fails
+     * @return {Promise} promise that rejects if filling on the relayer fails
      */
     onBeforeFillOrder: async function (lifecycle) {
       const {
@@ -323,7 +336,7 @@ const FillStateMachine = StateMachine.factory({
 
     /**
      * Execute the swap on the Payment Channel Network
-     * This function gets called before the `exuecte` transition (triggered by a call to `exuecte`)
+     * This function gets called before the `execute` transition (triggered by a call to `execute`)
      * Actual execution is done in `onBeforeFill` so that the transition can be cancelled if execution fails
      *
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
