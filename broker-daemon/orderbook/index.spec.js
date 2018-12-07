@@ -1,5 +1,6 @@
 const path = require('path')
 const { rewire, sinon, expect } = require('test/test-helper')
+const { Big } = require('../utils')
 
 const Orderbook = rewire(path.resolve('broker-daemon', 'orderbook', 'index'))
 
@@ -100,7 +101,8 @@ describe('Orderbook', () => {
 
     logger = {
       info: sinon.stub(),
-      debug: sinon.stub()
+      debug: sinon.stub(),
+      error: sinon.stub()
     }
   })
 
@@ -653,6 +655,46 @@ describe('Orderbook', () => {
       await orderbook.getBestOrders({ side: 'ASK', depth: '100' })
 
       expect(askIndex.streamOrdersAtPriceOrBetter).to.have.been.calledWith(undefined)
+    })
+  })
+
+  describe('getAveragePrice', () => {
+    let side
+    let targetDepth
+    let orders
+    let orderbook
+
+    beforeEach(() => {
+      side = 'BID'
+      targetDepth = 10
+      orders = [
+        {
+          baseAmount: 1,
+          price: 10
+        },
+        {
+          baseAmount: 2,
+          price: 3
+        }
+      ]
+      orderbook = new Orderbook('BTC/LTC', relayer, baseStore, logger)
+      orderbook.getBestOrders = sinon.stub().resolves({orders, depth: targetDepth})
+    })
+
+    it('gets the best orders given the side and depth', async () => {
+      await orderbook.getAveragePrice(side, targetDepth)
+      expect(orderbook.getBestOrders).to.have.been.called()
+      expect(orderbook.getBestOrders).to.have.been.calledWith({side, depth: targetDepth})
+    })
+
+    it('throws an error if there is not sufficient depth in the orderbook', () => {
+      orderbook.getBestOrders.resolves({orders, depth: 8})
+      return expect(orderbook.getAveragePrice(side, targetDepth)).to.eventually.be.rejectedWith('Insufficient depth to find averagePrice')
+    })
+
+    it('returns the average weighted price', async () => {
+      const res = await orderbook.getAveragePrice(side, targetDepth)
+      expect(res).to.eql(Big(1.6))
     })
   })
 
