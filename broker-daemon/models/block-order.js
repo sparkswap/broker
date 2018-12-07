@@ -231,19 +231,27 @@ class BlockOrder {
   }
 
   /**
-  * get boolean for if the blockOrder is an ask
-  * @return {Boolean}
+   * get boolean for if the blockOrder is an ask
+   * @return {Boolean}
    */
   get isAsk () {
     return this.side === BlockOrder.SIDES.ASK
   }
 
   /**
-  * get boolean for if the blockOrder is an a state to be worked
-  * @return {Boolean}
+   * get boolean for if the blockOrder is an a state to be worked
+   * @return {Boolean}
    */
   get isInWorkableState () {
     return this.status === BlockOrder.STATUSES.ACTIVE
+  }
+
+  /**
+   * get boolean for if the blockOrder is a marketOrder
+   * @return {Boolean}
+   */
+  get isMarketOrder () {
+    return !this.price
   }
 
   /**

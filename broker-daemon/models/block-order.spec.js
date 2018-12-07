@@ -727,6 +727,17 @@ describe('BlockOrder', () => {
         expect(blockOrder).to.have.property('isInWorkableState', false)
       })
     })
+    describe('get isMarketOrder', () => {
+      it('gets true if block order is a market order', () => {
+        blockOrder.price = null
+        expect(blockOrder).to.have.property('isMarketOrder', true)
+      })
+
+      it('gets false if block order is not a market order', () => {
+        expect(blockOrder).to.have.property('isMarketOrder', false)
+      })
+    })
+
     describe('get activeFills', () => {
       let fills
       let createdFill
