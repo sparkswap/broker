@@ -83,6 +83,22 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
   const { inboundSymbol, inboundFillAmount, outboundSymbol, outboundFillAmount, takerAddress } = order
   const [ expectedSymbol, actualSymbol, expectedAmount, actualAmount ] = [ inboundSymbol, symbol, inboundFillAmount, amount ]
 
+  const outboundEngine = engines.get(outboundSymbol)
+  if (!outboundEngine) {
+    const err = `No engine available for ${outboundSymbol}`
+    logger.error(err)
+    return send({ permanentError: err })
+  }
+
+  if (await outboundEngine.isPaymentPendingOrComplete(swapHash)) {
+    const { paymentPreimage, permanentError } = await outboundEngine.getPaymentPreimage(swapHash)
+    if (permanentError) {
+      return send({ permanentError })
+    } else {
+      return send({ paymentPreimage })
+    }
+  }
+
   if (expectedSymbol !== actualSymbol) {
     const err = `Wrong currency paid in for ${swapHash}. Expected ${expectedSymbol}, found ${actualSymbol}`
     logger.error(err)
@@ -97,13 +113,6 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
   const inboundEngine = engines.get(inboundSymbol)
   if (!inboundEngine) {
     const err = `No engine available for ${inboundSymbol}`
-    logger.error(err)
-    return send({ permanentError: err })
-  }
-
-  const outboundEngine = engines.get(outboundSymbol)
-  if (!outboundEngine) {
-    const err = `No engine available for ${outboundSymbol}`
     logger.error(err)
     return send({ permanentError: err })
   }

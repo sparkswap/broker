@@ -92,6 +92,24 @@ describe('getPreimage', () => {
     expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('No routing entry available') }))
   })
 
+  it('returns permanent error if the outbound engine is unavailable', async () => {
+    order.outboundSymbol = 'XYZ'
+
+    await getPreimage({ params, send, ordersByHash, engines })
+
+    expect(send).to.have.been.calledOnce()
+    expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('No engine') }))
+  })
+
+  it('returns permanent error if the amount is not at least as much as on the order', async () => {
+    params.amount = '10'
+
+    await getPreimage({ params, send, ordersByHash, engines })
+
+    expect(send).to.have.been.calledOnce()
+    expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('Insufficient currency') }))
+  })
+
   it('returns permanent error if the amount is not at least as much as on the order', async () => {
     params.amount = '10'
 
@@ -117,15 +135,6 @@ describe('getPreimage', () => {
 
     expect(send).to.have.been.calledOnce()
     expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('is higher than') }))
-  })
-
-  it('returns permanent error if the outbound engine is unavailable', async () => {
-    order.outboundSymbol = 'XYZ'
-
-    await getPreimage({ params, send, ordersByHash, engines })
-
-    expect(send).to.have.been.calledOnce()
-    expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('No engine') }))
   })
 
   it('makes a payment to the outbound engine', async () => {
