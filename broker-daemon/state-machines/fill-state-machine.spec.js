@@ -180,7 +180,7 @@ describe('FillStateMachine', () => {
     })
   })
 
-  describe.only('#create', () => {
+  describe('#create', () => {
     let fsm
     let blockOrderId
     let orderParams
