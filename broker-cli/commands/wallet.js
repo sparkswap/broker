@@ -371,20 +371,39 @@ async function release (args, opts, logger) {
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
     try {
-      await client.walletService.releaseChannels({ market, force })
+      // We want to keep track if any returned channel had an error while attempting
+      // to be released so that we can display the proper error warnings below
+      let shouldForceRelease = false
+
+      const { base, counter } = await client.walletService.releaseChannels({ market, force })
+
+      const marketSides = [base, counter]
+
+      marketSides.forEach((side) => {
+        const { symbol, status } = side
+        let { error = '' } = side
+
+        if (error.includes('Inactive/pending channels exist. You must use `force` to close')) {
+          error = `Unable to release ${symbol}. Use '--force' and try again`
+          shouldForceRelease = true
+        }
+
+        if (error) {
+          logger.info(`${symbol}: ` + `${status}: ${error}`.red)
+        } else {
+          logger.info(`${symbol}: ` + status.green)
+        }
+      })
+
+      if (shouldForceRelease && !force) {
+        logger.info('')
+        logger.info('NOTE: using `--force` has the potential to lock your funds for an'.yellow)
+        logger.info('extended period of time (24/48 hours) and can cost additional fees.'.yellow)
+      }
     } catch (e) {
       logger.error(`Failed to release payment channels for ${market}`.red)
-
-      if (!force) {
-        logger.info('You can force the release of funds using the `--force` option, however')
-        logger.info('this has the potential to lock your funds for an extended period of time')
-        logger.info('and cost additional fees')
-      }
-
       throw e
     }
-
-    logger.info(`Successfully closed channels on ${market} market!`)
   } catch (e) {
     logger.error(handleError(e))
   }

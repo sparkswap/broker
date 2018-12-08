@@ -6,15 +6,14 @@ const releaseChannels = rewire(path.resolve(__dirname, 'release-channels'))
 describe('releaseChannels', () => {
   let params
   let logger
-  let res
   let engines
   let orderbooks
   let baseEngineStub
   let counterEngineStub
-  let EmptyResponse
+  let ReleaseChannelsResponse
 
   beforeEach(() => {
-    EmptyResponse = sinon.stub()
+    ReleaseChannelsResponse = sinon.stub()
     logger = {
       info: sinon.stub(),
       error: sinon.stub()
@@ -29,7 +28,7 @@ describe('releaseChannels', () => {
 
   describe('release channels from a specific market', () => {
     beforeEach(async () => {
-      res = await releaseChannels({ params, logger, engines, orderbooks }, { EmptyResponse })
+      await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
     })
 
     it('attempts to close channels on the base engine', async () => {
@@ -40,16 +39,20 @@ describe('releaseChannels', () => {
       expect(counterEngineStub.closeChannels).to.have.been.called()
     })
 
-    it('returns an EmptyResponse', async () => {
-      expect(EmptyResponse).to.have.been.called()
-      expect(res).to.be.eql({})
+    it('returns a successful ReleaseChannelsResponse', async () => {
+      const { RELEASED } = releaseChannels.__get__('RELEASE_STATE')
+      const expectedRes = {
+        base: { symbol: 'BTC', status: RELEASED },
+        counter: { symbol: 'LTC', status: RELEASED }
+      }
+      expect(ReleaseChannelsResponse).to.have.been.calledWith(expectedRes)
     })
   })
 
   describe('force releasing channels from a specific market', () => {
     beforeEach(async () => {
       params.force = true
-      res = await releaseChannels({ params, logger, engines, orderbooks }, { EmptyResponse })
+      await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
     })
 
     it('force closes channels on the base engine', async () => {
@@ -66,21 +69,36 @@ describe('releaseChannels', () => {
       orderbooks = new Map([['ABC/DXS', { store: sinon.stub() }]])
 
       const errorMessage = `${params.market} is not being tracked as a market.`
-      return expect(releaseChannels({ params, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
+      return expect(releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })).to.eventually.be.rejectedWith(errorMessage)
     })
 
     it('throws an error if the base engine does not exist for symbol', () => {
       engines = new Map([['LTC', counterEngineStub]])
       return expect(
-        releaseChannels({ params, logger, engines, orderbooks }, { EmptyResponse })
+        releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
       ).to.eventually.be.rejectedWith(PublicError, `No engine available for BTC`)
     })
 
     it('throws an error if the counter engine does not exist for symbol', () => {
       engines = new Map([['BTC', baseEngineStub]])
       return expect(
-        releaseChannels({ params, logger, engines, orderbooks }, { EmptyResponse })
+        releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
       ).to.be.rejectedWith(PublicError, `No engine available for LTC`)
+    })
+  })
+
+  context('errors while trying to close base engine channels', () => {
+    it('returns an error in the response', async () => {
+      const { RELEASED, FAILED } = releaseChannels.__get__('RELEASE_STATE')
+      const error = new Error('BTC engine is locked')
+      baseEngineStub.closeChannels.rejects(error)
+      await releaseChannels({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse })
+
+      const expectedResponse = {
+        base: { symbol: 'BTC', error: error.message, status: FAILED },
+        counter: { symbol: 'LTC', status: RELEASED }
+      }
+      expect(ReleaseChannelsResponse).to.have.been.calledWith(expectedResponse)
     })
   })
 })
