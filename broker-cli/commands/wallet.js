@@ -252,7 +252,7 @@ const NETWORK_STATUSES = Object.freeze({
  */
 function formatBalance (balance, status) {
   if (!balance) {
-    return 'N/A'.yellow
+    return 'Not Available'.yellow
   }
 
   const fixedBalance = Big(balance).toFixed(16)
@@ -301,14 +301,6 @@ async function networkStatus (args, opts, logger) {
       style: { head: ['gray'] }
     })
 
-    if (baseSymbolCapacities.error) {
-      logger.info(`Received errors when requesting ${baseSymbol} status. Please check your ${baseSymbol} daemon`.red)
-    }
-
-    if (counterSymbolCapacities.error) {
-      logger.info(`Received errors when requesting ${baseSymbol} status. Please check your ${counterSymbol} daemon`.red)
-    }
-
     // If any balances in the following table are empty (which occurs if the engine is unavailable)
     // then the text will show up as `N/A`.
     //
@@ -330,8 +322,17 @@ async function networkStatus (args, opts, logger) {
     statusTable.push([`  Buy ${baseSymbol}`, formatBalance(baseSymbolCapacities.inactiveReceiveCapacity, NETWORK_STATUSES.INACTIVE), formatBalance(counterSymbolCapacities.inactiveSendCapacity, NETWORK_STATUSES.INACTIVE)])
     statusTable.push([`  Sell ${baseSymbol}`, formatBalance(baseSymbolCapacities.inactiveSendCapacity, NETWORK_STATUSES.INACTIVE), formatBalance(counterSymbolCapacities.inactiveReceiveCapacity, NETWORK_STATUSES.INACTIVE)])
 
-    logger.info(` ${market.bold.white}`)
+    logger.info(` Market: ${market.bold.white}`)
     logger.info(statusTable.toString())
+    logger.info('')
+
+    if (baseSymbolCapacities.error) {
+      logger.info(`${baseSymbol}: Received errors when requesting network status. Please check your ${baseSymbol} daemon`.red)
+    }
+
+    if (counterSymbolCapacities.error) {
+      logger.info(`${counterSymbol}: Received errors when requesting network status. Please check your ${counterSymbol} daemon`.red)
+    }
   } catch (e) {
     logger.error(handleError(e))
   }

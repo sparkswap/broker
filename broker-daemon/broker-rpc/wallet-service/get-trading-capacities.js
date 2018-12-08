@@ -1,6 +1,11 @@
 const { currencies } = require('../../config')
 const { Big } = require('../../utils')
 
+/**
+ * @constant
+ * @type {Object<key, String>}
+ * @default
+ */
 const SIDES = Object.freeze({
   BID: 'BID',
   ASK: 'ASK'
@@ -14,7 +19,7 @@ const SIDES = Object.freeze({
  * @param {String} outstandingSendCapacity - amount of outstanding send capacity for the given currency
  * @param {String} outstandingReceiveCapacity - amount of outstanding receive capacity for the given currency
  * @param {Object} opts
- * @param {Logger} logger
+ * @param {Logger} opts.logger
  * @return {Object} res
  * @return {String} res.symbol - currency symbol e.g. BTC
  * @return {Boolean} res.error - true if errors occurred during request for capacities
@@ -60,7 +65,7 @@ async function getCapacities (engine, symbol, outstandingSendCapacity, outstandi
       outstandingSendCapacity: Big(outstandingSendCapacity).div(quantumsPerCommon).toString()
     }
   } catch (e) {
-    console.log('Martine is going to work on the next ticket')
+    logger.debug(`Received error when trying to get engine capacities for ${symbol}`, { outstandingReceiveCapacity, outstandingSendCapacity })
 
     return {
       symbol,
