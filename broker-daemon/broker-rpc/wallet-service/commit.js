@@ -12,23 +12,44 @@ const { currencies: currencyConfig } = require('../../config')
 const MINIMUM_FUNDING_AMOUNT = Big(0.00400000)
 
 /**
- * Grabs public lightning network information from relayer and opens a channel
+ * Grabs public lightning network information from relayer and opens a channel.
+ *
+ * NOTE: during funding We remove fees from the balance to make sure that the user
+ * has enough funds for the open/close channel transactions
  *
  * @param {Object} request - request object
  * @param {Object} request.params
  * @param {RelayerClient} request.relayer
- * @param {Logger} request.logger
  * @param {Engine} request.engines
+ * @param {Map<String, Orderbook>} request.orderbooks
+ * @param {Logger} request.logger
  * @param {Object} responses
  * @param {function} responses.EmptyResponse
  * @return {responses.EmptyResponse}
  */
-async function commit ({ params, relayer, logger, engines, orderbooks }, { EmptyResponse }) {
+async function commit ({ params, relayer, engines, orderbooks, logger }, { EmptyResponse }) {
   const { balance: balanceInCommonUnits, symbol, market } = params
   const currentCurrencyConfig = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol)
 
   if (!currentCurrencyConfig) {
     throw new Error(`Currency was not found when trying to commit to market: ${symbol}`)
+  }
+
+  // A very archaic fee estimation amount. This number was chosen based on fees and
+  // pricing of bitcoin at the current time (Dec 7 pricing $3.5k).
+  //
+  // As a conservative number, we would typically expect fees to be between $0.10 and $0.40
+  // per on-chain transaction, so if we buffer our commitment amount by 10000sat ($0.40 usd)
+  // then we should be relatively safe.
+  //
+  // The equivalent default for litecoin would be around 1000 litoshis
+  //
+  // TODO: Expose fee estimation in LND to provide a better way to estimate fees
+  //       for the user
+  const { feeEstimate } = currentCurrencyConfig
+
+  if (!feeEstimate) {
+    throw new Error('Currency configuration has not been setup with a fee estimate')
   }
 
   const orderbook = orderbooks.get(market)
@@ -97,10 +118,14 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     throw new PublicError(errorMessage)
   }
 
-  logger.debug('Creating outbound channel', { address, balance })
+  logger.debug('Creating outbound channel', { address, balance, feeEstimate })
+
+  // We remove fees from the balance to make sure that the user has enough funds
+  // for the open/close channel transactions
+  const balanceWithFeeEstimate = Big(balance).minus(feeEstimate)
 
   try {
-    await engine.createChannel(address, balance)
+    await engine.createChannel(address, balanceWithFeeEstimate)
   } catch (e) {
     logger.error('Received error when creating outbound channel', { error: e.stack })
     throw new PublicError(`Funding error: Check that you have sufficient balance`)
@@ -112,8 +137,10 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     logger.debug('Requesting inbound channel from relayer', { address: paymentChannelNetworkAddress, balance: convertBalance, symbol: inverseSymbol })
     await relayer.paymentChannelNetworkService.createChannel({address: paymentChannelNetworkAddress, balance: convertedBalance, symbol: inverseSymbol})
   } catch (e) {
-    // TODO: Close channel that was open if relayer call has failed
-    throw (e)
+    // If the relayer call fails, the user can simply try and open channels again
+    // on the same market. We handle this undesired state above where we check the
+    // current status of channels and repair them if necessary.
+    throw new PublicError(`Funding error: Relayer is unavailable, Please try again`)
   }
 
   return new EmptyResponse({})
