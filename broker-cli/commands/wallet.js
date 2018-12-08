@@ -326,12 +326,12 @@ async function networkStatus (args, opts, logger) {
     logger.info(statusTable.toString())
     logger.info('')
 
-    if (baseSymbolCapacities.error) {
-      logger.info(`${baseSymbol}: Received errors when requesting network status. Please check your ${baseSymbol} daemon`.red)
+    if (baseSymbolCapacities.status !== 'OK') {
+      logger.error(`${baseSymbol}: Received errors when requesting network status: ${baseSymbolCapacities.error}`.red)
     }
 
-    if (counterSymbolCapacities.error) {
-      logger.info(`${counterSymbol}: Received errors when requesting network status. Please check your ${counterSymbol} daemon`.red)
+    if (counterSymbolCapacities.status !== 'OK') {
+      logger.error(`${counterSymbol}: Received errors when requesting network status: ${counterSymbolCapacities.error}`.red)
     }
   } catch (e) {
     logger.error(handleError(e))

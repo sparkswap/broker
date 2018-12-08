@@ -9,6 +9,7 @@ const RELEASE_STATE = Object.freeze({
   RELEASED: 'RELEASED',
   FAILED: 'FAILED'
 })
+
 /**
  * Close channels on a specific engine
  *

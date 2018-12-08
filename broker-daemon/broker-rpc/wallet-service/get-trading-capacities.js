@@ -12,6 +12,16 @@ const SIDES = Object.freeze({
 })
 
 /**
+ * @constant
+ * @type {Object}
+ * @default
+ */
+const CAPACITY_STATE = Object.freeze({
+  OK: 'OK',
+  FAILED: 'FAILED'
+})
+
+/**
  * Grabs the total balance and total channel balance from a specified engine
  *
  * @param {Engine} SparkSwap Payment Channel Network Engine
@@ -22,6 +32,7 @@ const SIDES = Object.freeze({
  * @param {Logger} opts.logger
  * @return {Object} res
  * @return {String} res.symbol - currency symbol e.g. BTC
+ * @return {String} res.status - OK for success or FAILED if engine call fails
  * @return {Boolean} res.error - true if errors occurred during request for capacities
  * @return {String} res.availableReceiveCapacity
  * @return {String} res.availableSendCapacity
@@ -55,6 +66,7 @@ async function getCapacities (engine, symbol, outstandingSendCapacity, outstandi
 
     return {
       symbol,
+      status: CAPACITY_STATE.OK,
       availableReceiveCapacity: Big(activeChannelCapacities.remoteBalance).minus(outstandingReceiveCapacity).div(quantumsPerCommon).toString(),
       availableSendCapacity: Big(activeChannelCapacities.localBalance).minus(outstandingSendCapacity).div(quantumsPerCommon).toString(),
       pendingSendCapacity: Big(pendingChannelCapacities.localBalance).div(quantumsPerCommon).toString(),
@@ -69,7 +81,8 @@ async function getCapacities (engine, symbol, outstandingSendCapacity, outstandi
 
     return {
       symbol,
-      error: true
+      status: CAPACITY_STATE.FAILED,
+      error: e.message
     }
   }
 }
