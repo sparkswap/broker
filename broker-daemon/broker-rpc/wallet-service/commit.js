@@ -79,6 +79,11 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
   // If maxOutboundBalance or maxInboundBalance exist, we need to check if the balances are greater or less than the balance of the channel
   // we are trying to open. If neither maxOutboundBalance nor maxInboundBalance exist, it means there are no channels open and we can safely
   // attempt to create channels with the balance
+
+  logger.debug('------HERE MARTINE------')
+  logger.debug(maxOutboundBalance)
+  logger.debug(maxInboundBalance)
+
   if (maxOutboundBalance || maxInboundBalance) {
     const insufficientOutboundBalance = maxOutboundBalance && Big(maxOutboundBalance).lt(balance)
     const insufficientInboundBalance = maxInboundBalance && Big(maxInboundBalance).lt(convertedBalance)

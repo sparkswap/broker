@@ -889,6 +889,8 @@ message Capacity {
   string outstanding_send_capacity = 10;
   // Total outbound outstanding amount. This is currently in base units (e.g. Satoshis/Litoshis)
   string outstanding_receive_capacity = 11;
+  // true/false for any errors that may have occurred when requesting capacity for a particular currency
+  bool error = 20;
 }
 
 /**
