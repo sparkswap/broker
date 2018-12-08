@@ -932,6 +932,25 @@ message ReleaseChannelsRequest {
 }
 
 /**
+ * Container for channel information for a specific currency on a given market
+ */
+message ReleasedCurrency {
+  // Currency of the information
+  string symbol = 1;
+  // Status of the channel. e.g. RELEASED or FAILED
+  string status = 2;
+  // Message that identifies an issue with a released channel. Only available if status of channel is not `RELEASED`
+  string error = 10;
+}
+
+message ReleaseChannelsResponse {
+  // Channel status information for the base currency
+  ReleasedCurrency base = 1;
+  // Channel status information for the counter currency
+  ReleasedCurrency counter = 2;
+}
+
+/**
  * Get the payment channel network address for a given currency.
  */
 message GetPaymentChannelNetworkAddressRequest {
@@ -1169,7 +1188,7 @@ service WalletService {
    * ```
    *
    */
-  rpc ReleaseChannels (ReleaseChannelsRequest) returns (google.protobuf.Empty) {
+  rpc ReleaseChannels (ReleaseChannelsRequest) returns (ReleaseChannelsResponse) {
     option (google.api.http) = {
       post: "/v1/wallet/release"
       body: "*"

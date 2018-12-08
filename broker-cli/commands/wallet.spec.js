@@ -497,9 +497,42 @@ describe('cli wallet', () => {
       expect(releaseStub).to.not.have.been.called()
     })
 
-    it('logs the number of channels closed', async () => {
+    it('shows errors to the user if release channels returns them', async () => {
+      const status = 'FAILED'
+      const symbol = 'BTC'
+      const error = 'Engine is locked'
+      const channel = {
+        symbol,
+        status,
+        error: ''
+      }
+      releaseStub.resolves({ base: channel, counter: channel })
       await release(args, opts, logger)
-      expect(logger.info).to.have.been.called()
+      expect(logger.info).to.have.been.calledWith(sinon.match(symbol, status, error))
+    })
+
+    it('displays an informative message to user on errors if channels can be force released', async () => {
+      const status = 'FAILED'
+      const symbol = 'BTC'
+      const error = 'Inactive/pending channels exist. You must use `force` to close'
+      const channel = { symbol, status, error }
+
+      releaseStub.resolves({ base: channel, counter: channel })
+
+      await release(args, opts, logger)
+      expect(logger.info).to.have.been.calledWith(sinon.match('Use \'--force\''))
+    })
+
+    it('displays a disclaimer to the user on errors if channels can be force released', async () => {
+      const status = 'FAILED'
+      const symbol = 'BTC'
+      const error = 'Inactive/pending channels exist. You must use `force` to close'
+      const channel = { symbol, status, error }
+
+      releaseStub.resolves({ base: channel, counter: channel })
+
+      await release(args, opts, logger)
+      expect(logger.info).to.have.been.calledWith(sinon.match('has the potential to lock your funds'))
     })
 
     context('force release of channels', () => {
