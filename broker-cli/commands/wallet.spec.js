@@ -343,6 +343,38 @@ describe('cli wallet', () => {
       const expectedResult = ['  Sell BTC', formatBalance('0.000002', NETWORK_STATUSES.INACTIVE), formatBalance('0.00002', NETWORK_STATUSES.INACTIVE)]
       expect(tablePushStub).to.have.been.calledWith(expectedResult)
     })
+
+    it('displays a message if there were errors in base capacities', async () => {
+      const status = 'FAILED'
+      const error = 'Something Happened'
+      const badBaseCapacities = {
+        symbol: baseSymbolCapacities.symbol,
+        status,
+        error
+      }
+      getTradingCapacitiesStub.resolves({ baseSymbolCapacities: badBaseCapacities, counterSymbolCapacities })
+
+      await networkStatus({}, opts, logger)
+
+      expect(logger.error).to.have.been.calledWith(sinon.match(`${badBaseCapacities.symbol}: Received errors`))
+      expect(logger.error).to.have.been.calledWith(sinon.match(error))
+    })
+
+    it('displays a message if there were errors in counter capacities', async () => {
+      const status = 'FAILED'
+      const error = 'Something Happened'
+      const badCounterCapacities = {
+        symbol: counterSymbolCapacities.symbol,
+        status,
+        error
+      }
+      getTradingCapacitiesStub.resolves({ baseSymbolCapacities: badCounterCapacities, counterSymbolCapacities })
+
+      await networkStatus({}, opts, logger)
+
+      expect(logger.error).to.have.been.calledWith(sinon.match(`${badCounterCapacities.symbol}: Received errors`))
+      expect(logger.error).to.have.been.calledWith(sinon.match(error))
+    })
   })
 
   describe('formatBalance', () => {
@@ -367,6 +399,14 @@ describe('cli wallet', () => {
 
     it('colors the balance red if the balance is greater than 0 and the status is inactive', () => {
       expect(formatBalance('0.004', NETWORK_STATUSES.INACTIVE)).to.eql('0.0040000000000000'.red)
+    })
+
+    it('returns `Not Available` if balance is not provided', () => {
+      expect(formatBalance(null, NETWORK_STATUSES.AVAILABLE)).to.eql('Not Available'.yellow)
+    })
+
+    it('returns `Not Available` if balance is blank', () => {
+      expect(formatBalance('', NETWORK_STATUSES.AVAILABLE)).to.eql('Not Available'.yellow)
     })
   })
 

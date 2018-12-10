@@ -1,44 +1,89 @@
 const { currencies } = require('../../config')
 const { Big } = require('../../utils')
 
+/**
+ * @constant
+ * @type {Object<key, String>}
+ * @default
+ */
 const SIDES = Object.freeze({
   BID: 'BID',
   ASK: 'ASK'
 })
+
+/**
+ * @constant
+ * @type {Object}
+ * @default
+ */
+const CAPACITY_STATE = Object.freeze({
+  OK: 'OK',
+  FAILED: 'FAILED'
+})
+
 /**
  * Grabs the total balance and total channel balance from a specified engine
  *
  * @param {Engine} SparkSwap Payment Channel Network Engine
  * @param {String} symbol
- * @param {String} amount of outstanding send capacity for the given currency
- * @param {String} amount of outstanding receive capacity for the given currency
- * @return {Object} including symbol and available, pending, outstanding, and inactive capacties for sending and receiving
+ * @param {String} outstandingSendCapacity - amount of outstanding send capacity for the given currency
+ * @param {String} outstandingReceiveCapacity - amount of outstanding receive capacity for the given currency
+ * @param {Object} opts
+ * @param {Logger} opts.logger
+ * @return {Object} res
+ * @return {String} res.symbol - currency symbol e.g. BTC
+ * @return {String} res.status - OK for success or FAILED if engine call fails
+ * @return {Boolean} res.error - true if errors occurred during request for capacities
+ * @return {String} res.availableReceiveCapacity
+ * @return {String} res.availableSendCapacity
+ * @return {String} res.pendingSendCapacity
+ * @return {String} res.pendingReceiveCapacity
+ * @return {String} res.inactiveSendCapacity
+ * @return {String} res.inactiveReceiveCapacity
+ * @return {String} res.outstandingReceiveCapacity
+ * @return {String} res.outstandingSendCapacity
  */
-async function getCapacities (engine, symbol, outstandingSendCapacity, outstandingReceiveCapacity) {
-  const { quantumsPerCommon: divideBy } = currencies.find(({ symbol: configSymbol }) => configSymbol === symbol) || {}
-  if (!divideBy) throw new Error(`Currency was not found when trying to get trading capacities: ${this.symbol}`)
+async function getCapacities (engine, symbol, outstandingSendCapacity, outstandingReceiveCapacity, { logger }) {
+  const { quantumsPerCommon } = currencies.find(({ symbol: configSymbol }) => configSymbol === symbol) || {}
 
-  const [
-    openChannelCapacities,
-    pendingChannelCapacities
-  ] = await Promise.all([
-    engine.getOpenChannelCapacities(),
-    engine.getPendingChannelCapacities()
-  ])
+  if (!quantumsPerCommon) {
+    throw new Error(`Currency was not found when trying to get trading capacities: ${this.symbol}`)
+  }
 
-  const activeChannelCapacities = openChannelCapacities.active
-  const inactiveChannelCapacities = openChannelCapacities.inactive
+  try {
+    const [
+      openChannelCapacities,
+      pendingChannelCapacities
+    ] = await Promise.all([
+      engine.getOpenChannelCapacities(),
+      engine.getPendingChannelCapacities()
+    ])
 
-  return {
-    symbol,
-    availableReceiveCapacity: Big(activeChannelCapacities.remoteBalance).minus(outstandingReceiveCapacity).div(divideBy).toString(),
-    availableSendCapacity: Big(activeChannelCapacities.localBalance).minus(outstandingSendCapacity).div(divideBy).toString(),
-    pendingSendCapacity: Big(pendingChannelCapacities.localBalance).div(divideBy).toString(),
-    pendingReceiveCapacity: Big(pendingChannelCapacities.remoteBalance).div(divideBy).toString(),
-    inactiveSendCapacity: Big(inactiveChannelCapacities.localBalance).div(divideBy).toString(),
-    inactiveReceiveCapacity: Big(inactiveChannelCapacities.remoteBalance).div(divideBy).toString(),
-    outstandingReceiveCapacity: Big(outstandingReceiveCapacity).div(divideBy).toString(),
-    outstandingSendCapacity: Big(outstandingSendCapacity).div(divideBy).toString()
+    const {
+      active: activeChannelCapacities,
+      inactive: inactiveChannelCapacities
+    } = openChannelCapacities
+
+    return {
+      symbol,
+      status: CAPACITY_STATE.OK,
+      availableReceiveCapacity: Big(activeChannelCapacities.remoteBalance).minus(outstandingReceiveCapacity).div(quantumsPerCommon).toString(),
+      availableSendCapacity: Big(activeChannelCapacities.localBalance).minus(outstandingSendCapacity).div(quantumsPerCommon).toString(),
+      pendingSendCapacity: Big(pendingChannelCapacities.localBalance).div(quantumsPerCommon).toString(),
+      pendingReceiveCapacity: Big(pendingChannelCapacities.remoteBalance).div(quantumsPerCommon).toString(),
+      inactiveSendCapacity: Big(inactiveChannelCapacities.localBalance).div(quantumsPerCommon).toString(),
+      inactiveReceiveCapacity: Big(inactiveChannelCapacities.remoteBalance).div(quantumsPerCommon).toString(),
+      outstandingReceiveCapacity: Big(outstandingReceiveCapacity).div(quantumsPerCommon).toString(),
+      outstandingSendCapacity: Big(outstandingSendCapacity).div(quantumsPerCommon).toString()
+    }
+  } catch (e) {
+    logger.debug(`Received error when trying to get engine capacities for ${symbol}`, { outstandingReceiveCapacity, outstandingSendCapacity })
+
+    return {
+      symbol,
+      status: CAPACITY_STATE.FAILED,
+      error: e.message
+    }
   }
 }
 
@@ -48,13 +93,14 @@ async function getCapacities (engine, symbol, outstandingSendCapacity, outstandi
  * @function
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Object} request.params
- * @param {Map} request.engines
- * @param {Logger} request.logger
+ * @param {Map<symbol, Engine>} request.engines
  * @param {Object} request.orderbooks - initialized orderbooks
+ * @param {BlockOrderWorker} request.blockOrderWorker
+ * @param {Logger} request.logger
  * @param {function} responses.GetTradingCapacitiesResponse
  * @return {GetTradingCapacitiesResponse}
  */
-async function getTradingCapacities ({ params, logger, engines, orderbooks, blockOrderWorker }, { GetTradingCapacitiesResponse }) {
+async function getTradingCapacities ({ params, engines, orderbooks, blockOrderWorker, logger }, { GetTradingCapacitiesResponse }) {
   const { market } = params
   const orderbook = orderbooks.get(market)
 
@@ -73,6 +119,8 @@ async function getTradingCapacities ({ params, logger, engines, orderbooks, bloc
     throw new Error(`No engine available for ${counterSymbol}`)
   }
 
+  logger.debug(`Calculating active funds for ${market}`)
+
   const [
     { activeOutboundAmount: committedCounterSendCapacity, activeInboundAmount: committedBaseReceiveCapacity },
     { activeOutboundAmount: committedBaseSendCapacity, activeInboundAmount: committedCounterReceiveCapacity }
@@ -81,10 +129,18 @@ async function getTradingCapacities ({ params, logger, engines, orderbooks, bloc
     blockOrderWorker.calculateActiveFunds(market, SIDES.ASK)
   ])
 
-  const [baseSymbolCapacities, counterSymbolCapacities] = await Promise.all([
-    getCapacities(baseEngine, baseSymbol, committedBaseSendCapacity, committedBaseReceiveCapacity),
-    getCapacities(counterEngine, counterSymbol, committedCounterSendCapacity, committedCounterReceiveCapacity)
+  // Capacities will always be returned for each side of the market, however if
+  // the engine is unavailable, we will receive blank capacities w/ an `error` property
+  // in the payload of the returned data
+  const [
+    baseSymbolCapacities,
+    counterSymbolCapacities
+  ] = await Promise.all([
+    getCapacities(baseEngine, baseSymbol, committedBaseSendCapacity, committedBaseReceiveCapacity, { logger }),
+    getCapacities(counterEngine, counterSymbol, committedCounterSendCapacity, committedCounterReceiveCapacity, { logger })
   ])
+
+  logger.debug(`Received capacities for market ${market}`, { baseSymbolCapacities, counterSymbolCapacities })
 
   return new GetTradingCapacitiesResponse({ baseSymbolCapacities, counterSymbolCapacities })
 }
