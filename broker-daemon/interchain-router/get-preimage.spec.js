@@ -14,6 +14,8 @@ describe('getPreimage', () => {
   let engines
   let preimage
   let translateSwap
+  let isPaymentPendingOrComplete
+  let getPaymentPreimage
 
   beforeEach(() => {
     order = {
@@ -49,8 +51,12 @@ describe('getPreimage', () => {
     })
     send = sinon.stub()
     engines = new Map()
+    isPaymentPendingOrComplete = sinon.stub().resolves(false)
+    getPaymentPreimage = sinon.stub().resolves({})
     engines.set('LTC', {
-      translateSwap
+      translateSwap,
+      isPaymentPendingOrComplete,
+      getPaymentPreimage
     })
     engines.set('BTC', {
       currencyConfig: {
@@ -92,6 +98,57 @@ describe('getPreimage', () => {
     expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('No routing entry available') }))
   })
 
+  it('checks if the payment has been started or completed', async () => {
+    await getPreimage({ params, send, ordersByHash, engines })
+
+    expect(isPaymentPendingOrComplete).to.have.been.calledWith(params.paymentHash)
+  })
+
+  context('the payment is pending or complete', async () => {
+    beforeEach(() => {
+      isPaymentPendingOrComplete.resolves(true)
+    })
+    it('attempts to get the payment preimage from the engine', async () => {
+      await getPreimage({ params, send, ordersByHash, engines })
+
+      expect(getPaymentPreimage).to.have.been.calledOnce()
+      expect(getPaymentPreimage).to.have.been.calledWith(params.paymentHash)
+    })
+
+    it('returns a permanent error if the getting the payment preimage results in an permanent error', async () => {
+      getPaymentPreimage.resolves({permanentError: 'error'})
+      await getPreimage({ params, send, ordersByHash, engines })
+
+      expect(send).to.have.been.calledOnce()
+      expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('error') }))
+    })
+
+    it('returns the payment preimage if the getting the payment preimage from the engine is successful', async () => {
+      getPaymentPreimage.resolves({paymentPreimage: 'asdfasdf'})
+      await getPreimage({ params, send, ordersByHash, engines })
+
+      expect(send).to.have.been.calledOnce()
+      expect(send).to.have.been.calledWith(sinon.match({ paymentPreimage: 'asdfasdf' }))
+    })
+  })
+
+  context('the payment is not pending or complete', async () => {
+    it('will not look up the payment preimage', async () => {
+      await getPreimage({ params, send, ordersByHash, engines })
+
+      expect(getPaymentPreimage).to.not.have.been.called()
+    })
+  })
+
+  it('returns permanent error if the amount is not at least as much as on the order', async () => {
+    params.amount = '10'
+
+    await getPreimage({ params, send, ordersByHash, engines })
+
+    expect(send).to.have.been.calledOnce()
+    expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('Insufficient currency') }))
+  })
+
   it('returns permanent error if the amount is not at least as much as on the order', async () => {
     params.amount = '10'
 
@@ -117,15 +174,6 @@ describe('getPreimage', () => {
 
     expect(send).to.have.been.calledOnce()
     expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('is higher than') }))
-  })
-
-  it('returns permanent error if the outbound engine is unavailable', async () => {
-    order.outboundSymbol = 'XYZ'
-
-    await getPreimage({ params, send, ordersByHash, engines })
-
-    expect(send).to.have.been.calledOnce()
-    expect(send).to.have.been.calledWith(sinon.match({ permanentError: sinon.match('No engine') }))
   })
 
   it('makes a payment to the outbound engine', async () => {

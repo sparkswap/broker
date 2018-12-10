@@ -83,6 +83,20 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
   const { inboundSymbol, inboundFillAmount, outboundSymbol, outboundFillAmount, takerAddress } = order
   const [ expectedSymbol, actualSymbol, expectedAmount, actualAmount ] = [ inboundSymbol, symbol, inboundFillAmount, amount ]
 
+  const outboundEngine = engines.get(outboundSymbol)
+  if (!outboundEngine) {
+    const err = `No engine available for ${outboundSymbol}`
+    logger.error(err)
+    return send({ permanentError: err })
+  }
+
+  // We don't want to reject an incoming HTLC if we know that there is an active outgoing one. If the outgoing HTLC is in flight or completed,
+  // we should attempt to retrieve the associated preimage.
+  if (await outboundEngine.isPaymentPendingOrComplete(swapHash)) {
+    const { paymentPreimage, permanentError } = await outboundEngine.getPaymentPreimage(swapHash)
+    return send({ paymentPreimage, permanentError })
+  }
+
   if (expectedSymbol !== actualSymbol) {
     const err = `Wrong currency paid in for ${swapHash}. Expected ${expectedSymbol}, found ${actualSymbol}`
     logger.error(err)
@@ -97,13 +111,6 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
   const inboundEngine = engines.get(inboundSymbol)
   if (!inboundEngine) {
     const err = `No engine available for ${inboundSymbol}`
-    logger.error(err)
-    return send({ permanentError: err })
-  }
-
-  const outboundEngine = engines.get(outboundSymbol)
-  if (!outboundEngine) {
-    const err = `No engine available for ${outboundSymbol}`
     logger.error(err)
     return send({ permanentError: err })
   }
