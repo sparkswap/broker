@@ -873,21 +873,21 @@ message GetBalancesResponse {
 message Capacity {
   // Currency of the balance.
   string symbol = 1;
-  // Total pending amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
+  // Total pending amount a user can send in the currency. This is currently in common units (e.g. 0.15 BTC)
   string pending_send_capacity = 4;
-  // Total pending amount a user can receive in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
+  // Total pending amount a user can receive in the currency. This is currently in common units (e.g. 0.15 BTC)
   string pending_receive_capacity = 5;
-  // Total inactive amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
+  // Total inactive amount a user can send in the currency. This is currently in common units (e.g. 0.15 BTC)
   string inactive_send_capacity = 6;
-  // Total inactive amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
+  // Total inactive amount a user can send in the currency. This is currently in common units (e.g. 0.15 BTC)
   string inactive_receive_capacity = 7;
-  // Total available amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
+  // Total available amount a user can send in the currency. This is currently in common units (e.g. 0.15 BTC)
   string available_send_capacity = 8;
-  // Total available amount a user can send in the currency. This is currently in base units (e.g. Satoshis/Litoshis)
+  // Total available amount a user can send in the currency. This is currently in common units (e.g. 0.15 BTC)
   string available_receive_capacity = 9;
-  // Total inbound outstanding amount. This is currently in base units (e.g. Satoshis/Litoshis)
+  // Total inbound outstanding amount. This is currently in common units (e.g. 0.15 BTC)
   string outstanding_send_capacity = 10;
-  // Total outbound outstanding amount. This is currently in base units (e.g. Satoshis/Litoshis)
+  // Total outbound outstanding amount. This is currently in common units (e.g. 0.15 BTC)
   string outstanding_receive_capacity = 11;
   // Status of capacities. OK for success or FAILED if an error occurred when requesting capacities
   string status = 20;
@@ -1137,12 +1137,12 @@ service WalletService {
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
    * walletService.commit(
    *   {
-   *     // we are committing LTC to a channel on the BTC/LTC market
-   *     // The Broker will request a BTC channel be opened back to itself.
+   *     // We are committing LTC to a channel on the BTC/LTC market
+   *     // the Broker will request a BTC channel be opened back to itself.
    *     symbol: 'LTC',
-   *     // The amount (in Satoshis) to commit to the channel.
-   *     // The Broker will request a BTC channel of size 16700000 / 60 be opened back to itself.
-   *     balance: '16700000',
+   *     // The amount to commit to the channel in common units (e.g. 0.016 BTC).
+   *     // The Broker will request a BTC channel of size 0.0167 / 60 be opened back to itself.
+   *     balance: '0.0167',
    *     market: 'BTC/LTC'
    *   },
    *   { deadline },
