@@ -12,10 +12,7 @@ const { currencies: currencyConfig } = require('../../config')
 const MINIMUM_FUNDING_AMOUNT = Big(0.00400000)
 
 /**
- * Grabs public lightning network information from relayer and opens a channel.
- *
- * NOTE: during funding We remove fees from the balance to make sure that the user
- * has enough funds for the open/close channel transactions
+ * Grabs the public lightning network information from relayer and opens a channel.
  *
  * @param {Object} request - request object
  * @param {Object} request.params
