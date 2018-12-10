@@ -33,13 +33,15 @@ async function commit ({ params, relayer, engines, orderbooks, logger }, { Empty
   }
 
   // A very archaic fee estimation amount. This number was chosen based on fees and
-  // pricing of bitcoin at the current time (Dec 7 pricing $3.5k).
+  // pricing of bitcoin at the current time (Dec 10 pricing, roughly $3.5k).
   //
-  // As a conservative number, we would typically expect fees to be between $0.10 and $0.40
-  // per on-chain transaction, so if we buffer our commitment amount by 10000sat ($0.40 usd)
-  // then we should be relatively safe.
+  // As a conservative number, we would typically expect fees to be between $0.10
+  // and $0.40 per on-chain transaction, so if we buffer our commitment amount
+  // by $0.50 usd then we should be relatively safe.
   //
-  // The equivalent default for litecoin would be around 1000 litoshis
+  // Equivalent USD to <currency> at current market Dec 10:
+  // $0.50 USD equals 1700000 litoshis
+  // $0.50 USD equals 15000 satoshis
   //
   // TODO: Expose fee estimation in LND to provide a better way to estimate fees
   //       for the user

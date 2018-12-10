@@ -5,14 +5,14 @@
       "symbol": "BTC",
       "quantumsPerCommon": "100000000",
       "maxChannelBalance": "16777215",
-      "feeEstimate": "12000"
+      "feeEstimate": "15000"
     },
     {
       "name": "Litecoin",
       "symbol": "LTC",
       "quantumsPerCommon": "100000000",
       "maxChannelBalance": "1006632900",
-      "feeEstimate": "1000"
+      "feeEstimate": "1700000"
     }
   ]
 }
