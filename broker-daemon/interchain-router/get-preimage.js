@@ -92,11 +92,7 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
 
   if (await outboundEngine.isPaymentPendingOrComplete(swapHash)) {
     const { paymentPreimage, permanentError } = await outboundEngine.getPaymentPreimage(swapHash)
-    if (permanentError) {
-      return send({ permanentError })
-    } else {
-      return send({ paymentPreimage })
-    }
+    return send({ paymentPreimage, permanentError })
   }
 
   if (expectedSymbol !== actualSymbol) {
