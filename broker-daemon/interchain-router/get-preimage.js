@@ -90,6 +90,8 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
     return send({ permanentError: err })
   }
 
+  // We don't want to reject an incoming HTLC if we know that there is an active outgoing one. If the outgoing HTLC is in flight or completed,
+  // we should attempt to retrieve the associated preimage.
   if (await outboundEngine.isPaymentPendingOrComplete(swapHash)) {
     const { paymentPreimage, permanentError } = await outboundEngine.getPaymentPreimage(swapHash)
     return send({ paymentPreimage, permanentError })
