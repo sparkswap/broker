@@ -99,28 +99,8 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No engine available for ${orderbook.counterSymbol}.`)
     }
 
-    const { activeOutboundAmount, activeInboundAmount } = await this.calculateActiveFunds(marketName, side)
-
     const blockOrder = new BlockOrder({ id, marketName, side, amount, price, timeInForce })
-    const outboundEngine = this.engines.get(blockOrder.outboundSymbol)
-    const inboundEngine = this.engines.get(blockOrder.inboundSymbol)
-    const [{address: outboundAddress}, {address: inboundAddress}] = await Promise.all([
-      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.outboundSymbol}),
-      this.relayer.paymentChannelNetworkService.getAddress({symbol: blockOrder.inboundSymbol})
-    ])
-
-    const outboundBalanceIsSufficient = await outboundEngine.isBalanceSufficient(outboundAddress, Big(blockOrder.outboundAmount).plus(activeOutboundAmount))
-
-    // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
-    if (!outboundBalanceIsSufficient) {
-      throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channel to create order`)
-    }
-
-    const inboundBalanceIsSufficient = await inboundEngine.isBalanceSufficient(inboundAddress, Big(blockOrder.inboundAmount).plus(activeInboundAmount), {outbound: false})
-    // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
-    if (!inboundBalanceIsSufficient) {
-      throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order`)
-    }
+    await this.checkFundsAreSufficient(blockOrder)
 
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
@@ -133,6 +113,75 @@ class BlockOrderWorker extends EventEmitter {
     })
 
     return id
+  }
+
+  /**
+   * Checks that there are valid inbound and outbound funds to place/fill the order
+   *
+   * @param {BlockOrder}
+   * @return {Void}
+   * @throws {Error} If there are insufficient outbound or inbound funds
+   */
+  async checkFundsAreSufficient (blockOrder) {
+    const { marketName, side, outboundSymbol, inboundSymbol } = blockOrder
+    const { activeOutboundAmount, activeInboundAmount } = await this.calculateActiveFunds(marketName, side)
+
+    const outboundEngine = this.engines.get(outboundSymbol)
+    const inboundEngine = this.engines.get(inboundSymbol)
+
+    if (!outboundEngine) {
+      throw new Error(`No engine available for ${outboundSymbol}.`)
+    }
+
+    if (!inboundEngine) {
+      throw new Error(`No engine available for ${inboundSymbol}.`)
+    }
+    const [{address: outboundAddress}, {address: inboundAddress}] = await Promise.all([
+      this.relayer.paymentChannelNetworkService.getAddress({symbol: outboundSymbol}),
+      this.relayer.paymentChannelNetworkService.getAddress({symbol: inboundSymbol})
+    ])
+
+    let counterAmount
+    let outboundAmount
+    let inboundAmount
+    // If the blockOrder is a market order we will not have a counterAmount and therefore will not be
+    // able to calculate if the funds in channels are sufficient. So we calculate an average price for this.
+    if (blockOrder.isMarketOrder) {
+      const orderbook = this.orderbooks.get(blockOrder.marketName)
+
+      if (!orderbook) {
+        throw new Error(`${blockOrder.marketName} is not being tracked as a market. Configure sparkswapd to track ${blockOrder.marketName} using the MARKETS environment variable.`)
+      }
+      // averagePrice is the weighted average price of the best orders. This is in common units.
+      const averagePrice = await orderbook.getAveragePrice(blockOrder.inverseSide, blockOrder.baseAmount)
+      // The counterAmount is calculated by multiplying the price of the order (in our case we have an approximation
+      // based on the weighted average of the depth of our order) by the amount of the order. This gets us the common counter amount.
+      // We then multiply this by the quantums per common amount for the counter currency to get the counterAmount in units of the counter currency.
+      counterAmount = averagePrice.times(blockOrder.amount).times(blockOrder.counterCurrencyConfig.quantumsPerCommon).round(0).toString()
+      if (blockOrder.isBid) {
+        outboundAmount = counterAmount
+        inboundAmount = blockOrder.baseAmount
+      } else {
+        outboundAmount = blockOrder.baseAmount
+        inboundAmount = counterAmount
+      }
+    } else {
+      outboundAmount = blockOrder.outboundAmount
+      inboundAmount = blockOrder.inboundAmount
+    }
+
+    const outboundBalanceIsSufficient = await outboundEngine.isBalanceSufficient(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount))
+
+    // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
+    if (!outboundBalanceIsSufficient) {
+      throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channel to create order`)
+    }
+
+    const inboundBalanceIsSufficient = await inboundEngine.isBalanceSufficient(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), {outbound: false})
+    // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
+    if (!inboundBalanceIsSufficient) {
+      throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order`)
+    }
   }
 
   /**
@@ -284,7 +333,7 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No orderbook is initialized for created order in the ${blockOrder.marketName} market.`)
     }
 
-    if (!blockOrder.price) {
+    if (blockOrder.isMarketOrder) {
       // block orders without prices are Market orders and take the best available price
       await this.workMarketBlockOrder(blockOrder, targetDepth)
     } else {

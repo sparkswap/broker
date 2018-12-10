@@ -218,6 +218,44 @@ class Orderbook {
   }
 
   /**
+   * get the average weighted price given the side and depth
+   * @param  {String} options.side  Side of the orderbook to get the best priced orders for (i.e. `BID` or `ASK`)
+   * @param  {String} options.depth int64 String of the amount, in base currency base units to ge the best prices up to
+   * @return {Integer} The weighted average price
+   */
+  async getAveragePrice (side, targetDepth) {
+    const { orders, depth } = await this.getBestOrders({ side, depth: targetDepth })
+    if (Big(depth).lt(targetDepth)) {
+      const params = {
+        market: this.marketName,
+        side: this.side,
+        depth,
+        targetDepth
+      }
+      this.logger.error('Insufficient depth to find averagePrice', params)
+      throw new Error('Insufficient depth to find averagePrice', params)
+    }
+    targetDepth = Big(targetDepth)
+    let currentDepth = Big(0)
+    let weightedPrice = Big(0)
+    orders.forEach((order) => {
+      const depthRemaining = targetDepth.minus(currentDepth)
+
+      // if we have already reached our target depth, return
+      if (depthRemaining.lte(0)) {
+        return
+      }
+
+      // Take the smaller of the remaining desired depth or the base amount of the order
+      const fillAmount = depthRemaining.gt(order.baseAmount) ? order.baseAmount : depthRemaining.toString()
+      // track our current depth so we know how much depth we have left
+      currentDepth = currentDepth.plus(fillAmount)
+      weightedPrice = weightedPrice.plus(Big(order.price).times(fillAmount))
+    })
+    return Big(weightedPrice).div(targetDepth)
+  }
+
+  /**
    * Gets current orderbook events by timestamp
    *
    * @param {String} timestamp - timestamp in nano-seconds

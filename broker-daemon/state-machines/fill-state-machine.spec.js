@@ -198,7 +198,9 @@ describe('FillStateMachine', () => {
       createFillResponse = {
         fillId: 'fakeFillId',
         feePaymentRequest: 'lnbcas9df0as9fu',
-        depositPaymentRequest: 'lnbcasd9fuas90f'
+        depositPaymentRequest: 'lnbcasd9fuas90f',
+        feeRequired: true,
+        depositRequired: false
       }
       Fill.prototype.key = fakeKey
       Fill.prototype.valueObject = fakeValueObject
