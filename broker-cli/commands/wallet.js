@@ -252,9 +252,9 @@ const NETWORK_STATUSES = Object.freeze({
  */
 function formatBalance (balance, status) {
   // If there were errors when receiving balances, the balance will come back
-  // as either a blank string or null. We set the balance to `Not Available` in this
-  // case, but should make sure we dont treat `0` as the same type.
-  if (balance === '' || balance === null || balance === undefined) {
+  // as either a blank string, undefined or null. We set the balance to `Not Available`
+  // in this case, but should make sure we dont treat `0` as the same type.
+  if (balance === '' || balance == null) {
     return 'Not Available'.yellow
   }
 
