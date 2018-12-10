@@ -132,19 +132,19 @@ describe('AdminService', () => {
 
     describe('request options', () => {
       it('passes in the logger', () => {
-        expect(callArgs[2]).to.have.property('logger', transformedLogger)
+        expect(callArgs[1]).to.have.property('logger', transformedLogger)
       })
 
       it('passes in a relayer', () => {
-        expect(callArgs[2]).to.have.property('relayer', relayer)
+        expect(callArgs[1]).to.have.property('relayer', relayer)
       })
 
       it('passes in the engines', () => {
-        expect(callArgs[2]).to.have.property('engines', engines)
+        expect(callArgs[1]).to.have.property('engines', engines)
       })
 
       it('passes in auth', () => {
-        expect(callArgs[2]).to.have.property('auth', auth)
+        expect(callArgs[1]).to.have.property('auth', auth)
       })
     })
 
@@ -178,15 +178,15 @@ describe('AdminService', () => {
 
     describe('request options', () => {
       it('passes in the logger', () => {
-        expect(callArgs[2]).to.have.property('logger', transformedLogger)
+        expect(callArgs[1]).to.have.property('logger', transformedLogger)
       })
 
       it('passes in a relayer', () => {
-        expect(callArgs[2]).to.have.property('relayer', relayer)
+        expect(callArgs[1]).to.have.property('relayer', relayer)
       })
 
       it('passes in auth', () => {
-        expect(callArgs[2]).to.have.property('auth', auth)
+        expect(callArgs[1]).to.have.property('auth', auth)
       })
     })
 
