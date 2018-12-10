@@ -3,15 +3,30 @@ const { expect } = require('test/test-helper')
 const handleError = require('./error-handler')
 
 describe('handleError', () => {
-  const error = new Error('14 UNAVAILABLE: Connect Failed')
-  const customError = 'Broker Daemon is unavailable, you may want to check if it\'s still up.'
-  it('logs a specific error if the broken daemon is down', () => {
-    handleError(error)
-    expect(handleError(error)).to.eql(customError)
+  let error
+  let expectedMessage
+
+  it('logs a specific error if the broker daemon is down', () => {
+    error = new Error('14 UNAVAILABLE: Connect Failed')
+    error.code = 14
+    expectedMessage = 'Broker Daemon is unavailable'
+
+    expect(handleError(error)).to.include(expectedMessage)
   })
 
-  const otherError = new Error('normal error')
+  it('logs a specific error if the broker daemon encountered an internal error', () => {
+    error = new Error('13 INTERNAL: Call terminated before completion')
+    error.details = 'Call terminated before completion'
+    error.code = 13
+    expectedMessage = 'Broker Daemon encountered an Internal Error: Call terminated before completion'
+
+    expect(handleError(error)).to.include(expectedMessage)
+  })
+
   it('logs the error message of the original error if the broker daemon is not down', () => {
-    expect(handleError(otherError)).to.eql(otherError)
+    error = new Error('normal error')
+    expectedMessage = 'normal error'
+
+    expect(handleError(error).message).to.include(expectedMessage)
   })
 })
