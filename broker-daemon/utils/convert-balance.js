@@ -18,10 +18,10 @@ const MARKET_CONVERSION = {
  *       channel opening.
  *
  * @function
- * @param {String} balance - int64 balance in the `currency` smallest unit e.g. satoshis
+ * @param {String} balance - int64 balance in the `currency` smallest unit (e.g. satoshis)
  * @param {String} currency - currency symbol
  * @param {String} currencyToConvertTo - symbol to convert to
- * @return {String} int64 string in the `currnecyToConvertTo` smallest unit e.g. litoshis
+ * @return {String} int64 string in the `currencyToConvertTo` smallest unit (e.g. litoshis)
  */
 function convertBalance (balance, currency, currencyToConvertTo) {
   let multiplier
