@@ -377,7 +377,7 @@ describe('cli wallet', () => {
     })
   })
 
-  describe.only('formatBalance', () => {
+  describe('formatBalance', () => {
     const NETWORK_STATUSES = program.__get__('NETWORK_STATUSES')
     const formatBalance = program.__get__('formatBalance')
 
