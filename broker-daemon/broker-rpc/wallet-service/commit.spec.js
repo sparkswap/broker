@@ -69,7 +69,8 @@ describe('commit', () => {
       name: 'Bitcoin',
       symbol: 'BTC',
       quantumsPerCommon: '100000000',
-      maxChannelBalance: '16777215'
+      maxChannelBalance: '16777215',
+      feeEstimate: '100'
     }]
 
     commit.__set__('convertBalance', convertBalanceStub)
@@ -108,7 +109,8 @@ describe('commit', () => {
 
     it('creates a channel through an btc engine with base units', () => {
       const baseUnitsBalance = Big(params.balance).times(currencyConfig[0].quantumsPerCommon).toString()
-      expect(btcEngine.createChannel).to.have.been.calledWith(paymentNetworkAddress, baseUnitsBalance)
+      const expectedBalanceWithFee = Big(baseUnitsBalance).minus(currencyConfig[0].feeEstimate).toString()
+      expect(btcEngine.createChannel).to.have.been.calledWith(paymentNetworkAddress, expectedBalanceWithFee)
     })
 
     it('retrieves the address from an inverse engine', () => {
@@ -136,7 +138,30 @@ describe('commit', () => {
     })
   })
 
-  describe('invalid market', () => {
+  context('missing fee estimate configuration', () => {
+    let revert
+
+    beforeEach(() => {
+      currencyConfig = [{
+        name: 'Bitcoin',
+        symbol: 'BTC',
+        quantumsPerCommon: '100000000',
+        maxChannelBalance: '16777215'
+      }]
+      revert = commit.__set__('currencyConfig', currencyConfig)
+    })
+
+    afterEach(() => {
+      revert()
+    })
+
+    it('throws an error if engine does not exist for symbol', () => {
+      const errorMessage = 'not been setup with a fee estimate'
+      return expect(commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
+    })
+  })
+
+  context('invalid market', () => {
     it('throws an error if engine does not exist for symbol', () => {
       const badParams = {symbol: 'BTC', market: 'BTC/BAD'}
       const errorMessage = `${badParams.market} is not being tracked as a market.`
@@ -144,13 +169,14 @@ describe('commit', () => {
     })
   })
 
-  describe('invalid engine types', () => {
+  context('invalid engine types', () => {
     it('throws an error if engine does not exist for symbol', () => {
       currencyConfig = [{
         name: 'BadBitcoin',
         symbol: 'BAD',
         quantumsPerCommon: '100000000',
-        maxChannelBalance: '16777215'
+        maxChannelBalance: '16777215',
+        feeEstimate: '100'
       }]
 
       commit.__set__('currencyConfig', currencyConfig)

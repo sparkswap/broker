@@ -122,7 +122,7 @@ async function commit ({ params, relayer, engines, orderbooks, logger }, { Empty
 
   // We remove fees from the balance to make sure that the user has enough funds
   // for the open/close channel transactions
-  const balanceWithFeeEstimate = Big(balance).minus(feeEstimate)
+  const balanceWithFeeEstimate = Big(balance).minus(feeEstimate).toString()
 
   try {
     await engine.createChannel(address, balanceWithFeeEstimate)
