@@ -377,7 +377,7 @@ describe('cli wallet', () => {
     })
   })
 
-  describe('formatBalance', () => {
+  describe.only('formatBalance', () => {
     const NETWORK_STATUSES = program.__get__('NETWORK_STATUSES')
     const formatBalance = program.__get__('formatBalance')
 
@@ -403,6 +403,10 @@ describe('cli wallet', () => {
 
     it('returns `Not Available` if balance is not provided', () => {
       expect(formatBalance(null, NETWORK_STATUSES.AVAILABLE)).to.eql('Not Available'.yellow)
+    })
+
+    it('returns `Not Available` if balance is blank', () => {
+      expect(formatBalance('', NETWORK_STATUSES.AVAILABLE)).to.eql('Not Available'.yellow)
     })
   })
 

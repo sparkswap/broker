@@ -250,8 +250,11 @@ const NETWORK_STATUSES = Object.freeze({
  * @param {String} status
  * @return {String} balance - formatted with size and color
  */
-function formatBalance (balance, status) {
-  if (!balance) {
+function formatBalance (balance, status, errorPresent) {
+  // If there were errors when receiving balances, the balance will come back
+  // as either a blank string or null. We set the balance to `Not Available` in this
+  // case, but should make sure we dont treat `0` as the same type.
+  if (balance === '' || balance === null) {
     return 'Not Available'.yellow
   }
 
@@ -272,6 +275,15 @@ function formatBalance (balance, status) {
 
   return fixedBalance
 }
+
+/**
+ * @constant
+ * @type {Object<key, String>}
+ * @default
+ */
+const CAPACITY_STATUSES = Object.freeze({
+  OK: 'OK'
+})
 
 /**
  * network-status
@@ -302,7 +314,7 @@ async function networkStatus (args, opts, logger) {
     })
 
     // If any balances in the following table are empty (which occurs if the engine is unavailable)
-    // then the text will show up as `N/A`.
+    // then the text will show up as `Not Available`.
     //
     // The user will then be prompted with a warning letting them know that we failed
     // to receive a balance for a particular currency
@@ -326,11 +338,11 @@ async function networkStatus (args, opts, logger) {
     logger.info(statusTable.toString())
     logger.info('')
 
-    if (baseSymbolCapacities.status !== 'OK') {
+    if (baseSymbolCapacities.status !== CAPACITY_STATUSES.OK) {
       logger.error(`${baseSymbol}: Received errors when requesting network status: ${baseSymbolCapacities.error}`.red)
     }
 
-    if (counterSymbolCapacities.status !== 'OK') {
+    if (counterSymbolCapacities.status !== CAPACITY_STATUSES.OK) {
       logger.error(`${counterSymbol}: Received errors when requesting network status: ${counterSymbolCapacities.error}`.red)
     }
   } catch (e) {
