@@ -139,7 +139,8 @@ async function commit ({ params, relayer, engines, orderbooks, logger }, { Empty
     // If the relayer call fails, the user can simply try and open channels again
     // on the same market. We handle this undesired state above where we check the
     // current status of channels and repair them if necessary.
-    throw new PublicError(`Funding error: Relayer is unavailable, Please try again`)
+    logger.error('Received error from relayer when trying to commit funds', { market, symbol, error: e.stack })
+    throw new PublicError(`Relayer error: Please try again`)
   }
 
   return new EmptyResponse({})
