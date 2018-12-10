@@ -1,5 +1,5 @@
 const { GrpcUnaryMethod } = require('grpc-methods')
-const { loadProto } = require('../../utils')
+const { loadProto, transformLogger } = require('../../utils')
 
 const healthCheck = require('./health-check')
 const getIdentity = require('./get-identity')
@@ -27,13 +27,15 @@ class AdminService {
     } = this.proto.broker.rpc
 
     this.implementation = {
-      healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer, engines, auth }, { HealthCheckResponse }).register(),
-      getIdentity: new GrpcUnaryMethod(getIdentity, this.messageId('getIdentity'), { logger, relayer, auth }, { GetIdentityResponse }).register()
+      healthCheck: new GrpcUnaryMethod(healthCheck, { logger: this.loggerFor('healthCheck'), relayer, engines, auth }, { HealthCheckResponse }).register(),
+      getIdentity: new GrpcUnaryMethod(getIdentity, { logger: this.loggerFor('getIdentity'), relayer, auth }, { GetIdentityResponse }).register()
     }
   }
 
-  messageId (methodName) {
-    return `[${this.serviceName}:${methodName}]`
+  loggerFor (methodName) {
+    return transformLogger(this.logger, (logFn, msg, ...args) => {
+      return logFn(`[${this.serviceName}:${methodName}] ${msg}`, ...args)
+    })
   }
 }
 

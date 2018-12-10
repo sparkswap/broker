@@ -6,6 +6,8 @@ const AdminService = rewire(path.resolve(__dirname))
 describe('AdminService', () => {
   let healthCheckStub
   let getIdentityStub
+  let transformLoggerStub
+  let transformedLogger
 
   let GrpcMethod
   let register
@@ -56,6 +58,13 @@ describe('AdminService', () => {
     healthCheckStub = sinon.stub()
     AdminService.__set__('healthCheck', healthCheckStub)
     AdminService.__set__('getIdentity', getIdentityStub)
+
+    transformedLogger = {
+      info: sinon.stub(),
+      error: sinon.stub()
+    }
+    transformLoggerStub = sinon.stub().returns(transformedLogger)
+    AdminService.__set__('transformLogger', transformLoggerStub)
   })
 
   beforeEach(() => {
@@ -121,13 +130,9 @@ describe('AdminService', () => {
       expect(callArgs[0]).to.be.equal(healthCheckStub)
     })
 
-    it('provides a message id', () => {
-      expect(callArgs[1]).to.be.equal('[AdminService:healthCheck]')
-    })
-
     describe('request options', () => {
       it('passes in the logger', () => {
-        expect(callArgs[2]).to.have.property('logger', logger)
+        expect(callArgs[2]).to.have.property('logger', transformedLogger)
       })
 
       it('passes in a relayer', () => {
@@ -171,13 +176,9 @@ describe('AdminService', () => {
       expect(callArgs[0]).to.be.equal(getIdentityStub)
     })
 
-    it('provides a message id', () => {
-      expect(callArgs[1]).to.be.equal('[AdminService:getIdentity]')
-    })
-
     describe('request options', () => {
       it('passes in the logger', () => {
-        expect(callArgs[2]).to.have.property('logger', logger)
+        expect(callArgs[2]).to.have.property('logger', transformedLogger)
       })
 
       it('passes in a relayer', () => {
