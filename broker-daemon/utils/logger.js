@@ -14,6 +14,7 @@
 const winston = require('winston')
 
 const sensitiveList = [
+  'username',
   'pass',
   'password',
   'passphrase',
