@@ -8,7 +8,7 @@ describe('handleError', () => {
 
   it('logs a specific error if the broker daemon is down', () => {
     error = new Error('14 UNAVAILABLE: Connect Failed')
-    errror.details = 'Connect Failed'
+    error.details = 'Connect Failed'
     error.code = 14
     expectedMessage = 'Broker Daemon is unavailable'
 
