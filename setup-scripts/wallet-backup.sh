@@ -22,7 +22,7 @@ CHAIN_ENV=regtest
 BTC_WALLET=/data/chain/bitcoin/$CHAIN_ENV/wallet.db
 LTC_WALLET=/data/chain/litecoin/$CHAIN_ENV/wallet.db
 
-# We need to grab the actual docker id's for use with `docker cp`
+# We need to grab lnd docker id's for use with `docker cp`
 LND_BTC_ID=$(docker-compose ps -q lnd_btc)
 LND_LTC_ID=$(docker-compose ps -q lnd_ltc)
 
