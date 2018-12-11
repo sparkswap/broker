@@ -40,7 +40,7 @@ const filterSensitive = winston.format((info) => {
   const updatedInfo = Object.assign({}, info)
 
   Object.entries(updatedInfo).forEach(([key, value]) => {
-    if (value != null) {
+    if (SENSITIVE_PROP_LIST.includes(key) && value != null) {
       updatedInfo[key] = SENSITIVE_REPLACEMENT
     }
   })
