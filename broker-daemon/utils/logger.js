@@ -13,11 +13,28 @@
 
 const winston = require('winston')
 
+const sensitiveList = [
+  'pass',
+  'password',
+  'passphrase',
+  'recoverySeed'
+]
+const filterSensitive = winston.format((info, opts) => {
+  return sensitiveList.reduce(([info, key]) => {
+    const updatedInfo = Object.assign({}, info)
+    if (updatedInfo[key] != null) {
+      updatedInfo[key] = '***FILTERED***'
+    }
+    return updatedInfo
+  }, info)
+});
+
 const logger = winston.createLogger({
   level: (process.env.NODE_ENV === 'production') ? 'info' : 'debug',
   format: winston.format.combine(
+    filterSensitive(),
     winston.format.timestamp(),
-    winston.format.json()
+    winston.format.json(),
   ),
   json: true,
   humanReadableUnhandledException: true,
@@ -27,6 +44,7 @@ const logger = winston.createLogger({
 if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
     format: winston.format.combine(
+      filterSensitive(),
       winston.format.timestamp(),
       winston.format.colorize(),
       winston.format.simple()
