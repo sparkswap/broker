@@ -437,7 +437,7 @@ describe('cli wallet', () => {
       balances = [
         { symbol: 'BTC', uncommittedBalance: '0.1677700000000000' }
       ]
-      walletBalanceStub = sinon.stub().returns({ balances })
+      walletBalanceStub = sinon.stub().resolves({ balances })
       commitStub = sinon.stub()
       askQuestionStub = sinon.stub().returns('Y')
       opts = { rpcAddress, market }
@@ -473,11 +473,25 @@ describe('cli wallet', () => {
     })
 
     it('logs an error if currency is not supported', async () => {
-      await commit(args, opts, logger)
       const badSymbol = 'bad'
-      await commit({ symbol: badSymbol }, opts, logger)
       const expectedError = sinon.match.instanceOf(Error)
         .and(sinon.match.has('message', `Currency is not supported by the CLI: ${badSymbol}`))
+
+      await commit({ symbol: badSymbol }, opts, logger)
+
+      expect(errorStub).to.have.been.calledWith(sinon.match(expectedError))
+    })
+
+    it('returns an error if the balances call for the currency returns an error', async () => {
+      balances = [
+        { symbol: 'BTC', uncommittedBalance: '', error: 'this is an error' }
+      ]
+      walletBalanceStub.resolves({ balances })
+      const expectedError = sinon.match.instanceOf(Error)
+        .and(sinon.match.has('message', `Error fetching current balances from ${symbol} engine`))
+
+      await commit(args, opts, logger)
+
       expect(errorStub).to.have.been.calledWith(sinon.match(expectedError))
     })
 

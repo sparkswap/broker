@@ -154,7 +154,11 @@ async function commit (args, opts, logger) {
 
     const { balances } = await client.walletService.getBalances({})
 
-    const { uncommittedBalance } = balances.find(({ symbol: s }) => s === symbol)
+    const { uncommittedBalance, error } = balances.find(({ symbol: s }) => s === symbol)
+
+    if (error) {
+      throw new Error(`Error fetching current balances from ${symbol} engine`)
+    }
 
     const totalUncommittedBalance = Big(uncommittedBalance)
 
