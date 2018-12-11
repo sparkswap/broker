@@ -37,11 +37,15 @@ const SENSITIVE_REPLACEMENT = '***FILTERED***'
  * Formatter to filter sensitive data from logs.
  */
 const filterSensitive = winston.format((info) => {
-  return SENSITIVE_PROP_LIST.reduce((info, key) => {
-    if (info[key] != null) {
-      info[key] = SENSITIVE_REPLACEMENT
+  const updatedInfo = Object.assign({}, info)
+
+  Object.entries(updatedInfo).forEach(([key, value]) => {
+    if (value != null) {
+      updatedInfo[key] = SENSITIVE_REPLACEMENT
     }
-  }, info)
+  })
+
+  return updatedInfo
 })
 
 const logger = winston.createLogger({
