@@ -21,7 +21,7 @@ const sensitiveList = [
   'recoverySeed'
 ]
 const filterSensitive = winston.format((info, opts) => {
-  return sensitiveList.reduce(([info, key]) => {
+  return sensitiveList.reduce((info, key) => {
     const updatedInfo = Object.assign({}, info)
     if (updatedInfo[key] != null) {
       updatedInfo[key] = '***FILTERED***'
