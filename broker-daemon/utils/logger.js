@@ -27,14 +27,14 @@ const filterSensitive = winston.format((info, opts) => {
     }
     return updatedInfo
   }, info)
-});
+})
 
 const logger = winston.createLogger({
   level: (process.env.NODE_ENV === 'production') ? 'info' : 'debug',
   format: winston.format.combine(
     filterSensitive(),
     winston.format.timestamp(),
-    winston.format.json(),
+    winston.format.json()
   ),
   json: true,
   humanReadableUnhandledException: true,
