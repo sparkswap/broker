@@ -27,15 +27,20 @@ const SENSITIVE_PROP_LIST = Object.freeze([
 ])
 
 /**
+ * String to replace sensitive data with.
+ * @constant
+ * @type {String}
+ */
+const SENSITIVE_REPLACEMENT = '***FILTERED***'
+
+/**
  * Formatter to filter sensitive data from logs.
  */
 const filterSensitive = winston.format((info) => {
-  return SENSITIVE_PROP_LIST.reduce((currentInfo, key) => {
-    const updatedInfo = Object.assign({}, currentInfo)
-    if (updatedInfo[key] != null) {
-      updatedInfo[key] = '***FILTERED***'
+  return SENSITIVE_PROP_LIST.reduce((info, key) => {
+    if (info[key] != null) {
+      info[key] = SENSITIVE_REPLACEMENT
     }
-    return updatedInfo
   }, info)
 })
 
