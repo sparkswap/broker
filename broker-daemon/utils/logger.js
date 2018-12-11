@@ -13,16 +13,25 @@
 
 const winston = require('winston')
 
-const sensitiveList = [
+/**
+ * List of properties whose contents should be filtered from logs.
+ * @constant
+ * @type {Array}
+ */
+const SENSITIVE_PROP_LIST = Object.freeze([
   'username',
   'pass',
   'password',
   'passphrase',
   'recoverySeed'
-]
-const filterSensitive = winston.format((info, opts) => {
-  return sensitiveList.reduce((info, key) => {
-    const updatedInfo = Object.assign({}, info)
+])
+
+/**
+ * Formatter to filter sensitive data from logs.
+ */
+const filterSensitive = winston.format((info) => {
+  return SENSITIVE_PROP_LIST.reduce((currentInfo, key) => {
+    const updatedInfo = Object.assign({}, currentInfo)
     if (updatedInfo[key] != null) {
       updatedInfo[key] = '***FILTERED***'
     }
