@@ -58,6 +58,6 @@
     "timeout-as-promise": "1.0.0"
   },
   "engines": {
-    "node": "8.x.x"
+    "node": "8.11.x"
   }
 }
