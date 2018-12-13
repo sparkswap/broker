@@ -93,7 +93,7 @@ const OrderStateMachine = StateMachine.factory({
    */
   transitions: [
     /**
-     * create transition: the first transtion, from 'none' (the default state) to 'created'
+     * create transition: the first transition, from 'none' (the default state) to 'created'
      * @type {Object}
      */
     { name: 'create', from: 'none', to: 'created' },

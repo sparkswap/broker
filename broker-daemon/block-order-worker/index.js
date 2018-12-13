@@ -125,9 +125,11 @@ class BlockOrderWorker extends EventEmitter {
         // its prefix range.
         Fill.rangeForBlockOrder(blockOrder.id)
       )
-      for (let fsm in fillStateMachines) {
-        fsm.applyFsmListeners(fsm, blockOrder)
-      }
+      const { FILLED, EXECUTED } = FillStateMachine.STATES
+      fillStateMachines.filter((fsm) => [FILLED, EXECUTED].includes(fsm.state)).forEach((fsm) => {
+        this.applyOsmListeners(fsm, blockOrder)
+        fsm.triggerState()
+      })
     }
   }
 

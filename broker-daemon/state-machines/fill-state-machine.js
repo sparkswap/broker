@@ -391,7 +391,8 @@ FillStateMachine.create = async function (initParams, ...createParams) {
 FillStateMachine.STATES = Object.freeze({
   NONE: 'none',
   CREATED: 'created',
-  FILLED: 'filled'
+  FILLED: 'filled',
+  EXECUTED: 'executed'
 })
 
 module.exports = FillStateMachine
