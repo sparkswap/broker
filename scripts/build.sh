@@ -43,7 +43,7 @@ if [ "$ARG" == "local" ]; then
   echo "Copying env simnet local file to .env"
   cp ./.env-simnet-sample ./.env
   echo "Copying dev file to 'docker-compose.override.yml'"
-  cp ./docker-compose.simnet.yml ./docker-compose.override.yml
+  cp ./docker-compose.simnet.sample.yml ./docker-compose.override.yml
 elif [ -f docker-compose.override.yml ]; then
   # Let the user know that an override file exists which may mean that the user
   # will have settings they do not expect
