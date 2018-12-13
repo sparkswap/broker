@@ -351,6 +351,8 @@ const OrderStateMachine = StateMachine.factory({
     onAfterGoto: function (lifecycle) {
       if (lifecycle.to === 'executing') {
         this.triggerComplete()
+      } else if (lifecycle.to === 'placed' || lifecycle.to === 'created') {
+        process.nextTick(() => this.tryTo('cancel'))
       }
     },
     /**

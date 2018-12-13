@@ -86,10 +86,11 @@ class StateMachinePersistence extends StateMachinePlugin {
   get persistedFields () {
     const fields = {
       state: function (state) {
-        if (state) {
-          this.goto(state)
-        } else {
+        const completedStates = ['rejected', 'cancelled']
+        if (state && completedStates.includes(state)) {
           return this.state
+        } else if (state) {
+          this.goto(state)
         }
       }
     }

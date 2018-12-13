@@ -1,7 +1,7 @@
 const EventEmitter = require('events')
 const { promisify } = require('util')
 
-const { BlockOrder, Order } = require('../models')
+const { BlockOrder, Order, Fill } = require('../models')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const {
   Big,
@@ -69,6 +69,63 @@ class BlockOrderWorker extends EventEmitter {
   async initialize () {
     await this.ordersByHash.ensureIndex()
     await this.ordersByOrderId.ensureIndex()
+    await this.retryIndeterminateOrdersFills()
+  }
+
+  async retryIndeterminateOrdersFills () {
+    const blockOrders = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder))
+
+    for (let blockOrder of blockOrders) {
+      const orderStateMachines = await getRecords(
+        this.ordersStore,
+        (key, value) => {
+          return OrderStateMachine.fromStore(
+            {
+              store: this.ordersStore,
+              logger: this.logger,
+              relayer: this.relayer,
+              engines: this.engines
+            },
+            {
+              key,
+              value
+            }
+          )
+        },
+        // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
+        // its prefix range.
+        Order.rangeForBlockOrder(blockOrder.id)
+      )
+      orderStateMachines.forEach((osm) => {
+        this.applyOsmListeners(osm, blockOrder)
+      })
+
+      const fillStateMachines = await getRecords(
+        this.fillsStore,
+        (key, value) => {
+          return { fillStateMachine:
+            FillStateMachine.fromStore(
+              {
+                store: this.fillsStore,
+                logger: this.logger,
+                relayer: this.relayer,
+                engines: this.engines
+              },
+              {
+                key,
+                value
+              }
+            )
+          }
+        },
+        // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
+        // its prefix range.
+        Fill.rangeForBlockOrder(blockOrder.id)
+      )
+      for (let fsm in fillStateMachines) {
+        fsm.applyFsmListeners(fsm, blockOrder)
+      }
+    }
   }
 
   /**
