@@ -69,10 +69,10 @@ class BlockOrderWorker extends EventEmitter {
   async initialize () {
     await this.ordersByHash.ensureIndex()
     await this.ordersByOrderId.ensureIndex()
-    await this.retryIndeterminateOrdersFills()
+    await this.settleIndeterminateOrdersFills()
   }
 
-  async retryIndeterminateOrdersFills () {
+  async settleIndeterminateOrdersFills () {
     const blockOrders = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder))
 
     for (let blockOrder of blockOrders) {
