@@ -1,4 +1,4 @@
-FROM node:8 as builder
+FROM node:8.11 as builder
 
 LABEL maintainer="SparkSwap <dev@sparkswap.com>"
 
@@ -67,7 +67,7 @@ RUN git clone --branch ${RELAYER_PROTO_BRANCH} https://github.com/sparkswap/rela
 
 
 # Start a new, final image to reduce size.
-FROM node:8 as final
+FROM node:8.11 as final
 
 RUN mkdir "/secure"
 
