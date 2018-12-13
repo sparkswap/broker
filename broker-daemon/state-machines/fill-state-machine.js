@@ -116,7 +116,12 @@ const FillStateMachine = StateMachine.factory({
      * execute transition: execute the swap itself
      * @type {Object}
      */
-    { name: 'execute', from: 'filled', to: 'executed' }
+    { name: 'execute', from: 'filled', to: 'executed' },
+    /**
+     * execute transition: execute the swap itself
+     * @type {Object}
+     */
+    { name: 'cancel', from: 'created', to: 'cancelled' }
   ],
   /**
    * Instantiate the data on the state machine
@@ -284,13 +289,20 @@ const FillStateMachine = StateMachine.factory({
     },
 
     /**
-     * Listen for order executions
-     * This is done based on the state and not the transition so that it gets actioned when being re-hydrated from storage
-     * [is that the right thing to do?]
+     * Call the trigger execution function. This is done this way so that we do not execute automatically if we are rehydrating
+     * a fill state machine in a filled state
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @return {void}
      */
-    onEnterFilled: function (lifecycle) {
+    onAfterFillOrder: function (lifecycle) {
+      this.triggerExecute(lifecycle)
+    },
+    /**
+     * Listen for order executions
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {void}
+     */
+    triggerExecute: function (lifecycle) {
       const { fillId } = this.fill
       this.logger.info(`In filled state, attempting to listen for executions on fill ${fillId}`)
 
@@ -369,6 +381,18 @@ const FillStateMachine = StateMachine.factory({
      */
     shouldRetry: function () {
       return !!this.fill.error && this.fill.error.message === FILL_ERROR_CODES.ORDER_NOT_PLACED
+    },
+    /**
+     * Trigger settle if we are re-hydrating state into the executing state
+     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @return {void}
+     */
+    triggerState: function (lifecycle) {
+      if (this.state === 'created') {
+        process.nextTick(() => this.tryTo('cancel'))
+      } else if (this.state === 'filled') {
+        this.triggerExecute()
+      }
     }
   }
 })
@@ -392,7 +416,8 @@ FillStateMachine.STATES = Object.freeze({
   NONE: 'none',
   CREATED: 'created',
   FILLED: 'filled',
-  EXECUTED: 'executed'
+  EXECUTED: 'executed',
+  CANCELLED: 'cancelled'
 })
 
 module.exports = FillStateMachine

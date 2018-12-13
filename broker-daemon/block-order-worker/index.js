@@ -527,6 +527,11 @@ class BlockOrderWorker extends EventEmitter {
       osm.removeAllListeners()
     })
 
+    // remove listeners if the osm is cancelled, should not affect block order status
+    osm.once('cancel', async () => {
+      osm.removeAllListeners()
+    })
+
     return osm
   }
 
@@ -678,6 +683,11 @@ class BlockOrderWorker extends EventEmitter {
           this.logger.error(`BlockOrder failed on setting a failed status from fill`, { id: blockOrder.id, error: e.stack })
         })
       }
+    })
+
+    // remove listeners if the fsm is cancelled, should not affect block order status
+    fsm.once('cancel', async () => {
+      fsm.removeAllListeners()
     })
   }
 }
