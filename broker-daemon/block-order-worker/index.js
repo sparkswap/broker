@@ -96,8 +96,11 @@ class BlockOrderWorker extends EventEmitter {
         // its prefix range.
         Order.rangeForBlockOrder(blockOrder.id)
       )
-      orderStateMachines.forEach((osm) => {
+
+      const { CREATED, PLACED, EXECUTING } = OrderStateMachine.STATES
+      orderStateMachines.filter((osm) => [CREATED, PLACED, EXECUTING].includes(osm.state)).forEach((osm) => {
         this.applyOsmListeners(osm, blockOrder)
+        osm.triggerState()
       })
 
       const fillStateMachines = await getRecords(

@@ -9,9 +9,10 @@ class StateMachineLogging extends StateMachinePlugin {
    * @param  {String} options.loggerName    Property of the host state machine that holds the logger
    * @return {StateMachineRejection}
    */
-  constructor ({ loggerName = 'logger' } = {}) {
+  constructor ({ loggerName = 'logger', skipTransitions = [] } = {}) {
     super()
     this.loggerName = loggerName
+    this.skipTransitions = skipTransitions
   }
 
   /**
@@ -24,19 +25,29 @@ class StateMachineLogging extends StateMachinePlugin {
 
     return {
       onBeforeTransition: function (lifecycle) {
-        this[plugin.loggerName].info(`BEFORE: ${lifecycle.transition}`)
+        if (!plugin.skipTransitions.includes(lifecycle.transition)) {
+          this[plugin.loggerName].info(`BEFORE: ${lifecycle.transition}`)
+        }
       },
       onLeaveState: function (lifecycle) {
-        this[plugin.loggerName].info(`LEAVE: ${lifecycle.from}`)
+        if (!plugin.skipTransitions.includes(lifecycle.transition)) {
+          this[plugin.loggerName].info(`LEAVE: ${lifecycle.from}`)
+        }
       },
       onEnterState: async function (lifecycle) {
-        this[plugin.loggerName].info(`ENTER: ${lifecycle.to}`)
+        if (!plugin.skipTransitions.includes(lifecycle.transition)) {
+          this[plugin.loggerName].info(`ENTER: ${lifecycle.to}`)
+        }
       },
       onAfterTransition: function (lifecycle) {
-        this[plugin.loggerName].info(`AFTER: ${lifecycle.transition}`)
+        if (!plugin.skipTransitions.includes(lifecycle.transition)) {
+          this[plugin.loggerName].info(`AFTER: ${lifecycle.transition}`)
+        }
       },
       onTransition: function (lifecycle) {
-        this[plugin.loggerName].info(`DURING: ${lifecycle.transition} (from ${lifecycle.from} to ${lifecycle.to})`)
+        if (!plugin.skipTransitions.includes(lifecycle.transition)) {
+          this[plugin.loggerName].info(`DURING: ${lifecycle.transition} (from ${lifecycle.from} to ${lifecycle.to})`)
+        }
       }
     }
   }

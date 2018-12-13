@@ -29,7 +29,7 @@ const OrderStateMachine = StateMachine.factory({
   plugins: [
     new StateMachineHistory(),
     new StateMachineRejection(),
-    new StateMachineLogging(),
+    new StateMachineLogging({ skipTransitions: ['goto'] }),
     new StateMachineEvents(),
     new StateMachinePersistence({
       /**
@@ -348,10 +348,10 @@ const OrderStateMachine = StateMachine.factory({
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @return {void}
      */
-    onAfterGoto: function (lifecycle) {
-      if (lifecycle.to === 'executing') {
+    triggerState: function (lifecycle) {
+      if (this.state === 'executing') {
         this.triggerComplete()
-      } else if (lifecycle.to === 'placed' || lifecycle.to === 'created') {
+      } else if (this.state === 'placed' || this.state === 'created') {
         process.nextTick(() => this.tryTo('cancel'))
       }
     },
