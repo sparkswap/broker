@@ -72,6 +72,11 @@ class BlockOrderWorker extends EventEmitter {
     await this.settleIndeterminateOrdersFills()
   }
 
+  /**
+   * When the broker goes down, there can be orders and fills in an unresolved state. We should rehydrate the state machines
+   * from the database and attempt to trigger them into a resolved state
+   * @return {Void}
+   */
   async settleIndeterminateOrdersFills () {
     const blockOrders = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder))
     for (let blockOrder of blockOrders) {
@@ -93,6 +98,11 @@ class BlockOrderWorker extends EventEmitter {
     }
   }
 
+  /**
+   * Given a blockOrder, return associated OrderStateMachines
+   * @param {BlockOrder}
+   * @return {Array<OrderStateMachine>}
+   */
   async getInterderminateOrderStateMachines (blockOrder) {
     const osms = await getRecords(
       this.ordersStore,
@@ -117,6 +127,11 @@ class BlockOrderWorker extends EventEmitter {
     return osms
   }
 
+  /**
+   * Given a blockOrder, return associated FillStateMachines
+   * @param {BlockOrder}
+   * @return {Array<FillStateMachine>}
+   */
   async getInterderminateFillStateMachines (blockOrder) {
     const fsms = await getRecords(
       this.fillsStore,
