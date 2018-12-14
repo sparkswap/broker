@@ -39,7 +39,7 @@ const FillStateMachine = StateMachine.factory({
     new StateMachineHistory(),
     new StateMachineRejection(),
     new StateMachineEvents(),
-    new StateMachineLogging(),
+    new StateMachineLogging({skipTransitions: ['goto']}),
     new StateMachinePersistence({
       /**
        * @type {StateMachinePersistence~KeyAccessor}

@@ -74,28 +74,8 @@ class BlockOrderWorker extends EventEmitter {
 
   async settleIndeterminateOrdersFills () {
     const blockOrders = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder))
-
     for (let blockOrder of blockOrders) {
-      const orderStateMachines = await getRecords(
-        this.ordersStore,
-        (key, value) => {
-          return OrderStateMachine.fromStore(
-            {
-              store: this.ordersStore,
-              logger: this.logger,
-              relayer: this.relayer,
-              engines: this.engines
-            },
-            {
-              key,
-              value
-            }
-          )
-        },
-        // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
-        // its prefix range.
-        Order.rangeForBlockOrder(blockOrder.id)
-      )
+      const orderStateMachines = await this.getInterderminateOrderStateMachines(blockOrder)
 
       const { CREATED, PLACED, EXECUTING } = OrderStateMachine.STATES
       orderStateMachines.filter((osm) => [CREATED, PLACED, EXECUTING].includes(osm.state)).forEach((osm) => {
@@ -103,34 +83,63 @@ class BlockOrderWorker extends EventEmitter {
         osm.triggerState()
       })
 
-      const fillStateMachines = await getRecords(
-        this.fillsStore,
-        (key, value) => {
-          return { fillStateMachine:
-            FillStateMachine.fromStore(
-              {
-                store: this.fillsStore,
-                logger: this.logger,
-                relayer: this.relayer,
-                engines: this.engines
-              },
-              {
-                key,
-                value
-              }
-            )
-          }
-        },
-        // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
-        // its prefix range.
-        Fill.rangeForBlockOrder(blockOrder.id)
-      )
-      const { FILLED, EXECUTED } = FillStateMachine.STATES
-      fillStateMachines.filter((fsm) => [FILLED, EXECUTED].includes(fsm.state)).forEach((fsm) => {
-        this.applyOsmListeners(fsm, blockOrder)
+      const fillStateMachines = await this.getInterderminateFillStateMachines(blockOrder)
+
+      const { CREATED: createdState, FILLED } = FillStateMachine.STATES
+      fillStateMachines.filter((fsm) => [createdState, FILLED].includes(fsm.state)).forEach((fsm) => {
+        this.applyFsmListeners(fsm, blockOrder)
         fsm.triggerState()
       })
     }
+  }
+
+  async getInterderminateOrderStateMachines (blockOrder) {
+    const osms = await getRecords(
+      this.ordersStore,
+      (key, value) => {
+        return OrderStateMachine.fromStore(
+          {
+            store: this.ordersStore,
+            logger: this.logger,
+            relayer: this.relayer,
+            engines: this.engines
+          },
+          {
+            key,
+            value
+          }
+        )
+      },
+      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
+      // its prefix range.
+      Order.rangeForBlockOrder(blockOrder.id)
+    )
+    return osms
+  }
+
+  async getInterderminateFillStateMachines (blockOrder) {
+    const fsms = await getRecords(
+      this.fillsStore,
+      (key, value) => {
+        return FillStateMachine.fromStore(
+          {
+            store: this.fillsStore,
+            logger: this.logger,
+            relayer: this.relayer,
+            engines: this.engines
+          },
+          {
+            key,
+            value
+          }
+        )
+      },
+      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
+      // its prefix range.
+      Fill.rangeForBlockOrder(blockOrder.id)
+    )
+
+    return fsms
   }
 
   /**

@@ -3,7 +3,7 @@ const { expect, sinon } = require('test/test-helper')
 const StateMachineLogging = require('./logging')
 const StateMachine = require('../state-machine')
 
-describe.only('StateMachineLogging', () => {
+describe('StateMachineLogging', () => {
   describe('observers', () => {
     let stateMachineLogging
     let Machine

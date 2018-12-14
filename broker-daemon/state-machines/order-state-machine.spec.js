@@ -726,7 +726,6 @@ describe('OrderStateMachine', () => {
 
     beforeEach(() => {
       osm = new OrderStateMachine({ store, logger, relayer, engines })
-      osm.tryTo = sinon.stub()
     })
 
     it('moves the state to the given state', async () => {
@@ -739,14 +738,6 @@ describe('OrderStateMachine', () => {
       await osm.goto('created')
 
       return expect(store.put).to.not.have.been.called
-    })
-
-    it('completes the order if in an executing state', async () => {
-      await osm.goto('executing')
-      await delay(5)
-
-      expect(osm.tryTo).to.have.been.calledOnce()
-      expect(osm.tryTo).to.have.been.calledWith('complete')
     })
   })
 
@@ -789,6 +780,64 @@ describe('OrderStateMachine', () => {
 
       expect(store.put).to.have.been.calledOnce()
       expect(store.put).to.have.been.calledWith(sinon.match(/^NO_ASSIGNED_ID\S+$/))
+    })
+  })
+
+  describe('#triggerState', () => {
+    let key
+    let state
+    let history
+    let error
+    let valueObject
+    let value
+
+    beforeEach(() => {
+      Order.fromObject = sinon.stub().returns({
+        valueObject: {}
+      })
+      key = 'fakeKey'
+      state = 'executing'
+      history = []
+      error = undefined
+      valueObject = {
+        order: { my: 'object' },
+        state,
+        history,
+        error
+      }
+      value = JSON.stringify(valueObject)
+    })
+
+    it('attempts to complete the order if it is in an executing state', async () => {
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
+      osm.triggerComplete = sinon.stub()
+      osm.triggerState()
+
+      expect(osm.triggerComplete).to.have.been.calledOnce()
+    })
+
+    it('cancels the order if it is in a created state', async () => {
+      valueObject.state = 'created'
+      value = JSON.stringify(valueObject)
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
+      osm.tryTo = sinon.stub()
+      osm.triggerState()
+      await delay(5)
+
+      expect(osm.tryTo).to.have.been.calledOnce()
+      expect(osm.tryTo).to.have.been.calledWith('cancel')
+    })
+
+    it('cancels the order if in an placed state', async () => {
+      valueObject.state = 'placed'
+      value = JSON.stringify(valueObject)
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
+      osm.tryTo = sinon.stub()
+      osm.triggerState()
+      await delay(5)
+
+      expect(osm.tryTo).to.have.been.calledOnce()
+      expect(osm.tryTo).to.have.been.calledWith('cancel')
     })
   })
 
