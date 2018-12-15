@@ -80,18 +80,16 @@ class BlockOrderWorker extends EventEmitter {
   async settleIndeterminateOrdersFills () {
     const blockOrders = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder))
     for (let blockOrder of blockOrders) {
-      const orderStateMachines = await this.getInterderminateOrderStateMachines(blockOrder)
+      const orderStateMachines = await this.getOrderStateMachines(blockOrder)
 
-      const { CREATED, PLACED, EXECUTING } = OrderStateMachine.STATES
-      orderStateMachines.filter((osm) => [CREATED, PLACED, EXECUTING].includes(osm.state)).forEach((osm) => {
+      orderStateMachines.filter((osm) => Object.values(OrderStateMachine.INDETERMINATE_STATES).includes(osm.state)).forEach((osm) => {
         this.applyOsmListeners(osm, blockOrder)
         osm.triggerState()
       })
 
-      const fillStateMachines = await this.getInterderminateFillStateMachines(blockOrder)
+      const fillStateMachines = await this.getFillStateMachines(blockOrder)
 
-      const { CREATED: createdState, FILLED } = FillStateMachine.STATES
-      fillStateMachines.filter((fsm) => [createdState, FILLED].includes(fsm.state)).forEach((fsm) => {
+      fillStateMachines.filter((fsm) => Object.values(FillStateMachine.INDETERMINATE_STATES).includes(fsm.state)).forEach((fsm) => {
         this.applyFsmListeners(fsm, blockOrder)
         fsm.triggerState()
       })
@@ -103,7 +101,7 @@ class BlockOrderWorker extends EventEmitter {
    * @param {BlockOrder}
    * @return {Array<OrderStateMachine>}
    */
-  async getInterderminateOrderStateMachines (blockOrder) {
+  async getOrderStateMachines (blockOrder) {
     const osms = await getRecords(
       this.ordersStore,
       (key, value) => {
@@ -132,7 +130,7 @@ class BlockOrderWorker extends EventEmitter {
    * @param {BlockOrder}
    * @return {Array<FillStateMachine>}
    */
-  async getInterderminateFillStateMachines (blockOrder) {
+  async getFillStateMachines (blockOrder) {
     const fsms = await getRecords(
       this.fillsStore,
       (key, value) => {

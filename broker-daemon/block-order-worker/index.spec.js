@@ -59,13 +59,25 @@ describe('BlockOrderWorker', () => {
       NONE: 'none',
       CREATED: 'created',
       PLACED: 'placed',
+      EXECUTING: 'executing',
       CANCELLED: 'cancelled'
+    }
+
+    OrderStateMachine.INDETERMINATE_STATES = {
+      CREATED: 'created',
+      PLACED: 'placed',
+      EXECUTING: 'executing'
     }
 
     FillStateMachine = sinon.stub()
     FillStateMachine.create = sinon.stub()
     FillStateMachine.STATES = {
       NONE: 'none',
+      CREATED: 'created',
+      FILLED: 'filled'
+    }
+
+    FillStateMachine.INDETERMINATE_STATES = {
       CREATED: 'created',
       FILLED: 'filled'
     }
@@ -318,8 +330,8 @@ describe('BlockOrderWorker', () => {
         bind: sinon.stub()
       }
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
-      worker.getInterderminateOrderStateMachines = sinon.stub().resolves(orderStateMachines)
-      worker.getInterderminateFillStateMachines = sinon.stub().resolves(fillStateMachines)
+      worker.getOrderStateMachines = sinon.stub().resolves(orderStateMachines)
+      worker.getFillStateMachines = sinon.stub().resolves(fillStateMachines)
       worker.applyOsmListeners = sinon.stub()
       worker.applyFsmListeners = sinon.stub()
     })
@@ -333,7 +345,7 @@ describe('BlockOrderWorker', () => {
     it('retrieves orderStateMachines for each blockOrder', async () => {
       await worker.settleIndeterminateOrdersFills()
 
-      expect(worker.getInterderminateFillStateMachines).to.have.been.calledWith({blockOrderId: '1234'})
+      expect(worker.getFillStateMachines).to.have.been.calledWith({blockOrderId: '1234'})
     })
 
     it('does not apply listeners to osm in finished state', async () => {
@@ -363,7 +375,7 @@ describe('BlockOrderWorker', () => {
     it('retrieves fillStateMachines for each blockOrder', async () => {
       await worker.settleIndeterminateOrdersFills()
 
-      expect(worker.getInterderminateOrderStateMachines).to.have.been.calledWith({blockOrderId: '1234'})
+      expect(worker.getOrderStateMachines).to.have.been.calledWith({blockOrderId: '1234'})
     })
 
     it('does not apply listeners to fsm in finished state', async () => {
@@ -391,7 +403,7 @@ describe('BlockOrderWorker', () => {
     })
   })
 
-  describe('getInterderminateOrderStateMachines', () => {
+  describe('getOrderStateMachines', () => {
     let ordersStore
     let getRecords
     let orderStateMachines = [
@@ -421,7 +433,7 @@ describe('BlockOrderWorker', () => {
       const fakeRange = 'myrange'
       Order.rangeForBlockOrder.returns(fakeRange)
 
-      await worker.getInterderminateOrderStateMachines(blockOrder)
+      await worker.getOrderStateMachines(blockOrder)
 
       expect(Order.rangeForBlockOrder).to.have.been.calledOnce()
       expect(Order.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id)
@@ -435,7 +447,7 @@ describe('BlockOrderWorker', () => {
       const fakeValue = JSON.stringify({ orderStateMachine: fakeOSM })
       OrderStateMachine.fromStore = sinon.stub()
 
-      await worker.getInterderminateOrderStateMachines(blockOrder)
+      await worker.getOrderStateMachines(blockOrder)
 
       const eachOrder = getRecords.withArgs(ordersStore).args[0][1]
 
@@ -445,7 +457,7 @@ describe('BlockOrderWorker', () => {
     })
   })
 
-  describe('getInterderminateFillStateMachines', () => {
+  describe('getFillStateMachines', () => {
     let fillsStore
     let getRecords
     let fillStateMachines = [
@@ -475,7 +487,7 @@ describe('BlockOrderWorker', () => {
       const fakeRange = 'myrange'
       Fill.rangeForBlockOrder.returns(fakeRange)
 
-      await worker.getInterderminateFillStateMachines(blockOrder)
+      await worker.getFillStateMachines(blockOrder)
 
       expect(Fill.rangeForBlockOrder).to.have.been.calledOnce()
       expect(Fill.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id)
@@ -489,7 +501,7 @@ describe('BlockOrderWorker', () => {
       const fakeValue = JSON.stringify({ fillStateMachine: fakeFSM })
       FillStateMachine.fromStore = sinon.stub()
 
-      await worker.getInterderminateFillStateMachines(blockOrder)
+      await worker.getFillStateMachines(blockOrder)
 
       const eachOrder = getRecords.withArgs(fillsStore).args[0][1]
 

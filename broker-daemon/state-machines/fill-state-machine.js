@@ -39,7 +39,9 @@ const FillStateMachine = StateMachine.factory({
     new StateMachineHistory(),
     new StateMachineRejection(),
     new StateMachineEvents(),
-    new StateMachineLogging({skipTransitions: ['goto']}),
+    new StateMachineLogging({
+      skipTransitions: [ 'goto' ]
+    }),
     new StateMachinePersistence({
       /**
        * @type {StateMachinePersistence~KeyAccessor}
@@ -418,6 +420,11 @@ FillStateMachine.STATES = Object.freeze({
   FILLED: 'filled',
   EXECUTED: 'executed',
   CANCELLED: 'cancelled'
+})
+
+FillStateMachine.INDETERMINATE_STATES = Object.freeze({
+  CREATED: 'created',
+  FILLED: 'filled'
 })
 
 module.exports = FillStateMachine

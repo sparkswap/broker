@@ -29,7 +29,9 @@ const OrderStateMachine = StateMachine.factory({
   plugins: [
     new StateMachineHistory(),
     new StateMachineRejection(),
-    new StateMachineLogging({ skipTransitions: ['goto'] }),
+    new StateMachineLogging({
+      skipTransitions: [ 'goto' ]
+    }),
     new StateMachineEvents(),
     new StateMachinePersistence({
       /**
@@ -430,6 +432,12 @@ OrderStateMachine.STATES = Object.freeze({
   CREATED: 'created',
   PLACED: 'placed',
   CANCELLED: 'cancelled',
+  EXECUTING: 'executing'
+})
+
+OrderStateMachine.INDETERMINATE_STATES = Object.freeze({
+  CREATED: 'created',
+  PLACED: 'placed',
   EXECUTING: 'executing'
 })
 
