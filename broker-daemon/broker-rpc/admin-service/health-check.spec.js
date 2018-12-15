@@ -71,28 +71,33 @@ describe('health-check', () => {
 
     let getEngineStatus
     let engineStub
-    let isAvailableStub
-    let statusOK
 
     beforeEach(() => {
-      isAvailableStub = sinon.stub()
       engineStub = {
-        isAvailable: isAvailableStub
+        isAvailable: sinon.stub().resolves(true),
+        unlocked: true
       }
-      statusOK = healthCheck.__get__('STATUS_CODES').OK
       getEngineStatus = healthCheck.__get__('getEngineStatus')
     })
 
     it('returns an OK response engine is available', async () => {
+      const { OK } = healthCheck.__get__('STATUS_CODES')
       const res = await getEngineStatus([ symbol, engineStub ])
-      expect(res).to.eql({ symbol, status: statusOK })
+      expect(res).to.eql({ symbol, status: OK })
     })
 
-    it('returns an error if engine.isAvailable fails', async () => {
-      const error = 'MY ERROR'
-      isAvailableStub.throws(error)
+    it('returns a LOCKED response if engine is available but locked', async () => {
+      const { LOCKED } = healthCheck.__get__('STATUS_CODES')
+      engineStub.unlocked = false
       const res = await getEngineStatus([ symbol, engineStub ])
-      expect(res).to.eql({ symbol, status: error })
+      expect(res).to.eql({ symbol, status: LOCKED })
+    })
+
+    it('returns NOT_AVAILABLE if engine is not available', async () => {
+      const { NOT_AVAILABLE } = healthCheck.__get__('STATUS_CODES')
+      engineStub.isAvailable.resolves(false)
+      const res = await getEngineStatus([ symbol, engineStub ])
+      expect(res).to.eql({ symbol, status: NOT_AVAILABLE })
     })
   })
 

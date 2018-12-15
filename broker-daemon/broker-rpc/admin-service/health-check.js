@@ -24,8 +24,6 @@ async function getEngineStatus ([ symbol, engine ]) {
 
   const isAvailable = await engine.isAvailable()
 
-  console.log(isAvailable)
-
   if (isAvailable && !engine.unlocked) {
     status = STATUS_CODES.LOCKED
   } else if (isAvailable) {
@@ -48,6 +46,7 @@ async function getRelayerStatus (relayer) {
     await relayer.healthService.check({})
     return STATUS_CODES.OK
   } catch (e) {
+    // TODO: Add status checks for relayer's response to be consistent
     return e.toString()
   }
 }
