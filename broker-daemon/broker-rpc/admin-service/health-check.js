@@ -4,7 +4,9 @@
  * @default
  */
 const STATUS_CODES = Object.freeze({
-  OK: 'OK'
+  OK: 'OK',
+  LOCKED: 'LOCKED',
+  NOT_AVAILABLE: 'NOT AVAILABLE'
 })
 
 /**
@@ -20,11 +22,16 @@ const STATUS_CODES = Object.freeze({
 async function getEngineStatus ([ symbol, engine ]) {
   let status
 
-  try {
-    await engine.isAvailable()
+  const isAvailable = await engine.isAvailable()
+
+  console.log(isAvailable)
+
+  if (isAvailable && !engine.unlocked) {
+    status = STATUS_CODES.LOCKED
+  } else if (isAvailable) {
     status = STATUS_CODES.OK
-  } catch (e) {
-    status = e.toString()
+  } else {
+    status = STATUS_CODES.NOT_AVAILABLE
   }
 
   return { symbol, status }
