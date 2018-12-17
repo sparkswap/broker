@@ -46,7 +46,7 @@ services:
       - RELAYER_CERT_HOST=${RELAYER_CERT_HOST}
       - RELAYER_CERT_PATH=/secure/relayer-root.pem
       # WARNING: Only disable broker SSL during development
-      - DISABLE_AUTH=true
+      - DISABLE_AUTH=false
       - RPC_PRIV_KEY=/secure/broker-rpc-tls.key
       - RPC_PUB_KEY=/secure/broker-rpc-tls.cert
       - RPC_USER=sparkswap

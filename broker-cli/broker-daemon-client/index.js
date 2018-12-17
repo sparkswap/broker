@@ -1,4 +1,5 @@
 const path = require('path')
+const os = require('os')
 const grpc = require('grpc')
 const caller = require('grpc-caller')
 const { readFileSync } = require('fs')
@@ -42,7 +43,7 @@ class BrokerDaemonClient {
     /**
      * Broker Daemon grpc host address
      *
-     * If not set, defaults to the user settings at ~/.sparkswap.js
+     * If not set, defaults to the user settings at ~/.sparkswap/sparkswap.js
      * or the installation settings at ../sparkswap.js
      *
      * Port defaults to DEFAULT_RPC_PORT if tld is passed in
@@ -73,8 +74,12 @@ class BrokerDaemonClient {
       if (!this.username) throw new Error('No username is specified for authentication')
       if (!this.password) throw new Error('No password is specified for authentication')
 
-      // Go back to the ./broker-cli/certs directory from the current directory
-      this.cert = readFileSync(path.join(PROJECT_ROOT, this.certPath))
+      let certPathParts = this.certPath.split(path.sep)
+      if (certPathParts[0] === '~') {
+        certPathParts[0] = os.homedir()
+      }
+      const certPath = path.join(...certPathParts)
+      this.cert = readFileSync(certPath)
 
       const channelCredentials = grpc.credentials.createSsl(this.cert)
       const callCredentials = basicAuth.generateBasicAuthCredentials(this.username, this.password)

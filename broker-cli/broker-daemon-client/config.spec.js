@@ -26,7 +26,7 @@ describe('config', () => {
 
     it('resolves a path to a users sparkswap configuration file', () => {
       loadConfig()
-      expect(resolveStub).to.be.calledWith(sinon.match.any, '.sparkswap.js')
+      expect(resolveStub).to.be.calledWith(sinon.match.any, '.sparkswap/sparkswap.js')
     })
 
     it('loads a config file', () => {
