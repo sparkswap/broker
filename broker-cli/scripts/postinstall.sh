@@ -1,9 +1,13 @@
 #!/bin/sh
 
 # Setup auto-completion for bash
-echo "source <(sparkswap completion bash)" >> ~/.bashrc && source ~/.bashrc
+if [-f ~/.bashrc]; then
+    echo "source <(sparkswap completion bash)" >> ~/.bashrc && source ~/.bashrc
+fi    
 # Setup auto-completion for zsh
-echo "source <(sparkswap completion zsh)" >> ~/.zshrc && source ~/.zshrc
+if [-f ~/.zshrc]; then
+    echo "source <(sparkswap completion zsh)" >> ~/.zshrc && source ~/.zshrc
+fi    
 
 echo "Successfully installed Ϟ SparkSwap Broker CLI (sparkswap)!"
 echo ""
