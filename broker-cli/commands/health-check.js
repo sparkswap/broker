@@ -60,6 +60,6 @@ async function healthCheck (args, opts, logger) {
 module.exports = (program) => {
   program
     .command('healthcheck', 'Checks the connection between Broker and the Exchange')
-    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
+    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use', validations.isHost)
     .action(healthCheck)
 }

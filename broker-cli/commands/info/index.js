@@ -28,7 +28,7 @@ module.exports = (program) => {
     .help(`Available Commands: ${Object.values(SUPPORTED_COMMANDS).join(', ')}`)
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
-    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
+    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use', validations.isHost)
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
@@ -50,12 +50,12 @@ module.exports = (program) => {
       }
     })
     .command(`info ${SUPPORTED_COMMANDS.SUPPORTED_MARKETS}`, 'Get the markets currently supported')
-    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
-    .command(`info ${SUPPORTED_COMMANDS.MARKET_STATS}`, 'Get the markets currently supported')
+    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use', validations.isHost)
+    .command(`info ${SUPPORTED_COMMANDS.MARKET_STATS}`, 'Get statistics (price ticker information) for a particular market/symbol for a period of the last 24 hours')
     .option('--market [marketName]', 'Relevant market name')
-    .command(`info ${SUPPORTED_COMMANDS.TRADES}`, 'Get the markets currently supported')
-    .argument('<since>', 'Datetime for lowerbound of range.', validations.isDate)
+    .command(`info ${SUPPORTED_COMMANDS.TRADES}`, 'Get detailed information about trades from a given time range')
+    .argument('<since>', 'Datetime for lowerbound of range', validations.isDate)
     .argument('<limit>', 'Number of records to be retrieved', validations.isPositiveInteger)
-    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
+    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use', validations.isHost)
     .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
 }

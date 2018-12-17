@@ -7,20 +7,20 @@
 
 const buyCommand = require('./buy')
 const sellCommand = require('./sell')
-const orderbookCommand = require('./orderbook')
-const healthCheckCommand = require('./health-check')
-const walletCommand = require('./wallet')
-const orderCommand = require('./order')
 const infoCommand = require('./info')
+const orderbookCommand = require('./orderbook')
+const orderCommand = require('./order')
+const walletCommand = require('./wallet')
 const identityCommand = require('./identity')
+const healthCheckCommand = require('./health-check')
 
 module.exports = {
   buyCommand,
   sellCommand,
-  orderbookCommand,
-  healthCheckCommand,
-  walletCommand,
-  orderCommand,
   infoCommand,
-  identityCommand
+  orderbookCommand,
+  orderCommand,
+  walletCommand,
+  identityCommand,
+  healthCheckCommand
 }

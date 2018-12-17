@@ -50,11 +50,11 @@ async function sell (args, opts, logger) {
 
 module.exports = (program) => {
   program
-    .command('sell', 'Submit an order to sell.')
-    .argument('<amount>', 'Amount of counter currency to sell.', validations.isDecimal)
+    .command('sell', 'Submit an order to sell')
+    .argument('<amount>', 'Amount of counter currency to sell', validations.isDecimal)
     .argument('[price]', 'Worst price that this order should be executed at. (If omitted, the market price will be used)', validations.isDecimal)
     .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
-    .option('--time-in-force [time-in-force]', 'Time in force policy for this order.', Object.keys(TIME_IN_FORCE), 'GTC')
-    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
+    .option('--time-in-force [time-in-force]', 'Time in force policy for this order', Object.keys(TIME_IN_FORCE), 'GTC')
+    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use', validations.isHost)
     .action(sell)
 }
