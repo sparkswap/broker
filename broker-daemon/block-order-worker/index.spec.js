@@ -59,13 +59,25 @@ describe('BlockOrderWorker', () => {
       NONE: 'none',
       CREATED: 'created',
       PLACED: 'placed',
+      EXECUTING: 'executing',
       CANCELLED: 'cancelled'
+    }
+
+    OrderStateMachine.INDETERMINATE_STATES = {
+      CREATED: 'created',
+      PLACED: 'placed',
+      EXECUTING: 'executing'
     }
 
     FillStateMachine = sinon.stub()
     FillStateMachine.create = sinon.stub()
     FillStateMachine.STATES = {
       NONE: 'none',
+      CREATED: 'created',
+      FILLED: 'filled'
+    }
+
+    FillStateMachine.INDETERMINATE_STATES = {
       CREATED: 'created',
       FILLED: 'filled'
     }
@@ -265,6 +277,7 @@ describe('BlockOrderWorker', () => {
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       worker.ordersByHash = { ensureIndex: sinon.stub().resolves() }
       worker.ordersByOrderId = { ensureIndex: sinon.stub().resolves() }
+      worker.settleIndeterminateOrdersFills = sinon.stub().resolves()
     })
 
     it('rebuilds the ordersByHash index', async () => {
@@ -283,6 +296,218 @@ describe('BlockOrderWorker', () => {
       worker.ordersByHash.ensureIndex.rejects()
 
       return expect(worker.initialize()).to.eventually.be.rejectedWith(Error)
+    })
+
+    it('settles orders and fills in indeterminate states', async () => {
+      await worker.initialize()
+
+      expect(worker.settleIndeterminateOrdersFills).to.have.been.calledOnce()
+    })
+  })
+
+  describe('settleIndeterminateOrdersFills', () => {
+    let worker
+    let createdOsm
+    let cancelledOsm
+    let orderStateMachines
+    let createdFsm
+    let executedFsm
+    let fillStateMachines
+    let getRecords
+
+    beforeEach(() => {
+      cancelledOsm = { state: 'cancelled', triggerState: sinon.stub() }
+      createdOsm = { state: 'created', triggerState: sinon.stub() }
+      createdFsm = { state: 'created', triggerState: sinon.stub() }
+      executedFsm = { state: 'executed', triggerState: sinon.stub() }
+      orderStateMachines = [cancelledOsm, createdOsm]
+      fillStateMachines = [createdFsm, executedFsm]
+
+      getRecords = sinon.stub()
+      getRecords = sinon.stub().resolves([{blockOrderId: '1234'}])
+      BlockOrderWorker.__set__('getRecords', getRecords)
+      BlockOrder.fromStorage = {
+        bind: sinon.stub()
+      }
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.getOrderStateMachines = sinon.stub().resolves(orderStateMachines)
+      worker.getFillStateMachines = sinon.stub().resolves(fillStateMachines)
+      worker.applyOsmListeners = sinon.stub()
+      worker.applyFsmListeners = sinon.stub()
+    })
+
+    it('retrieves all blockOrders from the store', async () => {
+      await worker.settleIndeterminateOrdersFills()
+
+      expect(getRecords).to.have.been.calledWith(store, BlockOrder.fromStorage.bind(BlockOrder))
+    })
+
+    it('retrieves orderStateMachines for each blockOrder', async () => {
+      await worker.settleIndeterminateOrdersFills()
+
+      expect(worker.getFillStateMachines).to.have.been.calledWith({blockOrderId: '1234'})
+    })
+
+    it('does not apply listeners to osm in finished state', async () => {
+      await worker.settleIndeterminateOrdersFills()
+
+      expect(worker.applyOsmListeners).to.not.have.been.calledWith(cancelledOsm, {blockOrderId: '1234'})
+    })
+
+    it('applies listeners to each osm in an indeterminate state', async () => {
+      await worker.settleIndeterminateOrdersFills()
+
+      expect(worker.applyOsmListeners).to.have.been.calledWith(createdOsm, {blockOrderId: '1234'})
+    })
+
+    it('triggers the osm to the next state if the osm is in an indeterminate state', async () => {
+      await worker.settleIndeterminateOrdersFills()
+
+      expect(createdOsm.triggerState).to.have.been.called()
+    })
+
+    it('does not trigger the osm to the next state if the osm is in a finished state', async () => {
+      await worker.settleIndeterminateOrdersFills()
+
+      expect(cancelledOsm.triggerState).to.not.have.been.called()
+    })
+
+    it('retrieves fillStateMachines for each blockOrder', async () => {
+      await worker.settleIndeterminateOrdersFills()
+
+      expect(worker.getOrderStateMachines).to.have.been.calledWith({blockOrderId: '1234'})
+    })
+
+    it('does not apply listeners to fsm in finished state', async () => {
+      await worker.settleIndeterminateOrdersFills()
+
+      expect(worker.applyFsmListeners).to.not.have.been.calledWith(executedFsm, {blockOrderId: '1234'})
+    })
+
+    it('applies listeners to each fsm in an indeterminate state', async () => {
+      await worker.settleIndeterminateOrdersFills()
+
+      expect(worker.applyFsmListeners).to.have.been.calledWith(createdFsm, {blockOrderId: '1234'})
+    })
+
+    it('triggers the fsm to the next state if the fsm is in an indeterminate state', async () => {
+      await worker.settleIndeterminateOrdersFills()
+
+      expect(createdFsm.triggerState).to.have.been.called()
+    })
+
+    it('does not trigger the fsm to the next state if the fsm is in a finished state', async () => {
+      await worker.settleIndeterminateOrdersFills()
+
+      expect(executedFsm.triggerState).to.not.have.been.called()
+    })
+  })
+
+  describe('getOrderStateMachines', () => {
+    let ordersStore
+    let getRecords
+    let orderStateMachines = [
+      {
+        id: 'someId'
+      }
+    ]
+    let worker
+    let blockOrder
+
+    beforeEach(() => {
+      ordersStore = {
+        put: sinon.stub()
+      }
+      blockOrder = {id: '1234'}
+      getRecords = sinon.stub().resolves(orderStateMachines)
+
+      getRecords.withArgs(ordersStore).resolves(orderStateMachines)
+
+      BlockOrderWorker.__set__('getRecords', getRecords)
+
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.ordersStore = ordersStore
+    })
+
+    it('retrieves all open orders associated with the block order', async () => {
+      const fakeRange = 'myrange'
+      Order.rangeForBlockOrder.returns(fakeRange)
+
+      await worker.getOrderStateMachines(blockOrder)
+
+      expect(Order.rangeForBlockOrder).to.have.been.calledOnce()
+      expect(Order.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id)
+      expect(getRecords).to.have.been.calledOnce()
+      expect(getRecords).to.have.been.calledWith(ordersStore, sinon.match.func, fakeRange)
+    })
+
+    it('inflates orderStateMachines', async () => {
+      const fakeKey = 'mykey'
+      const fakeOSM = 'somestate'
+      const fakeValue = JSON.stringify({ orderStateMachine: fakeOSM })
+      OrderStateMachine.fromStore = sinon.stub()
+
+      await worker.getOrderStateMachines(blockOrder)
+
+      const eachOrder = getRecords.withArgs(ordersStore).args[0][1]
+
+      eachOrder(fakeKey, fakeValue)
+      expect(OrderStateMachine.fromStore).to.have.been.calledOnce()
+      expect(OrderStateMachine.fromStore).to.have.been.calledWith({store: ordersStore, logger, relayer, engines}, {key: fakeKey, value: fakeValue})
+    })
+  })
+
+  describe('getFillStateMachines', () => {
+    let fillsStore
+    let getRecords
+    let fillStateMachines = [
+      {
+        id: 'someId'
+      }
+    ]
+    let worker
+    let blockOrder
+
+    beforeEach(() => {
+      fillsStore = {
+        put: sinon.stub()
+      }
+      blockOrder = {id: '1234'}
+      getRecords = sinon.stub().resolves(fillStateMachines)
+
+      getRecords.withArgs(fillsStore).resolves(fillStateMachines)
+
+      BlockOrderWorker.__set__('getRecords', getRecords)
+
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.fillsStore = fillsStore
+    })
+
+    it('retrieves all open fills associated with the block order', async () => {
+      const fakeRange = 'myrange'
+      Fill.rangeForBlockOrder.returns(fakeRange)
+
+      await worker.getFillStateMachines(blockOrder)
+
+      expect(Fill.rangeForBlockOrder).to.have.been.calledOnce()
+      expect(Fill.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id)
+      expect(getRecords).to.have.been.calledOnce()
+      expect(getRecords).to.have.been.calledWith(fillsStore, sinon.match.func, fakeRange)
+    })
+
+    it('inflates orderStateMachines', async () => {
+      const fakeKey = 'mykey'
+      const fakeFSM = 'somestate'
+      const fakeValue = JSON.stringify({ fillStateMachine: fakeFSM })
+      FillStateMachine.fromStore = sinon.stub()
+
+      await worker.getFillStateMachines(blockOrder)
+
+      const eachOrder = getRecords.withArgs(fillsStore).args[0][1]
+
+      eachOrder(fakeKey, fakeValue)
+      expect(FillStateMachine.fromStore).to.have.been.calledOnce()
+      expect(FillStateMachine.fromStore).to.have.been.calledWith({store: fillsStore, logger, relayer, engines}, {key: fakeKey, value: fakeValue})
     })
   })
 
@@ -1678,6 +1903,24 @@ describe('BlockOrderWorker', () => {
         expect(loggerErrorStub).to.have.been.calledWith(sinon.match('BlockOrder failed'), sinon.match.any)
       })
     })
+
+    describe('cancel event', async () => {
+      let cancelListener
+
+      it('registers an event on an order for order cancellation', async () => {
+        await worker._fillOrders(blockOrder, orders, targetDepth)
+
+        expect(onceStub).to.have.been.calledWith('cancel', sinon.match.func)
+      })
+
+      it('registers an event on an order for order cancellation', async () => {
+        await worker._fillOrders(blockOrder, orders, targetDepth)
+        cancelListener = onceStub.withArgs('cancel').args[1][1]
+        await cancelListener()
+
+        expect(removeAllListenersStub).to.have.been.called()
+      })
+    })
   })
 
   describe('#applyOsmListeners', () => {
@@ -1809,6 +2052,24 @@ describe('BlockOrderWorker', () => {
         await rejectListener()
         expect(failBlockOrderStub).to.have.been.calledOnce()
         expect(loggerErrorStub).to.have.been.calledWith(sinon.match('BlockOrder failed'), sinon.match.any)
+      })
+    })
+
+    describe('cancel event', () => {
+      let cancelListener
+
+      beforeEach(() => {
+        cancelListener = onceStub.withArgs('cancel').args[0][1]
+      })
+
+      it('registers an event on an order for order cancellation', async () => {
+        expect(onceStub).to.have.been.calledWith('cancel', sinon.match.func)
+      })
+
+      it('registers an event on an order for order cancellation', async () => {
+        await cancelListener()
+
+        expect(removeAllListenersStub).to.have.been.called()
       })
     })
   })

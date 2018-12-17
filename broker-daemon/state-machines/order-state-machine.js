@@ -29,7 +29,9 @@ const OrderStateMachine = StateMachine.factory({
   plugins: [
     new StateMachineHistory(),
     new StateMachineRejection(),
-    new StateMachineLogging(),
+    new StateMachineLogging({
+      skipTransitions: [ 'goto' ]
+    }),
     new StateMachineEvents(),
     new StateMachinePersistence({
       /**
@@ -93,7 +95,7 @@ const OrderStateMachine = StateMachine.factory({
    */
   transitions: [
     /**
-     * create transition: the first transtion, from 'none' (the default state) to 'created'
+     * create transition: the first transition, from 'none' (the default state) to 'created'
      * @type {Object}
      */
     { name: 'create', from: 'none', to: 'created' },
@@ -348,9 +350,11 @@ const OrderStateMachine = StateMachine.factory({
      * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
      * @return {void}
      */
-    onAfterGoto: function (lifecycle) {
-      if (lifecycle.to === 'executing') {
+    triggerState: function (lifecycle) {
+      if (this.state === 'executing') {
         this.triggerComplete()
+      } else if (this.state === 'created' || this.state === 'placed') {
+        process.nextTick(() => this.tryTo('cancel'))
       }
     },
     /**
@@ -428,6 +432,12 @@ OrderStateMachine.STATES = Object.freeze({
   CREATED: 'created',
   PLACED: 'placed',
   CANCELLED: 'cancelled',
+  EXECUTING: 'executing'
+})
+
+OrderStateMachine.INDETERMINATE_STATES = Object.freeze({
+  CREATED: 'created',
+  PLACED: 'placed',
   EXECUTING: 'executing'
 })
 

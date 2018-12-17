@@ -339,8 +339,6 @@ describe('FillStateMachine', () => {
     let fakeFill
     let fsm
     let fillOrderStub
-    let subscribeExecuteStub
-    let subscribeExecuteStream
     let invoice
     let feePaymentRequest
     let feeRequired
@@ -353,11 +351,7 @@ describe('FillStateMachine', () => {
       invoice = '1234'
       payInvoiceStub.resolves(invoice)
       fillOrderStub = sinon.stub().resolves({})
-      subscribeExecuteStream = {
-        on: sinon.stub(),
-        removeListener: sinon.stub()
-      }
-      subscribeExecuteStub = sinon.stub().returns(subscribeExecuteStream)
+
       feePaymentRequest = 'fee'
       feeRequired = true
       depositPaymentRequest = 'deposit'
@@ -378,8 +372,7 @@ describe('FillStateMachine', () => {
       }
       relayer = {
         takerService: {
-          fillOrder: fillOrderStub,
-          subscribeExecute: subscribeExecuteStub
+          fillOrder: fillOrderStub
         },
         identity: {
           authorize: sinon.stub()
@@ -388,6 +381,7 @@ describe('FillStateMachine', () => {
 
       fsm = new FillStateMachine({ store, logger, relayer, engines })
       fsm.fill = fakeFill
+      fsm.triggerExecute = sinon.stub()
 
       await fsm.goto('created')
     })
@@ -447,23 +441,64 @@ describe('FillStateMachine', () => {
       expect(fsm.fillOrder()).to.eventually.be.rejectedWith('ORDER_NOT_PLACED')
     })
 
-    it('does not subscribe to executions for fills that fail', async () => {
+    it('does not try to execute for fills that fail', async () => {
       fillOrderStub.rejects(new Error('fake error'))
 
-      expect(subscribeExecuteStub).to.not.have.been.called()
+      expect(fsm.triggerExecute).to.not.have.been.called()
+    })
+
+    it('triggers execution after the order has been filled', async () => {
+      await fsm.fillOrder()
+
+      expect(fsm.triggerExecute).to.have.been.called()
+    })
+  })
+
+  describe('#triggerExecute', () => {
+    let fakeFill
+    let fsm
+    let subscribeExecuteStub
+    let subscribeExecuteStream
+    let fillId
+
+    beforeEach(async () => {
+      subscribeExecuteStream = {
+        on: sinon.stub(),
+        removeListener: sinon.stub()
+      }
+      subscribeExecuteStub = sinon.stub().returns(subscribeExecuteStream)
+      fillId = '1234'
+
+      fakeFill = {
+        fillId,
+        paramsForFill: {
+          fillId
+        }
+      }
+      relayer = {
+        takerService: {
+          subscribeExecute: subscribeExecuteStub
+        },
+        identity: {
+          authorize: sinon.stub()
+        }
+      }
+
+      fsm = new FillStateMachine({ store, logger, relayer, engines })
+      fsm.fill = fakeFill
     })
 
     it('authorizes the request', async () => {
-      await fsm.fillOrder()
-      expect(relayer.identity.authorize).to.have.been.calledTwice()
+      await fsm.triggerExecute()
+      expect(relayer.identity.authorize).to.have.been.calledOnce()
       expect(relayer.identity.authorize).to.have.been.calledWith(fillId)
     })
 
     it('subscribes to fills on the relayer', async () => {
       const fakeAuth = 'my auth'
-      relayer.identity.authorize.onCall(1).returns(fakeAuth)
+      relayer.identity.authorize.onCall(0).returns(fakeAuth)
 
-      await fsm.fillOrder()
+      await fsm.triggerExecute()
       expect(subscribeExecuteStub).to.have.been.calledOnce()
       expect(subscribeExecuteStub).to.have.been.calledWith(sinon.match({ fillId, authorization: fakeAuth }))
     })
@@ -472,7 +507,7 @@ describe('FillStateMachine', () => {
       fsm.reject = sinon.stub()
       subscribeExecuteStream.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
 
-      await fsm.fillOrder()
+      await fsm.triggerExecute()
 
       await delay(10)
 
@@ -485,7 +520,7 @@ describe('FillStateMachine', () => {
       fsm.reject = sinon.stub()
       subscribeExecuteStream.on.withArgs('end').callsArgAsync(1)
 
-      await fsm.fillOrder()
+      await fsm.triggerExecute()
 
       await delay(10)
 
@@ -500,7 +535,7 @@ describe('FillStateMachine', () => {
       fsm.fill.setExecuteParams = sinon.stub()
       subscribeExecuteStream.on.withArgs('data').callsArgWithAsync(1, { makerAddress })
 
-      await fsm.fillOrder()
+      await fsm.triggerExecute()
       await delay(10)
 
       expect(fsm.fill.setExecuteParams).to.have.been.calledOnce()
@@ -512,7 +547,7 @@ describe('FillStateMachine', () => {
       fsm.tryTo = sinon.stub()
       subscribeExecuteStream.on.withArgs('data').callsArgWithAsync(1, {})
 
-      await fsm.fillOrder()
+      await fsm.triggerExecute()
       await delay(10)
 
       expect(fsm.tryTo).to.have.been.calledOnce()
@@ -523,7 +558,7 @@ describe('FillStateMachine', () => {
       fsm.reject = sinon.stub()
       subscribeExecuteStream.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
 
-      await fsm.fillOrder()
+      await fsm.triggerExecute()
 
       await delay(10)
 
@@ -537,7 +572,7 @@ describe('FillStateMachine', () => {
       fsm.reject = sinon.stub()
       subscribeExecuteStream.on.withArgs('end').callsArgAsync(1)
 
-      await fsm.fillOrder()
+      await fsm.triggerExecute()
 
       await delay(10)
 
@@ -551,7 +586,7 @@ describe('FillStateMachine', () => {
       fsm.reject = sinon.stub()
       subscribeExecuteStream.on.withArgs('data').callsArgWithAsync(1, {})
 
-      await fsm.fillOrder()
+      await fsm.triggerExecute()
 
       await delay(10)
 
@@ -685,6 +720,52 @@ describe('FillStateMachine', () => {
       fsm.fill.error = { error: { code: 'NOT_RELAYER_ERROR' } }
 
       expect(fsm.shouldRetry()).to.be.false()
+    })
+  })
+
+  describe('#triggerState', () => {
+    let key
+    let state
+    let history
+    let error
+    let valueObject
+    let value
+
+    beforeEach(() => {
+      Fill.fromObject = sinon.stub().returns({
+        valueObject: {}
+      })
+      key = 'fakeKey'
+      state = 'filled'
+      history = []
+      error = undefined
+      valueObject = {
+        fill: { my: 'object' },
+        state,
+        history,
+        error
+      }
+      value = JSON.stringify(valueObject)
+    })
+
+    it('attempts to complete the fill if it is in an executing state', async () => {
+      const fsm = await FillStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
+      fsm.triggerExecute = sinon.stub()
+      fsm.triggerState()
+
+      expect(fsm.triggerExecute).to.have.been.calledOnce()
+    })
+
+    it('cancels the fill if it is in a created state', async () => {
+      valueObject.state = 'created'
+      value = JSON.stringify(valueObject)
+      const fsm = await FillStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
+      fsm.tryTo = sinon.stub()
+      fsm.triggerState()
+      await delay(5)
+
+      expect(fsm.tryTo).to.have.been.calledOnce()
+      expect(fsm.tryTo).to.have.been.calledWith('cancel')
     })
   })
 

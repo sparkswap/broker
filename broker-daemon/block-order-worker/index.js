@@ -1,7 +1,7 @@
 const EventEmitter = require('events')
 const { promisify } = require('util')
 
-const { BlockOrder, Order } = require('../models')
+const { BlockOrder, Order, Fill } = require('../models')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const {
   Big,
@@ -69,6 +69,90 @@ class BlockOrderWorker extends EventEmitter {
   async initialize () {
     await this.ordersByHash.ensureIndex()
     await this.ordersByOrderId.ensureIndex()
+    await this.settleIndeterminateOrdersFills()
+  }
+
+  /**
+   * When the broker goes down, there can be orders and fills in an unresolved state. We should rehydrate the state machines
+   * from the database and attempt to trigger them into a resolved state
+   * @return {Void}
+   */
+  async settleIndeterminateOrdersFills () {
+    const blockOrders = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder))
+    for (let blockOrder of blockOrders) {
+      const orderStateMachines = await this.getOrderStateMachines(blockOrder)
+
+      orderStateMachines.filter((osm) => Object.values(OrderStateMachine.INDETERMINATE_STATES).includes(osm.state)).forEach((osm) => {
+        this.applyOsmListeners(osm, blockOrder)
+        osm.triggerState()
+      })
+
+      const fillStateMachines = await this.getFillStateMachines(blockOrder)
+
+      fillStateMachines.filter((fsm) => Object.values(FillStateMachine.INDETERMINATE_STATES).includes(fsm.state)).forEach((fsm) => {
+        this.applyFsmListeners(fsm, blockOrder)
+        fsm.triggerState()
+      })
+    }
+  }
+
+  /**
+   * Given a blockOrder, return associated OrderStateMachines
+   * @param {BlockOrder}
+   * @return {Array<OrderStateMachine>}
+   */
+  async getOrderStateMachines (blockOrder) {
+    const osms = await getRecords(
+      this.ordersStore,
+      (key, value) => {
+        return OrderStateMachine.fromStore(
+          {
+            store: this.ordersStore,
+            logger: this.logger,
+            relayer: this.relayer,
+            engines: this.engines
+          },
+          {
+            key,
+            value
+          }
+        )
+      },
+      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
+      // its prefix range.
+      Order.rangeForBlockOrder(blockOrder.id)
+    )
+    return osms
+  }
+
+  /**
+   * Given a blockOrder, return associated FillStateMachines
+   * @param {BlockOrder}
+   * @return {Array<FillStateMachine>}
+   */
+  async getFillStateMachines (blockOrder) {
+    const fsms = await getRecords(
+      this.fillsStore,
+      (key, value) => {
+        return FillStateMachine.fromStore(
+          {
+            store: this.fillsStore,
+            logger: this.logger,
+            relayer: this.relayer,
+            engines: this.engines
+          },
+          {
+            key,
+            value
+          }
+        )
+      },
+      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
+      // its prefix range.
+      Fill.rangeForBlockOrder(blockOrder.id)
+    )
+
+    return fsms
   }
 
   /**
@@ -465,6 +549,11 @@ class BlockOrderWorker extends EventEmitter {
       osm.removeAllListeners()
     })
 
+    // remove listeners if the osm is cancelled, should not affect block order status
+    osm.once('cancel', async () => {
+      osm.removeAllListeners()
+    })
+
     return osm
   }
 
@@ -616,6 +705,11 @@ class BlockOrderWorker extends EventEmitter {
           this.logger.error(`BlockOrder failed on setting a failed status from fill`, { id: blockOrder.id, error: e.stack })
         })
       }
+    })
+
+    // remove listeners if the fsm is cancelled, should not affect block order status
+    fsm.once('cancel', async () => {
+      fsm.removeAllListeners()
     })
   }
 }
