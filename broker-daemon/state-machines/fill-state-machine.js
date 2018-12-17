@@ -120,7 +120,7 @@ const FillStateMachine = StateMachine.factory({
      */
     { name: 'execute', from: 'filled', to: 'executed' },
     /**
-     * execute transition: execute the swap itself
+     * cancel transition: cancel the fill
      * @type {Object}
      */
     { name: 'cancel', from: 'created', to: 'cancelled' }
