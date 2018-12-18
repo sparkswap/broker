@@ -113,8 +113,8 @@ describe('BrokerDaemonClient', () => {
         rpcPass
       })
 
-      homedir = '/home/'
-      osStub = { homedir: sinon.stub().returns('/home/') }
+      homedir = '/home'
+      osStub = { homedir: sinon.stub().returns('/home') }
       joinStub = sinon.stub().returns(certPath)
       BrokerDaemonClient.__set__('path', { join: joinStub, sep: '/' })
       BrokerDaemonClient.__set__('os', osStub)
@@ -125,7 +125,7 @@ describe('BrokerDaemonClient', () => {
       expect(readFileSyncStub).to.have.been.calledWith(certPath)
     })
 
-    it('expands the filepath if it is pointing to root', () => {
+    it('expands the filepath if it is pointing to home', () => {
       joinStub = sinon.stub().returns(`${homedir}.sparkswap/config.js`)
       BrokerDaemonClient.__set__('path', { join: joinStub, sep: '/' })
       loadConfigStub.returns({
