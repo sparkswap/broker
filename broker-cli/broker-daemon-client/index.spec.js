@@ -29,7 +29,7 @@ describe('BrokerDaemonClient', () => {
 
   beforeEach(() => {
     address = '172.0.0.1:27492'
-    certPath = '/my/cert/path.cert'
+    certPath = 'my/cert/path.cert'
     certFile = 'mycertfile'
     sslCredential = 'sslcred'
     callCredential = 'callcred'
@@ -83,7 +83,7 @@ describe('BrokerDaemonClient', () => {
   beforeEach(() => {
     loadConfigStub.returns({
       rpcAddress: address,
-      rpcCert: certPath,
+      rpcCertPath: certPath,
       disableAuth: true
     })
   })
@@ -98,6 +98,9 @@ describe('BrokerDaemonClient', () => {
     let broker
     let rpcUser
     let rpcPass
+    let osStub
+    let homedir
+    let sep
 
     beforeEach(() => {
       rpcUser = 'sparkswap'
@@ -105,16 +108,37 @@ describe('BrokerDaemonClient', () => {
 
       loadConfigStub.returns({
         rpcAddress: address,
-        rpcCert: certPath,
+        rpcCertPath: certPath,
         disableAuth: false,
         rpcUser,
         rpcPass
       })
+
+      homedir = '/home/'
+      osStub = { homedir: sinon.stub().returns('/home/') }
+      joinStub = sinon.stub().returns(certPath)
+      BrokerDaemonClient.__set__('path', { join: joinStub, sep: '/' })
+      BrokerDaemonClient.__set__('os', osStub)
     })
 
     it('reads a cert file', () => {
       broker = new BrokerDaemonClient()
       expect(readFileSyncStub).to.have.been.calledWith(certPath)
+    })
+
+    it('expands the filepath if it is pointing to root', () => {
+      joinStub = sinon.stub().returns(`${homedir}.sparkswap/config.js`)
+      BrokerDaemonClient.__set__('path', { join: joinStub, sep: '/' })
+      loadConfigStub.returns({
+        rpcAddress: address,
+        rpcCertPath: '~/.sparkswap/config.js',
+        disableAuth: false,
+        rpcUser,
+        rpcPass
+      })
+      broker = new BrokerDaemonClient()
+      expect(osStub.homedir).to.have.been.called()
+      expect(readFileSyncStub).to.have.been.calledWith(`${homedir}.sparkswap/config.js`)
     })
 
     it('creates ssl credentials', () => {

@@ -43,8 +43,8 @@ class BrokerDaemonClient {
     /**
      * Broker Daemon grpc host address
      *
-     * If not set, defaults to the user settings at ~/.sparkswap/sparkswap.js
-     * or the installation settings at ../sparkswap.js
+     * If not set, defaults to the user settings at ~/.sparkswap/config.js
+     * or the installation settings at ../config.js
      *
      * Port defaults to DEFAULT_RPC_PORT if tld is passed in
      *
@@ -74,6 +74,8 @@ class BrokerDaemonClient {
       if (!this.username) throw new Error('No username is specified for authentication')
       if (!this.password) throw new Error('No password is specified for authentication')
 
+      // https://github.com/nodejs/node/issues/684 is still unresolved so we perform
+      // our own tilde expansion to get the full file path
       let certPathParts = this.certPath.split(path.sep)
       if (certPathParts[0] === '~') {
         certPathParts[0] = os.homedir()

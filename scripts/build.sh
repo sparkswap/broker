@@ -58,9 +58,9 @@ echo "Building broker docker images"
 EXTERNAL_ADDRESS=$EXTERNAL_ADDRESS npm run build-images
 
 echo "Copying certs"
-DIRECTORY=~/.sparkswap
 
 echo "Making certs directory"
+DIRECTORY=~/.sparkswap
 mkdir -p $DIRECTORY/certs
 
 CERT_PATH=/secure/broker-rpc-tls.cert
