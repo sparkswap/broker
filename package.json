@@ -43,8 +43,8 @@
     "type": "git",
     "url": "git+https://github.com/sparkswap/broker.git"
   },
-  "author": "sparkswap",
-  "license": "ISC",
+  "author": "Sparkswap <dev@sparkswap.com>",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/sparkswap/broker/issues"
   },

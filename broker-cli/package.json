@@ -1,7 +1,7 @@
 {
   "name": "broker-cli",
   "version": "0.2.0-alpha-preview",
-  "description": "Broker CLI utility to interact with the SparkSwap Broker Daemon",
+  "description": "Broker CLI utility to interact with the Sparkswap Broker Daemon",
   "main": "./bin/sparkswap",
   "scripts": {
     "format": "standard --fix",
@@ -24,7 +24,7 @@
     "type": "git",
     "url": "git+https://github.com/sparkswap/broker-cli.git"
   },
-  "author": "",
+  "author": "Sparkswap <dev@sparkswap.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/sparkswap/broker-cli/issues"
