@@ -94,7 +94,7 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
 
   // We don't want to reject an incoming HTLC if we know that there is an active outgoing one. If the outgoing HTLC is in flight or completed,
   // we should attempt to retrieve the associated preimage.
-  logger.debug(`Checking outbound HTLC status for swap ${swapHash}`)
+  logger.debug(`Checking outbound HTLC status for swap ${swapHash}`, { outboundSymbol })
   if (await outboundEngine.isPaymentPendingOrComplete(swapHash)) {
     logger.debug(`HTLC in progress for swap ${swapHash}, waiting for resolution`)
     const { paymentPreimage, permanentError } = await outboundEngine.getPaymentPreimage(swapHash)
