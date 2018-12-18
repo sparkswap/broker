@@ -2,6 +2,7 @@ require('colors')
 
 const BrokerDaemonClient = require('../broker-daemon-client')
 const { validations, handleError } = require('../utils')
+const { RPC_ADDRESS_HELP_STRING } = require('../utils/strings')
 
 /**
  * @constant
@@ -60,6 +61,6 @@ async function healthCheck (args, opts, logger) {
 module.exports = (program) => {
   program
     .command('healthcheck', 'Checks the connection between Broker and the Exchange')
-    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use', validations.isHost)
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .action(healthCheck)
 }
