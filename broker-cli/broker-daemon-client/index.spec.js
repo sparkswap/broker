@@ -100,7 +100,6 @@ describe('BrokerDaemonClient', () => {
     let rpcPass
     let osStub
     let homedir
-    let sep
 
     beforeEach(() => {
       rpcUser = 'sparkswap'
