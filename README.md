@@ -13,3 +13,7 @@ This repo contains source for the following products:
     - Daemon that handles interactions between the user's lightning nodes and the SparkSwap Relayer
 
 Documentation regarding installation and usage can be found in the [sparkswap docs](https://sparkswap.com/docs/getting-started).
+
+### License
+
+The Sparkswap Broker Daemon and Broker CLI are licensed under the [MIT License](./LICENSE).

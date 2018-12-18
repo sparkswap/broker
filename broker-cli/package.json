@@ -24,7 +24,7 @@
     "type": "git",
     "url": "git+https://github.com/sparkswap/broker-cli.git"
   },
-  "author": "",
+  "author": "sparkswap",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/sparkswap/broker-cli/issues"
