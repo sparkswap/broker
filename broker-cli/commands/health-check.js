@@ -10,7 +10,8 @@ const { validations, handleError } = require('../utils')
  */
 const STATUS_CODES = Object.freeze({
   OK: 'OK',
-  UNKNOWN: 'UNKNOWN'
+  UNKNOWN: 'UNKNOWN',
+  VALIDATED: 'VALIDATED'
 })
 
 /**
@@ -33,13 +34,17 @@ async function healthCheck (args, opts, logger) {
     const client = await new BrokerDaemonClient(rpcAddress)
 
     const {
-      engineStatus = STATUS_CODES.UNKNOWN,
+      engineStatus = [],
       relayerStatus = STATUS_CODES.UNKNOWN
     } = await client.adminService.healthCheck({})
 
+    if (!engineStatus.length) {
+      logger.info(`No Engine Statuses Returned`.red)
+    }
+
     engineStatus.forEach(({ symbol, status }) => {
-      if (status === STATUS_CODES.OK) {
-        logger.info(`Engine status for ${symbol}: ` + `${status}`.green)
+      if (status === STATUS_CODES.VALIDATED) {
+        logger.info(`Engine status for ${symbol}: ` + `${STATUS_CODES.OK}`.green)
       } else {
         logger.info(`Engine status for ${symbol}: ` + `${status}`.red)
       }
