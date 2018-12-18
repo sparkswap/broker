@@ -1,7 +1,13 @@
 #!/bin/sh
+set -e -u
+echo ""
+echo "Installing sparkswap config file"
+echo ""
+
 echo "Making directory"
 DIRECTORY=~/.sparkswap
 mkdir -p $DIRECTORY
+echo ""
 
 if [ ! -f "$DIRECTORY/sparkswap.js" ]; then
   echo "Copying sparkswap-sample.js to ~/.sparkswap/sparkswap.js"
@@ -10,3 +16,4 @@ else
   echo "Config file already exists, you can override it with your sample file by running:"
   echo "cp -n \"$(dirname $(which sparkswap))/../lib/node_modules/broker-cli/sample-sparkswap.js\" ~/.sparkswap/"
 fi
+echo ""
