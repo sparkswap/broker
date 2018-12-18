@@ -9,7 +9,8 @@
     "test": "NODE_PATH=. mocha './{,!(node_modules)/**/}*.spec.js'",
     "coverage": "nyc npm test",
     "ci-test": "npm run format && npm test",
-    "postinstall": "sh scripts/postinstall.sh"
+    "postinstall": "sh scripts/postinstall.sh",
+    "install-config": "sh scripts/install-config.sh"
   },
   "bin": {
     "sparkswap": "./bin/sparkswap"
