@@ -51,6 +51,7 @@ services:
       - RPC_PUB_KEY=/secure/broker-rpc-tls.cert
       - RPC_USER=sparkswap
       - RPC_PASS=sparkswap
+      - NETWORK=${NETWORK}
     ports:
       - '27492:27492'
       - '27592:27592'
