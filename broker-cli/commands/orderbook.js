@@ -3,6 +3,7 @@ const {
 } = require('../package.json')
 const BrokerDaemonClient = require('../broker-daemon-client')
 const { validations, Big, handleError } = require('../utils')
+const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../utils/strings')
 const Table = require('cli-table')
 const size = require('window-size')
 require('colors')
@@ -174,8 +175,8 @@ function calculateTableWidths (windowWidth) {
 
 module.exports = (program) => {
   program
-    .command('orderbook', 'View the order book for a specific market.')
-    .option('--market <marketName>', 'Relevant market name', validations.isMarketName, null, true)
-    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
+    .command('orderbook', 'View the order book for a specific market')
+    .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .action(orderbook)
 }

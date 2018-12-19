@@ -1,4 +1,5 @@
 const { validations } = require('../../utils')
+const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../../utils/strings')
 
 /**
  * Info
@@ -28,8 +29,8 @@ module.exports = (program) => {
     .help(`Available Commands: ${Object.values(SUPPORTED_COMMANDS).join(', ')}`)
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
-    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
-    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
+    .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
       const { market } = opts
@@ -50,12 +51,12 @@ module.exports = (program) => {
       }
     })
     .command(`info ${SUPPORTED_COMMANDS.SUPPORTED_MARKETS}`, 'Get the markets currently supported')
-    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
-    .command(`info ${SUPPORTED_COMMANDS.MARKET_STATS}`, 'Get the markets currently supported')
-    .option('--market [marketName]', 'Relevant market name')
-    .command(`info ${SUPPORTED_COMMANDS.TRADES}`, 'Get the markets currently supported')
-    .argument('<since>', 'Datetime for lowerbound of range.', validations.isDate)
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
+    .command(`info ${SUPPORTED_COMMANDS.MARKET_STATS}`, 'Get statistics (price ticker information) for a particular market for a period of the last 24 hours')
+    .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
+    .command(`info ${SUPPORTED_COMMANDS.TRADES}`, 'Get detailed information about trades from a given time range')
+    .argument('<since>', 'Start datetime in ISO format e.g. 2018-04-23T10:26:00.996Z', validations.isDate)
     .argument('<limit>', 'Number of records to be retrieved', validations.isPositiveInteger)
-    .option('--rpc-address [rpc-address]', 'Location of the RPC server to use.', validations.isHost)
-    .option('--market [marketName]', 'Relevant market name', validations.isMarketName)
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
+    .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
 }
