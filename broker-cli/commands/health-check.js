@@ -1,3 +1,4 @@
+const LndEngine = require('lnd-engine')
 require('colors')
 
 const BrokerDaemonClient = require('../broker-daemon-client')
@@ -10,8 +11,7 @@ const { validations, handleError } = require('../utils')
  */
 const STATUS_CODES = Object.freeze({
   OK: 'OK',
-  UNKNOWN: 'UNKNOWN',
-  VALIDATED: 'VALIDATED'
+  UNKNOWN: 'UNKNOWN'
 })
 
 /**
@@ -43,7 +43,7 @@ async function healthCheck (args, opts, logger) {
     }
 
     engineStatus.forEach(({ symbol, status }) => {
-      if (status === STATUS_CODES.VALIDATED) {
+      if (status === LndEngine.STATUSES.VALIDATED) {
         logger.info(`Engine status for ${symbol}: ` + `${STATUS_CODES.OK}`.green)
       } else {
         logger.info(`Engine status for ${symbol}: ` + `${status}`.red)
