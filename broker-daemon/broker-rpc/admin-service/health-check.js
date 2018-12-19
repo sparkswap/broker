@@ -4,7 +4,6 @@
  * @default
  */
 const STATUS_CODES = Object.freeze({
-  VALIDATED: 'VALIDATED',
   UNAVAILABLE: 'UNAVAILABLE',
   OK: 'OK'
 })
