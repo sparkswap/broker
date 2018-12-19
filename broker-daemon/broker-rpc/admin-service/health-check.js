@@ -1,34 +1,12 @@
 /**
  * @constant
- * @type {Object}
+ * @type {Object<key, String>}
  * @default
  */
 const STATUS_CODES = Object.freeze({
+  UNAVAILABLE: 'UNAVAILABLE',
   OK: 'OK'
 })
-
-/**
- * Returns an individual engine's status
- *
- * @param {Array} req
- * @param {String} req.symbol
- * @param {Object} req.engine
- * @return {Object} res
- * @return {String} res.symbol - an engine's currency symbol (e.g. BTC or LTC)
- * @return {String} res.status - an engine's status
- */
-async function getEngineStatus ([ symbol, engine ]) {
-  let status
-
-  try {
-    await engine.isAvailable()
-    status = STATUS_CODES.OK
-  } catch (e) {
-    status = e.toString()
-  }
-
-  return { symbol, status }
-}
 
 /**
  * Gets the relayer status through relayer's health check
@@ -36,12 +14,13 @@ async function getEngineStatus ([ symbol, engine ]) {
  * @param {RelayerClient} relayer - gRPC Client for interacting with the Relayer
  * @return {String} status - either 'OK' or an error message if the call fails
  */
-async function getRelayerStatus (relayer) {
+async function getRelayerStatus (relayer, { logger }) {
   try {
     await relayer.healthService.check({})
     return STATUS_CODES.OK
   } catch (e) {
-    return e.toString()
+    logger.error(`Relayer error during status check: `, { error: e.stack })
+    return STATUS_CODES.UNAVAILABLE
   }
 }
 
@@ -57,12 +36,13 @@ async function getRelayerStatus (relayer) {
  * @return {responses.HealthCheckResponse}
  */
 async function healthCheck ({ relayer, logger, engines }, { HealthCheckResponse }) {
-  const statusPromises = Array.from(engines).map(getEngineStatus)
-  const engineStatus = await Promise.all(statusPromises)
+  const engineStatus = Array.from(engines).map(([ symbol, engine ]) => {
+    return { symbol, status: engine.status }
+  })
 
   logger.debug(`Received status from engines`, { engineStatus })
 
-  const relayerStatus = await getRelayerStatus(relayer)
+  const relayerStatus = await getRelayerStatus(relayer, { logger })
 
   logger.debug(`Received status from relayer`, { relayerStatus })
 
