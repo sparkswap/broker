@@ -56,3 +56,15 @@ fi
 
 echo "Building broker docker images"
 EXTERNAL_ADDRESS=$EXTERNAL_ADDRESS npm run build-images
+
+echo "Copying certs"
+
+echo "Making certs directory"
+DIRECTORY=~/.sparkswap
+mkdir -p $DIRECTORY/certs
+
+CERT_PATH=/secure/broker-rpc-tls.cert
+SPARKSWAPD_ID=$(docker-compose ps -q sparkswapd)
+
+echo "Copying certs to local directory"
+docker cp $SPARKSWAPD_ID:$CERT_PATH $DIRECTORY/certs/broker-rpc-tls.cert

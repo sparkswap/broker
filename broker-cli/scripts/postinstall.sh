@@ -1,18 +1,21 @@
-#!/bin/sh
+#!/usr/bin/env bash
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+NC='\033[0m'
 
-echo "Successfully installed Ϟ SparkSwap Broker CLI (sparkswap)!"
+
+echo "${GREEN}Successfully installed Ϟ SparkSwap Broker CLI (sparkswap)!${NC}"
 echo ""
-echo "To set up your custom configuration for the SparkSwap CLI, copy 'sample-.sparkswap.js' to your home directory as '.sparkswap.js'."
+echo "${CYAN}To set up your custom configuration for the SparkSwap CLI, copy 'sample-config.js' to '~/.sparkswap/config.js'.${NC}"
 echo ""
-echo "To do this now, run the below (in bash):"
-echo "cp -n \"$(dirname $(which sparkswap))/../lib/node_modules/broker-cli/sample-.sparkswap.js\" ~/.sparkswap.js"
+echo "${CYAN}To do this now, run the below (in bash):${NC}"
+echo "cd $(dirname $(which sparkswap))/../lib/node_modules/broker-cli; npm run install-config"
 echo ""
-echo "You can also enable autocompletion of Sparkswap CLI."
+echo "${CYAN}You can also enable autocompletion of Sparkswap CLI.${NC}"
 echo ""
-echo "If your favorite shell is bash, run the below command:"
+echo "${CYAN}If your favorite shell is bash, run the below command:${NC}"
 echo "echo \"source <(sparkswap completion bash)\" >> ~/.bashrc && source ~/.bashrc"
-echo ""1:
-echo "To do it on zsh, run the below command:"
+echo ""
+echo "${CYAN}To do it on zsh, run the below command:${NC}"
 echo "echo \"source <(sparkswap completion zsh)\" >> ~/.zshrc && source ~/.zshrc"
-
 echo ""

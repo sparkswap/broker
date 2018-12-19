@@ -1,11 +1,11 @@
 /**
  * SparkSwap CLI User configuration
  *
- * In order to edit this file, first move it to your home directory
- * and rename it to '.sparkswap.js'
+ * In order to edit this file, first move it to .sparkswap in your home directory
+ * and rename it to 'config.js'
  *
  * On *nix in bash, you can do this by running:
- * `cp -n "$(dirname $(which sparkswap))/../lib/node_modules/broker-cli/sample-.sparkswap.js" ~/.sparkswap.js`
+ * `cp -n "$(dirname $(which sparkswap))/../lib/node_modules/broker-cli/sample-config.js" ~/.sparkswap/config.js`
  *
  */
 
@@ -20,14 +20,14 @@ module.exports = {
    * Default path of the Broker Daemons RPC Public Cert
    * @type {String}
    */
-  // rpcCertPath: 'certs/broker-rpc-tls.cert',
+  // rpcCertPath: '~/.sparkswap/certs/broker-rpc-tls.cert',
 
   /**
    * Configuration for SSL between the CLI and Daemon. This setting is only required
    * if you will be hosting the daemon remotely
    * @type {Boolean}
    */
-  // disableAuth: true
+  // disableAuth: false
 
   /**
    * The username specified on the remote Broker Daemon RPC
