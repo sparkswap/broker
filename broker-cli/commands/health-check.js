@@ -1,3 +1,4 @@
+const LndEngine = require('lnd-engine')
 require('colors')
 
 const BrokerDaemonClient = require('../broker-daemon-client')
@@ -34,13 +35,17 @@ async function healthCheck (args, opts, logger) {
     const client = await new BrokerDaemonClient(rpcAddress)
 
     const {
-      engineStatus = STATUS_CODES.UNKNOWN,
+      engineStatus = [],
       relayerStatus = STATUS_CODES.UNKNOWN
     } = await client.adminService.healthCheck({})
 
+    if (!engineStatus.length) {
+      logger.info(`No Engine Statuses Returned`.red)
+    }
+
     engineStatus.forEach(({ symbol, status }) => {
-      if (status === STATUS_CODES.OK) {
-        logger.info(`Engine status for ${symbol}: ` + `${status}`.green)
+      if (status === LndEngine.STATUSES.VALIDATED) {
+        logger.info(`Engine status for ${symbol}: ` + `${STATUS_CODES.OK}`.green)
       } else {
         logger.info(`Engine status for ${symbol}: ` + `${status}`.red)
       }

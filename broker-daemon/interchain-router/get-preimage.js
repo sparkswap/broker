@@ -83,6 +83,8 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
   const { inboundSymbol, inboundFillAmount, outboundSymbol, outboundFillAmount, takerAddress } = order
   const [ expectedSymbol, actualSymbol, expectedAmount, actualAmount ] = [ inboundSymbol, symbol, inboundFillAmount, amount ]
 
+  logger.debug(`Found routing entry for swap ${swapHash}`)
+
   const outboundEngine = engines.get(outboundSymbol)
   if (!outboundEngine) {
     const err = `No engine available for ${outboundSymbol}`
@@ -92,7 +94,9 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
 
   // We don't want to reject an incoming HTLC if we know that there is an active outgoing one. If the outgoing HTLC is in flight or completed,
   // we should attempt to retrieve the associated preimage.
+  logger.debug(`Checking outbound HTLC status for swap ${swapHash}`, { outboundSymbol })
   if (await outboundEngine.isPaymentPendingOrComplete(swapHash)) {
+    logger.debug(`HTLC in progress for swap ${swapHash}, waiting for resolution`)
     const { paymentPreimage, permanentError } = await outboundEngine.getPaymentPreimage(swapHash)
     return send({ paymentPreimage, permanentError })
   }
@@ -123,15 +127,16 @@ async function getPreimage ({ params, send, onCancel, onError, ordersByHash, eng
     return send({ permanentError: err.message })
   }
 
-  logger.debug(`Sending payment to ${takerAddress} to translate swap ${swapHash}`)
+  logger.debug(`Sending payment to ${takerAddress} to translate swap ${swapHash}`, { timeLockDelta, outboundFillAmount })
   const { paymentPreimage, permanentError } = await outboundEngine.translateSwap(takerAddress, swapHash, outboundFillAmount, timeLockDelta)
+  logger.debug(`translateSwap returned for swap ${swapHash}`)
 
   if (permanentError) {
     logger.error(permanentError)
     return send({ permanentError })
   }
 
-  logger.debug(`Completed payment to ${takerAddress} for swap ${swapHash}`)
+  logger.debug(`Successfully completed payment to ${takerAddress} for swap ${swapHash}`)
 
   // Note: we do NOT save the order here. The Interchain Router should treat orders as Read-only routing entries
   // Any state should be maintained by the engines themselves and the OrderStateMachine

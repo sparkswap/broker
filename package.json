@@ -20,7 +20,7 @@
     "coverage": "nyc npm test",
     "ci-test": "npm run format && npm test",
     "start-sparkswapd": "pm2-docker pm2.json --watch",
-    "validate-config": "standard ~/.sparkswap.js",
+    "validate-config": "standard ~/.sparkswap/config.js",
     "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp -r ./broker-daemon/proto/ ./broker-cli/proto/",
     "check-for-cycles": "madge --circular broker-daemon/"
   },
@@ -43,8 +43,8 @@
     "type": "git",
     "url": "git+https://github.com/sparkswap/broker.git"
   },
-  "author": "sparkswap",
-  "license": "ISC",
+  "author": "Sparkswap <dev@sparkswap.com>",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/sparkswap/broker/issues"
   },
