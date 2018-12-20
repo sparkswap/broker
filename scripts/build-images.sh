@@ -13,7 +13,8 @@
 
 set -e -u
 
-CERT_HOST=${EXTERNAL_ADDRESS:-localhost}
+KEY_PATH=${KEY_PATH}
+CERT_PATH=${CERT_PATH}
 RELAYER_PROTO_BRANCH=${RELAYER_PROTO_BRANCH:-master}
 
 # We now grab the commit-shas related to the branches set above. These will
@@ -31,6 +32,7 @@ RELAYER_PROTO_COMMIT_SHA=${RELAYER_COMMIT_SHA:-$CURRENT_RELAYER_PROTO_COMMIT_SHA
 # NOTE: The names specified with `-t` directly map to the service names in
 # the applicable services docker-compose file
 docker build -t sparkswap_sparkswapd -f ./docker/sparkswapd/Dockerfile ./  \
-  --build-arg CERT_HOST=$CERT_HOST \
   --build-arg RELAYER_PROTO_COMMIT_SHA=$RELAYER_PROTO_COMMIT_SHA \
-  --build-arg RELAYER_PROTO_BRANCH=$RELAYER_PROTO_BRANCH
+  --build-arg RELAYER_PROTO_BRANCH=$RELAYER_PROTO_BRANCH \
+  --build-arg KEY_PATH=$KEY_PATH \
+  --build-arg CERT_PATH=$CERT_PATH
