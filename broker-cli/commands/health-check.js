@@ -15,6 +15,8 @@ const STATUS_CODES = Object.freeze({
 })
 
 /**
+ * Engine status codes we expect to be returned from the engine, defined in:
+ * https://github.com/sparkswap/lnd-engine/blob/master/src/constants/engine-statuses.js
  * @constant
  * @type {Object<key, String>}
  * @default
