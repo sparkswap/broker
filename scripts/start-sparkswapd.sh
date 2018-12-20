@@ -9,9 +9,7 @@
 
 set -e
 if [ "$NETWORK" == "mainnet" ]; then
-  echo "Copying mainnet cert"
-  cp /home/app/LetsEncrypt-X1-Root.pem /secure/relayer-root.pem
-  echo "Relayer cert copied successfully"
+  echo "Using GRPC default certs"
 else
   echo "Downloading Relayer cert..."
   curl --silent -S --output /secure/relayer-root.pem "${RELAYER_CERT_HOST}/cert" || exit 1

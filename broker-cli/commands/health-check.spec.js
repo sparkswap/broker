@@ -29,8 +29,8 @@ describe('healthCheck', () => {
     errorSpy = sinon.spy()
     healthCheckStub = sinon.stub().returns({
       engineStatus: [
-        { symbol: 'BTC', status: 'OK' },
-        { symbol: 'LTC', status: 'OK' }
+        { symbol: 'BTC', status: 'VALIDATED' },
+        { symbol: 'LTC', status: 'NOT VALIDATED' }
       ],
       relayerStatus: 'OK'
     })
@@ -53,5 +53,15 @@ describe('healthCheck', () => {
   it('makes a request to the broker', async () => {
     await healthCheck(args, opts, logger)
     expect(healthCheckStub).to.have.been.called()
+  })
+
+  it('logs ok engine status if engine is validated', async () => {
+    await healthCheck(args, opts, logger)
+    expect(logger.info).to.have.been.calledWith('Engine status for BTC: ' + 'OK'.green)
+  })
+
+  it('logs other engine status if engine is not validated', async () => {
+    await healthCheck(args, opts, logger)
+    expect(logger.info).to.have.been.calledWith('Engine status for LTC: ' + 'NOT VALIDATED'.red)
   })
 })

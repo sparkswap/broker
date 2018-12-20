@@ -54,17 +54,59 @@ elif [ -f docker-compose.override.yml ]; then
   echo ""
 fi
 
+echo "Generating certificates for RPC"
+
+# Generate certs for the CLI
+rm -rf ./certs
+mkdir -p ./certs
+
+# Set paths for self-signed key pair
+KEY_PATH="./certs/broker-rpc-tls.key"
+CERT_PATH="./certs/broker-rpc-tls.cert"
+CSR_PATH="./certs/broker-rpc-csr.csr"
+EXTERNAL_ADDRESS=${EXTERNAL_ADDRESS:-localhost}
+
+openssl ecparam -genkey -name prime256v1 -out $KEY_PATH
+
+openssl req -new -sha256 \
+  -reqexts SAN \
+  -extensions SAN \
+  -config <(cat /etc/ssl/openssl.cnf \
+      <(printf "\n[SAN]\nsubjectAltName=DNS:${EXTERNAL_ADDRESS},DNS:localhost")) \
+  -key $KEY_PATH \
+  -out $CSR_PATH \
+  -subj "/CN=$EXTERNAL_ADDRESS/O=sparkswap"
+
+openssl req -x509 -sha256 \
+  -reqexts SAN \
+  -extensions SAN \
+  -config <(cat /etc/ssl/openssl.cnf \
+      <(printf "\n[SAN]\nsubjectAltName=DNS:${EXTERNAL_ADDRESS},DNS:localhost")) \
+  -days 36500 \
+  -key $KEY_PATH \
+  -in $CSR_PATH \
+  -out $CERT_PATH
+
+rm $CSR_PATH
+
 echo "Building broker docker images"
-EXTERNAL_ADDRESS=$EXTERNAL_ADDRESS npm run build-images
+KEY_PATH=$KEY_PATH CERT_PATH=$CERT_PATH npm run build-images
+
+# We can skip the copying of certs to a local directory if the current build is
+# a standalone broker
+if [ "$ARG" == "no-cli" ]; then
+  rm -rf ./certs
+  exit 0
+fi
 
 echo "Copying certs"
 
-echo "Making certs directory"
+echo "Making local ~/.sparkswap certs directory"
 DIRECTORY=~/.sparkswap
 mkdir -p $DIRECTORY/certs
 
-CERT_PATH=/secure/broker-rpc-tls.cert
-SPARKSWAPD_ID=$(docker-compose ps -q sparkswapd)
+echo "Copying certs to local certs directory"
+cp $CERT_PATH $DIRECTORY/certs/broker-rpc-tls.cert
 
-echo "Copying certs to local directory"
-docker cp $SPARKSWAPD_ID:$CERT_PATH $DIRECTORY/certs/broker-rpc-tls.cert
+# Clean certs directory after use
+rm -rf ./certs

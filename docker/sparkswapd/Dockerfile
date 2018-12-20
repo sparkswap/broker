@@ -15,16 +15,16 @@ RUN apt-get update && \
 #
 #############################################
 
-ARG CERT_HOST
-RUN : "${CERT_HOST:?CERTHOST Build argument needs to be set.}"
-RUN mkdir -p '/secure'
+ARG KEY_PATH
+RUN : "${KEY_PATH:?KEY_PATH Build argument needs to be set.}"
+ARG CERT_PATH
+RUN : "${CERT_PATH:?CERT_PATH Build argument needs to be set.}"
+
 ARG TLS_KEY="/secure/broker-rpc-tls.key"
 ARG TLS_CERT="/secure/broker-rpc-tls.cert"
-ARG TLS_CSR="/secure/broker-rpc-csr.csr"
-RUN openssl ecparam -genkey -name prime256v1 -noout -out ${TLS_KEY}
-RUN openssl req -new -sha256 -key ${TLS_KEY} -out ${TLS_CSR} -subj "/CN=${CERT_HOST}/O=sparkswap"
-RUN openssl req -x509 -sha256 -days 36500 -key ${TLS_KEY} -in ${TLS_CSR} -out ${TLS_CERT}
-RUN rm ${TLS_CSR}
+
+COPY ${KEY_PATH} ${TLS_KEY}
+COPY ${CERT_PATH} ${TLS_CERT}
 
 #############################################
 # Keypair Generation for Relayer
