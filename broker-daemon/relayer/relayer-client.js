@@ -43,7 +43,13 @@ class RelayerClient {
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
 
     this.identity = Identity.load(privKeyPath, pubKeyPath)
-    const channelCredentials = credentials.createSsl(readFileSync(certPath))
+    let channelCredentials
+    // TODO figure out a way for this check to not be in the application code
+    if (process.env.NETWORK === 'mainnet') {
+      channelCredentials = credentials.createSsl()
+    } else {
+      channelCredentials = credentials.createSsl(readFileSync(certPath))
+    }
     // `service_url` in the line below is defined by the grpc lib, so we need to tell eslint to ignore snake case
     // eslint-disable-next-line
     const callCredentials = credentials.createFromMetadataGenerator(({ service_url }, callback) => {
