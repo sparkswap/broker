@@ -40,7 +40,7 @@ services:
       - LTC_LND_RPC_HOST=lnd_ltc:10009
       - LTC_LND_TLS_CERT=/shared/lnd-engine-tls-ltc.cert
       - LTC_LND_MACAROON=/shared/lnd-engine-admin-ltc.macaroon
-      - GRPC_SSL_CIPHER_SUITES=HIGH+ECDSA
+      - GRPC_SSL_CIPHER_SUITES=HIGH+ECDSA:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384
       - MARKETS=BTC/LTC
       - RELAYER_RPC_HOST=${RELAYER_RPC_HOST}
       - RELAYER_CERT_HOST=${RELAYER_CERT_HOST}
