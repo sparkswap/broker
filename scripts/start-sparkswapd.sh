@@ -10,7 +10,7 @@
 set -e
 if [ "$NETWORK" == "mainnet" ]; then
   echo "Copying mainnet cert"
-  cp /home/app/LetsEncrypt-X1-Root.pem /secure/relayer-root.pem
+  cp /home/app/DST-Root-X3.pem /secure/relayer-root.pem
   echo "Relayer cert copied successfully"
 else
   echo "Downloading Relayer cert..."
