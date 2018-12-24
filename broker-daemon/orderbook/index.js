@@ -9,12 +9,12 @@ const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
 
 /**
- * Time, in milliseconds, between tries to get the market events from
- * the Relayer.
+ * Maximum time, in milliseconds, between tries to get the
+ * market events from the Relayer.
  * @constant
  * @type {Number}
  */
-const RETRY_WATCHMARKET = 5000
+const MAX_RETRY_INTERVAL = 60000
 
 /**
  * @class Current state of the orderbook in a particular market
@@ -38,6 +38,9 @@ class Orderbook {
     this.bidIndex = new BidIndex(this.store)
     this.logger = logger
     this.synced = false
+    this._retries = 0
+    this._reachedMaxInterval = false
+    this._delay = 0
   }
 
   get baseSymbol () {
@@ -85,6 +88,7 @@ class Orderbook {
      */
     const onWatcherSync = () => {
       this.synced = true
+      this._resetBackoff()
       this.logger.info(`Market ${this.marketName} synced.`)
     }
 
@@ -97,12 +101,12 @@ class Orderbook {
       this.synced = false
       watcher.removeListener('sync', onWatcherSync)
       watcher.removeListener('error', onWatcherError)
+      this._updateExponentialDelayPeriod()
 
-      this.logger.info(`Market ${this.marketName} unavailable, retrying in ${RETRY_WATCHMARKET}ms`, { error })
-      // TODO: exponential backoff?
+      this.logger.info(`Market ${this.marketName} unavailable, retrying in ${this._delay}ms`, { error })
       setTimeout(() => {
         this.watchMarket()
-      }, RETRY_WATCHMARKET)
+      }, this._delay)
     }
 
     /**
@@ -336,6 +340,39 @@ class Orderbook {
       lastUpdated,
       sequence
     }
+  }
+
+  /**
+   * Updates retry count and calculates next delay period if the
+   * MAX_RETRY_INTERVAL hasn't been surpassed
+   *
+   * @private
+   * @return {void}
+   */
+  _updateExponentialDelayPeriod () {
+    if (this._reachedMaxInterval) {
+      return
+    }
+
+    this._retries++
+    const newDelay = (2 ** this._retries - 1) * 1000
+    if (newDelay > MAX_RETRY_INTERVAL) {
+      this._delay = MAX_RETRY_INTERVAL
+      this._reachedMaxInterval = true
+    } else {
+      this._delay = newDelay
+    }
+  }
+
+  /**
+   * Resets exponential backoff parameters to initial state
+   * @private
+   * @return {void}
+   */
+  _resetBackoff () {
+    this._retries = 0
+    this._reachedMaxInterval = false
+    this._delay = 0
   }
 }
 
