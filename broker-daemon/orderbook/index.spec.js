@@ -284,10 +284,17 @@ describe('Orderbook', () => {
       it('sets the synced status to true', () => {
         expect(orderbook.synced).to.be.true()
       })
+
+      it('resets exponential backoff parameters', () => {
+        expect(orderbook._retries).to.be.equal(0)
+        expect(orderbook._reachedMaxInterval).to.equal(false)
+        expect(orderbook._delay).to.be.equal(0)
+      })
     })
 
     describe('watcher ends', () => {
       let timeoutStub
+      let onEnd
 
       beforeEach(() => {
         orderbook.watchMarket = sinon.stub()
@@ -295,7 +302,7 @@ describe('Orderbook', () => {
 
         Orderbook.__set__('setTimeout', timeoutStub)
 
-        const onEnd = watcher.once.withArgs('end').args[0][1]
+        onEnd = watcher.once.withArgs('end').args[0][1]
 
         onEnd()
       })
@@ -312,9 +319,26 @@ describe('Orderbook', () => {
         expect(watcher.removeListener).to.have.been.calledWith('error', sinon.match.func)
       })
 
-      it('sets a 5 second timeout', () => {
+      it('exponentially backs off after repeated end events', () => {
         expect(timeoutStub).to.have.been.calledOnce()
-        expect(timeoutStub).to.have.been.calledWith(sinon.match.func, 5000)
+        expect(timeoutStub).to.have.been.calledWith(sinon.match.func, 1000)
+
+        const expectedResults = [3000, 7000, 15000, 31000]
+
+        for (let i = 0; i < expectedResults.length; i++) {
+          onEnd()
+          const expected = expectedResults[i]
+          expect(timeoutStub.lastCall).to.have.been.calledWith(sinon.match.func, expected)
+          expect(orderbook._reachedMaxInterval).to.equal(false)
+        }
+
+        // Test the MAX_RETRY_INTERVAL is reached and maintained
+        for (let i = 0; i < 2; i++) {
+          onEnd()
+          const expected = 60000
+          expect(timeoutStub.lastCall).to.have.been.calledWith(sinon.match.func, expected)
+          expect(orderbook._reachedMaxInterval).to.equal(true)
+        }
       })
 
       it('re-initializes after the timeout', () => {
