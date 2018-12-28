@@ -27,7 +27,7 @@ module.exports = {
    * if you will be hosting the daemon remotely
    * @type {Boolean}
    */
-  disableAuth: false
+  disableAuth: false,
 
   /**
    * The username specified on the remote Broker Daemon RPC
