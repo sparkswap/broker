@@ -38,9 +38,6 @@ class Orderbook {
     this.bidIndex = new BidIndex(this.store)
     this.logger = logger
     this.synced = false
-    this._retries = 0
-    this._reachedMaxInterval = false
-    this._delay = 0
   }
 
   get baseSymbol () {
@@ -74,61 +71,73 @@ class Orderbook {
    * @return {Promise} Resolves when market is being watched (not necessarily when it is synced)
    */
   async watchMarket () {
-    this.logger.debug(`Watching market ${this.marketName}...`)
+    let retries = 0
 
-    const { baseSymbol, counterSymbol } = this
-    const { lastUpdated, sequence } = await this.lastUpdate()
-    const params = { baseSymbol, counterSymbol, lastUpdated, sequence }
+    const watchMarketCall = async () => {
+      this.logger.debug(`Watching market ${this.marketName}...`)
 
-    const watcher = this.relayer.watchMarket(this.eventStore, params)
+      const { baseSymbol, counterSymbol } = this
+      const { lastUpdated, sequence } = await this.lastUpdate()
+      const params = { baseSymbol, counterSymbol, lastUpdated, sequence }
 
-    /**
-     * Handle sync events from the watcher by updating internal state
-     * @return {void}
-     */
-    const onWatcherSync = () => {
-      this.synced = true
-      this._resetBackoff()
-      this.logger.info(`Market ${this.marketName} synced.`)
-    }
+      const watcher = this.relayer.watchMarket(this.eventStore, params)
 
-    /**
-     * Handle end events from the watcher by retrying
-     * @param  {Error} error
-     * @return {void}
-     */
-    const onWatcherEnd = (error) => {
-      this.synced = false
-      watcher.removeListener('sync', onWatcherSync)
-      watcher.removeListener('error', onWatcherError)
-      this._updateExponentialDelayPeriod()
+      /**
+       * Handle sync events from the watcher by updating internal state
+       * @return {void}
+       */
+      const onWatcherSync = () => {
+        this.synced = true
+        retries = 0
+        this.logger.info(`Market ${this.marketName} synced.`)
+      }
 
-      this.logger.info(`Market ${this.marketName} unavailable, retrying in ${this._delay}ms`, { error })
-      setTimeout(() => {
+      /**
+       * Handle end events from the watcher by retrying
+       * @param  {Error} error
+       * @return {void}
+       */
+      const onWatcherEnd = (error) => {
+        this.synced = false
+        watcher.removeListener('sync', onWatcherSync)
+        watcher.removeListener('error', onWatcherError)
+
+        // Calculate the exponential backoff delay interval using the binary exponential backoff algorithm
+        // defined in https://en.wikipedia.org/wiki/Exponential_backoff
+        //
+        // Note: Repeated retransmission wait time is typically defined as a random variable between
+        // 0 and 2^c - 1, where c is the number of retries, however here we increase delay time using
+        // 2^c - 1 until MAX_RETRY_INTERVAL is reached.
+        retries++
+        const delay = Math.min((2 ** retries - 1) * 1000, MAX_RETRY_INTERVAL)
+
+        this.logger.info(`Market ${this.marketName} unavailable, retrying in ${delay}ms`, { error })
+        setTimeout(watchMarketCall, delay)
+      }
+
+      /**
+       * Handle error events from the watcher by clearing our store and retrying
+       * @param  {Error} error
+       * @return {Promise<void>}
+       */
+      const onWatcherError = async (error) => {
+        this.synced = false
+
+        watcher.removeListener('sync', onWatcherSync)
+        watcher.removeListener('end', onWatcherEnd)
+
+        this.logger.info(`Market ${this.marketName} encountered sync'ing error, re-building`, { error })
+        await watcher.migrate()
+        await this.index.ensureIndex()
         this.watchMarket()
-      }, this._delay)
+      }
+
+      watcher.once('sync', onWatcherSync)
+      watcher.once('end', onWatcherEnd)
+      watcher.once('error', onWatcherError)
     }
 
-    /**
-     * Handle error events from the watcher by clearing our store and retrying
-     * @param  {Error} error
-     * @return {Promise<void>}
-     */
-    const onWatcherError = async (error) => {
-      this.synced = false
-
-      watcher.removeListener('sync', onWatcherSync)
-      watcher.removeListener('end', onWatcherEnd)
-
-      this.logger.info(`Market ${this.marketName} encountered sync'ing error, re-building`, { error })
-      await watcher.migrate()
-      await this.index.ensureIndex()
-      this.watchMarket()
-    }
-
-    watcher.once('sync', onWatcherSync)
-    watcher.once('end', onWatcherEnd)
-    watcher.once('error', onWatcherError)
+    await watchMarketCall()
   }
 
   /**
@@ -340,39 +349,6 @@ class Orderbook {
       lastUpdated,
       sequence
     }
-  }
-
-  /**
-   * Updates retry count and calculates next delay period if the
-   * MAX_RETRY_INTERVAL hasn't been surpassed
-   *
-   * @private
-   * @return {void}
-   */
-  _updateExponentialDelayPeriod () {
-    if (this._reachedMaxInterval) {
-      return
-    }
-
-    this._retries++
-    const newDelay = (2 ** this._retries - 1) * 1000
-    if (newDelay > MAX_RETRY_INTERVAL) {
-      this._delay = MAX_RETRY_INTERVAL
-      this._reachedMaxInterval = true
-    } else {
-      this._delay = newDelay
-    }
-  }
-
-  /**
-   * Resets exponential backoff parameters to initial state
-   * @private
-   * @return {void}
-   */
-  _resetBackoff () {
-    this._retries = 0
-    this._reachedMaxInterval = false
-    this._delay = 0
   }
 }
 
