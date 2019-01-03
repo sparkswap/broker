@@ -75,5 +75,5 @@ COPY --from=builder /home/app/proto /home/app/proto
 
 WORKDIR /home/app
 
-RUN npm i --quiet
+RUN npm install --quiet
 RUN npm run broker-proto
