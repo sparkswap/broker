@@ -43,21 +43,14 @@ ARG ID_PUB_KEY='/secure/broker-identity.public.pem'
 RUN openssl ecparam -name prime256v1 -genkey -noout -out ${ID_PRIV_KEY}
 RUN openssl ec -in ${ID_PRIV_KEY} -pubout -out ${ID_PUB_KEY}
 
-########
-# Relayer proto file
-
 #############################################
 # Broker installation steps
 #############################################
 
+# Copy local broker files to container
 COPY . /home/app
 
-# We remove the package-lock file here so that our github dependencies like lnd-engine
-# and grpc-methods can continue to update if they are unstable.
-#
-# TODO: Remove this line when lnd-engine is ready for versioning
-RUN rm -f package-lock.json
-
+# Download relayer proto and add it to container
 ARG RELAYER_PROTO_BRANCH
 ARG RELAYER_PROTO_COMMIT_SHA
 
@@ -71,7 +64,7 @@ FROM node:8.11 as final
 
 RUN mkdir "/secure"
 
-# Copy Certs
+# Copy certs
 COPY --from=builder /secure /secure
 
 # Copy the application
