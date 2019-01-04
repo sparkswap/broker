@@ -4,16 +4,27 @@
 # Generates and sets environment variables for broker
 #
 ################################################
+RED='\033[0;31m'
+NC='\033[0m'
 
+FILE=".env"
+if [ -f $FILE ]; then
+   echo -e "${RED}$FILE already exists, you can edit it manually if you need to make changes.${NC}"
+   echo ""
+   exit 1
+fi
 # Set the network in the .env file based on user input
-echo "Enter the network: 1 for MainNet, 2 for TestNet"
-read ADDR
-if [ $ADDR = '1' ]; then
-  sed -i "" -e "s/.*NETWORK.*/NETWORK=mainnet/" .env
-elif [ $ADDR = '2' ]; then
-  sed -i "" -e "/NETWORK/c\NETWORK=testnet" .env
+echo "Enter the network:"
+echo "m - MainNet"
+echo "t - TestNet"
+read NETWORK
+
+if [ $NETWORK = 'm' ]; then
+  cp .env-mainnet-sample .env
+elif [ $NETWORK = 't' ]; then
+  cp .env-testnet-sample .env
 else
-  echo "$ADDR is not a valid option for network"
+  echo "$NETWORK is not a valid option for network"
   exit 1
 fi
 
