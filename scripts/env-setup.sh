@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+################################################
+# Generates and sets environment variables for broker
+#
+################################################
+
 # Set the network in the .env file based on user input
 echo "Enter the network: 1 for MainNet, 2 for TestNet"
 read ADDR
@@ -27,7 +32,7 @@ RPC_USER
 RPC_PASS)
 
 
-# Generate and set username/passwords for engines and broker rpc 
+# Generate and set username/passwords for engines and broker rpc
 for i in "${array[@]}"
 do
    string=$(base64 < /dev/urandom | tr -d 'O0Il1+\:/' | head -c 24)
