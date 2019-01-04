@@ -22,7 +22,8 @@
     "start-sparkswapd": "pm2-docker pm2.json --watch",
     "validate-config": "standard ~/.sparkswap/config.js",
     "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp -r ./broker-daemon/proto/ ./broker-cli/proto/",
-    "check-for-cycles": "madge --circular broker-daemon/"
+    "check-for-cycles": "madge --circular broker-daemon/",
+    "env-setup": "bash ./scripts/env-setup.sh"
   },
   "bin": {
     "sparkswapd": "./broker-daemon/bin/sparkswapd",
