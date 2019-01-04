@@ -32,8 +32,15 @@ fi
 echo "Enter your public IP address:"
 read IP_ADDRESS
 
-sed -i "" -e "s/^EXTERNAL_BTC_ADDRESS.*/EXTERNAL_BTC_ADDRESS=$IP_ADDRESS/" .env
-sed -i "" -e "s/^EXTERNAL_LTC_ADDRESS.*/EXTERNAL_LTC_ADDRESS=$IP_ADDRESS/" .env
+if [ "$OS" = 'Darwin' ]; then
+  # for MacOS
+  sed -i '' -e "s/^EXTERNAL_BTC_ADDRESS.*/EXTERNAL_BTC_ADDRESS=$IP_ADDRESS/" .env
+  sed -i '' -e "s/^EXTERNAL_LTC_ADDRESS.*/EXTERNAL_LTC_ADDRESS=$IP_ADDRESS/" .env
+else
+  # for Linux and Windows
+  sed -i'' -e "s/^EXTERNAL_BTC_ADDRESS.*/EXTERNAL_BTC_ADDRESS=$IP_ADDRESS/" .env
+  sed -i'' -e "s/^EXTERNAL_LTC_ADDRESS.*/EXTERNAL_LTC_ADDRESS=$IP_ADDRESS/" .env
+fi
 
 array=(BTC_RPC_USER
 BTC_RPC_PASS
@@ -47,5 +54,11 @@ RPC_PASS)
 for i in "${array[@]}"
 do
    string=$(base64 < /dev/urandom | tr -d 'O0Il1+\:/' | head -c 24)
-   sed -i "" -e "s/^$i.*/$i=$string/" .env
+   if [ "$OS" = 'Darwin' ]; then
+     # for MacOS
+     sed -i '' -e "s/^$i.*/$i=$string/" .env
+   else
+     # for Linux and Windows
+     sed -i'' -e "s/^$i.*/$i=$string/" .env
+   fi
 done
