@@ -1,19 +1,58 @@
 /**
- * @author konsumer
- * @see {@link https://github.com/konsumer/grpc-dynamic-gateway}
+ * Sparkswap GRPC Gateway HTTP Proxy
  *
+ * This loads a proto file and creates REST endpoints from it's google.api.http declarations.
+ *
+ * We 'forked' this library from the origin author konsumer which can be found at
+ * the link below.
+ *
+ * @see {@link https://github.com/konsumer/grpc-dynamic-gateway}
  */
 
-const requiredGrpc = require('grpc')
+const grpc = require('grpc')
 const express = require('express')
 require('colors')
 const fs = require('fs')
 const schema = require('protocol-buffers-schema')
 
-const supportedMethods = ['get', 'put', 'post', 'delete', 'patch'] // supported HTTP methods
-const paramRegex = /{(\w+)}/g // regex to find gRPC params in url
+/**
+ * Supported HTTP methods for proto file
+ * @constant
+ * @type {Array}
+ * @default
+ */
+const supportedMethods = Object.freeze([
+  'get',
+  'put',
+  'post',
+  'delete',
+  'patch'
+])
 
-const lowerFirstChar = str => str.charAt(0).toLowerCase() + str.slice(1)
+/**
+ * Regexp to find gRPC params in url
+ * @constant
+ * @type {RegExp}
+ * @default
+ */
+const paramRegex = /{(\w+)}/g
+
+/**
+ * @constant
+ * @type {String}
+ * @default
+ */
+const GRPC_API_OPTION_ID = '.google.api.http'
+
+/**
+ * Takes a string (from grpc proto file) and formats to camelCase
+ *
+ * @param {String} str
+ * @returns {String} string formatted in camelCase
+ */
+function lowerFirstChar (str) {
+  return str.charAt(0).toLowerCase() + str.slice(1)
+}
 
 /**
  * generate middleware to proxy to gRPC defined by proto files
@@ -23,7 +62,7 @@ const lowerFirstChar = str => str.charAt(0).toLowerCase() + str.slice(1)
  * @param  {string} include      Path to find all includes
  * @return {Function}            Middleware
  */
-const middleware = (protoFiles, grpcLocation, credentials = requiredGrpc.credentials.createInsecure(), debug = true, include = '', grpc = requiredGrpc) => {
+const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.createInsecure(), debug = true, include = '') => {
   const router = express.Router()
   const clients = {}
   if (include.endsWith('/')) {
@@ -48,12 +87,15 @@ const middleware = (protoFiles, grpcLocation, credentials = requiredGrpc.credent
 
         getPkg(clients, pkg, true)[svc] = new (getPkg(protos[si], pkg, false))[svc](grpcLocation, credentials)
         s.methods.forEach(m => {
-          if (m.options['google.api.http']) {
+          if (m.options[GRPC_API_OPTION_ID]) {
             supportedMethods.forEach(httpMethod => {
-              if (m.options['google.api.http'][httpMethod]) {
-                if (debug) console.log(httpMethod.toUpperCase().green, m.options['google.api.http'][httpMethod].blue)
-                router[httpMethod](convertUrl(m.options['google.api.http'][httpMethod]), (req, res) => {
-                  const params = convertParams(req, m.options['google.api.http'][httpMethod])
+              if (m.options[GRPC_API_OPTION_ID][httpMethod]) {
+                if (debug) {
+                  console.log(httpMethod.toUpperCase().green, m.options[GRPC_API_OPTION_ID][httpMethod].blue)
+                }
+
+                router[httpMethod](convertUrl(m.options[GRPC_API_OPTION_ID][httpMethod]), (req, res) => {
+                  const params = convertParams(req, m.options[GRPC_API_OPTION_ID][httpMethod])
                   const meta = convertHeaders(req.headers, grpc)
 
                   if (debug) {
@@ -70,7 +112,7 @@ const middleware = (protoFiles, grpcLocation, credentials = requiredGrpc.credent
                         console.trace()
                         return res.status(500).json({ code: err.code, message: err.message })
                       }
-                      res.json(convertBody(ans, m.options['google.api.http'].body, m.options['google.api.http'][httpMethod]))
+                      res.json(convertBody(ans, m.options[GRPC_API_OPTION_ID].body, m.options[GRPC_API_OPTION_ID][httpMethod]))
                     })
                   } catch (err) {
                     console.error(`${svc}.${m.name}: `.red, err.message.red)
@@ -109,7 +151,7 @@ const getPkg = (client, pkg, create = false) => {
 /**
  * Parse express request params & query into params for grpc client
  * @param  {Request} req Express request object
- * @param  {string} url  gRPC url field (ie "/v1/hi/{name}")
+ * @param  {String} url  gRPC url field (ie "/v1/hi/{name}")
  * @return {Object}      params for gRPC client
  */
 const convertParams = (req, url) => {
@@ -176,8 +218,7 @@ const getParamsList = (url) => {
  * @param  {object} headers Headers: {name: value}
  * @return {meta}           grpc meta object
  */
-const convertHeaders = (headers, grpc) => {
-  grpc = grpc || requiredGrpc
+const convertHeaders = (headers) => {
   headers = headers || {}
   const metadata = new grpc.Metadata()
   Object.keys(headers).forEach(h => { metadata.set(h, headers[h]) })
