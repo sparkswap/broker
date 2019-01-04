@@ -1,6 +1,6 @@
 {
   "name": "broker",
-  "version": "0.3.0-beta-rc6",
+  "version": "0.3.0-beta",
   "description": "Broker software to interact with the Sparkswap Relayer",
   "main": "src/index.js",
   "config": {
@@ -66,7 +66,7 @@
     "level": "3.0.1",
     "level-live-stream": "1.4.12",
     "level-sublevel": "6.6.1",
-    "lnd-engine": "sparkswap/lnd-engine#v0.3.0-beta-rc3",
+    "lnd-engine": "sparkswap/lnd-engine#v0.3.0-beta",
     "nano-seconds": "1.2.2",
     "pm2": "2.10.3",
     "protocol-buffers-schema": "3.3.2",
