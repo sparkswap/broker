@@ -32,6 +32,7 @@ fi
 echo "Enter your public IP address:"
 read IP_ADDRESS
 
+OS=`uname`
 if [ "$OS" = 'Darwin' ]; then
   # for MacOS
   sed -i '' -e "s/^EXTERNAL_BTC_ADDRESS.*/EXTERNAL_BTC_ADDRESS=$IP_ADDRESS/" .env
