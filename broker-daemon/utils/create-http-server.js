@@ -53,10 +53,9 @@ function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableC
   }
 
   // Handle 404s correctly for the server
-  app.get('*', (req, res) => {
+  app.use((req, res, _next) => {
     logger.debug('Received request but had no route', { url: req.url })
-    res.status(404)
-    res.json({ error: '404' })
+    res.status(404).send('404')
   })
 
   return app
