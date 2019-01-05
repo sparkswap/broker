@@ -28,7 +28,7 @@ FORCE_YES="false"
 for i in "$@"
 do
 case $i in
-    -y=*|--yes=*)
+    -y|--yes)
     FORCE_YES="true"
 
     ;;
