@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# options:
+# -y: answer "Yes" to all prompts to allow for non-interactive scripting
+
 # Install the Broker and Broker CLI
 set -e -u
 
@@ -19,6 +22,21 @@ BROKER_VERSION="v0.3.0-beta"
 msg () {
   echo -e "${GRAY}${TAG}${NC}:  $2$1${NC}"
 }
+
+# parse options
+FORCE_YES="false"
+for i in "$@"
+do
+case $i in
+    -y=*|--yes=*)
+    FORCE_YES="true"
+
+    ;;
+    *)
+            # unknown option
+    ;;
+esac
+done
 
 msg "You're about to install Sparkswap. Good for you!" $GREEN
 
@@ -50,20 +68,24 @@ if [ "$(command -v docker-compose)" == "" ]; then
   exit 1
 fi
 
-msg "We're about to create a directory named 'sparkswap' in ${PWD}. Is that ok? [Y/n]" $WHITE
-read response
-response=${response,,} # lowercase
-if [[ -z $response ]]; then
-  response="y" # default if they push enter
+msg "We're about to create a directory named 'sparkswap' in ${PWD}." $WHITE
+
+if [ "$FORCE_YES" != "true" ]; then
+  msg "Is that ok? [Y/n]" $WHITE
+  read response
+  response=${response,,} # lowercase
+  if [[ -z $response ]]; then
+    response="y" # default if they push enter
+  fi
+  case $response in
+    y|ye|yes)
+      mkdir -p sparkswap && cd sparkswap
+      ;;
+    *)
+      msg "Goodbye" $YELLOW || exit 0
+      ;;
+  esac
 fi
-case $response in
-  y|ye|yes)
-    mkdir -p sparkswap && cd sparkswap
-    ;;
-  *)
-    echo "${YELLOW}Goodbye${NC}" || exit 0
-    ;;
-esac
 
 # Install LND Engine
 msg "Installing LND Engine (BTC and LTC support)" $WHITE
