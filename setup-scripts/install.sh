@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 
-# options:
-# -y: answer "Yes" to all prompts to allow for non-interactive scripting
+#################################
+# Install Engines, the Broker and Broker CLI
+#
+# Options:
+# -y, --yes                     answer "Yes" to all yes/no prompts to allow for non-interactive scripting
+# -n=, --network=[network]      'm' for MainNet, 't' for TestNet (removes prompt)
+# -i=, --public-ip=[ip address] Your public IP Address (removes prompt)
+# 
+#################################
 
-# Install the Broker and Broker CLI
 set -e -u
 
 TAG='[⚡ Sparkswap Installer]'
@@ -25,11 +31,21 @@ msg () {
 
 # parse options
 FORCE_YES="false"
+NETWORK=""
+IP_ADDRESS=""
 for i in "$@"
 do
 case $i in
     -y|--yes)
     FORCE_YES="true"
+
+    ;;
+    -n=*|--network=*)
+    NETWORK="${i#*=}"
+
+    ;;
+    -i=*|--public-ip=*)
+    IP_ADDRESS="${i#*=}"
 
     ;;
     *)
@@ -111,7 +127,7 @@ fi
 
 # Set up environment
 msg "Setting up your Broker" $WHITE
-npm run env-setup
+npm run env-setup -- -n=$NETWORK -i=$IP_ADDRESS
 
 # Install CLI
 msg "Installing the CLI" $WHITE
