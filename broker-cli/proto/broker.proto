@@ -249,6 +249,8 @@ message Order {
     COMPLETED = 4;
     // The order has encountered a failure.
     REJECTED = 5;
+    // The order has been cancelled by the user.
+    CANCELLED = 6;
   }
 
   // Unique ID assigned by the Relayer for this order.
