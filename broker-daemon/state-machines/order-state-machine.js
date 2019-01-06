@@ -292,16 +292,16 @@ const OrderStateMachine = StateMachine.factory({
           // the Relayer will send a single data message containing the order's state as cancelled and close
           // the stream if the order has been cancelled. We should handle that and cancel the order locally.
           if (OrderStateMachine.STATES[orderStatus] === OrderStateMachine.STATES.CANCELLED) {
-            this.logger.info(`Order ${orderId} was cancelled on the relayer, cancelling locally.`)
+            this.logger.info(`Order ${orderId} was cancelled on the relayer, cancelling locally.`, { orderId })
             return this.tryTo('cancel')
           }
 
-          this.logger.info(`Placed order ${this.order.orderId} on the relayer`)
+          this.logger.info(`Placed order ${orderId} on the relayer`, { orderId })
           const { swapHash, fillAmount, takerAddress } = fill
 
           this.order.setFilledParams({ swapHash, fillAmount, takerAddress })
 
-          this.logger.info(`Order ${this.order.orderId} is being filled`)
+          this.logger.info(`Order ${this.order.orderId} is being filled`, { orderId })
           this.tryTo('execute')
         } catch (e) {
           this.reject(e)
