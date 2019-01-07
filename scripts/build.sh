@@ -54,6 +54,8 @@ elif [ -f docker-compose.override.yml ]; then
   echo ""
 fi
 
+echo "Generating certificates for RPC"
+
 # Generate certs for the CLI
 rm -rf ./certs
 mkdir -p ./certs
@@ -61,12 +63,30 @@ mkdir -p ./certs
 # Set paths for self-signed key pair
 KEY_PATH="./certs/broker-rpc-tls.key"
 CERT_PATH="./certs/broker-rpc-tls.cert"
-CSR_PATH="./certs/brokr-rpc-csr.csr"
+CSR_PATH="./certs/broker-rpc-csr.csr"
 EXTERNAL_ADDRESS=${EXTERNAL_ADDRESS:-localhost}
 
 openssl ecparam -genkey -name prime256v1 -out $KEY_PATH
-openssl req -new -sha256 -key $KEY_PATH -out $CSR_PATH -subj "/CN=$EXTERNAL_ADDRESS/O=sparkswap"
-openssl req -x509 -sha256 -days 36500 -key $KEY_PATH -in $CSR_PATH -out $CERT_PATH
+
+openssl req -new -sha256 \
+  -reqexts SAN \
+  -extensions SAN \
+  -config <(cat /etc/ssl/openssl.cnf \
+      <(printf "\n[SAN]\nsubjectAltName=DNS:${EXTERNAL_ADDRESS},DNS:localhost")) \
+  -key $KEY_PATH \
+  -out $CSR_PATH \
+  -subj "/CN=$EXTERNAL_ADDRESS/O=sparkswap"
+
+openssl req -x509 -sha256 \
+  -reqexts SAN \
+  -extensions SAN \
+  -config <(cat /etc/ssl/openssl.cnf \
+      <(printf "\n[SAN]\nsubjectAltName=DNS:${EXTERNAL_ADDRESS},DNS:localhost")) \
+  -days 36500 \
+  -key $KEY_PATH \
+  -in $CSR_PATH \
+  -out $CERT_PATH
+
 rm $CSR_PATH
 
 echo "Building broker docker images"

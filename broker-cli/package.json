@@ -1,6 +1,6 @@
 {
   "name": "broker-cli",
-  "version": "0.3.0-beta-rc5",
+  "version": "0.3.0-beta",
   "description": "Broker CLI utility to interact with the Sparkswap Broker Daemon",
   "main": "./bin/sparkswap",
   "scripts": {
