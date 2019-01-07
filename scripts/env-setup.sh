@@ -1,11 +1,35 @@
 #!/usr/bin/env bash
 
-################################################
+##########################################################
 # Generates and sets environment variables for broker
+# 
+# Options:
+# -n=, --network=[network] 'm' for MainNet, 't' for TestNet (removes prompt)
+# -i=, --public-ip=[ip address] Your public IP Address (removes prompt)
 #
-################################################
+##########################################################
 RED='\033[0;31m'
 NC='\033[0m'
+
+# parse options
+NETWORK=""
+IP_ADDRESS=""
+for i in "$@"
+do
+case $i in
+    -n=*|--network=*)
+    NETWORK="${i#*=}"
+
+    ;;
+    -i=*|--public-ip=*)
+    IP_ADDRESS="${i#*=}"
+
+    ;;
+    *)
+            # unknown option
+    ;;
+esac
+done
 
 FILE=".env"
 if [ -f $FILE ]; then
@@ -14,10 +38,13 @@ if [ -f $FILE ]; then
    exit 1
 fi
 # Set the network in the .env file based on user input
-echo "Enter the network:"
-echo "m - MainNet"
-echo "t - TestNet"
-read NETWORK
+
+if [ "$NETWORK" == "" ]; then
+  echo "Enter the network:"
+  echo "m - MainNet"
+  echo "t - TestNet"
+  read NETWORK
+fi
 
 if [ $NETWORK = 'm' ]; then
   cp .env-mainnet-sample .env
@@ -29,8 +56,10 @@ else
 fi
 
 # Set the external btc/ltc addresses in the .env file based on user public IP address
-echo "Enter your public IP address:"
-read IP_ADDRESS
+if [ "$IP_ADDRESS" == "" ]; then
+  echo "Enter your public IP address:"
+  read IP_ADDRESS
+fi
 
 OS=`uname`
 if [ "$OS" = 'Darwin' ]; then
