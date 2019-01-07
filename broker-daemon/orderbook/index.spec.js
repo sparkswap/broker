@@ -291,6 +291,7 @@ describe('Orderbook', () => {
       let onEnd
 
       beforeEach(() => {
+        orderbook.watchMarket = sinon.stub()
         timeoutStub = sinon.stub()
 
         Orderbook.__set__('setTimeout', timeoutStub)
@@ -332,15 +333,14 @@ describe('Orderbook', () => {
         }
       })
 
-      it('re-initializes after the timeout', async () => {
-        watcher.once.resetHistory()
-
+      it('re-initializes after the timeout', () => {
         const timeoutFunc = timeoutStub.args[0][0]
-        await timeoutFunc()
+        const updatedRetries = timeoutStub.args[0][2]
 
-        expect(watcher.once).to.have.been.calledWith('sync', sinon.match.func)
-        expect(watcher.once).to.have.been.calledWith('end', sinon.match.func)
-        expect(watcher.once).to.have.been.calledWith('error', sinon.match.func)
+        timeoutFunc(updatedRetries)
+
+        expect(orderbook.watchMarket).to.have.been.calledOnce()
+        expect(orderbook.watchMarket).to.have.been.calledWith(1)
       })
     })
 

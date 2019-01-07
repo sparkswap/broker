@@ -68,76 +68,71 @@ class Orderbook {
   /**
    * Sync orderbook state with the Relayer and retry when it fails
    * @private
+   * @param  {Number} [retries=0] - number of times end events have been handled without success
    * @return {Promise} Resolves when market is being watched (not necessarily when it is synced)
    */
-  async watchMarket () {
-    let retries = 0
+  async watchMarket (retries = 0) {
+    this.logger.debug(`Watching market ${this.marketName}...`)
 
-    const watchMarketCall = async () => {
-      this.logger.debug(`Watching market ${this.marketName}...`)
+    const { baseSymbol, counterSymbol } = this
+    const { lastUpdated, sequence } = await this.lastUpdate()
+    const params = { baseSymbol, counterSymbol, lastUpdated, sequence }
 
-      const { baseSymbol, counterSymbol } = this
-      const { lastUpdated, sequence } = await this.lastUpdate()
-      const params = { baseSymbol, counterSymbol, lastUpdated, sequence }
+    const watcher = this.relayer.watchMarket(this.eventStore, params)
 
-      const watcher = this.relayer.watchMarket(this.eventStore, params)
-
-      /**
-       * Handle sync events from the watcher by updating internal state
-       * @return {void}
-       */
-      const onWatcherSync = () => {
-        this.synced = true
-        retries = 0
-        this.logger.info(`Market ${this.marketName} synced.`)
-      }
-
-      /**
-       * Handle end events from the watcher by retrying
-       * @param  {Error} error
-       * @return {void}
-       */
-      const onWatcherEnd = (error) => {
-        this.synced = false
-        watcher.removeListener('sync', onWatcherSync)
-        watcher.removeListener('error', onWatcherError)
-
-        // Calculate the exponential backoff delay interval using the binary exponential backoff algorithm
-        // defined in https://en.wikipedia.org/wiki/Exponential_backoff
-        //
-        // Note: Repeated retransmission wait time is typically defined as a random variable between
-        // 0 and 2^c - 1, where c is the number of retries, however here we increase delay time using
-        // 2^c - 1 until MAX_RETRY_INTERVAL is reached.
-        retries++
-        const delay = Math.min((2 ** retries - 1) * 1000, MAX_RETRY_INTERVAL)
-
-        this.logger.info(`Market ${this.marketName} unavailable, retrying in ${delay}ms`, { error })
-        setTimeout(watchMarketCall, delay)
-      }
-
-      /**
-       * Handle error events from the watcher by clearing our store and retrying
-       * @param  {Error} error
-       * @return {Promise<void>}
-       */
-      const onWatcherError = async (error) => {
-        this.synced = false
-
-        watcher.removeListener('sync', onWatcherSync)
-        watcher.removeListener('end', onWatcherEnd)
-
-        this.logger.info(`Market ${this.marketName} encountered sync'ing error, re-building`, { error })
-        await watcher.migrate()
-        await this.index.ensureIndex()
-        this.watchMarket()
-      }
-
-      watcher.once('sync', onWatcherSync)
-      watcher.once('end', onWatcherEnd)
-      watcher.once('error', onWatcherError)
+    /**
+     * Handle sync events from the watcher by updating internal state
+     * @return {void}
+     */
+    const onWatcherSync = () => {
+      this.synced = true
+      retries = 0
+      this.logger.info(`Market ${this.marketName} synced.`)
     }
 
-    await watchMarketCall()
+    /**
+     * Handle end events from the watcher by retrying
+     * @param  {Error} error
+     * @return {void}
+     */
+    const onWatcherEnd = (error) => {
+      this.synced = false
+      watcher.removeListener('sync', onWatcherSync)
+      watcher.removeListener('error', onWatcherError)
+
+      // Calculate the exponential backoff delay interval using the binary exponential backoff algorithm
+      // defined in https://en.wikipedia.org/wiki/Exponential_backoff
+      //
+      // Note: Repeated retransmission wait time is typically defined as a random variable between
+      // 0 and 2^c - 1, where c is the number of retries, however here we increase delay time using
+      // 2^c - 1 until MAX_RETRY_INTERVAL is reached.
+      retries++
+      const delay = Math.min((2 ** retries - 1) * 1000, MAX_RETRY_INTERVAL)
+
+      this.logger.info(`Market ${this.marketName} unavailable, retrying in ${delay}ms`, { error })
+      setTimeout(this.watchMarket, delay, retries)
+    }
+
+    /**
+     * Handle error events from the watcher by clearing our store and retrying
+     * @param  {Error} error
+     * @return {Promise<void>}
+     */
+    const onWatcherError = async (error) => {
+      this.synced = false
+
+      watcher.removeListener('sync', onWatcherSync)
+      watcher.removeListener('end', onWatcherEnd)
+
+      this.logger.info(`Market ${this.marketName} encountered sync'ing error, re-building`, { error })
+      await watcher.migrate()
+      await this.index.ensureIndex()
+      this.watchMarket()
+    }
+
+    watcher.once('sync', onWatcherSync)
+    watcher.once('end', onWatcherEnd)
+    watcher.once('error', onWatcherError)
   }
 
   /**
