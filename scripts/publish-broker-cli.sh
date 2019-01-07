@@ -33,6 +33,9 @@ git remote add origin git@github.com:sparkswap/broker-cli.git
 echo "Pushing to GitHub"
 git push origin master
 
+echo "Pushing tags to github"
+git push --tags
+
 echo "Removing working directory"
 
 cd ..
