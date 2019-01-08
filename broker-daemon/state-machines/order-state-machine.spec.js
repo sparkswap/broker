@@ -545,7 +545,7 @@ describe('OrderStateMachine', () => {
       expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('data')
     })
 
-    it.only('tears down listeners on cancel', async () => {
+    it('tears down listeners on cancel', async () => {
       osm.reject = sinon.stub()
       placeOrderStreamStub.on.withArgs('data').callsArgWithAsync(1, { orderStatus: 'CANCELLED' })
 
