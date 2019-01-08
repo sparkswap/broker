@@ -49,7 +49,7 @@ describe('generateId', () => {
       generateId()
 
       expect(crypto.randomBytes).to.have.been.calledOnce()
-      expect(crypto.randomBytes).to.have.been.calledWith(20)
+      expect(crypto.randomBytes).to.have.been.calledWith(9)
       expect(bytes.toString).to.have.been.calledOnce()
       expect(bytes.toString).to.have.been.calledWith('hex')
     })

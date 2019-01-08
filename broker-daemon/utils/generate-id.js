@@ -1,11 +1,14 @@
 const crypto = require('crypto')
 
 /**
- * Generate a random ID string
- * @return {String} 43 random characters in [base64url encoding]{@link https://tools.ietf.org/html/rfc4648}
+ * Generate a unique ID string
+ * We use 9 bytes of randonmness since this is for a single broker.
+ * It can be increased for particularly high-frequency brokers as nothing should depend on the length
+ * of this ID.
+ * @return {String} 12 characters in [base64url encoding]{@link https://tools.ietf.org/html/rfc4648}
  */
 function generateId () {
-  const data = crypto.randomBytes(20).toString('hex')
+  const data = crypto.randomBytes(9).toString('hex')
   return urlEncode(crypto.createHash('sha256').update(data).digest('base64'))
 }
 
