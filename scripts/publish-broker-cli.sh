@@ -34,7 +34,7 @@ echo "Pushing to GitHub"
 git push origin master
 
 echo "Pushing missing/relevant tags to github"
-git push origin master --tags
+git push origin master --tags --force
 
 echo "Removing working directory"
 
