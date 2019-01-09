@@ -1,6 +1,6 @@
 const BrokerDaemonClient = require('../broker-daemon-client')
 const { validations, handleError } = require('../utils')
-const { RPC_ADDRESS_HELP_STRING } = require('../utils/strings')
+const { RPC_ADDRESS_HELP_STRING, JSON_FORMAT_STRING } = require('../utils/strings')
 
 /**
  * sparkswap id
@@ -17,13 +17,19 @@ const { RPC_ADDRESS_HELP_STRING } = require('../utils/strings')
 
 async function getIdentity (args, opts, logger) {
   const { rpcAddress = null } = opts
+  const { json } = opts
 
   try {
     const client = await new BrokerDaemonClient(rpcAddress)
 
-    const { publicKey } = await client.adminService.getIdentity({})
+    const identity = await client.adminService.getIdentity({})
 
-    logger.info(publicKey)
+    if (json) {
+      logger.info(JSON.stringify(identity))
+    } else {
+      const { publicKey } = identity
+      logger.info(publicKey)
+    }
   } catch (e) {
     logger.error(handleError(e))
   }
@@ -33,5 +39,6 @@ module.exports = (program) => {
   program
     .command('id', 'Gets the Public Key of the Broker Daemon')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
+    .option('--json', JSON_FORMAT_STRING, program.BOOLEAN)
     .action(getIdentity)
 }
