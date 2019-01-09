@@ -22,7 +22,7 @@ GRAY='\033[0;37m'
 NC='\033[0m' # No Color
 
 LND_ENGINE_VERSION="v0.3.0-beta"
-BROKER_VERSION="v0.3.0-beta"
+BROKER_VERSION="v0.3.2-beta"
 
 # print a message with a color, like msg "my message" $GRAY
 msg () {
@@ -109,7 +109,7 @@ if [ -d "lnd-engine" ]; then
   msg "You already have a folder for the lnd-engine. Skipping." $YELLOW
   msg "If you need to re-install, remove the folder and try again." $YELLOW
 else
-  git clone -b "$LND_ENGINE_VERSION" --single-branch --depth 1 git://github.com/sparkswap/lnd-engine.git
+  git clone -b "$LND_ENGINE_VERSION" --single-branch --depth 1 https://github.com/sparkswap/lnd-engine.git
   (cd lnd-engine && npm run build)
 fi
 
@@ -120,7 +120,7 @@ if [ -d "broker" ]; then
   msg "If you need to re-install, remove the folder and try again." $YELLOW
   cd broker
 else
-  git clone -b "$BROKER_VERSION" --single-branch --depth 1 git://github.com/sparkswap/broker.git
+  git clone -b "$BROKER_VERSION" --single-branch --depth 1 https://github.com/sparkswap/broker.git
   cd broker
   npm run build
 fi
