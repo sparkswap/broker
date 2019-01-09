@@ -57,11 +57,11 @@ done
 msg "You're about to install Sparkswap. Good for you!" $GREEN
 
 # Source nvm 🤢
-. ~/.nvm/nvm.sh
-. ~/.profile
-. ~/.bashrc
+test -f ~/.nvm/nvm.sh && . ~/.nvm/nvm.sh
+test -f ~/.profile && . ~/.profile
+test -f ~/.bashrc && . ~/.bashrc
 if [ "$(command -v brew)" != "" ]; then
-  . $(brew --prefix nvm)/nvm.sh
+  test -f "$(brew --prefix nvm)/nvm.sh" && . "$(brew --prefix nvm)/nvm.sh" --no-use
 fi
 
 # Ensure nvm is installed
@@ -86,22 +86,25 @@ fi
 
 msg "We're about to create a directory named 'sparkswap' in ${PWD}." $WHITE
 
-if [ "$FORCE_YES" != "true" ]; then
+if [ "$FORCE_YES" == "true" ]; then
+  dirok="y"
+else
   msg "Is that ok? [Y/n]" $WHITE
-  read response
-  response=${response,,} # lowercase
-  if [[ -z $response ]]; then
-    response="y" # default if they push enter
+  read dirok
+  dirok=$(echo $dirok | tr '[:upper:]' '[:lower:]') # lowercase
+  if [[ -z $dirok ]]; then
+    dirok="y" # default if they push enter
   fi
-  case $response in
-    y|ye|yes)
-      mkdir -p sparkswap && cd sparkswap
-      ;;
-    *)
-      msg "Goodbye" $YELLOW || exit 0
-      ;;
-  esac
 fi
+
+case $dirok in
+  y|ye|yes)
+    mkdir -p sparkswap && cd sparkswap
+    ;;
+  *)
+    msg "Goodbye" $YELLOW || exit 0
+    ;;
+esac
 
 # Install LND Engine
 msg "Installing LND Engine (BTC and LTC support)" $WHITE
