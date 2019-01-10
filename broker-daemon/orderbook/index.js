@@ -110,7 +110,7 @@ class Orderbook {
       const delay = Math.min((2 ** retries - 1) * 1000, MAX_RETRY_INTERVAL)
 
       this.logger.info(`Market ${this.marketName} unavailable, retrying in ${delay}ms`, { error })
-      setTimeout(this.watchMarket, delay, retries)
+      setTimeout(() => this.watchMarket(retries), delay)
     }
 
     /**
