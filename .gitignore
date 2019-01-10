@@ -64,7 +64,7 @@ typings/
 .DS_Store
 
 # Proto build files
-proto/*
+proto
 
 # Override file which we use dynamically in the broker setup
 docker-compose.override.yml
