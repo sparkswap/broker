@@ -23,7 +23,7 @@ git clone -b master git@github.com:sparkswap/broker.git .
 echo "Latest commit: $(git log --oneline -n 1)"
 
 echo "Pruning git repo to only broker-cli"
-git filter-branch --prune-empty --subdirectory-filter broker-cli master
+git filter-branch --tag-name-filter cat --prune-empty --subdirectory-filter broker-cli master
 
 echo "Updating remote origin"
 
