@@ -344,6 +344,60 @@ describe('Orderbook', () => {
       })
     })
 
+    describe('watcher ends then re-syncs', () => {
+      let onSync
+      let onEnd
+      let timeoutStub
+      let watchMarketStub
+      let retries
+
+      beforeEach(() => {
+        onSync = watcher.once.withArgs('sync').args[0][1]
+        onEnd = watcher.once.withArgs('end').args[0][1]
+        timeoutStub = sinon.stub()
+
+        Orderbook.__set__('setTimeout', timeoutStub)
+      })
+
+      it('resets retries to 0 after syncing', () => {
+        // Emit end event, make sure retries is 1
+        onEnd()
+
+        watchMarketStub = sinon.stub(orderbook, 'watchMarket')
+        const timeoutFunc = timeoutStub.args[0][0]
+        timeoutFunc()
+
+        retries = watchMarketStub.lastCall.args[0]
+        expect(retries).to.be.eql(1)
+
+        // Call watchMarket with updated retries
+        watchMarketStub.restore()
+        timeoutFunc()
+
+        // Emit another end event, make sure retries is 2
+        onEnd()
+        watchMarketStub = sinon.stub(orderbook, 'watchMarket')
+        timeoutFunc()
+
+        retries = watchMarketStub.lastCall.args[0]
+        expect(retries).to.be.eql(2)
+
+        // Call watchMarket with updated retries
+        watchMarketStub.restore()
+        timeoutFunc()
+
+        // Sync orderbook, then emit another end event making sure retries were reset on sync
+        onSync()
+        onEnd()
+
+        watchMarketStub = sinon.stub(orderbook, 'watchMarket')
+        timeoutFunc()
+
+        retries = watchMarketStub.lastCall.args[0]
+        expect(retries).to.be.eql(1)
+      })
+    })
+
     describe('watcher errors', () => {
       let onError
 
