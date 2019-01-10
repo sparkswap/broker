@@ -9,12 +9,12 @@ const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
 
 /**
- * Time, in milliseconds, between tries to get the market events from
- * the Relayer.
+ * Maximum time, in milliseconds, between tries to get the
+ * market events from the Relayer.
  * @constant
  * @type {Number}
  */
-const RETRY_WATCHMARKET = 5000
+const MAX_RETRY_INTERVAL = 60000
 
 /**
  * @class Current state of the orderbook in a particular market
@@ -68,9 +68,10 @@ class Orderbook {
   /**
    * Sync orderbook state with the Relayer and retry when it fails
    * @private
+   * @param  {Number} [retries=0] - number of times end events have been handled without success
    * @return {Promise} Resolves when market is being watched (not necessarily when it is synced)
    */
-  async watchMarket () {
+  async watchMarket (retries = 0) {
     this.logger.debug(`Watching market ${this.marketName}...`)
 
     const { baseSymbol, counterSymbol } = this
@@ -85,6 +86,7 @@ class Orderbook {
      */
     const onWatcherSync = () => {
       this.synced = true
+      retries = 0
       this.logger.info(`Market ${this.marketName} synced.`)
     }
 
@@ -98,11 +100,17 @@ class Orderbook {
       watcher.removeListener('sync', onWatcherSync)
       watcher.removeListener('error', onWatcherError)
 
-      this.logger.info(`Market ${this.marketName} unavailable, retrying in ${RETRY_WATCHMARKET}ms`, { error })
-      // TODO: exponential backoff?
-      setTimeout(() => {
-        this.watchMarket()
-      }, RETRY_WATCHMARKET)
+      // Calculate the exponential backoff delay interval using the binary exponential backoff algorithm
+      // defined in https://en.wikipedia.org/wiki/Exponential_backoff
+      //
+      // Note: Repeated retransmission wait time is typically defined as a random variable between
+      // 0 and 2^c - 1, where c is the number of retries, however here we increase delay time using
+      // 2^c - 1 until MAX_RETRY_INTERVAL is reached.
+      retries++
+      const delay = Math.min((2 ** retries - 1) * 1000, MAX_RETRY_INTERVAL)
+
+      this.logger.info(`Market ${this.marketName} unavailable, retrying in ${delay}ms`, { error })
+      setTimeout(() => this.watchMarket(retries), delay)
     }
 
     /**
