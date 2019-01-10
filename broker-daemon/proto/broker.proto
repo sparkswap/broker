@@ -147,7 +147,7 @@ service AdminService {
    * ```
    */
   rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       get: "/v1/admin/healthcheck"
     };
   }
@@ -183,7 +183,7 @@ service AdminService {
    * ```
    */
   rpc GetIdentity (google.protobuf.Empty) returns (GetIdentityResponse) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       get: "/v1/admin/identity"
     };
   }
@@ -249,6 +249,8 @@ message Order {
     COMPLETED = 4;
     // The order has encountered a failure.
     REJECTED = 5;
+    // The order has been cancelled by the user.
+    CANCELLED = 6;
   }
 
   // Unique ID assigned by the Relayer for this order.
@@ -498,7 +500,7 @@ service OrderService {
    *
    */
   rpc CreateBlockOrder (CreateBlockOrderRequest) returns (CreateBlockOrderResponse) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       post: "/v1/orders"
       body: "*"
     };
@@ -552,7 +554,7 @@ service OrderService {
    * ```
    */
   rpc GetBlockOrder (GetBlockOrderRequest) returns (GetBlockOrderResponse) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       get: "/v1/orders/{block_order_id}"
     };
   }
@@ -575,7 +577,7 @@ service OrderService {
    * > The above command will cancel the block order, but has no output.
    */
   rpc CancelBlockOrder (CancelBlockOrderRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       delete: "/v1/orders/{block_order_id}"
       body: "*"
     };
@@ -630,7 +632,7 @@ service OrderService {
    * ```
    */
   rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       get: "/v1/orders"
     };
   }
@@ -809,7 +811,7 @@ service OrderBookService {
    * ```
    */
   rpc GetOrderbook (GetOrderbookRequest) returns (GetOrderbookResponse) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       get: "/v1/orderbook"
     };
   }
@@ -1059,7 +1061,7 @@ service WalletService {
    * ```
    */
   rpc NewDepositAddress (NewDepositAddressRequest) returns (NewDepositAddressResponse) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       post: "/v1/wallet/address"
       body: "*"
     };
@@ -1118,7 +1120,7 @@ service WalletService {
    * ```
    */
   rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       get: "/v1/wallet/balances"
     };
   }
@@ -1157,7 +1159,7 @@ service WalletService {
    * ```
    */
   rpc Commit (CommitRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       post: "/v1/wallet/commit"
       body: "*"
     };
@@ -1193,7 +1195,7 @@ service WalletService {
    *
    */
   rpc ReleaseChannels (ReleaseChannelsRequest) returns (ReleaseChannelsResponse) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       post: "/v1/wallet/release"
       body: "*"
     };
@@ -1318,7 +1320,7 @@ service WalletService {
    * ```
    */
   rpc WithdrawFunds (WithdrawFundsRequest) returns (WithdrawFundsResponse) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       post: "/v1/wallet/withdraw"
       body: "*"
     };
@@ -1363,7 +1365,7 @@ service WalletService {
    * ```
    */
   rpc CreateWallet (CreateWalletRequest) returns (CreateWalletResponse) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       post: "/v1/wallet/create"
       body: "*"
     };
@@ -1395,7 +1397,7 @@ service WalletService {
    * ```
    */
   rpc UnlockWallet (UnlockWalletRequest) returns (google.protobuf.Empty) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       post: "/v1/wallet/unlock"
       body: "*"
     };
@@ -1566,7 +1568,7 @@ service InfoService {
    * ```
    */
   rpc getSupportedMarkets (google.protobuf.Empty) returns (GetSupportedMarketsResponse) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       get: "/v1/markets"
     };
   }
@@ -1621,7 +1623,7 @@ service InfoService {
    * ```
    */
   rpc getMarketStats (GetMarketStatsRequest) returns (GetMarketStatsResponse) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       get: "/v1/market_stats"
     };
   }
@@ -1696,7 +1698,7 @@ service InfoService {
    * ```
    */
   rpc GetTrades (GetTradesRequest) returns (GetTradesResponse) {
-    option (google.api.http) = {
+    option (.google.api.http) = {
       get: "/v1/trades"
     };
   }

@@ -1,5 +1,5 @@
 const path = require('path')
-const { sinon, rewire, expect } = require('test/test-helper')
+const { sinon, rewire, expect, timekeeper } = require('test/test-helper')
 
 const generateId = rewire(path.resolve(__dirname, 'generate-id'))
 
@@ -7,33 +7,32 @@ describe('generateId', () => {
   describe('generateId', () => {
     let urlEncode
     let crypto
-    let hash
-    let bytes
     let resetUrlEncode
     let resetCrypto
-    let randomString
+    let randomData
+    let randomHex
     let randomBase64
     let randomUrlEncoded
+    let timestamp
+    let timeInSeconds
 
     beforeEach(() => {
-      randomString = 'aoisjdfoasijfd9sdfu0a9sdf09'
-      randomBase64 = 'asfdjJF09809ASDFasdf+asdf/asdf='
+      timestamp = 1532045654371
+      timeInSeconds = 1532045654
+      timekeeper.freeze(new Date(timestamp))
+      randomData = Buffer.from('deadbeefdeadbeef', 'hex')
+
+      randomHex = timeInSeconds.toString(16) + 'deadbeefdeadbeef'
+
+      // the data should be the timestamp on the front, followed by
+      // our random data at the end
+      randomBase64 = Buffer.from(randomHex, 'hex').toString('base64')
       randomUrlEncoded = 'asfdjJF09809ASDFasdf-asdf_asdf'
 
       urlEncode = sinon.stub().returns(randomUrlEncoded)
-      hash = {
-        update: sinon.stub(),
-        digest: sinon.stub().returns(randomBase64)
-      }
-      hash.update.returns(hash)
-
-      bytes = {
-        toString: sinon.stub().returns(randomString)
-      }
 
       crypto = {
-        randomBytes: sinon.stub().returns(bytes),
-        createHash: sinon.stub().returns(hash)
+        randomBytes: sinon.stub().returns(randomData)
       }
 
       resetUrlEncode = generateId.__set__('urlEncode', urlEncode)
@@ -43,29 +42,17 @@ describe('generateId', () => {
     afterEach(() => {
       resetUrlEncode()
       resetCrypto()
+      timekeeper.reset()
     })
 
     it('creates random hex data', () => {
       generateId()
 
       expect(crypto.randomBytes).to.have.been.calledOnce()
-      expect(crypto.randomBytes).to.have.been.calledWith(20)
-      expect(bytes.toString).to.have.been.calledOnce()
-      expect(bytes.toString).to.have.been.calledWith('hex')
+      expect(crypto.randomBytes).to.have.been.calledWith(8)
     })
 
-    it('hashes the random data', () => {
-      generateId()
-
-      expect(crypto.createHash).to.have.been.calledOnce()
-      expect(crypto.createHash).to.have.been.calledWith('sha256')
-      expect(hash.update).to.have.been.calledOnce()
-      expect(hash.update).to.have.been.calledWith(randomString)
-      expect(hash.digest).to.have.been.calledOnce()
-      expect(hash.digest).to.have.been.calledWith('base64')
-    })
-
-    it('url encodes the hash', () => {
+    it('url encodes the data', () => {
       expect(generateId()).to.be.eql(randomUrlEncoded)
 
       expect(urlEncode).to.have.been.calledOnce()

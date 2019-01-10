@@ -544,6 +544,20 @@ describe('OrderStateMachine', () => {
       expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('end')
       expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('data')
     })
+
+    it('tears down listeners on cancel', async () => {
+      osm.reject = sinon.stub()
+      placeOrderStreamStub.on.withArgs('data').callsArgWithAsync(1, { orderStatus: 'CANCELLED' })
+
+      await osm.place()
+
+      await delay(10)
+
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledThrice()
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('error')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('end')
+      expect(placeOrderStreamStub.removeListener).to.have.been.calledWith('data')
+    })
   })
 
   describe('#execute', () => {
