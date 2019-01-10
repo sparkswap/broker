@@ -22,7 +22,7 @@ GRAY='\033[0;37m'
 NC='\033[0m' # No Color
 
 LND_ENGINE_VERSION="v0.3.0-beta"
-BROKER_VERSION="v0.3.2-beta"
+BROKER_VERSION="v0.3.3-beta"
 
 # print a message with a color, like msg "my message" $GRAY
 msg () {
