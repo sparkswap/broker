@@ -335,9 +335,8 @@ describe('Orderbook', () => {
 
       it('re-initializes after the timeout', () => {
         const timeoutFunc = timeoutStub.args[0][0]
-        const updatedRetries = timeoutStub.args[0][2]
 
-        timeoutFunc(updatedRetries)
+        timeoutFunc()
 
         expect(orderbook.watchMarket).to.have.been.calledOnce()
         expect(orderbook.watchMarket).to.have.been.calledWith(1)
