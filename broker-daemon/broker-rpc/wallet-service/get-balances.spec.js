@@ -100,8 +100,7 @@ describe('get-balances', () => {
       currencyConfig = [{
         name: 'Bitcoin',
         symbol: 'BTC',
-        quantumsPerCommon: '100000000',
-        maxChannelBalance: '16777215'
+        quantumsPerCommon: '100000000'
       }]
 
       uncommittedBalanceStub = sinon.stub().resolves(uncommittedBalance)

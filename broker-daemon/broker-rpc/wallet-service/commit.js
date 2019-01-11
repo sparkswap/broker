@@ -1,7 +1,6 @@
 const { PublicError } = require('grpc-methods')
 
 const { convertBalance, Big } = require('../../utils')
-const { currencies: currencyConfig } = require('../../config')
 
 /**
  * Minimum funding amount in common units (e.g. 0.123 BTC)
@@ -25,11 +24,6 @@ const MINIMUM_FUNDING_AMOUNT = Big(0.00400000)
  */
 async function commit ({ params, relayer, logger, engines, orderbooks }, { EmptyResponse }) {
   const { balance: balanceInCommonUnits, symbol, market } = params
-  const currentCurrencyConfig = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol)
-
-  if (!currentCurrencyConfig) {
-    throw new Error(`Currency was not found when trying to commit to market: ${symbol}`)
-  }
 
   const orderbook = orderbooks.get(market)
 
@@ -55,8 +49,8 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     throw new PublicError(`No engine is configured for symbol: ${inverseSymbol}`)
   }
 
-  const maxChannelBalance = Big(currentCurrencyConfig.maxChannelBalance)
-  const balance = Big(balanceInCommonUnits).times(currentCurrencyConfig.quantumsPerCommon).toString()
+  const maxChannelBalance = Big(engine.currencyConfig.maxChannelBalance)
+  const balance = Big(balanceInCommonUnits).times(engine.currencyConfig.quantumsPerCommon).toString()
 
   logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balanceInCommonUnits}`, { balanceInCommonUnits, balance })
 
