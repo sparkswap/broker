@@ -61,14 +61,22 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     throw new PublicError(`Minimum balance of ${MINIMUM_FUNDING_AMOUNT} needed to commit to the relayer`)
   } else if (maxChannelBalance.lt(balance)) {
     logger.error(`Balance from the client exceeds maximum balance allowed (${maxChannelBalance.toString()}).`, { balance })
-    throw new PublicError(`Maximum balance of ${maxChannelBalance.toString()} exceeded for committing of ${balance} to the relayer. Please try again.`)
+    throw new PublicError(`Maximum balance of ${Big(maxChannelBalance).div(engine.currencyConfig.quantumsPerCommon).toString()} ${symbol} exceeded for committing of ${balanceInCommonUnits} ${symbol} to the Relayer. Please try again.`)
+  }
+
+  // Also check that the inbound channel does not exceed the channel maximum, otherwise our channel will succeed, but our request to the Relayer will fail.
+  const convertedBalance = convertBalance(balance, symbol, inverseSymbol)
+  const convertedMaxChannelBalance = Big(inverseEngine.currencyConfig.maxChannelBalance)
+
+  if (convertedMaxChannelBalance.lt(convertedBalance)) {
+    logger.error(`Balance in desired inbound channel exceeds maximum balance allowed (${convertedMaxChannelBalance.toString}).`, { convertedBalance })
+    throw new PublicError(`Maximum balance of ${Big(convertedMaxChannelBalance).div(inverseEngine.currencyConfig.quantumsPerCommon).toString()} ${inverseSymbol} exceeded for requesting inbound channel of ${Big(convertedBalance).div(inverseEngine.currencyConfig.quantumsPerCommon).toString()} ${inverseSymbol} from the Relayer. Please try again.`)
   }
 
   // Get the max balance for outbound and inbound channels to see if there are already channels with the balance open. If this is the
   // case we do not need to go to the trouble of opening new channels
   const {maxBalance: maxOutboundBalance} = await engine.getMaxChannel()
   const {maxBalance: maxInboundBalance} = await inverseEngine.getMaxChannel({outbound: false})
-  const convertedBalance = convertBalance(balance, symbol, inverseSymbol)
 
   // If maxOutboundBalance or maxInboundBalance exist, we need to check if the balances are greater or less than the balance of the channel
   // we are trying to open. If neither maxOutboundBalance nor maxInboundBalance exist, it means there are no channels open and we can safely

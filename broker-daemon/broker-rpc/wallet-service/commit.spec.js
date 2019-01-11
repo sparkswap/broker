@@ -53,7 +53,13 @@ describe('commit', () => {
     }
     ltcEngine = {
       getPaymentChannelNetworkAddress: sinon.stub().resolves(relayerAddress),
-      getMaxChannel: getMaxInboundChannelStub
+      getMaxChannel: getMaxInboundChannelStub,
+      currencyConfig: {
+        name: 'Litecoin',
+        symbol: 'LTC',
+        quantumsPerCommon: '100000000',
+        maxChannelBalance: '1006632900'
+      }
     }
     engines = new Map([
       ['BTC', btcEngine],
@@ -84,6 +90,15 @@ describe('commit', () => {
   it('balance over allowed maximum value throws an error for an incorrect balance', () => {
     const maxBalance = btcEngine.currencyConfig.maxChannelBalance
     params.balance = maxBalance + 1
+    return expect(
+      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+    ).to.be.rejectedWith(PublicError, 'Maximum balance')
+  })
+
+  it('throws an error if the inbound channel exceeds the maximum value', () => {
+    ltcEngine.currencyConfig.maxChannelBalance = btcEngine.currencyConfig.maxChannelBalance
+
+    params.balance = btcEngine.currencyConfig.maxChannelBalance - 1
     return expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
     ).to.be.rejectedWith(PublicError, 'Maximum balance')
