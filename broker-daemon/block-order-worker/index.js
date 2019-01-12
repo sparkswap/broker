@@ -464,7 +464,7 @@ class BlockOrderWorker extends EventEmitter {
 
     if (targetDepth.gt(availableDepth)) {
       // place an order for the remaining depth that we could not fill
-      this._placeOrder(blockOrder, targetDepth.minus(availableDepth).toString())
+      this._placeOrders(blockOrder, targetDepth.minus(availableDepth).toString())
     }
   }
 
@@ -558,6 +558,62 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
+   * Place orders for a block order for a given amount, breaking them up based on the maximum order size
+   * @param  {BlockOrder} blockOrder Block Order to place orders on behalf of
+   * @param  {String}     baseAmount Int64 amount, in the base currency's base units, to place orders for
+   * @return {void}
+   */
+  _placeOrders (blockOrder, baseAmount) {
+    // order params
+    const { baseSymbol, counterSymbol, quantumPrice } = blockOrder
+    const baseEngine = this.engines.get(baseSymbol)
+    const counterEngine = this.engines.get(counterSymbol)
+
+    if (!baseEngine) {
+      throw new Error(`No engine available for ${baseSymbol}`)
+    }
+    if (!counterEngine) {
+      throw new Error(`No engine available for ${counterSymbol}`)
+    }
+
+    const baseMaxPayment = baseEngine.currencyConfig.maxPaymentSize
+    const counterMaxPayment = counterEngine.currencyConfig.maxPaymentSize
+
+    // our max payment size settings have an implied price. We need to compare that to our actual price
+    // to see which max payment size we're going to run up against.
+    const maxPaymentSizeImpliedPrice = Big(counterMaxPayment).div(baseMaxPayment)
+    let maxBaseAmountPerOrder
+
+    // quantum price is the counter/base (both in quantum units)
+    if (Big(quantumPrice).gte(maxPaymentSizeImpliedPrice)) {
+      // counter for the block order is larger than base (relative to their max payment sizes)
+      maxBaseAmountPerOrder = Big(counterMaxPayment).div(quantumPrice).round(0)
+    } else {
+      // base for the block order is larger than counter (relative to their max payment sizes)
+      maxBaseAmountPerOrder = Big(baseMaxPayment)
+    }
+
+    let baseAmountRemaining = Big(baseAmount)
+    let orderCount = 1
+
+    // split our larger block order into individual placed orders that are each under
+    // the max payment size
+    while (baseAmountRemaining.gt(0)) {
+      this.logger.info(`Placing order #${orderCount} for BlockOrder`, { blockOrderId: blockOrder.id })
+
+      let orderBaseAmount = baseAmountRemaining
+
+      if (orderBaseAmount.gte(maxBaseAmountPerOrder)) {
+        orderBaseAmount = maxBaseAmountPerOrder
+      }
+
+      this._placeOrder(blockOrder, orderBaseAmount.toString())
+
+      baseAmountRemaining = baseAmountRemaining.minus(orderBaseAmount)
+    }
+  }
+
+  /**
    * Place an order for a block order of a given amount
    * @param  {BlockOrder} blockOrder Block Order to place an order on behalf of
    * @param  {String} amount     Int64 amount, in base currency's base units to place the order for
@@ -572,15 +628,7 @@ class BlockOrderWorker extends EventEmitter {
     const { relayer, engines, logger } = this
     const store = this.ordersStore
 
-    if (!engines.has(baseSymbol)) {
-      throw new Error(`No engine available for ${baseSymbol}`)
-    }
-
-    if (!engines.has(counterSymbol)) {
-      throw new Error(`No engine available for ${counterSymbol}`)
-    }
-
-    this.logger.info('Creating order for BlockOrder', { blockOrderId: blockOrder.id })
+    this.logger.info('Creating order for BlockOrder', { baseAmount, side, blockOrderId: blockOrder.id })
 
     const osm = await OrderStateMachine.create(
       {

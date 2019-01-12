@@ -4,7 +4,7 @@ const { expect, rewire, sinon } = require('test/test-helper')
 
 const BlockOrderWorker = rewire(path.resolve(__dirname))
 
-describe('BlockOrderWorker', () => {
+describe.only('BlockOrderWorker', () => {
   let generateId
   let BlockOrder
   let Order
@@ -19,6 +19,8 @@ describe('BlockOrderWorker', () => {
   let logger
   let relayer
   let engines
+  let engineLtc
+  let engineBtc
 
   let secondLevel
 
@@ -108,7 +110,29 @@ describe('BlockOrderWorker', () => {
       debug: sinon.stub()
     }
     relayer = sinon.stub()
-    engines = new Map([ ['BTC', sinon.stub()], ['LTC', sinon.stub()] ])
+
+    engineLtc = {
+      currencyConfig: {
+        quantumsPerCommon: '100000000',
+        symbol: 'LTC',
+        maxChannelBalance: '1006632900',
+        maxPaymentSize: '251658225'
+      }
+    }
+
+    engineBtc = {
+      currencyConfig: {
+        quantumsPerCommon: '100000000',
+        symbol: 'BTC',
+        maxChannelBalance: '16777215',
+        maxPaymentSize: '4194304'
+      }
+    }
+
+    engines = new Map([
+      ['BTC', engineBtc],
+      ['LTC', engineLtc]
+    ])
   })
 
   describe('new', () => {
@@ -1394,7 +1418,7 @@ describe('BlockOrderWorker', () => {
     beforeEach(() => {
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       worker._fillOrders = sinon.stub()
-      worker._placeOrder = sinon.stub()
+      worker._placeOrders = sinon.stub()
       blockOrder = {
         id: 'fakeId',
         marketName: 'BTC/LTC',
@@ -1439,9 +1463,9 @@ describe('BlockOrderWorker', () => {
     it('places an order for the remaining amount', async () => {
       await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
 
-      expect(worker._placeOrder).to.have.been.calledOnce()
-      expect(worker._placeOrder.args[0][0]).to.be.eql(blockOrder)
-      expect(worker._placeOrder.args[0][1]).to.be.eql('10000000000')
+      expect(worker._placeOrders).to.have.been.calledOnce()
+      expect(worker._placeOrders.args[0][0]).to.be.eql(blockOrder)
+      expect(worker._placeOrders.args[0][1]).to.be.eql('10000000000')
     })
 
     it('does not place an order if it can be filled with fills only', async () => {
@@ -1454,7 +1478,7 @@ describe('BlockOrderWorker', () => {
       await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
 
       expect(worker._fillOrders.args[0][1]).to.have.lengthOf(2)
-      expect(worker._placeOrder).to.not.have.been.called()
+      expect(worker._placeOrders).to.not.have.been.called()
     })
     // NOTE: other testing is TODO until workBlockOrder supports more sophisticated order handling
   })
@@ -2074,6 +2098,57 @@ describe('BlockOrderWorker', () => {
     })
   })
 
+  describe('#_placeOrders', () => {
+    let worker
+    let blockOrder
+
+    beforeEach(() => {
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker._placeOrder = sinon.stub()
+
+      blockOrder = {
+        id: 'fakeId',
+        baseSymbol: 'BTC',
+        counterSymbol: 'LTC',
+        quantumPrice: '1000'
+      }
+    })
+
+    it('throws if one of the engines is missing', () => {
+      blockOrder.counterSymbol = 'XYZ'
+
+      return expect(() => worker._placeOrders(blockOrder, '100')).to.throw('No engine available')
+    })
+
+    it('creates a single order order if the order size is below the max', () => {
+      worker._placeOrders(blockOrder, '100')
+
+      expect(worker._placeOrder).to.have.been.calledOnce()
+      expect(worker._placeOrder).to.have.been.calledWith(blockOrder, '100')
+    })
+
+    it('creates multiple orders if the base size is above the max', () => {
+      blockOrder.quantumPrice = '1'
+
+      worker._placeOrders(blockOrder, Big(engineBtc.currencyConfig.maxPaymentSize).plus(10).toString())
+
+      expect(worker._placeOrder).to.have.been.calledTwice()
+      expect(worker._placeOrder.firstCall).to.have.been.calledWith(blockOrder, engineBtc.currencyConfig.maxPaymentSize)
+      expect(worker._placeOrder.secondCall).to.have.been.calledWith(blockOrder, '10')
+    })
+
+    it('creates multiple orders if the counter size is above the max', () => {
+      blockOrder.quantumPrice = '100'
+      const maxAmount = Big(engineLtc.currencyConfig.maxPaymentSize).div(100).round(0).toString()
+
+      worker._placeOrders(blockOrder, Big(engineBtc.currencyConfig.maxPaymentSize).minus(10).toString())
+
+      expect(worker._placeOrder).to.have.been.calledTwice()
+      expect(worker._placeOrder.firstCall).to.have.been.calledWith(blockOrder, maxAmount)
+      expect(worker._placeOrder.secondCall).to.have.been.calledWith(blockOrder, '1677712')
+    })
+  })
+
   describe('#_placeOrder', () => {
     let worker
     let blockOrder
@@ -2103,13 +2178,6 @@ describe('BlockOrderWorker', () => {
         }
       }
       OrderStateMachine.create.resolves(order)
-    })
-
-    it('throws if one of the engines is missing', () => {
-      blockOrder.marketName = 'BTC/XYZ'
-      blockOrder.counterSymbol = 'XYZ'
-
-      return expect(worker._placeOrder(blockOrder, '100')).to.eventually.be.rejectedWith('No engine available')
     })
 
     it('creates an OrderStateMachine', async () => {
