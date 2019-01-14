@@ -5,7 +5,7 @@ LABEL maintainer="SparkSwap <dev@sparkswap.com>"
 ARG BROKER_VERSION='fix/docker-build'
 
 RUN apk update && apk upgrade && \
-    apk add --no-cache bash git libc6-compat openssl python
+    apk add --no-cache bash git libc6-compat python make gcc g++
 
 RUN mkdir "/home/app"
 WORKDIR /home/app
@@ -27,5 +27,8 @@ RUN mv /home/app/certs /secure
 
 # Remove certs directory
 RUN rm -rf /home/app/certs
+
+# Remove deps that we dont need
+RUN apk del python make gcc g++ git python libc6-compat
 
 CMD ["bash", "-c", "npm run start-sparkswapd"]
