@@ -14,7 +14,7 @@ set -eu
 # This address is used during the build process so that certs can be generated
 # correctly for a hosted (remote) broker daemon.
 EXTERNAL_ADDRESS=${EXTERNAL_ADDRESS:-}
-RELAYER_PROTO_VERSION='v0.2.2-beta'
+RELAYER_PROTO_VERSION='master'
 
 ARG=${1:-false}
 
