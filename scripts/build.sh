@@ -88,8 +88,8 @@ rm $CSR_PATH
 ID_PRIV_KEY='./certs/broker-identity.private.pem'
 ID_PUB_KEY='./certs/broker-identity.public.pem'
 
-RUN openssl ecparam -name prime256v1 -genkey -noout -out ${ID_PRIV_KEY}
-RUN openssl ec -in ${ID_PRIV_KEY} -pubout -out ${ID_PUB_KEY}
+openssl ecparam -name prime256v1 -genkey -noout -out ${ID_PRIV_KEY}
+openssl ec -in ${ID_PRIV_KEY} -pubout -out ${ID_PUB_KEY}
 
 echo "Building broker docker images"
 if [ "$ARG" == "no-docker" ]; then
