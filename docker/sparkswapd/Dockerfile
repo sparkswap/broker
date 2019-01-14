@@ -1,34 +1,39 @@
-FROM node:8.11-alpine as builder
+FROM node:8.11 as builder
 
 LABEL maintainer="SparkSwap <dev@sparkswap.com>"
 
 ARG BROKER_VERSION='fix/docker-build'
 
-RUN apk update && apk upgrade && \
-    apk add --no-cache bash git libc6-compat python make gcc g++
-
+RUN apt-get update && apt-get upgrade -y --no-install-recommends
+RUN apt-get install git
 RUN mkdir "/home/app"
+
 WORKDIR /home/app
 
 #############################################
 # Build the broker
 #############################################
-
 RUN git clone -b ${BROKER_VERSION} https://github.com/sparkswap/broker.git .
-
-# Build the broker, which generates all tls certs
 RUN npm run build no-docker
 
-# Copy the certs to the secure directory
+FROM node:8.11-alpine as final
+
 RUN mkdir "/secure"
+RUN mkdir "/home/app"
 
-# Move the certs to secure
-RUN mv /home/app/certs /secure
+WORKDIR /home/app
 
-# Remove certs directory
-RUN rm -rf /home/app/certs
+COPY --from=builder /home/app/certs /secure
 
-# Remove deps that we dont need
-RUN apk del python make gcc g++ git python libc6-compat
+# Copy the application
+COPY --from=builder /home/app/broker-daemon /home/app/broker-daemon
+COPY --from=builder /home/app/broker-cli /home/app/broker-cli
+
+# Copy relayer-proto files
+COPY --from=builder /home/app/proto /home/app/proto
+
+# Copy node_modules and rebuild
+COPY --from=dep /home/app/node_modules ./node_modules
+RUN ["npm", "rebuild", "-q"]
 
 CMD ["bash", "-c", "npm run start-sparkswapd"]
