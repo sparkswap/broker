@@ -1,27 +1,29 @@
-ARG NODE_VERSION='8.11'
-ARG BROKER_VERSION='v0.3.3-beta'
-
-FROM node:${NODE_VERSION}-alpine as builder
+FROM node:8.11-alpine as builder
 
 LABEL maintainer="SparkSwap <dev@sparkswap.com>"
+
+ARG BROKER_VERSION='fix/docker-build'
 
 RUN apk update && apk upgrade && \
     apk add --no-cache bash git openssl
 
+RUN mkdir "/home/app"
+WORKDIR /home/app
+
 #############################################
 # Build the broker
-# This step generates certs and proto files for the project
 #############################################
-RUN mkdir "/home/app"
-RUN git clone -b v0.3.2-beta https://github.com/sparkswap/broker.git /home/app
+
+RUN git clone -b ${BROKER_VERSION} https://github.com/sparkswap/broker.git .
+
+# Build the broker, which generates all tls certs
 RUN npm run build no-docker
 
-# Start a new, final image to reduce size.
-FROM node:8.11 as final
-
+# Copy the certs to the secure directory
 RUN mkdir "/secure"
 
-COPY --from=builder /home/app/certs /secure
-COPY --from=builder /home/app /home/app
+# Move the certs to secure
+RUN mv /home/app/certs /secure
 
-WORKDIR /home/app
+# Remove certs directory
+RUN rm -rf /home/app/certs
