@@ -8,6 +8,7 @@
 ################################################
 
 set -e
+
 if [ "$NETWORK" == "mainnet" ]; then
   echo "Using GRPC default certs"
 else
@@ -15,5 +16,6 @@ else
   curl --silent -S --output /secure/relayer-root.pem "${RELAYER_CERT_HOST}/cert" || exit 1
   echo "Relayer cert downloaded successfully"
 fi
+
 echo "Starting sparkswapd"
 ./broker-daemon/bin/sparkswapd

@@ -27,3 +27,5 @@ RUN mv /home/app/certs /secure
 
 # Remove certs directory
 RUN rm -rf /home/app/certs
+
+CMD ["bash", "-c", "npm run start-sparkswapd"]
