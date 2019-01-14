@@ -5,7 +5,7 @@ LABEL maintainer="SparkSwap <dev@sparkswap.com>"
 ARG BROKER_VERSION='fix/docker-build'
 
 RUN apk update && apk upgrade && \
-    apk add --no-cache bash git openssl
+    apk add --no-cache bash git libc6-compat openssl python
 
 RUN mkdir "/home/app"
 WORKDIR /home/app
