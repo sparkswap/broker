@@ -44,22 +44,16 @@ describe('commit', () => {
     btcEngine = {
       createChannel: createChannelStub,
       getMaxChannel: getMaxOutboundChannelStub,
-      currencyConfig: {
-        name: 'Bitcoin',
-        symbol: 'BTC',
-        quantumsPerCommon: '100000000',
-        maxChannelBalance: '16777215'
-      }
+      symbol: 'BTC',
+      quantumsPerCommon: '100000000',
+      maxChannelBalance: '16777215'
     }
     ltcEngine = {
       getPaymentChannelNetworkAddress: sinon.stub().resolves(relayerAddress),
       getMaxChannel: getMaxInboundChannelStub,
-      currencyConfig: {
-        name: 'Litecoin',
-        symbol: 'LTC',
-        quantumsPerCommon: '100000000',
-        maxChannelBalance: '1006632900'
-      }
+      symbol: 'LTC',
+      quantumsPerCommon: '100000000',
+      maxChannelBalance: '1006632900'
     }
     engines = new Map([
       ['BTC', btcEngine],
@@ -88,7 +82,7 @@ describe('commit', () => {
   })
 
   it('balance over allowed maximum value throws an error for an incorrect balance', () => {
-    const maxBalance = btcEngine.currencyConfig.maxChannelBalance
+    const maxBalance = btcEngine.maxChannelBalance
     params.balance = maxBalance + 1
     return expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
@@ -96,9 +90,9 @@ describe('commit', () => {
   })
 
   it('throws an error if the inbound channel exceeds the maximum value', () => {
-    ltcEngine.currencyConfig.maxChannelBalance = btcEngine.currencyConfig.maxChannelBalance
+    ltcEngine.maxChannelBalance = btcEngine.maxChannelBalance
 
-    params.balance = btcEngine.currencyConfig.maxChannelBalance - 1
+    params.balance = btcEngine.maxChannelBalance - 1
     return expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
     ).to.be.rejectedWith(PublicError, 'Maximum balance')
@@ -114,7 +108,7 @@ describe('commit', () => {
     })
 
     it('creates a channel through an btc engine with base units', () => {
-      const baseUnitsBalance = Big(params.balance).times(btcEngine.currencyConfig.quantumsPerCommon).toString()
+      const baseUnitsBalance = Big(params.balance).times(btcEngine.quantumsPerCommon).toString()
       expect(btcEngine.createChannel).to.have.been.calledWith(paymentNetworkAddress, baseUnitsBalance)
     })
 

@@ -59,9 +59,7 @@ describe('getPreimage', () => {
       getPaymentPreimage
     })
     engines.set('BTC', {
-      currencyConfig: {
-        secondsPerBlock: 600
-      }
+      secondsPerBlock: 600
     })
   })
 

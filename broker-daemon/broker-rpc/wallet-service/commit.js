@@ -49,8 +49,8 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     throw new PublicError(`No engine is configured for symbol: ${inverseSymbol}`)
   }
 
-  const maxChannelBalance = Big(engine.currencyConfig.maxChannelBalance)
-  const balance = Big(balanceInCommonUnits).times(engine.currencyConfig.quantumsPerCommon).toString()
+  const maxChannelBalance = Big(engine.maxChannelBalance)
+  const balance = Big(balanceInCommonUnits).times(engine.quantumsPerCommon).toString()
 
   logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balanceInCommonUnits}`, { balanceInCommonUnits, balance })
 
@@ -60,17 +60,20 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
   if (MINIMUM_FUNDING_AMOUNT.gt(balanceInCommonUnits)) {
     throw new PublicError(`Minimum balance of ${MINIMUM_FUNDING_AMOUNT} needed to commit to the relayer`)
   } else if (maxChannelBalance.lt(balance)) {
+    const maxChannelBalanceInCommonUnits = Big(maxChannelBalance).div(engine.quantumsPerCommon).toString()
     logger.error(`Balance from the client exceeds maximum balance allowed (${maxChannelBalance.toString()}).`, { balance })
-    throw new PublicError(`Maximum balance of ${Big(maxChannelBalance).div(engine.currencyConfig.quantumsPerCommon).toString()} ${symbol} exceeded for committing of ${balanceInCommonUnits} ${symbol} to the Relayer. Please try again.`)
+    throw new PublicError(`Maximum balance of ${maxChannelBalanceInCommonUnits} ${symbol} exceeded for committing of ${balanceInCommonUnits} ${symbol} to the Relayer. Please try again.`)
   }
 
   // Also check that the inbound channel does not exceed the channel maximum, otherwise our channel will succeed, but our request to the Relayer will fail.
   const convertedBalance = convertBalance(balance, symbol, inverseSymbol)
-  const convertedMaxChannelBalance = Big(inverseEngine.currencyConfig.maxChannelBalance)
+  const convertedMaxChannelBalance = Big(inverseEngine.maxChannelBalance)
 
   if (convertedMaxChannelBalance.lt(convertedBalance)) {
-    logger.error(`Balance in desired inbound channel exceeds maximum balance allowed (${convertedMaxChannelBalance.toString}).`, { convertedBalance })
-    throw new PublicError(`Maximum balance of ${Big(convertedMaxChannelBalance).div(inverseEngine.currencyConfig.quantumsPerCommon).toString()} ${inverseSymbol} exceeded for requesting inbound channel of ${Big(convertedBalance).div(inverseEngine.currencyConfig.quantumsPerCommon).toString()} ${inverseSymbol} from the Relayer. Please try again.`)
+    const convertedBalanceInCommonUnits = Big(convertedBalance).div(inverseEngine.quantumsPerCommon).toString()
+    const convertedMaxChannelBalanceInCommonUnits = Big(convertedMaxChannelBalance).div(inverseEngine.quantumsPerCommon).toString()
+    logger.error(`Balance in desired inbound channel exceeds maximum balance allowed (${convertedMaxChannelBalance.toString()}).`, { convertedBalance })
+    throw new PublicError(`Maximum balance of ${convertedMaxChannelBalanceInCommonUnits} ${inverseSymbol} exceeded for requesting inbound channel of ${convertedBalanceInCommonUnits} ${inverseSymbol} from the Relayer. Please try again.`)
   }
 
   // Get the max balance for outbound and inbound channels to see if there are already channels with the balance open. If this is the
