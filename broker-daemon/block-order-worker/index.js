@@ -576,8 +576,8 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No engine available for ${counterSymbol}`)
     }
 
-    const baseMaxPayment = baseEngine.currencyConfig.maxPaymentSize
-    const counterMaxPayment = counterEngine.currencyConfig.maxPaymentSize
+    const baseMaxPayment = baseEngine.maxPaymentSize
+    const counterMaxPayment = counterEngine.maxPaymentSize
 
     // our max payment size settings have an implied price. We need to compare that to our actual price
     // to see which max payment size we're going to run up against.

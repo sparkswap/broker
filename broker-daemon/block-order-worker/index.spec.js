@@ -4,7 +4,7 @@ const { expect, rewire, sinon } = require('test/test-helper')
 
 const BlockOrderWorker = rewire(path.resolve(__dirname))
 
-describe.only('BlockOrderWorker', () => {
+describe('BlockOrderWorker', () => {
   let generateId
   let BlockOrder
   let Order
@@ -112,21 +112,17 @@ describe.only('BlockOrderWorker', () => {
     relayer = sinon.stub()
 
     engineLtc = {
-      currencyConfig: {
-        quantumsPerCommon: '100000000',
-        symbol: 'LTC',
-        maxChannelBalance: '1006632900',
-        maxPaymentSize: '251658225'
-      }
+      quantumsPerCommon: '100000000',
+      symbol: 'LTC',
+      maxChannelBalance: '1006632900',
+      maxPaymentSize: '251658225'
     }
 
     engineBtc = {
-      currencyConfig: {
-        quantumsPerCommon: '100000000',
-        symbol: 'BTC',
-        maxChannelBalance: '16777215',
-        maxPaymentSize: '4194304'
-      }
+      quantumsPerCommon: '100000000',
+      symbol: 'BTC',
+      maxChannelBalance: '16777215',
+      maxPaymentSize: '4194304'
     }
 
     engines = new Map([
@@ -2130,18 +2126,18 @@ describe.only('BlockOrderWorker', () => {
     it('creates multiple orders if the base size is above the max', () => {
       blockOrder.quantumPrice = '1'
 
-      worker._placeOrders(blockOrder, Big(engineBtc.currencyConfig.maxPaymentSize).plus(10).toString())
+      worker._placeOrders(blockOrder, Big(engineBtc.maxPaymentSize).plus(10).toString())
 
       expect(worker._placeOrder).to.have.been.calledTwice()
-      expect(worker._placeOrder.firstCall).to.have.been.calledWith(blockOrder, engineBtc.currencyConfig.maxPaymentSize)
+      expect(worker._placeOrder.firstCall).to.have.been.calledWith(blockOrder, engineBtc.maxPaymentSize)
       expect(worker._placeOrder.secondCall).to.have.been.calledWith(blockOrder, '10')
     })
 
     it('creates multiple orders if the counter size is above the max', () => {
       blockOrder.quantumPrice = '100'
-      const maxAmount = Big(engineLtc.currencyConfig.maxPaymentSize).div(100).round(0).toString()
+      const maxAmount = Big(engineLtc.maxPaymentSize).div(100).round(0).toString()
 
-      worker._placeOrders(blockOrder, Big(engineBtc.currencyConfig.maxPaymentSize).minus(10).toString())
+      worker._placeOrders(blockOrder, Big(engineBtc.maxPaymentSize).minus(10).toString())
 
       expect(worker._placeOrder).to.have.been.calledTwice()
       expect(worker._placeOrder.firstCall).to.have.been.calledWith(blockOrder, maxAmount)
