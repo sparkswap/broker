@@ -3,8 +3,11 @@
 ################################################
 # Build script for sparkswapd
 #
-# Params:
-# - EXTERNAL_ADDRESS (optional, for hosted daemons)
+# Options:
+# -c, --no-cli                    do not copy certs for local cli installation
+# -d, --no-docker                 do not build docker images
+# -e=, --external-address=        your public IP address (removes prompt)
+#
 ################################################
 
 set -eu
@@ -27,7 +30,7 @@ case $i in
     NO_CLI="true"
 
     ;;
-    -d=*|--no-docker)
+    -d|--no-docker)
     NO_DOCKER="true"
 
     ;;
@@ -67,7 +70,9 @@ rm -rf ./proto/.git
 
 echo "Building broker docker images"
 if [ "$NO_DOCKER" == "false" ]; then
-  KEY_PATH=$KEY_PATH CERT_PATH=$CERT_PATH npm run build-images
+  # NOTE: The names specified with `-t` directly map to the service names in
+  # the applicable services docker-compose file
+  docker build -t sparkswap_sparkswapd -f ./docker/sparkswapd/Dockerfile ./
 fi
 
 if [ -f docker-compose.override.yml ]; then
