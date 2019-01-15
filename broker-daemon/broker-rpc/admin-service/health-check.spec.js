@@ -18,6 +18,8 @@ describe('health-check', () => {
     let engineStub
     let engines
     let reverts = []
+    let orderbooks
+    let orderbookStub
 
     beforeEach(() => {
       relayerStub = sinon.stub()
@@ -27,6 +29,12 @@ describe('health-check', () => {
       }
       engines.set('BTC', engineStub)
       engines.set('LTC', engineStub)
+
+      orderbooks = new Map()
+      orderbookStub = {
+        synced: true
+      }
+      orderbooks.set('BTC/LTC', orderbookStub)
       loggerStub = {
         info: sinon.stub(),
         debug: sinon.stub()
@@ -39,7 +47,7 @@ describe('health-check', () => {
     })
 
     beforeEach(async () => {
-      result = await healthCheck({ relayer: relayerStub, logger: loggerStub, engines: engines }, { HealthCheckResponse })
+      result = await healthCheck({ relayer: relayerStub, logger: loggerStub, engines, orderbooks }, { HealthCheckResponse })
     })
 
     afterEach(() => {
@@ -54,7 +62,17 @@ describe('health-check', () => {
     it('returns status values', async () => {
       expect(result).to.be.an.instanceOf(HealthCheckResponse)
       expect(HealthCheckResponse).to.have.been.calledOnce()
-      expect(HealthCheckResponse).to.have.been.calledWith(sinon.match({ engineStatus: [ { symbol: 'BTC', status: statusOK }, { symbol: 'LTC', status: statusOK } ], relayerStatus: statusOK }))
+      expect(HealthCheckResponse).to.have.been.calledWith(sinon.match(
+        {
+          engineStatus: [
+            { symbol: 'BTC', status: statusOK },
+            { symbol: 'LTC', status: statusOK }
+          ],
+          relayerStatus: statusOK,
+          orderbookStatus: [
+            { market: 'BTC/LTC', synced: true }
+          ]
+        }))
     })
   })
 

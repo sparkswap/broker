@@ -77,6 +77,8 @@ message HealthCheckResponse {
   repeated EngineStatus engine_status = 1;
   // The status of the relayer this BrokerDaemon is connected to, either `'OK'` or the error message returned when connecting to it.
   string relayer_status = 2;
+  // The status of every engine available on the BrokerDaemon.
+  repeated OrderbookStatus orderbook_status = 3;
 
   /**
    * EngineStatus provides the status of an engine for a currency.
@@ -86,6 +88,16 @@ message HealthCheckResponse {
     string symbol = 1;
     // The status of the engine, either `'OK'` or the error message returned when accessing it.
     string status = 2;
+  }
+
+  /**
+   * OrderbookStatus provides the status of an orderbook for a market.
+   */
+  message OrderbookStatus {
+    // The market for the orderbook, e.g. `BTC/LTC`
+    string market = 1;
+    // The status of the market, either `'synced'` or `'not synced'`.
+    bool synced = 2;
   }
 }
 

@@ -11,9 +11,10 @@ class AdminService {
    * @param {Object} opts.logger
    * @param {Object} opts.relayer
    * @param {Map} opts.engines
+   * @param {Map} opts.orderbooks
    * @param {Function} opts.auth
    */
-  constructor (protoPath, { logger, relayer, engines, auth }) {
+  constructor (protoPath, { logger, relayer, engines, orderbooks, auth }) {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
     this.logger = logger
@@ -27,7 +28,7 @@ class AdminService {
     } = this.proto.broker.rpc
 
     this.implementation = {
-      healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer, engines, auth }, { HealthCheckResponse }).register(),
+      healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer, engines, orderbooks, auth }, { HealthCheckResponse }).register(),
       getIdentity: new GrpcUnaryMethod(getIdentity, this.messageId('getIdentity'), { logger, relayer, auth }, { GetIdentityResponse }).register()
     }
   }

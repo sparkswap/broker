@@ -35,7 +35,7 @@ async function getRelayerStatus (relayer, { logger }) {
  * @param {function} responses.HealthCheckResponse - constructor for HealthCheckResponse messages
  * @return {responses.HealthCheckResponse}
  */
-async function healthCheck ({ relayer, logger, engines }, { HealthCheckResponse }) {
+async function healthCheck ({ relayer, logger, engines, orderbooks }, { HealthCheckResponse }) {
   const engineStatus = Array.from(engines).map(([ symbol, engine ]) => {
     return { symbol, status: engine.status }
   })
@@ -46,7 +46,13 @@ async function healthCheck ({ relayer, logger, engines }, { HealthCheckResponse 
 
   logger.debug(`Received status from relayer`, { relayerStatus })
 
-  return new HealthCheckResponse({ engineStatus, relayerStatus })
+  const orderbookStatus = Array.from(orderbooks).map(([ market, orderbook ]) => {
+    return { market, synced: orderbook.synced }
+  })
+
+  logger.debug(`Received status from orderbooks`, { orderbookStatus })
+
+  return new HealthCheckResponse({ engineStatus, relayerStatus, orderbookStatus })
 }
 
 module.exports = healthCheck
