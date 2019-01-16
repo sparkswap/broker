@@ -98,6 +98,14 @@ describe('commit', () => {
     ).to.be.rejectedWith(PublicError, 'Maximum balance')
   })
 
+  it('throws an error if creating a channel fails', () => {
+    createChannelStub.rejects(new Error('channels cannot be created before the wallet is fully synced'))
+
+    expect(
+      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+    ).to.be.rejectedWith(PublicError, 'Funding error')
+  })
+
   describe('committing a balance to the exchange', () => {
     beforeEach(async () => {
       res = await commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
