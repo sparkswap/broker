@@ -564,7 +564,6 @@ class BlockOrderWorker extends EventEmitter {
    * @return {void}
    */
   _placeOrders (blockOrder, baseAmount) {
-    // order params
     const { baseSymbol, counterSymbol, quantumPrice } = blockOrder
     const baseEngine = this.engines.get(baseSymbol)
     const counterEngine = this.engines.get(counterSymbol)
@@ -599,7 +598,7 @@ class BlockOrderWorker extends EventEmitter {
     // split our larger block order into individual placed orders that are each under
     // the max payment size
     while (baseAmountRemaining.gt(0)) {
-      this.logger.info(`Placing order #${orderCount} for BlockOrder`, { blockOrderId: blockOrder.id })
+      this.logger.info(`Placing order #${orderCount++} for BlockOrder`, { blockOrderId: blockOrder.id })
 
       let orderBaseAmount = baseAmountRemaining
 
