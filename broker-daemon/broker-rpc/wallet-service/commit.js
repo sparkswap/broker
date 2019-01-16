@@ -1,7 +1,6 @@
 const { PublicError } = require('grpc-methods')
 
 const { convertBalance, Big } = require('../../utils')
-const { currencies: currencyConfig } = require('../../config')
 
 /**
  * Minimum funding amount in common units (e.g. 0.123 BTC)
@@ -24,12 +23,7 @@ const MINIMUM_FUNDING_AMOUNT = Big(0.00400000)
  * @return {responses.EmptyResponse}
  */
 async function commit ({ params, relayer, logger, engines, orderbooks }, { EmptyResponse }) {
-  const { balance: balanceInCommonUnits, symbol, market } = params
-  const currentCurrencyConfig = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol)
-
-  if (!currentCurrencyConfig) {
-    throw new Error(`Currency was not found when trying to commit to market: ${symbol}`)
-  }
+  const { balance: balanceCommon, symbol, market } = params
 
   const orderbook = orderbooks.get(market)
 
@@ -55,26 +49,43 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     throw new PublicError(`No engine is configured for symbol: ${inverseSymbol}`)
   }
 
-  const maxChannelBalance = Big(currentCurrencyConfig.maxChannelBalance)
-  const balance = Big(balanceInCommonUnits).times(currentCurrencyConfig.quantumsPerCommon).toString()
+  const maxChannelBalance = Big(engine.maxChannelBalance)
+  const balance = Big(balanceCommon).times(engine.quantumsPerCommon).toString()
 
-  logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balanceInCommonUnits}`, { balanceInCommonUnits, balance })
+  logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balanceCommon}`, {
+    balanceCommon,
+    balance
+  })
 
   // We use common units for these calculation so that we can provide
   // friendly errors to the user.
   // TODO: Get correct fee amount from engine
-  if (MINIMUM_FUNDING_AMOUNT.gt(balanceInCommonUnits)) {
+  if (MINIMUM_FUNDING_AMOUNT.gt(balanceCommon)) {
     throw new PublicError(`Minimum balance of ${MINIMUM_FUNDING_AMOUNT} needed to commit to the relayer`)
   } else if (maxChannelBalance.lt(balance)) {
+    const maxChannelBalanceCommon = Big(maxChannelBalance).div(engine.quantumsPerCommon).toString()
     logger.error(`Balance from the client exceeds maximum balance allowed (${maxChannelBalance.toString()}).`, { balance })
-    throw new PublicError(`Maximum balance of ${maxChannelBalance.toString()} exceeded for committing of ${balance} to the relayer. Please try again.`)
+    throw new PublicError(`Maximum balance of ${maxChannelBalanceCommon} ${symbol} exceeded for ` +
+      `committing of ${balanceCommon} ${symbol} to the Relayer. Please try again.`)
+  }
+
+  // Also check that the inbound channel does not exceed the channel maximum,
+  // otherwise our channel will succeed, but our request to the Relayer will fail.
+  const convertedBalance = convertBalance(balance, symbol, inverseSymbol)
+  const convertedMaxChannelBalance = Big(inverseEngine.maxChannelBalance)
+
+  if (convertedMaxChannelBalance.lt(convertedBalance)) {
+    const convertedBalanceCommon = Big(convertedBalance).div(inverseEngine.quantumsPerCommon).toString()
+    const convertedMaxChannelBalanceCommon = Big(convertedMaxChannelBalance).div(inverseEngine.quantumsPerCommon).toString()
+    logger.error(`Balance in desired inbound channel exceeds maximum balance allowed (${convertedMaxChannelBalance.toString()}).`, { convertedBalance })
+    throw new PublicError(`Maximum balance of ${convertedMaxChannelBalanceCommon} ${inverseSymbol} exceeded for ` +
+      `requesting inbound channel of ${convertedBalanceCommon} ${inverseSymbol} from the Relayer. Please try again.`)
   }
 
   // Get the max balance for outbound and inbound channels to see if there are already channels with the balance open. If this is the
   // case we do not need to go to the trouble of opening new channels
   const {maxBalance: maxOutboundBalance} = await engine.getMaxChannel()
   const {maxBalance: maxInboundBalance} = await inverseEngine.getMaxChannel({outbound: false})
-  const convertedBalance = convertBalance(balance, symbol, inverseSymbol)
 
   // If maxOutboundBalance or maxInboundBalance exist, we need to check if the balances are greater or less than the balance of the channel
   // we are trying to open. If neither maxOutboundBalance nor maxInboundBalance exist, it means there are no channels open and we can safely
@@ -90,7 +101,7 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     } else if (insufficientInboundBalance) {
       errorMessage = 'You have another inbound channel open with a balance lower than desired, release that channel and try again.'
     } else {
-      errorMessage = `You already have a channel open with ${balanceInCommonUnits} or greater.`
+      errorMessage = `You already have a channel open with ${balanceCommon} or greater.`
     }
 
     logger.error(errorMessage, { balance, maxOutboundBalance, maxInboundBalance, inboundBalance: convertedBalance })

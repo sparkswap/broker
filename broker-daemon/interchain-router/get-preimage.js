@@ -45,7 +45,7 @@ function timeLockDeltaInSeconds (inboundEngine, timeLock, bestHeight) {
     throw new Error(`Current block height (${bestHeight}) is higher than the extended timelock (${timeLock})`)
   }
 
-  return timeLockDelta.times(inboundEngine.currencyConfig.secondsPerBlock).toString()
+  return timeLockDelta.times(inboundEngine.secondsPerBlock).toString()
 }
 
 /**

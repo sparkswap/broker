@@ -1,6 +1,3 @@
-const { PublicError } = require('grpc-methods')
-
-const { currencies: currencyConfig } = require('../../config')
 const { Big } = require('../../utils')
 
 /**
@@ -23,12 +20,7 @@ const BALANCE_PRECISION = 16
  * @return {String} res.totalPendingChannelBalance
  */
 async function getEngineBalances (symbol, engine, logger) {
-  const { quantumsPerCommon } = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol) || {}
-
-  if (!quantumsPerCommon) {
-    logger.error(`Currency not supported in ${symbol} configuration`)
-    throw new PublicError(`Currency not supported in ${symbol} configuration`)
-  }
+  const { quantumsPerCommon } = engine
 
   let [uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance] = await Promise.all([
     engine.getUncommittedBalance(),
