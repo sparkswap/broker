@@ -23,7 +23,7 @@ const MINIMUM_FUNDING_AMOUNT = Big(0.00400000)
  * @return {responses.EmptyResponse}
  */
 async function commit ({ params, relayer, logger, engines, orderbooks }, { EmptyResponse }) {
-  const { balance: balanceInCommonUnits, symbol, market } = params
+  const { balance: balanceCommon, symbol, market } = params
 
   const orderbook = orderbooks.get(market)
 
@@ -50,30 +50,36 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
   }
 
   const maxChannelBalance = Big(engine.maxChannelBalance)
-  const balance = Big(balanceInCommonUnits).times(engine.quantumsPerCommon).toString()
+  const balance = Big(balanceCommon).times(engine.quantumsPerCommon).toString()
 
-  logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balanceInCommonUnits}`, { balanceInCommonUnits, balance })
+  logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balanceCommon}`, {
+    balanceCommon,
+    balance
+  })
 
   // We use common units for these calculation so that we can provide
   // friendly errors to the user.
   // TODO: Get correct fee amount from engine
-  if (MINIMUM_FUNDING_AMOUNT.gt(balanceInCommonUnits)) {
+  if (MINIMUM_FUNDING_AMOUNT.gt(balanceCommon)) {
     throw new PublicError(`Minimum balance of ${MINIMUM_FUNDING_AMOUNT} needed to commit to the relayer`)
   } else if (maxChannelBalance.lt(balance)) {
-    const maxChannelBalanceInCommonUnits = Big(maxChannelBalance).div(engine.quantumsPerCommon).toString()
+    const maxChannelBalanceCommon = Big(maxChannelBalance).div(engine.quantumsPerCommon).toString()
     logger.error(`Balance from the client exceeds maximum balance allowed (${maxChannelBalance.toString()}).`, { balance })
-    throw new PublicError(`Maximum balance of ${maxChannelBalanceInCommonUnits} ${symbol} exceeded for committing of ${balanceInCommonUnits} ${symbol} to the Relayer. Please try again.`)
+    throw new PublicError(`Maximum balance of ${maxChannelBalanceCommon} ${symbol} exceeded for ` +
+      `committing of ${balanceCommon} ${symbol} to the Relayer. Please try again.`)
   }
 
-  // Also check that the inbound channel does not exceed the channel maximum, otherwise our channel will succeed, but our request to the Relayer will fail.
+  // Also check that the inbound channel does not exceed the channel maximum,
+  // otherwise our channel will succeed, but our request to the Relayer will fail.
   const convertedBalance = convertBalance(balance, symbol, inverseSymbol)
   const convertedMaxChannelBalance = Big(inverseEngine.maxChannelBalance)
 
   if (convertedMaxChannelBalance.lt(convertedBalance)) {
-    const convertedBalanceInCommonUnits = Big(convertedBalance).div(inverseEngine.quantumsPerCommon).toString()
-    const convertedMaxChannelBalanceInCommonUnits = Big(convertedMaxChannelBalance).div(inverseEngine.quantumsPerCommon).toString()
+    const convertedBalanceCommon = Big(convertedBalance).div(inverseEngine.quantumsPerCommon).toString()
+    const convertedMaxChannelBalanceCommon = Big(convertedMaxChannelBalance).div(inverseEngine.quantumsPerCommon).toString()
     logger.error(`Balance in desired inbound channel exceeds maximum balance allowed (${convertedMaxChannelBalance.toString()}).`, { convertedBalance })
-    throw new PublicError(`Maximum balance of ${convertedMaxChannelBalanceInCommonUnits} ${inverseSymbol} exceeded for requesting inbound channel of ${convertedBalanceInCommonUnits} ${inverseSymbol} from the Relayer. Please try again.`)
+    throw new PublicError(`Maximum balance of ${convertedMaxChannelBalanceCommon} ${inverseSymbol} exceeded for ` +
+      `requesting inbound channel of ${convertedBalanceCommon} ${inverseSymbol} from the Relayer. Please try again.`)
   }
 
   // Get the max balance for outbound and inbound channels to see if there are already channels with the balance open. If this is the
@@ -95,7 +101,7 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     } else if (insufficientInboundBalance) {
       errorMessage = 'You have another inbound channel open with a balance lower than desired, release that channel and try again.'
     } else {
-      errorMessage = `You already have a channel open with ${balanceInCommonUnits} or greater.`
+      errorMessage = `You already have a channel open with ${balanceCommon} or greater.`
     }
 
     logger.error(errorMessage, { balance, maxOutboundBalance, maxInboundBalance, inboundBalance: convertedBalance })
