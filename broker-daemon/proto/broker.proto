@@ -77,7 +77,7 @@ message HealthCheckResponse {
   repeated EngineStatus engine_status = 1;
   // The status of the relayer this BrokerDaemon is connected to, either `'OK'` or the error message returned when connecting to it.
   string relayer_status = 2;
-  // The status of every engine available on the BrokerDaemon.
+  // The status of every orderbook available on the BrokerDaemon.
   repeated OrderbookStatus orderbook_status = 3;
 
   /**
@@ -96,7 +96,7 @@ message HealthCheckResponse {
   message OrderbookStatus {
     // The market for the orderbook, e.g. `BTC/LTC`
     string market = 1;
-    // The status of the market, either `'synced'` or `'not synced'`.
+    // The status of the market, either `true` or `false`.
     bool synced = 2;
   }
 }
@@ -147,8 +147,32 @@ service AdminService {
    *       "status": "OK"
    *     },
    *   ],
+   *   "orderbookStatus": [
+   *     {
+   *       "market": "BTC/LTC",
+   *       "synced": "true"
+   *     }
+   *   ],
    *   "relayerStatus": "OK"
    * }
+   * ```
+   *
+   * ```shell
+   * Sparkswap Healthcheck
+   *
+   * ┌───────────────────┬───────────────────┐
+   * │ Component         │ Status            │
+   * ├───────────────────┼───────────────────┤
+   * │ BTC Engine        │ OK                │
+   * ├───────────────────┼───────────────────┤
+   * │ LTC Engine        │ OK                │
+   * ├───────────────────┼───────────────────┤
+   * │ Relayer           │ OK                │
+   * ├───────────────────┼───────────────────┤
+   * │ BTC/LTC Orderbook │ OK                │
+   * ├───────────────────┼───────────────────┤
+   * │ Daemon            │ OK                │
+   * └───────────────────┴───────────────────┘
    * ```
    *
    * ```shell
