@@ -17,13 +17,11 @@ describe('MarketStats', () => {
     currencyConfig = [{
       name: 'Bitcoin',
       symbol: 'BTC',
-      quantumsPerCommon: '100000000',
-      maxChannelBalance: '16777215'
+      quantumsPerCommon: '100000000'
     }, {
       name: 'Ethereum',
       symbol: 'ETH',
-      quantumsPerCommon: '100000000',
-      maxChannelBalance: '16777215'
+      quantumsPerCommon: '100000000'
     }]
 
     MarketStats.__set__('currencyConfig', currencyConfig)
