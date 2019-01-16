@@ -96,8 +96,8 @@ message HealthCheckResponse {
   message OrderbookStatus {
     // The market for the orderbook, e.g. `BTC/LTC`
     string market = 1;
-    // The status of the market, either `true` or `false`.
-    bool synced = 2;
+    // The status of the market, either `'OK'` or `'NOT_SYNCED'`.
+    string status = 2;
   }
 }
 
@@ -150,7 +150,7 @@ service AdminService {
    *   "orderbookStatus": [
    *     {
    *       "market": "BTC/LTC",
-   *       "synced": "true"
+   *       "status": "OK"
    *     }
    *   ],
    *   "relayerStatus": "OK"

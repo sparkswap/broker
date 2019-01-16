@@ -37,8 +37,8 @@ describe('healthCheck', () => {
       ],
       relayerStatus: 'OK',
       orderbookStatus: [
-        { market: 'BTC/LTC', synced: true },
-        { market: 'ABC/XYZ', synced: false }
+        { market: 'BTC/LTC', status: 'OK' },
+        { market: 'ABC/XYZ', status: 'NOT_SYNCED' }
       ]
     })
     instanceTableStub = {push: sinon.stub()}
@@ -76,8 +76,8 @@ describe('healthCheck', () => {
     healthCheckStub = sinon.stub().returns({
       relayerStatus: 'OK',
       orderbookStatus: [
-        { market: 'BTC/LTC', synced: true },
-        { market: 'ABC/XYZ', synced: false }
+        { market: 'BTC/LTC', status: 'OK' },
+        { market: 'ABC/XYZ', status: 'NOT_SYNCED' }
       ]
     })
     brokerStub.prototype.adminService = { healthCheck: healthCheckStub }

@@ -70,7 +70,7 @@ describe('health-check', () => {
           ],
           relayerStatus: statusOK,
           orderbookStatus: [
-            { market: 'BTC/LTC', synced: true }
+            { market: 'BTC/LTC', status: 'OK' }
           ]
         }))
     })

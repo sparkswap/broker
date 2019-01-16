@@ -5,7 +5,8 @@
  */
 const STATUS_CODES = Object.freeze({
   UNAVAILABLE: 'UNAVAILABLE',
-  OK: 'OK'
+  OK: 'OK',
+  NOT_SYNCED: 'NOT_SYNCED'
 })
 
 /**
@@ -47,7 +48,8 @@ async function healthCheck ({ relayer, logger, engines, orderbooks }, { HealthCh
   logger.debug(`Received status from relayer`, { relayerStatus })
 
   const orderbookStatus = Array.from(orderbooks).map(([ market, orderbook ]) => {
-    return { market, synced: orderbook.synced }
+    const status = orderbook.synced ? STATUS_CODES.OK : STATUS_CODES.NOT_SYNCED
+    return { market, status }
   })
 
   logger.debug(`Received status from orderbooks`, { orderbookStatus })

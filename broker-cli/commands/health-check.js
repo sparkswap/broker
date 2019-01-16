@@ -28,15 +28,6 @@ const ENGINE_STATUS_CODES = Object.freeze({
 })
 
 /**
- * Statuses for whether or not the orderbook is synced
- * @constant
- * @type {Object}
- */
-const SYNCED_STATUS = Object.freeze({
-  NOT_SYNCED: 'NOT_SYNCED'
-})
-
-/**
  * sparkswap healthcheck
  *
  * Tests the broker and engine connection for the cli
@@ -78,18 +69,18 @@ async function healthCheck (args, opts, logger) {
 
     if (engineStatus.length > 0) {
       engineStatus.forEach(({ symbol, status }) => {
-        const statusString = status === ENGINE_STATUS_CODES.VALIDATED ? `${STATUS_CODES.OK}`.green : `${status}`.red
+        const statusString = status === ENGINE_STATUS_CODES.VALIDATED ? `${STATUS_CODES.OK}`.green : status.red
         healthcheckTable.push([`${symbol} Engine`, statusString])
       })
     } else {
       healthcheckTable.push(['Engines', 'No Statuses Returned'.red])
     }
 
-    const relayerStatusString = relayerStatus === STATUS_CODES.OK ? `${relayerStatus}`.green : `${relayerStatus}`.red
+    const relayerStatusString = relayerStatus === STATUS_CODES.OK ? relayerStatus.green : relayerStatus.red
     healthcheckTable.push(['Relayer', relayerStatusString])
 
-    orderbookStatus.forEach(({ market, synced }) => {
-      const orderbookStatusString = synced ? STATUS_CODES.OK.green : SYNCED_STATUS.NOT_SYNCED.red
+    orderbookStatus.forEach(({ market, status }) => {
+      const orderbookStatusString = status === STATUS_CODES.OK ? status.green : status.red
       healthcheckTable.push([`${market} Orderbook`, orderbookStatusString])
     })
 
