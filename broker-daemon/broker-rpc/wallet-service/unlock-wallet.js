@@ -11,6 +11,8 @@ const { PublicError } = require('grpc-methods')
  * @param {Map<Engine>} request.engines
  * @param {Object} responses
  * @param {Function} responses.EmptyResponse
+ * @throws {PublicError} If Engine does not exist for the given symbol
+ * @throws {PublicError} If Engine is not in a LOCKED state
  * @return {EmptyResponse}
  */
 async function unlockWallet ({ logger, params, engines }, { EmptyResponse }) {
