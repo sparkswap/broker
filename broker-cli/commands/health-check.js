@@ -4,7 +4,6 @@ const BrokerDaemonClient = require('../broker-daemon-client')
 const { validations, handleError } = require('../utils')
 const { RPC_ADDRESS_HELP_STRING } = require('../utils/strings')
 const Table = require('cli-table')
-const size = require('window-size')
 
 /**
  * @constant
