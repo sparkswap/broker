@@ -16,7 +16,8 @@ describe('unlock-wallet', () => {
     password = 'my-password'
     symbol = 'BTC'
     engine = {
-      unlockWallet: sinon.stub()
+      unlockWallet: sinon.stub(),
+      isLocked: true
     }
     engines = new Map([
       ['BTC', engine]
@@ -43,6 +44,12 @@ describe('unlock-wallet', () => {
     } catch (e) {
       expect(logger.error).to.have.been.calledOnce()
     }
+  })
+
+  it('errors if the wallet is not locked', () => {
+    engine.isLocked = false
+
+    return expect(unlockWallet({ logger, params, engines }, { EmptyResponse })).to.eventually.be.rejectedWith('Unable to unlock wallet')
   })
 
   it('unlocks a wallet', async () => {
