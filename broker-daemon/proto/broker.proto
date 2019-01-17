@@ -83,7 +83,7 @@ enum EngineStatuses {
   LOCKED = 3;
   // Wallet is unlocked but the configuration of the node and chain sync status are not known
   UNLOCKED = 4;
-  // Wallet is not yet synced to chain
+  // Engine is not yet synced to chain
   NOT_SYNCED = 5;
   // Engine is validated and ready for use
   VALIDATED = 6;
