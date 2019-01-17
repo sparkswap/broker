@@ -22,6 +22,11 @@ async function unlockWallet ({ logger, params, engines }, { EmptyResponse }) {
     throw new PublicError(`Unable to unlock wallet. No engine available for ${symbol}`)
   }
 
+  if (!engine.isLocked) {
+    logger.error(`Engine for ${symbol} is not locked. Current status: ${engine.status}`)
+    throw new PublicError(`Unable to unlock wallet, engine for ${symbol} is currently: ${engine.status}`)
+  }
+
   await engine.unlockWallet(password)
 
   return new EmptyResponse({})
