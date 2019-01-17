@@ -114,7 +114,7 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     await engine.createChannel(address, balance)
   } catch (e) {
     logger.error('Received error when creating outbound channel', { error: e.stack })
-    throw new PublicError(`Funding error: Check that you have sufficient balance`)
+    throw new PublicError(`Funding error: ${e.message}`)
   }
 
   const paymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
