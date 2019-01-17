@@ -174,13 +174,6 @@ service AdminService {
    * │ Daemon            │ OK                │
    * └───────────────────┴───────────────────┘
    * ```
-   *
-   * ```shell
-   * Engine status for BTC: OK
-   * Engine status for LTC: OK
-   * Relayer Status: OK
-   * Daemon Status: OK
-   * ```
    */
   rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse) {
     option (.google.api.http) = {

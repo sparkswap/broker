@@ -52,12 +52,8 @@ async function healthCheck (args, opts, logger) {
       relayerStatus = STATUS_CODES.UNKNOWN
     } = await client.adminService.healthCheck({})
 
-    const windowWidth = size.get().width
-    const unitWidth = Math.floor(windowWidth / 16)
-
     const healthcheckTable = new Table({
       head: ['Component', 'Status'],
-      colWidths: [unitWidth, unitWidth],
       style: { head: ['gray'] }
     })
 
@@ -69,20 +65,24 @@ async function healthCheck (args, opts, logger) {
 
     if (engineStatus.length > 0) {
       engineStatus.forEach(({ symbol, status }) => {
-        const statusString = status === ENGINE_STATUS_CODES.VALIDATED ? `${STATUS_CODES.OK}`.green : status.red
+        const statusString = (status === ENGINE_STATUS_CODES.VALIDATED) ? `${STATUS_CODES.OK}`.green : status.red
         healthcheckTable.push([`${symbol} Engine`, statusString])
       })
     } else {
       healthcheckTable.push(['Engines', 'No Statuses Returned'.red])
     }
 
-    const relayerStatusString = relayerStatus === STATUS_CODES.OK ? relayerStatus.green : relayerStatus.red
+    const relayerStatusString = (relayerStatus === STATUS_CODES.OK) ? relayerStatus.green : relayerStatus.red
     healthcheckTable.push(['Relayer', relayerStatusString])
 
-    orderbookStatus.forEach(({ market, status }) => {
-      const orderbookStatusString = status === STATUS_CODES.OK ? status.green : status.red
-      healthcheckTable.push([`${market} Orderbook`, orderbookStatusString])
-    })
+    if (orderbookStatus.length > 0) {
+      orderbookStatus.forEach(({ market, status }) => {
+        const orderbookStatusString = (status === STATUS_CODES.OK) ? status.green : status.red
+        healthcheckTable.push([`${market} Orderbook`, orderbookStatusString])
+      })
+    } else {
+      healthcheckTable.push(['Orderbooks', 'No Statuses Returned'.red])
+    }
 
     healthcheckTable.push(['Daemon', `${STATUS_CODES.OK}`.green])
 
