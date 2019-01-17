@@ -70,13 +70,55 @@ enum Side {
 }
 
 /**
+ * Statuses of an engine
+ */
+enum EngineStatuses {
+  // Default state of the engine
+  UNKNOWN = 0;
+  // Engine is unavailable
+  UNAVAILABLE = 1;
+  // Wallet does not exist
+  NEEDS_WALLET = 2;
+  // Wallet exists but is not locked
+  LOCKED = 3;
+  // Wallet is unlocked but the configuration of the node and chain sync status are not known
+  UNLOCKED = 4;
+  // Engine is not yet synced to chain
+  NOT_SYNCED = 5;
+  // Engine is validated and ready for use
+  VALIDATED = 6;
+}
+
+/**
+ * Statuses of the relayer
+ */
+enum RelayerStatuses {
+  // Relayer is available
+  OK = 0;
+  // Relayer is not available
+  UNAVAILABLE = 1;
+}
+
+/**
+ * Statuses of an orderbook
+ */
+enum OrderbookStatuses {
+  // Orderbook is synced
+  OK = 0;
+  // Orderbook is not synced
+  NOT_SYNCED = 1;
+}
+
+/**
  * HealthCheckResponse provides information on the health of a BrokerDaemon.
  */
 message HealthCheckResponse {
   // The status of every engine available on the BrokerDaemon.
   repeated EngineStatus engine_status = 1;
   // The status of the relayer this BrokerDaemon is connected to, either `'OK'` or the error message returned when connecting to it.
-  string relayer_status = 2;
+  RelayerStatuses relayer_status = 2;
+  // The status of every orderbook available on the BrokerDaemon.
+  repeated OrderbookStatus orderbook_status = 3;
 
   /**
    * EngineStatus provides the status of an engine for a currency.
@@ -84,8 +126,18 @@ message HealthCheckResponse {
   message EngineStatus {
     // The common symbol that the engine is responsible for, e.g. `BTC` or `LTC`
     string symbol = 1;
-    // The status of the engine, either `'OK'` or the error message returned when accessing it.
-    string status = 2;
+    // The status of the engine
+    EngineStatuses status = 2;
+  }
+
+  /**
+   * OrderbookStatus provides the status of an orderbook for a market.
+   */
+  message OrderbookStatus {
+    // The market for the orderbook, e.g. `BTC/LTC`
+    string market = 1;
+    // The status of the market
+    OrderbookStatuses status = 2;
   }
 }
 
@@ -135,15 +187,32 @@ service AdminService {
    *       "status": "OK"
    *     },
    *   ],
+   *   "orderbookStatus": [
+   *     {
+   *       "market": "BTC/LTC",
+   *       "status": "OK"
+   *     }
+   *   ],
    *   "relayerStatus": "OK"
    * }
    * ```
    *
    * ```shell
-   * Engine status for BTC: OK
-   * Engine status for LTC: OK
-   * Relayer Status: OK
-   * Daemon Status: OK
+   * Sparkswap Healthcheck
+   *
+   * ┌───────────────────┬───────────────────┐
+   * │ Component         │ Status            │
+   * ├───────────────────┼───────────────────┤
+   * │ BTC Engine        │ OK                │
+   * ├───────────────────┼───────────────────┤
+   * │ LTC Engine        │ OK                │
+   * ├───────────────────┼───────────────────┤
+   * │ Relayer           │ OK                │
+   * ├───────────────────┼───────────────────┤
+   * │ BTC/LTC Orderbook │ OK                │
+   * ├───────────────────┼───────────────────┤
+   * │ Daemon            │ OK                │
+   * └───────────────────┴───────────────────┘
    * ```
    */
   rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse) {

@@ -5,7 +5,8 @@
  */
 const STATUS_CODES = Object.freeze({
   UNAVAILABLE: 'UNAVAILABLE',
-  OK: 'OK'
+  OK: 'OK',
+  NOT_SYNCED: 'NOT_SYNCED'
 })
 
 /**
@@ -35,7 +36,7 @@ async function getRelayerStatus (relayer, { logger }) {
  * @param {function} responses.HealthCheckResponse - constructor for HealthCheckResponse messages
  * @return {responses.HealthCheckResponse}
  */
-async function healthCheck ({ relayer, logger, engines }, { HealthCheckResponse }) {
+async function healthCheck ({ relayer, logger, engines, orderbooks }, { HealthCheckResponse }) {
   const engineStatus = Array.from(engines).map(([ symbol, engine ]) => {
     return { symbol, status: engine.status }
   })
@@ -46,7 +47,14 @@ async function healthCheck ({ relayer, logger, engines }, { HealthCheckResponse 
 
   logger.debug(`Received status from relayer`, { relayerStatus })
 
-  return new HealthCheckResponse({ engineStatus, relayerStatus })
+  const orderbookStatus = Array.from(orderbooks).map(([ market, orderbook ]) => {
+    const status = orderbook.synced ? STATUS_CODES.OK : STATUS_CODES.NOT_SYNCED
+    return { market, status }
+  })
+
+  logger.debug(`Received status from orderbooks`, { orderbookStatus })
+
+  return new HealthCheckResponse({ engineStatus, relayerStatus, orderbookStatus })
 }
 
 module.exports = healthCheck

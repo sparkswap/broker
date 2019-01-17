@@ -77,7 +77,7 @@ class BrokerRPCServer {
     this.server = new grpc.Server()
     this.httpServer = createHttpServer(this.protoPath, DEFAULT_RPC_ADDRESS, { disableAuth, enableCors, privKeyPath, pubKeyPath, logger })
 
-    this.adminService = new AdminService(this.protoPath, { logger, relayer, engines, auth: this.auth })
+    this.adminService = new AdminService(this.protoPath, { logger, relayer, engines, orderbooks, auth: this.auth })
     this.server.addService(this.adminService.definition, this.adminService.implementation)
 
     this.orderService = new OrderService(this.protoPath, { logger, blockOrderWorker, auth: this.auth })
