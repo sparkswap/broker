@@ -75,17 +75,17 @@ enum Side {
 enum EngineStatuses {
   // Default state of the engine
   UNKNOWN = 0;
-  // LightningRpc (lnrpc) is unavailable, WalletUnlocker rpc is unavailable
+  // Engine is unavailable
   UNAVAILABLE = 1;
-  // Wallet does not exist, LightningRpc is UNIMPLEMENTED, genSeeds does not throw
+  // Wallet does not exist
   NEEDS_WALLET = 2;
-  // LightningRpc (lnrpc) is UNIMPLEMENTED, genSeeds throws "wallet already exists"
+  // Wallet exists but is not locked
   LOCKED = 3;
-  // LightningRpc (lnrpc) getInfo does not throw an error
+  // Wallet is unlocked but the configuration of the node and chain sync status are not known
   UNLOCKED = 4;
-  // LightningRpc (lnrpc) getInfo synced_to_chain boolean is false
+  // Wallet is not yet synced to chain
   NOT_SYNCED = 5;
-  // LightningRpc (lnrpc) getInfo matches the engines configuration
+  // Engine is validated and ready for use
   VALIDATED = 6;
 }
 
