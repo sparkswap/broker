@@ -25,6 +25,7 @@ describe('orderbook', () => {
   let createOrderBookJsonStub
   let stream
   let revertCreateUI
+  let revertCreateOrderBookJson
   let resizeHandleStub
   let revertProcessStub
 
@@ -50,7 +51,7 @@ describe('orderbook', () => {
 
     revert = program.__set__('BrokerDaemonClient', brokerStub)
     revertCreateUI = program.__set__('createOrderBookTable', createUIStub)
-    revertCreateUI = program.__set__('createOrderBookJson', createOrderBookJsonStub)
+    revertCreateOrderBookJson = program.__set__('createOrderBookJson', createOrderBookJsonStub)
 
     logger = {
       info: infoSpy,
@@ -65,6 +66,7 @@ describe('orderbook', () => {
     revert()
     revertCreateUI()
     revertProcessStub()
+    revertCreateOrderBookJson()
   })
 
   it('makes a request to the broker', async () => {
