@@ -21,6 +21,7 @@ describe('healthCheck', () => {
   let instanceTableStub
   let tableStub
   let revertTable
+  let healthStatus
 
   const healthCheck = program.__get__('healthCheck')
 
@@ -30,7 +31,7 @@ describe('healthCheck', () => {
     opts = { rpcAddress }
     infoSpy = sinon.spy()
     errorSpy = sinon.spy()
-    healthCheckStub = sinon.stub().returns({
+    healthStatus = {
       engineStatus: [
         { symbol: 'BTC', status: 'VALIDATED' },
         { symbol: 'LTC', status: 'NOT VALIDATED' }
@@ -40,7 +41,8 @@ describe('healthCheck', () => {
         { market: 'BTC/LTC', status: 'OK' },
         { market: 'ABC/XYZ', status: 'NOT_SYNCED' }
       ]
-    })
+    }
+    healthCheckStub = sinon.stub().returns(healthStatus)
     instanceTableStub = {push: sinon.stub()}
     tableStub = sinon.stub().returns(instanceTableStub)
     revertTable = program.__set__('Table', tableStub)
@@ -99,5 +101,32 @@ describe('healthCheck', () => {
     await healthCheck(args, opts, logger)
     expect(instanceTableStub.push).to.have.been.calledWith(['BTC/LTC Orderbook', 'OK'.green])
     expect(instanceTableStub.push).to.have.been.calledWith(['ABC/XYZ Orderbook', 'NOT_SYNCED'.red])
+  })
+
+  describe('with json output', () => {
+    let json
+    let consoleStub
+
+    beforeEach(() => {
+      json = true
+      consoleStub = { log: sinon.stub() }
+      program.__set__('console', consoleStub)
+      opts = { rpcAddress, json }
+    })
+
+    it('makes a request to the broker', async () => {
+      await healthCheck(args, opts, logger)
+      expect(healthCheckStub).to.have.been.called()
+    })
+
+    it('does not create a table', async () => {
+      await healthCheck(args, opts, logger)
+      expect(instanceTableStub.push).to.not.have.been.called()
+    })
+
+    it('logs health status to ', async () => {
+      await healthCheck(args, opts, logger)
+      expect(consoleStub.log).to.have.been.calledWith(healthStatus)
+    })
   })
 })

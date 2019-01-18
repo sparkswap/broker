@@ -27,6 +27,58 @@ const ENGINE_STATUS_CODES = Object.freeze({
 })
 
 /**
+ * Prints health check status summary in Table format.
+ * @param {Object} healthStatus
+
+ * @returns {Void}
+ */
+
+function createUI (healthStatus) {
+  const {
+    engineStatus = [],
+    orderbookStatus = [],
+    relayerStatus = STATUS_CODES.UNKNOWN
+  } = healthStatus
+
+  const healthcheckTable = new Table({
+    head: ['Component', 'Status'],
+    style: { head: ['gray'] }
+  })
+
+  const ui = []
+
+  ui.push('')
+  ui.push('Sparkswap Healthcheck'.bold.white)
+  ui.push('')
+
+  if (engineStatus.length > 0) {
+    engineStatus.forEach(({ symbol, status }) => {
+      const statusString = (status === ENGINE_STATUS_CODES.VALIDATED) ? `${STATUS_CODES.OK}`.green : status.red
+      healthcheckTable.push([`${symbol} Engine`, statusString])
+    })
+  } else {
+    healthcheckTable.push(['Engines', 'No Statuses Returned'.red])
+  }
+
+  const relayerStatusString = (relayerStatus === STATUS_CODES.OK) ? relayerStatus.green : relayerStatus.red
+  healthcheckTable.push(['Relayer', relayerStatusString])
+
+  if (orderbookStatus.length > 0) {
+    orderbookStatus.forEach(({ market, status }) => {
+      const orderbookStatusString = (status === STATUS_CODES.OK) ? status.green : status.red
+      healthcheckTable.push([`${market} Orderbook`, orderbookStatusString])
+    })
+  } else {
+    healthcheckTable.push(['Orderbooks', 'No Statuses Returned'.red])
+  }
+
+  healthcheckTable.push(['Daemon', `${STATUS_CODES.OK}`.green])
+
+  ui.push(healthcheckTable.toString())
+  console.log(ui.join('\n') + '\n')
+}
+
+/**
  * sparkswap healthcheck
  *
  * Tests the broker and engine connection for the cli
@@ -40,53 +92,17 @@ const ENGINE_STATUS_CODES = Object.freeze({
  */
 
 async function healthCheck (args, opts, logger) {
-  const { rpcAddress } = opts
+  const { rpcAddress, json } = opts
 
   try {
     const client = await new BrokerDaemonClient(rpcAddress)
+    const healthStatus = await client.adminService.healthCheck({})
 
-    const {
-      engineStatus = [],
-      orderbookStatus = [],
-      relayerStatus = STATUS_CODES.UNKNOWN
-    } = await client.adminService.healthCheck({})
-
-    const healthcheckTable = new Table({
-      head: ['Component', 'Status'],
-      style: { head: ['gray'] }
-    })
-
-    const ui = []
-
-    ui.push('')
-    ui.push('Sparkswap Healthcheck'.bold.white)
-    ui.push('')
-
-    if (engineStatus.length > 0) {
-      engineStatus.forEach(({ symbol, status }) => {
-        const statusString = (status === ENGINE_STATUS_CODES.VALIDATED) ? `${STATUS_CODES.OK}`.green : status.red
-        healthcheckTable.push([`${symbol} Engine`, statusString])
-      })
+    if (json) {
+      console.log(healthStatus)
     } else {
-      healthcheckTable.push(['Engines', 'No Statuses Returned'.red])
+      createUI(healthStatus)
     }
-
-    const relayerStatusString = (relayerStatus === STATUS_CODES.OK) ? relayerStatus.green : relayerStatus.red
-    healthcheckTable.push(['Relayer', relayerStatusString])
-
-    if (orderbookStatus.length > 0) {
-      orderbookStatus.forEach(({ market, status }) => {
-        const orderbookStatusString = (status === STATUS_CODES.OK) ? status.green : status.red
-        healthcheckTable.push([`${market} Orderbook`, orderbookStatusString])
-      })
-    } else {
-      healthcheckTable.push(['Orderbooks', 'No Statuses Returned'.red])
-    }
-
-    healthcheckTable.push(['Daemon', `${STATUS_CODES.OK}`.green])
-
-    ui.push(healthcheckTable.toString())
-    console.log(ui.join('\n') + '\n')
   } catch (e) {
     logger.error(handleError(e))
   }

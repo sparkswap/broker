@@ -49,12 +49,17 @@ function createUI (market, orders) {
  * @param {Logger} logger
  */
 async function summary (args, opts, logger) {
-  const { market, rpcAddress } = opts
+  const { market, rpcAddress, json } = opts
   const request = { market }
   try {
     const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)
     const orders = await brokerDaemonClient.orderService.getBlockOrders(request)
-    createUI(market, orders.blockOrders)
+
+    if (json) {
+      console.log(orders)
+    } else {
+      createUI(market, orders.blockOrders)
+    }
   } catch (e) {
     logger.error(handleError(e))
   }

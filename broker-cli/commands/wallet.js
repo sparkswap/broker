@@ -46,6 +46,40 @@ const SUPPORTED_COMMANDS = Object.freeze({
   UNLOCK: 'unlock'
 })
 
+function createUI (balances) {
+  const balancesTable = new Table({
+    head: ['', 'Committed (Pending)', 'Uncommitted (Pending)'],
+    style: { head: ['gray'] }
+  })
+
+  balances.forEach((balance) => {
+    let {
+      symbol,
+      error = null,
+      totalChannelBalance,
+      totalPendingChannelBalance,
+      uncommittedBalance,
+      uncommittedPendingBalance
+    } = balance
+
+    totalChannelBalance = error ? 'Not Available'.yellow : totalChannelBalance.green
+    uncommittedBalance = error ? 'Not Available'.yellow : uncommittedBalance
+
+    // We fix all pending balances to 8 decimal places due to aesthetics. Since
+    // this balance should only be temporary, we do not care as much about precision
+    totalPendingChannelBalance = error ? '' : `(${Big(totalPendingChannelBalance).toFixed(8)})`.grey
+    uncommittedPendingBalance = error ? '' : `(${Big(uncommittedPendingBalance).toFixed(8)})`.grey
+
+    balancesTable.push([
+      symbol,
+      `${totalChannelBalance} ${totalPendingChannelBalance}`,
+      `${uncommittedBalance} ${uncommittedPendingBalance}`
+    ])
+  })
+
+  console.info('Wallet Balances'.bold.white)
+  console.info(balancesTable.toString())
+}
 /**
  * Calls the broker for the daemons wallet balance
  *
@@ -58,44 +92,17 @@ const SUPPORTED_COMMANDS = Object.freeze({
  * @return {Void}
  */
 async function balance (args, opts, logger) {
-  const { rpcAddress } = opts
+  const { rpcAddress, json } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const { balances } = await client.walletService.getBalances({})
 
-    const balancesTable = new Table({
-      head: ['', 'Committed (Pending)', 'Uncommitted (Pending)'],
-      style: { head: ['gray'] }
-    })
-
-    balances.forEach((balance) => {
-      let {
-        symbol,
-        error = null,
-        totalChannelBalance,
-        totalPendingChannelBalance,
-        uncommittedBalance,
-        uncommittedPendingBalance
-      } = balance
-
-      totalChannelBalance = error ? 'Not Available'.yellow : totalChannelBalance.green
-      uncommittedBalance = error ? 'Not Available'.yellow : uncommittedBalance
-
-      // We fix all pending balances to 8 decimal places due to aesthetics. Since
-      // this balance should only be temporary, we do not care as much about precision
-      totalPendingChannelBalance = error ? '' : `(${Big(totalPendingChannelBalance).toFixed(8)})`.grey
-      uncommittedPendingBalance = error ? '' : `(${Big(uncommittedPendingBalance).toFixed(8)})`.grey
-
-      balancesTable.push([
-        symbol,
-        `${totalChannelBalance} ${totalPendingChannelBalance}`,
-        `${uncommittedBalance} ${uncommittedPendingBalance}`
-      ])
-    })
-
-    logger.info('Wallet Balances'.bold.white)
-    logger.info(balancesTable.toString())
+    if (json) {
+      console.log(balances)
+    } else {
+      createUI(balances)
+    }
   } catch (e) {
     logger.error(handleError(e))
   }
@@ -291,6 +298,60 @@ const CAPACITY_STATUSES = Object.freeze({
 })
 
 /**
+ * Prints network status summary in Table format.
+ * @param {String} market
+ * @param {Object} baseSymbolCapacities
+ * @param {Object} counterSymbolCapacities
+ * @param {Object} logger
+
+ * @returns {Void}
+ */
+
+function networkStatusTable (market, tradingCapacities) {
+  const { baseSymbolCapacities, counterSymbolCapacities } = tradingCapacities
+  const baseSymbol = baseSymbolCapacities.symbol.toUpperCase()
+  const counterSymbol = counterSymbolCapacities.symbol.toUpperCase()
+
+  const statusTable = new Table({
+    head: ['', `${baseSymbol} Capacity`, `${counterSymbol} Capacity`],
+    style: { head: ['gray'] }
+  })
+
+  // If any balances in the following table are empty (which occurs if the engine is unavailable)
+  // then the text will show up as `Not Available`.
+  //
+  // The user will then be prompted with a warning letting them know that we failed
+  // to receive a balance for a particular currency
+  statusTable.push(['Available', '', ''])
+  statusTable.push([`  Buy ${baseSymbol}`, formatBalance(baseSymbolCapacities.availableReceiveCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(counterSymbolCapacities.availableSendCapacity, NETWORK_STATUSES.AVAILABLE)])
+  statusTable.push([`  Sell ${baseSymbol}`, formatBalance(baseSymbolCapacities.availableSendCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(counterSymbolCapacities.availableReceiveCapacity, NETWORK_STATUSES.AVAILABLE)])
+
+  statusTable.push(['Outstanding', '', ''])
+  statusTable.push([`  Buy ${baseSymbol}`, formatBalance(baseSymbolCapacities.outstandingReceiveCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(counterSymbolCapacities.outstandingSendCapacity, NETWORK_STATUSES.OUTSTANDING)])
+  statusTable.push([`  Sell ${baseSymbol}`, formatBalance(baseSymbolCapacities.outstandingSendCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(counterSymbolCapacities.outstandingReceiveCapacity, NETWORK_STATUSES.OUTSTANDING)])
+
+  statusTable.push(['Pending', '', ''])
+  statusTable.push([`  Buy ${baseSymbol}`, formatBalance(baseSymbolCapacities.pendingReceiveCapacity, NETWORK_STATUSES.PENDING), formatBalance(counterSymbolCapacities.pendingSendCapacity, NETWORK_STATUSES.PENDING)])
+  statusTable.push([`  Sell ${baseSymbol}`, formatBalance(baseSymbolCapacities.pendingSendCapacity, NETWORK_STATUSES.PENDING), formatBalance(counterSymbolCapacities.pendingReceiveCapacity, NETWORK_STATUSES.PENDING)])
+
+  statusTable.push(['Inactive', '', ''])
+  statusTable.push([`  Buy ${baseSymbol}`, formatBalance(baseSymbolCapacities.inactiveReceiveCapacity, NETWORK_STATUSES.INACTIVE), formatBalance(counterSymbolCapacities.inactiveSendCapacity, NETWORK_STATUSES.INACTIVE)])
+  statusTable.push([`  Sell ${baseSymbol}`, formatBalance(baseSymbolCapacities.inactiveSendCapacity, NETWORK_STATUSES.INACTIVE), formatBalance(counterSymbolCapacities.inactiveReceiveCapacity, NETWORK_STATUSES.INACTIVE)])
+
+  console.info(` Market: ${market.bold.white}`)
+  console.info(statusTable.toString())
+  console.info('')
+
+  if (baseSymbolCapacities.status !== CAPACITY_STATUSES.OK) {
+    console.error(`${baseSymbol}: Received errors when requesting network status: ${baseSymbolCapacities.error}`.red)
+  }
+
+  if (counterSymbolCapacities.status !== CAPACITY_STATUSES.OK) {
+    console.error(`${counterSymbol}: Received errors when requesting network status: ${counterSymbolCapacities.error}`.red)
+  }
+}
+
+/**
  * network-status
  *
  * ex: `sparkswap wallet network-status`
@@ -304,51 +365,16 @@ const CAPACITY_STATUSES = Object.freeze({
  * @return {Void}
  */
 async function networkStatus (args, opts, logger) {
-  const { market, rpcAddress } = opts
+  const { market, rpcAddress, json } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({market})
+    const tradingCapacities = await client.walletService.getTradingCapacities({market})
 
-    const baseSymbol = baseSymbolCapacities.symbol.toUpperCase()
-    const counterSymbol = counterSymbolCapacities.symbol.toUpperCase()
-
-    const statusTable = new Table({
-      head: ['', `${baseSymbol} Capacity`, `${counterSymbol} Capacity`],
-      style: { head: ['gray'] }
-    })
-
-    // If any balances in the following table are empty (which occurs if the engine is unavailable)
-    // then the text will show up as `Not Available`.
-    //
-    // The user will then be prompted with a warning letting them know that we failed
-    // to receive a balance for a particular currency
-    statusTable.push(['Available', '', ''])
-    statusTable.push([`  Buy ${baseSymbol}`, formatBalance(baseSymbolCapacities.availableReceiveCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(counterSymbolCapacities.availableSendCapacity, NETWORK_STATUSES.AVAILABLE)])
-    statusTable.push([`  Sell ${baseSymbol}`, formatBalance(baseSymbolCapacities.availableSendCapacity, NETWORK_STATUSES.AVAILABLE), formatBalance(counterSymbolCapacities.availableReceiveCapacity, NETWORK_STATUSES.AVAILABLE)])
-
-    statusTable.push(['Outstanding', '', ''])
-    statusTable.push([`  Buy ${baseSymbol}`, formatBalance(baseSymbolCapacities.outstandingReceiveCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(counterSymbolCapacities.outstandingSendCapacity, NETWORK_STATUSES.OUTSTANDING)])
-    statusTable.push([`  Sell ${baseSymbol}`, formatBalance(baseSymbolCapacities.outstandingSendCapacity, NETWORK_STATUSES.OUTSTANDING), formatBalance(counterSymbolCapacities.outstandingReceiveCapacity, NETWORK_STATUSES.OUTSTANDING)])
-
-    statusTable.push(['Pending', '', ''])
-    statusTable.push([`  Buy ${baseSymbol}`, formatBalance(baseSymbolCapacities.pendingReceiveCapacity, NETWORK_STATUSES.PENDING), formatBalance(counterSymbolCapacities.pendingSendCapacity, NETWORK_STATUSES.PENDING)])
-    statusTable.push([`  Sell ${baseSymbol}`, formatBalance(baseSymbolCapacities.pendingSendCapacity, NETWORK_STATUSES.PENDING), formatBalance(counterSymbolCapacities.pendingReceiveCapacity, NETWORK_STATUSES.PENDING)])
-
-    statusTable.push(['Inactive', '', ''])
-    statusTable.push([`  Buy ${baseSymbol}`, formatBalance(baseSymbolCapacities.inactiveReceiveCapacity, NETWORK_STATUSES.INACTIVE), formatBalance(counterSymbolCapacities.inactiveSendCapacity, NETWORK_STATUSES.INACTIVE)])
-    statusTable.push([`  Sell ${baseSymbol}`, formatBalance(baseSymbolCapacities.inactiveSendCapacity, NETWORK_STATUSES.INACTIVE), formatBalance(counterSymbolCapacities.inactiveReceiveCapacity, NETWORK_STATUSES.INACTIVE)])
-
-    logger.info(` Market: ${market.bold.white}`)
-    logger.info(statusTable.toString())
-    logger.info('')
-
-    if (baseSymbolCapacities.status !== CAPACITY_STATUSES.OK) {
-      logger.error(`${baseSymbol}: Received errors when requesting network status: ${baseSymbolCapacities.error}`.red)
-    }
-
-    if (counterSymbolCapacities.status !== CAPACITY_STATUSES.OK) {
-      logger.error(`${counterSymbol}: Received errors when requesting network status: ${counterSymbolCapacities.error}`.red)
+    if (json) {
+      console.log(tradingCapacities)
+    } else {
+      networkStatusTable(market, tradingCapacities)
     }
   } catch (e) {
     logger.error(handleError(e))

@@ -90,4 +90,26 @@ describe('summary', () => {
     expect(instanceTableStub.push).to.have.been.called()
     expect(instanceTableStub.push).to.have.been.calledWith([order.blockOrderId, order.side.green, order.amount, 'MARKET', order.timeInForce, order.status])
   })
+
+  describe('with json output', () => {
+    let json
+    let consoleStub
+
+    beforeEach(() => {
+      json = true
+      consoleStub = { log: sinon.stub() }
+      program.__set__('console', consoleStub)
+      opts = { rpcAddress, json }
+    })
+
+    it('makes a request to the broker', async () => {
+      await summary(args, opts, logger)
+      expect(getBlockOrdersStub).to.have.been.called()
+    })
+
+    it('logs summary to console', async () => {
+      await summary(args, opts, logger)
+      expect(consoleStub.log).to.have.been.calledWith({blockOrders: [order]})
+    })
+  })
 })
