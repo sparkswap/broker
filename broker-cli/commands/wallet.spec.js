@@ -212,28 +212,6 @@ describe('cli wallet', () => {
         expect(tablePushStub).to.have.been.calledTwice()
       })
     })
-
-    context('with json option', () => {
-      let json
-      let balancesJSONStub
-      let revertBalancesJSONStub
-
-      beforeEach(() => {
-        json = true
-        opts = { rpcAddress, json }
-        balancesJSONStub = sinon.stub()
-        revertBalancesJSONStub = program.__set__('balancesJSON', balancesJSONStub)
-      })
-
-      afterEach(() => {
-        revertBalancesJSONStub()
-      })
-
-      it('adds balances to the json', async () => {
-        await balance(args, opts, logger)
-        expect(balancesJSONStub).to.have.been.called()
-      })
-    })
   })
 
   describe('networkStatus', () => {
