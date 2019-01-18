@@ -38,30 +38,6 @@ function createUI (market, orders) {
 }
 
 /**
- * Prints the users orders in JSON format
- * @param {String} market
- * @param {Array.<{blockOrderId, side, amount, price, timeInForce, status>}}
-
- * @returns {Void}
- */
-function createSummaryJson (market, orders) {
-  const orderList = orders.map((order) => {
-    const price = order.isMarketOrder ? 'MARKET' : order.limitPrice
-    const side = order.side === ORDER_TYPES.BID ? order.side.green : order.side.red
-    return {
-      orderId: order.blockOrderId,
-      side: side,
-      amount: order.amount,
-      limitPrice: price,
-      time: order.timeInForce,
-      status: order.status
-    }
-  })
-
-  console.log({ market: market, orders: orderList })
-}
-
-/**
  * sparkswap order summary
  *
  * ex: `sparkswap order summary --market 'BTC/LTC'
@@ -73,16 +49,12 @@ function createSummaryJson (market, orders) {
  * @param {Logger} logger
  */
 async function summary (args, opts, logger) {
-  const { market, rpcAddress, json } = opts
+  const { market, rpcAddress } = opts
   const request = { market }
   try {
     const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)
     const orders = await brokerDaemonClient.orderService.getBlockOrders(request)
-    if (json) {
-      createSummaryJson(market, orders.blockOrders)
-    } else {
-      createUI(market, orders.blockOrders)
-    }
+    createUI(market, orders.blockOrders)
   } catch (e) {
     logger.error(handleError(e))
   }

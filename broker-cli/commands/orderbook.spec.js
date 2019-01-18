@@ -20,9 +20,7 @@ describe('orderbook', () => {
   let brokerStub
   let market
   let rpcAddress
-  let json
   let createUIStub
-  let createOrderBookJsonStub
   let stream
   let revertCreateUI
   let resizeHandleStub
@@ -34,7 +32,6 @@ describe('orderbook', () => {
     rpcAddress = undefined
     market = 'BTC/LTC'
     args = {}
-    json = true
     opts = { market, rpcAddress }
     infoSpy = sinon.spy()
     errorSpy = sinon.spy()
@@ -43,14 +40,12 @@ describe('orderbook', () => {
     }
     watchMarketStub = sinon.stub().returns(stream)
     createUIStub = sinon.stub()
-    createOrderBookJsonStub = sinon.stub()
 
     brokerStub = sinon.stub()
     brokerStub.prototype.orderBookService = { watchMarket: watchMarketStub }
 
     revert = program.__set__('BrokerDaemonClient', brokerStub)
-    revertCreateUI = program.__set__('createOrderBookTable', createUIStub)
-    revertCreateUI = program.__set__('createOrderBookJson', createOrderBookJsonStub)
+    revertCreateUI = program.__set__('createUI', createUIStub)
 
     logger = {
       info: infoSpy,
@@ -181,32 +176,6 @@ describe('orderbook', () => {
     expect(createUIStub).to.have.been.calledWith(market, [{ price: '100.0000000000000000', amount: '0.0000000100000000' }], [])
     expect(createUIStub).to.have.been.calledWith(market, [{ price: '100.0000000000000000', amount: '0.0000000100000000' }, { price: '1000.0000000000000000', amount: '0.0000000100000000' }], [])
     expect(createUIStub).to.have.been.calledWith(market, [{ price: '1000.0000000000000000', amount: '0.0000000100000000' }], [])
-  })
-
-  it('deletes bids or asks on delete events coming from the broker daemon with json', async () => {
-    opts = { market, rpcAddress, json }
-
-    const firstAsk = { type: 'ADD', marketEvent: { orderId: 'orderId', price: '100.0000000000000000', amount: '0.0000000100000000', side: 'ASK' } }
-    const secondAsk = { type: 'ADD', marketEvent: { orderId: 'orderId2', price: '1000.0000000000000000', amount: '0.0000000100000000', side: 'ASK' } }
-    const deleteFirstAsk = { type: 'DELETE', marketEvent: { orderId: 'orderId' } }
-
-    stream.on.withArgs('data').callsFake(async (evt, fn) => {
-      await delay(10)
-      fn(firstAsk)
-      await delay(10)
-      fn(secondAsk)
-      await delay(10)
-      fn(deleteFirstAsk)
-    })
-
-    orderbook(args, opts, logger)
-
-    await delay(100)
-
-    expect(createOrderBookJsonStub).to.have.been.calledWith(market, [], [])
-    expect(createOrderBookJsonStub).to.have.been.calledWith(market, [{ price: '100.0000000000000000', amount: '0.0000000100000000' }], [])
-    expect(createOrderBookJsonStub).to.have.been.calledWith(market, [{ price: '100.0000000000000000', amount: '0.0000000100000000' }, { price: '1000.0000000000000000', amount: '0.0000000100000000' }], [])
-    expect(createOrderBookJsonStub).to.have.been.calledWith(market, [{ price: '1000.0000000000000000', amount: '0.0000000100000000' }], [])
   })
 
   it('sets a resize event handler that results in recreating the UI', async () => {

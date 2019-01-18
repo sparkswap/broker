@@ -3,7 +3,7 @@ const {
 } = require('../package.json')
 const BrokerDaemonClient = require('../broker-daemon-client')
 const { validations, Big, handleError } = require('../utils')
-const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING, JSON_FORMAT_STRING } = require('../utils/strings')
+const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../utils/strings')
 const Table = require('cli-table')
 const size = require('window-size')
 require('colors')
@@ -22,7 +22,7 @@ const EVENT_TYPES = Object.freeze({
 
  * @returns {Void}
  */
-function createOrderBookTable (market, asks, bids) {
+function createUI (market, asks, bids) {
   console.clear()
   const baseCurrencySymbol = market.split('/')[0].toUpperCase()
   const windowWidth = size.get().width
@@ -96,40 +96,6 @@ function createOrderBookTable (market, asks, bids) {
 }
 
 /**
- * Prints orderbook in JSON format
- *
- * @param {String} market
- * @param {Array.<{price: price, depth: depth>}} asks with price and depth
- * @param {Array.<{price: price, depth: depth>}} bids with price and depth
-
- * @returns {Void}
- */
-function createOrderBookJson (market, asks, bids) {
-  console.clear()
-  const askList = asks.map((ask) => {
-    return {
-      price: ask.price,
-      amount: ask.amount
-    }
-  })
-
-  const bidList = bids.map((bid) => {
-    return {
-      price: bid.price,
-      amount: bid.amount
-    }
-  })
-
-  const orderbook = {
-    market: market,
-    version: BROKER_VERSION,
-    asks: askList,
-    bids: bidList
-  }
-  console.log(orderbook)
-}
-
-/**
  * sparkswap orderbook
  *
  * ex: `sparkswap orderbook --market 'BTC/LTC'
@@ -141,7 +107,7 @@ function createOrderBookJson (market, asks, bids) {
  * @param {Logger} logger
  */
 async function orderbook (args, opts, logger) {
-  const { market, rpcAddress, json } = opts
+  const { market, rpcAddress } = opts
   const request = { market }
 
   try {
@@ -157,11 +123,7 @@ async function orderbook (args, opts, logger) {
 
     // Lets initialize the view AND just to be sure, we will clear the view
     console.clear()
-    if (json) {
-      createOrderBookJson(market, [], [])
-    } else {
-      createOrderBookTable(market, [], [])
-    }
+    createUI(market, [], [])
 
     call.on('data', (order) => {
       const { orderId, side, price, amount } = order.marketEvent
@@ -180,19 +142,11 @@ async function orderbook (args, opts, logger) {
       sortedAsks = Array.from(asks.values()).sort(function (a, b) { return (Big(a.price).cmp(b.price)) })
       sortedBids = Array.from(bids.values()).sort(function (a, b) { return (Big(b.price).cmp(a.price)) })
       console.clear()
-      if (json) {
-        createOrderBookJson(market, sortedAsks, sortedBids)
-      } else {
-        createOrderBookTable(market, sortedAsks, sortedBids)
-      }
+      createUI(market, sortedAsks, sortedBids)
     })
 
     process.stdout.on('resize', function () {
-      if (json) {
-        createOrderBookJson(market, sortedAsks, sortedBids)
-      } else {
-        createOrderBookTable(market, sortedAsks, sortedBids)
-      }
+      createUI(market, sortedAsks, sortedBids)
     })
 
     call.on('cancelled', () => logger.info('Stream was cancelled by the server'))
@@ -224,6 +178,5 @@ module.exports = (program) => {
     .command('orderbook', 'View the order book for a specific market')
     .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
-    .option('--json', JSON_FORMAT_STRING, program.BOOLEAN)
     .action(orderbook)
 }
