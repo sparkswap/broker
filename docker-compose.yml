@@ -26,32 +26,19 @@ services:
       # This is populated externally w/ an engine
       - 'shared:/shared'
     environment:
-      - NODE_PATH=.
-      - RPC_ADDRESS=0.0.0.0:27492
-      - INTERCHAIN_ROUTER_ADDRESS=0.0.0.0:40369
-      - DATA_DIR=/data
-      - ID_PRIV_KEY=/secure/broker-identity.private.pem
-      - ID_PUB_KEY=/secure/broker-identity.public.pem
-      - BTC_ENGINE_TYPE=LND
-      - BTC_LND_RPC_HOST=lnd_btc:10009
-      - BTC_LND_TLS_CERT=/shared/lnd-engine-tls-btc.cert
-      - BTC_LND_MACAROON=/shared/lnd-engine-admin-btc.macaroon
-      - LTC_ENGINE_TYPE=LND
-      - LTC_LND_RPC_HOST=lnd_ltc:10009
-      - LTC_LND_TLS_CERT=/shared/lnd-engine-tls-ltc.cert
-      - LTC_LND_MACAROON=/shared/lnd-engine-admin-ltc.macaroon
-      - GRPC_SSL_CIPHER_SUITES=HIGH+ECDSA:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384
-      - MARKETS=BTC/LTC
-      - RELAYER_RPC_HOST=${RELAYER_RPC_HOST}
-      - RELAYER_CERT_HOST=${RELAYER_CERT_HOST}
-      - RELAYER_CERT_PATH=/secure/relayer-root.pem
-      # WARNING: Only disable broker SSL during development
-      - DISABLE_AUTH=false
-      - RPC_PRIV_KEY=/secure/broker-rpc-tls.key
-      - RPC_PUB_KEY=/secure/broker-rpc-tls.cert
+      - DATA_DIR=${DATA_DIR:-}
+      - NETWORK=${NETWORK}
+      - RPC_ADDRESS=${RPC_ADDRESS:-}
+      - RPC_HTTP_PROXY_ADDRESS=${RPC_HTTP_PROXY_ADDRESS:-}
       - RPC_USER=${RPC_USER}
       - RPC_PASS=${RPC_PASS}
-      - NETWORK=${NETWORK}
+      - RPC_PUB_KEY=${RPC_PUB_KEY:-}
+      - RPC_PRIV_KEY=${RPC_PRIV_KEY:-}
+      - ID_PRIV_KEY=${ID_PRIV_KEY:-}
+      - ID_PUB_KEY=${ID_PUB_KEY:-}
+      - RELAYER_RPC_HOST=${RELAYER_RPC_HOST}
+      - RELAYER_CERT_HOST=${RELAYER_CERT_HOST:-}
+      - RELAYER_CERT_PATH=${RELAYER_CERT_PATH:-}
     ports:
       - '27492:27492'
       - '27592:27592'
@@ -62,41 +49,21 @@ services:
 
   lnd_btc:
     image: sparkswap_lnd_btc:latest
-    depends_on:
-      - bitcoind
     ports:
       - '10113:9735'
     environment:
       - RPC_USER=${BTC_RPC_USER}
       - RPC_PASS=${BTC_RPC_PASS}
-      - RPC_HOST=${BTC_RPC_HOST}
+      - RPC_HOST=${BTC_RPC_HOST:-}
       - NETWORK=${NETWORK}
       - DEBUG=info
       - EXTERNAL_ADDRESS="${EXTERNAL_BTC_ADDRESS}:10113"
       - EXTPREIMAGE_HOST=sparkswapd:40369
-      - ZMQPUBRAWBLOCK=tcp://bitcoind:28333
-      - ZMQPUBRAWTX=tcp://bitcoind:28334
+      - ZMQPUBRAWBLOCK=${BTC_ZMQPUBRAWBLOCK:-}
+      - ZMQPUBRAWTX=${BTC_ZMQPUBRAWTX:-}
     volumes:
       - 'shared:/shared'
       - 'lnd_btc:/data'
-    networks:
-      - broker
-    logging:
-      options:
-        max-size: 50m
-
-  bitcoind:
-    image: sparkswap_bitcoind:latest
-    volumes:
-      - shared:/shared
-      - bitcoin:/data
-    environment:
-      - RPC_USER=${BTC_RPC_USER}
-      - RPC_PASS=${BTC_RPC_PASS}
-      - NETWORK=${NETWORK}
-      - DEBUG=info
-      - DATA_DIR=/data
-      - RPC_LISTEN=0.0.0.0
     networks:
       - broker
     logging:
@@ -107,18 +74,16 @@ services:
     image: sparkswap_lnd_ltc:latest
     ports:
       - '10114:9735'
-    depends_on:
-      - litecoind
     environment:
       - RPC_USER=${LTC_RPC_USER}
       - RPC_PASS=${LTC_RPC_PASS}
-      - RPC_HOST=${LTC_RPC_HOST}
+      - RPC_HOST=${LTC_RPC_HOST:-}
       - NETWORK=${NETWORK}
       - DEBUG=info
       - EXTERNAL_ADDRESS="${EXTERNAL_LTC_ADDRESS}:10114"
       - EXTPREIMAGE_HOST=sparkswapd:40369
-      - ZMQPUBRAWBLOCK=tcp://litecoind:28333
-      - ZMQPUBRAWTX=tcp://litecoind:28334
+      - ZMQPUBRAWBLOCK=${LTC_ZMQPUBRAWBLOCK:-}
+      - ZMQPUBRAWTX=${LTC_ZMQPUBRAWTX:-}
     volumes:
       - 'shared:/shared'
       - 'lnd_ltc:/data'
@@ -128,31 +93,10 @@ services:
       options:
         max-size: 50m
 
-  litecoind:
-    image: sparkswap_litecoind:latest
-    volumes:
-      - shared:/shared
-      - litecoin:/data
-    environment:
-      - RPC_USER=${LTC_RPC_USER}
-      - RPC_PASS=${LTC_RPC_PASS}
-      - NETWORK=${NETWORK}
-      - DEBUG=info
-      - DATA_DIR=/data
-      - RPC_LISTEN=0.0.0.0
-    networks:
-      - broker
-    logging:
-      options:
-        max-size: 50m
-
-
 volumes:
   shared:
   lnd_btc:
   lnd_ltc:
-  bitcoin:
-  litecoin:
   sparkswapd:
 
 networks:
