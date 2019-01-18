@@ -8,9 +8,7 @@
     "daemon": "sparkswapd"
   },
   "scripts": {
-    "prebuild": "bash ./scripts/prebuild.sh",
     "build": "bash ./scripts/build.sh",
-    "build-images": "bash ./scripts/build-images.sh",
     "destroy": "bash ./scripts/destroy.sh",
     "dist-cli": "npm run broker-proto && bash ./scripts/publish-broker-cli.sh",
     "format": "standard --fix",
@@ -19,7 +17,8 @@
     "test": "npm run check-for-cycles && npm run mocha-test",
     "coverage": "nyc npm test",
     "ci-test": "npm run format && npm test",
-    "start-sparkswapd": "pm2-docker pm2.json --watch",
+    "start-sparkswapd": "pm2-docker pm2.json",
+    "start-sparkswapd-watch": "pm2-docker pm2.json --watch",
     "validate-config": "standard ~/.sparkswap/config.js",
     "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp -r ./broker-daemon/proto/ ./broker-cli/proto/",
     "check-for-cycles": "madge --circular broker-daemon/",
@@ -68,7 +67,7 @@
     "level-sublevel": "6.6.1",
     "lnd-engine": "sparkswap/lnd-engine#v0.3.2-beta",
     "nano-seconds": "1.2.2",
-    "pm2": "2.10.3",
+    "pm2": "3.2.9",
     "protocol-buffers-schema": "3.3.2",
     "through2": "2.0.3",
     "validator": "10.2.0",
