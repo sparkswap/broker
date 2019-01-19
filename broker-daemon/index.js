@@ -177,6 +177,8 @@ class BrokerDaemon {
       // the validation will be retried on the engine until successful or until final failure.
       this.validateEngines()
 
+      // We want to validate the external address here
+
       this.rpcServer.listen(this.rpcAddress)
       this.logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
 
