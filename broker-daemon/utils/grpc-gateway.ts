@@ -82,7 +82,7 @@ const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.cre
             supportedMethods.forEach(httpMethod => {
               if (m.options[GRPC_API_OPTION_ID][httpMethod]) {
                 if (debug) {
-                  console.log(colors.green(httpMethod.toUpperCase()), m.options[GRPC_API_OPTION_ID][httpMethod].blue)
+                  console.log(colors.green(httpMethod.toUpperCase()), colors.blue(m.options[GRPC_API_OPTION_ID][httpMethod]))
                 }
 
                 router[httpMethod](convertUrl(m.options[GRPC_API_OPTION_ID][httpMethod]), (req, res) => {
@@ -91,7 +91,7 @@ const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.cre
 
                   if (debug) {
                     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
-                    console.log(`GATEWAY: ${colors.yellow((new Date()).toISOString())} (${ip.blue}): /${colors.blue(pkg.replace(/\./g, colors.white('.')))}.${colors.blue(svc)}/${colors.blue(m.name)}(${params})`)
+                    console.log(`GATEWAY: ${colors.yellow((new Date()).toISOString())} (${colors.blue(ip)}): /${colors.blue(pkg.replace(/\./g, colors.white('.')))}.${colors.blue(svc)}/${colors.blue(m.name)}(${params})`)
                   }
 
                   try {

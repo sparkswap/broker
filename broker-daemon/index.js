@@ -1,3 +1,6 @@
+// Source map support for typescript/nodejs
+require('source-map-support').install()
+
 const level = require('level')
 const sublevel = require('level-sublevel')
 const EventEmitter = require('events')
