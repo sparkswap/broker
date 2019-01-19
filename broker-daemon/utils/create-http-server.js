@@ -5,7 +5,7 @@ const https = require('https')
 const fs = require('fs')
 const grpc = require('grpc')
 
-const grpcGateway = require('./grpc-gateway')
+const grpcGateway = require('../built/grpc-gateway').default
 const corsMiddleware = require('./enable-cors')
 
 /**

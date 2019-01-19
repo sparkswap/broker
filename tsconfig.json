@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+      "outDir": "./broker-daemon/built",
+      "allowJs": true,
+      "target": "es5"
+  },
+  "include": [
+      "./broker-daemon/utils/grpc-gateway.ts"
+  ],
+  "exclude": [
+      "./broker-daemon/built",
+  ]
+}

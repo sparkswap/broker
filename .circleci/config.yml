@@ -26,6 +26,7 @@ jobs:
             - node_modules
           key: v2-dependencies-{{ checksum "package.json" }}
 
+      - run: npm run tsc
       - run: npm run ci-test
   publish-cli:
     docker:

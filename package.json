@@ -9,7 +9,6 @@
   },
   "scripts": {
     "prebuild": "bash ./scripts/prebuild.sh",
-    "build": "bash ./scripts/build.sh",
     "build-images": "bash ./scripts/build-images.sh",
     "destroy": "bash ./scripts/destroy.sh",
     "dist-cli": "npm run broker-proto && bash ./scripts/publish-broker-cli.sh",
@@ -23,7 +22,8 @@
     "validate-config": "standard ~/.sparkswap/config.js",
     "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp -r ./broker-daemon/proto/ ./broker-cli/proto/",
     "check-for-cycles": "madge --circular broker-daemon/",
-    "env-setup": "bash ./scripts/env-setup.sh"
+    "env-setup": "bash ./scripts/env-setup.sh",
+    "tsc": "tsc"
   },
   "bin": {
     "sparkswapd": "./broker-daemon/bin/sparkswapd",
@@ -91,7 +91,8 @@
     "sinon-chai": "3.0.0",
     "standard": "11.0.1",
     "timekeeper": "2.1.2",
-    "timeout-as-promise": "1.0.0"
+    "timeout-as-promise": "1.0.0",
+    "typescript": "3.2.4"
   },
   "engines": {
     "node": "8.11.x"

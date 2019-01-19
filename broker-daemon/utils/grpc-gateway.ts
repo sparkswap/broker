@@ -9,11 +9,11 @@
  * @see {@link https://github.com/konsumer/grpc-dynamic-gateway}
  */
 
-const grpc = require('grpc')
-const express = require('express')
-require('colors')
-const fs = require('fs')
-const schema = require('protocol-buffers-schema')
+import * as grpc from 'grpc'
+import * as express from 'express'
+import * as colors from 'colors/safe'
+import * as fs from 'fs'
+import * as schema from 'protocol-buffers-schema'
 
 /**
  * Supported HTTP methods for proto file
@@ -21,7 +21,7 @@ const schema = require('protocol-buffers-schema')
  * @type {Array}
  * @default
  */
-const supportedMethods = Object.freeze([
+const supportedMethods: ReadonlyArray<string> = Object.freeze([
   'get',
   'put',
   'post',
@@ -42,7 +42,7 @@ const paramRegex = /{(\w+)}/g
  * @type {String}
  * @default
  */
-const GRPC_API_OPTION_ID = '.google.api.http'
+const GRPC_API_OPTION_ID: string = '.google.api.http'
 
 /**
  * Takes a string (from grpc proto file) and formats to camelCase
@@ -50,7 +50,7 @@ const GRPC_API_OPTION_ID = '.google.api.http'
  * @param {String} str
  * @returns {String} string formatted in camelCase
  */
-function lowerFirstChar (str) {
+function lowerFirstChar (str: string): string {
   return str.charAt(0).toLowerCase() + str.slice(1)
 }
 
@@ -82,16 +82,16 @@ const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.cre
             supportedMethods.forEach(httpMethod => {
               if (m.options[GRPC_API_OPTION_ID][httpMethod]) {
                 if (debug) {
-                  console.log(httpMethod.toUpperCase().green, m.options[GRPC_API_OPTION_ID][httpMethod].blue)
+                  console.log(colors.green(httpMethod.toUpperCase()), m.options[GRPC_API_OPTION_ID][httpMethod].blue)
                 }
 
                 router[httpMethod](convertUrl(m.options[GRPC_API_OPTION_ID][httpMethod]), (req, res) => {
                   const params = convertParams(req, m.options[GRPC_API_OPTION_ID][httpMethod])
-                  const meta = convertHeaders(req.headers, grpc)
+                  const meta = convertHeaders(req.headers)
 
                   if (debug) {
                     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
-                    console.log(`GATEWAY: ${(new Date()).toISOString().yellow} (${ip.blue}): /${pkg.replace(/\./g, '.'.white).blue}.${svc.blue}/${m.name.blue}(${params})`)
+                    console.log(`GATEWAY: ${colors.yellow((new Date()).toISOString())} (${ip.blue}): /${colors.blue(pkg.replace(/\./g, colors.white('.')))}.${colors.blue(svc)}/${colors.blue(m.name)}(${params})`)
                   }
 
                   try {
@@ -99,14 +99,14 @@ const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.cre
                       // TODO: PRIORITY:MEDIUM - improve error-handling
                       // TODO: PRIORITY:HIGH - double-check JSON mapping is identical to grpc-gateway
                       if (err) {
-                        console.error(`${svc}.${m.name}`.red, err.message.red)
+                        console.error(colors.red(`${svc}.${m.name}`), colors.red(err.message))
                         console.trace()
                         return res.status(500).json({ code: err.code, message: err.message })
                       }
-                      res.json(convertBody(ans, m.options[GRPC_API_OPTION_ID].body, m.options[GRPC_API_OPTION_ID][httpMethod]))
+                      res.json(convertBody(ans, m.options[GRPC_API_OPTION_ID].body))
                     })
                   } catch (err) {
-                    console.error(`${svc}.${m.name}: `.red, err.message.red)
+                    console.error(colors.red(`${svc}.${m.name}: `), colors.red(err.message))
                     console.trace()
                   }
                 })
@@ -167,10 +167,10 @@ const convertParams = (req, url) => {
  * @param  {string} url gRPC URL expression
  * @return {string}     express URL expression
  */
-const convertUrl = (url) => (
+function convertUrl (url: string): string {
   // TODO: PRIORITY:LOW - use types to generate regex for numbers & strings in params
-  url.replace(paramRegex, ':$1')
-)
+  return url.replace(paramRegex, ':$1')
+}
 
 /**
  * Convert gRPC response to output, based on gRPC body field
@@ -178,22 +178,22 @@ const convertUrl = (url) => (
  * @param  {string} bodyMap gRPC body field
  * @return {mixed}          mapped output for `res.send()`
  */
-const convertBody = (value, bodyMap) => {
-  bodyMap = bodyMap || '*'
+function convertBody (value: object, bodyMap: string = '*') {
   if (bodyMap === '*') {
     return value
-  } else {
-    return value[bodyMap]
   }
+  return value[bodyMap]
 }
 
 /**
  * Get a list of params from a gRPC URL
  * @param  {string} url gRPC URL
- * @return {string[]}   Array of params
+ * @return {Array<string>}   Array of params
  */
-const getParamsList = (url) => {
+function getParamsList (url: string): Array<string> {
   const out = []
+
+  // TODO: refactor this
   let m
   while ((m = paramRegex.exec(url)) !== null) {
     if (m.index === paramRegex.lastIndex) {
@@ -201,25 +201,20 @@ const getParamsList = (url) => {
     }
     out.push(m[1])
   }
+
   return out
 }
 
 /**
- * Convert headers into gRPC meta
- * @param  {object} headers Headers: {name: value}
- * @return {meta}           grpc meta object
+ * Convert http headers received from express into gRPC meta
+ *
+ * @param  {object} [headers={}] Headers: {name: value}
+ * @return {grpc.Metadata} gRPC metadata object
  */
-const convertHeaders = (headers) => {
-  headers = headers || {}
+function convertHeaders (headers: object = {}): grpc.Metadata {
   const metadata = new grpc.Metadata()
-  Object.keys(headers).forEach(h => { metadata.set(h, headers[h]) })
+  Object.keys(headers).forEach(h => metadata.set(h, headers[h]))
   return metadata
 }
 
-// interface
-module.exports = middleware
-module.exports.convertParams = convertParams
-module.exports.convertUrl = convertUrl
-module.exports.convertBody = convertBody
-module.exports.getParamsList = getParamsList
-module.exports.convertHeaders = convertHeaders
+export = middleware
