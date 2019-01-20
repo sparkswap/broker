@@ -753,6 +753,8 @@ message MarketEvent {
 message GetOrderbookRequest {
   // Market to retrieve updates for, e.g. `'BTC/LTC'`.
   string market = 1;
+  // Number to limit results of either side of orderbook
+  int64 limit = 2;
 }
 
 message Bid {

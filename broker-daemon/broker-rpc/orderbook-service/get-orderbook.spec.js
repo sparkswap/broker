@@ -77,4 +77,41 @@ describe('getOrderbook', () => {
         timestamp: '1537487471431784972' }
     )
   })
+
+  it('limits the number of orders', async () => {
+    orders = [
+      {side: 'BID', price: '0.0017', amount: '0.003'},
+      {side: 'BID', price: '0.0018', amount: '0.003'},
+      {side: 'BID', price: '0.0019', amount: '0.003'},
+      {side: 'BID', price: '0.002', amount: '0.003'},
+      {side: 'BID', price: '0.0021', amount: '0.003'},
+      {side: 'ASK', price: '0.003', amount: '0.0004'},
+      {side: 'ASK', price: '0.0031', amount: '0.0004'},
+      {side: 'ASK', price: '0.0032', amount: '0.0004'},
+      {side: 'ASK', price: '0.0033', amount: '0.0004'},
+      {side: 'ASK', price: '0.0034', amount: '0.0004'}
+    ]
+
+    orderbook = { all: sinon.stub().resolves(orders) }
+    orderbooks = new Map([['BTC/LTC', orderbook]])
+    params.limit = 3
+    await getOrderbook({ params, logger, orderbooks }, { GetOrderbookResponse })
+
+    expect(GetOrderbookResponse).to.have.been.calledWith(
+      {
+        bids: [
+          {price: '0.0021', amount: '0.003'},
+          {price: '0.002', amount: '0.003'},
+          {price: '0.0019', amount: '0.003'}
+        ],
+        asks: [
+          {price: '0.003', amount: '0.0004'},
+          {price: '0.0031', amount: '0.0004'},
+          {price: '0.0032', amount: '0.0004'}
+        ],
+        datetime: '2018-09-20T23:51:11.431784972Z',
+        timestamp: '1537487471431784972'
+      }
+    )
+  })
 })

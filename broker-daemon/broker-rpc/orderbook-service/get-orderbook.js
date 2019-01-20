@@ -1,10 +1,20 @@
 const nano = require('nano-seconds')
+const { Big } = require('../../utils')
+
+/**
+ * Default limit for number of orders returned for each side of orderbook
+ * @type {Integer}
+ * @constant
+ */
+const DEFAULT_LIMIT = Big(50)
 
 /**
  * Retrieve price and amount information for current orderbook state
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Object} request.params - Request parameters from the client
+ * @param {String} request.params.market - market symbol e.g. BTC/LTC
+ * @param {Integer} request.params.limit - limit for number of orders for each side of orderbook
  * @param {Object} request.logger
  * @param {Map<Orderbook>} request.orderbooks
  * @param {Object} responses
@@ -25,6 +35,9 @@ async function getOrderbook ({ params, logger, orderbooks }, { GetOrderbookRespo
     const datetime = nano.toISOString(currentTime)
     const orders = await orderbook.all()
 
+    // limit is passed as an integer with default protobuf value of '0', so '0' implies limit was omitted
+    const limit = (params.limit === '0' || params.limit === undefined) ? DEFAULT_LIMIT : Big(params.limit)
+
     const bids = []
     const asks = []
     orders.forEach((order) => {
@@ -35,6 +48,12 @@ async function getOrderbook ({ params, logger, orderbooks }, { GetOrderbookRespo
         asks.push(orderInfo)
       }
     })
+
+    // Bids are sorted in descending order so the best bid (i.e. highest bid) is returned first
+    bids.sort((a, b) => parseFloat(b.price) - parseFloat(a.price)).splice(limit)
+
+    // Asks are sorted in ascending order so best ask (i.e. lowest ask) is returned first
+    asks.sort((a, b) => parseFloat(a.price) - parseFloat(b.price)).splice(limit)
 
     return new GetOrderbookResponse({timestamp, datetime, bids, asks})
   } catch (err) {
