@@ -1,0 +1,45 @@
+##########################################
+#
+# sparkswap Broker-CLI and Broker-Daemon
+# https://sparkswap.com
+#
+# The broker and engines currently default to TestNet. To adjust settings, please
+# look at the associated `.env` files
+#
+# Troubleshooting GRPC:
+# - GRPC_VERBOSITY=INFO
+# - GRPC_TRACE=all
+#
+##########################################
+
+version: '2.4'
+
+services:
+  lnd_btc:
+    depends_on:
+      - bitcoind
+
+  bitcoind:
+    image: sparkswap_bitcoind:latest
+    volumes:
+      - shared:/shared
+      - bitcoin:/data
+    environment:
+      - RPC_USER=${BTC_RPC_USER}
+      - RPC_PASS=${BTC_RPC_PASS}
+      - NETWORK=${NETWORK}
+      - DEBUG=info
+      - DATA_DIR=/data
+      - RPC_LISTEN=0.0.0.0
+    networks:
+      - broker
+    logging:
+      options:
+        max-size: 50m
+
+volumes:
+  shared:
+  bitcoin:
+
+networks:
+  broker:
