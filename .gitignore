@@ -72,5 +72,5 @@ docker-compose.override.yml
 # local cert generation
 certs/
 
-broker-daemon/built/*
-!!broker-daemon/built/.keep
+# Generated application
+lib/
