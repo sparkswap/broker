@@ -24,7 +24,7 @@
     "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp -r ./broker-daemon/proto/ ./broker-cli/proto/",
     "check-for-cycles": "madge --circular broker-daemon/",
     "env-setup": "bash ./scripts/env-setup.sh",
-    "tsc": "tsc"
+    "tsc": "rm -rf ./broker-daemon/built && tsc"
   },
   "bin": {
     "sparkswapd": "./broker-daemon/bin/sparkswapd",

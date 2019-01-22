@@ -1,14 +1,19 @@
 {
-  "compilerOptions": {
-      "outDir": "./broker-daemon/built",
-      "lib": ["es2017"],
-      "module": "commonjs",
-      "target": "es2017"
-  },
-  "include": [
-      "./broker-daemon/utils/grpc-gateway.ts"
-  ],
-  "exclude": [
-      "./broker-daemon/built",
-  ]
-}
+    "compilerOptions": {
+        "locale": "en-US",
+        "sourceMap": true,
+        "moduleResolution": "node",
+        "outDir": "lib",
+        "lib": ["es2017"],
+        "module": "commonjs",
+        "target": "es2017",
+        "allowJs": true,
+        "removeComments": true
+    },
+    "include": [
+        "./broker-daemon/**/*"
+    ],
+    "exclude": [
+        "./broker-daemon/built",
+    ]
+  }

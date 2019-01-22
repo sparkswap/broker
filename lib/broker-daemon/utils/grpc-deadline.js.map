@@ -1,0 +1,1 @@
+{"version":3,"file":"grpc-deadline.js","sourceRoot":"","sources":["../../../broker-daemon/utils/grpc-deadline.js"],"names":[],"mappings":"AAUA,MAAM,0BAA0B,GAAG,CAAC,CAAA;AASpC,SAAS,YAAY,CAAE,gBAAgB,GAAG,0BAA0B;IAClE,OAAO,IAAI,IAAI,EAAE,CAAC,UAAU,CAAC,IAAI,IAAI,EAAE,CAAC,UAAU,EAAE,GAAG,gBAAgB,CAAC,CAAA;AAC1E,CAAC;AAED,MAAM,CAAC,OAAO,GAAG,YAAY,CAAA"}

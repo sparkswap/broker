@@ -1,0 +1,1 @@
+{"version":3,"file":"get-identity.js","sourceRoot":"","sources":["../../../../broker-daemon/broker-rpc/admin-service/get-identity.js"],"names":[],"mappings":"AAUA,KAAK,UAAU,WAAW,CAAE,EAAE,OAAO,EAAE,MAAM,EAAE,EAAE,EAAE,mBAAmB,EAAE;IACtE,MAAM,SAAS,GAAG,OAAO,CAAC,QAAQ,CAAC,MAAM,CAAA;IAEzC,OAAO,IAAI,mBAAmB,CAAC,EAAE,SAAS,EAAE,CAAC,CAAA;AAC/C,CAAC;AAED,MAAM,CAAC,OAAO,GAAG,WAAW,CAAA"}
