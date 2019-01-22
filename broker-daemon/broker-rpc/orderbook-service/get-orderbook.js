@@ -14,7 +14,7 @@ const DEFAULT_LIMIT = Big(50)
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Object} request.params - Request parameters from the client
  * @param {String} request.params.market - market symbol e.g. BTC/LTC
- * @param {Integer} request.params.limit - limit for number of orders for each side of orderbook
+ * @param {String} request.params.limit - limit for number of orders for each side of orderbook
  * @param {Object} request.logger
  * @param {Map<Orderbook>} request.orderbooks
  * @param {Object} responses
