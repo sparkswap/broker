@@ -3,7 +3,7 @@ const { Big } = require('../../utils')
 
 /**
  * Default limit for number of orders returned for each side of orderbook
- * @type {Integer}
+ * @type {Big}
  * @constant
  */
 const DEFAULT_LIMIT = Big(50)
@@ -36,7 +36,7 @@ async function getOrderbook ({ params, logger, orderbooks }, { GetOrderbookRespo
     const orders = await orderbook.all()
 
     // limit is passed as an integer with default protobuf value of '0', so '0' implies limit was omitted
-    const limit = (params.limit === '0' || params.limit === undefined) ? DEFAULT_LIMIT : Big(params.limit)
+    const limit = (params.limit === '0') ? DEFAULT_LIMIT : Big(params.limit)
 
     const bids = []
     const asks = []

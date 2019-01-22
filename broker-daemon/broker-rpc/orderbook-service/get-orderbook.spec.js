@@ -5,6 +5,7 @@ const getOrderbook = rewire(path.resolve(__dirname, 'get-orderbook'))
 
 describe('getOrderbook', () => {
   let market
+  let limit
   let orders
   let orderbook
   let orderbooks
@@ -18,7 +19,9 @@ describe('getOrderbook', () => {
 
   beforeEach(() => {
     market = 'BTC/LTC'
-    params = { market }
+    // Default value when no limit is provided to RPC GetOrderbookRequest is '0'
+    limit = '0'
+    params = { market, limit }
     orders = [
       {side: 'BID', price: '0.001', amount: '0.003'},
       {side: 'ASK', price: '0.0031', amount: '0.0004'},
@@ -94,7 +97,7 @@ describe('getOrderbook', () => {
 
     orderbook = { all: sinon.stub().resolves(orders) }
     orderbooks = new Map([['BTC/LTC', orderbook]])
-    params.limit = 3
+    params.limit = '3'
     await getOrderbook({ params, logger, orderbooks }, { GetOrderbookResponse })
 
     expect(GetOrderbookResponse).to.have.been.calledWith(
