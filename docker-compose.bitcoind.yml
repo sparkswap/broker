@@ -18,6 +18,10 @@ services:
   lnd_btc:
     depends_on:
       - bitcoind
+    environment:
+      - RPC_HOST=bitcoind
+      - ZMQPUBRAWBLOCK=tcp://bitcoind:28333
+      - ZMQPUBRAWTX=tcp://bitcoind:28334
 
   bitcoind:
     image: sparkswap_bitcoind:latest

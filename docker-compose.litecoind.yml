@@ -18,6 +18,10 @@ services:
   lnd_ltc:
     depends_on:
       - litecoind
+    environment:
+      - RPC_HOST=litecoind
+      - ZMQPUBRAWBLOCK=tcp://litecoind:28333
+      - ZMQPUBRAWTX=tcp://litecoind:28334
 
   litecoind:
     image: sparkswap_litecoind:latest
