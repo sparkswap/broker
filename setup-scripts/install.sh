@@ -7,7 +7,7 @@
 # -y, --yes                     answer "Yes" to all yes/no prompts to allow for non-interactive scripting
 # -n=, --network=[network]      'm' for MainNet, 't' for TestNet (removes prompt)
 # -i=, --public-ip=[ip address] Your public IP Address (removes prompt)
-# 
+#
 #################################
 
 set -e -u
@@ -125,7 +125,7 @@ if [ -d "broker" ]; then
 else
   git clone -b "$BROKER_VERSION" --single-branch --depth 1 https://github.com/sparkswap/broker.git
   cd broker
-  npm run build
+  npm run build -- -e=$IP_ADDRESS
 fi
 
 # Set up environment

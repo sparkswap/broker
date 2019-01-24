@@ -1,8 +1,10 @@
 ##########################################
-#
-# sparkswap Broker-CLI and Broker-Daemon
+# Sparkswap Broker Daemon SimNet development sample file
 # https://sparkswap.com
 #
+# Usage:
+# 1. copy file to `docker-compose.override.yml`
+# 2. restart all containers with `docker-compose up -d`
 ##########################################
 
 version: '2.4'

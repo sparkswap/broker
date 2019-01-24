@@ -47,7 +47,6 @@ services:
     networks:
       - broker
     working_dir: '/home/app'
-    entrypoint: bash -c 'npm run start-sparkswapd-watch'
 
   lnd_btc:
     image: sparkswap_lnd_btc:latest

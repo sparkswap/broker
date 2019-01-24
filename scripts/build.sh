@@ -30,7 +30,6 @@ echo "                                                                          
 #
 # This address is used during the build process so that certs can be generated
 # correctly for a hosted (remote) broker daemon.
-EXTERNAL_ADDRESS=${EXTERNAL_ADDRESS:-}
 RELAYER_PROTO_VERSION='master'
 
 # parse options
