@@ -5,81 +5,85 @@
 const program = require('caporal')
 
 const BrokerDaemon = require('../')
-const { currencies } = require('../config')
+const config = require('../config')
+const { currencies } = config
+const { version: CLI_VERSION } = require('../../package.json')
 
 // TODO: Change this path to be sparkswapd specific
 const { validations } = require('../../broker-cli/utils')
 
-const { version: CLI_VERSION } = require('../../package.json')
+// LND currently uses ECDSA generated certs, which we use on the broker. We've
+// add ECDSA to the gRPC cipher suites as it is not added by default.
+// If this line is removed, we will see an SSL Handshake Error stating `no shared cipher`
+process.env.GRPC_SSL_CIPHER_SUITES = 'HIGH+ECDSA:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384'
 
-// sparkswapd Specific ENV variables
-const {
-  RPC_ADDRESS,
-  DATA_DIR,
-  RELAYER_RPC_HOST,
-  RELAYER_CERT_PATH,
-  MARKETS,
-  INTERCHAIN_ROUTER_ADDRESS,
-  ID_PRIV_KEY,
-  ID_PUB_KEY,
-  DISABLE_AUTH,
-  DISABLE_RELAYER_AUTH,
-  RPC_PRIV_KEY,
-  RPC_PUB_KEY,
-  RPC_USER,
-  RPC_PASS
-} = process.env
+/**
+ * Caporal Validation for checking valid engine types
+ * @param {String} engineType
+ */
+function isSupportedEngineType (engineType = '') {
+  const { supportedEngineTypes = [] } = config
+
+  if (supportedEngineTypes.includes(engineType.toUpperCase())) {
+    return engineType.toUpperCase()
+  }
+
+  throw new Error(`Invalid engine type: ${engineType}`)
+}
 
 // TODO: Add validations to ./bin/sparkswapd when they become available
 program
   .version(CLI_VERSION)
-  .option('--rpc-address [rpc-address]', 'Add a host/port to listen for daemon RPC connections', validations.isHost, RPC_ADDRESS)
-  .option('--interchain-router-address [server]', 'Add a host/port to listen for interchain router RPC connections', validations.isHost, INTERCHAIN_ROUTER_ADDRESS)
-  .option('--data-dir [path]', 'Location to store SparkSwap data', validations.isFormattedPath, DATA_DIR)
-  .option('--disable-auth [disable-auth]', 'Disable SSL for the broker (DEV ONLY)', program.BOOL, DISABLE_AUTH)
-  .option('--rpc-user [rpc-user]', 'Rpc user name, used when auth is enabled', program.String, RPC_USER)
-  .option('--rpc-pass [rpc-pass]', 'Rpc password, used when auth is enabled', program.String, RPC_PASS)
-  .option('--rpc-privkey-path [path>', 'Location of private key for the broker\'s rpc', validations.isFormattedPath, RPC_PRIV_KEY)
-  .option('--rpc-pubkey-path [path]', 'Location of the public key for the broker\'s rpc', validations.isFormattedPath, RPC_PUB_KEY)
-  .option('--disable-relayer-auth [disable-relayer-auth]', 'Disable SSL and message signing to the relayer (DEV ONLY)', program.BOOL, DISABLE_RELAYER_AUTH)
-  .option('--id-privkey-path [path]', 'Location of private key for the broker\'s identity', validations.isFormattedPath, ID_PRIV_KEY)
-  .option('--id-pubkey-path [path]', 'Location of the public key for the broker\'s identity', validations.isFormattedPath, ID_PUB_KEY)
-  .option('--markets [markets]', 'Comma-separated market names to track on startup', validations.areValidMarketNames, MARKETS)
-  .option('--relayer-host [server]', 'The host address for the SparkSwap Relayer', validations.isHost, RELAYER_RPC_HOST)
-  .option('--relayer-cert-path [path]', 'Location of the root certificate for the SparkSwap Relayer', validations.isFormattedPath, RELAYER_CERT_PATH)
+  // Broker configuration options
+  .option('--data-dir [data-dir]', 'Location to store SparkSwap data', validations.isFormattedPath, config.dataDir)
+  .option('--interchain-router-address [interchain-router-address]', 'Add a host/port to listen for interchain router RPC connections', validations.isHost, config.interchainRouterAddress)
+  .option('--id-pub-key-path [id-pub-key-path]', 'Location of the public key for the broker\'s identity', validations.isFormattedPath, config.idPubKeyPath)
+  .option('--id-priv-key-path [id-priv-key-path]', 'Location of private key for the broker\'s identity', validations.isFormattedPath, config.idPrivKeyPath)
+  // TODO: Make this a list instead of string
+  .option('--markets [markets]', 'Comma-separated market names to track on startup', validations.areValidMarketNames, config.markets)
+  .option('--disable-auth', 'Disable SSL for the broker (DEV ONLY)', program.BOOL, config.disableAuth)
+  // Relayer configuration options
+  .option('--relayer.rpc-host [rpc-host]', 'The host address for the SparkSwap Relayer', validations.isHost, config.relayer.rpcHost)
+  .option('--relayer.cert-path [cert-path]', 'Location of the root certificate for the SparkSwap Relayer (only used in development)', validations.isFormattedPath, config.relayer.certPath)
+  // Broker RPC configuration options
+  .option('--rpc.address [rpc-address]', 'Add a host/port to listen for daemon RPC connections', validations.isHost, config.rpc.address)
+  .option('--rpc.http-proxy-address [rpc-http-proxy-address]', 'Add a host/port to listen for HTTP RPC proxy connections', validations.isHost, config.rpc.httpProxyAddress)
+  .option('--rpc.user [rpc-user]', 'Broker rpc user name', program.String, config.rpc.user)
+  .option('--rpc.pass [rpc-pass]', 'Broker rpc password', program.String, config.rpc.pass)
+  .option('--rpc.pub-key-path [rpc-pub-key-path]', 'Location of the public key for the broker\'s rpc', validations.isFormattedPath, config.rpc.pubKeyPath)
+  .option('--rpc.priv-key-path [rpc-priv-key-path]', 'Location of private key for the broker\'s rpc', validations.isFormattedPath, config.rpc.privKeyPath)
 
+// For each currency, we will add expected options for an engine
 for (let currency of currencies) {
   let lowerSymbol = currency.symbol.toLowerCase()
-  let ENGINE_TYPE = process.env[`${currency.symbol}_ENGINE_TYPE`]
-  let LND_TLS_CERT = process.env[`${currency.symbol}_LND_TLS_CERT`]
-  let LND_MACAROON = process.env[`${currency.symbol}_LND_MACAROON`]
-  let LND_RPC_HOST = process.env[`${currency.symbol}_LND_RPC_HOST`]
+
   program
-    .option(`--${lowerSymbol}-engine-type <type>`, `The type of underlying Payment Channel Network node for ${currency.name}`, [ 'LND' ], ENGINE_TYPE)
+    .option(`--${lowerSymbol}.engine-type [engine-type]`, `The type of underlying Payment Channel Network node for ${currency.name}`, isSupportedEngineType, currency.engineType)
+    .option(`--${lowerSymbol}.rpc-host [rpc-host]`, `Location of a Payment Channel Network node's RPC server to use for ${currency.name}.`, validations.isHost, currency.rpcHost)
+    .option(`--${lowerSymbol}.tls-cert [tls-cert]`, `Location of the TLS certificate for the Payment Channel Network node to use when communicating with ${currency.name}.`, validations.isFormattedPath, currency.tlsCert)
+
   // LND Specific commands
-  // These will be validated based off of the engine type
   program
-    .option(`--${lowerSymbol}-lnd-rpc <server>`, `Location of the LND RPC server to use for ${currency.name}.`, validations.isHost, LND_RPC_HOST)
-    .option(`--${lowerSymbol}-lnd-tls <path>`, `Location of the certificate to use when communicating with ${currency.name} LND.`, validations.isFormattedPath, LND_TLS_CERT)
-    .option(`--${lowerSymbol}-lnd-macaroon <path>`, `Location of the macaroon to use when communicating with ${currency.name} LND.`, validations.isFormattedPath, LND_MACAROON)
+    .option(`--${lowerSymbol}.lnd-macaroon [lnd-macaroon]`, `Location of the LND macaroon to use when communicating with ${currency.name} LND. (Only for LND engine type)`, validations.isFormattedPath, currency.lndMacaroon)
 }
 
 program
   .action((args, opts) => {
     const {
-      rpcAddress,
       dataDir,
-      markets,
       interchainRouterAddress,
-      relayerHost: relayerRpcHost,
-      relayerCertPath,
-      idPrivkeyPath: privIdKeyPath,
-      idPubkeyPath: pubIdKeyPath,
+      idPubKeyPath: pubIdKeyPath,
+      idPrivKeyPath: privIdKeyPath,
+      markets,
       disableAuth,
-      rpcPrivkeyPath: privRpcKeyPath,
-      rpcPubkeyPath: pubRpcKeyPath,
+      relayerRpcHost,
+      relayerCertPath,
+      rpcAddress,
+      rpcHttpProxyAddress,
       rpcUser,
-      rpcPass
+      rpcPass,
+      rpcPubKeyPath: pubRpcKeyPath,
+      rpcPrivKeyPath: privRpcKeyPath
     } = opts
 
     const engines = {}
@@ -87,15 +91,20 @@ program
     for (let currency of currencies) {
       let lowerSymbol = currency.symbol.toLowerCase()
       if (opts[`${lowerSymbol}EngineType`] === 'LND') {
+        // TODO: Change the lndRpc, lndTls variables to generic names
         engines[currency.symbol] = {
-          type: 'LND',
-          lndRpc: opts[`${lowerSymbol}LndRpc`],
-          lndTls: opts[`${lowerSymbol}LndTls`],
+          type: opts[`${lowerSymbol}EngineType`],
+          lndRpc: opts[`${lowerSymbol}RpcHost`],
+          lndTls: opts[`${lowerSymbol}TlsCert`],
           lndMacaroon: opts[`${lowerSymbol}LndMacaroon`]
         }
+      } else {
+        const engineType = opts[`${lowerSymbol}EngineType`]
+        throw new Error(`Unsupported engine type: ${engineType}`)
       }
     }
 
+    // `markets` will be a string of market symbols that are delimited by a comma
     const marketNames = (markets || '').split(',').filter(m => m)
 
     const brokerOptions = {
@@ -104,6 +113,7 @@ program
       privIdKeyPath,
       pubIdKeyPath,
       rpcAddress,
+      rpcHttpProxyAddress,
       interchainRouterAddress,
       dataDir,
       marketNames,
