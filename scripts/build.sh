@@ -37,14 +37,7 @@ fi
 git clone https://github.com/sparkswap/relayer-proto.git ./proto
 rm -rf ./proto/.git
 
-# If the build is local, then we will copy related files for dev usage
-# for a local SimNet network
-if [ "$ARG" == "local" ]; then
-  echo "Copying env simnet local file to .env"
-  cp ./.env-simnet-sample ./.env
-  echo "Copying dev file to 'docker-compose.override.yml'"
-  cp ./docker-compose.simnet.sample.yml ./docker-compose.override.yml
-elif [ -f docker-compose.override.yml ]; then
+if [ -f docker-compose.override.yml ]; then
   # Let the user know that an override file exists which may mean that the user
   # will have settings they do not expect
   echo "A 'docker-compose.override.yml' file exists, but you are not using a supported"
