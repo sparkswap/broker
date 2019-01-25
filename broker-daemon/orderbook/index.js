@@ -165,6 +165,51 @@ class Orderbook {
   }
 
   /**
+   * Get orders in the orderbook for a given side up to a given limit. If no limit is provided, gets all orders
+   * @param {String} side Side of the orderbook to get orders for (i.e. `BID` or `ASK`)
+   * @param {String} limit int64 String of the the amount of orders to return.
+   * @return {Promise<Array<MarketEventOrder>>} A promise that resolves MarketEventOrders for the limited records
+   */
+  getOrders ({ side, limit }) {
+    this.assertSynced()
+    return new Promise((resolve, reject) => {
+      const message = limit ? `with a maximum number of records limited to ${limit}` : `for all records`
+      this.logger.info(`Retrieving ${side}s ` + message)
+
+      if (!MarketEventOrder.SIDES[side]) {
+        return reject(new Error(`${side} is not a valid market side`))
+      }
+
+      let resolved = false
+      let orders = []
+
+      function finish () {
+        resolved = true
+        stream.pause()
+        stream.unpipe()
+
+        resolve({ orders })
+      }
+
+      const index = side === MarketEventOrder.SIDES.BID ? this.bidIndex : this.askIndex
+      const stream = index.streamOrdersUpToLimit(limit)
+
+      stream.on('error', reject)
+
+      stream.on('end', () => {
+        finish()
+      })
+
+      stream.on('data', ({ key, value }) => {
+        if (resolved) return
+
+        const order = MarketEventOrder.fromStorage(key, value)
+        orders.push(order)
+      })
+    })
+  }
+
+  /**
    * @typedef {Object} BestOrders
    * @property {String} depth Int64 string of the total depth represented by the orders
    * @property {Array<MarketEventOrder>} orders Array of the best market event orders

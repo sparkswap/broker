@@ -589,6 +589,145 @@ describe('Orderbook', () => {
     })
   })
 
+  describe('#getOrders', () => {
+    let orderbook
+    let askIndex
+    let bidIndex
+    let stream
+    let orders
+    let setupFakeStream
+
+    beforeEach(() => {
+      orderbook = new Orderbook('XYZ/ABC', relayer, baseStore, logger)
+      orderbook.assertSynced = sinon.stub()
+      stream = {
+        on: sinon.stub(),
+        unpipe: sinon.stub(),
+        pause: sinon.stub()
+      }
+      askIndex = {
+        streamOrdersUpToLimit: sinon.stub().returns(stream)
+      }
+      bidIndex = {
+        streamOrdersUpToLimit: sinon.stub().returns(stream)
+      }
+
+      orderbook.askIndex = askIndex
+      orderbook.bidIndex = bidIndex
+
+      orders = [
+        {
+          key: 'order1',
+          value: 'order1Data'
+        },
+        {
+          key: 'order2',
+          value: 'order2Data'
+        },
+        {
+          key: 'order3',
+          value: 'order3Data'
+        },
+        {
+          key: 'order4',
+          value: 'order4Data'
+        }
+      ]
+
+      MarketEventOrderFromStorage.withArgs(orders[0].key, orders[0].value).returns(orders[0].value)
+      MarketEventOrderFromStorage.withArgs(orders[1].key, orders[1].value).returns(orders[1].value)
+      MarketEventOrderFromStorage.withArgs(orders[2].key, orders[2].value).returns(orders[2].value)
+      MarketEventOrderFromStorage.withArgs(orders[3].key, orders[3].value).returns(orders[3].value)
+
+      // Sets up a fake stream that emits an 'end' event once `limit` records have been streamed
+      setupFakeStream = (limit = '4') => {
+        let endEventFunction
+        stream.on.withArgs('end').callsFake((evt, fn) => { endEventFunction = fn })
+        stream.on.withArgs('data').callsFake((evt, fn) => {
+          const locals = orders.slice()
+          const streamLimit = locals.length - parseInt(limit)
+
+          function nextOrder () {
+            fn(locals.shift())
+
+            if (locals.length > streamLimit) {
+              process.nextTick(nextOrder)
+            } else {
+              process.nextTick(endEventFunction)
+            }
+          }
+
+          process.nextTick(nextOrder)
+        })
+      }
+      setupFakeStream()
+    })
+
+    it('makes sure the orderbook is synced', () => {
+      orderbook.getOrders({ side: 'ASK', limit: '100' })
+
+      expect(orderbook.assertSynced).to.have.been.calledOnce()
+    })
+
+    it('rejects if using an invalid side', () => {
+      return expect(orderbook.getOrders({ side: 'UGH', limit: '100' })).to.eventually.be.rejectedWith(Error)
+    })
+
+    it('pulls a read stream from the correct side', () => {
+      orderbook.getOrders({ side: 'ASK', limit: '100' })
+
+      expect(askIndex.streamOrdersUpToLimit).to.have.been.calledOnce()
+    })
+
+    it('rejects on stream error', () => {
+      stream.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
+
+      return expect(orderbook.getOrders({ side: 'ASK', limit: '100' })).to.eventually.be.rejectedWith('fake error')
+    })
+
+    it('returns the orders for the provided limit', async () => {
+      const limitToTest = '3'
+      setupFakeStream(limitToTest)
+      const { orders } = await orderbook.getOrders({ side: 'ASK', limit: limitToTest })
+
+      expect(orders).to.have.lengthOf(parseInt(limitToTest))
+    })
+
+    it('returns the current orders if the stream ends early', async () => {
+      stream.on.withArgs('end').callsArgAsync(1)
+      const { orders } = await orderbook.getOrders({ side: 'ASK', limit: '3' })
+
+      expect(orders).to.be.an('array')
+      expect(orders).to.have.lengthOf(0)
+    })
+
+    it('returns inflated MarketEventOrders', async () => {
+      const limitToTest = '2'
+      setupFakeStream(limitToTest)
+
+      const { orders: returnedOrders } = await orderbook.getOrders({ side: 'ASK', depth: limitToTest })
+
+      expect(MarketEventOrderFromStorage).to.have.been.calledTwice()
+      expect(MarketEventOrderFromStorage).to.have.been.calledWith(orders[0].key, orders[0].value)
+      expect(MarketEventOrderFromStorage).to.have.been.calledWith(orders[1].key, orders[1].value)
+      expect(returnedOrders[0]).to.be.equal(orders[0].value)
+      expect(returnedOrders[1]).to.be.equal(orders[1].value)
+    })
+
+    it('unpipes and pauses the stream once it is done', async () => {
+      await orderbook.getOrders({ side: 'ASK', limit: '4' })
+
+      expect(stream.unpipe).to.have.been.calledOnce()
+      expect(stream.pause).to.have.been.calledOnce()
+    })
+
+    it('returns all available orders when given no limit', async () => {
+      await orderbook.getOrders({ side: 'ASK' })
+
+      expect(askIndex.streamOrdersUpToLimit).to.have.been.calledWith(undefined)
+    })
+  })
+
   describe('#getBestOrders', () => {
     let orderbook
     let askIndex
