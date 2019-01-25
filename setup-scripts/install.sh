@@ -10,7 +10,8 @@
 #
 #################################
 
-set -e -u
+# Note: we don't set -u because we're sourcing from scripts (e.g. .bashrc) that may not be as strict.
+set -e
 
 TAG='[⚡ Sparkswap Installer]'
 WHITE='\033[1;37m'

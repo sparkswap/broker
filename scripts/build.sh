@@ -127,13 +127,13 @@ elif [ "$NO_CERTS" != "true" ]; then
 fi
 
 #############################################
-# Keypair Generation for Relayer
+# Keypair Generation of Broker Identity for Relayer
 #
-# This step creates certs to allow the broker to authenticate/auth for orders
+# This step creates certs to allow the broker to authenticate/auth for all actions
 # on the relayer
 #
-# We use a "Secure key exchange algorithm" here because these keys are exchanged
-# via a non secure channel. (ECDH)
+# We use a "Secure key exchange algorithm" (ECDH) here because these keys are exchanged
+# via a non secure channel.
 #
 #############################################
 ID_PRIV_KEY='./certs/broker-identity.private.pem'
