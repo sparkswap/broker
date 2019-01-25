@@ -5,8 +5,10 @@ const getOrderbook = rewire(path.resolve(__dirname, 'get-orderbook'))
 
 describe('getOrderbook', () => {
   let market
-  let limitPerSide
-  let orders
+  let defaultProtobufValue
+  let DEFAULT_LIMIT
+  let bids
+  let asks
   let orderbook
   let orderbooks
   let GetOrderbookResponse
@@ -20,15 +22,19 @@ describe('getOrderbook', () => {
   beforeEach(() => {
     market = 'BTC/LTC'
     // Default value when no limitPerSide is provided to RPC GetOrderbookRequest is '0'
-    limitPerSide = '0'
-    params = { market, limitPerSide }
-    orders = [
-      {side: 'BID', price: '0.001', amount: '0.003'},
+    defaultProtobufValue = '0'
+    DEFAULT_LIMIT = '50'
+    params = { market, limitPerSide: defaultProtobufValue }
+    bids = [
+      {side: 'BID', price: '0.001', amount: '0.003'}
+    ]
+    asks = [
       {side: 'ASK', price: '0.0031', amount: '0.0004'},
       {side: 'ASK', price: '0.005', amount: '0.0001'}
-
     ]
-    orderbook = { all: sinon.stub().resolves(orders) }
+    orderbook = { getOrders: sinon.stub() }
+    orderbook.getOrders.withArgs({ side: 'BID', limit: DEFAULT_LIMIT }).resolves(bids)
+    orderbook.getOrders.withArgs({ side: 'ASK', limit: DEFAULT_LIMIT }).resolves(asks)
     logger = {
       info: sinon.stub(),
       error: sinon.stub()
@@ -51,7 +57,7 @@ describe('getOrderbook', () => {
   it('gets all orders from the orderbook', async () => {
     await getOrderbook({ params, logger, orderbooks }, { GetOrderbookResponse })
 
-    expect(orderbook.all).to.have.been.calledOnce()
+    expect(orderbook.getOrders).to.have.been.calledTwice()
   })
 
   it('converts the current time to nanoseconds', async () => {
@@ -82,22 +88,22 @@ describe('getOrderbook', () => {
   })
 
   it('limits the number of orders', async () => {
-    orders = [
-      {side: 'BID', price: '0.0017', amount: '0.003'},
-      {side: 'BID', price: '0.0018', amount: '0.003'},
-      {side: 'BID', price: '0.0019', amount: '0.003'},
-      {side: 'BID', price: '0.002', amount: '0.003'},
+    params.limitPerSide = '3'
+    bids = [
       {side: 'BID', price: '0.0021', amount: '0.003'},
-      {side: 'ASK', price: '0.003', amount: '0.0004'},
-      {side: 'ASK', price: '0.0031', amount: '0.0004'},
-      {side: 'ASK', price: '0.0032', amount: '0.0004'},
-      {side: 'ASK', price: '0.0033', amount: '0.0004'},
-      {side: 'ASK', price: '0.0034', amount: '0.0004'}
+      {side: 'BID', price: '0.002', amount: '0.003'},
+      {side: 'BID', price: '0.0019', amount: '0.003'}
     ]
 
-    orderbook = { all: sinon.stub().resolves(orders) }
+    asks = [
+      {side: 'ASK', price: '0.003', amount: '0.0004'},
+      {side: 'ASK', price: '0.0031', amount: '0.0004'},
+      {side: 'ASK', price: '0.0032', amount: '0.0004'}
+    ]
+
+    orderbook.getOrders.withArgs({ side: 'BID', limit: params.limitPerSide }).resolves(bids)
+    orderbook.getOrders.withArgs({ side: 'ASK', limit: params.limitPerSide }).resolves(asks)
     orderbooks = new Map([['BTC/LTC', orderbook]])
-    params.limitPerSide = '3'
     await getOrderbook({ params, logger, orderbooks }, { GetOrderbookResponse })
 
     expect(GetOrderbookResponse).to.have.been.calledWith(

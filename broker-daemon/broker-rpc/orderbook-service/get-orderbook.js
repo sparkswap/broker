@@ -1,12 +1,12 @@
 const nano = require('nano-seconds')
-const { Big } = require('../../utils')
+const MarketEventOrder = require('../../models/market-event-order')
 
 /**
  * Default limit for number of orders returned for each side of orderbook
- * @type {Big}
+ * @type {String}
  * @constant
  */
-const DEFAULT_LIMIT = Big(50)
+const DEFAULT_LIMIT = '50'
 
 /**
  * Retrieve price and amount information for current orderbook state
@@ -33,29 +33,20 @@ async function getOrderbook ({ params, logger, orderbooks }, { GetOrderbookRespo
     const currentTime = nano.now()
     const timestamp = nano.toString(currentTime)
     const datetime = nano.toISOString(currentTime)
-    const orders = await orderbook.all()
 
     // limitPerSide is passed as an integer with default protobuf value of '0', so '0' implies param was omitted
-    const limitPerSide = (params.limitPerSide === '0') ? DEFAULT_LIMIT : Big(params.limitPerSide)
+    const limitPerSide = (params.limitPerSide === '0') ? DEFAULT_LIMIT : params.limitPerSide
 
-    const bids = []
-    const asks = []
-    orders.forEach((order) => {
-      const orderInfo = {price: order.price, amount: order.amount}
-      if (order.side === 'BID') {
-        bids.push(orderInfo)
-      } else {
-        asks.push(orderInfo)
-      }
-    })
+    const bids = await orderbook.getOrders({ side: MarketEventOrder.SIDES.BID, limit: limitPerSide })
+    const asks = await orderbook.getOrders({ side: MarketEventOrder.SIDES.ASK, limit: limitPerSide })
 
-    // Bids are sorted in descending order so the best bid (i.e. highest bid) is returned first
-    bids.sort((a, b) => parseFloat(b.price) - parseFloat(a.price)).splice(limitPerSide)
+    const formattedBids = []
+    bids.forEach((bid) => formattedBids.push({price: bid.price, amount: bid.amount}))
 
-    // Asks are sorted in ascending order so best ask (i.e. lowest ask) is returned first
-    asks.sort((a, b) => parseFloat(a.price) - parseFloat(b.price)).splice(limitPerSide)
+    const formattedAsks = []
+    asks.forEach((ask) => formattedAsks.push({price: ask.price, amount: ask.amount}))
 
-    return new GetOrderbookResponse({timestamp, datetime, bids, asks})
+    return new GetOrderbookResponse({timestamp, datetime, bids: formattedBids, asks: formattedAsks})
   } catch (err) {
     logger.error(`Failed to get orderbook: ${err.message}`)
     throw new Error(err)
