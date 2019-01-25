@@ -51,7 +51,8 @@ class PriceIndex extends SublevelIndex {
   }
 
   /**
-   * create a read stream of orders with prices at least as good as the given on
+   * Create a read stream of orders with prices at least as good as the given one
+   * Note: If no quantumPrice is provided, creates a read stream of all records
    * @param  {String} quantumPrice Decimal of the price
    * @return {ReadableStream}       ReadableStream from sublevel-index
    */
@@ -60,6 +61,21 @@ class PriceIndex extends SublevelIndex {
 
     if (quantumPrice) {
       opts.lte = this.keyForPrice(quantumPrice)
+    }
+    return this.createReadStream(opts)
+  }
+
+  /**
+   * Create a read stream of orders where total records returned are limited to the provided limit
+   * Note: If no limit is provided, creates a read stream of all records
+   * @param  {String} limit   The number of records to limit
+   * @return {ReadableStream} ReadableStream from sublevel-index
+   */
+  streamOrdersUpToLimit (limit) {
+    const opts = {}
+
+    if (limit) {
+      opts.limit = parseInt(limit)
     }
     return this.createReadStream(opts)
   }
