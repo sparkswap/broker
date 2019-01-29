@@ -35,7 +35,6 @@ async function watchMarket ({ params, send, onCancel, onError, logger, orderbook
    * @param  {Object}  opts       Database operation from LevelDb
    * @param  {String}  opts.key   Key of the database object
    * @param  {String}  opts.value Value of the database object
-   * @param  {Boolean} opts.sync  Flag from level-live-stream indicating that the stream is caught up to the present
    * @return {void}
    */
   const onData = (opts) => {
