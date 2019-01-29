@@ -29,7 +29,6 @@ async function watchMarket ({ params, send, onCancel, onError, logger, orderbook
   }
 
   const liveStream = createLiveStream(orderbook.store)
-  const DB_ACTIONS = { DELETE: 'del', ADD: 'put' }
 
   /**
    * Send market events to clients when records are added/deleted in the orderbook data store
@@ -41,25 +40,9 @@ async function watchMarket ({ params, send, onCancel, onError, logger, orderbook
    * @return {void}
    */
   const onData = (opts) => {
-    if (opts === undefined) {
-      logger.info('Undefined event in the stream, likely from a delete event')
-      // do nothing right now, this is a side effect of deleting a record from the DB
-    } else if (opts.sync) {
-      logger.info('Sync event signifying end of old events being added to stream, following events are new')
-      // also do nothing right now ({sync: true} is part of level stream, it is added to the stream after all
-      // old events have been added to the stream before any new events are added to the stream.)
-    } else {
-      logger.info('New event being added to stream, event info', opts)
-      if (opts.type === DB_ACTIONS.DELETE) {
-        params = {
-          type: WatchMarketResponse.EventType.DELETE,
-          marketEvent: { orderId: opts.key }
-        }
-      } else {
-        params = {
-          type: WatchMarketResponse.EventType.ADD,
-          marketEvent: MarketEventOrder.fromStorage(opts.key, opts.value).serialize()
-        }
+    if (opts.type === 'put') {
+      params = {
+        marketEvent: MarketEventOrder.fromStorage(opts.key, opts.value).serialize()
       }
       send(new WatchMarketResponse(params))
     }

@@ -41,7 +41,6 @@ describe('watchMarket', () => {
     store = sinon.stub()
     orderbooks = new Map([['BTC/LTC', { store: store }]])
     WatchMarketResponse = sinon.stub()
-    WatchMarketResponse.EventType = { ADD: 'ADD', DELETE: 'DELETE' }
     createLiveStream = sinon.stub().returns(liveStream)
     watchMarket.__set__('createLiveStream', createLiveStream)
     watchMarket.__set__('MarketEventOrder', MarketEventOrder)
@@ -84,7 +83,7 @@ describe('watchMarket', () => {
   })
 
   it('sends add events', async () => {
-    const fakeOrder = { key: 'key', value: JSON.stringify({ baseAmount: '100', counterAmount: '1000', side: 'BID' }) }
+    const fakeOrder = { key: 'key', value: JSON.stringify({ baseAmount: '100', counterAmount: '1000', side: 'BID' }), type: 'put' }
     const fakeSerialized = 'blah'
     const serialize = sinon.stub().returns(fakeSerialized)
 
@@ -101,22 +100,6 @@ describe('watchMarket', () => {
     expect(serialize).to.have.been.calledOnce()
     expect(sendStub).to.have.been.calledOnce()
     expect(WatchMarketResponse).to.have.been.calledOnce()
-    expect(WatchMarketResponse).to.have.been.calledWith({type: 'ADD', marketEvent: fakeSerialized})
-  })
-
-  it('sends delete events if type is del', async () => {
-    const fakeOrder = { key: 'key', type: 'del' }
-    const marketEvent = {
-      orderId: fakeOrder.key
-    }
-
-    liveStream.on.withArgs('data').callsArgWithAsync(1, fakeOrder)
-
-    watchMarket({ params, send: sendStub, onCancel: onCancelStub, onError: onErrorStub, logger, orderbooks }, { WatchMarketResponse })
-
-    await delay(10)
-    expect(sendStub).to.have.been.calledOnce()
-    expect(WatchMarketResponse).to.have.been.calledOnce()
-    expect(WatchMarketResponse).to.have.been.calledWith({type: 'DELETE', marketEvent: marketEvent})
+    expect(WatchMarketResponse).to.have.been.calledWith({marketEvent: fakeSerialized})
   })
 })
