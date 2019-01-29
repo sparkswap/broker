@@ -33,9 +33,8 @@ async function watchMarket ({ params, send, onCancel, onError, logger, orderbook
   /**
    * Send market events to clients when records are added/deleted in the orderbook data store
    * @param  {Object}  opts       Database operation from LevelDb
-   * @param  {String}  opts.type  type of database operation, i.e. `put` or `del`
-   * @param  {String}  opts.key   Key of the database object being `put`ed or `del`ed
-   * @param  {String}  opts.value Value of the database object to be `put` (undefined for `del`)
+   * @param  {String}  opts.key   Key of the database object
+   * @param  {String}  opts.value Value of the database object
    * @param  {Boolean} opts.sync  Flag from level-live-stream indicating that the stream is caught up to the present
    * @return {void}
    */
