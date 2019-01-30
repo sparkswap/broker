@@ -8,8 +8,8 @@
  * @param {function} responses.RegisterResponse - constructor for RegisterResponse messages
  * @return {RegisterResponse}
  */
-async function register ({ params, relayer, logger }, { RegisterResponse }) {
-  const { publicKey } = params
+async function register ({ relayer, logger }, { RegisterResponse }) {
+  const publicKey = relayer.identity.pubKeyBase64
 
   const { entityId } = await relayer.adminService.register({publicKey})
 

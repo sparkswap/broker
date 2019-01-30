@@ -4,7 +4,6 @@ const { expect, rewire, sinon } = require('test/test-helper')
 const register = rewire(path.resolve(__dirname, 'register'))
 
 describe('register', () => {
-  let params
   let relayer
   let logger
   let RegisterResponse
@@ -15,9 +14,11 @@ describe('register', () => {
   beforeEach(() => {
     publicKey = 'asdf'
     entityId = 'entityid'
-    params = { publicKey }
     registerStub = sinon.stub().resolves({ entityId })
     relayer = {
+      identity: {
+        pubKeyBase64: publicKey
+      },
       adminService: {
         register: registerStub
       }
@@ -26,14 +27,14 @@ describe('register', () => {
   })
 
   it('registers the publickey with the relayer', async () => {
-    await register({ params, relayer, logger }, { RegisterResponse })
+    await register({ relayer, logger }, { RegisterResponse })
 
     expect(registerStub).to.have.been.calledOnce()
     expect(registerStub).to.have.been.calledWith({publicKey})
   })
 
   it('returns the entityId created by the relayer', async () => {
-    const res = await register({ params, relayer, logger }, { RegisterResponse })
+    const res = await register({ relayer, logger }, { RegisterResponse })
 
     expect(res).to.be.an.instanceOf(RegisterResponse)
     expect(RegisterResponse).to.have.been.calledOnce()

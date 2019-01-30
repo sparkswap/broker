@@ -7,13 +7,6 @@ const { Big } = require('./big')
 const MAX_VALUE = '9223372036854775807'
 
 /**
- * RegExp for matching Base64 strings, which public keys are (once stripped of newlines and banners)
- * @constant
- * @type {RegExp}
- */
-const BASE64_MATCH = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/
-
-/**
  * Checks if the specified string is a valid decimal format
  *
  * @param {String} str
@@ -176,21 +169,6 @@ function isPositiveInteger (str) {
   throw new Error('Not a valid integer value')
 }
 
-/**
- * Checks if a specified string is in base64
- *
- * @param  {String}  str - base64 string
- * @return {String}  str - base64 string
- * @throws {Error} If string is not a valid base64 string
- */
-function isBase64 (str) {
-  if (matches(str, BASE64_MATCH)) {
-    return str
-  }
-
-  throw new Error('Not a valid base64 string')
-}
-
 module.exports = {
   isDecimal,
   isMarketName,
@@ -199,6 +177,5 @@ module.exports = {
   areValidMarketNames,
   isBlockOrderId,
   isDate,
-  isPositiveInteger,
-  isBase64
+  isPositiveInteger
 }

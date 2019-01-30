@@ -7,8 +7,7 @@ const {
   areValidMarketNames,
   isFormattedPath,
   isBlockOrderId,
-  isDate,
-  isBase64
+  isDate
 } = require('./validations')
 
 describe('Validations', () => {
@@ -170,20 +169,6 @@ describe('Validations', () => {
     it('throws an error if the string can be parsed to a valid date', () => {
       const date = '2018-09-T13:10:53.0233343Z'
       expect(() => isDate(date)).to.throw(expectedError)
-    })
-  })
-
-  describe('isBase64', () => {
-    const expectedError = 'Not a valid base64 string'
-
-    it('returns the base64 string if it is valid', () => {
-      const base64 = 'asdf'
-      expect(isBase64(base64)).to.eql(base64)
-    })
-
-    it('throws an error if the string is not in base64 format', () => {
-      const base64 = 'asdff'
-      expect(() => isBase64(base64)).to.throw(expectedError)
     })
   })
 })

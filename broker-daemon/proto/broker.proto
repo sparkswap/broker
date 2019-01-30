@@ -149,11 +149,6 @@ message GetIdentityResponse {
   string public_key = 1;
 }
 
-message RegisterRequest {
-  // The public key of the BrokerDaemon used to authenticate/authorize interactions with the Relayer
-  string public_key = 1;
-}
-
 message RegisterResponse {
   // The entity_id of the entity registered with the authorization service
   string entity_id = 1;
@@ -268,19 +263,18 @@ service AdminService {
   }
 
   /**
-   * Register takes a publicKey and returns the entityId of the entity created by the Relayer's authorization service.
+   * Register takes the publicKey of users identity returns the entityId of the entity created by the Relayer's authorization service.
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
-   * const publicKey = "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEVbt2b1JHw7Kg2I9340n8jA5ycbyH\neucZq00VNANqsoUSfw2iqRkM4OLVdUZ22YGR+mN/0CgIIwiWxNE6g58V+g==\n-----END PUBLIC KEY-----\n""
-   * adminService.register({ publicKey }, { deadline }, (err, { entityId }) => {
+   * adminService.register({ }, { deadline }, (err, { entityId }) => {
    *   if (err) return console.error(err)
    *   console.log({ entityId })
    * })
    * ```
    *
    * ```shell
-   * > sparkswap register "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEVbt2b1JHw7Kg2I9340n8jA5ycbyH\neucZq00VNANqsoUSfw2iqRkM4OLVdUZ22YGR+mN/0CgIIwiWxNE6g58V+g==\n-----END PUBLIC KEY-----\n"
+   * > sparkswap register
    * ```
    *
    * > The above command will print:
@@ -295,7 +289,7 @@ service AdminService {
    * BAfwIYxkUqHJ3pLLh60AAQj3
    * ```
    */
-  rpc Register (RegisterRequest) returns (RegisterResponse);
+  rpc Register (google.protobuf.Empty) returns (RegisterResponse);
 }
 
 /**
