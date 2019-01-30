@@ -6,7 +6,7 @@ const getOrderbook = rewire(path.resolve(__dirname, 'get-orderbook'))
 describe('getOrderbook', () => {
   let market
   let defaultProtobufValue
-  let DEFAULT_LIMIT
+  let undefinedLimit
   let bids
   let asks
   let orderbook
@@ -23,7 +23,6 @@ describe('getOrderbook', () => {
     market = 'BTC/LTC'
     // Default value when no limitPerSide is provided to RPC GetOrderbookRequest is '0'
     defaultProtobufValue = '0'
-    DEFAULT_LIMIT = '50'
     params = { market, limitPerSide: defaultProtobufValue }
     bids = [
       {side: 'BID', price: '0.001', amount: '0.003'}
@@ -33,8 +32,8 @@ describe('getOrderbook', () => {
       {side: 'ASK', price: '0.005', amount: '0.0001'}
     ]
     orderbook = { getOrders: sinon.stub() }
-    orderbook.getOrders.withArgs({ side: 'BID', limit: DEFAULT_LIMIT }).resolves(bids)
-    orderbook.getOrders.withArgs({ side: 'ASK', limit: DEFAULT_LIMIT }).resolves(asks)
+    orderbook.getOrders.withArgs({ side: 'BID', limit: undefinedLimit }).resolves(bids)
+    orderbook.getOrders.withArgs({ side: 'ASK', limit: undefinedLimit }).resolves(asks)
     logger = {
       info: sinon.stub(),
       error: sinon.stub()

@@ -2,13 +2,6 @@ const nano = require('nano-seconds')
 const MarketEventOrder = require('../../models/market-event-order')
 
 /**
- * Default limit for number of orders returned for each side of orderbook
- * @type {String}
- * @constant
- */
-const DEFAULT_LIMIT = '50'
-
-/**
  * Retrieve price and amount information for current orderbook state
  *
  * @param {GrpcUnaryMethod~request} request - request object
@@ -35,16 +28,16 @@ async function getOrderbook ({ params, logger, orderbooks }, { GetOrderbookRespo
     const datetime = nano.toISOString(currentTime)
 
     // limitPerSide is passed as an integer with default protobuf value of '0', so '0' implies param was omitted
-    const limitPerSide = (params.limitPerSide === '0') ? DEFAULT_LIMIT : params.limitPerSide
+    let limitPerSide
+    if (params.limitPerSide !== '0') {
+      limitPerSide = params.limitPerSide
+    }
 
     const bids = await orderbook.getOrders({ side: MarketEventOrder.SIDES.BID, limit: limitPerSide })
     const asks = await orderbook.getOrders({ side: MarketEventOrder.SIDES.ASK, limit: limitPerSide })
 
-    const formattedBids = []
-    bids.forEach((bid) => formattedBids.push({price: bid.price, amount: bid.amount}))
-
-    const formattedAsks = []
-    asks.forEach((ask) => formattedAsks.push({price: ask.price, amount: ask.amount}))
+    const formattedBids = bids.map(bid => { return { price: bid.price, amount: bid.amount } })
+    const formattedAsks = asks.map(ask => { return { price: ask.price, amount: ask.amount } })
 
     return new GetOrderbookResponse({timestamp, datetime, bids: formattedBids, asks: formattedAsks})
   } catch (err) {
