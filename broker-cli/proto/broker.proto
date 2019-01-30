@@ -150,7 +150,7 @@ message GetIdentityResponse {
 }
 
 message RegisterResponse {
-  // The entity_id of the entity registered with the authorization service
+  // the Identifier assigned by the Relayer for the Entity associated with the provided Public Key
   string entity_id = 1;
 }
 
@@ -263,7 +263,7 @@ service AdminService {
   }
 
   /**
-   * Register takes the publicKey of users identity returns the entityId of the entity created by the Relayer's authorization service.
+   * Register takes the publicKey of users identity returns the entityId of the entity created by the Relayer
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
@@ -281,12 +281,12 @@ service AdminService {
    *
    * ```javascript
    * {
-   *   "entityId": "BAfwIYxkUqHJ3pLLh60AAQj3"
+   *   "Successfully registered public key with relayer"
    * }
    * ```
    *
    * ```shell
-   * BAfwIYxkUqHJ3pLLh60AAQj3
+   * Successfully registered public key with relayer
    * ```
    */
   rpc Register (google.protobuf.Empty) returns (RegisterResponse);

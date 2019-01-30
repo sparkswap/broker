@@ -1,5 +1,5 @@
 /**
- * Register the publicKey with the authorization service on the Relayer
+ * Register the publicKey with the Relayer
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
@@ -11,7 +11,8 @@
 async function register ({ relayer, logger }, { RegisterResponse }) {
   const publicKey = relayer.identity.pubKeyBase64
 
-  const { entityId } = await relayer.adminService.register({publicKey})
+  // Currently we don't do anything with this entityId but we will need it in the future
+  const { entityId } = await relayer.adminService.register({ publicKey })
 
   return new RegisterResponse({ entityId })
 }

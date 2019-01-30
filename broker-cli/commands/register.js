@@ -4,7 +4,7 @@ const { RPC_ADDRESS_HELP_STRING } = require('../utils/strings')
 
 /**
  *
- * Register publicKey with the Relayer's authorization service
+ * Register publicKey with the Relayer
  *
  * ex: `sparkswap register`
  *
@@ -20,10 +20,9 @@ async function register (args, opts, logger) {
   try {
     const client = await new BrokerDaemonClient(rpcAddress)
 
-    // Currently we don't do anything with this entityId but we will need it in the future
-    const { entityId } = await client.adminService.register({})
+    await client.adminService.register({})
 
-    logger.info('Successfully registered', { entityId })
+    logger.info('Successfully registered public key with relayer')
   } catch (e) {
     logger.error(handleError(e))
   }
@@ -31,7 +30,7 @@ async function register (args, opts, logger) {
 
 module.exports = (program) => {
   program
-    .command('register', 'Registers the public key with the authorization service')
+    .command('register', 'Registers the public key with the relayer')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .action(register)
 }
