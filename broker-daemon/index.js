@@ -8,6 +8,7 @@ const Orderbook = require('./orderbook')
 const BlockOrderWorker = require('./block-order-worker')
 const BrokerRPCServer = require('./broker-rpc/broker-rpc-server')
 const InterchainRouter = require('./interchain-router')
+const isReachable = require('is-reachable')
 const { logger } = require('./utils')
 const CONFIG = require('./config')
 
@@ -93,7 +94,7 @@ class BrokerDaemon {
    * @param {String} opts.relayerOptions.certPath - Absolute path to the root certificate for the relayer
    * @return {BrokerDaemon}
    */
-  constructor ({ privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcHttpProxyAddress }) {
+  constructor ({ privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcHttpProxyAddress, externalAddress }) {
     if (!privIdKeyPath) throw new Error('Private Key path is required to create a BrokerDaemon')
     if (!pubIdKeyPath) throw new Error('Public Key path is required to create a BrokerDaemon')
 
@@ -104,6 +105,7 @@ class BrokerDaemon {
     }
     this.rpcAddress = rpcAddress || DEFAULT_RPC_ADDRESS
     this.rpcHttpProxyAddress = rpcHttpProxyAddress
+    this.externalAddress = externalAddress
     this.dataDir = dataDir || DEFAULT_DATA_DIR
     this.marketNames = marketNames || []
     this.interchainRouterAddress = interchainRouterAddress || DEFAULT_INTERCHAIN_ROUTER_ADDRESS
@@ -179,7 +181,8 @@ class BrokerDaemon {
       // the validation will be retried on the engine until successful or until final failure.
       this.validateEngines()
 
-      // We want to validate the external address here
+      // validate the external address
+      this.validateExternalAddress()
 
       this.rpcServer.listen(this.rpcAddress)
       this.logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
@@ -243,6 +246,13 @@ class BrokerDaemon {
    */
   validateEngines () {
     this.engines.forEach((engine, _) => engine.validateEngine())
+  }
+
+  async validateExternalAddress () {
+    const externalAddressReachable = await isReachable(this.externalAddress)
+    if (!externalAddressReachable) {
+      this.logger.warning(`External Address {${this.externalAddress}} is not reachable. Broker might not be able to work properly.`)
+    }
   }
 }
 

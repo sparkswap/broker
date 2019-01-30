@@ -6,6 +6,7 @@ const BrokerDaemon = rewire(path.resolve('broker-daemon', 'index'))
 describe('broker daemon', () => {
   let rpcServer
   let interchainRouter
+  let isReachable
   let eventEmitter
   let level
   let sublevel
@@ -33,6 +34,7 @@ describe('broker daemon', () => {
   let brokerDaemonOptions
   let rpcUser
   let rpcPass
+  let externalAddress
 
   beforeEach(() => {
     level = sinon.stub().returns('fake-level')
@@ -46,6 +48,7 @@ describe('broker daemon', () => {
     rpcServer.prototype.listen = rpcListenStub
     interchainRouterListenSpy = sinon.stub()
     interchainRouter = sinon.stub()
+    isReachable = sinon.stub()
     interchainRouter.prototype.listen = interchainRouterListenSpy
     eventEmitter = sinon.stub()
     logger = {
@@ -93,6 +96,7 @@ describe('broker daemon', () => {
     BrokerDaemon.__set__('events', eventEmitter)
     BrokerDaemon.__set__('BrokerRPCServer', rpcServer)
     BrokerDaemon.__set__('InterchainRouter', interchainRouter)
+    BrokerDaemon.__set__('isReachable', isReachable)
     BrokerDaemon.__set__('logger', logger)
 
     privRpcKeyPath = '/my/private/rpc/key/path'
@@ -101,6 +105,7 @@ describe('broker daemon', () => {
     pubIdKeyPath = '/my/public/id/key/path'
     rpcAddress = '0.0.0.0:27492'
     interchainRouterAddress = '0.0.0.0:40369'
+    externalAddress = '0.0.0.0:12345'
     dataDir = '/datadir'
     marketNames = [ 'BTC/LTC' ]
     engines = {
@@ -136,7 +141,8 @@ describe('broker daemon', () => {
       disableAuth,
       rpcUser,
       rpcPass,
-      relayerOptions
+      relayerOptions,
+      externalAddress
     }
   })
 
@@ -367,6 +373,7 @@ describe('broker daemon', () => {
     beforeEach(() => {
       brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
       brokerDaemon.validateEngines = sinon.stub().returns()
+      brokerDaemon.validateExternalAddress = sinon.stub().returns()
       brokerDaemon.initializeMarkets = sinon.stub().resolves()
     })
 
@@ -386,6 +393,10 @@ describe('broker daemon', () => {
 
     it('validates the engines', () => {
       expect(brokerDaemon.validateEngines).to.have.been.calledOnce()
+    })
+
+    it('validates the external address', () => {
+      expect(brokerDaemon.validateExternalAddress).to.have.been.calledOnce()
     })
 
     it('initializes markets', () => {
