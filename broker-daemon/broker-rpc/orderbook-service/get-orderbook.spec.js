@@ -105,6 +105,9 @@ describe('getOrderbook', () => {
     orderbooks = new Map([['BTC/LTC', orderbook]])
     await getOrderbook({ params, logger, orderbooks }, { GetOrderbookResponse })
 
+    expect(orderbook.getOrders).to.have.been.calledTwice()
+    expect(orderbook.getOrders.firstCall).to.have.been.calledWith({ side: 'BID', limit: params.limitPerSide })
+    expect(orderbook.getOrders.secondCall).to.have.been.calledWith({ side: 'ASK', limit: params.limitPerSide })
     expect(GetOrderbookResponse).to.have.been.calledWith(
       {
         bids: [

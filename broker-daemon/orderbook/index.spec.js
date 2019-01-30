@@ -557,38 +557,6 @@ describe('Orderbook', () => {
     })
   })
 
-  describe('#all', () => {
-    let orderbook
-    let bound
-    let orders
-    let retrieved
-
-    beforeEach(async () => {
-      const marketName = 'XYZ/ABC'
-      orderbook = new Orderbook(marketName, relayer, baseStore, logger)
-
-      orderbook.assertSynced = sinon.stub()
-
-      bound = 'mybind'
-      MarketEventOrderFromStorageBind.returns(bound)
-
-      orders = []
-      getRecords.resolves(orders)
-
-      retrieved = await orderbook.all()
-    })
-
-    it('makes sure the orderbook is synced', () => {
-      expect(orderbook.assertSynced).to.have.been.calledOnce()
-    })
-
-    it('returns all the orders', () => {
-      expect(getRecords).to.have.been.calledOnce()
-      expect(getRecords).to.have.been.calledWith(orderbookStore, bound)
-      expect(retrieved).to.be.equal(orders)
-    })
-  })
-
   describe('#getOrders', () => {
     let orderbook
     let askIndex

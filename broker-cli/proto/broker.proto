@@ -862,8 +862,8 @@ service OrderBookService {
   /**
    * GetOrderbook returns price and amount information about the bids and asks on the orderbook in the current state.
    *
-   * When GetOrderbookRequest includes a limit parameter, the total number of bids or asks will not exceed
-   * the provided limit.
+   * When GetOrderbookRequest includes a limit parameter, the total number of bids will not exceed the limit and the
+   * total number of asks will not exceed the limit.
    *
    * > Below is a simple example of a console-based UI for an orderbook:
    *

@@ -136,17 +136,6 @@ class Orderbook {
   }
 
   /**
-   * Returns all records in the current orderbook
-   *
-   * @returns {Promise<Array<MarketEventOrder>>} A promise that resolves an array of MarketEventOrder records
-   */
-  async all () {
-    this.assertSynced()
-    this.logger.info(`Retrieving all records for ${this.marketName}`)
-    return getRecords(this.store, MarketEventOrder.fromStorage.bind(MarketEventOrder))
-  }
-
-  /**
    * Gets all trades for a specific timestamp
    *
    * @param  {String} since - ISO8601 datetime lowerbound
