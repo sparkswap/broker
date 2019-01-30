@@ -3,11 +3,10 @@ const { validations, handleError } = require('../utils')
 const { RPC_ADDRESS_HELP_STRING } = require('../utils/strings')
 
 /**
- * sparkswap register
  *
  * Register publicKey with the Relayer's authorization service
  *
- * ex: `sparkswap id`
+ * ex: `sparkswap register`
  *
  * @param {Object} args
  * @param {Object} opts
