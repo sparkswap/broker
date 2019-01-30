@@ -621,7 +621,7 @@ describe('Orderbook', () => {
       const limit = '100'
       await orderbook.getOrders({ side: 'ASK', limit })
 
-      expect(getRecords).to.have.been.calledWith(askIndex, sinon.match.func, { limit })
+      expect(getRecords).to.have.been.calledWith(askIndex, sinon.match.func, { limit: parseInt(limit) })
     })
 
     it('returns the expected orders', async () => {

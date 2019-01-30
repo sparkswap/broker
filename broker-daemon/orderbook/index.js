@@ -166,7 +166,7 @@ class Orderbook {
     const params = {}
 
     if (limit) {
-      params.limit = limit
+      params.limit = parseInt(limit)
     }
 
     if (!MarketEventOrder.SIDES[side]) {
