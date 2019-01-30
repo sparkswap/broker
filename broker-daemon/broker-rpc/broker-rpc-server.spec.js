@@ -144,13 +144,12 @@ describe('BrokerRPCServer', () => {
     })
 
     it('creates an http server', () => {
-      const server = new BrokerRPCServer()
-      const rpcAddress = BrokerRPCServer.__get__('DEFAULT_RPC_ADDRESS')
-      console.log(server.protoPath)
+      const rpcHttpProxyAddress = '0.0.0.0:27492'
+      const server = new BrokerRPCServer({ rpcHttpProxyAddress })
       expect(rpcServer).to.have.been.calledOnce()
       expect(rpcServer).to.have.been.calledWithNew()
       expect(server).to.have.property('httpServer')
-      expect(httpServer).to.have.been.calledWith(server.protoPath, rpcAddress)
+      expect(httpServer).to.have.been.calledWith(server.protoPath, rpcHttpProxyAddress)
       expect(server.httpServer).to.be.equal(httpServerStub)
     })
 
