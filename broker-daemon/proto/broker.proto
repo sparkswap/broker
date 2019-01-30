@@ -281,7 +281,7 @@ service AdminService {
    *
    * ```javascript
    * {
-   *   "Successfully registered public key with relayer"
+   *   "entityId": "BAfwIYxkUqHJ3pLLh60AAQj3"
    * }
    * ```
    *
