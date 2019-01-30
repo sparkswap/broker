@@ -8,7 +8,7 @@ require('colors')
 
 const BrokerDaemonClient = require('../broker-daemon-client')
 const { validations, askQuestion, Big, handleError } = require('../utils')
-const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../utils/strings')
+const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING, JSON_FORMAT_STRING } = require('../utils/strings')
 const { currencies: currencyConfig } = require('../config')
 
 /**
@@ -657,6 +657,7 @@ module.exports = (program) => {
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.BALANCE}`, 'Current daemon wallet balance')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
+    .option('--json', JSON_FORMAT_STRING, program.BOOLEAM)
     .command(`wallet ${SUPPORTED_COMMANDS.NEW_DEPOSIT_ADDRESS}`, 'Generates a new wallet address for a daemon instance')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
@@ -679,4 +680,5 @@ module.exports = (program) => {
     .command(`wallet ${SUPPORTED_COMMANDS.NETWORK_STATUS}`, 'Payment Channel Network status for trading in different markets')
     .option('--market [marketName]', MARKET_NAME_HELP_STRING, null, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
+    .option('--json', JSON_FORMAT_STRING, program.BOOLEAM)
 }

@@ -1,5 +1,5 @@
 const { validations } = require('../../utils')
-const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../../utils/strings')
+const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING, JSON_FORMAT_STRING } = require('../../utils/strings')
 /**
  * Order
  * @module broker-cli/order
@@ -58,6 +58,7 @@ module.exports = (program) => {
     .command(`order ${SUPPORTED_COMMANDS.SUMMARY}`, 'View your orders')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
+    .option('--json', JSON_FORMAT_STRING, program.BOOLEAM)
     .command(`order ${SUPPORTED_COMMANDS.STATUS}`, 'Get the status of a block order')
     .argument('<blockOrderId>', 'Block order to get status of', validations.isBlockOrderId)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)

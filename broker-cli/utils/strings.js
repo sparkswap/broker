@@ -4,5 +4,6 @@ const JSON_FORMAT_STRING = 'Print output in JSON format'
 
 module.exports = {
   RPC_ADDRESS_HELP_STRING,
-  MARKET_NAME_HELP_STRING
+  MARKET_NAME_HELP_STRING,
+  JSON_FORMAT_STRING
 }
