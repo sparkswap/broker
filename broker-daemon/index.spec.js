@@ -506,17 +506,17 @@ describe('broker daemon', () => {
   })
 
   describe('#validateExternalAddress', () => {
-    it('not print warning on the console', () => {
+    it('not print warning on the console', async () => {
       isReachable.returns(true)
       brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
-      brokerDaemon.validateExternalAddress()
+      await brokerDaemon.validateExternalAddress()
       expect(logger.warning).to.not.have.been.called()
     })
 
-    it('print warning on the console', () => {
+    it('print warning on the console', async () => {
       isReachable.returns(false)
       brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
-      brokerDaemon.validateExternalAddress()
+      await brokerDaemon.validateExternalAddress()
       expect(logger.warning).to.have.been.called()
     })
   })

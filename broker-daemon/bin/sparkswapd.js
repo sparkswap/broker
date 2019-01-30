@@ -83,7 +83,8 @@ program
       rpcUser,
       rpcPass,
       rpcPubKeyPath: pubRpcKeyPath,
-      rpcPrivKeyPath: privRpcKeyPath
+      rpcPrivKeyPath: privRpcKeyPath,
+      externalAddress
     } = opts
 
     const engines = {}
@@ -124,7 +125,8 @@ program
       relayerOptions: {
         relayerRpcHost,
         relayerCertPath
-      }
+      },
+      externalAddress
     }
     return new BrokerDaemon(brokerOptions).initialize()
   })
