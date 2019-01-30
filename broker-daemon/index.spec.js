@@ -53,7 +53,8 @@ describe('broker daemon', () => {
     eventEmitter = sinon.stub()
     logger = {
       error: sinon.spy(),
-      info: sinon.spy()
+      info: sinon.spy(),
+      warning: sinon.spy()
     }
     LndEngine = sinon.stub()
     LndEngine.prototype.validateNodeConfig = sinon.stub().resolves()
@@ -501,6 +502,22 @@ describe('broker daemon', () => {
       brokerDaemonOptions.rpcPass = 'passwd'
       brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
       expect(brokerDaemon.rpcPass).to.be.eql('passwd')
+    })
+  })
+
+  describe('#validateExternalAddress', () => {
+    it('not print warning on the console', () => {
+      isReachable.returns(true)
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      brokerDaemon.validateExternalAddress()
+      expect(logger.warning).to.not.have.been.called()
+    })
+
+    it('print warning on the console', () => {
+      isReachable.returns(false)
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      brokerDaemon.validateExternalAddress()
+      expect(logger.warning).to.have.been.called()
     })
   })
 })
