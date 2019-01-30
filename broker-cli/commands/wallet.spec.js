@@ -212,6 +212,28 @@ describe('cli wallet', () => {
         expect(tablePushStub).to.have.been.calledTwice()
       })
     })
+
+    describe('with json output', () => {
+      let json
+      let consoleStub
+
+      beforeEach(() => {
+        json = true
+        consoleStub = { log: sinon.stub() }
+        program.__set__('console', consoleStub)
+        opts = { rpcAddress, json }
+      })
+
+      it('makes a request to the broker', async () => {
+        await balance(args, opts, logger)
+        expect(walletBalanceStub).to.have.been.called()
+      })
+
+      it('logs summary to console', async () => {
+        await balance(args, opts, logger)
+        expect(consoleStub.log).to.have.been.calledWith({ balances })
+      })
+    })
   })
 
   describe('networkStatus', () => {
@@ -374,6 +396,28 @@ describe('cli wallet', () => {
 
       expect(logger.error).to.have.been.calledWith(sinon.match(`${badCounterCapacities.symbol}: Received errors`))
       expect(logger.error).to.have.been.calledWith(sinon.match(error))
+    })
+
+    describe('with json output', () => {
+      let json
+      let consoleStub
+
+      beforeEach(() => {
+        json = true
+        consoleStub = { log: sinon.stub() }
+        program.__set__('console', consoleStub)
+        opts = { rpcAddress, json }
+      })
+
+      it('makes a request to the broker', async () => {
+        await networkStatus({}, opts, logger)
+        expect(getTradingCapacitiesStub).to.have.been.called()
+      })
+
+      it('logs summary to console', async () => {
+        await networkStatus({}, opts, logger)
+        expect(consoleStub.log).to.have.been.calledWith({baseSymbolCapacities, counterSymbolCapacities})
+      })
     })
   })
 

@@ -112,6 +112,6 @@ module.exports = (program) => {
   program
     .command('healthcheck', 'Checks the connection between Broker and the Exchange')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
-    .option('--json', JSON_FORMAT_STRING, program.BOOLEAM)
+    .option('--json', JSON_FORMAT_STRING, program.BOOLEAN)
     .action(healthCheck)
 }
