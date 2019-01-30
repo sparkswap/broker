@@ -58,6 +58,6 @@ describe('register', () => {
   it('logs the output from the broker', async () => {
     await register(args, opts, logger)
     expect(infoSpy).to.have.been.calledOnce()
-    expect(infoSpy).to.have.been.calledWith('Successfully registered', {entityId})
+    expect(infoSpy).to.have.been.calledWith('Successfully registered public key with relayer')
   })
 })

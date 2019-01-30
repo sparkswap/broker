@@ -23,6 +23,7 @@ describe('register', () => {
         register: registerStub
       }
     }
+    logger = { info: sinon.stub() }
     RegisterResponse = sinon.stub()
   })
 

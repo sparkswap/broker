@@ -14,6 +14,8 @@ async function register ({ relayer, logger }, { RegisterResponse }) {
   // Currently we don't do anything with this entityId but we will need it in the future
   const { entityId } = await relayer.adminService.register({ publicKey })
 
+  logger.info('Successfully registered public key with relayer', {entityId})
+
   return new RegisterResponse({ entityId })
 }
 
