@@ -64,21 +64,6 @@ class PriceIndex extends SublevelIndex {
     }
     return this.createReadStream(opts)
   }
-
-  /**
-   * Create a read stream of orders where total records returned are limited to the provided limit
-   * Note: If no limit is provided, creates a read stream of all records
-   * @param  {String} limit   The number of records to limit
-   * @return {ReadableStream} ReadableStream from sublevel-index
-   */
-  streamOrdersUpToLimit (limit) {
-    const opts = {}
-
-    if (limit) {
-      opts.limit = parseInt(limit)
-    }
-    return this.createReadStream(opts)
-  }
 }
 
 module.exports = PriceIndex

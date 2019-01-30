@@ -178,38 +178,5 @@ describe('PriceIndex', () => {
         expect(createReadStreamStub).to.have.been.calledWith({})
       })
     })
-
-    describe('#streamOrdersUpToLimit', () => {
-      let SublevelIndex
-      let createReadStream
-      let createReadStreamStub
-
-      beforeEach(() => {
-        createReadStreamStub = sinon.stub()
-
-        SublevelIndex = PriceIndex.__get__('SublevelIndex')
-        createReadStream = SublevelIndex.prototype.createReadStream
-        SublevelIndex.prototype.createReadStream = createReadStreamStub
-      })
-
-      afterEach(() => {
-        SublevelIndex.prototype.createReadStream = createReadStream
-      })
-
-      it('limits the total records returned for the given limit', () => {
-        const fakeLimit = '5'
-        index.streamOrdersUpToLimit(fakeLimit)
-
-        expect(createReadStreamStub).to.have.been.calledOnce()
-        expect(createReadStreamStub).to.have.been.calledWith(sinon.match({ limit: parseInt(fakeLimit) }))
-      })
-
-      it('returns a normal stream if no limit is provided', () => {
-        index.streamOrdersUpToLimit()
-
-        expect(createReadStreamStub).to.have.been.calledOnce()
-        expect(createReadStreamStub).to.have.been.calledWith({})
-      })
-    })
   })
 })
