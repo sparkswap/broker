@@ -18,9 +18,9 @@ if (compareVersions(clientVersion, currentVersion) < 0) {
   process.exit(1)
 }
 
-// Due to updated ECDSA generated cert on the broker, we need to let gprc know that
-// we need to use that cipher suite otherwise there will be a handhsake
-// error when we communicate with the broker rpc server.
+// LND currently uses ECDSA generated certs, which we use on the broker. We've
+// add ECDSA to the gRPC cipher suites as it is not added by default.
+// If this line is removed, we will see an SSL Handshake Error stating `no shared cipher`
 process.env.GRPC_SSL_CIPHER_SUITES = 'HIGH+ECDSA:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384'
 
 /**
