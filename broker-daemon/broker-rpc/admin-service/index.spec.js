@@ -6,6 +6,7 @@ const AdminService = rewire(path.resolve(__dirname))
 describe('AdminService', () => {
   let healthCheckStub
   let getIdentityStub
+  let registerStub
 
   let GrpcMethod
   let register
@@ -32,7 +33,8 @@ describe('AdminService', () => {
             service: 'fakeService'
           },
           HealthCheckResponse: sinon.stub(),
-          GetIdentityResponse: sinon.stub()
+          GetIdentityResponse: sinon.stub(),
+          RegisterResponse: sinon.stub()
         }
       }
     }
@@ -56,8 +58,10 @@ describe('AdminService', () => {
     AdminService.__set__('loadProto', loadProto)
 
     healthCheckStub = sinon.stub()
+    registerStub = sinon.stub()
     AdminService.__set__('healthCheck', healthCheckStub)
     AdminService.__set__('getIdentity', getIdentityStub)
+    AdminService.__set__('register', registerStub)
   })
 
   beforeEach(() => {
@@ -197,6 +201,48 @@ describe('AdminService', () => {
 
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.eql({ GetIdentityResponse: proto.broker.rpc.GetIdentityResponse })
+    })
+  })
+
+  describe('#register', () => {
+    let callOrder = 2
+    let callArgs
+
+    beforeEach(() => {
+      callArgs = GrpcMethod.args[callOrder]
+    })
+
+    it('exposes an implementation', () => {
+      expect(server.implementation).to.have.property('register')
+      expect(server.implementation.register).to.be.a('function')
+    })
+
+    it('creates a GrpcMethod', () => {
+      expect(GrpcMethod).to.have.been.called()
+      expect(GrpcMethod).to.have.been.calledWithNew()
+      expect(server.implementation.register).to.be.equal(fakeRegistered)
+    })
+
+    it('provides the method', () => {
+      expect(callArgs[0]).to.be.equal(registerStub)
+    })
+
+    it('provides a message id', () => {
+      expect(callArgs[1]).to.be.equal('[AdminService:register]')
+    })
+
+    describe('request options', () => {
+      it('passes in the logger', () => {
+        expect(callArgs[2]).to.have.property('logger', logger)
+      })
+
+      it('passes in a relayer', () => {
+        expect(callArgs[2]).to.have.property('relayer', relayer)
+      })
+    })
+
+    it('passes in the response', () => {
+      expect(callArgs[3]).to.be.eql({ RegisterResponse: proto.broker.rpc.RegisterResponse })
     })
   })
 })

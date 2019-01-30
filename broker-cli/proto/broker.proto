@@ -149,6 +149,11 @@ message GetIdentityResponse {
   string public_key = 1;
 }
 
+message RegisterResponse {
+  // the Identifier assigned by the Relayer for the Entity associated with the provided Public Key
+  string entity_id = 1;
+}
+
 /**
  * The AdminService performs administrative tasks on the BrokerDaemon.
  *
@@ -256,6 +261,35 @@ service AdminService {
       get: "/v1/admin/identity"
     };
   }
+
+  /**
+   * Register takes the publicKey of users identity returns the entityId of the entity created by the Relayer
+   *
+   * ```javascript
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * adminService.register({ }, { deadline }, (err, { entityId }) => {
+   *   if (err) return console.error(err)
+   *   console.log({ entityId })
+   * })
+   * ```
+   *
+   * ```shell
+   * > sparkswap register
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * {
+   *   "entityId": "BAfwIYxkUqHJ3pLLh60AAQj3"
+   * }
+   * ```
+   *
+   * ```shell
+   * Successfully registered public key with relayer
+   * ```
+   */
+  rpc Register (google.protobuf.Empty) returns (RegisterResponse);
 }
 
 /**
