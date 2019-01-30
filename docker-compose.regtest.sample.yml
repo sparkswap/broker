@@ -1,8 +1,10 @@
 ##########################################
-#
-# sparkswap Broker-CLI and Broker-Daemon
+# Sparkswap Broker Daemon Regtest development sample file
 # https://sparkswap.com
 #
+# Usage:
+# 1. copy file to `docker-compose.override.yml`
+# 2. restart all containers with `docker-compose up -d`
 ##########################################
 
 version: '2.4'
@@ -23,6 +25,8 @@ services:
     environment:
       # WARNING: only disable Relayer SSL/AUTH during development
       - DISABLE_RELAYER_AUTH=false
+    # We use this to be able to have "hot reloading" with our application
+    entrypoint: bash -c 'npm run start-sparkswapd-watch'
 
   lnd_btc:
     depends_on:
