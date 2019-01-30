@@ -63,6 +63,7 @@ class RelayerClient {
     this.orderbookService = caller(this.address, this.proto.OrderBookService, this.credentials)
     this.paymentChannelNetworkService = caller(this.address, this.proto.PaymentChannelNetworkService, this.credentials)
     this.infoService = caller(this.address, this.proto.InfoService, this.credentials)
+    this.adminService = caller(this.address, this.proto.AdminService, this.credentials)
   }
 
   /**

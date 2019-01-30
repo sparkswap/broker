@@ -149,6 +149,16 @@ message GetIdentityResponse {
   string public_key = 1;
 }
 
+message RegisterRequest {
+  // The public key of the BrokerDaemon used to authenticate interactions with the Relayer
+  string public_key = 1;
+}
+
+message RegisterResponse {
+  // The public key of the BrokerDaemon used to authenticate interactions with the Relayer
+  string entity_id = 1;
+}
+
 /**
  * The AdminService performs administrative tasks on the BrokerDaemon.
  *
@@ -256,6 +266,7 @@ service AdminService {
       get: "/v1/admin/identity"
     };
   }
+  rpc Register (RegisterRequest) returns (RegisterResponse);
 }
 
 /**

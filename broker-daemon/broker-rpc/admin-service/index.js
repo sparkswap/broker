@@ -3,6 +3,7 @@ const { loadProto } = require('../../utils')
 
 const healthCheck = require('./health-check')
 const getIdentity = require('./get-identity')
+const register = require('./register')
 
 class AdminService {
   /**
@@ -24,12 +25,14 @@ class AdminService {
 
     const {
       HealthCheckResponse,
-      GetIdentityResponse
+      GetIdentityResponse,
+      RegisterResponse
     } = this.proto.broker.rpc
 
     this.implementation = {
       healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer, engines, orderbooks, auth }, { HealthCheckResponse }).register(),
-      getIdentity: new GrpcUnaryMethod(getIdentity, this.messageId('getIdentity'), { logger, relayer, auth }, { GetIdentityResponse }).register()
+      getIdentity: new GrpcUnaryMethod(getIdentity, this.messageId('getIdentity'), { logger, relayer, auth }, { GetIdentityResponse }).register(),
+      register: new GrpcUnaryMethod(register, this.messageId('register'), { logger, relayer }, { RegisterResponse }).register()
     }
   }
 
