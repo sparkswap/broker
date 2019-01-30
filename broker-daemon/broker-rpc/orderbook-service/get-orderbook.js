@@ -1,5 +1,5 @@
 const nano = require('nano-seconds')
-const MarketEventOrder = require('../../models/market-event-order')
+const { SIDES } = require('../../models/market-event-order')
 
 /**
  * Retrieve price and amount information for current orderbook state
@@ -33,8 +33,8 @@ async function getOrderbook ({ params, logger, orderbooks }, { GetOrderbookRespo
       limitPerSide = params.limitPerSide
     }
 
-    const bids = await orderbook.getOrders({ side: MarketEventOrder.SIDES.BID, limit: limitPerSide })
-    const asks = await orderbook.getOrders({ side: MarketEventOrder.SIDES.ASK, limit: limitPerSide })
+    const bids = await orderbook.getOrders({ side: SIDES.BID, limit: limitPerSide })
+    const asks = await orderbook.getOrders({ side: SIDES.ASK, limit: limitPerSide })
 
     const formattedBids = bids.map(bid => { return { price: bid.price, amount: bid.amount } })
     const formattedAsks = asks.map(ask => { return { price: ask.price, amount: ask.amount } })
