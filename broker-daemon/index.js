@@ -93,7 +93,7 @@ class BrokerDaemon {
    * @param {String} opts.relayerOptions.certPath - Absolute path to the root certificate for the relayer
    * @return {BrokerDaemon}
    */
-  constructor ({ privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {} }) {
+  constructor ({ privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcHttpProxyAddress }) {
     if (!privIdKeyPath) throw new Error('Private Key path is required to create a BrokerDaemon')
     if (!pubIdKeyPath) throw new Error('Public Key path is required to create a BrokerDaemon')
 
@@ -103,6 +103,7 @@ class BrokerDaemon {
       pubKeyPath: pubIdKeyPath
     }
     this.rpcAddress = rpcAddress || DEFAULT_RPC_ADDRESS
+    this.rpcHttpProxyAddress = rpcHttpProxyAddress
     this.dataDir = dataDir || DEFAULT_DATA_DIR
     this.marketNames = marketNames || []
     this.interchainRouterAddress = interchainRouterAddress || DEFAULT_INTERCHAIN_ROUTER_ADDRESS
@@ -132,6 +133,7 @@ class BrokerDaemon {
     })
 
     this.rpcServer = new BrokerRPCServer({
+      rpcHttpProxyAddress,
       logger: this.logger,
       engines: this.engines,
       relayer: this.relayer,
