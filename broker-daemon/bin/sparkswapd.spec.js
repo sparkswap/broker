@@ -79,6 +79,27 @@ describe('sparkswapd', () => {
   })
 
   context('broker params', () => {
+    it('provides an data dir', () => {
+      const dataDir = '/dev/null'
+      argv.push('--data-dir')
+      argv.push(dataDir)
+
+      sparkswapd(argv)
+
+      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ dataDir }))
+    })
+
+    it('provides an interchain router address', () => {
+      const interchainRouterAddress = '0.0.0.0:9876'
+
+      argv.push('--interchain-router-address')
+      argv.push(interchainRouterAddress)
+
+      sparkswapd(argv)
+
+      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ interchainRouterAddress }))
+    })
+
     it('provides the identity private/public key paths', () => {
       const privIdKeyPath = '/path/to/priv/key'
       const pubIdKeyPath = '/path/pub/key'
@@ -93,27 +114,6 @@ describe('sparkswapd', () => {
       expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ }))
     })
 
-    it('provides an interchain router address', () => {
-      const interchainRouterAddress = '0.0.0.0:9876'
-
-      argv.push('--interchain-router-address')
-      argv.push(interchainRouterAddress)
-
-      sparkswapd(argv)
-
-      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ interchainRouterAddress }))
-    })
-
-    it('provides an data dir', () => {
-      const dataDir = '/dev/null'
-      argv.push('--data-dir')
-      argv.push(dataDir)
-
-      sparkswapd(argv)
-
-      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ dataDir }))
-    })
-
     it('provides the markets', () => {
       const markets = 'BTC/LTC,ABC/XYZ'
       argv.push('--markets')
@@ -124,6 +124,20 @@ describe('sparkswapd', () => {
       const marketNames = markets.split(',')
 
       expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ marketNames }))
+    })
+
+    describe('--disable-auth', () => {
+      it('disables authentication if flag exists', () => {
+        argv.push('--disable-auth')
+        sparkswapd(argv)
+        expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ disableAuth: true }))
+      })
+
+      it('does not disable authentication', () => {
+        argv.push('--disable-auth')
+        sparkswapd(argv)
+        expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ disableAuth: false }))
+      })
     })
   })
 
