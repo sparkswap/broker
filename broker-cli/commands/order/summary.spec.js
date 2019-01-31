@@ -109,7 +109,7 @@ describe('summary', () => {
 
     it('logs summary to console', async () => {
       await summary(args, opts, logger)
-      expect(consoleStub.log).to.have.been.calledWith({blockOrders: [order]})
+      expect(consoleStub.log).to.have.been.calledWith(JSON.stringify({blockOrders: [order]}))
     })
   })
 })

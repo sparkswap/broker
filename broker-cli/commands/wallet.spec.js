@@ -231,7 +231,7 @@ describe('cli wallet', () => {
 
       it('logs summary to console', async () => {
         await balance(args, opts, logger)
-        expect(consoleStub.log).to.have.been.calledWith({ balances })
+        expect(consoleStub.log).to.have.been.calledWith(JSON.stringify({ balances }))
       })
     })
   })

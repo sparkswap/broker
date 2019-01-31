@@ -20,7 +20,7 @@ async function trades (args, opts, logger) {
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const trades = await client.infoService.getTrades({since, limit, market})
-    logger.info(trades)
+    logger.info(JSON.stringify(trades))
   } catch (e) {
     logger.error(handleError(e))
   }

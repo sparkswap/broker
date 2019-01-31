@@ -15,7 +15,7 @@ async function supportedMarkets (opts, logger) {
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const supportedMarkets = await client.infoService.getSupportedMarkets({})
-    logger.info(supportedMarkets)
+    logger.info(JSON.stringify(supportedMarkets))
   } catch (e) {
     logger.error(handleError(e))
   }

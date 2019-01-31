@@ -24,7 +24,7 @@ async function getIdentity (args, opts, logger) {
     const identity = await client.adminService.getIdentity({})
 
     if (json) {
-      logger.info(identity)
+      logger.info(JSON.stringify(identity))
       return
     }
     const { publicKey } = identity

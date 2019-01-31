@@ -126,7 +126,7 @@ describe('healthCheck', () => {
 
     it('logs health status to ', async () => {
       await healthCheck(args, opts, logger)
-      expect(consoleStub.log).to.have.been.calledWith(healthStatus)
+      expect(consoleStub.log).to.have.been.calledWith(JSON.stringify(healthStatus))
     })
   })
 })

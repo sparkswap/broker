@@ -56,7 +56,7 @@ async function summary (args, opts, logger) {
     const orders = await brokerDaemonClient.orderService.getBlockOrders(request)
 
     if (json) {
-      console.log(orders)
+      console.log(JSON.stringify(orders))
     } else {
       createUI(market, orders.blockOrders)
     }

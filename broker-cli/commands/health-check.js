@@ -99,7 +99,7 @@ async function healthCheck (args, opts, logger) {
     const healthStatus = await client.adminService.healthCheck({})
 
     if (json) {
-      console.log(healthStatus)
+      console.log(JSON.stringify(healthStatus))
     } else {
       createUI(healthStatus)
     }

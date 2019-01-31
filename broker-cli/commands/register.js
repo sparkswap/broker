@@ -21,7 +21,7 @@ async function register (args, opts, logger) {
     const client = await new BrokerDaemonClient(rpcAddress)
     const registerResult = await client.adminService.register({})
     if (json) {
-      logger.info(registerResult)
+      logger.info(JSON.stringify(registerResult))
     } else {
       logger.info('Successfully registered public key with relayer')
     }

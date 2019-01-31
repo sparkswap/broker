@@ -43,7 +43,7 @@ async function sell (args, opts, logger) {
 
     // TODO: send a friendly message the logger. The current functionality will simple
     // return the object from the broker.proto file
-    logger.info(blockOrderResult)
+    logger.info(JSON.stringify(blockOrderResult))
   } catch (e) {
     logger.error(handleError(e))
   }

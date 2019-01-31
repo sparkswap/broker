@@ -14,21 +14,28 @@ describe('cli info supported-markets', () => {
   let getSupportedMarketsStub
   let daemonStub
 
-  beforeEach(() => {
+  beforeEach(async () => {
     rpcAddress = 'test:1337'
     opts = { rpcAddress }
-    logger = { info: sinon.stub(), error: sinon.stub() }
+    logger = { info: sinon.spy(), error: sinon.stub() }
 
-    getSupportedMarketsStub = sinon.stub()
+    getSupportedMarketsStub = sinon.stub().returns({markets: 'fake'})
     daemonStub = sinon.stub()
     daemonStub.prototype.infoService = { getSupportedMarkets: getSupportedMarketsStub }
 
     supportedMarkets.__set__('BrokerDaemonClient', daemonStub)
 
-    supportedMarkets(opts, logger)
+    await supportedMarkets(opts, logger)
   })
   it('calls broker daemon for the info supported-markets', () => {
     expect(daemonStub).to.have.been.calledWith(rpcAddress)
     expect(getSupportedMarketsStub).to.have.been.calledOnce()
+  })
+
+  it('logs supported markets for json flag', async () => {
+    const json = true
+    opts = { rpcAddress, json }
+    expect(logger.info).to.have.been.calledOnce()
+    expect(logger.info).to.have.been.calledWith(JSON.stringify({markets: 'fake'}))
   })
 })

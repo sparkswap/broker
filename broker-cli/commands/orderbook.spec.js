@@ -219,7 +219,7 @@ describe('orderbook', () => {
 
     it('logs orderbook to console', async () => {
       await orderbook(args, opts, logger)
-      expect(consoleStub.log).to.have.been.calledWith(orderbookResult)
+      expect(consoleStub.log).to.have.been.calledWith(JSON.stringify(orderbookResult))
     })
   })
 

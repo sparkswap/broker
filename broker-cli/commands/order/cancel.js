@@ -23,7 +23,7 @@ async function cancel (args, opts, logger) {
     const client = new BrokerDaemonClient(rpcAddress)
     const cancelBlockOrderResult = await client.orderService.cancelBlockOrder(request)
     if (json) {
-      logger.info(cancelBlockOrderResult)
+      logger.info(JSON.stringify(cancelBlockOrderResult))
       return
     }
     logger.info(`Cancelled ${blockOrderId}`)

@@ -16,7 +16,7 @@ async function marketStats (opts, logger) {
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const stats = await client.infoService.getMarketStats({ market })
-    logger.info(stats)
+    logger.info(JSON.stringify(stats))
   } catch (e) {
     logger.error(handleError(e))
   }

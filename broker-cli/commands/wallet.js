@@ -65,7 +65,7 @@ async function balance (args, opts, logger) {
     const balanceResult = await client.walletService.getBalances({})
 
     if (json) {
-      console.log(balanceResult)
+      console.log(JSON.stringify(balanceResult))
       return
     }
 

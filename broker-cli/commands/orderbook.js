@@ -115,7 +115,7 @@ async function orderbook (args, opts, logger) {
     if (!stream) {
       const orderbook = await brokerDaemonClient.orderBookService.getOrderbook(request)
       if (json) {
-        console.log(orderbook)
+        console.log(JSON.stringify(orderbook))
       } else {
         const { asks, bids } = orderbook
 

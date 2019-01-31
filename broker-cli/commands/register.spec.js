@@ -66,6 +66,6 @@ describe('register', () => {
     opts = { rpcAddress, json }
     await register(args, opts, logger)
     expect(infoSpy).to.have.been.calledOnce()
-    expect(infoSpy).to.have.been.calledWith({entityId})
+    expect(infoSpy).to.have.been.calledWith(JSON.stringify({entityId}))
   })
 })

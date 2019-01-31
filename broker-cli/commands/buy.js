@@ -40,7 +40,7 @@ async function buy (args, opts, logger) {
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const blockOrderResult = await client.orderService.createBlockOrder(request)
-    logger.info(blockOrderResult)
+    logger.info(JSON.stringify(blockOrderResult))
   } catch (e) {
     logger.error(handleError(e))
   }

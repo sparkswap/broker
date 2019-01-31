@@ -24,12 +24,12 @@ describe('cli info market-stats', () => {
       market
     }
     logger = {
-      info: sinon.stub(),
+      info: sinon.spy(),
       error: sinon.stub()
     }
 
     handleErrorStub = sinon.stub()
-    getMarketStatsStub = sinon.stub()
+    getMarketStatsStub = sinon.stub().returns({stats: 'fake'})
     daemonStub = sinon.stub()
     daemonStub.prototype.infoService = {
       getMarketStats: getMarketStatsStub
@@ -50,5 +50,15 @@ describe('cli info market-stats', () => {
     daemonStub.throws(error)
     marketStats(opts, logger)
     expect(handleErrorStub).to.have.been.calledWith(error)
+  })
+
+  describe('with json output', () => {
+    it('logs market stats to ', async () => {
+      const json = true
+      opts = { rpcAddress, json }
+      await marketStats(opts, logger)
+      expect(logger.info).to.have.been.calledOnce()
+      expect(logger.info).to.have.been.calledWith(JSON.stringify({stats: 'fake'}))
+    })
   })
 })
