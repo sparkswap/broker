@@ -17,6 +17,7 @@ describe('orderbook', () => {
   let infoSpy
   let errorSpy
   let watchMarketStub
+  let getOrderbookStub
   let brokerStub
   let market
   let rpcAddress
@@ -39,10 +40,14 @@ describe('orderbook', () => {
       on: sinon.stub()
     }
     watchMarketStub = sinon.stub().returns(stream)
+    getOrderbookStub = sinon.stub().returns('fakeOrderbook')
     createUIStub = sinon.stub()
 
     brokerStub = sinon.stub()
-    brokerStub.prototype.orderBookService = { watchMarket: watchMarketStub }
+    brokerStub.prototype.orderBookService = {
+      watchMarket: watchMarketStub,
+      getOrderbook: getOrderbookStub
+    }
 
     revert = program.__set__('BrokerDaemonClient', brokerStub)
     revertCreateUI = program.__set__('createUI', createUIStub)
@@ -182,6 +187,29 @@ describe('orderbook', () => {
     await orderbook(args, opts, logger)
 
     expect(resizeHandleStub).to.have.been.calledWith('resize', sinon.match.func)
+  })
+
+  describe('with json output', () => {
+    let json
+    let consoleStub
+
+    beforeEach(() => {
+      json = true
+      consoleStub = { log: sinon.stub() }
+      program.__set__('console', consoleStub)
+      opts = { market, rpcAddress, json }
+    })
+
+    it('makes a request to the getOrderBook', async () => {
+      await orderbook(args, opts, logger)
+      // expect(watchMarketStub).to.have.been.called()
+      expect(getOrderbookStub).to.have.been.called()
+    })
+
+    it('logs orderbook to console', async () => {
+      await orderbook(args, opts, logger)
+      expect(consoleStub.log).to.have.been.calledWith('fakeOrderbook')
+    })
   })
 })
 

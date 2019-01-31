@@ -107,11 +107,18 @@ function createUI (market, asks, bids) {
  * @param {Logger} logger
  */
 async function orderbook (args, opts, logger) {
-  const { market, rpcAddress } = opts
+  const { market, rpcAddress, json } = opts
   const request = { market }
 
   try {
     const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)
+
+    if (json) {
+      const orderbook = await brokerDaemonClient.orderBookService.getOrderbook(request)
+      console.log(orderbook)
+      return
+    }
+
     const call = brokerDaemonClient.orderBookService.watchMarket(request)
     // TODO: We should save orders to an internal DB or figure out a way to store
     // this info instead of in memory?
