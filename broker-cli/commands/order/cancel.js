@@ -13,7 +13,7 @@ const { handleError } = require('../../utils')
  */
 async function cancel (args, opts, logger) {
   const { blockOrderId } = args
-  const { rpcAddress } = opts
+  const { rpcAddress, json } = opts
 
   const request = {
     blockOrderId
@@ -21,7 +21,11 @@ async function cancel (args, opts, logger) {
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    await client.orderService.cancelBlockOrder(request)
+    const cancelBlockOrderResult = await client.orderService.cancelBlockOrder(request)
+    if (json) {
+      logger.info(cancelBlockOrderResult)
+      return
+    }
     logger.info(`Cancelled ${blockOrderId}`)
   } catch (e) {
     logger.error(handleError(e))

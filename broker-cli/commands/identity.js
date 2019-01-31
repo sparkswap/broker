@@ -1,6 +1,6 @@
 const BrokerDaemonClient = require('../broker-daemon-client')
 const { validations, handleError } = require('../utils')
-const { RPC_ADDRESS_HELP_STRING } = require('../utils/strings')
+const { RPC_ADDRESS_HELP_STRING, JSON_FORMAT_STRING } = require('../utils/strings')
 
 /**
  * sparkswap id
@@ -33,5 +33,6 @@ module.exports = (program) => {
   program
     .command('id', 'Gets the Public Key of the Broker Daemon')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
+    .option('--json', JSON_FORMAT_STRING, program.BOOLEAN)
     .action(getIdentity)
 }

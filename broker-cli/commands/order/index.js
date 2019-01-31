@@ -63,8 +63,10 @@ module.exports = (program) => {
     .argument('<blockOrderId>', 'Block order to get status of', validations.isBlockOrderId)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
+    .option('--json', JSON_FORMAT_STRING, program.BOOLEAN)
     .command(`order ${SUPPORTED_COMMANDS.CANCEL}`, 'Cancel a block order')
     .argument('<blockOrderId>', 'Block Order to cancel.', validations.isBlockOrderId)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
+    .option('--json', JSON_FORMAT_STRING, program.BOOLEAN)
 }
