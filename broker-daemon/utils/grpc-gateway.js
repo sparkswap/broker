@@ -55,7 +55,6 @@ const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.cre
   const router = express.Router()
   const clients = {}
   const protos = protoFiles.map(p => grpc.load(p))
-  console.log('GRPC LOCATION', { grpcLocation })
 
   protoFiles
     .map(p => `/${p}`)
