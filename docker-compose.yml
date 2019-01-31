@@ -26,7 +26,7 @@ services:
       # This is populated externally w/ an engine
       - 'shared:/shared'
       # Persistent certs for broker
-      - './certs:/secure'
+      - ${CERT_PATH}:/secure
     environment:
       - DATA_DIR=${DATA_DIR:-}
       - NETWORK=${NETWORK}

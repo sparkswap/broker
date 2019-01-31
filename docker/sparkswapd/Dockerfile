@@ -15,7 +15,7 @@ WORKDIR /home/app
 RUN git clone -b ${BROKER_VERSION} https://github.com/sparkswap/broker.git .
 
 RUN npm install --quiet --production
-RUN npm run build -- --no-docker
+RUN npm run build -- --no-docker --no-identity --no-certs
 
 # Create a final image as this will be < 50% the size of the build image
 FROM node:8.11-alpine as final
@@ -31,9 +31,6 @@ COPY --from=builder /home/app/broker-cli /home/app/broker-cli
 COPY --from=builder /home/app/scripts/start-sparkswapd.sh /home/app/scripts/start-sparkswapd.sh
 COPY --from=builder /home/app/package.json /home/app/package.json
 COPY --from=builder /home/app/pm2.json /home/app/pm2.json
-
-# Copy certs
-COPY --from=builder /home/app/certs /secure
 
 # Copy relayer-proto files
 COPY --from=builder /home/app/proto /home/app/proto
