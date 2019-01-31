@@ -111,7 +111,7 @@ const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.cre
                     services[svc][implementationName]({}, meta, requestHandler)
                   } catch (err) {
                     console.error(`${svc}.${m.name}: `.red, err.message.red)
-                    console.stack()
+                    console.trace()
                   }
                 })
               }
