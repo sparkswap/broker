@@ -26,7 +26,7 @@ describe('getTrades', () => {
 
     market = 'BTC/LTC'
     since = '2018-09-20T18:58:07.866Z'
-    limit = 10
+    limit = '10'
 
     params = {
       market,
@@ -75,7 +75,8 @@ describe('getTrades', () => {
   })
 
   it('sets the limit to the default of 50 if no limit is specified', async () => {
-    params.limit = undefined
+    // '0' is the default protobuf value when no limit is provided
+    params.limit = '0'
     await getTrades({ params, logger, orderbooks }, { GetTradesResponse })
     expect(orderbookStub.getTrades).to.have.been.calledWith(since, Big(50))
   })

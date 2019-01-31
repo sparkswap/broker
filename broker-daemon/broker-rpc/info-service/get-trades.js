@@ -34,7 +34,7 @@ async function getTrades ({ params, logger, orderbooks }, { GetTradesResponse })
     }
 
     // limit is passed as an integer so even if undefined it gets passed as '0', we can assume the limit should not be 0
-    const limit = (params.limit === '0' || params.limit === undefined) ? DEFAULT_LIMIT : Big(params.limit)
+    const limit = (params.limit === '0') ? DEFAULT_LIMIT : Big(params.limit)
 
     logger.info(`Fetching trades for ${market} since ${since}, limit: ${limit}`)
     const trades = await orderbook.getTrades(since, limit)
