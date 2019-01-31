@@ -40,6 +40,14 @@ function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableC
 
   if (disableAuth) {
     app.use('/', grpcGateway([`/${protoPath}`], rpcAddress))
+
+    // Handle 404s correctly for the server
+    app.use((req, res, _next) => {
+      logger.debug('Received request but had no route', { url: req.url })
+      res.status(404).send('404')
+    })
+
+    return app
   } else {
     const key = fs.readFileSync(privKeyPath)
     const cert = fs.readFileSync(pubKeyPath)
@@ -57,14 +65,6 @@ function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableC
 
     return https.createServer({ key, cert }, app)
   }
-
-  // Handle 404s correctly for the server
-  app.use((req, res, _next) => {
-    logger.debug('Received request but had no route', { url: req.url })
-    res.status(404).send('404')
-  })
-
-  return app
 }
 
 module.exports = createHttpServer
