@@ -1,10 +1,13 @@
 const nano = require('nano-seconds')
+const { SIDES } = require('../../models/market-event-order')
 
 /**
  * Retrieve price and amount information for current orderbook state
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Object} request.params - Request parameters from the client
+ * @param {String} request.params.market - market symbol e.g. BTC/LTC
+ * @param {String} request.params.limitPerSide - limit for number of orders for each side of orderbook
  * @param {Object} request.logger
  * @param {Map<Orderbook>} request.orderbooks
  * @param {Object} responses
@@ -23,20 +26,20 @@ async function getOrderbook ({ params, logger, orderbooks }, { GetOrderbookRespo
     const currentTime = nano.now()
     const timestamp = nano.toString(currentTime)
     const datetime = nano.toISOString(currentTime)
-    const orders = await orderbook.all()
 
-    const bids = []
-    const asks = []
-    orders.forEach((order) => {
-      const orderInfo = {price: order.price, amount: order.amount}
-      if (order.side === 'BID') {
-        bids.push(orderInfo)
-      } else {
-        asks.push(orderInfo)
-      }
-    })
+    // limitPerSide is passed as an integer with default protobuf value of '0', so '0' implies param was omitted
+    let limitPerSide
+    if (params.limitPerSide !== '0') {
+      limitPerSide = params.limitPerSide
+    }
 
-    return new GetOrderbookResponse({timestamp, datetime, bids, asks})
+    const bids = await orderbook.getOrders({ side: SIDES.BID, limit: limitPerSide })
+    const asks = await orderbook.getOrders({ side: SIDES.ASK, limit: limitPerSide })
+
+    const formattedBids = bids.map(bid => { return { price: bid.price, amount: bid.amount } })
+    const formattedAsks = asks.map(ask => { return { price: ask.price, amount: ask.amount } })
+
+    return new GetOrderbookResponse({timestamp, datetime, bids: formattedBids, asks: formattedAsks})
   } catch (err) {
     logger.error(`Failed to get orderbook: ${err.message}`)
     throw new Error(err)
