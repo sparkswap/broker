@@ -26,6 +26,7 @@ describe('orderbook', () => {
   let revertCreateUI
   let resizeHandleStub
   let revertProcessStub
+  let orderbookResult
 
   const orderbook = program.__get__('orderbook')
 
@@ -33,14 +34,24 @@ describe('orderbook', () => {
     rpcAddress = undefined
     market = 'BTC/LTC'
     args = {}
-    opts = { market, rpcAddress }
+    opts = { market, rpcAddress, stream: true }
     infoSpy = sinon.spy()
     errorSpy = sinon.spy()
     stream = {
       on: sinon.stub()
     }
     watchMarketStub = sinon.stub().returns(stream)
-    getOrderbookStub = sinon.stub().returns('fakeOrderbook')
+    orderbookResult = {
+      asks: [
+        { price: '100.0000000000000000', amount: '0.0000000100000000' },
+        { price: '1000.0000000000000000', amount: '0.0000000100000000' }
+      ],
+      bids: [
+        { price: '1000.0000000000000000', amount: '0.0000000100000000' },
+        { price: '100.0000000000000000', amount: '0.0000000100000000' }
+      ]
+    }
+    getOrderbookStub = sinon.stub().returns(orderbookResult)
     createUIStub = sinon.stub()
 
     brokerStub = sinon.stub()
@@ -208,7 +219,25 @@ describe('orderbook', () => {
 
     it('logs orderbook to console', async () => {
       await orderbook(args, opts, logger)
-      expect(consoleStub.log).to.have.been.calledWith('fakeOrderbook')
+      expect(consoleStub.log).to.have.been.calledWith(orderbookResult)
+    })
+  })
+
+  describe('non-streaming output', () => {
+    beforeEach(() => {
+      opts = { market, rpcAddress, stream: false }
+    })
+
+    it('makes a request to the getOrderBook', async () => {
+      await orderbook(args, opts, logger)
+      expect(getOrderbookStub).to.have.been.called()
+    })
+
+    it('logs orderbook to console', async () => {
+      await orderbook(args, opts, logger)
+      const { asks, bids } = orderbookResult
+      expect(createUIStub).to.have.been.called()
+      expect(createUIStub).to.have.been.calledWith(market, asks, bids)
     })
   })
 })

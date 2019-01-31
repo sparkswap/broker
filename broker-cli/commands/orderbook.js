@@ -3,7 +3,7 @@ const {
 } = require('../package.json')
 const BrokerDaemonClient = require('../broker-daemon-client')
 const { validations, Big, handleError } = require('../utils')
-const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../utils/strings')
+const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING, JSON_FORMAT_STRING } = require('../utils/strings')
 const Table = require('cli-table')
 const size = require('window-size')
 require('colors')
@@ -23,7 +23,6 @@ const EVENT_TYPES = Object.freeze({
  * @returns {Void}
  */
 function createUI (market, asks, bids) {
-  console.clear()
   const baseCurrencySymbol = market.split('/')[0].toUpperCase()
   const windowWidth = size.get().width
   const { mainTableWidth, innerTableWidth } = calculateTableWidths(windowWidth)
@@ -107,15 +106,21 @@ function createUI (market, asks, bids) {
  * @param {Logger} logger
  */
 async function orderbook (args, opts, logger) {
-  const { market, rpcAddress, json } = opts
+  const { market, rpcAddress, json, stream } = opts
   const request = { market }
 
   try {
     const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)
 
-    if (json) {
+    if (!stream) {
       const orderbook = await brokerDaemonClient.orderBookService.getOrderbook(request)
-      console.log(orderbook)
+      if (json) {
+        console.log(orderbook)
+      } else {
+        const { asks, bids } = orderbook
+
+        createUI(market, asks, bids)
+      }
       return
     }
 
@@ -153,6 +158,7 @@ async function orderbook (args, opts, logger) {
     })
 
     process.stdout.on('resize', function () {
+      console.clear()
       createUI(market, sortedAsks, sortedBids)
     })
 
@@ -185,5 +191,7 @@ module.exports = (program) => {
     .command('orderbook', 'View the order book for a specific market')
     .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
+    .option('--json', JSON_FORMAT_STRING, program.BOOLEAN)
+    .option('--stream', 'Stream the updates to orderbook', program.BOOLEAN)
     .action(orderbook)
 }
