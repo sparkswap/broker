@@ -51,7 +51,8 @@ class PriceIndex extends SublevelIndex {
   }
 
   /**
-   * create a read stream of orders with prices at least as good as the given on
+   * Create a read stream of orders with prices at least as good as the given one
+   * Note: If no quantumPrice is provided, creates a read stream of all records
    * @param  {String} quantumPrice Decimal of the price
    * @return {ReadableStream}       ReadableStream from sublevel-index
    */

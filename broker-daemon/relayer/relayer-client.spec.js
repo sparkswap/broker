@@ -22,6 +22,8 @@ describe('RelayerClient', () => {
   let HealthService
   let InfoService
   let PaymentChannelNetworkService
+  let AdminService
+
   let ResponseType = {
     EXISTING_EVENT: 'EXISTING_EVENT',
     EXISTING_EVENTS_DONE: 'EXISTING_EVENTS_DONE',
@@ -69,6 +71,7 @@ describe('RelayerClient', () => {
     HealthService = sinon.stub()
     PaymentChannelNetworkService = sinon.stub()
     InfoService = sinon.stub()
+    AdminService = sinon.stub()
 
     pathResolve = sinon.stub()
     RelayerClient.__set__('path', { resolve: pathResolve })
@@ -83,6 +86,7 @@ describe('RelayerClient', () => {
       HealthService,
       PaymentChannelNetworkService,
       InfoService,
+      AdminService,
       WatchMarketResponse: {
         ResponseType
       }
@@ -202,6 +206,7 @@ describe('RelayerClient', () => {
       it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(relayer.address, OrderBookService, fakeCreds))
       it('creates a healthService', () => expect(callerStub).to.have.been.calledWith(relayer.address, HealthService, fakeCreds))
       it('creates an infoService', () => expect(callerStub).to.have.been.calledWith(relayer.address, InfoService, fakeCreds))
+      it('creates an adminService', () => expect(callerStub).to.have.been.calledWith(relayer.address, AdminService))
     })
   })
 

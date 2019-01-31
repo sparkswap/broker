@@ -6,15 +6,15 @@
   "exec_interpreter" : "bash",
   "exec_mode"  : "fork_mode",
   "min_uptime": 5000,
+  "watch_options": {
+    "usePolling": true,
+    "interval": 5001
+  },
+  "watch": [
+    "broker-daemon",
+    "proto"
+  ],
   "env": {
-    "NODE_ENV": "development",
-    "watch_options": {
-      "usePolling": true,
-      "interval": 5001
-    },
-    "watch": [
-      "broker-daemon",
-      "proto"
-    ]
+    "NODE_ENV": "development"
   }
 }

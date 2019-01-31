@@ -557,35 +557,96 @@ describe('Orderbook', () => {
     })
   })
 
-  describe('#all', () => {
+  describe('#getOrders', () => {
     let orderbook
-    let bound
+    let askIndex
+    let bidIndex
     let orders
-    let retrieved
 
-    beforeEach(async () => {
-      const marketName = 'XYZ/ABC'
-      orderbook = new Orderbook(marketName, relayer, baseStore, logger)
-
+    beforeEach(() => {
+      orderbook = new Orderbook('XYZ/ABC', relayer, baseStore, logger)
       orderbook.assertSynced = sinon.stub()
 
-      bound = 'mybind'
-      MarketEventOrderFromStorageBind.returns(bound)
+      askIndex = sinon.stub()
+      bidIndex = sinon.stub()
 
-      orders = []
+      orderbook.askIndex = askIndex
+      orderbook.bidIndex = bidIndex
+
+      orders = [
+        {
+          key: 'order1',
+          value: 'order1Data'
+        },
+        {
+          key: 'order2',
+          value: 'order2Data'
+        },
+        {
+          key: 'order3',
+          value: 'order3Data'
+        },
+        {
+          key: 'order4',
+          value: 'order4Data'
+        }
+      ]
+
       getRecords.resolves(orders)
-
-      retrieved = await orderbook.all()
     })
 
     it('makes sure the orderbook is synced', () => {
+      orderbook.getOrders({ side: 'ASK', limit: '100' })
+
       expect(orderbook.assertSynced).to.have.been.calledOnce()
     })
 
-    it('returns all the orders', () => {
-      expect(getRecords).to.have.been.calledOnce()
-      expect(getRecords).to.have.been.calledWith(orderbookStore, bound)
+    it('throws if using an invalid side', () => {
+      expect(() => orderbook.getOrders({ side: 'UGH', limit: '100' })).to.throw(Error)
+    })
+
+    it('returns asks when specified', async () => {
+      await orderbook.getOrders({ side: 'ASK' })
+
+      expect(getRecords).to.have.been.calledWith(askIndex)
+    })
+
+    it('returns bids when specified', async () => {
+      await orderbook.getOrders({ side: 'BID' })
+
+      expect(getRecords).to.have.been.calledWith(bidIndex)
+    })
+
+    it('returns orders up to limit', async () => {
+      const limit = '100'
+      await orderbook.getOrders({ side: 'ASK', limit })
+
+      expect(getRecords).to.have.been.calledWith(askIndex, sinon.match.func, { limit: parseInt(limit, 10) })
+    })
+
+    it('returns the expected orders', async () => {
+      const retrieved = await orderbook.getOrders({ side: 'ASK' })
+
       expect(retrieved).to.be.equal(orders)
+    })
+
+    it('returns inflated MarketEventOrders', async () => {
+      await orderbook.getOrders({ side: 'ASK' })
+
+      const getRecordsCallback = getRecords.args[0][1]
+      const myKey = 'myKey'
+      const myValue = 'myValue'
+
+      getRecordsCallback(myKey, myValue)
+
+      expect(MarketEventOrderFromStorage).to.have.been.calledOnce()
+      expect(MarketEventOrderFromStorage).to.have.been.calledWith(myKey, myValue)
+    })
+
+    it('returns all available orders when given no limit', async () => {
+      await orderbook.getOrders({ side: 'ASK' })
+
+      expect(getRecords).to.have.been.calledWith(askIndex, sinon.match.func, {})
     })
   })
 
