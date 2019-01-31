@@ -18,14 +18,13 @@ describe('sell', () => {
   let createBlockOrderSpy
   let brokerStub
 
+  const market = 'BTC/LTC'
+  const amount = '10'
+  const rpcAddress = undefined
+  const timeInForce = 'GTC'
   const sell = program.__get__('sell')
 
   beforeEach(() => {
-    const market = 'BTC/LTC'
-    const amount = '10'
-    const rpcAddress = undefined
-    const timeInForce = 'GTC'
-
     infoSpy = sinon.spy()
     errorSpy = sinon.spy()
     createBlockOrderSpy = sinon.spy()
@@ -86,5 +85,14 @@ describe('sell', () => {
     sell(args, opts, logger)
     expect(createBlockOrderSpy).to.have.been.called()
     expect(createBlockOrderSpy).to.have.been.calledWith(expectedRequest)
+  })
+
+  describe('with json output', () => {
+    it('logs sell result', async () => {
+      const json = true
+      opts = { market, timeInForce, rpcAddress, json }
+      await sell(args, opts, logger)
+      expect(infoSpy).to.have.been.calledOnce()
+    })
   })
 })

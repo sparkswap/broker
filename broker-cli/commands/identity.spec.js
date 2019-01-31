@@ -67,7 +67,7 @@ describe('getIdentity', () => {
       opts = { rpcAddress, json }
       await getIdentity(args, opts, logger)
       expect(infoSpy).to.have.been.calledOnce()
-      expect(infoSpy).to.have.been.calledWith(publicKey)
+      expect(infoSpy).to.have.been.calledWith({publicKey})
     })
   })
 })

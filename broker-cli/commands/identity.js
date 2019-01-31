@@ -16,13 +16,18 @@ const { RPC_ADDRESS_HELP_STRING, JSON_FORMAT_STRING } = require('../utils/string
  */
 
 async function getIdentity (args, opts, logger) {
-  const { rpcAddress = null } = opts
+  const { rpcAddress = null, json } = opts
 
   try {
     const client = await new BrokerDaemonClient(rpcAddress)
 
-    const { publicKey } = await client.adminService.getIdentity({})
+    const identity = await client.adminService.getIdentity({})
 
+    if (json) {
+      logger.info(identity)
+      return
+    }
+    const { publicKey } = identity
     logger.info(publicKey)
   } catch (e) {
     logger.error(handleError(e))
