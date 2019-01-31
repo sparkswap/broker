@@ -324,9 +324,10 @@ class BlockOrderWorker extends EventEmitter {
 
     await Promise.all(openOrders.map(({ order }) => {
       const orderId = order.orderId
-      const authorization = this.relayer.identity.authorize(orderId)
+      const params = { orderId }
+      const authorization = this.relayer.identity.authorize('CancelOrder', params)
       this.logger.debug(`Generated authorization for ${orderId}`, authorization)
-      return this.relayer.makerService.cancelOrder({ orderId, authorization })
+      return this.relayer.makerService.cancelOrder(params, authorization)
     }))
 
     this.logger.info(`Cancelled ${openOrders.length} underlying orders for ${blockOrder.id}`)

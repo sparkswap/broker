@@ -172,13 +172,15 @@ const OrderStateMachine = StateMachine.factory({
       this.order.makerBaseAddress = await baseEngine.getPaymentChannelNetworkAddress()
       this.order.makerCounterAddress = await counterEngine.getPaymentChannelNetworkAddress()
 
+      const authorization = this.relayer.identity.authorize('CreateOrder', this.order.paramsForCreate)
+
       const {
         orderId,
         feePaymentRequest,
         feeRequired,
         depositPaymentRequest,
         depositRequired
-      } = await this.relayer.makerService.createOrder(this.order.paramsForCreate)
+      } = await this.relayer.makerService.createOrder(this.order.paramsForCreate, authorization)
 
       this.order.setCreatedParams({
         orderId,
@@ -261,15 +263,19 @@ const OrderStateMachine = StateMachine.factory({
         payDepositInvoice
       ])
 
-      const authorization = this.relayer.identity.authorize(orderId)
+      const placeOrderParams = {
+        orderId,
+        feeRefundPaymentRequest,
+        depositRefundPaymentRequest
+      }
+      const authorization = this.relayer.identity.authorize('PlaceOrder', placeOrderParams)
       this.logger.debug(`Generated authorization for ${orderId}`, authorization)
       // NOTE: this method should NOT reject a promise, as that may prevent the state of the order from saving
       const call = this.relayer.makerService.placeOrder({
         orderId,
         feeRefundPaymentRequest,
-        depositRefundPaymentRequest,
-        authorization
-      })
+        depositRefundPaymentRequest
+      }, authorization)
 
       // Stop listening to further events from the stream
       const finish = () => {
@@ -332,9 +338,9 @@ const OrderStateMachine = StateMachine.factory({
       }
       await engine.prepareSwap(orderId, swapHash, amount)
 
-      const authorization = this.relayer.identity.authorize(orderId)
+      const authorization = this.relayer.identity.authorize('ExecuteOrder', { orderId })
       this.logger.debug(`Generated authorization for ${orderId}`, authorization)
-      await this.relayer.makerService.executeOrder({ orderId, authorization })
+      await this.relayer.makerService.executeOrder({ orderId }, authorization)
     },
 
     /**
@@ -395,9 +401,10 @@ const OrderStateMachine = StateMachine.factory({
       this.order.setSettledParams({ swapPreimage })
 
       const { orderId } = this.order.paramsForComplete
-      const authorization = this.relayer.identity.authorize(orderId)
+      const completeOrderParams = { orderId, swapPreimage }
+      const authorization = this.relayer.identity.authorize('CompleteOrder', completeOrderParams)
       this.logger.debug(`Generated authorization for ${orderId}`, authorization)
-      return this.relayer.makerService.completeOrder({ orderId, swapPreimage, authorization })
+      return this.relayer.makerService.completeOrder({ orderId, swapPreimage }, authorization)
     },
 
     /**
