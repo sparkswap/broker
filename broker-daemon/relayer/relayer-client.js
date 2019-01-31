@@ -50,12 +50,8 @@ class RelayerClient {
     } else {
       channelCredentials = credentials.createSsl(readFileSync(certPath))
     }
-    // `service_url` in the line below is defined by the grpc lib, so we need to tell eslint to ignore snake case
-    // eslint-disable-next-line
-    const callCredentials = credentials.createFromMetadataGenerator(({ service_url }, callback) => {
-      callback(null, this.identity.identify())
-    })
-    this.credentials = credentials.combineChannelCredentials(channelCredentials, callCredentials)
+
+    this.credentials = channelCredentials
 
     this.makerService = caller(this.address, this.proto.MakerService, this.credentials)
     this.takerService = caller(this.address, this.proto.TakerService, this.credentials)

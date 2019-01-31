@@ -38,23 +38,6 @@ class Identity {
   }
 
   /**
-   * Create metadata for a grpc request with this identity attached to it.
-   * Specifically, attaches the public key to every request so that we
-   * can authorize ourselves later.
-   *
-   * The public key is in PEM format without newlines and without anchor lines.
-   * In other words, it is ANSI.1 DER in Base64.
-   *
-   * @return {grpc.Metadata} Metadata object iwth a `pubkey` key containing the pem-encoded public key of the broker
-   */
-  identify () {
-    const metadata = new Metadata()
-    metadata.set('pubkey', this.pubKeyBase64)
-
-    return metadata
-  }
-
-  /**
    * Sign data with this identity's private key
    * @param  {String} data to sign
    * @return {String} Base64 encoded signature of the data
@@ -77,30 +60,33 @@ class Identity {
    */
 
   /**
-   * Authorize a request to act on a given object by signing its id
+   * Authorize a gRPC Request by adding metadata to it.
    *
    * Specifically, the signature is of the following payload:
+   *  - a string name of the request [ what format? ]
    *  - timestamp of the request, in seconds. A timestamp within +/- 60 seconds of the Relayer's time should be accepted.
    *  - A random nonce of 32 bytes, represented in base64. This nonce should not be repeated, but the Relayer may not reject duplicate nonces older than 24 hours.
-   *  - Id of the object to authorize access to
+   *  - Contents of the request, JSON stringified
    *
    * This payload is joined by commas (','), and signed using the public key of the broker.
    *
    * The request can then be validated by the Relayer as being genuine from the owner of the public key.
-   * @param  {String} id - id to authorize a request for
-   * @return {Authorization}
+   * @param  {string} action action to authorize the request for
+   * @param  {object} params Parameters of the request to authorize
+   * @return {grpc.Metadata} Metadata object with necessary items to verify it
    */
-  authorize (id) {
+  authorize (action, params) {
+    const request = `${action}:${JSON.stringify(params)}`
     const timestamp = nowInSeconds().toString()
     const nonce = randomBytes(32).toString('base64')
-    const payload = [ timestamp, nonce, id ].join(',')
+    const payload = [ timestamp, nonce, request ].join(',')
     const signature = this.sign(payload)
+    const pubKey = this.pubKeyBase64
 
-    return {
-      timestamp,
-      nonce,
-      signature
-    }
+    const metadata = new Metadata()
+    metadata.set('authorization', `${pubKey},${timestamp},${nonce},${signature}`)
+
+    return metadata
   }
 }
 
