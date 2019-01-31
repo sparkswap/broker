@@ -45,16 +45,6 @@ const paramRegex = /{(\w+)}/g
 const GRPC_API_OPTION_ID = '.google.api.http'
 
 /**
- * Takes a string (from grpc proto file) and formats to camelCase
- *
- * @param {String} str
- * @returns {String} string formatted in camelCase
- */
-function lowerFirstChar (str) {
-  return str.charAt(0).toLowerCase() + str.slice(1)
-}
-
-/**
  * generate middleware to proxy to gRPC defined by proto files
  * @param  {string[]} protoFiles Filenames of protobuf-file
  * @param  {string} grpcLocation HOST:PORT of gRPC server
@@ -65,6 +55,7 @@ const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.cre
   const router = express.Router()
   const clients = {}
   const protos = protoFiles.map(p => grpc.load(p))
+  console.log('GRPC LOCATION', { grpcLocation })
 
   protoFiles
     .map(p => `/${p}`)
@@ -95,19 +86,33 @@ const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.cre
                   }
 
                   try {
-                    getPkg(clients, pkg, false)[svc][lowerFirstChar(m.name)](params, meta, (err, ans) => {
+                    // Contains all services in the provided protoFiles
+                    const services = getPkg(clients, pkg, false)
+                    const implementationName = m.name
+
+                    /**
+                     * gRPC request handler for expressjs
+                     *
+                     * @param {Error|null} err - exception if it thrown
+                     * @param {object} ans - request object from gRPC call
+                     */
+                    const requestHandler = (err, ans) => {
                       // TODO: PRIORITY:MEDIUM - improve error-handling
                       // TODO: PRIORITY:HIGH - double-check JSON mapping is identical to grpc-gateway
                       if (err) {
                         console.error(`${svc}.${m.name}`.red, err.message.red)
-                        console.trace()
+                        console.error(err)
                         return res.status(500).json({ code: err.code, message: err.message })
                       }
+
                       res.json(convertBody(ans, m.options[GRPC_API_OPTION_ID].body, m.options[GRPC_API_OPTION_ID][httpMethod]))
-                    })
+                    }
+
+                    // gRPC call (e.g. broker.rpc.AdminService.HealthCheck)
+                    services[svc][implementationName]({}, meta, requestHandler)
                   } catch (err) {
                     console.error(`${svc}.${m.name}: `.red, err.message.red)
-                    console.trace()
+                    console.stack()
                   }
                 })
               }
