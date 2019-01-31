@@ -60,4 +60,12 @@ describe('register', () => {
     expect(infoSpy).to.have.been.calledOnce()
     expect(infoSpy).to.have.been.calledWith('Successfully registered public key with relayer')
   })
+
+  it('logs the output from the broker with json flag set', async () => {
+    const json = true
+    opts = { rpcAddress, json }
+    await register(args, opts, logger)
+    expect(infoSpy).to.have.been.calledOnce()
+    expect(infoSpy).to.have.been.calledWith('Successfully registered public key with relayer')
+  })
 })

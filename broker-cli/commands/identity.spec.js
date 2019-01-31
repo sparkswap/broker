@@ -60,4 +60,14 @@ describe('getIdentity', () => {
     expect(infoSpy).to.have.been.calledOnce()
     expect(infoSpy).to.have.been.calledWith(publicKey)
   })
+
+  describe('with json output', () => {
+    it('logs health status to ', async () => {
+      const json = true
+      opts = { rpcAddress, json }
+      await getIdentity(args, opts, logger)
+      expect(infoSpy).to.have.been.calledOnce()
+      expect(infoSpy).to.have.been.calledWith(publicKey)
+    })
+  })
 })
