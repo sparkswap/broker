@@ -121,6 +121,9 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
 
   try {
     const authorization = relayer.identity.authorize()
+    console.log('calling', {
+      address: paymentChannelNetworkAddress
+    })
     await relayer.paymentChannelNetworkService.createChannel({
       address: paymentChannelNetworkAddress,
       balance: convertedBalance,

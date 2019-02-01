@@ -65,6 +65,9 @@ describe('commit', () => {
       market: 'BTC/LTC'
     }
     relayer = {
+      identity: {
+        authorize: sinon.stub()
+      },
       paymentChannelNetworkService: {
         getAddress: getAddressStub,
         createChannel: createChannelRelayerStub
@@ -106,8 +109,11 @@ describe('commit', () => {
     ).to.be.rejectedWith(PublicError, 'Funding error')
   })
 
-  describe('committing a balance to the exchange', () => {
+  describe('committing a balance to the relayer', () => {
+    let fakeAuth
     beforeEach(async () => {
+      fakeAuth = 'fake auth'
+      relayer.identity.authorize.returns(fakeAuth)
       res = await commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
     })
 
@@ -128,12 +134,17 @@ describe('commit', () => {
       expect(convertBalanceStub).to.have.been.calledWith('10000000', 'BTC', 'LTC')
     })
 
+    it('authorizes a request to the relayer', () => {
+      expect(relayer.identity.authorize).to.have.been.calledOnce()
+    })
+
     it('makes a request to the relayer to create a channel', () => {
-      expect(relayer.paymentChannelNetworkService.createChannel).to.have.been.calledWith({
+      expect(createChannelRelayerStub).to.have.been.calledOnce()
+      expect(createChannelRelayerStub).to.have.been.calledWith({
         address: relayerAddress,
         balance: '100',
         symbol: 'LTC'
-      })
+      }, fakeAuth)
     })
 
     it('constructs a EmptyResponse', () => {
