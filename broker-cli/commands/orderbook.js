@@ -106,14 +106,14 @@ function createUI (market, asks, bids) {
  * @param {Logger} logger
  */
 async function orderbook (args, opts, logger) {
-  const { market, rpcAddress, json, noStream } = opts
+  const { market, rpcAddress, json, static } = opts
   const request = { market }
 
   try {
     const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)
 
-    // if json flag is true, defaults to json output irrespective of no-stream flag.
-    if (noStream || json) {
+    // if json flag is true, defaults to json output irrespective of static flag.
+    if (static || json) {
       const orderbook = await brokerDaemonClient.orderBookService.getOrderbook(request)
       if (json) {
         console.log(JSON.stringify(orderbook))
@@ -192,6 +192,6 @@ module.exports = (program) => {
     .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .option('--json', JSON_FORMAT_STRING, program.BOOLEAN)
-    .option('--static', 'Stream the updates to orderbook', program.BOOLEAN)
+    .option('--static', 'Print static snapshot of the orderbook', program.BOOLEAN)
     .action(orderbook)
 }
