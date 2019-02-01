@@ -104,15 +104,15 @@ if [ ! -d "$DIRECTORY" ]; then
   mkdir -p $DIRECTORY
 fi
 
-if [[ ! -d "$DIRECTORY/certs" ]]; then
-  echo "Creating directory $DIRECTORY/certs"
+if [[ ! -d "$DIRECTORY/secure" ]]; then
+  echo "Creating directory $DIRECTORY/secure"
 
-  mkdir -p $DIRECTORY/certs
+  mkdir -p $DIRECTORY/secure
 fi
 
-KEY_PATH=~/.sparkswap/certs/broker-rpc-tls.key
-CERT_PATH=~/.sparkswap/certs/broker-rpc-tls.cert
-CSR_PATH=~/.sparkswap/certs/broker-rpc-csr.csr
+KEY_PATH=$DIRECTORY/secure/broker-rpc-tls.key
+CERT_PATH=$DIRECTORY/secure/broker-rpc-tls.cert
+CSR_PATH=$DIRECTORY/secure/broker-rpc-csr.csr
 
 if [[ -f "$KEY_PATH" ]]; then
   echo "WARNING: TLS Private Key already exists at $KEY_PATH for Broker Daemon. Skipping cert generation"
@@ -147,8 +147,9 @@ fi
 # via a non secure channel.
 #
 #############################################
-ID_PRIV_KEY=~/.sparkswap/certs/broker-identity.private.pem
-ID_PUB_KEY=~/.sparkswap/certs/broker-identity.public.pem
+
+ID_PRIV_KEY=$DIRECTORY/secure/broker-identity.private.pem
+ID_PUB_KEY=$DIRECTORY/secure/broker-identity.public.pem
 
 if [[ -f "$ID_PRIV_KEY" ]]; then
   echo "WARNING: ID already exists for Broker Daemon. Skipping ID generation"

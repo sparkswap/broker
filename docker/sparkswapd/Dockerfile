@@ -15,6 +15,9 @@ WORKDIR /home/app
 RUN git clone -b ${BROKER_VERSION} https://github.com/sparkswap/broker.git .
 
 RUN npm install --quiet --production
+# --no-docker is set so we don't get into an infinite loop
+# --no-identity makes it so we do not generate keys for the daemons identity because we do this externally
+# --no-certs  makes it so we do not re-generate tls certs for the daemon because we do this externally
 RUN npm run build -- --no-docker --no-identity --no-certs
 
 # Create a final image as this will be < 50% the size of the build image
