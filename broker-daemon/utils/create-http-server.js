@@ -9,6 +9,16 @@ const grpcGateway = require('./grpc-gateway')
 const corsMiddleware = require('./enable-cors')
 
 /**
+ * http 404 handler for our http (express) server
+ *
+ * @param {object} _req - request object
+ * @param {object} res - response object
+ */
+function handle404 (_req, res) {
+  res.status(404).send('404')
+}
+
+/**
  * creates an express app/server with the given protopath and rpcAddress
  *
  * @param {String} protoPath
@@ -40,29 +50,17 @@ function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableC
 
   if (disableAuth) {
     app.use('/', grpcGateway([`/${protoPath}`], rpcAddress))
-
-    // Handle 404s correctly for the server
-    app.use((req, res, _next) => {
-      logger.debug('Received request but had no route', { url: req.url })
-      res.status(404).send('404')
-    })
-
+    app.use(handle404)
     return app
   } else {
     const key = fs.readFileSync(privKeyPath)
     const cert = fs.readFileSync(pubKeyPath)
     const channelCredentials = grpc.credentials.createSsl(cert)
 
-    app.use('/', grpcGateway([`/${protoPath}`], rpcAddress, channelCredentials))
-
-    // Handle 404s correctly for the server
-    app.use((req, res, _next) => {
-      logger.debug('Received request but had no route', { url: req.url })
-      res.status(404).send('404')
-    })
-
     logger.debug(`Securing RPC proxy connections with TLS: key: ${privKeyPath}, cert: ${pubKeyPath}`)
 
+    app.use('/', grpcGateway([`/${protoPath}`], rpcAddress, channelCredentials))
+    app.use(handle404)
     return https.createServer({ key, cert }, app)
   }
 }
