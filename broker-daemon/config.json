@@ -5,7 +5,7 @@
   "idPrivKeyPath": "/secure/broker-identity.private.pem",
   "markets": "BTC/LTC",
   "//": "WARNING: Only disable broker SSL during development",
-  "disableAuth": false,
+  "disableAuth": true,
   "supportedEngineTypes": ["LND"],
   "relayer": {
     "rpcHost": "host.docker.internal:28492",
