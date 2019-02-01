@@ -53,33 +53,21 @@ class Identity {
   }
 
   /**
-   * @typedef {Object} Authorization
-   * @property {String} timestamp Int64 string of the current unix timestamp in seconds
-   * @property {String} nonce base64 string of 32 random bytes
-   * @property {String} signature base64 string of the signature that authorizes it
-   */
-
-  /**
    * Authorize a gRPC Request by adding metadata to it.
    *
    * Specifically, the signature is of the following payload:
-   *  - a string name of the request [ what format? ]
    *  - timestamp of the request, in seconds. A timestamp within +/- 60 seconds of the Relayer's time should be accepted.
    *  - A random nonce of 32 bytes, represented in base64. This nonce should not be repeated, but the Relayer may not reject duplicate nonces older than 24 hours.
-   *  - Contents of the request, JSON stringified
    *
    * This payload is joined by commas (','), and signed using the public key of the broker.
    *
    * The request can then be validated by the Relayer as being genuine from the owner of the public key.
-   * @param  {string} action action to authorize the request for
-   * @param  {object} params Parameters of the request to authorize
    * @return {grpc.Metadata} Metadata object with necessary items to verify it
    */
-  authorize (action, params) {
-    const request = `${action}:${JSON.stringify(params)}`
+  authorize () {
     const timestamp = nowInSeconds().toString()
     const nonce = randomBytes(32).toString('base64')
-    const payload = [ timestamp, nonce, request ].join(',')
+    const payload = [ timestamp, nonce ].join(',')
     const signature = this.sign(payload)
     const pubKey = this.pubKeyBase64
 
