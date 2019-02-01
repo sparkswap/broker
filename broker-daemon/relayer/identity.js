@@ -67,12 +67,13 @@ class Identity {
   authorize () {
     const timestamp = nowInSeconds().toString()
     const nonce = randomBytes(32).toString('base64')
-    const payload = [ timestamp, nonce ].join(',')
-    const signature = this.sign(payload)
-    const pubKey = this.pubKeyBase64
+    const signature = this.sign(`${timestamp},${nonce}`)
 
     const metadata = new Metadata()
-    metadata.set('authorization', `${pubKey},${timestamp},${nonce},${signature}`)
+    metadata.set('pubkey', this.pubKeyBase64)
+    metadata.set('timestamp', timestamp)
+    metadata.set('nonce', nonce)
+    metadata.set('signature', signature)
 
     return metadata
   }
