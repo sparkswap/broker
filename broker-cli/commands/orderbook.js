@@ -112,20 +112,15 @@ async function orderbook (args, opts, logger) {
   try {
     const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)
 
-    if (noStream) {
+    // if json flag is true, defaults to json output irrespective of no-stream flag.
+    if (noStream || json) {
       const orderbook = await brokerDaemonClient.orderBookService.getOrderbook(request)
       if (json) {
         console.log(JSON.stringify(orderbook))
       } else {
         const { asks, bids } = orderbook
-
         createUI(market, asks, bids)
       }
-      return
-    }
-
-    if (json) {
-      console.log('JSON output for a streaming orderbook is not supported.')
       return
     }
 

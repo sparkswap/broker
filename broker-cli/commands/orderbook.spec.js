@@ -222,10 +222,10 @@ describe('orderbook', () => {
       expect(consoleStub.log).to.have.been.calledWith(JSON.stringify(orderbookResult))
     })
 
-    it('logs orderbook to console', async () => {
+    it('logs orderbook in json format to console when no-stream is false', async () => {
       opts = { market, rpcAddress, json, noStream: false }
       await orderbook(args, opts, logger)
-      expect(consoleStub.log).to.have.been.calledWith('JSON output for a streaming orderbook is not supported.')
+      expect(consoleStub.log).to.have.been.calledWith(JSON.stringify(orderbookResult))
     })
   })
 
