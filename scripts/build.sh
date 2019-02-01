@@ -32,6 +32,9 @@ echo "                                                                          
 # correctly for a hosted (remote) broker daemon.
 RELAYER_PROTO_VERSION='master'
 
+# The directory where we store the sparkswap configuration, certs, and keys.
+SPARKSWAP_DIRECTORY=~/.sparkswap
+
 # parse options
 NO_CLI="false"
 NO_DOCKER="false"
@@ -98,21 +101,12 @@ rm -rf ./proto/.git
 #
 #############################################
 
-DIRECTORY=~/.sparkswap
-if [ ! -d "$DIRECTORY" ]; then
-  echo "Creating directory $DIRECTORY"
-  mkdir -p $DIRECTORY
-fi
+echo "Creating directories $SPARKSWAP_DIRECTORY and $SPARKSWAP_DIRECTORY/secure"
+mkdir -p $SPARKSWAP_DIRECTORY/secure
 
-if [[ ! -d "$DIRECTORY/secure" ]]; then
-  echo "Creating directory $DIRECTORY/secure"
-
-  mkdir -p $DIRECTORY/secure
-fi
-
-KEY_PATH=$DIRECTORY/secure/broker-rpc-tls.key
-CERT_PATH=$DIRECTORY/secure/broker-rpc-tls.cert
-CSR_PATH=$DIRECTORY/secure/broker-rpc-csr.csr
+KEY_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-tls.key
+CERT_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-tls.cert
+CSR_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-csr.csr
 
 if [[ -f "$KEY_PATH" ]]; then
   echo "WARNING: TLS Private Key already exists at $KEY_PATH for Broker Daemon. Skipping cert generation"
@@ -148,8 +142,8 @@ fi
 #
 #############################################
 
-ID_PRIV_KEY=$DIRECTORY/secure/broker-identity.private.pem
-ID_PUB_KEY=$DIRECTORY/secure/broker-identity.public.pem
+ID_PRIV_KEY=$SPARKSWAP_DIRECTORY/secure/broker-identity.private.pem
+ID_PUB_KEY=$SPARKSWAP_DIRECTORY/secure/broker-identity.public.pem
 
 if [[ -f "$ID_PRIV_KEY" ]]; then
   echo "WARNING: ID already exists for Broker Daemon. Skipping ID generation"
