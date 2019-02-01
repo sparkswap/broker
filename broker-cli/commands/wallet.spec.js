@@ -61,18 +61,25 @@ describe('cli wallet', () => {
       opts = { rpcAddress }
       logger = { info: sinon.stub(), error: sinon.stub() }
 
-      networkAddressStub = sinon.stub()
+      networkAddressStub = sinon.stub().returns({ networkAddress: 'fakeNetworkAddress' })
       daemonStub = sinon.stub()
       daemonStub.prototype.walletService = { getPaymentChannelNetworkAddress: networkAddressStub }
 
       program.__set__('BrokerDaemonClient', daemonStub)
-
-      networkAddress(args, opts, logger)
     })
 
     it('calls broker daemon for the pub key', () => {
+      networkAddress(args, opts, logger)
       expect(daemonStub).to.have.been.calledWith(rpcAddress)
       expect(networkAddressStub).to.have.been.calledWith({ symbol })
+    })
+
+    context('with json output', () => {
+      it('logs commit wallet result', async () => {
+        opts = { json: true }
+        await networkAddress(args, opts, logger)
+        expect(logger.info).to.have.been.calledWith(JSON.stringify({ networkAddress: 'fakeNetworkAddress' }))
+      })
     })
   })
 
@@ -647,6 +654,14 @@ describe('cli wallet', () => {
         expect(releaseStub).to.have.been.calledWith({ market, force: true })
       })
     })
+    context('with json output', () => {
+      it('logs release wallet result', async () => {
+        opts = { json: true }
+        await release(args, opts, logger)
+        expect(logger.info).to.have.been.calledOnce()
+        expect(logger.info).to.have.been.calledWith(JSON.stringify({}))
+      })
+    })
   })
 
   describe('withdraw', () => {
@@ -704,6 +719,16 @@ describe('cli wallet', () => {
     it('logs a successful withdrawal of funds', async () => {
       await withdraw(args, opts, logger)
       expect(logger.info).to.have.been.calledWith(`Successfully withdrew ${amount} ${symbol} from your wallet!`, { id: txid })
+    })
+
+    describe('with json output', () => {
+      it('logs withdraw result', async () => {
+        const json = true
+        opts = { json }
+        await withdraw(args, opts, logger)
+        expect(logger.info).to.have.been.calledOnce()
+        expect(logger.info).to.have.been.calledWith(JSON.stringify({ txid: '1234' }))
+      })
     })
   })
 
@@ -766,6 +791,16 @@ describe('cli wallet', () => {
       await create(args, opts, logger)
       expect(infoStub).to.have.been.calledWith(seeds)
     })
+
+    describe('with json output', () => {
+      it('logs create wallet result', async () => {
+        const json = true
+        opts = { json }
+        await create(args, opts, logger)
+        expect(logger.info).to.have.been.calledOnce()
+        expect(logger.info).to.have.been.calledWith(JSON.stringify({ recoverySeed: seeds }))
+      })
+    })
   })
 
   describe('unlock', () => {
@@ -783,7 +818,7 @@ describe('cli wallet', () => {
     const password = 'my-password'
 
     beforeEach(() => {
-      unlockWalletStub = sinon.stub()
+      unlockWalletStub = sinon.stub().returns({ unlock: 'fakeUnlockResult' })
       errorStub = sinon.stub()
       infoStub = sinon.stub()
       askQuestionStub = sinon.stub().resolves(password)
@@ -806,20 +841,29 @@ describe('cli wallet', () => {
       program.__set__('askQuestion', askQuestionStub)
     })
 
-    beforeEach(async () => {
+    it('create a broker daemon client', async () => {
       await unlock(args, opts, logger)
-    })
-
-    it('create a broker daemon client', () => {
       expect(daemonStub).to.have.been.calledOnce()
     })
 
-    it('asks the user for a wallet password', () => {
+    it('asks the user for a wallet password', async () => {
+      await unlock(args, opts, logger)
       expect(askQuestionStub).to.have.been.calledWith(sinon.match.string, sinon.match({ silent: true }))
     })
 
-    it('calls unlock wallet', () => {
+    it('calls unlock wallet', async () => {
+      await unlock(args, opts, logger)
       expect(unlockWalletStub).to.have.been.calledWith(sinon.match({ symbol, password }))
+    })
+
+    describe('with json output', () => {
+      it('logs unlock wallet result', async () => {
+        const json = true
+        opts = { json }
+        await unlock(args, opts, logger)
+        expect(logger.info).to.have.been.calledOnce()
+        expect(logger.info).to.have.been.calledWith(JSON.stringify({ unlock: 'fakeUnlockResult' }))
+      })
     })
   })
 })

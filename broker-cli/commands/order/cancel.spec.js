@@ -23,17 +23,26 @@ describe('cli order cancel', () => {
     opts = { rpcAddress }
     logger = { info: sinon.stub(), error: sinon.stub() }
 
-    cancelBlockOrderStub = sinon.stub()
+    cancelBlockOrderStub = sinon.stub().returns(args)
     daemonStub = sinon.stub()
     daemonStub.prototype.orderService = { cancelBlockOrder: cancelBlockOrderStub }
 
     cancel.__set__('BrokerDaemonClient', daemonStub)
-
-    cancel(args, opts, logger)
   })
 
   it('calls broker daemon for the order cancel', () => {
+    cancel(args, opts, logger)
     expect(daemonStub).to.have.been.calledWith(rpcAddress)
     expect(cancelBlockOrderStub).to.have.been.calledOnce()
+  })
+
+  describe('with json output', async () => {
+    it('logs trades', async () => {
+      const json = true
+      opts = { rpcAddress, json }
+      await cancel(args, opts, logger)
+      expect(logger.info).to.have.been.calledOnce()
+      expect(logger.info).to.have.been.calledWith(JSON.stringify(args))
+    })
   })
 })

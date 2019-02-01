@@ -15,7 +15,7 @@ describe('sell', () => {
   let revert
   let infoSpy
   let errorSpy
-  let createBlockOrderSpy
+  let createBlockOrderStub
   let brokerStub
 
   const market = 'BTC/LTC'
@@ -27,10 +27,10 @@ describe('sell', () => {
   beforeEach(() => {
     infoSpy = sinon.spy()
     errorSpy = sinon.spy()
-    createBlockOrderSpy = sinon.spy()
+    createBlockOrderStub = sinon.stub().returns({ sell: 'fakeSell' })
 
     brokerStub = sinon.stub()
-    brokerStub.prototype.orderService = { createBlockOrder: createBlockOrderSpy }
+    brokerStub.prototype.orderService = { createBlockOrder: createBlockOrderStub }
 
     revert = program.__set__('BrokerDaemonClient', brokerStub)
 
@@ -55,8 +55,8 @@ describe('sell', () => {
       timeInForce: opts.timeInForce
     }
     sell(args, opts, logger)
-    expect(createBlockOrderSpy).to.have.been.called()
-    expect(createBlockOrderSpy).to.have.been.calledWith(expectedRequest)
+    expect(createBlockOrderStub).to.have.been.called()
+    expect(createBlockOrderStub).to.have.been.calledWith(expectedRequest)
   })
 
   it('makes a limit order request to the broker', () => {
@@ -69,8 +69,8 @@ describe('sell', () => {
       timeInForce: opts.timeInForce
     }
     sell(args, opts, logger)
-    expect(createBlockOrderSpy).to.have.been.called()
-    expect(createBlockOrderSpy).to.have.been.calledWith(expectedRequest)
+    expect(createBlockOrderStub).to.have.been.called()
+    expect(createBlockOrderStub).to.have.been.calledWith(expectedRequest)
   })
 
   it('allows decimal prices in limit orders', () => {
@@ -83,8 +83,8 @@ describe('sell', () => {
       timeInForce: opts.timeInForce
     }
     sell(args, opts, logger)
-    expect(createBlockOrderSpy).to.have.been.called()
-    expect(createBlockOrderSpy).to.have.been.calledWith(expectedRequest)
+    expect(createBlockOrderStub).to.have.been.called()
+    expect(createBlockOrderStub).to.have.been.calledWith(expectedRequest)
   })
 
   describe('with json output', () => {
@@ -93,6 +93,7 @@ describe('sell', () => {
       opts = { market, timeInForce, rpcAddress, json }
       await sell(args, opts, logger)
       expect(infoSpy).to.have.been.calledOnce()
+      expect(infoSpy).to.have.been.calledWith(JSON.stringify({ sell: 'fakeSell' }))
     })
   })
 })

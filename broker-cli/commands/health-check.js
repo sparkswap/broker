@@ -100,9 +100,9 @@ async function healthCheck (args, opts, logger) {
 
     if (json) {
       console.log(JSON.stringify(healthStatus))
-    } else {
-      createUI(healthStatus)
+      return
     }
+    createUI(healthStatus)
   } catch (e) {
     logger.error(handleError(e))
   }

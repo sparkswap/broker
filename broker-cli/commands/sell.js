@@ -19,7 +19,7 @@ const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
  */
 async function sell (args, opts, logger) {
   const { amount, price } = args
-  const { timeInForce, market, rpcAddress } = opts
+  const { timeInForce, market, rpcAddress, json } = opts
   const side = ORDER_TYPES.ASK
 
   const request = {
@@ -41,6 +41,10 @@ async function sell (args, opts, logger) {
     const client = new BrokerDaemonClient(rpcAddress)
     const blockOrderResult = await client.orderService.createBlockOrder(request)
 
+    if (json) {
+      logger.info(JSON.stringify(blockOrderResult))
+      return
+    }
     // TODO: send a friendly message the logger. The current functionality will simple
     // return the object from the broker.proto file
     logger.info(JSON.stringify(blockOrderResult))

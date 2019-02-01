@@ -23,17 +23,26 @@ describe('cli order status', () => {
     opts = { rpcAddress }
     logger = { info: sinon.stub(), error: sinon.stub() }
 
-    getBlockOrderStub = sinon.stub()
+    getBlockOrderStub = sinon.stub().returns({ blockOrder: 'blockOrder' })
     daemonStub = sinon.stub()
     daemonStub.prototype.orderService = { getBlockOrder: getBlockOrderStub }
 
     status.__set__('BrokerDaemonClient', daemonStub)
-
-    status(args, opts, logger)
   })
 
   it('calls broker daemon for the order status', () => {
+    status(args, opts, logger)
     expect(daemonStub).to.have.been.calledWith(rpcAddress)
     expect(getBlockOrderStub).to.have.been.calledOnce()
+  })
+
+  describe('with json output', async () => {
+    it('logs order status', async () => {
+      const json = true
+      opts = { rpcAddress, json }
+      await status(args, opts, logger)
+      expect(logger.info).to.have.been.calledOnce()
+      expect(logger.info).to.have.been.calledWith(JSON.stringify({ blockOrder: 'blockOrder' }))
+    })
   })
 })

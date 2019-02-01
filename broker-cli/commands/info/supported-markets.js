@@ -10,12 +10,16 @@ const { handleError } = require('../../utils')
  * @param {Logger} logger
  */
 async function supportedMarkets (opts, logger) {
-  const { rpcAddress = null } = opts
+  const { rpcAddress = null, json } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const supportedMarkets = await client.infoService.getSupportedMarkets({})
-    logger.info(JSON.stringify(supportedMarkets))
+    if (json) {
+      logger.info(JSON.stringify(supportedMarkets))
+      return
+    }
+    logger.info(supportedMarkets)
   } catch (e) {
     logger.error(handleError(e))
   }

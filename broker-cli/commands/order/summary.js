@@ -57,9 +57,9 @@ async function summary (args, opts, logger) {
 
     if (json) {
       console.log(JSON.stringify(orders))
-    } else {
-      createUI(market, orders.blockOrders)
+      return
     }
+    createUI(market, orders.blockOrders)
   } catch (e) {
     logger.error(handleError(e))
   }

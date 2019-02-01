@@ -24,10 +24,9 @@ describe('cli info supported-markets', () => {
     daemonStub.prototype.infoService = { getSupportedMarkets: getSupportedMarketsStub }
 
     supportedMarkets.__set__('BrokerDaemonClient', daemonStub)
-
-    await supportedMarkets(opts, logger)
   })
-  it('calls broker daemon for the info supported-markets', () => {
+  it('calls broker daemon for the info supported-markets', async () => {
+    await supportedMarkets(opts, logger)
     expect(daemonStub).to.have.been.calledWith(rpcAddress)
     expect(getSupportedMarketsStub).to.have.been.calledOnce()
   })
@@ -35,6 +34,7 @@ describe('cli info supported-markets', () => {
   it('logs supported markets for json flag', async () => {
     const json = true
     opts = { rpcAddress, json }
+    await supportedMarkets(opts, logger)
     expect(logger.info).to.have.been.calledOnce()
     expect(logger.info).to.have.been.calledWith(JSON.stringify({markets: 'fake'}))
   })

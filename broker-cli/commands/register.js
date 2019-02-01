@@ -22,9 +22,9 @@ async function register (args, opts, logger) {
     const registerResult = await client.adminService.register({})
     if (json) {
       logger.info(JSON.stringify(registerResult))
-    } else {
-      logger.info('Successfully registered public key with relayer')
+      return
     }
+    logger.info('Successfully registered public key with relayer')
   } catch (e) {
     logger.error(handleError(e))
   }

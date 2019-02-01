@@ -21,7 +21,7 @@ const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
  */
 async function buy (args, opts, logger) {
   const { amount, price } = args
-  const { timeInForce, market, rpcAddress } = opts
+  const { timeInForce, market, rpcAddress, json } = opts
   const side = ORDER_TYPES.BID
 
   const request = {
@@ -40,6 +40,10 @@ async function buy (args, opts, logger) {
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const blockOrderResult = await client.orderService.createBlockOrder(request)
+    if (json) {
+      logger.info(JSON.stringify(blockOrderResult))
+      return
+    }
     logger.info(JSON.stringify(blockOrderResult))
   } catch (e) {
     logger.error(handleError(e))

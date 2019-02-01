@@ -15,7 +15,7 @@ describe('buy', () => {
   let revert
   let infoSpy
   let errorSpy
-  let createBlockOrderSpy
+  let createBlockOrderStub
   let brokerStub
 
   const market = 'BTC/LTC'
@@ -28,11 +28,11 @@ describe('buy', () => {
   beforeEach(() => {
     infoSpy = sinon.spy()
     errorSpy = sinon.spy()
-    createBlockOrderSpy = sinon.spy()
+    createBlockOrderStub = sinon.stub().returns({ blockOrder: 'blockOrder' })
 
     brokerStub = sinon.stub()
     brokerStub.prototype.orderService = {
-      createBlockOrder: createBlockOrderSpy
+      createBlockOrder: createBlockOrderStub
     }
 
     revert = program.__set__('BrokerDaemonClient', brokerStub)
@@ -59,8 +59,8 @@ describe('buy', () => {
       side: 'BID'
     }
     buy(args, opts, logger)
-    expect(createBlockOrderSpy).to.have.been.called()
-    expect(createBlockOrderSpy).to.have.been.calledWith(expectedRequest)
+    expect(createBlockOrderStub).to.have.been.called()
+    expect(createBlockOrderStub).to.have.been.calledWith(expectedRequest)
   })
 
   it('makes a limit order request to the broker', () => {
@@ -72,8 +72,8 @@ describe('buy', () => {
       timeInForce: opts.timeInForce
     }
     buy(args, opts, logger)
-    expect(createBlockOrderSpy).to.have.been.called()
-    expect(createBlockOrderSpy).to.have.been.calledWith(expectedRequest)
+    expect(createBlockOrderStub).to.have.been.called()
+    expect(createBlockOrderStub).to.have.been.calledWith(expectedRequest)
   })
 
   it('allows decimal prices in limit orders', () => {
@@ -86,8 +86,8 @@ describe('buy', () => {
       timeInForce: opts.timeInForce
     }
     buy(args, opts, logger)
-    expect(createBlockOrderSpy).to.have.been.called()
-    expect(createBlockOrderSpy).to.have.been.calledWith(expectedRequest)
+    expect(createBlockOrderStub).to.have.been.called()
+    expect(createBlockOrderStub).to.have.been.calledWith(expectedRequest)
   })
 
   describe('with json output', () => {
@@ -96,6 +96,7 @@ describe('buy', () => {
       opts = { market, timeInForce, rpcAddress, json }
       await buy(args, opts, logger)
       expect(infoSpy).to.have.been.calledOnce()
+      expect(infoSpy).to.have.been.calledWith(JSON.stringify({ blockOrder: 'blockOrder' }))
     })
   })
 })

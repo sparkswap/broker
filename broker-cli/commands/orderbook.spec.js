@@ -34,7 +34,7 @@ describe('orderbook', () => {
     rpcAddress = undefined
     market = 'BTC/LTC'
     args = {}
-    opts = { market, rpcAddress, stream: true }
+    opts = { market, rpcAddress }
     infoSpy = sinon.spy()
     errorSpy = sinon.spy()
     stream = {
@@ -208,7 +208,7 @@ describe('orderbook', () => {
       json = true
       consoleStub = { log: sinon.stub() }
       program.__set__('console', consoleStub)
-      opts = { market, rpcAddress, json }
+      opts = { market, rpcAddress, json, noStream: true }
     })
 
     it('makes a request to the getOrderBook', async () => {
@@ -221,11 +221,17 @@ describe('orderbook', () => {
       await orderbook(args, opts, logger)
       expect(consoleStub.log).to.have.been.calledWith(JSON.stringify(orderbookResult))
     })
+
+    it('logs orderbook to console', async () => {
+      opts = { market, rpcAddress, json, noStream: false }
+      await orderbook(args, opts, logger)
+      expect(consoleStub.log).to.have.been.calledWith('JSON output for a streaming orderbook is not supported.')
+    })
   })
 
-  describe('non-streaming output', () => {
+  describe('non streaming output', () => {
     beforeEach(() => {
-      opts = { market, rpcAddress, stream: false }
+      opts = { market, rpcAddress, noStream: true }
     })
 
     it('makes a request to the getOrderBook', async () => {

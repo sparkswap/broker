@@ -122,12 +122,17 @@ async function balance (args, opts, logger) {
  */
 async function newDepositAddress (args, opts, logger) {
   const { symbol } = args
-  const { rpcAddress } = opts
+  const { rpcAddress, json } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { address } = await client.walletService.newDepositAddress({ symbol })
+    const newDepositAddressResult = await client.walletService.newDepositAddress({ symbol })
+    if (json) {
+      logger.info(JSON.stringify(newDepositAddressResult))
+      return
+    }
 
+    const { address } = newDepositAddressResult
     logger.info(address)
   } catch (e) {
     logger.error(handleError(e))
@@ -150,7 +155,7 @@ async function newDepositAddress (args, opts, logger) {
  */
 async function commit (args, opts, logger) {
   const { symbol, amount } = args
-  const { rpcAddress, market } = opts
+  const { rpcAddress, market, json } = opts
   const currentCurrencyConfig = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol)
 
   try {
@@ -204,8 +209,12 @@ async function commit (args, opts, logger) {
       throw new Error(`Amount specified is larger than your current uncommitted balance of ${uncommittedBalance} ${symbol}`)
     }
 
-    await client.walletService.commit({ balance: maxSupportedBalance.toString(), symbol, market })
+    const commitResult = await client.walletService.commit({ balance: maxSupportedBalance.toString(), symbol, market })
 
+    if (json) {
+      logger.info(JSON.stringify(commitResult))
+      return
+    }
     logger.info('Successfully committed balance to sparkswap Relayer!')
   } catch (e) {
     logger.error(handleError(e))
@@ -227,13 +236,17 @@ async function commit (args, opts, logger) {
  */
 async function networkAddress (args, opts, logger) {
   const { symbol } = args
-  const { rpcAddress } = opts
+  const { rpcAddress, json } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
 
-    const { paymentChannelNetworkAddress } = await client.walletService.getPaymentChannelNetworkAddress({ symbol })
-
+    const paymentChannelNetworkAddressResult = await client.walletService.getPaymentChannelNetworkAddress({ symbol })
+    if (json) {
+      logger.info(JSON.stringify(paymentChannelNetworkAddressResult))
+      return
+    }
+    const { paymentChannelNetworkAddress } = paymentChannelNetworkAddressResult
     logger.info(paymentChannelNetworkAddress)
   } catch (e) {
     logger.error(handleError(e))
@@ -385,7 +398,7 @@ async function networkStatus (args, opts, logger) {
  */
 async function release (args, opts, logger) {
   const { market } = args
-  const { rpcAddress, force } = opts
+  const { rpcAddress, force, json } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -406,8 +419,14 @@ async function release (args, opts, logger) {
       // to be released so that we can display the proper error warnings below
       let shouldForceRelease = false
 
-      const { base, counter } = await client.walletService.releaseChannels({ market, force })
+      const releaseChannelsResult = await client.walletService.releaseChannels({ market, force })
 
+      if (json) {
+        logger.info(JSON.stringify(releaseChannelsResult))
+        return
+      }
+
+      const { base, counter } = releaseChannelsResult
       const marketSides = [base, counter]
 
       marketSides.forEach((side) => {
@@ -458,7 +477,7 @@ async function release (args, opts, logger) {
  */
 async function withdraw (args, opts, logger) {
   const {symbol, address, amount} = args
-  const { rpcAddress } = opts
+  const { rpcAddress, json } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -467,7 +486,12 @@ async function withdraw (args, opts, logger) {
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    const { txid } = await client.walletService.withdrawFunds({ symbol, address, amount })
+    const withdrawFundsResult = await client.walletService.withdrawFunds({ symbol, address, amount })
+    if (json) {
+      logger.info(JSON.stringify(withdrawFundsResult))
+      return
+    }
+    const { txid } = withdrawFundsResult
     logger.info(`Successfully withdrew ${amount} ${symbol} from your wallet!`, { id: txid })
   } catch (e) {
     logger.error(handleError(e))
@@ -488,7 +512,7 @@ async function withdraw (args, opts, logger) {
  */
 async function create (args, opts, logger) {
   const { symbol } = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress = null, json } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -500,7 +524,12 @@ async function create (args, opts, logger) {
       return logger.error('Error: Passwords did not match, please try again'.red)
     }
 
-    const { recoverySeed } = await client.walletService.createWallet({ symbol, password })
+    const createWalletResult = await client.walletService.createWallet({ symbol, password })
+    if (json) {
+      logger.info(JSON.stringify(createWalletResult))
+      return
+    }
+    const { recoverySeed } = createWalletResult
 
     logger.info('IMPORTANT: Please make a copy of the recovery seed below as you WILL NOT')
     logger.info('be able to recover this information again. We recommend that you write')
@@ -528,12 +557,16 @@ async function create (args, opts, logger) {
  */
 async function unlock (args, opts, logger) {
   const { symbol } = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress = null, json } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const password = await askQuestion(`Enter the wallet password:`, { silent: true })
-    await client.walletService.unlockWallet({ symbol, password })
+    const unlockResult = await client.walletService.unlockWallet({ symbol, password })
+    if (json) {
+      logger.info(JSON.stringify(unlockResult))
+      return
+    }
     logger.info(`Successfully Unlocked ${symbol.toUpperCase()} Wallet!`.green)
   } catch (e) {
     logger.error(handleError(e))

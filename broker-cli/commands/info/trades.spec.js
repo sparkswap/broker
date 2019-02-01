@@ -26,18 +26,26 @@ describe('cli info trades', () => {
 
     args = { since, limit }
     opts = { market, rpcAddress }
-    logger = { info: sinon.stub(), error: sinon.stub() }
+    logger = { info: sinon.spy(), error: sinon.stub() }
 
-    getTradesStub = sinon.stub()
+    getTradesStub = sinon.stub().returns({ trades: 'fakeTrades' })
     daemonStub = sinon.stub()
     daemonStub.prototype.infoService = { getTrades: getTradesStub }
 
     trades.__set__('BrokerDaemonClient', daemonStub)
-
-    trades(args, opts, logger)
   })
   it('calls broker daemon for the info trades', () => {
+    trades(args, opts, logger)
     expect(daemonStub).to.have.been.calledWith(rpcAddress)
     expect(getTradesStub).to.have.been.calledWith({market, since, limit})
+  })
+  describe('with json output', async () => {
+    it('logs trades', async () => {
+      const json = true
+      opts = { rpcAddress, json }
+      await trades(args, opts, logger)
+      expect(logger.info).to.have.been.calledOnce()
+      expect(logger.info).to.have.been.calledWith(JSON.stringify({ trades: 'fakeTrades' }))
+    })
   })
 })
