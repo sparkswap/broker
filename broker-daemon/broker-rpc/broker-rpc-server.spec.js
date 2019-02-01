@@ -144,12 +144,13 @@ describe('BrokerRPCServer', () => {
     })
 
     it('creates an http server', () => {
-      const rpcHttpProxyAddress = '0.0.0.0:27492'
-      const server = new BrokerRPCServer({ rpcHttpProxyAddress })
+      const rpcAddress = '0.0.0.0:27492'
+      const rpcHttpProxyAddress = '0.0.0.0:27592'
+      const server = new BrokerRPCServer({ rpcAddress, rpcHttpProxyAddress })
       expect(rpcServer).to.have.been.calledOnce()
       expect(rpcServer).to.have.been.calledWithNew()
       expect(server).to.have.property('httpServer')
-      expect(httpServer).to.have.been.calledWith(server.protoPath, rpcHttpProxyAddress)
+      expect(httpServer).to.have.been.calledWith(server.protoPath, rpcAddress, sinon.match.object)
       expect(server.httpServer).to.be.equal(httpServerStub)
     })
 
@@ -282,7 +283,9 @@ describe('BrokerRPCServer', () => {
       serverStub = sinon.stub()
       bindStub = sinon.stub()
 
-      server = new BrokerRPCServer()
+      server = new BrokerRPCServer({
+        rpcHttpProxyAddress: '0.0.0.0:27592'
+      })
       server.createCredentials = credentialStub
       server.server = {
         bind: bindStub,

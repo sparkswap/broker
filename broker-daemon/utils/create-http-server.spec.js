@@ -46,6 +46,11 @@ describe('createHttpServer', () => {
       expect(expressStub.use).to.have.been.calledWith(bodyParserStub.json())
     })
 
+    it('defaults a 0.0.0.0 address to localhost for certificate normalization', () => {
+      createHttpServer(protoPath, '0.0.0.0:8080', options)
+      expect(grpcGatewayStub).to.have.been.calledWith(sinon.match.any, 'localhost:8080')
+    })
+
     it('sets the app to parse urlencoded bodies', () => {
       expect(expressStub.use).to.have.been.calledWith(bodyParserStub.urlencoded())
     })
