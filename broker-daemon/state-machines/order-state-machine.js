@@ -394,9 +394,7 @@ const OrderStateMachine = StateMachine.factory({
       this.order.setSettledParams({ swapPreimage })
 
       const { orderId } = this.order.paramsForComplete
-      const completeOrderParams = { orderId, swapPreimage }
-      const authorization = this.relayer.identity.authorize('CompleteOrder', completeOrderParams)
-      this.logger.debug(`Generated authorization for ${orderId}`, authorization)
+      const authorization = this.relayer.identity.authorize()
       return this.relayer.makerService.completeOrder({ orderId, swapPreimage }, authorization)
     },
 
