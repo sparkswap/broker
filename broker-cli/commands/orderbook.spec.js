@@ -222,8 +222,8 @@ describe('orderbook', () => {
       expect(consoleStub.log).to.have.been.calledWith(JSON.stringify(orderbookResult))
     })
 
-    it('logs orderbook in json format to console when no-stream is false', async () => {
-      opts = { market, rpcAddress, json, noStream: false }
+    it('logs orderbook in json format to console when no stream is true', async () => {
+      opts = { market, rpcAddress, json, noStream: true }
       await orderbook(args, opts, logger)
       expect(consoleStub.log).to.have.been.calledWith(JSON.stringify(orderbookResult))
     })
