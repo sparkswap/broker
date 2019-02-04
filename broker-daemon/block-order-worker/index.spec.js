@@ -1218,7 +1218,7 @@ describe('BlockOrderWorker', () => {
     let blockOrderKey = blockOrderId
     let blockOrderValue = blockOrder
     let orders
-    let identityStub
+    let fakeAuth
 
     beforeEach(() => {
       orders = [
@@ -1237,13 +1237,13 @@ describe('BlockOrderWorker', () => {
         orders,
         openOrders: orders
       }
-      identityStub = sinon.stub()
+      fakeAuth = 'identity'
 
       relayer.makerService = {
         cancelOrder: sinon.stub().resolves()
       }
       relayer.identity = {
-        authorize: identityStub.returns('identity')
+        authorize: sinon.stub().returns(fakeAuth)
       }
 
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
@@ -1255,16 +1255,15 @@ describe('BlockOrderWorker', () => {
     })
 
     it('authorizes the request', async () => {
-      const orderId = orders[0].order.orderId
       await worker.cancelOutstandingOrders(blockOrder)
-      expect(relayer.identity.authorize).to.have.been.calledWith(orderId)
+      expect(relayer.identity.authorize).to.have.been.calledOnce()
     })
 
     it('cancels all of the orders on the relayer', async () => {
       await worker.cancelOutstandingOrders(blockOrder)
 
       expect(relayer.makerService.cancelOrder).to.have.been.calledOnce()
-      expect(relayer.makerService.cancelOrder).to.have.been.calledWith(sinon.match({ orderId: orders[0].order.orderId }))
+      expect(relayer.makerService.cancelOrder).to.have.been.calledWith(sinon.match({ orderId: orders[0].order.orderId }), fakeAuth)
     })
   })
 

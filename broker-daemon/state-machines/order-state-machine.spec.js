@@ -266,16 +266,23 @@ describe('OrderStateMachine', () => {
       return expect(osm.create(blockOrderId, params)).to.eventually.be.rejectedWith('No engine available')
     })
 
+    it('creates an authorization for the order', async () => {
+      await osm.create(blockOrderId, params)
+      expect(relayer.identity.authorize).to.have.been.calledOnce()
+    })
+
     it('creates an order on the relayer', async () => {
+      const fakeAuth = 'fake auth'
       const fakeParams = {
         my: 'fake'
       }
       Order.prototype.paramsForCreate = fakeParams
+      relayer.identity.authorize.returns(fakeAuth)
 
       await osm.create(blockOrderId, params)
 
       expect(relayer.makerService.createOrder).to.have.been.calledOnce()
-      expect(relayer.makerService.createOrder).to.have.been.calledWith(fakeParams)
+      expect(relayer.makerService.createOrder).to.have.been.calledWith(fakeParams, fakeAuth)
     })
 
     it('updates the order with returned params', async () => {
@@ -425,7 +432,7 @@ describe('OrderStateMachine', () => {
 
     it('creates an authorization for the order', async () => {
       await osm.place()
-      expect(relayer.identity.authorize).to.have.been.calledWith(orderId)
+      expect(relayer.identity.authorize).to.have.been.calledOnce()
     })
 
     it('places an order on the relayer', async () => {
@@ -435,9 +442,8 @@ describe('OrderStateMachine', () => {
       expect(placeOrderStub).to.have.been.calledWith(sinon.match({
         feeRefundPaymentRequest: invoice,
         depositRefundPaymentRequest: invoice,
-        orderId,
-        authorization: fakeAuth
-      }))
+        orderId
+      }), fakeAuth)
     })
 
     it('rejects on error from the relayer place order hook', async () => {
@@ -628,7 +634,6 @@ describe('OrderStateMachine', () => {
       await osm.execute()
 
       expect(relayer.identity.authorize).to.have.been.calledOnce()
-      expect(relayer.identity.authorize).to.have.been.calledWith(orderId)
     })
 
     it('executes the order on the relayer', async () => {
@@ -637,7 +642,7 @@ describe('OrderStateMachine', () => {
       await osm.execute()
 
       expect(relayer.makerService.executeOrder).to.have.been.calledOnce()
-      expect(relayer.makerService.executeOrder).to.have.been.calledWith({ orderId, authorization: fakeAuth })
+      expect(relayer.makerService.executeOrder).to.have.been.calledWith({ orderId }, fakeAuth)
     })
 
     it('completes the order after preparing to execute', async () => {
@@ -722,7 +727,6 @@ describe('OrderStateMachine', () => {
       await osm.complete()
 
       expect(relayer.identity.authorize).to.have.been.calledOnce()
-      expect(relayer.identity.authorize).to.have.been.calledWith(orderId)
     })
 
     it('completes the order on the relayer', async () => {
@@ -731,7 +735,7 @@ describe('OrderStateMachine', () => {
       await osm.complete()
 
       expect(completeOrderStub).to.have.been.calledOnce()
-      expect(completeOrderStub).to.have.been.calledWith({ orderId, swapPreimage: preimage, authorization: fakeAuth })
+      expect(completeOrderStub).to.have.been.calledWith({ orderId, swapPreimage: preimage }, fakeAuth)
     })
   })
 
