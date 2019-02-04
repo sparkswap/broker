@@ -2,8 +2,6 @@ FROM node:8.11-alpine as builder
 
 LABEL maintainer="SparkSwap <dev@sparkswap.com>"
 
-ARG BROKER_VERSION='master'
-
 RUN apk update
 RUN apk --no-cache add bash ca-certificates g++ git make openssl python wget && \
     wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
@@ -11,6 +9,8 @@ RUN apk --no-cache add bash ca-certificates g++ git make openssl python wget && 
     apk add glibc-2.28-r0.apk
 
 WORKDIR /home/app
+
+ARG BROKER_VERSION=${BROKER_VERSION:-master}
 
 RUN git clone -b ${BROKER_VERSION} https://github.com/sparkswap/broker.git .
 
