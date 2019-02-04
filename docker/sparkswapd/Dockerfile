@@ -2,7 +2,7 @@ FROM node:8.11-alpine as builder
 
 LABEL maintainer="SparkSwap <dev@sparkswap.com>"
 
-ARG BROKER_VERSION='master'
+ARG BROKER_VERSION='v0.4.0-beta'
 
 RUN apk update
 RUN apk --no-cache add bash ca-certificates g++ git make openssl python wget && \
