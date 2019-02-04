@@ -32,6 +32,9 @@ echo "                                                                          
 # correctly for a hosted (remote) broker daemon.
 RELAYER_PROTO_VERSION='master'
 
+# The directory where we store the sparkswap configuration, certs, and keys.
+SPARKSWAP_DIRECTORY=~/.sparkswap
+
 # parse options
 NO_CLI="false"
 NO_DOCKER="false"
@@ -97,9 +100,13 @@ rm -rf ./proto/.git
 # Primary use is TLS between Broker-CLI and Broker Daemon
 #
 #############################################
-KEY_PATH="./certs/broker-rpc-tls.key"
-CERT_PATH="./certs/broker-rpc-tls.cert"
-CSR_PATH="./certs/broker-rpc-csr.csr"
+
+echo "Creating directories $SPARKSWAP_DIRECTORY and $SPARKSWAP_DIRECTORY/secure"
+mkdir -p $SPARKSWAP_DIRECTORY/secure
+
+KEY_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-tls.key
+CERT_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-tls.cert
+CSR_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-csr.csr
 
 if [[ -f "$KEY_PATH" ]]; then
   echo "WARNING: TLS Private Key already exists at $KEY_PATH for Broker Daemon. Skipping cert generation"
@@ -107,8 +114,6 @@ elif [[ -f "$CERT_PATH" ]]; then
   echo "WARNING: TLS Cert already exists at $CERT_PATH for Broker Daemon. Skipping cert generation"
 elif [ "$NO_CERTS" != "true" ]; then
   echo "Generating TLS certs for Broker Daemon"
-
-  mkdir -p ./certs
 
   openssl ecparam -genkey -name prime256v1 -out $KEY_PATH
   openssl req -new -sha256 -key $KEY_PATH -out $CSR_PATH \
@@ -136,15 +141,15 @@ fi
 # via a non secure channel.
 #
 #############################################
-ID_PRIV_KEY='./certs/broker-identity.private.pem'
-ID_PUB_KEY='./certs/broker-identity.public.pem'
+
+ID_PRIV_KEY=$SPARKSWAP_DIRECTORY/secure/broker-identity.private.pem
+ID_PUB_KEY=$SPARKSWAP_DIRECTORY/secure/broker-identity.public.pem
 
 if [[ -f "$ID_PRIV_KEY" ]]; then
   echo "WARNING: ID already exists for Broker Daemon. Skipping ID generation"
 elif [[ -f "$ID_PUB_KEY" ]]; then
   echo "WARNING: ID Public Key already exists for Broker Daemon. Skipping ID generation"
 elif [ "$NO_IDENTITY" != "true" ]; then
-  mkdir -p ./certs
   openssl ecparam -name prime256v1 -genkey -noout -out $ID_PRIV_KEY
   openssl ec -in $ID_PRIV_KEY -pubout -out $ID_PUB_KEY
 fi
@@ -164,16 +169,3 @@ if [ -f docker-compose.override.yml ]; then
   echo "WARNING: This may add unwanted settings to the broker that could affect how your daemon runs."
   echo ""
 fi
-
-# We can skip the copying of certs to a local directory if the current build is
-# a standalone broker
-if [ "$NO_CLI" == "true" ] || [ "$NO_CERTS" == "true" ]; then
-  exit 0
-fi
-
-echo "Making local ~/.sparkswap certs directory"
-DIRECTORY=~/.sparkswap
-mkdir -p $DIRECTORY/certs
-
-echo "Copying certs to local certs directory"
-cp $CERT_PATH $DIRECTORY/certs/broker-rpc-tls.cert

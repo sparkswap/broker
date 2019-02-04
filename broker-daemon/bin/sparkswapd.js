@@ -41,7 +41,7 @@ program
   .option('--id-priv-key-path [id-priv-key-path]', 'Location of private key for the broker\'s identity', validations.isFormattedPath, config.idPrivKeyPath)
   // TODO: Make this a list instead of string
   .option('--markets [markets]', 'Comma-separated market names to track on startup', validations.areValidMarketNames, config.markets)
-  .option('--disable-auth', 'Disable SSL for the broker (DEV ONLY)', program.BOOL, config.disableAuth)
+  .option('--disable-auth [disable-auth]', 'Disable SSL for the broker (DEV ONLY)', program.BOOL, config.disableAuth)
   // Relayer configuration options
   .option('--relayer.rpc-host [rpc-host]', 'The host address for the SparkSwap Relayer', validations.isHost, config.relayer.rpcHost)
   .option('--relayer.cert-path [cert-path]', 'Location of the root certificate for the SparkSwap Relayer (only used in development)', validations.isFormattedPath, config.relayer.certPath)

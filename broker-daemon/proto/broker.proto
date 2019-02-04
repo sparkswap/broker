@@ -787,6 +787,8 @@ message MarketEvent {
 message GetOrderbookRequest {
   // Market to retrieve updates for, e.g. `'BTC/LTC'`.
   string market = 1;
+  // Number to limit results of either side of orderbook
+  int64 limit_per_side = 2;
 }
 
 message Bid {
@@ -893,6 +895,10 @@ service OrderBookService {
   rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
   /**
    * GetOrderbook returns price and amount information about the bids and asks on the orderbook in the current state.
+   *
+   * When GetOrderbookRequest includes a limit parameter, the total number of bids will not exceed the limit and the
+   * total number of asks will not exceed the limit.
+   *
    * > Below is a simple example of a console-based UI for an orderbook:
    *
    * ```javascript
