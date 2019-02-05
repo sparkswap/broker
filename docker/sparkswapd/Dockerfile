@@ -10,7 +10,7 @@ RUN apk --no-cache add bash ca-certificates g++ git make openssl python wget && 
 
 WORKDIR /home/app
 
-ARG BROKER_VERSION=${BROKER_VERSION:-v0.4.0-beta}
+ARG BROKER_VERSION=${BROKER_VERSION:-v0.4.1-beta}
 
 RUN git clone https://github.com/sparkswap/broker.git . && \
     git checkout ${BROKER_VERSION}
