@@ -1,6 +1,6 @@
 /**
  * @constant
- * @type {Object<key, String>}
+ * @type {Object}
  * @default
  */
 const STATUS_CODES = Object.freeze({
@@ -13,11 +13,13 @@ const STATUS_CODES = Object.freeze({
  * Gets the relayer status through relayer's health check
  *
  * @param {RelayerClient} relayer - gRPC Client for interacting with the Relayer
- * @return {String} status - either 'OK' or an error message if the call fails
+ * @param {Object} opts
+ * @param {Logger} opts.logger
+ * @returns {string} status - either 'OK' or an error message if the call fails
  */
 async function getRelayerStatus (relayer, { logger }) {
   try {
-    await relayer.healthService.check({})
+    await relayer.adminService.healthCheck({})
     return STATUS_CODES.OK
   } catch (e) {
     logger.error(`Relayer error during status check: `, { error: e.stack })
@@ -31,10 +33,10 @@ async function getRelayerStatus (relayer, { logger }) {
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {RelayerClient} request.relayer - gRPC Client for interacting with the Relayer
  * @param {Object} request.logger
- * @param {Map<String, Engine>} request.engines - all available Payment Channel Network engines in the Broker
+ * @param {Map<string, Engine>} request.engines - all available Payment Channel Network engines in the Broker
  * @param {Object} responses
- * @param {function} responses.HealthCheckResponse - constructor for HealthCheckResponse messages
- * @return {responses.HealthCheckResponse}
+ * @param {Function} responses.HealthCheckResponse - constructor for HealthCheckResponse messages
+ * @returns {HealthCheckResponse}
  */
 async function healthCheck ({ relayer, logger, engines, orderbooks }, { HealthCheckResponse }) {
   const engineStatus = Array.from(engines).map(([ symbol, engine ]) => {

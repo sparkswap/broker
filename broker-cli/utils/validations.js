@@ -1,16 +1,19 @@
 const { isInt, isAlpha, isURL, isDecimal: validatorIsDecimal, matches } = require('validator')
 const { Big } = require('./big')
+
 /**
  * Largest int64 is our maximum value for amounts
- * @type {String}
+ * @constant
+ * @type {string}
+ * @default
  */
 const MAX_VALUE = '9223372036854775807'
 
 /**
  * Checks if the specified string is a valid decimal format
  *
- * @param {String} str
- * @returns {String} validated decimal
+ * @param {string} str
+ * @returns {string} validated decimal
  * @throws {Error} returns an error if decimal is not a valid format
  */
 function isDecimal (str) {
@@ -24,7 +27,7 @@ function isDecimal (str) {
 /**
  * Checks the provided marketName's length
  *
- * @param {String} marketName
+ * @param {string} marketName
  * @returns {Bool} returns true if specified market name is valid
  */
 function validMarketNameLength (marketName) {
@@ -34,8 +37,8 @@ function validMarketNameLength (marketName) {
 /**
  * Provides type and length checking for a market name
  *
- * @param {String} str - potential market name
- * @returns {String} validated market name
+ * @param {string} str - potential market name
+ * @returns {string} validated market name
  * @throws {Error} returns an error if marketname is not valid
  */
 function isMarketName (str) {
@@ -60,7 +63,7 @@ function isMarketName (str) {
 /**
  * Checks the provided list of marketnames lengths
  *
- * @param {String} marketNames comma separated
+ * @param {string} marketNames - comma separated
  * @returns {Bool} returns true if all market names are valid
  */
 function validMarketNames (marketNames) {
@@ -70,8 +73,8 @@ function validMarketNames (marketNames) {
 /**
  * Checks the provided list of marketnames lengths
  *
- * @param {String} marketNames comma separated
- * @returns {String} returns string if all market names are valid
+ * @param {string} marketNames - comma separated
+ * @returns {string} returns string if all market names are valid
  * @throws {Error} returns an error if not all marketnames are valid
  */
 function areValidMarketNames (marketNames) {
@@ -87,8 +90,8 @@ function areValidMarketNames (marketNames) {
 /**
  * Checks if a specified string is a valid host.
  *
- * @param {String} str - host address
- * @returns {String}
+ * @param {string} str - host address
+ * @returns {string}
  * @throws {Error} returns an error if the given string is invalid for an host
  */
 function isHost (str) {
@@ -125,8 +128,8 @@ function isFormattedPath (str) {
 /**
  * Checks if a specified string is a valid block order id.
  *
- * @param  {String}  str - block order id
- * @return {String}     block order id
+ * @param  {string}  str - block order id
+ * @returns {string}     block order id
  * @throws {Error} If string contains more than the allowed characters
  */
 function isBlockOrderId (str) {
@@ -140,8 +143,8 @@ function isBlockOrderId (str) {
 /**
  * Checks if a specified string is a valid date.
  *
- * @param  {String}  str - date
- * @return {String}  str - date
+ * @param  {string}  str - date
+ * @returns {string}  str - date
  * @throws {Error} If string cannot be parsed into a date
  */
 function isDate (str) {
@@ -157,8 +160,8 @@ function isDate (str) {
 /**
  * Checks if a specified string is a limit
  *
- * @param  {String}  str - limit
- * @return {String}  str - limit
+ * @param  {string}  str - limit
+ * @returns {string}  str - limit
  * @throws {Error} If string is not a valid integer
  */
 function isPositiveInteger (str) {

@@ -42,7 +42,7 @@ describe('new-deposit-address', () => {
   })
 
   describe('invalid engine type', () => {
-    const badParams = {symbol: 'BAD'}
+    const badParams = { symbol: 'BAD' }
 
     it('throws an error', () => {
       return expect(newDepositAddress({ logger, engines, params: badParams }, { NewDepositAddressResponse: responseStub })).to.eventually.be.rejectedWith('Unable to generate address')

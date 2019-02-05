@@ -14,14 +14,14 @@ const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 class BlockOrder {
   /**
    * Instantiate a new Block Order
-   * @param  {String} options.id          Unique id for the block order
-   * @param  {String} options.marketName  Market name (e.g. BTC/LTC)
-   * @param  {String} options.side        Side of the market being taken (i.e. BID or ASK)
-   * @param  {String} options.amount      Size of the order in base currency (e.g. '10000')
-   * @param  {String} options.price       Limit price for the order (e.g. '100.1')
-   * @param  {String} options.timeInForce Time restriction on the order (e.g. GTC, FOK)
-   * @param  {String} options.status      Block Order status
-   * @return {BlockOrder}
+   * @param {Object} args
+   * @param {string} args.id          - Unique id for the block order
+   * @param {string} args.marketName  - Market name (e.g. BTC/LTC)
+   * @param {string} args.side        - Side of the market being taken (i.e. BID or ASK)
+   * @param {string} args.amount      - Size of the order in base currency (e.g. '10000')
+   * @param {string} args.price       - Limit price for the order (e.g. '100.1')
+   * @param {string} args.timeInForce - Time restriction on the order (e.g. GTC, FOK)
+   * @param {string} args.status      - Block Order status
    */
   constructor ({ id, marketName, side, amount, price, timeInForce, timestamp, status = BlockOrder.STATUSES.ACTIVE }) {
     this.id = id
@@ -68,7 +68,7 @@ class BlockOrder {
 
   /**
    * Convenience getter for the inverse side of the market
-   * @return {String} `BID` or `ASK`
+   * @returns {string} `BID` or `ASK`
    */
   get inverseSide () {
     if (this.side === BlockOrder.SIDES.BID) {
@@ -80,7 +80,7 @@ class BlockOrder {
 
   /**
    * Convenience getter for baseSymbol
-   * @return {String} Base symbol from market name (e.g. BTC from BTC/LTC)
+   * @returns {string} Base symbol from market name (e.g. BTC from BTC/LTC)
    */
   get baseSymbol () {
     return this.marketName.split('/')[0]
@@ -88,7 +88,7 @@ class BlockOrder {
 
   /**
    * Convenience getter for counterSymbol
-   * @return {String} Counter symbol from market name (e.g. LTC from BTC/LTC)
+   * @returns {string} Counter symbol from market name (e.g. LTC from BTC/LTC)
    */
   get counterSymbol () {
     return this.marketName.split('/')[1]
@@ -96,7 +96,7 @@ class BlockOrder {
 
   /**
    * Get configuration for the baseSymbol
-   * @return {Object} Currency configuration
+   * @returns {Object} Currency configuration
    */
   get baseCurrencyConfig () {
     return CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
@@ -104,7 +104,7 @@ class BlockOrder {
 
   /**
    * Get configuration for the counterSymbol
-   * @return {Object} Currency configuration
+   * @returns {Object} Currency configuration
    */
   get counterCurrencyConfig () {
     return CONFIG.currencies.find(({ symbol }) => symbol === this.counterSymbol)
@@ -112,7 +112,7 @@ class BlockOrder {
 
   /**
    * Convenience getter for baseAmount
-   * @return {String} String representation of the amount of currency to be transacted in base currency's smallest unit
+   * @returns {string} String representation of the amount of currency to be transacted in base currency's smallest unit
    */
   get baseAmount () {
     return this.amount.times(this.baseCurrencyConfig.quantumsPerCommon).round(0).toString()
@@ -120,7 +120,7 @@ class BlockOrder {
 
   /**
    * Convenience getter for counterAmount calculated using the block order price
-   * @return {String} String representation of the amount of currency to be transacted in counter currency's smallest unit
+   * @returns {string} String representation of the amount of currency to be transacted in counter currency's smallest unit
    */
   get counterAmount () {
     if (!this.price) {
@@ -134,7 +134,7 @@ class BlockOrder {
 
   /**
   * Convenience getter for outboundAmount
-  * @return {String} String representation of the amount of currency we will send outbound for the order
+  * @returns {string} String representation of the amount of currency we will send outbound for the order
   */
   get outboundAmount () {
     return this.isBid ? this.counterAmount : this.baseAmount
@@ -142,7 +142,7 @@ class BlockOrder {
 
   /**
   * Convenience getter for inboundAmount
-  * @return {String} String representation of the amount of currency we will receive inbound for the order
+  * @returns {string} String representation of the amount of currency we will receive inbound for the order
   */
   get inboundAmount () {
     return this.isBid ? this.baseAmount : this.counterAmount
@@ -150,7 +150,7 @@ class BlockOrder {
 
   /**
   * Get the symbol of the currency we will receive inbound
-  * @return {String} Currency symbol
+  * @returns {string} Currency symbol
   */
   get inboundSymbol () {
     return this.isBid ? this.baseSymbol : this.counterSymbol
@@ -158,7 +158,7 @@ class BlockOrder {
 
   /**
   * Get the symbol of the currency we will send outbound
-  * @return {String} Currency symbol
+  * @returns {string} Currency symbol
   */
   get outboundSymbol () {
     return this.isBid ? this.counterSymbol : this.baseSymbol
@@ -166,7 +166,7 @@ class BlockOrder {
 
   /**
    * Price of an order expressed in terms of the smallest unit of each currency
-   * @return {String} Decimal of the price expressed as a string with 16 decimal places
+   * @returns {string} Decimal of the price expressed as a string with 16 decimal places
    */
   get quantumPrice () {
     if (!this.counterAmount) return
@@ -175,7 +175,7 @@ class BlockOrder {
 
   /**
    * get key for storage in leveldb
-   * @return {String} Block order id
+   * @returns {string} Block order id
    */
   get key () {
     return this.id
@@ -183,7 +183,7 @@ class BlockOrder {
 
   /**
    * get value for storage in leveldb
-   * @return {String} Stringified JSON object
+   * @returns {string} Stringified JSON object
    */
   get value () {
     const {
@@ -224,7 +224,7 @@ class BlockOrder {
 
   /**
    * get boolean for if the blockOrder is a bid
-   * @return {Boolean}
+   * @returns {boolean}
    */
   get isBid () {
     return this.side === BlockOrder.SIDES.BID
@@ -232,23 +232,31 @@ class BlockOrder {
 
   /**
    * get boolean for if the blockOrder is an ask
-   * @return {Boolean}
+   * @returns {boolean}
    */
   get isAsk () {
     return this.side === BlockOrder.SIDES.ASK
   }
 
   /**
-   * get boolean for if the blockOrder is an a state to be worked
-   * @return {Boolean}
+   * get boolean for if the blockOrder is in an active
+   * @returns {boolean}
    */
-  get isInWorkableState () {
+  get isActive () {
     return this.status === BlockOrder.STATUSES.ACTIVE
   }
 
   /**
+   * get boolean for if the blockOrder is an a state to be worked
+   * @returns {boolean}
+   */
+  get isInWorkableState () {
+    return this.isActive
+  }
+
+  /**
    * get boolean for if the blockOrder is a marketOrder
-   * @return {Boolean}
+   * @returns {boolean}
    */
   get isMarketOrder () {
     return !this.price
@@ -256,7 +264,7 @@ class BlockOrder {
 
   /**
    * Move the block order to a failed status
-   * @return {BlockOrder} Modified block order instance
+   * @returns {BlockOrder} Modified block order instance
    */
   fail () {
     // TODO: Do we need to fail the remaining orders that are tied to this block order in the ordersStore?
@@ -266,7 +274,7 @@ class BlockOrder {
 
   /**
    * Move the block order to a completed status
-   * @return {BlockOrder} Modified block order instance
+   * @returns {BlockOrder} Modified block order instance
    */
   complete () {
     this.status = BlockOrder.STATUSES.COMPLETED
@@ -275,7 +283,7 @@ class BlockOrder {
 
   /**
    * Move the block order to a cancelled status
-   * @return {BlockOrder} Modified block order instance
+   * @returns {BlockOrder} Modified block order instance
    */
   cancel () {
     // TODO: Do we need to cancel the remaining orders that are tied to this block order in the ordersStore?
@@ -283,36 +291,49 @@ class BlockOrder {
     return this
   }
 
+  /**
+   * Calculates the active outbound amount
+   * @returns {Big}
+   */
   activeOutboundAmount () {
-    const activeOrderAmount = this.activeOrders.reduce((acc, {order, state}) => {
+    const activeOrderAmount = this.activeOrders.reduce((acc, { order, state }) => {
       if (state === OrderStateMachine.STATES.EXECUTING) {
         return acc.plus(order.outboundFillAmount)
       } else {
         return acc.plus(order.outboundAmount)
       }
     }, Big(0))
-    const activeFillAmount = this.activeFills.reduce((acc, {fill}) => {
+    const activeFillAmount = this.activeFills.reduce((acc, { fill }) => {
       return acc.plus(fill.outboundAmount)
     }, Big(0))
 
     return activeOrderAmount.plus(activeFillAmount)
   }
 
+  /**
+   * Calculates the active inbound amount
+   * @returns {Big}
+   */
   activeInboundAmount () {
-    const activeOrderAmount = this.activeOrders.reduce((acc, {order, state}) => {
+    const activeOrderAmount = this.activeOrders.reduce((acc, { order, state }) => {
       if (state === OrderStateMachine.STATES.EXECUTING) {
         return acc.plus(order.inboundFillAmount)
       } else {
         return acc.plus(order.inboundAmount)
       }
     }, Big(0))
-    const activeFillAmount = this.activeFills.reduce((acc, {fill}) => {
+    const activeFillAmount = this.activeFills.reduce((acc, { fill }) => {
       return acc.plus(fill.inboundAmount)
     }, Big(0))
 
     return activeOrderAmount.plus(activeFillAmount)
   }
 
+  /**
+   * Populates orders on a block order
+   * @param {sublevel} store
+   * @returns {void}
+   */
   async populateOrders (store) {
     const orders = await getRecords(
       store,
@@ -327,6 +348,11 @@ class BlockOrder {
     this.orders = orders
   }
 
+  /**
+   * Populates fills on a block order
+   * @param {sublevel} store
+   * @returns {void}
+   */
   async populateFills (store) {
     const fills = await getRecords(
       store,
@@ -343,7 +369,7 @@ class BlockOrder {
 
   /**
    * serialize a block order for transmission via grpc
-   * @return {Object} Object to be serialized into a GRPC message
+   * @returns {Object} Object to be serialized into a GRPC message
    */
   serialize () {
     const baseAmountFactor = this.baseCurrencyConfig.quantumsPerCommon
@@ -397,6 +423,10 @@ class BlockOrder {
     return serialized
   }
 
+  /**
+   * Returns a serialized summary of a block order
+   * @returns {Object}
+   */
   serializeSummary () {
     const serialized = {
       blockOrderId: this.id,
@@ -421,9 +451,9 @@ class BlockOrder {
   /**
    * Re-instantiate a previously saved BlockOrder
    *
-   * @param  {String} key   Key used to retrieve the BlockOrder
-   * @param  {String} value Value returned from leveldb
-   * @return {BlockOrder}   BlockOrder instance
+   * @param  {string} key   - Key used to retrieve the BlockOrder
+   * @param  {string} value - Value returned from leveldb
+   * @returns {BlockOrder}   BlockOrder instance
    */
   static fromStorage (key, value) {
     const {
@@ -448,9 +478,9 @@ class BlockOrder {
   /**
    * Grab a block order from a given sublevel
    *
-   * @param {Sublevel} store block order sublevel store
-   * @param {String} blockOrderId
-   * @return {BlockOrder} BlockOrder instance
+   * @param {sublevel} store - block order sublevel store
+   * @param {string} blockOrderId
+   * @returns {BlockOrder} BlockOrder instance
    * @throws {Error} store is null
    * @throws {BlockOrderNotFoundError} block order could not be found
    */

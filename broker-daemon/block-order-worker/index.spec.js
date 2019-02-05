@@ -344,7 +344,7 @@ describe('BlockOrderWorker', () => {
       fillStateMachines = [createdFsm, executedFsm]
 
       getRecords = sinon.stub()
-      getRecords = sinon.stub().resolves([{blockOrderId: '1234'}])
+      getRecords = sinon.stub().resolves([{ blockOrderId: '1234' }])
       BlockOrderWorker.__set__('getRecords', getRecords)
       BlockOrder.fromStorage = {
         bind: sinon.stub()
@@ -365,19 +365,19 @@ describe('BlockOrderWorker', () => {
     it('retrieves orderStateMachines for each blockOrder', async () => {
       await worker.settleIndeterminateOrdersFills()
 
-      expect(worker.getFillStateMachines).to.have.been.calledWith({blockOrderId: '1234'})
+      expect(worker.getFillStateMachines).to.have.been.calledWith({ blockOrderId: '1234' })
     })
 
     it('does not apply listeners to osm in finished state', async () => {
       await worker.settleIndeterminateOrdersFills()
 
-      expect(worker.applyOsmListeners).to.not.have.been.calledWith(cancelledOsm, {blockOrderId: '1234'})
+      expect(worker.applyOsmListeners).to.not.have.been.calledWith(cancelledOsm, { blockOrderId: '1234' })
     })
 
     it('applies listeners to each osm in an indeterminate state', async () => {
       await worker.settleIndeterminateOrdersFills()
 
-      expect(worker.applyOsmListeners).to.have.been.calledWith(createdOsm, {blockOrderId: '1234'})
+      expect(worker.applyOsmListeners).to.have.been.calledWith(createdOsm, { blockOrderId: '1234' })
     })
 
     it('triggers the osm to the next state if the osm is in an indeterminate state', async () => {
@@ -395,19 +395,19 @@ describe('BlockOrderWorker', () => {
     it('retrieves fillStateMachines for each blockOrder', async () => {
       await worker.settleIndeterminateOrdersFills()
 
-      expect(worker.getOrderStateMachines).to.have.been.calledWith({blockOrderId: '1234'})
+      expect(worker.getOrderStateMachines).to.have.been.calledWith({ blockOrderId: '1234' })
     })
 
     it('does not apply listeners to fsm in finished state', async () => {
       await worker.settleIndeterminateOrdersFills()
 
-      expect(worker.applyFsmListeners).to.not.have.been.calledWith(executedFsm, {blockOrderId: '1234'})
+      expect(worker.applyFsmListeners).to.not.have.been.calledWith(executedFsm, { blockOrderId: '1234' })
     })
 
     it('applies listeners to each fsm in an indeterminate state', async () => {
       await worker.settleIndeterminateOrdersFills()
 
-      expect(worker.applyFsmListeners).to.have.been.calledWith(createdFsm, {blockOrderId: '1234'})
+      expect(worker.applyFsmListeners).to.have.been.calledWith(createdFsm, { blockOrderId: '1234' })
     })
 
     it('triggers the fsm to the next state if the fsm is in an indeterminate state', async () => {
@@ -438,7 +438,7 @@ describe('BlockOrderWorker', () => {
       ordersStore = {
         put: sinon.stub()
       }
-      blockOrder = {id: '1234'}
+      blockOrder = { id: '1234' }
       getRecords = sinon.stub().resolves(orderStateMachines)
 
       getRecords.withArgs(ordersStore).resolves(orderStateMachines)
@@ -473,7 +473,7 @@ describe('BlockOrderWorker', () => {
 
       eachOrder(fakeKey, fakeValue)
       expect(OrderStateMachine.fromStore).to.have.been.calledOnce()
-      expect(OrderStateMachine.fromStore).to.have.been.calledWith({store: ordersStore, logger, relayer, engines}, {key: fakeKey, value: fakeValue})
+      expect(OrderStateMachine.fromStore).to.have.been.calledWith({ store: ordersStore, logger, relayer, engines }, { key: fakeKey, value: fakeValue })
     })
   })
 
@@ -492,7 +492,7 @@ describe('BlockOrderWorker', () => {
       fillsStore = {
         put: sinon.stub()
       }
-      blockOrder = {id: '1234'}
+      blockOrder = { id: '1234' }
       getRecords = sinon.stub().resolves(fillStateMachines)
 
       getRecords.withArgs(fillsStore).resolves(fillStateMachines)
@@ -527,7 +527,7 @@ describe('BlockOrderWorker', () => {
 
       eachOrder(fakeKey, fakeValue)
       expect(FillStateMachine.fromStore).to.have.been.calledOnce()
-      expect(FillStateMachine.fromStore).to.have.been.calledWith({store: fillsStore, logger, relayer, engines}, {key: fakeKey, value: fakeValue})
+      expect(FillStateMachine.fromStore).to.have.been.calledWith({ store: fillsStore, logger, relayer, engines }, { key: fakeKey, value: fakeValue })
     })
   })
 
@@ -736,12 +736,12 @@ describe('BlockOrderWorker', () => {
       relayer.paymentChannelNetworkService = {
         getAddress: sinon.stub()
       }
-      relayer.paymentChannelNetworkService.getAddress.withArgs({symbol: outboundSymbol}).resolves({address: outboundAddress})
-      relayer.paymentChannelNetworkService.getAddress.withArgs({symbol: inboundSymbol}).resolves({address: inboundAddress})
+      relayer.paymentChannelNetworkService.getAddress.withArgs({ symbol: outboundSymbol }).resolves({ address: outboundAddress })
+      relayer.paymentChannelNetworkService.getAddress.withArgs({ symbol: inboundSymbol }).resolves({ address: inboundAddress })
 
       ltcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount)).resolves(true)
-      btcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), {outbound: false}).resolves(true)
-      ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), {outbound: false}).resolves(true)
+      btcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
+      ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
       btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount)).resolves(true)
       isMarketOrder = false
       engines = new Map([ ['BTC', btcEngine], ['LTC', ltcEngine] ])
@@ -769,7 +769,7 @@ describe('BlockOrderWorker', () => {
       revert = BlockOrderWorker.__set__('BlockOrder', BlockOrder)
 
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
-      worker.calculateActiveFunds = sinon.stub().resolves({activeInboundAmount, activeOutboundAmount})
+      worker.calculateActiveFunds = sinon.stub().resolves({ activeInboundAmount, activeOutboundAmount })
     })
 
     afterEach(() => {
@@ -784,8 +784,8 @@ describe('BlockOrderWorker', () => {
     it('gets the addresses to the relayer to check engine balances', async () => {
       await worker.checkFundsAreSufficient(blockOrderStub)
       expect(relayer.paymentChannelNetworkService.getAddress).to.have.been.calledTwice()
-      expect(relayer.paymentChannelNetworkService.getAddress).to.have.been.calledWith({symbol: outboundSymbol})
-      expect(relayer.paymentChannelNetworkService.getAddress).to.have.been.calledWith({symbol: inboundSymbol})
+      expect(relayer.paymentChannelNetworkService.getAddress).to.have.been.calledWith({ symbol: outboundSymbol })
+      expect(relayer.paymentChannelNetworkService.getAddress).to.have.been.calledWith({ symbol: inboundSymbol })
     })
 
     it('throws if the outbound engine does not exist', () => {
@@ -811,7 +811,7 @@ describe('BlockOrderWorker', () => {
           await worker.checkFundsAreSufficient(blockOrderStub)
 
           expect(btcEngine.isBalanceSufficient).to.have.been.calledOnce()
-          expect(btcEngine.isBalanceSufficient).to.have.been.calledWith(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), {outbound: false})
+          expect(btcEngine.isBalanceSufficient).to.have.been.calledWith(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false })
         })
 
         it('throws if the outbound balance is greater than the amount they have in the outbound channel', () => {
@@ -821,7 +821,7 @@ describe('BlockOrderWorker', () => {
         })
 
         it('throws the inbound balance is greater than the amount the relayer has in the inbound channel', () => {
-          btcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), {outbound: false}).resolves(false)
+          btcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false }).resolves(false)
 
           return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in inbound BTC channel to create order')
         })
@@ -838,7 +838,7 @@ describe('BlockOrderWorker', () => {
         })
 
         it('checks if the outbound balance in the engine is sufficient', async () => {
-          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), {outbound: false}).resolves(true)
+          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
           btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(blockOrderStub.outboundAmount).plus(activeOutboundAmount)).resolves(true)
 
           await worker.checkFundsAreSufficient(blockOrderStub)
@@ -848,24 +848,24 @@ describe('BlockOrderWorker', () => {
         })
 
         it('checks if the inbound balance in the engine is sufficient', async () => {
-          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), {outbound: false}).resolves(true)
+          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
           btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(blockOrderStub.outboundAmount).plus(activeOutboundAmount)).resolves(true)
 
           await worker.checkFundsAreSufficient(blockOrderStub)
 
           expect(ltcEngine.isBalanceSufficient).to.have.been.calledOnce()
-          expect(ltcEngine.isBalanceSufficient).to.have.been.calledWith(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), {outbound: false})
+          expect(ltcEngine.isBalanceSufficient).to.have.been.calledWith(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), { outbound: false })
         })
 
         it('throws if the inboundAmount is greater than the amount they have in the inbound channel', () => {
-          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), {outbound: false}).resolves(false)
+          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), { outbound: false }).resolves(false)
           btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(blockOrderStub.outboundAmount).plus(activeOutboundAmount)).resolves(true)
 
           return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in inbound LTC channel to create order')
         })
 
         it('throws if the outbound is greater than the amount the relayer has in the outbound channel', () => {
-          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), {outbound: false}).resolves(true)
+          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
           btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(blockOrderStub.outboundAmount).plus(activeOutboundAmount)).resolves(false)
 
           return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in outbound BTC channel to create order')
@@ -885,7 +885,7 @@ describe('BlockOrderWorker', () => {
         beforeEach(() => {
           blockOrderStub.inverseSide = 'ASK'
           ltcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(4000).plus(activeOutboundAmount)).resolves(true)
-          btcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), {outbound: false}).resolves(true)
+          btcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
         })
 
         it('throws if the market is not in the orderbook', () => {
@@ -911,7 +911,7 @@ describe('BlockOrderWorker', () => {
           await worker.checkFundsAreSufficient(blockOrderStub)
 
           expect(btcEngine.isBalanceSufficient).to.have.been.calledOnce()
-          expect(btcEngine.isBalanceSufficient).to.have.been.calledWith(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), {outbound: false})
+          expect(btcEngine.isBalanceSufficient).to.have.been.calledWith(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), { outbound: false })
         })
 
         it('throws if the outbound balance is greater than the amount they have in the outbound channel', () => {
@@ -921,7 +921,7 @@ describe('BlockOrderWorker', () => {
         })
 
         it('throws the inbound balance is greater than the amount the relayer has in the inbound channel', () => {
-          btcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), {outbound: false}).resolves(false)
+          btcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), { outbound: false }).resolves(false)
 
           return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in inbound BTC channel to create order')
         })
@@ -937,7 +937,7 @@ describe('BlockOrderWorker', () => {
           outboundAddress = 'bolt:tttasdf'
           inboundAddress = 'bolt:asdf1234'
           btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(4000).plus(activeOutboundAmount)).resolves(true)
-          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), {outbound: false}).resolves(true)
+          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
         })
 
         it('gets the averagePrice of orders given the side and the depth', async () => {
@@ -957,18 +957,18 @@ describe('BlockOrderWorker', () => {
           await worker.checkFundsAreSufficient(blockOrderStub)
 
           expect(ltcEngine.isBalanceSufficient).to.have.been.calledOnce()
-          expect(ltcEngine.isBalanceSufficient).to.have.been.calledWith(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), {outbound: false})
+          expect(ltcEngine.isBalanceSufficient).to.have.been.calledWith(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), { outbound: false })
         })
 
         it('throws if the inboundAmount is greater than the amount they have in the inbound channel', () => {
-          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), {outbound: false}).resolves(false)
+          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), { outbound: false }).resolves(false)
           btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(4000).plus(activeOutboundAmount)).resolves(true)
 
           return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in inbound LTC channel to create order')
         })
 
         it('throws if the outbound is greater than the amount the relayer has in the outbound channel', () => {
-          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), {outbound: false}).resolves(true)
+          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
           btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(4000).plus(activeOutboundAmount)).resolves(false)
 
           return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in outbound BTC channel to create order')
@@ -1208,6 +1208,73 @@ describe('BlockOrderWorker', () => {
 
       expect(store.put).to.have.been.calledOnce()
       expect(store.put).to.have.been.calledWith(blockOrderKey, blockOrderValue)
+    })
+  })
+
+  describe('#cancelActiveOrders', () => {
+    let worker
+    let getBlockOrders
+    let market
+    let cancelBlockOrder
+    let unsuccessfulBlockOrder
+    let successfulBlockOrder
+
+    beforeEach(() => {
+      market = 'BTC/LTC'
+      unsuccessfulBlockOrder = {
+        isActive: true,
+        id: 'unsuccessfulId'
+      }
+      successfulBlockOrder = {
+        isActive: true,
+        id: 'successfulId'
+      }
+      cancelBlockOrder = sinon.stub()
+      cancelBlockOrder.withArgs(unsuccessfulBlockOrder.id).rejects()
+      cancelBlockOrder.withArgs(successfulBlockOrder.id).resolves()
+
+      getBlockOrders = sinon.stub().resolves([successfulBlockOrder, unsuccessfulBlockOrder])
+
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.getBlockOrders = getBlockOrders
+      worker.cancelBlockOrder = cancelBlockOrder
+    })
+
+    it('gets all block orders', async () => {
+      await worker.cancelActiveOrders(market)
+
+      expect(getBlockOrders).to.have.been.called()
+      expect(getBlockOrders).to.have.been.calledWith(market)
+    })
+
+    it('filters out inactive block orders', async () => {
+      const inactiveBlockOrder = {
+        isActive: false,
+        id: 'inactiveBlockOrder'
+      }
+      getBlockOrders.resolves([successfulBlockOrder, unsuccessfulBlockOrder, inactiveBlockOrder])
+      await worker.cancelActiveOrders(market)
+
+      expect(cancelBlockOrder).to.not.have.been.calledWith(inactiveBlockOrder.id)
+    })
+
+    it('attempts to cancel each block order', async () => {
+      await worker.cancelActiveOrders(market)
+
+      expect(cancelBlockOrder).to.have.been.calledWith(successfulBlockOrder.id)
+      expect(cancelBlockOrder).to.have.been.calledWith(unsuccessfulBlockOrder.id)
+    })
+
+    it('returns successfully cancelled block order ids', async () => {
+      const res = await worker.cancelActiveOrders(market)
+
+      expect(res.cancelledOrders).to.eql(['successfulId'])
+    })
+
+    it('returns unsuccessfully cancelled block order ids', async () => {
+      const res = await worker.cancelActiveOrders(market)
+
+      expect(res.failedToCancelOrders).to.eql(['unsuccessfulId'])
     })
   })
 
@@ -1773,7 +1840,7 @@ describe('BlockOrderWorker', () => {
     })
 
     it('throws if the order being filled is the users own order', () => {
-      getRecords.resolves([{orderId: '1'}])
+      getRecords.resolves([{ orderId: '1' }])
       const worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       worker.ordersByOrderId = ordersByOrderId
       return expect(worker._fillOrders(blockOrder, orders, targetDepth)).to.eventually.be.rejectedWith(`Cannot fill own order 1`)

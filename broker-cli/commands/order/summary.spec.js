@@ -42,11 +42,11 @@ describe('summary', () => {
       blockOrderId: 'asdfasdf',
       status: 'FAILED'
     }
-    getBlockOrdersStub = sinon.stub().resolves({blockOrders: [order]})
+    getBlockOrdersStub = sinon.stub().resolves({ blockOrders: [order] })
 
     brokerStub = sinon.stub()
     brokerStub.prototype.orderService = { getBlockOrders: getBlockOrdersStub }
-    instanceTableStub = {push: sinon.stub()}
+    instanceTableStub = { push: sinon.stub() }
     tableStub = sinon.stub().returns(instanceTableStub)
     revert = program.__set__('BrokerDaemonClient', brokerStub)
     revertTable = program.__set__('Table', tableStub)
@@ -64,7 +64,7 @@ describe('summary', () => {
 
   it('makes a request to the broker', async () => {
     await summary(args, opts, logger)
-    expect(getBlockOrdersStub).to.have.been.calledWith({market})
+    expect(getBlockOrdersStub).to.have.been.calledWith({ market })
   })
 
   it('adds orders to the table', async () => {
@@ -84,7 +84,7 @@ describe('summary', () => {
       blockOrderId: 'asdfasdf',
       status: 'FAILED'
     }
-    brokerStub.prototype.orderService = { getBlockOrders: sinon.stub().resolves({blockOrders: [order]}) }
+    brokerStub.prototype.orderService = { getBlockOrders: sinon.stub().resolves({ blockOrders: [order] }) }
     await summary(args, opts, logger)
 
     expect(instanceTableStub.push).to.have.been.called()

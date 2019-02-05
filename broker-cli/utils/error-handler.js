@@ -5,7 +5,7 @@ const { status } = require('grpc')
  * Takes in an error object and throws a friendly error if the broker daemon is down
  *
  * @param {Error} error
- * @return {void}
+ * @returns {string}
  */
 function handleError (error) {
   if (error.code === status.UNAVAILABLE) {

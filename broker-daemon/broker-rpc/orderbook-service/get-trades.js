@@ -40,7 +40,7 @@ async function getTrades ({ params, logger, orderbooks }, { GetTradesResponse })
     const trades = await orderbook.getTrades(since, limit)
     logger.info(`Formatting trades for ${market} since ${since}, limit: ${limit}`)
     const formattedTrades = trades.filter(trade => trade.eventType === MarketEvent.TYPES.FILLED).map(t => t.tradeInfo(market))
-    return new GetTradesResponse({trades: formattedTrades})
+    return new GetTradesResponse({ trades: formattedTrades })
   } catch (err) {
     logger.error('Received error when grabbing trades', { error: err.stack })
     throw new Error(err.message)

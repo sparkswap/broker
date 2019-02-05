@@ -17,8 +17,6 @@ describe('RelayerClient', () => {
   let MakerService
   let TakerService
   let OrderBookService
-  let HealthService
-  let InfoService
   let PaymentChannelNetworkService
   let AdminService
 
@@ -66,9 +64,7 @@ describe('RelayerClient', () => {
     MakerService = sinon.stub()
     TakerService = sinon.stub()
     OrderBookService = sinon.stub()
-    HealthService = sinon.stub()
     PaymentChannelNetworkService = sinon.stub()
-    InfoService = sinon.stub()
     AdminService = sinon.stub()
 
     pathResolve = sinon.stub()
@@ -81,9 +77,7 @@ describe('RelayerClient', () => {
       MakerService,
       TakerService,
       OrderBookService,
-      HealthService,
       PaymentChannelNetworkService,
-      InfoService,
       AdminService,
       WatchMarketResponse: {
         ResponseType
@@ -137,18 +131,28 @@ describe('RelayerClient', () => {
       expect(relayer).to.have.property('identity', fakeId)
     })
 
-    it('creates ssl credentials', () => {
+    it('creates ssl credentials with local file if in development', () => {
       const fakePath = '/path/to/root.pem'
       const fakeCert = 'fakeydo'
       readFileSync.returns(fakeCert)
+
+      RelayerClient.__set__('PRODUCTION', false)
 
       // eslint-disable-next-line
       new RelayerClient(idKeyPath, { host: relayerHost, certPath: fakePath }, logger)
 
       expect(readFileSync).to.have.been.calledOnce()
       expect(readFileSync).to.have.been.calledWith(fakePath)
-      expect(createSslStub).to.have.been.calledOnce()
       expect(createSslStub).to.have.been.calledWith(fakeCert)
+    })
+
+    it('creates ssl credentials', () => {
+      RelayerClient.__set__('PRODUCTION', true)
+
+      // eslint-disable-next-line
+      new RelayerClient(idKeyPath, { host: relayerHost }, logger)
+
+      expect(createSslStub).to.have.been.calledOnce()
     })
 
     it('sets ssl credentials for the services', () => {
@@ -172,8 +176,6 @@ describe('RelayerClient', () => {
       it('creates a makerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, MakerService, fakeCreds))
       it('creates a takerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, TakerService, fakeCreds))
       it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(relayer.address, OrderBookService, fakeCreds))
-      it('creates a healthService', () => expect(callerStub).to.have.been.calledWith(relayer.address, HealthService, fakeCreds))
-      it('creates an infoService', () => expect(callerStub).to.have.been.calledWith(relayer.address, InfoService, fakeCreds))
       it('creates an adminService', () => expect(callerStub).to.have.been.calledWith(relayer.address, AdminService))
     })
   })
