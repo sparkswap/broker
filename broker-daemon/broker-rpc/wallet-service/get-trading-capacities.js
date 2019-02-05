@@ -3,7 +3,7 @@ const { Big } = require('../../utils')
 
 /**
  * @constant
- * @type {Object<key, String>}
+ * @type {Object<key, string>}
  * @default
  */
 const SIDES = Object.freeze({
@@ -24,24 +24,24 @@ const CAPACITY_STATE = Object.freeze({
 /**
  * Grabs the total balance and total channel balance from a specified engine
  *
- * @param {Engine} SparkSwap Payment Channel Network Engine
- * @param {String} symbol
- * @param {String} outstandingSendCapacity - amount of outstanding send capacity for the given currency
- * @param {String} outstandingReceiveCapacity - amount of outstanding receive capacity for the given currency
+ * @param {Engine} engine - Sparkswap Payment Channel Network Engine
+ * @param {string} symbol
+ * @param {string} outstandingSendCapacity - amount of outstanding send capacity for the given currency
+ * @param {string} outstandingReceiveCapacity - amount of outstanding receive capacity for the given currency
  * @param {Object} opts
  * @param {Logger} opts.logger
- * @return {Object} res
- * @return {String} res.symbol - currency symbol e.g. BTC
- * @return {String} res.status - OK for success or FAILED if engine call fails
- * @return {Boolean} res.error - true if errors occurred during request for capacities
- * @return {String} res.availableReceiveCapacity
- * @return {String} res.availableSendCapacity
- * @return {String} res.pendingSendCapacity
- * @return {String} res.pendingReceiveCapacity
- * @return {String} res.inactiveSendCapacity
- * @return {String} res.inactiveReceiveCapacity
- * @return {String} res.outstandingReceiveCapacity
- * @return {String} res.outstandingSendCapacity
+ * @returns {Object} res
+ * @returns {string} res.symbol - currency symbol e.g. BTC
+ * @returns {string} res.status - OK for success or FAILED if engine call fails
+ * @returns {boolean} res.error - true if errors occurred during request for capacities
+ * @returns {string} res.availableReceiveCapacity
+ * @returns {string} res.availableSendCapacity
+ * @returns {string} res.pendingSendCapacity
+ * @returns {string} res.pendingReceiveCapacity
+ * @returns {string} res.inactiveSendCapacity
+ * @returns {string} res.inactiveReceiveCapacity
+ * @returns {string} res.outstandingReceiveCapacity
+ * @returns {string} res.outstandingSendCapacity
  */
 async function getCapacities (engine, symbol, outstandingSendCapacity, outstandingReceiveCapacity, { logger }) {
   const { quantumsPerCommon } = currencies.find(({ symbol: configSymbol }) => configSymbol === symbol) || {}
@@ -97,8 +97,9 @@ async function getCapacities (engine, symbol, outstandingSendCapacity, outstandi
  * @param {Object} request.orderbooks - initialized orderbooks
  * @param {BlockOrderWorker} request.blockOrderWorker
  * @param {Logger} request.logger
- * @param {function} responses.GetTradingCapacitiesResponse
- * @return {GetTradingCapacitiesResponse}
+ * @param {Object} responses
+ * @param {Function} responses.GetTradingCapacitiesResponse
+ * @returns {GetTradingCapacitiesResponse}
  */
 async function getTradingCapacities ({ params, engines, orderbooks, blockOrderWorker, logger }, { GetTradingCapacitiesResponse }) {
   const { market } = params

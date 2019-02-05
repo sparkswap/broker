@@ -41,7 +41,7 @@ describe('healthCheck', () => {
         { market: 'ABC/XYZ', status: 'NOT_SYNCED' }
       ]
     })
-    instanceTableStub = {push: sinon.stub()}
+    instanceTableStub = { push: sinon.stub() }
     tableStub = sinon.stub().returns(instanceTableStub)
     revertTable = program.__set__('Table', tableStub)
 

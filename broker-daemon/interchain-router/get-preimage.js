@@ -4,9 +4,9 @@ const fromStorage = Order.fromStorage.bind(Order)
 
 /**
  * Get a routing entry (an order) for a specified swap hash
- * @param  {SublevelIndex} ordersByHash Orders for which the broker is the maker, indexed by their swap hash
- * @param  {String}        swapHash     swap hash of the order to retrieve
- * @return {Order}
+ * @param {SublevelIndex} ordersByHash - Orders for which the broker is the maker, indexed by their swap hash
+ * @param {string}        swapHash     - swap hash of the order to retrieve
+ * @returns {Order}
  */
 async function getRoutingEntry (ordersByHash, swapHash) {
   const range = {
@@ -33,10 +33,10 @@ async function getRoutingEntry (ordersByHash, swapHash) {
 
 /**
  * Convert the time lock of the HTLC to a delta time lock expressed in seconds
- * @param  {Engine} inboundEngine engine of the inbound node
- * @param  {String} timeLock      time lock extended to the inbound node in blocks
- * @param  {String} bestHeight    current height of the inbound node's blockchain
- * @return {String} Time, in seconds, of the extended time lock
+ * @param {Engine} inboundEngine - engine of the inbound node
+ * @param {string} timeLock      - time lock extended to the inbound node in blocks
+ * @param {string} bestHeight    - current height of the inbound node's blockchain
+ * @returns {string} Time, in seconds, of the extended time lock
  */
 function timeLockDeltaInSeconds (inboundEngine, timeLock, bestHeight) {
   const timeLockDelta = Big(timeLock).minus(bestHeight)
@@ -51,15 +51,17 @@ function timeLockDeltaInSeconds (inboundEngine, timeLock, bestHeight) {
 /**
  * Gets a preimage from another chain by making a payment if the
  * inbound preimage meets its criteria.
- *
- * @param  {Object}             request.params   Parameters of the request
- * @param  {Function}           request.send     Send responses back to the client
- * @param  {Function}           request.onCancel Handle cancellations of the stream by the client
- * @param  {Function}           request.onError  Handle errors in the stream with the client
- * @param  {SublevelIndex}      request.ordersByHash Orders for which the broker is the maker, indexed by their swap hash
- * @param  {Map<String, Engine} request.engines All available engines
- * @param  {Object}             request.logger
  * @todo handle client cancellations and errors and general failures during transition
+ * @param {Object} request
+ * @param  {Object} request.params   - Parameters of the request
+ * @param  {Function} request.send     - Send responses back to the client
+ * @param  {Function} request.onCancel - Handle cancellations of the stream by the client
+ * @param  {Function} request.onError  - Handle errors in the stream with the client
+ * @param  {SublevelIndex} request.ordersByHash - Orders for which the broker is the maker, indexed by their swap hash
+ * @param  {Map<Symbol, Engine>} request.engines - All available engines
+ * @param  {Object} [request.logger=console]
+ * @returns {Object} response
+ * @returns {string} response.paymentPreimage
  */
 async function getPreimage ({ params, send, onCancel, onError, ordersByHash, engines, logger = console }) {
   const {

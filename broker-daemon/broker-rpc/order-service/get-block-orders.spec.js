@@ -11,7 +11,7 @@ describe('getBlockOrders', () => {
   let params
 
   beforeEach(() => {
-    params = {market: 'BTC/LTC'}
+    params = { market: 'BTC/LTC' }
     GetBlockOrdersResponse = sinon.stub()
 
     blockOrder = {
@@ -47,6 +47,6 @@ describe('getBlockOrders', () => {
 
     expect(blockOrder.serializeSummary).to.have.been.calledOnce()
     expect(anotherBlockOrder.serializeSummary).to.have.been.calledOnce()
-    expect(response).to.eql({blockOrders: [firstSerialized, secondSerialized]})
+    expect(response).to.eql({ blockOrders: [firstSerialized, secondSerialized] })
   })
 })

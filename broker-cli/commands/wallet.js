@@ -3,12 +3,21 @@
  * @module broker-cli/wallet
  */
 
-const Table = require('cli-table')
+const Table = require('cli-table2')
 require('colors')
 
 const BrokerDaemonClient = require('../broker-daemon-client')
-const { validations, askQuestion, Big, handleError } = require('../utils')
-const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../utils/strings')
+const {
+  validations,
+  askQuestion,
+  askPassword,
+  Big,
+  handleError
+} = require('../utils')
+const {
+  RPC_ADDRESS_HELP_STRING,
+  MARKET_NAME_HELP_STRING
+} = require('../utils/strings')
 const { currencies: currencyConfig } = require('../config')
 
 /**
@@ -31,7 +40,7 @@ const SUPPORTED_SYMBOLS = Object.freeze(
  * Supported commands for `sparkswap wallet`
  *
  * @constant
- * @type {Object<key, String>}
+ * @type {Object}
  * @default
  */
 const SUPPORTED_COMMANDS = Object.freeze({
@@ -53,9 +62,9 @@ const SUPPORTED_COMMANDS = Object.freeze({
  * @function
  * @param {Object} args
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function balance (args, opts, logger) {
   const { rpcAddress } = opts
@@ -109,9 +118,9 @@ async function balance (args, opts, logger) {
  * @function
  * @param {Object} args
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function newDepositAddress (args, opts, logger) {
   const { symbol } = args
@@ -136,10 +145,10 @@ async function newDepositAddress (args, opts, logger) {
  * @param {Object} args
  * @param {Object} args.symbol
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.market] market to commit funds to
+ * @param {string} [opts.rpcAddress] - broker rpc address
+ * @param {string} [opts.market] - market to commit funds to
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function commit (args, opts, logger) {
   const { symbol, amount } = args
@@ -214,9 +223,9 @@ async function commit (args, opts, logger) {
  * @param {Object} args
  * @param {Object} args.symbol
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function networkAddress (args, opts, logger) {
   const { symbol } = args
@@ -251,9 +260,9 @@ const NETWORK_STATUSES = Object.freeze({
  * than 0. Will return Not Available if balance is empty
  *
  * @function
- * @param {String} balance
- * @param {String} status
- * @return {String} balance - formatted with size and color
+ * @param {string} balance
+ * @param {string} status
+ * @returns {string} balance - formatted with size and color
  */
 function formatBalance (balance, status) {
   // If there were errors when receiving balances, the balance will come back
@@ -283,7 +292,7 @@ function formatBalance (balance, status) {
 
 /**
  * @constant
- * @type {Object<key, String>}
+ * @type {Object}
  * @default
  */
 const CAPACITY_STATUSES = Object.freeze({
@@ -298,17 +307,17 @@ const CAPACITY_STATUSES = Object.freeze({
  * @function
  * @param {Object} args
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.market] market name
+ * @param {string} [opts.rpcAddress] - broker rpc address
+ * @param {string} [opts.market] - market name
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function networkStatus (args, opts, logger) {
   const { market, rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({market})
+    const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({ market })
 
     const baseSymbol = baseSymbolCapacities.symbol.toUpperCase()
     const counterSymbol = counterSymbolCapacities.symbol.toUpperCase()
@@ -364,10 +373,10 @@ async function networkStatus (args, opts, logger) {
  * @param {Object} args
  * @param {Object} args.symbol
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.market] market name, i.e BTC/LTC
+ * @param {string} [opts.rpcAddress] - broker rpc address
+ * @param {string} [opts.market] - market name, i.e BTC/LTC
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function release (args, opts, logger) {
   const { market } = args
@@ -433,17 +442,17 @@ async function release (args, opts, logger) {
  *
  * @function
  * @param {Object} args
- * @param {String} args.symbol
- * @param {String} args.address
- * @param {String} args.amount
+ * @param {string} args.symbol
+ * @param {string} args.address
+ * @param {string} args.amount
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.walletAddress] wallet address to move funds to
+ * @param {string} [opts.rpcAddress] - broker rpc address
+ * @param {string} [opts.walletAddress] - wallet address to move funds to
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function withdraw (args, opts, logger) {
-  const {symbol, address, amount} = args
+  const { symbol, address, amount } = args
   const { rpcAddress } = opts
 
   try {
@@ -467,10 +476,10 @@ async function withdraw (args, opts, logger) {
  *
  * @function
  * @param {Object} args
- * @param {String} args.symbol
+ * @param {string} args.symbol
  * @param {Object} opts
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function create (args, opts, logger) {
   const { symbol } = args
@@ -479,11 +488,11 @@ async function create (args, opts, logger) {
   try {
     const client = new BrokerDaemonClient(rpcAddress)
 
-    const password = await askQuestion(`Please enter a password:`, { silent: true })
-    const confirmPass = await askQuestion(`Please confirm password:`, { silent: true })
+    const { password, confirm } = await askPassword()
 
-    if (password !== confirmPass) {
-      return logger.error('Error: Passwords did not match, please try again'.red)
+    // Super basic check for if passwords match
+    if (password !== confirm) {
+      return logger.error('Passwords did not match, please try again'.red)
     }
 
     const { recoverySeed } = await client.walletService.createWallet({ symbol, password })
@@ -506,11 +515,11 @@ async function create (args, opts, logger) {
  *
  * @function
  * @param {Object} args
- * @param {String} args.symbol
+ * @param {string} args.symbol
  * @param {Object} opts
- * @param {String} [opts.rpcAddress=null]
+ * @param {string} [opts.rpcAddress=null]
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function unlock (args, opts, logger) {
   const { symbol } = args

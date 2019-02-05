@@ -19,7 +19,7 @@ describe('exponentialBackoff', () => {
     delayTime = 100
     logger = { error: sinon.stub() }
     delay = sinon.stub().resolves()
-    logOptions = {info: 'info'}
+    logOptions = { info: 'info' }
     exponentialBackoff.__set__('logger', logger)
     exponentialBackoff.__set__('delay', delay)
   })

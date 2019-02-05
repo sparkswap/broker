@@ -262,7 +262,7 @@ describe('cli wallet', () => {
         outstandingSendCapacity: '0.000001'
       }
 
-      getTradingCapacitiesStub = sinon.stub().resolves({baseSymbolCapacities, counterSymbolCapacities})
+      getTradingCapacitiesStub = sinon.stub().resolves({ baseSymbolCapacities, counterSymbolCapacities })
 
       tableStub = sinon.stub()
       tablePushStub = sinon.stub()
@@ -439,7 +439,7 @@ describe('cli wallet', () => {
       ]
       walletBalanceStub = sinon.stub().resolves({ balances })
       commitStub = sinon.stub()
-      askQuestionStub = sinon.stub().returns('Y')
+      askQuestionStub = sinon.stub().resolves('Y')
       opts = { rpcAddress, market }
       logger = {
         info: sinon.stub(),
@@ -555,14 +555,22 @@ describe('cli wallet', () => {
       const status = 'FAILED'
       const symbol = 'BTC'
       const error = 'Engine is locked'
-      const channel = {
+      const base = {
         symbol,
         status,
         error: ''
       }
-      releaseStub.resolves({ base: channel, counter: channel })
+      const counter = {
+        symbol,
+        status,
+        error
+      }
+
+      releaseStub.resolves({ base, counter })
       await release(args, opts, logger)
-      expect(logger.info).to.have.been.calledWith(sinon.match(symbol, status, error))
+      expect(logger.info).to.have.been.calledWith(sinon.match(symbol))
+      expect(logger.info).to.have.been.calledWith(sinon.match(status))
+      expect(logger.info).to.have.been.calledWith(sinon.match(error))
     })
 
     it('displays an informative message to user on errors if channels can be force released', async () => {
@@ -628,7 +636,7 @@ describe('cli wallet', () => {
       args = { symbol, amount, address }
       opts = { rpcAddress }
       txid = '1234'
-      withdrawStub = sinon.stub().resolves({txid: '1234'})
+      withdrawStub = sinon.stub().resolves({ txid: '1234' })
       askQuestionStub = sinon.stub().returns('Y')
       logger = { info: sinon.stub(), error: sinon.stub() }
 
@@ -643,7 +651,7 @@ describe('cli wallet', () => {
 
     it('calls the daemon to withdraw channels in the given market', async () => {
       await withdraw(args, opts, logger)
-      expect(withdrawStub).to.have.been.calledWith({amount, symbol, address})
+      expect(withdrawStub).to.have.been.calledWith({ amount, symbol, address })
     })
 
     it('asks the user if they are ok to withdraw channels', async () => {
@@ -671,7 +679,7 @@ describe('cli wallet', () => {
     let createWalletStub
     let seeds
     let errorStub
-    let askQuestionStub
+    let askPasswordStub
     let symbol
     let infoStub
 
@@ -680,7 +688,7 @@ describe('cli wallet', () => {
     beforeEach(() => {
       errorStub = sinon.stub()
       infoStub = sinon.stub()
-      askQuestionStub = sinon.stub()
+      askPasswordStub = sinon.stub()
       symbol = 'BTC'
       args = {
         symbol
@@ -699,26 +707,25 @@ describe('cli wallet', () => {
       }
 
       program.__set__('BrokerDaemonClient', daemonStub)
-      program.__set__('askQuestion', askQuestionStub)
+      program.__set__('askPassword', askPasswordStub)
     })
 
     it('logs an error if passwords do not match', async () => {
-      askQuestionStub.onFirstCall().resolves('realpassword')
-      askQuestionStub.onSecondCall().resolves('relpassword')
+      askPasswordStub.resolves({ password: 'realpassword', confirm: 'jsdfkjsdf' })
       await create(args, opts, logger)
       expect(errorStub).to.have.been.calledWith(sinon.match('Passwords did not match'))
     })
 
     it('creates a wallet', async () => {
       const password = 'password'
-      askQuestionStub.resolves(password)
+      askPasswordStub.resolves({ password, confirm: password })
       await create(args, opts, logger)
       expect(createWalletStub).to.have.been.calledWith({ symbol, password })
     })
 
     it('outputs a cipher seed', async () => {
       const password = 'password'
-      askQuestionStub.resolves(password)
+      askPasswordStub.resolves({ password, confirm: password })
       await create(args, opts, logger)
       expect(infoStub).to.have.been.calledWith(seeds)
     })

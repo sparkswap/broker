@@ -1,10 +1,7 @@
 ##########################################
 #
-# sparkswap Broker-CLI and Broker-Daemon
+# Sparkswap Broker-CLI and Broker-Daemon
 # https://sparkswap.com
-#
-# The broker and engines currently default to TestNet. To adjust settings, please
-# look at the associated `.env` files
 #
 # Troubleshooting GRPC:
 # - GRPC_VERBOSITY=INFO
@@ -16,7 +13,7 @@ version: '2.4'
 
 services:
   sparkswapd:
-    image: sparkswap_sparkswapd:latest
+    image: sparkswap/broker:0.5.0-beta
     depends_on:
       - lnd_btc
       - lnd_ltc
@@ -27,8 +24,8 @@ services:
       - 'shared:/shared'
       # Persistent certs/keys for broker
       - '${SECURE_PATH}:/secure'
-
     environment:
+      - NODE_ENV=production
       - DATA_DIR=${DATA_DIR:-}
       - NETWORK=${NETWORK}
       - RPC_ADDRESS=${RPC_ADDRESS:-}
@@ -40,7 +37,6 @@ services:
       - ID_PRIV_KEY=${ID_PRIV_KEY:-}
       - ID_PUB_KEY=${ID_PUB_KEY:-}
       - RELAYER_RPC_HOST=${RELAYER_RPC_HOST}
-      - RELAYER_CERT_HOST=${RELAYER_CERT_HOST:-}
       - RELAYER_CERT_PATH=${RELAYER_CERT_PATH:-}
     ports:
       - '27492:27492'
@@ -50,7 +46,7 @@ services:
     working_dir: '/home/app'
 
   lnd_btc:
-    image: sparkswap_lnd_btc:latest
+    image: sparkswap/lnd_btc:0.4.0-beta
     ports:
       - '10113:9735'
     environment:
@@ -73,7 +69,7 @@ services:
         max-size: 50m
 
   lnd_ltc:
-    image: sparkswap_lnd_ltc:latest
+    image: sparkswap/lnd_ltc:0.4.0-beta
     ports:
       - '10114:9735'
     environment:
