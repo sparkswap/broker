@@ -162,8 +162,8 @@ if [ "$NO_DOCKER" == "false" ]; then
   # steps that the container itself will have old code
   # TODO: Tag this to a release?
   BROKER_BRANCH='master'
-  BROKER_VERSION=`git ls-remote https://github.com/sparkswap/broker | grep "refs/heads/${BROKER_BRANCH}" | cut -f 1`
-  docker build -t sparkswap_sparkswapd --build-arg BROKER_VERSION=BROKER_COMMIT_SHA -f ./docker/sparkswapd/Dockerfile ./
+  BROKER_VERSION=`git ls-remote https://github.com/sparkswap/broker | grep "refs/heads/$BROKER_BRANCH" | cut -f 1`
+  docker build -t sparkswap_sparkswapd --build-arg BROKER_VERSION=$BROKER_VERSION -f ./docker/sparkswapd/Dockerfile ./
 fi
 
 if [ -f docker-compose.override.yml ]; then

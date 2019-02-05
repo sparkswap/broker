@@ -10,9 +10,10 @@ RUN apk --no-cache add bash ca-certificates g++ git make openssl python wget && 
 
 WORKDIR /home/app
 
-ARG BROKER_VERSION=${BROKER_VERSION:-master}
+ARG BROKER_VERSION=${BROKER_VERSION:-v0.4.0-beta}
 
-RUN git clone -b ${BROKER_VERSION} https://github.com/sparkswap/broker.git .
+RUN git clone https://github.com/sparkswap/broker.git . && \
+    git checkout ${BROKER_VERSION}
 
 RUN npm install --quiet --production
 # --no-docker is set so we don't get into an infinite loop
