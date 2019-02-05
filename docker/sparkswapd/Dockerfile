@@ -2,8 +2,6 @@ FROM node:8.11-alpine as builder
 
 LABEL maintainer="SparkSwap <dev@sparkswap.com>"
 
-ARG BROKER_VERSION='v0.4.0-beta'
-
 RUN apk update
 RUN apk --no-cache add bash ca-certificates g++ git make openssl python wget && \
     wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
@@ -12,7 +10,10 @@ RUN apk --no-cache add bash ca-certificates g++ git make openssl python wget && 
 
 WORKDIR /home/app
 
-RUN git clone -b ${BROKER_VERSION} https://github.com/sparkswap/broker.git .
+ARG BROKER_VERSION=${BROKER_VERSION:-v0.4.1-beta}
+
+RUN git clone https://github.com/sparkswap/broker.git . && \
+    git checkout ${BROKER_VERSION}
 
 RUN npm install --quiet --production
 # --no-docker is set so we don't get into an infinite loop
