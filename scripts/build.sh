@@ -79,9 +79,6 @@ echo ""
 echo "It's time to BUILD! All resistance is futile."
 echo ""
 
-echo "Checking broker.proto file for issues"
-npm run broker-proto
-
 echo "Downloading relayer proto files"
 # Blow away proto directory and recreate or git-clone will yell at us
 if [ -d ./proto ]; then
