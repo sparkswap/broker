@@ -40,7 +40,6 @@ services:
       - ID_PRIV_KEY=${ID_PRIV_KEY:-}
       - ID_PUB_KEY=${ID_PUB_KEY:-}
       - RELAYER_RPC_HOST=${RELAYER_RPC_HOST}
-      - RELAYER_CERT_HOST=${RELAYER_CERT_HOST:-}
       - RELAYER_CERT_PATH=${RELAYER_CERT_PATH:-}
     ports:
       - '27492:27492'
