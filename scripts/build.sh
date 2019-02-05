@@ -26,6 +26,7 @@ echo "░  ░  ░  ░░         ░   ▒     ░░   ░ ░ ░░ ░ �
 echo "      ░                 ░  ░   ░     ░  ░         ░      ░          ░  ░         ";
 echo "                                                                                 ";
 
+
 # Setting this env is ONLY required for a hosted broker setup.
 #
 # This address is used during the build process so that certs can be generated
@@ -160,7 +161,7 @@ if [ "$NO_DOCKER" == "false" ]; then
   # TODO: Tag this to a release?
   BROKER_BRANCH='master'
   BROKER_VERSION=`git ls-remote https://github.com/sparkswap/broker | grep "refs/heads/$BROKER_BRANCH" | cut -f 1`
-  docker build -t sparkswap_sparkswapd --build-arg BROKER_VERSION=$BROKER_VERSION -f ./docker/sparkswapd/Dockerfile ./
+  docker build -t sparkswap/broker:latest --build-arg BROKER_VERSION=$BROKER_VERSION -f ./docker/sparkswapd/Dockerfile ./
 fi
 
 if [ -f docker-compose.override.yml ]; then
