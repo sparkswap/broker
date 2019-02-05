@@ -8,9 +8,18 @@ version: '2.4'
 services:
   sparkswapd:
     volumes:
-      - './:/home/app/'
-      - '/home/app/node_modules'
-      - '/home/app/broker-cli/node_modules'
+      - './broker-daemon:/home/app/broker-daemon'
+      - './scripts:/home/app/scripts'
+      - './proto:/home/app/proto'
+      # CLI volume mounts for the broker container
+      # TODO: Change the directory structure of broker-cli so we dont have to
+      #       mount so many lines
+      - './broker-cli/bin:/home/app/broker-cli/bin'
+      - './broker-cli/broker-daemon-client:/home/app/broker-cli/broker-daemon-client'
+      - './broker-cli/commands:/home/app/broker-cli/commands'
+      - './broker-cli/proto:/home/app/broker-cli/proto'
+      - './broker-cli/scripts:/home/app/broker-cli/scripts'
+      - './broker-cli/utils:/home/app/broker-cli/utils'
     environment:
       - NODE_ENV=development
     # We use this to be able to have "hot reloading" with our application
