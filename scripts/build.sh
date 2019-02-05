@@ -155,7 +155,12 @@ if [ "$NO_DOCKER" == "false" ]; then
   # NOTE: The names specified with `-t` directly map to the service names in
   # the applicable services docker-compose file
   echo "Building broker docker images"
-  docker build -t sparkswap_sparkswapd -f ./docker/sparkswapd/Dockerfile ./
+  # We grab the latest commit of master because it is possible during the build
+  # steps that the container itself will have old code
+  # TODO: Tag this to a release?
+  BROKER_BRANCH='master'
+  BROKER_VERSION=`git ls-remote https://github.com/sparkswap/broker | grep "refs/heads/$BROKER_BRANCH" | cut -f 1`
+  docker build -t sparkswap_sparkswapd --build-arg BROKER_VERSION=$BROKER_VERSION -f ./docker/sparkswapd/Dockerfile ./
 fi
 
 if [ -f docker-compose.override.yml ]; then
