@@ -7,13 +7,12 @@
  * @param {Logger} request.logger
  * @param {Engine} request.engines
  * @param {Map<Orderbook>} request.orderbooks
- *
  * @param {Object} responses
- * @param {function} responses.GetSupportedMarketsResponse - constructor for GetSupportedMarketsResponse messages
- * @return {responses.GetSupportedMarketsResponse}
+ * @param {Function} responses.GetSupportedMarketsResponse
+ * @returns {GetSupportedMarketsResponse}
  */
 async function getSupportedMarkets ({ params, relayer, logger, engines, orderbooks }, { GetSupportedMarketsResponse }) {
-  const { markets } = await relayer.infoService.getMarkets({})
+  const { markets } = await relayer.adminService.getMarkets({})
 
   const supportedMarkets = markets.reduce((acc, market) => {
     if (!orderbooks.get(market)) return acc
@@ -28,7 +27,7 @@ async function getSupportedMarkets ({ params, relayer, logger, engines, orderboo
     acc.push(marketInfo)
     return acc
   }, [])
-  return new GetSupportedMarketsResponse({supportedMarkets})
+  return new GetSupportedMarketsResponse({ supportedMarkets })
 }
 
 module.exports = getSupportedMarkets

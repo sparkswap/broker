@@ -6,13 +6,10 @@ const { BlockOrderNotFoundError } = require('../../models/errors')
 const cancelBlockOrder = rewire(path.resolve(__dirname, 'cancel-block-order'))
 
 describe('cancelBlockOrder', () => {
-  let PublicError
   let blockOrderWorker
   let blockOrder
 
   beforeEach(() => {
-    PublicError = cancelBlockOrder.__get__('PublicError')
-
     blockOrder = {
       serialize: sinon.stub()
     }
@@ -21,18 +18,8 @@ describe('cancelBlockOrder', () => {
     }
   })
 
-  it('throws a Public Error if the block order is not found', () => {
+  it('throws an error if the block order is not found', () => {
     blockOrderWorker.cancelBlockOrder.rejects(new BlockOrderNotFoundError('fakeID', new Error('fake error')))
-
-    const params = {
-      blockOrderId: 'fakeID'
-    }
-
-    return expect(cancelBlockOrder({ params, blockOrderWorker })).to.eventually.be.rejectedWith(PublicError)
-  })
-
-  it('throws a non-public error if another error is encountered', () => {
-    blockOrderWorker.cancelBlockOrder.rejects()
 
     const params = {
       blockOrderId: 'fakeID'

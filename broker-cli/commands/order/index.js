@@ -15,12 +15,14 @@ const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../../util
 const SUPPORTED_COMMANDS = Object.freeze({
   STATUS: 'status',
   CANCEL: 'cancel',
-  SUMMARY: 'summary'
+  SUMMARY: 'summary',
+  CANCEL_ALL: 'cancel-all'
 })
 
 const status = require('./status')
 const cancel = require('./cancel')
 const summary = require('./summary')
+const cancelAll = require('./cancel-all')
 
 module.exports = (program) => {
   program
@@ -32,7 +34,7 @@ module.exports = (program) => {
     .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
-
+      const { market } = opts
       let blockOrderId
 
       switch (command) {
@@ -50,9 +52,12 @@ module.exports = (program) => {
           return cancel(args, opts, logger)
 
         case SUPPORTED_COMMANDS.SUMMARY:
-          const { market } = opts
           opts.market = validations.isMarketName(market)
           return summary(args, opts, logger)
+
+        case SUPPORTED_COMMANDS.CANCEL_ALL:
+          opts.market = validations.isMarketName(market)
+          return cancelAll(args, opts, logger)
       }
     })
     .command(`order ${SUPPORTED_COMMANDS.SUMMARY}`, 'View your orders')
@@ -64,6 +69,9 @@ module.exports = (program) => {
     .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
     .command(`order ${SUPPORTED_COMMANDS.CANCEL}`, 'Cancel a block order')
     .argument('<blockOrderId>', 'Block Order to cancel.', validations.isBlockOrderId)
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
+    .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
+    .command(`order ${SUPPORTED_COMMANDS.CANCEL_ALL}`, 'Cancel all block orders on market')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
 }

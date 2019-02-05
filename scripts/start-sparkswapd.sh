@@ -12,6 +12,7 @@ set -eu
 # We set value defaults here to mimic the behaivor of docker-compose in-case
 # this script is called outside of docker-compose
 DATA_DIR=${DATA_DIR:-""}
+NETWORK=${NETWORK:-""}
 RPC_ADDRESS=${RPC_ADDRESS:-""}
 RPC_USER=${RPC_USER:-""}
 RPC_PASS=${RPC_PASS:-""}
@@ -22,20 +23,16 @@ ID_PUB_KEY=${ID_PUB_KEY:-""}
 RELAYER_RPC_HOST=${RELAYER_RPC_HOST:-""}
 RELAYER_CERT_PATH=${RELAYER_CERT_PATH:-""}
 
-if [ "$NETWORK" == "mainnet" ]; then
-  echo "Using GRPC default certs"
-else
-  echo "Downloading Relayer cert..."
-  curl --silent -S --output /secure/relayer-root.pem "${RELAYER_CERT_HOST}/cert" || exit 1
-  echo "Relayer cert downloaded successfully"
-fi
-
 # For each parameter, we must check if the string is blank, because docker-compose
 # will automatically assign a blank string to the value and CLI validations will fail
 PARAMS=""
 
 if [ ! -z "$DATA_DIR" ]; then
   PARAMS="$PARAMS --data-dir=$DATA_DIR"
+fi
+
+if [ ! -z "$NETWORK" ]; then
+  PARAMS="$PARAMS --network=$NETWORK"
 fi
 
 if [ ! -z "$ID_PUB_KEY" ]; then

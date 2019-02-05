@@ -42,7 +42,7 @@ describe('get-payment-channel-network-address', () => {
   })
 
   describe('invalid engine type', () => {
-    const badParams = {symbol: 'BAD'}
+    const badParams = { symbol: 'BAD' }
 
     it('throws an error', () => {
       return expect(getPaymentChannelNetworkAddress({ logger, engines, params: badParams }, { GetPaymentChannelNetworkAddressResponse: responseStub })).to.eventually.be.rejectedWith('Unable to get network address')

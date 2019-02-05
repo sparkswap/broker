@@ -7,10 +7,9 @@ const { migrateStore } = require('../utils')
 class OrderbookIndex {
   /**
    * Create a new index from a base store and a store of Market Events
-   * @param  {Sublevel} store      Base store to sublevel from
-   * @param  {Sublevel} eventStore Store of MarketEvents to index
-   * @param  {String} marketName   Name of the market to index
-   * @return {OrderbookIndex}      Created, but unintialized index
+   * @param {sublevel} store      - Base store to sublevel from
+   * @param {sublevel} eventStore - Store of MarketEvents to index
+   * @param {string} marketName   - Name of the market to index
    */
   constructor (store, eventStore, marketName) {
     this.store = store.sublevel('orderbook')
@@ -20,7 +19,7 @@ class OrderbookIndex {
 
   /**
    * Rebuild the index and add hooks for new events
-   * @return {Promise} resolves when the index is rebuilt and ready for new events
+   * @returns {void} resolves when the index is rebuilt and ready for new events
    */
   async ensureIndex () {
     await this._clearIndex()
@@ -30,8 +29,9 @@ class OrderbookIndex {
 
   /**
    * Create an object that can be passed to Sublevel to create or remove an orderbook record
-   * @param {String} key   Key of the record to create an index op for
-   * @param {String} value Value of the record being added to the events store to create an index op for
+   * @param {string} key   - Key of the record to create an index op for
+   * @param {string} value - Value of the record being added to the events store to create an index op for
+   * @returns {Object} object for create/delete for use with sublevel
    */
   _addToIndexOperation (key, value) {
     const event = MarketEvent.fromStorage(key, value)
@@ -46,7 +46,7 @@ class OrderbookIndex {
 
   /**
    * Clear the existing index
-   * @return {Promise} resolves when the index is cleared
+   * @returns {Promise} resolves when the index is cleared
    */
   _clearIndex () {
     // remove any previously applied hooks
@@ -58,7 +58,7 @@ class OrderbookIndex {
 
   /**
    * Rebuild the index from events
-   * @return {Promise} resolves when the index is rebuilt
+   * @returns {Promise} resolves when the index is rebuilt
    */
   _rebuildIndex () {
     return migrateStore(this.eventStore, this.store, this._addToIndexOperation.bind(this))
@@ -66,6 +66,7 @@ class OrderbookIndex {
 
   /**
    * Create a hook for new events added to the store to modify the orderbook
+   * @returns {void}
    */
   _addIndexHook () {
     const indexHook = (dbOperation, add) => {

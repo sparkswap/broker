@@ -4,7 +4,7 @@ const ExternalPreimageService = require('./external-preimage-service')
 
 /**
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const PROTO_PATH = path.resolve(__dirname, 'rpc.proto')
@@ -12,14 +12,15 @@ const PROTO_PATH = path.resolve(__dirname, 'rpc.proto')
 /**
  * Interchain Router for retriving preimages from other payment channel networks
  *
- * @author SparkSwap
+ * @author Sparkswap
  */
 class InterchainRouter {
   /**
    * Create a new Interchain Router instance
-   * @param  {SublevelIndex} ordersByHash Index of orders for which we are the maker, indexed by their swap hash
-   * @param  {Object}        logger
-   * @return {InterchainRouter}
+   * @param {Object} args
+   * @param {SublevelIndex} args.ordersByHash - Index of orders for which we are the maker, indexed by their swap hash
+   * @param {Object} args.logger
+   * @param {Map<Symbol, Engine>} args.engines
    */
   constructor ({ ordersByHash, logger, engines }) {
     this.ordersByHash = ordersByHash
@@ -33,7 +34,7 @@ class InterchainRouter {
   /**
    * Binds a given rpc address for our grpc server
    *
-   * @param {String} host Hostname and port to listen on
+   * @param {string} host - Hostname and port to listen on
    * @returns {void}
    */
   listen (host) {
