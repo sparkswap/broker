@@ -7,7 +7,7 @@ const {
 
 const marketStats = rewire(path.resolve(__dirname, 'market-stats'))
 
-describe('cli info market-stats', () => {
+describe('cli market market-stats', () => {
   let opts
   let logger
   let rpcAddress
@@ -31,7 +31,7 @@ describe('cli info market-stats', () => {
     handleErrorStub = sinon.stub()
     getMarketStatsStub = sinon.stub()
     daemonStub = sinon.stub()
-    daemonStub.prototype.infoService = {
+    daemonStub.prototype.orderBookService = {
       getMarketStats: getMarketStatsStub
     }
 

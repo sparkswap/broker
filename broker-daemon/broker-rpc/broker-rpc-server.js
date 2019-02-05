@@ -6,13 +6,12 @@ const AdminService = require('./admin-service')
 const OrderService = require('./order-service')
 const OrderBookService = require('./orderbook-service')
 const WalletService = require('./wallet-service')
-const InfoService = require('./info-service')
 
 const { createBasicAuth, createHttpServer } = require('../utils')
 
 /**
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
@@ -21,7 +20,7 @@ const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
  * Whether we are starting this process in production based on the NODE_ENV
  *
  * @constant
- * @type {Boolean}
+ * @type {boolean}
  * @default
  */
 const IS_PRODUCTION = (process.env.NODE_ENV === 'production')
@@ -29,20 +28,19 @@ const IS_PRODUCTION = (process.env.NODE_ENV === 'production')
 /**
  * @class User-facing gRPC server for controling the BrokerDaemon
  *
- * @author SparkSwap
+ * @author Sparkswap
  */
 class BrokerRPCServer {
   /**
    * @param {Object} opts
    * @param {Logger} opts.logger
-   * @param {Map<String, Engine>} opts.engines
+   * @param {Map<string, Engine>} opts.engines
    * @param {RelayerClient} opts.relayer
    * @param {BlockOrderWorker} opts.blockOrderWorker
    * @param {Map<Orderbook>} opts.orderbooks
-   * @param {String} opts.privKeyPath - Path to private key for broker rpc
-   * @param {String} opts.pubKeyPath - Path to public key for broker rpc
-   * @param {Boolean} [opts.disableAuth=false]
-   * @return {BrokerRPCServer}
+   * @param {string} opts.privKeyPath - Path to private key for broker rpc
+   * @param {string} opts.pubKeyPath - Path to public key for broker rpc
+   * @param {boolean} [opts.disableAuth=false]
    */
   constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, pubKeyPath, privKeyPath, disableAuth = false, enableCors = false, rpcUser = null, rpcPass = null, rpcHttpProxyAddress, rpcAddress } = {}) {
     this.logger = logger
@@ -72,9 +70,6 @@ class BrokerRPCServer {
 
     this.walletService = new WalletService(this.protoPath, { logger, engines, relayer, orderbooks, blockOrderWorker, auth: this.auth })
     this.server.addService(this.walletService.definition, this.walletService.implementation)
-
-    this.infoService = new InfoService(this.protoPath, { logger, engines, relayer, orderbooks })
-    this.server.addService(this.infoService.definition, this.infoService.implementation)
   }
 
   get rpcHttpProxyHost () {
@@ -88,7 +83,7 @@ class BrokerRPCServer {
   /**
    * Binds a given rpc address for our gRPC server
    *
-   * @param {String} host
+   * @param {string} host
    * @returns {void}
    */
   listen (host) {
@@ -109,7 +104,7 @@ class BrokerRPCServer {
   /**
    * Creates gRPC server credentials for the broker rpc server
    *
-   * @return {grpc.Credentials}
+   * @returns {Object} grpc credentials
    */
   createCredentials () {
     if (this.disableAuth) {

@@ -72,7 +72,7 @@ describe('ask-question', () => {
 
       it('returns the cursor to the beginning of the line', () => {
         suppressInput(message, input)
-        expect(cursorStub).to.have.been.calledWith(sinon.match(processStub.stdout, 0))
+        expect(cursorStub).to.have.been.calledWith(processStub.stdout, 0)
       })
 
       it('rewrites the message to stdout', () => {

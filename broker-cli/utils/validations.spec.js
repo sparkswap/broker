@@ -7,7 +7,8 @@ const {
   areValidMarketNames,
   isFormattedPath,
   isBlockOrderId,
-  isDate
+  isDate,
+  isBlockchainNetwork
 } = require('./validations')
 
 describe('Validations', () => {
@@ -169,6 +170,17 @@ describe('Validations', () => {
     it('throws an error if the string can be parsed to a valid date', () => {
       const date = '2018-09-T13:10:53.0233343Z'
       expect(() => isDate(date)).to.throw(expectedError)
+    })
+  })
+
+  describe('isBlockchainNetwork', () => {
+    it('returns the network if it is valid', () => {
+      const network = 'mainnet'
+      expect(isBlockchainNetwork(network)).to.eql(network)
+    })
+
+    it('throws an error if the string can be parsed to a valid date', () => {
+      expect(() => isBlockchainNetwork('badnetwork')).to.throw('Invalid blockchain network')
     })
   })
 })

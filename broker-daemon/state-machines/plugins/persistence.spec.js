@@ -319,7 +319,7 @@ describe('StateMachinePersistence', () => {
 
         db = {
           put: sinon.stub().callsArgAsync(2),
-          get: sinon.stub().callsArgWithAsync(1, null, JSON.stringify({state: 'none'})),
+          get: sinon.stub().callsArgWithAsync(1, null, JSON.stringify({ state: 'none' })),
           createReadStream: sinon.stub().returns({ on: sinon.stub() })
         }
       })
@@ -348,7 +348,7 @@ describe('StateMachinePersistence', () => {
       beforeEach(() => {
         store = {
           put: sinon.stub().callsArgAsync(2),
-          get: sinon.stub().callsArgWithAsync(1, null, JSON.stringify({state: 'none'})),
+          get: sinon.stub().callsArgWithAsync(1, null, JSON.stringify({ state: 'none' })),
           createReadStream: sinon.stub().returns({ on: sinon.stub() })
         }
         data = function ({ store }) {

@@ -7,9 +7,14 @@
   "//": "WARNING: Only disable broker SSL during development",
   "disableAuth": false,
   "supportedEngineTypes": ["LND"],
+  "registerUrls": {
+    "mainnet": "https://sparkswap.com/register/",
+    "testnet": "https://sparkswap.com/register-sandbox/",
+    "regtest": "https://sparkswap.com/register-sandbox/"
+  },
   "relayer": {
     "rpcHost": "host.docker.internal:28492",
-    "certPath": "/secure/relayer-root.pem"
+    "certPath": "/secure/relayer-root-regtest-local.pem"
   },
   "rpc": {
     "address": "0.0.0.0:27492",

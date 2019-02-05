@@ -7,8 +7,10 @@ const config = rewire(path.resolve(__dirname, '..', 'config.json'))
 describe('sparkswapd', () => {
   let BrokerDaemon
   let argv
+  let network
 
   beforeEach(() => {
+    network = 'regtest'
     BrokerDaemon = sinon.stub()
     BrokerDaemon.prototype.initialize = sinon.stub()
 
@@ -16,7 +18,8 @@ describe('sparkswapd', () => {
 
     argv = [
       'node',
-      './broker-daemon/bin/sparkswapd'
+      './broker-daemon/bin/sparkswapd',
+      `--network=${network}`
     ]
   })
 
@@ -58,6 +61,7 @@ describe('sparkswapd', () => {
 
     const brokerOptions = {
       dataDir,
+      network,
       interchainRouterAddress,
       pubIdKeyPath,
       privIdKeyPath,
@@ -112,6 +116,18 @@ describe('sparkswapd', () => {
       sparkswapd(argv)
 
       expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ dataDir }))
+    })
+
+    it('provides a network', () => {
+      const newNetwork = 'mainnet'
+      // remove last object which should be the duplicate `--network` option
+      argv.pop()
+      argv.push('--network')
+      argv.push(newNetwork)
+
+      sparkswapd(argv)
+
+      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ network: newNetwork }))
     })
 
     it('provides the markets', () => {

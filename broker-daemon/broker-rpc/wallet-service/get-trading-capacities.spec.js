@@ -40,8 +40,8 @@ describe('get-trading-capacities', () => {
       committedBaseReceiveCapacity = '0.00002'
       committedCounterSendCapacity = '0.00003'
       committedCounterReceiveCapacity = '0.00004'
-      blockOrderWorker.calculateActiveFunds.withArgs(params.market, 'BID').resolves({activeInboundAmount: committedBaseReceiveCapacity, activeOutboundAmount: committedCounterSendCapacity})
-      blockOrderWorker.calculateActiveFunds.withArgs(params.market, 'ASK').resolves({activeInboundAmount: committedCounterReceiveCapacity, activeOutboundAmount: committedBaseSendCapacity})
+      blockOrderWorker.calculateActiveFunds.withArgs(params.market, 'BID').resolves({ activeInboundAmount: committedBaseReceiveCapacity, activeOutboundAmount: committedCounterSendCapacity })
+      blockOrderWorker.calculateActiveFunds.withArgs(params.market, 'ASK').resolves({ activeInboundAmount: committedCounterReceiveCapacity, activeOutboundAmount: committedBaseSendCapacity })
 
       revert = getTradingCapacities.__set__('getCapacities', getCapacitiesStub)
     })
@@ -93,7 +93,7 @@ describe('get-trading-capacities', () => {
       expect(result).to.be.an.instanceOf(GetTradingCapacitiesResponse)
       expect(GetTradingCapacitiesResponse).to.have.been.calledOnce()
       expect(GetTradingCapacitiesResponse).to.have.been.calledWithNew()
-      expect(GetTradingCapacitiesResponse).to.have.been.calledWith({baseSymbolCapacities: {}, counterSymbolCapacities: {}})
+      expect(GetTradingCapacitiesResponse).to.have.been.calledWith({ baseSymbolCapacities: {}, counterSymbolCapacities: {} })
     })
   })
 })

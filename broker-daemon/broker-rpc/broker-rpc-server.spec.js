@@ -14,8 +14,6 @@ describe('BrokerRPCServer', () => {
   let orderBookService
   let WalletService
   let walletService
-  let InfoService
-  let infoService
   let pathResolve
   let protoPath
   let engines
@@ -53,13 +51,6 @@ describe('BrokerRPCServer', () => {
     WalletService = sinon.stub().returns(walletService)
     BrokerRPCServer.__set__('WalletService', WalletService)
 
-    infoService = {
-      definition: 'mydef',
-      implementation: 'myimp'
-    }
-    InfoService = sinon.stub().returns(infoService)
-    BrokerRPCServer.__set__('InfoService', InfoService)
-
     addService = sinon.stub()
     rpcServer = sinon.stub().returns({
       addService
@@ -71,7 +62,7 @@ describe('BrokerRPCServer', () => {
     router = function router (req, res, next) {
       router.handle(req, res, next)
     }
-    httpServerStub = {listen: sinon.stub()}
+    httpServerStub = { listen: sinon.stub() }
     httpServer = sinon.stub().returns(httpServerStub)
     grpcGateway = sinon.stub().returns(router)
     BrokerRPCServer.__set__('grpcGateway', grpcGateway)
@@ -231,27 +222,6 @@ describe('BrokerRPCServer', () => {
       expect(server.walletService).to.be.equal(walletService)
     })
 
-    it('adds the info service', () => {
-      const server = new BrokerRPCServer()
-
-      expect(server).to.have.property('server')
-      expect(server.server.addService).to.be.equal(addService)
-      expect(addService).to.have.been.calledWith(infoService.definition, infoService.implementation)
-    })
-
-    it('creates a info service', () => {
-      const logger = 'mylogger'
-      const engines = 'myengines'
-
-      const server = new BrokerRPCServer({ logger, engines })
-
-      expect(InfoService).to.have.been.calledOnce()
-      expect(InfoService).to.have.been.calledWith(protoPath, sinon.match({ logger, engines }))
-      expect(InfoService).to.have.been.calledWithNew()
-      expect(server).to.have.property('infoService')
-      expect(server.infoService).to.be.equal(infoService)
-    })
-
     it('adds the orderBook service', () => {
       const server = new BrokerRPCServer()
 
@@ -291,7 +261,7 @@ describe('BrokerRPCServer', () => {
         bind: bindStub,
         start: serverStub
       }
-      server.httpServer = {listen: sinon.stub()}
+      server.httpServer = { listen: sinon.stub() }
     })
 
     beforeEach(() => {

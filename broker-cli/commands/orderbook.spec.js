@@ -53,7 +53,7 @@ describe('orderbook', () => {
     }
 
     resizeHandleStub = sinon.stub()
-    revertProcessStub = program.__set__('process', {stdout: {on: resizeHandleStub}})
+    revertProcessStub = program.__set__('process', { stdout: { on: resizeHandleStub } })
   })
 
   afterEach(() => {
@@ -192,6 +192,6 @@ describe('calculateTableWidths', () => {
     let windowWidth = 60
     let innerTableWidth = 12
     let mainTableWidth = 28
-    expect(calculateTableWidths(windowWidth)).to.to.eql({innerTableWidth, mainTableWidth})
+    expect(calculateTableWidths(windowWidth)).to.to.eql({ innerTableWidth, mainTableWidth })
   })
 })
