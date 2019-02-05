@@ -26,6 +26,9 @@ jobs:
             - node_modules
           key: v2-dependencies-{{ checksum "package.json" }}
 
+      # This checks if the broker proto files are valid during our CI run
+      - run: npm run broker-proto
+
       - run: npm run ci-test
   publish-cli:
     docker:
