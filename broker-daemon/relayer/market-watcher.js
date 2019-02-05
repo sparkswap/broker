@@ -12,9 +12,9 @@ const { migrateStore, eachRecord, Checksum } = require('../utils')
 class MarketWatcher extends EventEmitter {
   /**
    * Set up the watcher
-   * @param  {grpc.ServerStreaming} watcher        Stream of events from the Relayer
-   * @param  {Sublevel}             store          Leveldb compatible store
-   * @param  {Object}               RESPONSE_TYPES Response types from the proto file
+   * @param  {grpc.ServerStreaming} watcher        - Stream of events from the Relayer
+   * @param  {Sublevel}             store          - Leveldb compatible store
+   * @param  {Object}               RESPONSE_TYPES - Response types from the proto file
    * @param  {Object} logger
    * @return {MarketWatcher}
    */
@@ -92,7 +92,7 @@ class MarketWatcher extends EventEmitter {
   /**
    * Handle an inbound event from the Relayer
    * @private
-   * @param  {Object} response Response from the Relayer stream
+   * @param  {Object} response - Response from the Relayer stream
    * @return {void}
    */
   async handleResponse (response) {
@@ -127,7 +127,7 @@ class MarketWatcher extends EventEmitter {
   /**
    * Add a promise to the set of promises to wait to complete
    * @private
-   * @param  {Promise} promise Promise that should be `await`ed before continuing processing of events
+   * @param  {Promise} promise - Promise that should be `await`ed before continuing processing of events
    * @return {void}
    */
   delayProcessingFor (promise) {
@@ -150,8 +150,8 @@ class MarketWatcher extends EventEmitter {
   /**
    * Store a market event
    * @private
-   * @param  {Object} response Response from the Relayer
-   * @param  {Object} response.marketEvent Market Event to be created
+   * @param  {Object} response - Response from the Relayer
+   * @param  {Object} response.marketEvent - Market Event to be created
    * @return {Promise<void>}
    */
   async createMarketEvent ({ marketEvent }) {
@@ -191,8 +191,8 @@ class MarketWatcher extends EventEmitter {
    * Validate that a given checksum matches our internal
    * checksum, and trigger a re-sync if it does not
    * @private
-   * @param  {String}  checksum Base64 string of the bytes of a checksum
-   * @return {Boolean}          TRUE if the checksum matches, otherwise FALSE
+   * @param  {string}  checksum - Base64 string of the bytes of a checksum
+   * @return {boolean}          TRUE if the checksum matches, otherwise FALSE
    */
   validateChecksum (checksum) {
     this.logger.debug('Validating checksum', { checksum })

@@ -3,10 +3,13 @@ const { loadProto } = require('../../utils')
 
 const watchMarket = require('./watch-market')
 const getOrderbook = require('./get-orderbook')
+const getSupportedMarkets = require('./get-supported-markets')
+const getMarketStats = require('./get-market-stats')
+const getTrades = require('./get-trades')
 
 class OrderBookService {
   /**
-   * @param {String} protoPath
+   * @param {string} protoPath
    * @param {Object} opts
    * @param {Object} opts.logger
    * @param {RelayerClient} opts.relayer
@@ -23,12 +26,18 @@ class OrderBookService {
 
     const {
       WatchMarketResponse,
-      GetOrderbookResponse
+      GetOrderbookResponse,
+      GetSupportedMarketsResponse,
+      GetMarketStatsResponse,
+      GetTradesResponse
     } = this.proto.broker.rpc
 
     this.implementation = {
       watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks, auth }, { WatchMarketResponse }).register(),
-      getOrderbook: new GrpcUnaryMethod(getOrderbook, this.messageId('getOrderbook'), { logger, relayer, orderbooks, auth }, { GetOrderbookResponse }).register()
+      getOrderbook: new GrpcUnaryMethod(getOrderbook, this.messageId('getOrderbook'), { logger, relayer, orderbooks, auth }, { GetOrderbookResponse }).register(),
+      getSupportedMarkets: new GrpcUnaryMethod(getSupportedMarkets, this.messageId('getSupportedMarkets'), { logger, relayer, orderbooks }, { GetSupportedMarketsResponse }).register(),
+      getMarketStats: new GrpcUnaryMethod(getMarketStats, this.messageId('getMarketStats'), { logger, orderbooks }, { GetMarketStatsResponse }).register(),
+      getTrades: new GrpcUnaryMethod(getTrades, this.messageId('getTrades'), { logger, relayer, orderbooks }, { GetTradesResponse }).register()
     }
   }
 

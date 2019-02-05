@@ -61,16 +61,14 @@ function createLogger () {
     handleExceptions: true
   })
 
-  if (process.env.NODE_ENV !== 'production') {
-    logger.add(new winston.transports.Console({
-      format: winston.format.combine(
-        filterSensitive(),
-        winston.format.timestamp(),
-        winston.format.colorize(),
-        winston.format.simple()
-      )
-    }))
-  }
+  logger.add(new winston.transports.Console({
+    format: winston.format.combine(
+      filterSensitive(),
+      winston.format.timestamp(),
+      winston.format.colorize(),
+      winston.format.simple()
+    )
+  }))
 
   return logger
 }

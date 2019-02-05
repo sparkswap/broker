@@ -25,7 +25,7 @@ const END_OF_TRANSMISSION = '\u0004'
  * Helper function for stdin that suppresses a user's input from being displayed
  * through stdout
  *
- * @param {String} message
+ * @param {string} message
  * @param {Buffer} char
  */
 function suppressInput (message, char) {
@@ -48,7 +48,7 @@ function suppressInput (message, char) {
 /**
  * Asks a question to a user through readline
  *
- * @param {String} message
+ * @param {string} message
  * @param {Object} options
  * @param {Object} [options.silent=false] - suppress typing for answer
  * @return {Promise<string>} answer

@@ -1,10 +1,7 @@
 ##########################################
 #
-# sparkswap Broker-CLI and Broker-Daemon
+# Sparkswap Broker-CLI and Broker-Daemon
 # https://sparkswap.com
-#
-# The broker and engines currently default to TestNet. To adjust settings, please
-# look at the associated `.env` files
 #
 # Troubleshooting GRPC:
 # - GRPC_VERBOSITY=INFO
@@ -24,7 +21,7 @@ services:
       - ZMQPUBRAWTX=tcp://litecoind:28334
 
   litecoind:
-    image: sparkswap_litecoind:latest
+    image: sparkswap/litecoind:0.3.6-beta
     volumes:
       - shared:/shared
       - litecoin:/data

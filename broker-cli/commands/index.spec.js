@@ -7,7 +7,7 @@ const {
   healthCheckCommand,
   walletCommand,
   orderCommand,
-  infoCommand,
+  marketCommand,
   identityCommand,
   registerCommand
 } = require('./index')
@@ -43,9 +43,9 @@ describe('broker index', () => {
     expect(orderCommand).to.not.be.undefined()
   })
 
-  it('defines infoCommand', () => {
-    expect(infoCommand).to.not.be.null()
-    expect(infoCommand).to.not.be.undefined()
+  it('defines marketCommand', () => {
+    expect(marketCommand).to.not.be.null()
+    expect(marketCommand).to.not.be.undefined()
   })
 
   it('defines identityCommand', () => {

@@ -3,7 +3,7 @@
  * @module broker-cli/wallet
  */
 
-const Table = require('cli-table')
+const Table = require('cli-table2')
 require('colors')
 
 const BrokerDaemonClient = require('../broker-daemon-client')
@@ -53,7 +53,7 @@ const SUPPORTED_COMMANDS = Object.freeze({
  * @function
  * @param {Object} args
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {Logger} logger
  * @return {Void}
  */
@@ -109,7 +109,7 @@ async function balance (args, opts, logger) {
  * @function
  * @param {Object} args
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {Logger} logger
  * @return {Void}
  */
@@ -136,8 +136,8 @@ async function newDepositAddress (args, opts, logger) {
  * @param {Object} args
  * @param {Object} args.symbol
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.market] market to commit funds to
+ * @param {string} [opts.rpcAddress] - broker rpc address
+ * @param {string} [opts.market] - market to commit funds to
  * @param {Logger} logger
  * @return {Void}
  */
@@ -214,7 +214,7 @@ async function commit (args, opts, logger) {
  * @param {Object} args
  * @param {Object} args.symbol
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {Logger} logger
  * @return {Void}
  */
@@ -251,9 +251,9 @@ const NETWORK_STATUSES = Object.freeze({
  * than 0. Will return Not Available if balance is empty
  *
  * @function
- * @param {String} balance
- * @param {String} status
- * @return {String} balance - formatted with size and color
+ * @param {string} balance
+ * @param {string} status
+ * @return {string} balance - formatted with size and color
  */
 function formatBalance (balance, status) {
   // If there were errors when receiving balances, the balance will come back
@@ -298,8 +298,8 @@ const CAPACITY_STATUSES = Object.freeze({
  * @function
  * @param {Object} args
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.market] market name
+ * @param {string} [opts.rpcAddress] - broker rpc address
+ * @param {string} [opts.market] - market name
  * @param {Logger} logger
  * @return {Void}
  */
@@ -308,7 +308,7 @@ async function networkStatus (args, opts, logger) {
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({market})
+    const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({ market })
 
     const baseSymbol = baseSymbolCapacities.symbol.toUpperCase()
     const counterSymbol = counterSymbolCapacities.symbol.toUpperCase()
@@ -364,8 +364,8 @@ async function networkStatus (args, opts, logger) {
  * @param {Object} args
  * @param {Object} args.symbol
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.market] market name, i.e BTC/LTC
+ * @param {string} [opts.rpcAddress] - broker rpc address
+ * @param {string} [opts.market] - market name, i.e BTC/LTC
  * @param {Logger} logger
  * @return {Void}
  */
@@ -433,17 +433,17 @@ async function release (args, opts, logger) {
  *
  * @function
  * @param {Object} args
- * @param {String} args.symbol
- * @param {String} args.address
- * @param {String} args.amount
+ * @param {string} args.symbol
+ * @param {string} args.address
+ * @param {string} args.amount
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.walletAddress] wallet address to move funds to
+ * @param {string} [opts.rpcAddress] - broker rpc address
+ * @param {string} [opts.walletAddress] - wallet address to move funds to
  * @param {Logger} logger
  * @return {Void}
  */
 async function withdraw (args, opts, logger) {
-  const {symbol, address, amount} = args
+  const { symbol, address, amount } = args
   const { rpcAddress } = opts
 
   try {
@@ -467,7 +467,7 @@ async function withdraw (args, opts, logger) {
  *
  * @function
  * @param {Object} args
- * @param {String} args.symbol
+ * @param {string} args.symbol
  * @param {Object} opts
  * @param {Logger} logger
  * @return {Void}
@@ -506,9 +506,9 @@ async function create (args, opts, logger) {
  *
  * @function
  * @param {Object} args
- * @param {String} args.symbol
+ * @param {string} args.symbol
  * @param {Object} opts
- * @param {String} [opts.rpcAddress=null]
+ * @param {string} [opts.rpcAddress=null]
  * @param {Logger} logger
  * @return {Void}
  */

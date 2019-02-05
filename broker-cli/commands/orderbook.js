@@ -4,7 +4,7 @@ const {
 const BrokerDaemonClient = require('../broker-daemon-client')
 const { validations, Big, handleError } = require('../utils')
 const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../utils/strings')
-const Table = require('cli-table')
+const Table = require('cli-table2')
 const size = require('window-size')
 require('colors')
 
@@ -13,14 +13,12 @@ const EVENT_TYPES = Object.freeze({
 })
 
 /**
- * Prints log statements for a psuedo UI for the orderbook
+ * Prints log statements for a psuedo UI for the OrderBook
  *
- * TODO: Use a util like clui/smart-table to represent columns/rows
- * @param {String} market
- * @param {Array.<{price: price, depth: depth>}} asks with price and depth
- * @param {Array.<{price: price, depth: depth>}} bids with price and depth
-
- * @returns {Void}
+ * @todo Use a util like cli/smart-table to represent columns/rows
+ * @param {string} market
+ * @param {Array<Object>} asks - an object with price and depth
+ * @param {Array<Object>} bids - an object with price and depth
  */
 function createUI (market, asks, bids) {
   console.clear()
@@ -73,8 +71,6 @@ function createUI (market, asks, bids) {
   ui.push(' ' + Array(windowWidth - 1 - rightSubSubHeader.length).join(' ') + rightSubSubHeader.underline.gray)
   ui.push('')
 
-  table.push([askTable, bidTable])
-
   // TODO: collapse orders at the same price point into a single line
 
   asks.forEach((ask) => {
@@ -91,6 +87,8 @@ function createUI (market, asks, bids) {
     bidTable.push([price.green, depth.white])
   })
 
+  table.push([askTable.toString(), bidTable.toString()])
+
   ui.push(table.toString())
   console.log(ui.join('\n') + '\n')
 }
@@ -102,8 +100,8 @@ function createUI (market, asks, bids) {
  *
  * @param {Object} args
  * @param {Object} opts
- * @param {String} opts.market
- * @param {String} [rpcaddress] opts.rpcaddress
+ * @param {string} opts.market
+ * @param {string} [rpcaddress] - opts.rpcaddress
  * @param {Logger} logger
  */
 async function orderbook (args, opts, logger) {
@@ -170,7 +168,7 @@ function calculateTableWidths (windowWidth) {
   const mainTableWidth = Math.round((windowWidth - borderOffset) / numTables)
   const innerTableWidth = Math.round((mainTableWidth - borderOffset) / numTables)
 
-  return {mainTableWidth, innerTableWidth}
+  return { mainTableWidth, innerTableWidth }
 }
 
 module.exports = (program) => {

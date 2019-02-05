@@ -10,11 +10,11 @@ const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
  * ex: `sparkswap sell 100 --market 'BTC/LTC'
  *
  * @param {Object} args
- * @param {String} args.amount
+ * @param {string} args.amount
  * @param {Object} opts
- * @param {String} opts.market
- * @param {String} [timeInForce] opts.timeInForce
- * @param {String} [rpcaddress] opts.rpcaddress
+ * @param {string} opts.market
+ * @param {string} [timeInForce] - opts.timeInForce
+ * @param {string} [rpcaddress] - opts.rpcaddress
  * @param {Logger} logger
  */
 async function sell (args, opts, logger) {

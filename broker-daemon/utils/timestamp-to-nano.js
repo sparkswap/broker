@@ -12,8 +12,8 @@ const MILLISECONDS_INDEX = 9
  * `nano-seconds` library. A `nano` array is defined as:
  * [ 'timestamp (10)', 'milliseconds (3), nanoseconds (6)']
  *
- * @param {String} timestamp - nano-second timestamp
- * @return {Array<String,String>}
+ * @param {string} timestamp - nano-second timestamp
+ * @return {Array<string, string>}
  */
 function nanoTimestampToNanoType (timestamp) {
   return [

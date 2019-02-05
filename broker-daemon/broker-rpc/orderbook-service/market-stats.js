@@ -3,7 +3,7 @@ const { currencies: currencyConfig } = require('../../config')
 
 class MarketStats {
   /**
-   * @param {String} market
+   * @param {string} market
    */
   constructor (market) {
     this.market = market

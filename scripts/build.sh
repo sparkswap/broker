@@ -41,6 +41,7 @@ NO_DOCKER="false"
 NO_CERTS="false"
 NO_IDENTITY="false"
 EXTERNAL_ADDRESS="localhost"
+LOCAL="false"
 for i in "$@"
 do
 case $i in
@@ -62,6 +63,10 @@ case $i in
     ;;
     -n|--no-certs)
     NO_CERTS="true"
+
+    ;;
+    -l|--local)
+    LOCAL="true"
 
     ;;
     *)
@@ -155,7 +160,8 @@ if [ "$NO_DOCKER" == "false" ]; then
   # NOTE: The names specified with `-t` directly map to the service names in
   # the applicable services docker-compose file
   echo "Building broker docker images"
-  docker build -t sparkswap_sparkswapd -f ./docker/sparkswapd/Dockerfile ./
+  BROKER_VERSION=$(node -pe "require('./package.json').version")
+  docker build -t sparkswap/broker:$BROKER_VERSION -f ./docker/sparkswapd/Dockerfile ./
 fi
 
 if [ -f docker-compose.override.yml ]; then
@@ -166,3 +172,12 @@ if [ -f docker-compose.override.yml ]; then
   echo "WARNING: This may add unwanted settings to the broker that could affect how your daemon runs."
   echo ""
 fi
+
+if [ "$LOCAL" == "true" ]; then
+  echo "Downloading Local Relayer Cert..."
+  # the path of this output is directly related to the SECURE_PATH that is set
+  # in the .env file
+  curl --silent -S --output ~/.sparkswap/secure/relayer-root-regtest-local.pem http://localhost:8080/cert
+  echo "Relayer cert downloaded successfully"
+fi
+

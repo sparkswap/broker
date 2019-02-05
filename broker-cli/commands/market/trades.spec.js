@@ -7,7 +7,7 @@ const {
 
 const trades = rewire(path.resolve(__dirname, 'trades'))
 
-describe('cli info trades', () => {
+describe('cli market trades', () => {
   let args
   let since
   let limit
@@ -30,7 +30,7 @@ describe('cli info trades', () => {
 
     getTradesStub = sinon.stub()
     daemonStub = sinon.stub()
-    daemonStub.prototype.infoService = { getTrades: getTradesStub }
+    daemonStub.prototype.orderBookService = { getTrades: getTradesStub }
 
     trades.__set__('BrokerDaemonClient', daemonStub)
 
@@ -38,6 +38,6 @@ describe('cli info trades', () => {
   })
   it('calls broker daemon for the info trades', () => {
     expect(daemonStub).to.have.been.calledWith(rpcAddress)
-    expect(getTradesStub).to.have.been.calledWith({market, since, limit})
+    expect(getTradesStub).to.have.been.calledWith({ market, since, limit })
   })
 })

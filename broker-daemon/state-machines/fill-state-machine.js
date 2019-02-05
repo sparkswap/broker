@@ -45,8 +45,8 @@ const FillStateMachine = StateMachine.factory({
     new StateMachinePersistence({
       /**
        * @type {StateMachinePersistence~KeyAccessor}
-       * @param {String}   key Unique key for the stored state machine
-       * @returns {String}     Unique key for the state machine
+       * @param {string}   key - Unique key for the stored state machine
+       * @returns {string}     Unique key for the state machine
        */
       key: function (key) {
         // this only defines a getter - it will be set by the `fill` setter
@@ -57,8 +57,8 @@ const FillStateMachine = StateMachine.factory({
       additionalFields: {
         /**
          * @type {StateMachinePersistence~FieldAccessor}
-         * @param {Object}   fillObject Stored plain object description of the Fill associated with the State machine
-         * @param {String}   key         Unique key for the fill/state machine
+         * @param {Object}   fillObject - Stored plain object description of the Fill associated with the State machine
+         * @param {string}   key         - Unique key for the fill/state machine
          * @returns {Object}             Plain object description of the Fill associated with the State machine
          */
         fill: function (fillObject, key) {
@@ -70,8 +70,8 @@ const FillStateMachine = StateMachine.factory({
         },
         /**
          * @type  {StateMachinePersistence~FieldAccessor}
-         * @param {Array<String>}   history Stored history of states for this state machine
-         * @returns {Array<String>}         History of states for this state machine
+         * @param {Array<string>}   history - Stored history of states for this state machine
+         * @returns {Array<string>}         History of states for this state machine
          */
         history: function (history) {
           if (history) {
@@ -83,8 +83,8 @@ const FillStateMachine = StateMachine.factory({
         },
         /**
          * @type {StateMachinePersistence~FieldAccessor}
-         * @param {String}   errorMessage Stored error message for a state machine in an errored state
-         * @returns {String}              Error message for a state machine in an errored state
+         * @param {string}   errorMessage - Stored error message for a state machine in an errored state
+         * @returns {string}              Error message for a state machine in an errored state
          */
         error: function (errorMessage) {
           if (errorMessage) {
@@ -130,12 +130,12 @@ const FillStateMachine = StateMachine.factory({
    * This function is effectively a constructor for the state machine
    * So we pass it all the objects we'll need later.
    *
-   * @param  {sublevel}            options.store       Sublevel partition for storing this fill in
+   * @param  {sublevel}            options.store       - Sublevel partition for storing this fill in
    * @param  {Object}              options.logger
    * @param  {RelayerClient}       options.relayer
-   * @param  {Map<String, Engine>} options.engines     Collection of all avialable engines
-   * @param  {Function}            options.onRejection A function to handle rejections of the fill
-   * @param  {Function}            options.onCompletion A function to handle the completion of the fill
+   * @param  {Map<string, Engine>} options.engines     - Collection of all avialable engines
+   * @param  {Function}            options.onRejection - A function to handle rejections of the fill
+   * @param  {Function}            options.onCompletion - A function to handle the completion of the fill
    * @return {Object}                                  Data to attach to the state machine
    */
   data: function ({ store, logger, relayer, engines }) {
@@ -148,15 +148,15 @@ const FillStateMachine = StateMachine.factory({
      * Actual creation is done in `onBeforeCreate` so that the transition can be cancelled if creation
      * on the Relayer fails.
      *
-     * @param  {Object} lifecycle           Lifecycle object passed by javascript-state-machine
-     * @param  {String} blockOrderid        Id of the block order that this fill belongs to
-     * @param  {String} order.orderId       Relayer-assigned unique ID for the order being filled
-     * @param  {String} order.side          Side of the market the order is on (i.e. BID or ASK)
-     * @param  {String} order.baseSymbol    Base symbol (e.g. BTC)
-     * @param  {String} order.counterSymbol Counter symbol (e.g. LTC)
-     * @param  {String} order.baseAmount    Amount of base currency (in base units) on the order
-     * @param  {String} order.counterAmount Amount of counter currency (in base units) on the order
-     * @param  {String} fill.fillAmount     Amount of base currency (in base units) of the order to fill
+     * @param  {Object} lifecycle           - Lifecycle object passed by javascript-state-machine
+     * @param  {string} blockOrderid        - Id of the block order that this fill belongs to
+     * @param  {string} order.orderId       - Relayer-assigned unique ID for the order being filled
+     * @param  {string} order.side          - Side of the market the order is on (i.e. BID or ASK)
+     * @param  {string} order.baseSymbol    - Base symbol (e.g. BTC)
+     * @param  {string} order.counterSymbol - Counter symbol (e.g. LTC)
+     * @param  {string} order.baseAmount    - Amount of base currency (in base units) on the order
+     * @param  {string} order.counterAmount - Amount of counter currency (in base units) on the order
+     * @param  {string} fill.fillAmount     - Amount of base currency (in base units) of the order to fill
      * @return {void}
      */
     onBeforeCreate: async function (lifecycle, blockOrderId, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
@@ -214,7 +214,7 @@ const FillStateMachine = StateMachine.factory({
 
     /**
      * Attempt to fill the order as soon as the fill is created
-     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
      * @return {void}
      */
     onAfterCreate: function (lifecycle) {
@@ -235,7 +235,7 @@ const FillStateMachine = StateMachine.factory({
      * Actual filling on the relayer is done in `onBeforeFill` so that the transition can be cancelled
      * if filling on the Relayer fails.
      *
-     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
      * @return {Promise} promise that rejects if filling on the relayer fails
      */
     onBeforeFillOrder: async function (lifecycle) {
@@ -298,7 +298,7 @@ const FillStateMachine = StateMachine.factory({
     /**
      * Call the trigger execution function. This is done this way so that we do not execute automatically if we are rehydrating
      * a fill state machine in a filled state
-     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
      * @return {void}
      */
     onAfterFillOrder: function (lifecycle) {
@@ -306,7 +306,7 @@ const FillStateMachine = StateMachine.factory({
     },
     /**
      * Listen for order executions
-     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
      * @return {void}
      */
     triggerExecute: function (lifecycle) {
@@ -357,7 +357,7 @@ const FillStateMachine = StateMachine.factory({
      * This function gets called before the `execute` transition (triggered by a call to `execute`)
      * Actual execution is done in `onBeforeFill` so that the transition can be cancelled if execution fails
      *
-     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
      * @return {Promise}          Promise that rejects if execution fails
      */
     onBeforeExecute: async function (lifecycle) {
@@ -372,8 +372,8 @@ const FillStateMachine = StateMachine.factory({
 
     /**
      * Log errors from rejection
-     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
-     * @param  {Error}  error     Error that caused the rejection
+     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {Error}  error     - Error that caused the rejection
      * @return {void}
      */
     onBeforeReject: function (lifecycle, error) {
@@ -383,14 +383,14 @@ const FillStateMachine = StateMachine.factory({
     /**
      * Returns true if there is a relayer error associated with the fill, false if not
      * This is just a getter function, no transition associated
-     * @return {Boolean}
+     * @return {boolean}
      */
     shouldRetry: function () {
       return !!this.fill.error && this.fill.error.message === FILL_ERROR_CODES.ORDER_NOT_PLACED
     },
     /**
      * Trigger settle if we are re-hydrating state into the executing state
-     * @param  {Object} lifecycle Lifecycle object passed by javascript-state-machine
+     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
      * @return {void}
      */
     triggerState: function (lifecycle) {
@@ -407,8 +407,8 @@ const FillStateMachine = StateMachine.factory({
  * Instantiate and create a fill
  * This method is a pure pass through to the state machine, so any parameter checking should happen in
  * `data` and `onBeforeCreate`, respectively.
- * @param  {Object} initParams      Params to pass to the FillStateMachine constructor (also to the `data` function)
- * @param  {Object} ...createParams Params to pass to the `create` method (also to the `onBeforeCreate` method)
+ * @param  {Object} initParams      - Params to pass to the FillStateMachine constructor (also to the `data` function)
+ * @param  {Object} ...createParams - Params to pass to the `create` method (also to the `onBeforeCreate` method)
  * @return {Promise<FillStateMachine>}
  */
 FillStateMachine.create = async function (initParams, ...createParams) {

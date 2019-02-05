@@ -1,0 +1,17 @@
+##########################################
+# Sparkswap Broker Daemon Local RegTest Development
+# https://sparkswap.com
+##########################################
+
+version: '2.4'
+
+services:
+  sparkswapd:
+    volumes:
+      - './:/home/app/'
+      - '/home/app/node_modules'
+      - '/home/app/broker-cli/node_modules'
+    environment:
+      - NODE_ENV=development
+    # We use this to be able to have "hot reloading" with our application
+    entrypoint: bash -c 'npm run start-sparkswapd-watch'

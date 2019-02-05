@@ -7,7 +7,7 @@ const {
 
 const supportedMarkets = rewire(path.resolve(__dirname, 'supported-markets'))
 
-describe('cli info supported-markets', () => {
+describe('cli market supported-markets', () => {
   let opts
   let logger
   let rpcAddress
@@ -21,13 +21,13 @@ describe('cli info supported-markets', () => {
 
     getSupportedMarketsStub = sinon.stub()
     daemonStub = sinon.stub()
-    daemonStub.prototype.infoService = { getSupportedMarkets: getSupportedMarketsStub }
+    daemonStub.prototype.orderBookService = { getSupportedMarkets: getSupportedMarketsStub }
 
     supportedMarkets.__set__('BrokerDaemonClient', daemonStub)
 
     supportedMarkets(opts, logger)
   })
-  it('calls broker daemon for the info supported-markets', () => {
+  it('calls broker daemon for the market supported-markets', () => {
     expect(daemonStub).to.have.been.calledWith(rpcAddress)
     expect(getSupportedMarketsStub).to.have.been.calledOnce()
   })

@@ -114,7 +114,7 @@ describe('getPreimage', () => {
     })
 
     it('returns a permanent error if the getting the payment preimage results in an permanent error', async () => {
-      getPaymentPreimage.resolves({permanentError: 'error'})
+      getPaymentPreimage.resolves({ permanentError: 'error' })
       await getPreimage({ params, send, ordersByHash, engines })
 
       expect(send).to.have.been.calledOnce()
@@ -122,7 +122,7 @@ describe('getPreimage', () => {
     })
 
     it('returns the payment preimage if the getting the payment preimage from the engine is successful', async () => {
-      getPaymentPreimage.resolves({paymentPreimage: 'asdfasdf'})
+      getPaymentPreimage.resolves({ paymentPreimage: 'asdfasdf' })
       await getPreimage({ params, send, ordersByHash, engines })
 
       expect(send).to.have.been.calledOnce()

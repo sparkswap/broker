@@ -46,7 +46,7 @@ class MarketEvent {
 
   /**
    * Get the amount of the order - i.e. the number of common units of base currency
-   * @return {String} Decimal string of the amount
+   * @return {string} Decimal string of the amount
    */
   amount (baseSymbol) {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === baseSymbol)
@@ -56,7 +56,7 @@ class MarketEvent {
 
   /**
    * Price of the order in common units for each currency
-   * @return {String} Decimal string of the price in common units
+   * @return {string} Decimal string of the price in common units
    */
   price (baseSymbol, counterSymbol) {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === baseSymbol)
@@ -104,7 +104,7 @@ class MarketEvent {
   /**
    * Given key/value data from the db, return a MarketEvent
    *
-   * @param {String} key
+   * @param {string} key
    * @param {Value} value
    * @returns {MarketEvent}
    */
@@ -116,9 +116,9 @@ class MarketEvent {
   /**
    * Returns a range query for leveldb from a given timestamp
    *
-   * @param {String} startTime - time in nanoseconds
+   * @param {string} startTime - time in nanoseconds
    * @return {Object} range
-   * @return {String} range.gte
+   * @return {string} range.gte
    *
    */
   static rangeFromTimestamp (startTime) {

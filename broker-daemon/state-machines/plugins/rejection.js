@@ -6,9 +6,9 @@ const StateMachinePlugin = require('./abstract')
 class StateMachineRejection extends StateMachinePlugin {
   /**
    * Set up configuration for the rejection plugin, controlling which properties on the host object to use
-   * @param  {String} options.errorName    Property of the host state machine to hold any errors that lead to rejectino
-   * @param  {String} options.rejectName   Property of the host state machine for the method to move to rejected state
-   * @param  {String} options.rejectedName Name of rejected state
+   * @param  {string} options.errorName    - Property of the host state machine to hold any errors that lead to rejectino
+   * @param  {string} options.rejectName   - Property of the host state machine for the method to move to rejected state
+   * @param  {string} options.rejectedName - Name of rejected state
    * @return {StateMachineRejection}
    */
   constructor ({ errorName = 'error', rejectName = 'reject', rejectedName = 'rejected' } = {}) {
@@ -58,8 +58,8 @@ class StateMachineRejection extends StateMachinePlugin {
     return {
       /**
        * Wrapper for running the next transition with error handling
-       * @param  {string}   transitionName Name of the transition to run
-       * @param  {...Array} arguments      Arguments to the apply to the transition
+       * @param  {string}   transitionName - Name of the transition to run
+       * @param  {...Array} arguments      - Arguments to the apply to the transition
        * @return {void}
        */
       tryTo: async function (transitionName, ...args) {

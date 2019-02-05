@@ -6,7 +6,7 @@ const StateMachinePlugin = require('./abstract')
 class StateMachineLogging extends StateMachinePlugin {
   /**
    * Set up configuration for the logging plugin, controlling which properties on the host object to use
-   * @param  {String} options.loggerName    Property of the host state machine that holds the logger
+   * @param  {string} options.loggerName    - Property of the host state machine that holds the logger
    * @return {StateMachineRejection}
    */
   constructor ({ loggerName = 'logger', skipTransitions = [] } = {}) {

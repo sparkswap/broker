@@ -31,10 +31,10 @@ const EXPONENTIAL_BACKOFF_DELAY = 5000
 /**
  * Calls a function repeatedly until success or throws if it fails on final retry
  *
- * @param {Function} function to be called
- * @param {Integer} attempts left
- * @param {Integer} delayTime in milliseconds between calls
- * @param {Object} logOptions if you want to pass information to log in the error log
+ * @param {Function} function - to be called
+ * @param {Integer} attempts - left
+ * @param {Integer} delayTime - in milliseconds between calls
+ * @param {Object} logOptions - if you want to pass information to log in the error log
 
  * @return {Promise}
  */

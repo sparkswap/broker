@@ -1,5 +1,3 @@
-const { PublicError } = require('grpc-methods')
-
 /**
  * @constant
  * @type {Boolean}
@@ -12,9 +10,9 @@ const BASIC_AUTH_DELIMITER = ':'
  * called from inside the grpc-methods authorization hook.
  *
  * @see {@link https://github.com/sparkswap/grpc-methods}
- * @param {String} rpcUser
- * @param {String} rpcPass
- * @param {Boolean} [disableAuth=false]
+ * @param {string} rpcUser
+ * @param {string} rpcPass
+ * @param {boolean} [disableAuth=false]
  * @return {Function}
  */
 function createBasicAuth (rpcUser, rpcPass, disableAuth = false) {
@@ -26,7 +24,7 @@ function createBasicAuth (rpcUser, rpcPass, disableAuth = false) {
 
     if (!authToken) {
       logger.debug('Basic Authentication has failed. No auth token could be found')
-      throw new PublicError('Basic Authentication Failed, please check your authorization credentials')
+      throw new Error('Basic Authentication Failed, please check your authorization credentials')
     }
 
     const [scheme, base64Token] = authToken.split(' ')
@@ -42,7 +40,7 @@ function createBasicAuth (rpcUser, rpcPass, disableAuth = false) {
     // grpc-method handles the authorization middleware
     if (username !== rpcUser || password !== rpcPass) {
       logger.debug('Basic Authentication has failed. Username/Password did not match')
-      throw new PublicError('Basic Authentication Failed, please check your authorization credentials')
+      throw new Error('Basic Authentication Failed, please check your authorization credentials')
     }
   }
 }

@@ -10,6 +10,7 @@ describe('register', () => {
   let registerStub
   let publicKey
   let entityId
+  let url
 
   beforeEach(() => {
     publicKey = 'asdf'
@@ -25,13 +26,14 @@ describe('register', () => {
     }
     logger = { info: sinon.stub() }
     RegisterResponse = sinon.stub()
+    url = register.__get__('REGISTER_URL')
   })
 
   it('registers the publickey with the relayer', async () => {
     await register({ relayer, logger }, { RegisterResponse })
 
     expect(registerStub).to.have.been.calledOnce()
-    expect(registerStub).to.have.been.calledWith({publicKey})
+    expect(registerStub).to.have.been.calledWith({ publicKey })
   })
 
   it('returns the entityId created by the relayer', async () => {
@@ -40,6 +42,6 @@ describe('register', () => {
     expect(res).to.be.an.instanceOf(RegisterResponse)
     expect(RegisterResponse).to.have.been.calledOnce()
     expect(RegisterResponse).to.have.been.calledWithNew()
-    expect(RegisterResponse).to.have.been.calledWith({entityId})
+    expect(RegisterResponse).to.have.been.calledWith({ entityId, url: `${url}${entityId}` })
   })
 })

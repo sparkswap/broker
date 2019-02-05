@@ -12,7 +12,7 @@ const PROTO_OPTIONS = {
 /**
  * Loads a given proto file path into a grpc proto definition
  *
- * @param {String} protoPath
+ * @param {string} protoPath
  * @return {Object} loaded grpc proto object
  * @throws {Error} proto does not exist
  */

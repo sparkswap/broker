@@ -152,7 +152,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         releaseChannels,
         expectedMessageId,
-        { logger, engines, orderbooks, auth },
+        { logger, engines, orderbooks, blockOrderWorker, auth },
         { ReleaseChannelsResponse: responseStub }
       )
     })
