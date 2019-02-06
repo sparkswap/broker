@@ -1,4 +1,6 @@
-FROM node:8.11-alpine as builder
+ARG NODE_VERSION=8.11
+
+FROM node:${NODE_VERSION}-alpine as builder
 
 LABEL maintainer="SparkSwap <dev@sparkswap.com>"
 
@@ -10,10 +12,7 @@ RUN apk --no-cache add bash ca-certificates g++ git make openssl python wget && 
 
 WORKDIR /home/app
 
-ARG BROKER_VERSION=${BROKER_VERSION:-v0.4.1-beta}
-
-RUN git clone https://github.com/sparkswap/broker.git . && \
-    git checkout ${BROKER_VERSION}
+COPY . /home/app
 
 RUN npm install --quiet --production
 # --no-docker is set so we don't get into an infinite loop
@@ -22,7 +21,7 @@ RUN npm install --quiet --production
 RUN npm run build -- --no-docker --no-identity --no-certs
 
 # Create a final image as this will be < 50% the size of the build image
-FROM node:8.11-alpine as final
+FROM node:${NODE_VERSION}-alpine as final
 
 RUN apk update
 RUN apk add bash curl
