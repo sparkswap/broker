@@ -17,8 +17,6 @@ describe('RelayerClient', () => {
   let MakerService
   let TakerService
   let OrderBookService
-  let HealthService
-  let InfoService
   let PaymentChannelNetworkService
   let AdminService
 
@@ -66,9 +64,7 @@ describe('RelayerClient', () => {
     MakerService = sinon.stub()
     TakerService = sinon.stub()
     OrderBookService = sinon.stub()
-    HealthService = sinon.stub()
     PaymentChannelNetworkService = sinon.stub()
-    InfoService = sinon.stub()
     AdminService = sinon.stub()
 
     pathResolve = sinon.stub()
@@ -81,9 +77,7 @@ describe('RelayerClient', () => {
       MakerService,
       TakerService,
       OrderBookService,
-      HealthService,
       PaymentChannelNetworkService,
-      InfoService,
       AdminService,
       WatchMarketResponse: {
         ResponseType
@@ -172,8 +166,6 @@ describe('RelayerClient', () => {
       it('creates a makerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, MakerService, fakeCreds))
       it('creates a takerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, TakerService, fakeCreds))
       it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(relayer.address, OrderBookService, fakeCreds))
-      it('creates a healthService', () => expect(callerStub).to.have.been.calledWith(relayer.address, HealthService, fakeCreds))
-      it('creates an infoService', () => expect(callerStub).to.have.been.calledWith(relayer.address, InfoService, fakeCreds))
       it('creates an adminService', () => expect(callerStub).to.have.been.calledWith(relayer.address, AdminService))
     })
   })

@@ -88,8 +88,8 @@ describe('health-check', () => {
       }
       healthCheckStub = sinon.stub()
       relayerStub = {
-        healthService: {
-          check: healthCheckStub
+        adminService: {
+          healthCheck: healthCheckStub
         }
       }
       getRelayerStatus = healthCheck.__get__('getRelayerStatus')

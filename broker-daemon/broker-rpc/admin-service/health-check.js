@@ -17,7 +17,7 @@ const STATUS_CODES = Object.freeze({
  */
 async function getRelayerStatus (relayer, { logger }) {
   try {
-    await relayer.healthService.check({})
+    await relayer.adminService.healthCheck({})
     return STATUS_CODES.OK
   } catch (e) {
     logger.error(`Relayer error during status check: `, { error: e.stack })
