@@ -17,6 +17,6 @@ if [ ! -f "$DIRECTORY/config.js" ]; then
   cp -n $(dirname $(which sparkswap))/../lib/node_modules/broker-cli/sample-config.js ~/.sparkswap/config.js
 else
   echo "${CYAN}Config file already exists, you can override it with your sample file by running:${NC}"
-  echo "cp -n $(dirname $(which sparkswap))/../lib/node_modules/broker-cli/sample-config.js ~/.sparkswap/config.js"
+  echo "cp $(dirname $(which sparkswap))/../lib/node_modules/broker-cli/sample-config.js ~/.sparkswap/config.js"
 fi
 echo ""
