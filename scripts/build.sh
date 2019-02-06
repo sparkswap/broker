@@ -155,7 +155,8 @@ if [ "$NO_DOCKER" == "false" ]; then
   # NOTE: The names specified with `-t` directly map to the service names in
   # the applicable services docker-compose file
   echo "Building broker docker images"
-  docker build -t sparkswap_sparkswapd -f ./docker/sparkswapd/Dockerfile ./
+  BROKER_VERSION=$(node -pe "require('./package.json').version")
+  docker build -t sparkswap/broker:$BROKER_VERSION -f ./docker/sparkswapd/Dockerfile ./
 fi
 
 if [ -f docker-compose.override.yml ]; then
