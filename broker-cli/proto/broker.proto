@@ -152,6 +152,8 @@ message GetIdentityResponse {
 message RegisterResponse {
   // the Identifier assigned by the Relayer for the Entity associated with the provided Public Key
   string entity_id = 1;
+  // url for registering a user
+  string url = 2;
 }
 
 /**
@@ -263,7 +265,8 @@ service AdminService {
   }
 
   /**
-   * Register takes the publicKey of users identity returns the entityId of the entity created by the Relayer
+   * Register takes the publicKey of users identity returns the entityId of the entity
+   * created by the Relayer and the url for the user to complete registration
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)

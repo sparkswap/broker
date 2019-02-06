@@ -1,4 +1,12 @@
 /**
+ * Sparkswap url for registering a user
+ * @constant
+ * @default
+ * @type {String}
+ */
+const REGISTER_URL = 'https://sparkswap.com/register'
+
+/**
  * Register the publicKey with the Relayer
  *
  * @param {GrpcUnaryMethod~request} request - request object
@@ -15,8 +23,8 @@ async function register ({ relayer, logger }, { RegisterResponse }) {
   const { entityId } = await relayer.adminService.register({ publicKey })
 
   logger.info('Successfully registered public key with relayer', {entityId})
-
-  return new RegisterResponse({ entityId })
+  const url = `${REGISTER_URL}/${entityId}`
+  return new RegisterResponse({ entityId, url })
 }
 
 module.exports = register

@@ -15,7 +15,7 @@ describe('register', () => {
   let revert
   let infoSpy
   let errorSpy
-  let entityId
+  let url
   let registerStub
   let brokerStub
   let rpcAddress
@@ -28,9 +28,9 @@ describe('register', () => {
     opts = { rpcAddress }
     infoSpy = sinon.spy()
     errorSpy = sinon.spy()
-    entityId = 'fakeky'
+    url = 'https://sparkwap.com/register/blahblahentityId'
     registerStub = sinon.stub().returns({
-      entityId
+      url
     })
 
     brokerStub = sinon.stub()
@@ -58,6 +58,6 @@ describe('register', () => {
   it('logs the output from the broker', async () => {
     await register(args, opts, logger)
     expect(infoSpy).to.have.been.calledOnce()
-    expect(infoSpy).to.have.been.calledWith('Successfully registered public key with relayer')
+    expect(infoSpy).to.have.been.calledWith(`Successfully registered public key with Sparkswap Relayer. Go to ${url.cyan} to complete registration.`)
   })
 })

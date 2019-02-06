@@ -20,9 +20,9 @@ async function register (args, opts, logger) {
   try {
     const client = await new BrokerDaemonClient(rpcAddress)
 
-    await client.adminService.register({})
+    const { url } = await client.adminService.register({})
 
-    logger.info('Successfully registered public key with relayer')
+    logger.info(`Successfully registered public key with Sparkswap Relayer. Go to ${url.cyan} to complete registration.`)
   } catch (e) {
     logger.error(handleError(e))
   }
