@@ -3,7 +3,7 @@
  * @module broker-cli/wallet
  */
 
-const Table = require('cli-table')
+const Table = require('cli-table2')
 require('colors')
 
 const BrokerDaemonClient = require('../broker-daemon-client')
