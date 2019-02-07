@@ -1,5 +1,5 @@
 const BrokerDaemonClient = require('../../broker-daemon-client')
-const Table = require('cli-table')
+const Table = require('cli-table2')
 const { ENUMS: { ORDER_TYPES }, handleError } = require('../../utils')
 require('colors')
 const size = require('window-size')
