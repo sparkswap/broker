@@ -42,6 +42,6 @@ describe('register', () => {
     expect(res).to.be.an.instanceOf(RegisterResponse)
     expect(RegisterResponse).to.have.been.calledOnce()
     expect(RegisterResponse).to.have.been.calledWithNew()
-    expect(RegisterResponse).to.have.been.calledWith({ entityId, url: `${url}/${entityId}` })
+    expect(RegisterResponse).to.have.been.calledWith({ entityId, url: `${url}${entityId}` })
   })
 })

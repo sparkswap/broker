@@ -19,6 +19,9 @@ describe('register', () => {
   let registerStub
   let brokerStub
   let rpcAddress
+  let instanceTableStub
+  let tableStub
+  let revertTable
 
   const register = program.__get__('register')
 
@@ -42,10 +45,15 @@ describe('register', () => {
       info: infoSpy,
       error: errorSpy
     }
+
+    instanceTableStub = {push: sinon.stub()}
+    tableStub = sinon.stub().returns(instanceTableStub)
+    revertTable = program.__set__('Table', tableStub)
   })
 
   afterEach(() => {
     revert()
+    revertTable()
   })
 
   it('makes a request to the broker', async () => {
@@ -55,9 +63,9 @@ describe('register', () => {
     expect(registerStub).to.have.been.calledOn(brokerStub.prototype.adminService)
   })
 
-  it('logs the output from the broker', async () => {
+  it('logs a table with registration information', async () => {
     await register(args, opts, logger)
-    expect(infoSpy).to.have.been.calledOnce()
-    expect(infoSpy).to.have.been.calledWith(`Successfully registered public key with Sparkswap Relayer. Go to ${url.cyan} to complete registration.`)
+    expect(instanceTableStub.push).to.have.been.calledWith([{ hAlign: 'center', content: 'Successfully registered public key with the Ϟ Sparkswap Relayer!' }])
+    expect(instanceTableStub.push).to.have.been.calledWith([{ hAlign: 'center', content: `Go to ${url.cyan} to complete registration.` }])
   })
 })
