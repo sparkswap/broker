@@ -22,7 +22,7 @@ describe('getSupportedMarkets', () => {
     markets = ['BTC/LTC']
     GetSupportedMarketsResponse = sinon.stub()
     relayer = {
-      infoService: {
+      adminService: {
         getMarkets: sinon.stub().resolves({markets})
       }
     }
@@ -30,7 +30,7 @@ describe('getSupportedMarkets', () => {
 
   it('gets the balances from a particular engine', async () => {
     await getSupportedMarkets({ logger, engines, relayer, orderbooks }, { GetSupportedMarketsResponse })
-    expect(relayer.infoService.getMarkets).to.have.been.calledOnce()
+    expect(relayer.adminService.getMarkets).to.have.been.calledOnce()
   })
 
   it('adds market information for supported markets from the relayer', async () => {

@@ -50,7 +50,7 @@ services:
     working_dir: '/home/app'
 
   lnd_btc:
-    image: sparkswap_lnd_btc:latest
+    image: sparkswap/lnd_btc:0.3.5-beta
     ports:
       - '10113:9735'
     environment:
@@ -73,7 +73,7 @@ services:
         max-size: 50m
 
   lnd_ltc:
-    image: sparkswap_lnd_ltc:latest
+    image: sparkswap/lnd_ltc:0.3.5-beta
     ports:
       - '10114:9735'
     environment:

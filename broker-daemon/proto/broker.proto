@@ -152,6 +152,8 @@ message GetIdentityResponse {
 message RegisterResponse {
   // the Identifier assigned by the Relayer for the Entity associated with the provided Public Key
   string entity_id = 1;
+  // URL to complete user registration
+  string url = 2;
 }
 
 /**
@@ -263,13 +265,14 @@ service AdminService {
   }
 
   /**
-   * Register takes the publicKey of users identity returns the entityId of the entity created by the Relayer
+   * Register takes the publicKey of users identity returns the entityId of the entity
+   * created by the Relayer and the url for the user to complete registration
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
-   * adminService.register({ }, { deadline }, (err, { entityId }) => {
+   * adminService.register({ }, { deadline }, (err, { entityId, url }) => {
    *   if (err) return console.error(err)
-   *   console.log({ entityId })
+   *   console.log({ entityId, url })
    * })
    * ```
    *
@@ -281,12 +284,19 @@ service AdminService {
    *
    * ```javascript
    * {
-   *   "entityId": "BAfwIYxkUqHJ3pLLh60AAQj3"
+   *   "entityId": "BAfwIYxkUqHJ3pLLh60AAQj3",
+   *   "url": "https://sparkswap.com/register/BAfwIYxkUqHJ3pLLh60AAQj3"
    * }
    * ```
    *
    * ```shell
-   * Successfully registered public key with relayer
+   * ┌─────────────────────────────────────────────────────────────────────────────────────────┐
+   * │                                                                                         │
+   * │          Successfully registered public key with the Ϟ Sparkswap Relayer!               │
+   * │                                                                                         │
+   * │ Go to https://sparkswap.com/register/BAfwIYxkUqHJ3pLLh60AAQj3 to complete registration. │
+   * │                                                                                         │
+   * └─────────────────────────────────────────────────────────────────────────────────────────┘
    * ```
    */
   rpc Register (google.protobuf.Empty) returns (RegisterResponse);

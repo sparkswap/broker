@@ -34,7 +34,7 @@
   "dependencies": {
     "big.js": "5.1.2",
     "caporal": "1.1.0",
-    "cli-table": "0.3.1",
+    "cli-table2": "^0.2.0",
     "colors": "1.2.4",
     "compare-versions": "3.1.0",
     "grpc": "1.11.3",
@@ -52,8 +52,8 @@
     "mock-require": "3.0.2",
     "nyc": "11.7.3",
     "rewire": "4.0.1",
-    "sinon": "5.0.7",
-    "sinon-chai": "3.0.0",
+    "sinon": "7.2.3",
+    "sinon-chai": "3.3.0",
     "standard": "11.0.1",
     "timekeeper": "2.1.2",
     "timeout-as-promise": "1.0.0"
