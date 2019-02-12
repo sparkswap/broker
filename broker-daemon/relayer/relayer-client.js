@@ -55,7 +55,7 @@ class RelayerClient {
 
     this.makerService = caller(this.address, this.proto.MakerService, this.credentials)
     this.takerService = caller(this.address, this.proto.TakerService, this.credentials)
-    this.orderbookService = caller(this.address, this.proto.OrderBookService, this.credentials)
+    this.orderBookService = caller(this.address, this.proto.OrderBookService, this.credentials)
     this.paymentChannelNetworkService = caller(this.address, this.proto.PaymentChannelNetworkService, this.credentials)
     this.adminService = caller(this.address, this.proto.AdminService, this.credentials)
   }
@@ -81,7 +81,7 @@ class RelayerClient {
     }
 
     this.logger.info('Setting up market watcher', params)
-    const watcher = this.orderbookService.watchMarket(params)
+    const watcher = this.orderBookService.watchMarket(params)
 
     return new MarketWatcher(watcher, store, RESPONSE_TYPES, this.logger)
   }

@@ -3,7 +3,7 @@ const { handleError } = require('../../utils')
 
 /**
  *
- * ex: `sparkswap info supported-markets'
+ * ex: `sparkswap market supported-markets'
  *
  * @param {Object} opts
  * @param {String} [rpcaddress] opts.rpcaddress
@@ -14,7 +14,7 @@ async function supportedMarkets (opts, logger) {
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const supportedMarkets = await client.infoService.getSupportedMarkets({})
+    const supportedMarkets = await client.orderBookService.getSupportedMarkets({})
     logger.info(supportedMarkets)
   } catch (e) {
     logger.error(handleError(e))

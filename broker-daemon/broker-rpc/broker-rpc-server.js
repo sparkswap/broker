@@ -6,7 +6,6 @@ const AdminService = require('./admin-service')
 const OrderService = require('./order-service')
 const OrderBookService = require('./orderbook-service')
 const WalletService = require('./wallet-service')
-const InfoService = require('./info-service')
 
 const { createBasicAuth, createHttpServer } = require('../utils')
 
@@ -72,9 +71,6 @@ class BrokerRPCServer {
 
     this.walletService = new WalletService(this.protoPath, { logger, engines, relayer, orderbooks, blockOrderWorker, auth: this.auth })
     this.server.addService(this.walletService.definition, this.walletService.implementation)
-
-    this.infoService = new InfoService(this.protoPath, { logger, engines, relayer, orderbooks })
-    this.server.addService(this.infoService.definition, this.infoService.implementation)
   }
 
   get rpcHttpProxyHost () {
