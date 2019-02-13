@@ -1061,7 +1061,7 @@ service OrderBookService {
    * ```
    *
    * ```shell
-   * > sparkswap info supported-markets
+   * > sparkswap market supported-markets
    * ```
    *
    * > The above command will print:
@@ -1107,7 +1107,7 @@ service OrderBookService {
    * ```
    *
    * ```shell
-   * > sparkswap info market-stats --market BTC/LTC
+   * > sparkswap market market-stats --market BTC/LTC
    * ```
    *
    * > The above command will print:
@@ -1166,7 +1166,7 @@ service OrderBookService {
    * ```
    *
    * ```shell
-   * > sparkswap info trades 2018-09-20T18:58:07.866Z 50 --market BTC/LTC
+   * > sparkswap market trades 2018-09-20T18:58:07.866Z 50 --market BTC/LTC
    * ```
    *
    * > The above command will print:
