@@ -2,7 +2,7 @@ const { validations } = require('../../utils')
 const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../../utils/strings')
 
 /**
- * Info
+ * Market
  * @module broker-cli/market
  */
 
