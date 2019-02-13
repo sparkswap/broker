@@ -3,7 +3,7 @@ const { handleError } = require('../../utils')
 
 /**
  *
- * ex: `sparkswap info trades'
+ * ex: `sparkswap market trades'
  *
  * @param {Object} args
  * @param {String} args.since timestamp for lowerbound of records, '2018-09-21T10:58:58.0131174Z'
@@ -19,7 +19,7 @@ async function trades (args, opts, logger) {
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const trades = await client.infoService.getTrades({since, limit, market})
+    const trades = await client.orderBookService.getTrades({since, limit, market})
     logger.info(trades)
   } catch (e) {
     logger.error(handleError(e))
