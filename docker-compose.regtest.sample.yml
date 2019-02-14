@@ -11,9 +11,6 @@ version: '2.4'
 
 services:
   sparkswapd:
-    depends_on:
-      - lnd_btc
-      - lnd_ltc
     volumes:
       - './:/home/app/'
       - '/home/app/node_modules'
@@ -24,14 +21,6 @@ services:
     # We use this to be able to have "hot reloading" with our application
     entrypoint: bash -c 'npm run start-sparkswapd-watch'
 
-  lnd_btc:
-    depends_on:
-      - bitcoind
-
-  lnd_ltc:
-    depends_on:
-      - litecoind
-
   bitcoind:
     environment:
       - CONNECT_HOST=host.docker.internal
@@ -41,7 +30,3 @@ services:
     environment:
       - CONNECT_HOST=host.docker.internal
       - CONNECT_PORT=19666
-
-volumes:
-  shared:
-  sparkswapd:
