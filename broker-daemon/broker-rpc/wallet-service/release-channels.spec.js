@@ -12,8 +12,8 @@ describe('releaseChannels', () => {
   let baseEngineStub
   let counterEngineStub
   let ReleaseChannelsResponse
-  let successfulCancellations
-  let unsuccessfulCancellations
+  let cancelledOrders
+  let failedToCancelOrders
 
   beforeEach(() => {
     ReleaseChannelsResponse = sinon.stub()
@@ -24,10 +24,10 @@ describe('releaseChannels', () => {
 
     params = { market: 'BTC/LTC' }
     orderbooks = new Map([['BTC/LTC', { store: sinon.stub() }]])
-    successfulCancellations = ['asdfasdf', 'asdfwerw']
-    unsuccessfulCancellations = ['gsdgsdgsg']
+    cancelledOrders = ['asdfasdf', 'asdfwerw']
+    failedToCancelOrders = ['gsdgsdgsg']
     blockOrderWorker = {
-      cancelActiveOrders: sinon.stub().resolves({ successfulCancellations, unsuccessfulCancellations })
+      cancelActiveOrders: sinon.stub().resolves({ cancelledOrders, failedToCancelOrders })
     }
     baseEngineStub = { closeChannels: sinon.stub().resolves([{chan: 'channel'}]) }
     counterEngineStub = { closeChannels: sinon.stub().resolves([{chan: 'counterchannel'}, {chan: 'counterchannel'}]) }
@@ -58,8 +58,8 @@ describe('releaseChannels', () => {
 
     it('cancels all orders on the market', async () => {
       expect(blockOrderWorker.cancelActiveOrders).to.have.been.calledWith(params.market)
-      expect(logger.info).to.have.been.calledWith('Successfully cancelled orders', { orders: successfulCancellations })
-      expect(logger.info).to.have.been.calledWith('Failed to cancel orders', { orders: unsuccessfulCancellations })
+      expect(logger.info).to.have.been.calledWith('Successfully cancelled orders', { orders: cancelledOrders })
+      expect(logger.info).to.have.been.calledWith('Failed to cancel orders', { orders: failedToCancelOrders })
     })
   })
 
@@ -113,13 +113,6 @@ describe('releaseChannels', () => {
         counter: { symbol: 'LTC', status: RELEASED }
       }
       expect(ReleaseChannelsResponse).to.have.been.calledWith(expectedResponse)
-    })
-
-    it('does not cancel orders on the market', async () => {
-      const error = new Error('BTC engine is locked')
-      baseEngineStub.closeChannels.rejects(error)
-      await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
-      expect(blockOrderWorker.cancelActiveOrders).to.not.have.been.called()
     })
   })
 })

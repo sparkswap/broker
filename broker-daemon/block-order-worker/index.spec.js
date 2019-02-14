@@ -1211,7 +1211,7 @@ describe('BlockOrderWorker', () => {
     })
   })
 
-  describe.only('#cancelActiveOrders', () => {
+  describe('#cancelActiveOrders', () => {
     let worker
     let getBlockOrders
     let market
@@ -1268,13 +1268,13 @@ describe('BlockOrderWorker', () => {
     it('returns successfully cancelled block order ids', async () => {
       const res = await worker.cancelActiveOrders(market)
 
-      expect(res.successfulCancellations).to.eql(['successfulId'])
+      expect(res.cancelledOrders).to.eql(['successfulId'])
     })
 
     it('returns unsuccessfully cancelled block order ids', async () => {
       const res = await worker.cancelActiveOrders(market)
 
-      expect(res.unsuccessfulCancellations).to.eql(['unsuccessfulId'])
+      expect(res.failedToCancelOrders).to.eql(['unsuccessfulId'])
     })
   })
 
