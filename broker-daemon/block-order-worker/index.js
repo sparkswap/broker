@@ -359,6 +359,31 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
+   * Cancel all active orders for a given market
+   * @param  {string} market to cancel orders on
+   * @return {object} successfulCancellations and unsuccessfulCancellations as arrays of blockorderids
+   */
+  async cancelActiveOrders (market) {
+    this.logger.info('Cancelling all active orders for market', { market })
+
+    const blockOrders = await this.getBlockOrders(market)
+    const activeBlockOrders = blockOrders.filter(blockOrder => blockOrder.isActive)
+    const successfulCancellations = []
+    const unsuccessfulCancellations = []
+
+    for (let blockOrder of activeBlockOrders) {
+      try {
+        await this.cancelBlockOrder(blockOrder.id)
+        successfulCancellations.push(blockOrder.id)
+      } catch (e) {
+        unsuccessfulCancellations.push(blockOrder.id)
+      }
+    }
+
+    return { successfulCancellations, unsuccessfulCancellations }
+  }
+
+  /**
    * Get existing block orders
    * @param  {String} market to filter by
    * @return {Array<BlockOrder>}

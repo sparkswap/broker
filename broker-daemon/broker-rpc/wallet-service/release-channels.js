@@ -58,7 +58,7 @@ async function closeChannels (engine, symbol, force, logger) {
  * @param {Object} responses
  * @return {Object} responses.ReleaseChannelsResponse
  */
-async function releaseChannels ({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse }) {
+async function releaseChannels ({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse }) {
   const { market, force } = params
 
   const orderbook = orderbooks.get(market)
@@ -83,6 +83,12 @@ async function releaseChannels ({ params, logger, engines, orderbooks }, { Relea
     closeChannels(baseEngine, baseSymbol, force, logger),
     closeChannels(counterEngine, counterSymbol, force, logger)
   ])
+
+  if (base.status === RELEASE_STATE.RELEASED && counter.status === RELEASE_STATE.RELEASED) {
+    const { successfulCancellations, unsuccessfulCancellations } = await blockOrderWorker.cancelActiveOrders(market)
+    logger.info('Successfully cancelled orders', { orders: successfulCancellations })
+    logger.info('Failed to cancel orders', { orders: unsuccessfulCancellations })
+  }
 
   return new ReleaseChannelsResponse({
     base,
