@@ -15,9 +15,6 @@ services:
       - './:/home/app/'
       - '/home/app/node_modules'
       - '/home/app/broker-cli/node_modules'
-    environment:
-      # WARNING: only disable Relayer SSL/AUTH during development
-      - DISABLE_RELAYER_AUTH=false
     # We use this to be able to have "hot reloading" with our application
     entrypoint: bash -c 'npm run start-sparkswapd-watch'
 
