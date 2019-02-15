@@ -385,6 +385,7 @@ class BlockOrderWorker extends EventEmitter {
       })
     )
 
+    this.logger.info(`Succesfully cancelled ${cancelledOrders.length} orders, failed to cancel ${failedToCancelOrders.length}.`)
     return { cancelledOrders, failedToCancelOrders }
   }
 

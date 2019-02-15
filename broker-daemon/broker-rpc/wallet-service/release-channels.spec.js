@@ -73,7 +73,7 @@ describe('releaseChannels', () => {
         blockOrderWorker.cancelActiveOrders.resolves({ cancelledOrders: [], failedToCancelOrders })
         await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
 
-        expect(logger.info).to.not.have.been.calledWith('Successfully cancelled orders', { orders: cancelledOrders })
+        expect(logger.info).to.not.have.been.calledWith('Successfully cancelled orders', { orders: [] })
       })
     })
 
@@ -88,7 +88,7 @@ describe('releaseChannels', () => {
         blockOrderWorker.cancelActiveOrders.resolves({ cancelledOrders, failedToCancelOrders: [] })
         await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
 
-        expect(logger.info).to.not.have.been.calledWith('Failed to cancel orders', { orders: failedToCancelOrders })
+        expect(logger.info).to.not.have.been.calledWith('Failed to cancel orders', { orders: [] })
       })
     })
   })
