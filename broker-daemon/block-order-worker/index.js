@@ -377,7 +377,7 @@ class BlockOrderWorker extends EventEmitter {
           await this.cancelBlockOrder(blockOrder.id)
           cancelledOrders.push(blockOrder.id)
         } catch (e) {
-          this.logger.error('Failed to cancel order', e)
+          this.logger.error('Failed to cancel block order', { blockOrderId: blockOrder.id, error: e })
           failedToCancelOrders.push(blockOrder.id)
         }
       })

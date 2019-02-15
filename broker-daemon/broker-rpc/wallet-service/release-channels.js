@@ -68,8 +68,8 @@ async function releaseChannels ({ params, logger, engines, orderbooks, blockOrde
   }
 
   const { cancelledOrders, failedToCancelOrders } = await blockOrderWorker.cancelActiveOrders(market)
-  logger.info('Successfully cancelled orders', { orders: cancelledOrders })
-  logger.info('Failed to cancel orders', { orders: failedToCancelOrders })
+  if (cancelledOrders) logger.info('Successfully cancelled orders', { orders: cancelledOrders })
+  if (failedToCancelOrders) logger.info('Failed to cancel orders', { orders: failedToCancelOrders })
 
   const [baseSymbol, counterSymbol] = market.split('/')
 
