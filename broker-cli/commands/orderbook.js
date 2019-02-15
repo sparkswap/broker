@@ -73,8 +73,6 @@ function createUI (market, asks, bids) {
   ui.push(' ' + Array(windowWidth - 1 - rightSubSubHeader.length).join(' ') + rightSubSubHeader.underline.gray)
   ui.push('')
 
-  table.push([askTable, bidTable])
-
   // TODO: collapse orders at the same price point into a single line
 
   asks.forEach((ask) => {
@@ -90,6 +88,8 @@ function createUI (market, asks, bids) {
     let depth = String(` ${bid.amount} `)
     bidTable.push([price.green, depth.white])
   })
+
+  table.push([askTable.toString(), bidTable.toString()])
 
   ui.push(table.toString())
   console.log(ui.join('\n') + '\n')
