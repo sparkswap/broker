@@ -239,11 +239,19 @@ class BlockOrder {
   }
 
   /**
+   * get boolean for if the blockOrder is in an active
+   * @return {Boolean}
+   */
+  get isActive () {
+    return this.status === BlockOrder.STATUSES.ACTIVE
+  }
+
+  /**
    * get boolean for if the blockOrder is an a state to be worked
    * @return {Boolean}
    */
   get isInWorkableState () {
-    return this.status === BlockOrder.STATUSES.ACTIVE
+    return this.isActive
   }
 
   /**

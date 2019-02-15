@@ -58,7 +58,7 @@ async function closeChannels (engine, symbol, force, logger) {
  * @param {Object} responses
  * @return {Object} responses.ReleaseChannelsResponse
  */
-async function releaseChannels ({ params, logger, engines, orderbooks }, { ReleaseChannelsResponse }) {
+async function releaseChannels ({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse }) {
   const { market, force } = params
 
   const orderbook = orderbooks.get(market)
@@ -66,6 +66,11 @@ async function releaseChannels ({ params, logger, engines, orderbooks }, { Relea
   if (!orderbook) {
     throw new PublicError(`${market} is not being tracked as a market.`)
   }
+
+  const { cancelledOrders, failedToCancelOrders } = await blockOrderWorker.cancelActiveOrders(market)
+
+  if (cancelledOrders.length) logger.info('Successfully cancelled orders', { orders: cancelledOrders })
+  if (failedToCancelOrders.length) logger.info('Failed to cancel orders', { orders: failedToCancelOrders })
 
   const [baseSymbol, counterSymbol] = market.split('/')
 
