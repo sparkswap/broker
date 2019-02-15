@@ -55,11 +55,41 @@ describe('releaseChannels', () => {
       }
       expect(ReleaseChannelsResponse).to.have.been.calledWith(expectedRes)
     })
+  })
 
+  describe('cancelling orders on the market', () => {
     it('cancels all orders on the market', async () => {
+      await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
       expect(blockOrderWorker.cancelActiveOrders).to.have.been.calledWith(params.market)
-      expect(logger.info).to.have.been.calledWith('Successfully cancelled orders', { orders: cancelledOrders })
-      expect(logger.info).to.have.been.calledWith('Failed to cancel orders', { orders: failedToCancelOrders })
+    })
+
+    context('logging cancelled orders', async () => {
+      it('logs successfully cancelled orders', async () => {
+        await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
+        expect(logger.info).to.have.been.calledWith('Successfully cancelled orders', { orders: cancelledOrders })
+      })
+
+      it('does not log success if none were successfully cancelled', async () => {
+        blockOrderWorker.cancelActiveOrders.resolves({ cancelledOrders: [], failedToCancelOrders })
+        await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
+
+        expect(logger.info).to.not.have.been.calledWith('Successfully cancelled orders', { orders: [] })
+      })
+    })
+
+    context('logging failed to cancel orders', async () => {
+      it('logs orders that could not be cancelled', async () => {
+        await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
+
+        expect(logger.info).to.have.been.calledWith('Failed to cancel orders', { orders: failedToCancelOrders })
+      })
+
+      it('does not log failure if no orders failed to cancel', async () => {
+        blockOrderWorker.cancelActiveOrders.resolves({ cancelledOrders, failedToCancelOrders: [] })
+        await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
+
+        expect(logger.info).to.not.have.been.calledWith('Failed to cancel orders', { orders: [] })
+      })
     })
   })
 

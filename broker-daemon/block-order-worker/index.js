@@ -361,7 +361,9 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Cancel all active orders for a given market
    * @param  {string} market to cancel orders on
-   * @return {object} cancelledOrders and failedToCancelOrders as arrays of blockorderids
+   * @returns {object} result
+   * @returns {Array<string>} result.cancelledOrders ids of block orders that have been cancelled
+   * @returns {Array<string>} result.failedToCancelOrders ids of block orders that failed to be cancelled
    */
   async cancelActiveOrders (market) {
     this.logger.info('Cancelling all active orders for market', { market })
@@ -377,12 +379,13 @@ class BlockOrderWorker extends EventEmitter {
           await this.cancelBlockOrder(blockOrder.id)
           cancelledOrders.push(blockOrder.id)
         } catch (e) {
-          this.logger.error('Failed to cancel order', e)
+          this.logger.error('Failed to cancel block order', { blockOrderId: blockOrder.id, error: e })
           failedToCancelOrders.push(blockOrder.id)
         }
       })
     )
 
+    this.logger.info(`Succesfully cancelled ${cancelledOrders.length} orders, failed to cancel ${failedToCancelOrders.length}.`)
     return { cancelledOrders, failedToCancelOrders }
   }
 
