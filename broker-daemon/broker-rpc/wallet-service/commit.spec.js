@@ -30,7 +30,7 @@ describe('commit', () => {
     relayerAddress = 'qwerty@localhost'
     getAddressStub = sinon.stub().resolves({ address: paymentNetworkAddress })
     createChannelRelayerStub = sinon.stub().resolves({})
-    convertBalanceStub = sinon.stub().returns('100')
+    convertBalanceStub = sinon.stub().returns('100000')
     createChannelStub = sinon.stub()
     orderbooks = new Map([['BTC/LTC', {}]])
     logger = {
@@ -45,6 +45,7 @@ describe('commit', () => {
       createChannel: createChannelStub,
       getMaxChannel: getMaxOutboundChannelStub,
       symbol: 'BTC',
+      feeEstimate: '20000',
       quantumsPerCommon: '100000000',
       maxChannelBalance: '16777215'
     }
@@ -52,6 +53,7 @@ describe('commit', () => {
       getPaymentChannelNetworkAddress: sinon.stub().resolves(relayerAddress),
       getMaxChannel: getMaxInboundChannelStub,
       symbol: 'LTC',
+      feeEstimate: '20000',
       quantumsPerCommon: '100000000',
       maxChannelBalance: '1006632900'
     }
@@ -142,7 +144,7 @@ describe('commit', () => {
       expect(createChannelRelayerStub).to.have.been.calledOnce()
       expect(createChannelRelayerStub).to.have.been.calledWith({
         address: relayerAddress,
-        balance: '100',
+        balance: '100000',
         symbol: 'LTC'
       }, fakeAuth)
     })
@@ -182,7 +184,7 @@ describe('commit', () => {
   describe('checking channel balances', () => {
     it('does not throw if there are already open inbound and outbound channel', () => {
       getMaxOutboundChannelStub.resolves({maxBalance: '10000001'})
-      getMaxInboundChannelStub.resolves({maxBalance: '300'})
+      getMaxInboundChannelStub.resolves({maxBalance: '100000'})
 
       return expect(
         commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
@@ -191,7 +193,7 @@ describe('commit', () => {
 
     it('opens an outbound channel if the outbound channel does not exist', async () => {
       getMaxOutboundChannelStub.resolves({})
-      getMaxInboundChannelStub.resolves({maxBalance: '300'})
+      getMaxInboundChannelStub.resolves({maxBalance: '100000'})
 
       await commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
 
@@ -209,17 +211,17 @@ describe('commit', () => {
       expect(createChannelRelayerStub).to.have.been.calledOnce()
     })
 
-    it('throws an error if the outbound channel does not have the desired amount', () => {
+    it('throws an error if the outbound channel does not have the desired amount excluding the fee estimate', () => {
       getMaxOutboundChannelStub.resolves({maxBalance: '1000'})
-      getMaxInboundChannelStub.resolves({maxBalance: '300'})
+      getMaxInboundChannelStub.resolves({maxBalance: '100000'})
       return expect(
         commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError, 'You have an existing outbound channel with a balance lower than desired, release that channel and try again.')
     })
 
-    it('throws an error if the inbound channel does not have the desired amount', () => {
+    it('throws an error if the inbound channel does not have the desired amount excluding the fee estimate', () => {
       getMaxOutboundChannelStub.resolves({maxBalance: '100000001'})
-      getMaxInboundChannelStub.resolves({maxBalance: '10'})
+      getMaxInboundChannelStub.resolves({maxBalance: '70000'})
       return expect(
         commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError, 'You have an existing inbound channel with a balance lower than desired, release that channel and try again.')

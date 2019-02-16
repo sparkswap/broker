@@ -91,16 +91,16 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
   // we are trying to open. If neither maxOutboundBalance nor maxInboundBalance exist, it means there are no channels open and we can safely
   // attempt to create channels with the balance
   if (maxOutboundBalance || maxInboundBalance) {
-    const insufficientOutboundBalance = maxOutboundBalance && Big(maxOutboundBalance).lt(balance)
-    const insufficientInboundBalance = maxInboundBalance && Big(maxInboundBalance).lt(convertedBalance)
+    const insufficientOutboundBalance = maxOutboundBalance && Big(maxOutboundBalance).plus(engine.feeEstimate).lt(balance)
+    const insufficientInboundBalance = maxInboundBalance && Big(maxInboundBalance).plus(inverseEngine.feeEstimate).lt(convertedBalance)
 
     if (insufficientOutboundBalance) {
-      logger.error('Existing outbound channel of insufficient size', { desiredBalance: balance, existingBalance: maxOutboundBalance })
+      logger.error('Existing outbound channel of insufficient size', { desiredBalance: balance, feeEstimate: engine.feeEstimate, existingBalance: maxOutboundBalance })
       throw new PublicError('You have an existing outbound channel with a balance lower than desired, release that channel and try again.')
     }
 
     if (insufficientInboundBalance) {
-      logger.error('Existing inbound channel of insufficient size', { desiredBalance: convertedBalance, existingBalance: maxInboundBalance })
+      logger.error('Existing inbound channel of insufficient size', { desiredBalance: convertedBalance, feeEstimate: inverseEngine.feeEstimate, existingBalance: maxInboundBalance })
       throw new PublicError('You have an existing inbound channel with a balance lower than desired, release that channel and try again.')
     }
   }
