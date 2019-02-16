@@ -8,11 +8,12 @@
  * @return {Object}
  */
 async function cancelAllBlockOrders ({ params, logger, blockOrderWorker }) {
-  const {
-    market
-  } = params
+  const { market } = params
 
-  const { cancelledOrders, failedToCancelOrders } = await blockOrderWorker.cancelActiveOrders(market)
+  const {
+    cancelledOrders,
+    failedToCancelOrders
+  } = await blockOrderWorker.cancelActiveOrders(market)
 
   return { cancelledOrders, failedToCancelOrders }
 }

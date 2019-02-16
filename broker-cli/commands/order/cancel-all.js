@@ -1,5 +1,12 @@
 const BrokerDaemonClient = require('../../broker-daemon-client')
-const { handleError } = require('../../utils')
+const { handleError, askQuestion } = require('../../utils')
+
+/**
+ * @constant
+ * @type {Array<string>}
+ * @default
+ */
+const ACCEPTED_ANSWERS = Object.freeze(['y', 'yes'])
 
 /**
  * sparkswap order cancel-all
@@ -21,10 +28,23 @@ async function cancelAll (args, opts, logger) {
     market
   }
 
+  const answer = await askQuestion(`Are you sure you want to cancel all your orders on the ${market} market? (Y/N)`)
+  if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
+
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    await client.orderService.cancelAllBlockOrders(request)
-    logger.info(`Cancelled all orders on ${market} market`)
+    const {
+      cancelledOrders = [],
+      failedToCancelOrders = []
+    } = await client.orderService.cancelAllBlockOrders(request)
+
+    var errorMessage = `Succesfully cancelled ${cancelledOrders.length} orders on ${market} market.`
+    if (failedToCancelOrders.length) {
+      errorMessage += `\nUnable to cancel ${failedToCancelOrders.length} orders on ${market} market.` +
+      ' Check your Broker Daemon logs (`docker-compose logs -f sparkswapd`) for more information.'
+    }
+
+    logger.info(errorMessage)
   } catch (e) {
     logger.error(handleError(e))
   }

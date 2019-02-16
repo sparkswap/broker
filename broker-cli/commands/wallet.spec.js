@@ -439,7 +439,7 @@ describe('cli wallet', () => {
       ]
       walletBalanceStub = sinon.stub().resolves({ balances })
       commitStub = sinon.stub()
-      askQuestionStub = sinon.stub().returns('Y')
+      askQuestionStub = sinon.stub().resolves('Y')
       opts = { rpcAddress, market }
       logger = {
         info: sinon.stub(),
