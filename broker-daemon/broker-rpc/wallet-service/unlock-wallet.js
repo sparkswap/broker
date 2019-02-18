@@ -5,9 +5,9 @@ const { PublicError } = require('grpc-methods')
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Logger} request.logger
- * @param {Object<String>} request.params
- * @param {String} request.params.symbol - currency symbol of the wallet e.g. `BTC`
- * @param {String} request.params.password - password for the specified engine's wallet
+ * @param {Object<string>} request.params
+ * @param {string} request.params.symbol - currency symbol of the wallet e.g. `BTC`
+ * @param {string} request.params.password - password for the specified engine's wallet
  * @param {Map<Engine>} request.engines
  * @param {Object} responses
  * @param {Function} responses.EmptyResponse

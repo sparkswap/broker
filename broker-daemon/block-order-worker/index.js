@@ -17,11 +17,11 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Create a new BlockOrderWorker instance
    *
-   * @param  {Map<String, Orderbook>} options.orderbooks Collection of all active Orderbooks
-   * @param  {sublevel}               options.store      Sublevel in which to store block orders and child orders
+   * @param  {Map<string, Orderbook>} options.orderbooks - Collection of all active Orderbooks
+   * @param  {sublevel}               options.store      - Sublevel in which to store block orders and child orders
    * @param  {Object}                 options.logger
    * @param  {RelayerClient}          options.relayer
-   * @param  {Map<String, Engine>}    options.engines    Collection of all available engines
+   * @param  {Map<string, Engine>}    options.engines    - Collection of all available engines
    * @return {BlockOrderWorker}
    */
   constructor ({ orderbooks, store, logger, relayer, engines }) {
@@ -159,12 +159,12 @@ class BlockOrderWorker extends EventEmitter {
    * Creates a new block order and registers events for all orders under a block order
    *
    * @param {Object} options
-   * @param  {String} options.marketName  Name of the market to creat the block order in (e.g. BTC/LTC)
-   * @param  {String} options.side        Side of the market to take (e.g. BID or ASK)
-   * @param  {String} options.amount      Amount of base currency (in base units) to transact
-   * @param  {String} options.price       Price at which to transact
-   * @param  {String} options.timeInForce Time restriction (e.g. GTC, FOK)
-   * @return {String}                     ID for the created Block Order
+   * @param  {string} options.marketName  - Name of the market to creat the block order in (e.g. BTC/LTC)
+   * @param  {string} options.side        - Side of the market to take (e.g. BID or ASK)
+   * @param  {string} options.amount      - Amount of base currency (in base units) to transact
+   * @param  {string} options.price       - Price at which to transact
+   * @param  {string} options.timeInForce - Time restriction (e.g. GTC, FOK)
+   * @return {string}                     ID for the created Block Order
    */
   async createBlockOrder ({ marketName, side, amount, price, timeInForce }) {
     const id = generateId()
@@ -220,9 +220,9 @@ class BlockOrderWorker extends EventEmitter {
     if (!inboundEngine) {
       throw new Error(`No engine available for ${inboundSymbol}.`)
     }
-    const [{address: outboundAddress}, {address: inboundAddress}] = await Promise.all([
-      this.relayer.paymentChannelNetworkService.getAddress({symbol: outboundSymbol}),
-      this.relayer.paymentChannelNetworkService.getAddress({symbol: inboundSymbol})
+    const [{ address: outboundAddress }, { address: inboundAddress }] = await Promise.all([
+      this.relayer.paymentChannelNetworkService.getAddress({ symbol: outboundSymbol }),
+      this.relayer.paymentChannelNetworkService.getAddress({ symbol: inboundSymbol })
     ])
 
     let counterAmount
@@ -261,7 +261,7 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channel to create order`)
     }
 
-    const inboundBalanceIsSufficient = await inboundEngine.isBalanceSufficient(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), {outbound: false})
+    const inboundBalanceIsSufficient = await inboundEngine.isBalanceSufficient(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false })
     // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
     if (!inboundBalanceIsSufficient) {
       throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order`)
@@ -271,8 +271,8 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Adds up active/committed funds in inbound and outbound orders/fills
    *
-   * @param {String} marketName  Name of the market to creat the block order in (e.g. BTC/LTC)
-   * @param {String} side        Side of the market to take (e.g. BID or ASK)
+   * @param {string} marketName  - Name of the market to creat the block order in (e.g. BTC/LTC)
+   * @param {string} side        - Side of the market to take (e.g. BID or ASK)
    * @return {Object} contains activeOutboundAmount and activeInboundAmount of orders/fills
    */
   async calculateActiveFunds (marketName, side) {
@@ -293,7 +293,7 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Get an existing block order
-   * @param  {String} blockOrderId ID of the block order
+   * @param  {string} blockOrderId - ID of the block order
    * @return {BlockOrder}
    */
   async getBlockOrder (blockOrderId) {
@@ -333,7 +333,7 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Cancel a block order in progress
-   * @param  {String} blockOrderId Id of the block order to cancel
+   * @param  {string} blockOrderId - Id of the block order to cancel
    * @return {BlockOrder}          Block order that was cancelled
    */
   async cancelBlockOrder (blockOrderId) {
@@ -360,8 +360,8 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Cancel all active orders for a given market
-   * @param  {string} market to cancel orders on
-   * @returns {object} result
+   * @param  {string} market - to cancel orders on
+   * @returns {Object} result
    * @returns {Array<string>} result.cancelledOrders ids of block orders that have been cancelled
    * @returns {Array<string>} result.failedToCancelOrders ids of block orders that failed to be cancelled
    */
@@ -391,7 +391,7 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Get existing block orders
-   * @param  {String} market to filter by
+   * @param  {string} market - to filter by
    * @return {Array<BlockOrder>}
    */
   async getBlockOrders (market) {
@@ -403,8 +403,8 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Move a block order to a failed state
-   * @param  {String} blockOrderId ID of the block order to be failed
-   * @param  {Error}  err          Error that caused the failure
+   * @param  {string} blockOrderId - ID of the block order to be failed
+   * @param  {Error}  err          - Error that caused the failure
    * @return {void}
    */
   async failBlockOrder (blockOrderId, err) {
@@ -429,8 +429,8 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * work a block order that gets created
-   * @param  {BlockOrder} blockOrder  Block Order to work
-   * @param  {Big}        targetDepth Depth, in base currency, to reach with this work
+   * @param  {BlockOrder} blockOrder  - Block Order to work
+   * @param  {Big}        targetDepth - Depth, in base currency, to reach with this work
    * @return {void}
    */
   async workBlockOrder (blockOrder, targetDepth) {
@@ -457,8 +457,8 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Work market block order
-   * @param  {BlockOrder} blockOrder  BlockOrder without a limit price, i.e. a market order
-   * @param  {Big}        targetDepth Depth, in base currency, to reach with this work
+   * @param  {BlockOrder} blockOrder  - BlockOrder without a limit price, i.e. a market order
+   * @param  {Big}        targetDepth - Depth, in base currency, to reach with this work
    * @return {void}
    */
   async workMarketBlockOrder (blockOrder, targetDepth) {
@@ -477,8 +477,8 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Work limit block order
    * @todo make limit orders more sophisticated than just sending a single limit order to the relayer
-   * @param  {BlockOrder} blockOrder  BlockOrder with a limit price
-   * @param  {Big}        targetDepth Depth, in base currency, to reach with this work
+   * @param  {BlockOrder} blockOrder  - BlockOrder with a limit price
+   * @param  {Big}        targetDepth - Depth, in base currency, to reach with this work
    * @return {void}
    */
   async workLimitBlockOrder (blockOrder, targetDepth) {
@@ -501,7 +501,7 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Move a block order to a completed state if all orders have been completed
    * @todo What should we do if this method fails, but the order itself is completed?
-   * @param {String} blockOrderId
+   * @param {string} blockOrderId
    */
   async checkBlockOrderCompletion (blockOrderId) {
     this.logger.info('Attempting to put block order in a completed state', { id: blockOrderId })
@@ -538,8 +538,8 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Applies listeners to a created OrderStateMachine
    * @private
-   * @param  {OrderStateMachine} osm        State machine to apply listeners to
-   * @param  {BlockOrder} blockOrder Block Order associated with the state machine
+   * @param  {OrderStateMachine} osm        - State machine to apply listeners to
+   * @param  {BlockOrder} blockOrder - Block Order associated with the state machine
    * @return {OrderStateMachine}
    */
   applyOsmListeners (osm, blockOrder) {
@@ -589,8 +589,8 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Place orders for a block order for a given amount, breaking them up based on the maximum order size
-   * @param  {BlockOrder} blockOrder Block Order to place orders on behalf of
-   * @param  {String}     baseAmount Int64 amount, in the base currency's base units, to place orders for
+   * @param  {BlockOrder} blockOrder - Block Order to place orders on behalf of
+   * @param  {string}     baseAmount - Int64 amount, in the base currency's base units, to place orders for
    * @return {void}
    */
   _placeOrders (blockOrder, baseAmount) {
@@ -644,8 +644,8 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Place an order for a block order of a given amount
-   * @param  {BlockOrder} blockOrder Block Order to place an order on behalf of
-   * @param  {String} amount     Int64 amount, in base currency's base units to place the order for
+   * @param  {BlockOrder} blockOrder - Block Order to place an order on behalf of
+   * @param  {string} amount     - Int64 amount, in base currency's base units to place the order for
    * @return {void}
    */
   async _placeOrder (blockOrder, baseAmount) {
@@ -677,9 +677,9 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Fill given orders for a given block order up to a target depth
-   * @param  {BlockOrder}              blockOrder  BlockOrder that the orders are being filled on behalf of
-   * @param  {Array<MarketEventOrder>} orders      Orders to be filled
-   * @param  {String}                  targetDepth Int64 string of the maximum depth to fill
+   * @param  {BlockOrder}              blockOrder  - BlockOrder that the orders are being filled on behalf of
+   * @param  {Array<MarketEventOrder>} orders      - Orders to be filled
+   * @param  {string}                  targetDepth - Int64 string of the maximum depth to fill
    * @return {Promise<Array<FillStateMachine>>}    Promise that resolves the array of Fill State Machines for these fills
    */
   async _fillOrders (blockOrder, orders, targetDepth) {
@@ -752,8 +752,8 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Applies listeners to the fill state machine
-   * @param  {Object<FillStateMachine>}   fill state machine to apply the listeners to
-   * @param  {Object<BlockOrder>}         blockOrder  BlockOrder that the orders are being filled on behalf of
+   * @param  {Object<FillStateMachine>}   fill - state machine to apply the listeners to
+   * @param  {Object<BlockOrder>}         blockOrder  - BlockOrder that the orders are being filled on behalf of
    * @return {Void}
    */
   applyFsmListeners (fsm, blockOrder) {

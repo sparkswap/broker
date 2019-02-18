@@ -5,10 +5,10 @@ const { PublicError } = require('grpc-methods')
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Logger} request.logger
- * @param {Object<String>} request.params
+ * @param {Object<string>} request.params
  * @param {Array<Engine>} request.engines
  * @param {Object} responses
- * @param {Function} responses.NewDepositAddressResponse constructor
+ * @param {Function} responses.NewDepositAddressResponse - constructor
  * @return {NewDepositAddressResponse}
  */
 async function newDepositAddress ({ logger, params, engines }, { NewDepositAddressResponse }) {

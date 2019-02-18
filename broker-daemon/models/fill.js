@@ -28,16 +28,16 @@ const UPPER_BOUND = '\uffff'
 class Fill {
   /**
    * Create a fill for an existing order
-   * @param  {String} blockOrderId        Id of the block order this fill is associated with
-   * @param  {String} order.orderId       Unique ID assigned by the relayer to identify an order
-   * @param  {String} order.baseSymbol    Currency symbol for the base currency in the market, e.g. BTC
-   * @param  {String} order.counterSymbol Currency symbol for the counter or quote currency in the market, e.g. LTC
-   * @param  {String} order.side          Side of the transaction that the order is on, either BID or ASK
-   * @param  {String} order.baseAmount    Amount, represented as an integer in the base currency's smallest unit, to be transacted
-   * @param  {String} order.counterAmount Amount, represented as an integer in the counter currency's smallest unit, to be transacted
-   * @param  {String} fill.fillAmount     Amount, represented as an integer in the base currency's smallets unit, that the order is filled with
-   * @param  {String} fill.takerBaseAddress   address for the taker base symbol
-   * @param  {String} fill.takerCounterAddress   address for the taker counter symbol
+   * @param  {string} blockOrderId        - Id of the block order this fill is associated with
+   * @param  {string} order.orderId       - Unique ID assigned by the relayer to identify an order
+   * @param  {string} order.baseSymbol    - Currency symbol for the base currency in the market, e.g. BTC
+   * @param  {string} order.counterSymbol - Currency symbol for the counter or quote currency in the market, e.g. LTC
+   * @param  {string} order.side          - Side of the transaction that the order is on, either BID or ASK
+   * @param  {string} order.baseAmount    - Amount, represented as an integer in the base currency's smallest unit, to be transacted
+   * @param  {string} order.counterAmount - Amount, represented as an integer in the counter currency's smallest unit, to be transacted
+   * @param  {string} fill.fillAmount     - Amount, represented as an integer in the base currency's smallets unit, that the order is filled with
+   * @param  {string} fill.takerBaseAddress   - address for the taker base symbol
+   * @param  {string} fill.takerCounterAddress   - address for the taker counter symbol
    * @return {Fill}                       Fill instance
    */
   constructor (blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerBaseAddress, takerCounterAddress }) {
@@ -64,7 +64,7 @@ class Fill {
 
   /**
    * Add a swap hash to the fill
-   * @param {String} swapHash Base64 string of the hash for the swap asssociated with this fill
+   * @param {string} swapHash - Base64 string of the hash for the swap asssociated with this fill
    */
   setSwapHash (swapHash) {
     this.swapHash = swapHash
@@ -72,11 +72,11 @@ class Fill {
 
   /**
    * Add parameters to the fill from its creation on the Relayer
-   * @param {String}  options.fillId                Unique identifier for the fill as assigned by the Relayer
-   * @param {String}  options.feePaymentRequest     Payment channel network payment request for the fill fee
-   * @param {Boolean} options.feeRequired           Whether the fee is required
-   * @param {String}  options.depositPaymentRequest Payment channel network payment request for the fill deposit
-   * @param {Boolean} options.depositRequired       Whether the deposit is required
+   * @param {string}  options.fillId                - Unique identifier for the fill as assigned by the Relayer
+   * @param {string}  options.feePaymentRequest     - Payment channel network payment request for the fill fee
+   * @param {boolean} options.feeRequired           - Whether the fee is required
+   * @param {string}  options.depositPaymentRequest - Payment channel network payment request for the fill deposit
+   * @param {boolean} options.depositRequired       - Whether the deposit is required
    */
   setCreatedParams ({ fillId, feePaymentRequest, feeRequired, depositPaymentRequest, depositRequired }) {
     this.fillId = fillId
@@ -88,7 +88,7 @@ class Fill {
 
   /**
    * Set params from execution on an order
-   * @param {String} options.makerAddress Address of the counterparty for the swap
+   * @param {string} options.makerAddress - Address of the counterparty for the swap
    */
   setExecuteParams ({ makerAddress }) {
     this.makerAddress = makerAddress
@@ -184,7 +184,7 @@ class Fill {
 
   /**
    * Alias for `fillAmount`
-   * @return {String} Amount, represented as an integer in the base currency's smallest unit, that the order is filled with
+   * @return {string} Amount, represented as an integer in the base currency's smallest unit, that the order is filled with
    */
   get baseFillAmount () {
     return this.fillAmount
@@ -192,7 +192,7 @@ class Fill {
 
   /**
    * Amount, in the counter currency's base units that will be filled in this fill
-   * @return {String} Amount, represented as an integer in the counter currency's smallest unit, that the order willb e fille with
+   * @return {string} Amount, represented as an integer in the counter currency's smallest unit, that the order willb e fille with
    */
   get counterFillAmount () {
     const baseAmount = Big(this.order.baseAmount)
@@ -205,7 +205,7 @@ class Fill {
 
   /**
    * Get the symbol of the currency we will receive inbound if the fill is completed
-   * @return {String} Currency symbol
+   * @return {string} Currency symbol
    */
   get inboundSymbol () {
     return this.order.side === Order.SIDES.BID ? this.order.counterSymbol : this.order.baseSymbol
@@ -213,7 +213,7 @@ class Fill {
 
   /**
    * Get the symbol of the currency we will send outbound if the fill is completed
-   * @return {String} Currency symbol
+   * @return {string} Currency symbol
    */
   get outboundSymbol () {
     return this.order.side === Order.SIDES.BID ? this.order.baseSymbol : this.order.counterSymbol
@@ -221,7 +221,7 @@ class Fill {
 
   /**
    * Get the amount (as an integer in its currency's smallest units) that we will receive inbound if this fill is completed
-   * @return {String} 64-bit integer represented as a string
+   * @return {string} 64-bit integer represented as a string
    */
   get inboundAmount () {
     return this.order.side === Order.SIDES.BID ? this.counterFillAmount : this.baseFillAmount
@@ -229,7 +229,7 @@ class Fill {
 
   /**
    * Get the amount (as an integer in its currency's smallest units) that we will send outbound if this fill is completed
-   * @return {String} 64-bit integer represented as a string
+   * @return {string} 64-bit integer represented as a string
    */
   get outboundAmount () {
     return this.order.side === Order.SIDES.BID ? this.baseFillAmount : this.counterFillAmount
@@ -237,7 +237,7 @@ class Fill {
 
   /**
    * Price of the order in the smallest unit of each currency
-   * @return {String} Number, rounded to 16 decimal places, represented as a string
+   * @return {string} Number, rounded to 16 decimal places, represented as a string
    */
   get quantumPrice () {
     const counterAmount = Big(this.order.counterAmount)
@@ -250,7 +250,7 @@ class Fill {
   /**
    * Get the unique key that this object can be stored with
    * It is prefixed by the blockOrderId so that it can be retrieved easily
-   * @return {String} Unique key for storage. In the case of a fill it is a combination of the blockOrderId and Relayer-assigned fillId
+   * @return {string} Unique key for storage. In the case of a fill it is a combination of the blockOrderId and Relayer-assigned fillId
    */
   get key () {
     // if either part of our key is undefined we return undefined so as not to create
@@ -263,7 +263,7 @@ class Fill {
 
   /**
    * Get the store-able representation of the object
-   * @return {String} Stringified representation of the Order object
+   * @return {string} Stringified representation of the Order object
    */
   get value () {
     return JSON.stringify(this.valueObject)
@@ -317,8 +317,8 @@ class Fill {
 
   /**
    * Create an instance of an fill object from a stored copy
-   * @param  {String} key   Unique key for the order, i.e. its `fillId`
-   * @param  {String} fillStateMachineRecord Stringified representation of the order
+   * @param  {string} key   - Unique key for the order, i.e. its `fillId`
+   * @param  {string} fillStateMachineRecord - Stringified representation of the order
    * @return {Object} Inflated fill object
    */
   static fromStorage (key, fillStateMachineRecord) {
@@ -327,8 +327,8 @@ class Fill {
 
   /**
    * Create an instance of an fill from an object representation
-   * @param  {String} key         Unique key for the fill, i.e. its `blockOrderId` and `fillId`
-   * @param  {Object} valueObject Plain object representation of the fill
+   * @param  {string} key         - Unique key for the fill, i.e. its `blockOrderId` and `fillId`
+   * @param  {Object} valueObject - Plain object representation of the fill
    * @return {Fill}              Inflated fill object
    */
   static fromObject (key, valueObject) {
@@ -396,7 +396,7 @@ class Fill {
    * Create a set of options that can be passed to a LevelUP `createReadStream` call
    * that limits the set to fills that belong to the given blockOrderId.
    * This works because all fills are prefixed with their blockOrderId and the Delimiter.
-   * @param  {String} Id of of the block order to create a range for
+   * @param  {string} Id - of of the block order to create a range for
    * @return {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
    */
   static rangeForBlockOrder (blockOrderId) {

@@ -8,7 +8,7 @@ const getBlockOrders = require('./get-block-orders')
 
 class OrderService {
   /**
-   * @param {String} protoPath
+   * @param {string} protoPath
    * @param {Object} opts
    * @param {Object} opts.logger
    * @param {BlockOrderWorker} opts.blockOrderWorker

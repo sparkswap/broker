@@ -17,7 +17,7 @@ const PROTO_PATH = path.resolve(__dirname, 'rpc.proto')
 class InterchainRouter {
   /**
    * Create a new Interchain Router instance
-   * @param  {SublevelIndex} ordersByHash Index of orders for which we are the maker, indexed by their swap hash
+   * @param  {SublevelIndex} ordersByHash - Index of orders for which we are the maker, indexed by their swap hash
    * @param  {Object}        logger
    * @return {InterchainRouter}
    */
@@ -33,7 +33,7 @@ class InterchainRouter {
   /**
    * Binds a given rpc address for our grpc server
    *
-   * @param {String} host Hostname and port to listen on
+   * @param {string} host - Hostname and port to listen on
    * @returns {void}
    */
   listen (host) {

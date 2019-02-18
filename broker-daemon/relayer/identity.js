@@ -10,8 +10,8 @@ const PUB_KEY_MARKERS = {
 class Identity {
   /**
    * Create a new identity for a broker to use with the Relayer
-   * @param  {String}  privKeyPath Absolute path to the private key to use for identity
-   * @param  {String}  pubKeyPath  Absolute path to the public key to use for the identity
+   * @param  {string}  privKeyPath - Absolute path to the private key to use for identity
+   * @param  {string}  pubKeyPath  - Absolute path to the public key to use for the identity
    * @return {Identity}
    */
   constructor (privKeyPath, pubKeyPath) {
@@ -39,8 +39,8 @@ class Identity {
 
   /**
    * Sign data with this identity's private key
-   * @param  {String} data to sign
-   * @return {String} Base64 encoded signature of the data
+   * @param  {string} data - to sign
+   * @return {string} Base64 encoded signature of the data
    * @throws {Error} If private key is not loaded
    */
   sign (data) {
@@ -81,8 +81,8 @@ class Identity {
 
 /**
  * Create and load a new identity for a broker to use with the Relayer
- * @param  {String}   privKeyPath Absolute path to the private key to use for identity
- * @param  {String}   pubKeyPath  Absolute path to the public key to use for the identity
+ * @param  {string}   privKeyPath - Absolute path to the private key to use for identity
+ * @param  {string}   pubKeyPath  - Absolute path to the public key to use for the identity
  * @return {Identity}
  */
 Identity.load = function (privKeyPath, pubKeyPath) {
@@ -93,8 +93,8 @@ Identity.load = function (privKeyPath, pubKeyPath) {
 
 /**
  * Strip the PEM file banners and newlines, returning just the PEM-encoded contents of a public key file
- * @param  {String} fileContents - string of a PEM file
- * @return {String} Pem-encoded public key without newlines or banners
+ * @param  {string} fileContents - string of a PEM file
+ * @return {string} Pem-encoded public key without newlines or banners
  */
 function pubKeyToBase64 (fileContents) {
   if (!fileContents) {

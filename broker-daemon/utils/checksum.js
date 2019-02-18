@@ -9,7 +9,7 @@ const SHA256_BYTE_SIZE = 32
 
 /**
  * Create a sha256 digest of a value
- * @param  {String} value Value to digest
+ * @param  {string} value - Value to digest
  * @return {Buffer}       SHA-256 of the value
  */
 function sha256 (value) {
@@ -56,8 +56,8 @@ class Checksum {
 
   /**
    * Check that the provided sum matches our calculated sum
-   * @param  {Buffer}  sum Buffer of a checksum of equivalent length
-   * @return {Boolean}     True if the checksums match, false otherwise
+   * @param  {Buffer}  sum - Buffer of a checksum of equivalent length
+   * @return {boolean}     True if the checksums match, false otherwise
    * @throws {Error} If sum is not a Buffer
    * @throws {Error} If sum does not have the correct length
    */
@@ -73,7 +73,7 @@ class Checksum {
 
   /**
    * Add a value to, or remove a value from the data set
-   * @param  {String} value Value to add to or remove from the data set, e.g. a unique ID
+   * @param  {string} value - Value to add to or remove from the data set, e.g. a unique ID
    * @return {Checksum}     Mutated checksum class, for easy chaining (e.g. mysum.process('a').process('b'))
    */
   process (value) {

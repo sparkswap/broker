@@ -19,7 +19,7 @@ process.env.GRPC_SSL_CIPHER_SUITES = 'HIGH+ECDSA:ECDHE-RSA-AES128-GCM-SHA256:ECD
 
 /**
  * Caporal Validation for checking valid engine types
- * @param {String} engineType
+ * @param {string} engineType
  */
 function isSupportedEngineType (engineType = '') {
   const { supportedEngineTypes = [] } = config

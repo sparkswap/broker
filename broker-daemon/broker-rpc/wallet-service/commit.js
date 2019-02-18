@@ -19,7 +19,7 @@ const MINIMUM_FUNDING_AMOUNT = Big(0.00400000)
  * @param {Logger} request.logger
  * @param {Engine} request.engines
  * @param {Object} responses
- * @param {function} responses.EmptyResponse
+ * @param {Function} responses.EmptyResponse
  * @return {responses.EmptyResponse}
  */
 async function commit ({ params, relayer, logger, engines, orderbooks }, { EmptyResponse }) {
@@ -31,7 +31,7 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     throw new Error(`${market} is not being tracked as a market.`)
   }
 
-  const { address } = await relayer.paymentChannelNetworkService.getAddress({symbol})
+  const { address } = await relayer.paymentChannelNetworkService.getAddress({ symbol })
 
   const [ baseSymbol, counterSymbol ] = market.split('/')
   const inverseSymbol = (symbol === baseSymbol) ? counterSymbol : baseSymbol
@@ -84,8 +84,8 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
 
   // Get the max balance for outbound and inbound channels to see if there are already channels with the balance open. If this is the
   // case we do not need to go to the trouble of opening new channels
-  const {maxBalance: maxOutboundBalance} = await engine.getMaxChannel()
-  const {maxBalance: maxInboundBalance} = await inverseEngine.getMaxChannel({outbound: false})
+  const { maxBalance: maxOutboundBalance } = await engine.getMaxChannel()
+  const { maxBalance: maxInboundBalance } = await inverseEngine.getMaxChannel({ outbound: false })
 
   // If maxOutboundBalance or maxInboundBalance exist, we need to check if the balances are greater or less than the balance of the channel
   // we are trying to open. If neither maxOutboundBalance nor maxInboundBalance exist, it means there are no channels open and we can safely

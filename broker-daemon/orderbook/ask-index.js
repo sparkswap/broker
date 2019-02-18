@@ -24,7 +24,7 @@ const DECIMAL_PLACES = 19
 class AskIndex extends PriceIndex {
   /**
    * Create an index for ask orders in an underlying store
-   * @param  {sublevel} store Underlying store with the orders
+   * @param  {sublevel} store - Underlying store with the orders
    * @return {AskIndex}
    */
   constructor (store) {
@@ -34,8 +34,8 @@ class AskIndex extends PriceIndex {
   /**
    * Get the index key prefix for a given price
    * Asks are sorted so that the lowest price comes first
-   * @param  {String} price Decimal string representation of the price
-   * @return {String}       Key to be used as a prefix in the store
+   * @param  {string} price - Decimal string representation of the price
+   * @return {string}       Key to be used as a prefix in the store
    */
   keyForPrice (price) {
     return Big(price).toFixed(DECIMAL_PLACES).padStart(PAD_SIZE, '0')

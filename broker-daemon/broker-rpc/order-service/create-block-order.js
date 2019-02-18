@@ -7,7 +7,7 @@ const { PublicError } = require('grpc-methods')
  * @param {Object} request.params - Request parameters from the client
  * @param {Object} request.blockOrderWorker
  * @param {Object} responses
- * @param {function} responses.CreateBlockOrderResponse - constructor for CreateBlockOrderResponse messages
+ * @param {Function} responses.CreateBlockOrderResponse - constructor for CreateBlockOrderResponse messages
  * @param {Object} responses.TimeInForce - Time In Force enum
  * @return {responses.CreateBlockOrderResponse}
  */

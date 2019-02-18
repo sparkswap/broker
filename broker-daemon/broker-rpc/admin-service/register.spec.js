@@ -33,7 +33,7 @@ describe('register', () => {
     await register({ relayer, logger }, { RegisterResponse })
 
     expect(registerStub).to.have.been.calledOnce()
-    expect(registerStub).to.have.been.calledWith({publicKey})
+    expect(registerStub).to.have.been.calledWith({ publicKey })
   })
 
   it('returns the entityId created by the relayer', async () => {

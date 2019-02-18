@@ -46,7 +46,7 @@ describe('register', () => {
       error: errorSpy
     }
 
-    instanceTableStub = {push: sinon.stub()}
+    instanceTableStub = { push: sinon.stub() }
     tableStub = sinon.stub().returns(instanceTableStub)
     revertTable = program.__set__('Table', tableStub)
   })

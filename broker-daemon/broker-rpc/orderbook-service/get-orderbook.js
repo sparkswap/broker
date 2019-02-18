@@ -6,12 +6,12 @@ const { SIDES } = require('../../models/market-event-order')
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Object} request.params - Request parameters from the client
- * @param {String} request.params.market - market symbol e.g. BTC/LTC
- * @param {String} request.params.limitPerSide - limit for number of orders for each side of orderbook
+ * @param {string} request.params.market - market symbol e.g. BTC/LTC
+ * @param {string} request.params.limitPerSide - limit for number of orders for each side of orderbook
  * @param {Object} request.logger
  * @param {Map<Orderbook>} request.orderbooks
  * @param {Object} responses
- * @param {function} responses.GetOrderbookResponse - constructor for GetOrderbookResponse messages
+ * @param {Function} responses.GetOrderbookResponse - constructor for GetOrderbookResponse messages
  * @return {responses.GetOrderbookResponse}
  */
 async function getOrderbook ({ params, logger, orderbooks }, { GetOrderbookResponse }) {
@@ -39,7 +39,7 @@ async function getOrderbook ({ params, logger, orderbooks }, { GetOrderbookRespo
     const formattedBids = bids.map(bid => { return { price: bid.price, amount: bid.amount } })
     const formattedAsks = asks.map(ask => { return { price: ask.price, amount: ask.amount } })
 
-    return new GetOrderbookResponse({timestamp, datetime, bids: formattedBids, asks: formattedAsks})
+    return new GetOrderbookResponse({ timestamp, datetime, bids: formattedBids, asks: formattedAsks })
   } catch (err) {
     logger.error(`Failed to get orderbook: ${err.message}`)
     throw new Error(err)

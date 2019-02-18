@@ -13,7 +13,7 @@ class StateMachineEvents extends StateMachinePlugin {
 
   /**
    * Set the event handler on the instance
-   * @param  {Object} instance State machine instance being initialized
+   * @param  {Object} instance - State machine instance being initialized
    * @return {void}
    */
   init (instance) {

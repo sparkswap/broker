@@ -25,11 +25,11 @@ describe('getOrderbook', () => {
     defaultProtobufValue = '0'
     params = { market, limitPerSide: defaultProtobufValue }
     bids = [
-      {side: 'BID', price: '0.001', amount: '0.003'}
+      { side: 'BID', price: '0.001', amount: '0.003' }
     ]
     asks = [
-      {side: 'ASK', price: '0.0031', amount: '0.0004'},
-      {side: 'ASK', price: '0.005', amount: '0.0001'}
+      { side: 'ASK', price: '0.0031', amount: '0.0004' },
+      { side: 'ASK', price: '0.005', amount: '0.0001' }
     ]
     orderbook = { getOrders: sinon.stub() }
     orderbook.getOrders.withArgs({ side: 'BID', limit: undefinedLimit }).resolves(bids)
@@ -79,8 +79,8 @@ describe('getOrderbook', () => {
 
     expect(GetOrderbookResponse).to.have.been.calledOnce()
     expect(GetOrderbookResponse).to.have.been.calledWith(
-      { bids: [{price: '0.001', amount: '0.003'}],
-        asks: [{price: '0.0031', amount: '0.0004'}, {price: '0.005', amount: '0.0001'}],
+      { bids: [{ price: '0.001', amount: '0.003' }],
+        asks: [{ price: '0.0031', amount: '0.0004' }, { price: '0.005', amount: '0.0001' }],
         datetime: '2018-09-20T23:51:11.431784972Z',
         timestamp: '1537487471431784972' }
     )
@@ -89,15 +89,15 @@ describe('getOrderbook', () => {
   it('limits the number of orders', async () => {
     params.limitPerSide = '3'
     bids = [
-      {side: 'BID', price: '0.0021', amount: '0.003'},
-      {side: 'BID', price: '0.002', amount: '0.003'},
-      {side: 'BID', price: '0.0019', amount: '0.003'}
+      { side: 'BID', price: '0.0021', amount: '0.003' },
+      { side: 'BID', price: '0.002', amount: '0.003' },
+      { side: 'BID', price: '0.0019', amount: '0.003' }
     ]
 
     asks = [
-      {side: 'ASK', price: '0.003', amount: '0.0004'},
-      {side: 'ASK', price: '0.0031', amount: '0.0004'},
-      {side: 'ASK', price: '0.0032', amount: '0.0004'}
+      { side: 'ASK', price: '0.003', amount: '0.0004' },
+      { side: 'ASK', price: '0.0031', amount: '0.0004' },
+      { side: 'ASK', price: '0.0032', amount: '0.0004' }
     ]
 
     orderbook.getOrders.withArgs({ side: 'BID', limit: params.limitPerSide }).resolves(bids)
@@ -111,14 +111,14 @@ describe('getOrderbook', () => {
     expect(GetOrderbookResponse).to.have.been.calledWith(
       {
         bids: [
-          {price: '0.0021', amount: '0.003'},
-          {price: '0.002', amount: '0.003'},
-          {price: '0.0019', amount: '0.003'}
+          { price: '0.0021', amount: '0.003' },
+          { price: '0.002', amount: '0.003' },
+          { price: '0.0019', amount: '0.003' }
         ],
         asks: [
-          {price: '0.003', amount: '0.0004'},
-          {price: '0.0031', amount: '0.0004'},
-          {price: '0.0032', amount: '0.0004'}
+          { price: '0.003', amount: '0.0004' },
+          { price: '0.0031', amount: '0.0004' },
+          { price: '0.0032', amount: '0.0004' }
         ],
         datetime: '2018-09-20T23:51:11.431784972Z',
         timestamp: '1537487471431784972'

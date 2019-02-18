@@ -7,9 +7,9 @@ const { migrateStore } = require('../utils')
 class OrderbookIndex {
   /**
    * Create a new index from a base store and a store of Market Events
-   * @param  {Sublevel} store      Base store to sublevel from
-   * @param  {Sublevel} eventStore Store of MarketEvents to index
-   * @param  {String} marketName   Name of the market to index
+   * @param  {Sublevel} store      - Base store to sublevel from
+   * @param  {Sublevel} eventStore - Store of MarketEvents to index
+   * @param  {string} marketName   - Name of the market to index
    * @return {OrderbookIndex}      Created, but unintialized index
    */
   constructor (store, eventStore, marketName) {
@@ -30,8 +30,8 @@ class OrderbookIndex {
 
   /**
    * Create an object that can be passed to Sublevel to create or remove an orderbook record
-   * @param {String} key   Key of the record to create an index op for
-   * @param {String} value Value of the record being added to the events store to create an index op for
+   * @param {string} key   - Key of the record to create an index op for
+   * @param {string} value - Value of the record being added to the events store to create an index op for
    */
   _addToIndexOperation (key, value) {
     const event = MarketEvent.fromStorage(key, value)

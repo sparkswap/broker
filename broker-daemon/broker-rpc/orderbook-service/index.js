@@ -9,7 +9,7 @@ const getTrades = require('./get-trades')
 
 class OrderBookService {
   /**
-   * @param {String} protoPath
+   * @param {string} protoPath
    * @param {Object} opts
    * @param {Object} opts.logger
    * @param {RelayerClient} opts.relayer

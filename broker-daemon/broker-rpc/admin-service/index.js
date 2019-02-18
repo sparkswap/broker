@@ -7,7 +7,7 @@ const register = require('./register')
 
 class AdminService {
   /**
-   * @param {String} protoPath
+   * @param {string} protoPath
    * @param {Object} opts
    * @param {Object} opts.logger
    * @param {Object} opts.relayer

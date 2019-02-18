@@ -15,13 +15,13 @@ const RELEASE_STATE = Object.freeze({
  *
  * @see {RELEASE_STATE}
  * @param {Engine} engine
- * @param {String} symbol - e.g. BTC or LTC
- * @param {Boolean} force
+ * @param {string} symbol - e.g. BTC or LTC
+ * @param {boolean} force
  * @param {Logger} logger
  * @returns {Object} res
- * @returns {String} res.symbol
- * @returns {String} res.status - RELEASED or FAILED
- * @returns {String} [res.error=undefined] - only present if status is FAILED
+ * @returns {string} res.symbol
+ * @returns {string} res.status - RELEASED or FAILED
+ * @returns {string} [res.error=undefined] - only present if status is FAILED
  */
 async function closeChannels (engine, symbol, force, logger) {
   try {
@@ -49,8 +49,8 @@ async function closeChannels (engine, symbol, force, logger) {
  *
  * @param {Object} request - request object
  * @param {Object} request.params
- * @param {String} request.params.market - Market name (e.g. BTC/LTC)
- * @param {Boolean} request.params.force - if channels should be force closed
+ * @param {string} request.params.market - Market name (e.g. BTC/LTC)
+ * @param {boolean} request.params.force - if channels should be force closed
  * @param {RelayerClient} request.relayer
  * @param {Logger} request.logger
  * @param {Engine} request.engines

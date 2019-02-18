@@ -24,7 +24,7 @@ async function register (args, opts, logger) {
 
     const { url } = await client.adminService.register({})
     const registerTable = new Table({
-      chars: {'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': ''},
+      chars: { 'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': '' },
       style: { border: ['green'] },
       align: 'center'
     })
