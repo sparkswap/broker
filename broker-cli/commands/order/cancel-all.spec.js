@@ -76,9 +76,13 @@ describe('cli order cancel-all', () => {
   it('logs the results of cancelling the orders', async () => {
     await cancelAll(args, opts, logger)
     expect(logger.info).to.have.been.calledWith(
-      `Succesfully cancelled 1 orders on ${market} market.` +
-      `\nUnable to cancel 1 orders on ${market} market.` +
-      ' Check your Broker Daemon logs (`docker-compose logs -f sparkswapd`) for more information.'
+      `Succesfully cancelled 1 orders on ${market} market.`
+    )
+    expect(logger.info).to.have.been.calledWith(
+      `Unable to cancel 1 orders on ${market} market.`
+    )
+    expect(logger.info).to.have.been.calledWith(
+      'Check your Broker Daemon logs (`docker-compose logs -f sparkswapd`) for more information.'
     )
   })
 })
