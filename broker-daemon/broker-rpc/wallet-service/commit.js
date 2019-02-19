@@ -132,7 +132,7 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
       }, authorization)
     } catch (e) {
       // TODO: Close channel that was open if relayer call has failed
-      throw (e)
+      throw new PublicError(`Error requesting inbound channel from Relayer: ${e.message}`, e)
     }
   } else {
     logger.debug('Inbound channel already exists', { balance: maxInboundBalance })

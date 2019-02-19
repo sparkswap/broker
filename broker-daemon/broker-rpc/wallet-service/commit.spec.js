@@ -111,6 +111,14 @@ describe('commit', () => {
     ).to.be.rejectedWith(PublicError, 'Funding error')
   })
 
+  it('throws an error if requesting an inbound channel fails', () => {
+    createChannelRelayerStub.rejects(new Error('fake relayer error'))
+
+    expect(
+      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+    ).to.be.rejectedWith(PublicError, 'Error requesting inbound channel')
+  })
+
   describe('committing a balance to the relayer', () => {
     let fakeAuth
     beforeEach(async () => {
