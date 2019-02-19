@@ -167,9 +167,9 @@ const convertParams = (req, url) => {
 }
 
 /**
- * Convert - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - gRPC URL expression into express
- * @param  {string} url gRPC URL expression
- * @return {string}     express URL expression
+ * Convert gRPC URL expression into express
+ * @param  {string} url - gRPC URL expression
+ * @returns {string} express URL expression
  */
 const convertUrl = (url) => (
   // TODO: PRIORITY:LOW - use types to generate regex for numbers & strings in params
@@ -177,10 +177,10 @@ const convertUrl = (url) => (
 )
 
 /**
- * Convert gRPC response to output, based on - - - - - - - - - - - - - - - - - - - - - - - - - - - - - gRPC body field
- * @param  {Object} value   - gRPC response object
- * @param  {string} bodyMap gRPC body field
- * @return {mixed}          mapped output for `res.send()`
+ * Convert gRPC response to output, based on gRPC body field
+ * @param {Object} value - gRPC response object
+ * @param {string} bodyMap - gRPC body field
+ * @returns {Object} mapped output for `res.send()`
  */
 const convertBody = (value, bodyMap) => {
   bodyMap = bodyMap || '*'
@@ -192,9 +192,9 @@ const convertBody = (value, bodyMap) => {
 }
 
 /**
- * Get a list of params from a - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - gRPC URL
- * @param  {string} url gRPC URL
- * @return {string[]}   Array of params
+ * Get a list of params from a gRPC URL
+ * @param {string} url - gRPC URL
+ * @returns {Array<string>} Array of params
  */
 const getParamsList = (url) => {
   const out = []

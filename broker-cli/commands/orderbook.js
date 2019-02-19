@@ -13,14 +13,12 @@ const EVENT_TYPES = Object.freeze({
 })
 
 /**
- * Prints log statements for a psuedo UI for the orderbook
+ * Prints log statements for a psuedo UI for the OrderBook
  *
- * TODO: Use a util like clui/smart-table to represent columns/rows
+ * @todo Use a util like cli/smart-table to represent columns/rows
  * @param {string} market
- * @param {Array.<{price: price, depth: depth>}} asks - - - - - - - - - - - - - - - - - - - - - - - - - - - - - with price and depth
- * @param {Array.<{price: price, depth: depth>}} bids with price and depth
-
- * @returns {Void}
+ * @param {Array<Object>} asks - an object with price and depth
+ * @param {Array<Object>} bids - an object with price and depth
  */
 function createUI (market, asks, bids) {
   console.clear()
