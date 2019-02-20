@@ -91,44 +91,51 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
   // we are trying to open. If neither maxOutboundBalance nor maxInboundBalance exist, it means there are no channels open and we can safely
   // attempt to create channels with the balance
   if (maxOutboundBalance || maxInboundBalance) {
-    const insufficientOutboundBalance = maxOutboundBalance && Big(maxOutboundBalance).lt(balance)
-    const insufficientInboundBalance = maxInboundBalance && Big(maxInboundBalance).lt(convertedBalance)
-
-    let errorMessage
+    const insufficientOutboundBalance = maxOutboundBalance && Big(maxOutboundBalance).plus(engine.feeEstimate).lt(balance)
+    const insufficientInboundBalance = maxInboundBalance && Big(maxInboundBalance).plus(inverseEngine.feeEstimate).lt(convertedBalance)
 
     if (insufficientOutboundBalance) {
-      errorMessage = 'You have another outbound channel open with a balance lower than desired, release that channel and try again.'
-    } else if (insufficientInboundBalance) {
-      errorMessage = 'You have another inbound channel open with a balance lower than desired, release that channel and try again.'
-    } else {
-      errorMessage = `You already have a channel open with ${balanceCommon} or greater.`
+      logger.error('Existing outbound channel of insufficient size', { desiredBalance: balance, feeEstimate: engine.feeEstimate, existingBalance: maxOutboundBalance })
+      throw new PublicError('You have an existing outbound channel with a balance lower than desired, release that channel and try again.')
     }
 
-    logger.error(errorMessage, { balance, maxOutboundBalance, maxInboundBalance, inboundBalance: convertedBalance })
-    throw new PublicError(errorMessage)
+    if (insufficientInboundBalance) {
+      logger.error('Existing inbound channel of insufficient size', { desiredBalance: convertedBalance, feeEstimate: inverseEngine.feeEstimate, existingBalance: maxInboundBalance })
+      throw new PublicError('You have an existing inbound channel with a balance lower than desired, release that channel and try again.')
+    }
   }
 
-  logger.debug('Creating outbound channel', { address, balance })
+  if (!maxOutboundBalance) {
+    logger.debug('Creating outbound channel', { address, balance })
 
-  try {
-    await engine.createChannel(address, balance)
-  } catch (e) {
-    logger.error('Received error when creating outbound channel', { error: e.stack })
-    throw new PublicError(`Funding error: ${e.message}`)
+    try {
+      await engine.createChannel(address, balance)
+    } catch (e) {
+      logger.error('Received error when creating outbound channel', { error: e.stack })
+      throw new PublicError(`Funding error: ${e.message}`)
+    }
+  } else {
+    logger.debug('Outbound channel already exists', { balance: maxOutboundBalance })
   }
 
-  const paymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
+  if (!maxInboundBalance) {
+    const paymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
 
-  try {
-    const authorization = relayer.identity.authorize()
-    await relayer.paymentChannelNetworkService.createChannel({
-      address: paymentChannelNetworkAddress,
-      balance: convertedBalance,
-      symbol: inverseSymbol
-    }, authorization)
-  } catch (e) {
-    // TODO: Close channel that was open if relayer call has failed
-    throw (e)
+    logger.debug('Creating inbound channel', { balance: convertedBalance })
+
+    try {
+      const authorization = relayer.identity.authorize()
+      await relayer.paymentChannelNetworkService.createChannel({
+        address: paymentChannelNetworkAddress,
+        balance: convertedBalance,
+        symbol: inverseSymbol
+      }, authorization)
+    } catch (e) {
+      // TODO: Close channel that was open if relayer call has failed
+      throw new PublicError(`Error requesting inbound channel from Relayer: ${e.message}`, e)
+    }
+  } else {
+    logger.debug('Inbound channel already exists', { balance: maxInboundBalance })
   }
 
   return new EmptyResponse({})
