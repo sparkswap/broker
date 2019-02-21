@@ -65,7 +65,7 @@ describe('register', () => {
 
   it('logs a table with registration information', async () => {
     await register(args, opts, logger)
-    expect(instanceTableStub.push).to.have.been.calledWith([{ hAlign: 'center', content: 'Successfully registered public key with the Ϟ Sparkswap Relayer!' }])
+    expect(instanceTableStub.push).to.have.been.calledWith([{ hAlign: 'center', content: 'Successfully registered Broker with the Ϟ Sparkswap Relayer!' }])
     expect(instanceTableStub.push).to.have.been.calledWith([{ hAlign: 'center', content: `Go to ${url.cyan} to complete registration.` }])
   })
 })
