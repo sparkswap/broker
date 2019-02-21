@@ -29,8 +29,8 @@ describe('releaseChannels', () => {
     blockOrderWorker = {
       cancelActiveOrders: sinon.stub().resolves({ cancelledOrders, failedToCancelOrders })
     }
-    baseEngineStub = { closeChannels: sinon.stub().resolves([{chan: 'channel'}]) }
-    counterEngineStub = { closeChannels: sinon.stub().resolves([{chan: 'counterchannel'}, {chan: 'counterchannel'}]) }
+    baseEngineStub = { closeChannels: sinon.stub().resolves([{ chan: 'channel' }]) }
+    counterEngineStub = { closeChannels: sinon.stub().resolves([{ chan: 'counterchannel' }, { chan: 'counterchannel' }]) }
     engines = new Map([['BTC', baseEngineStub], ['LTC', counterEngineStub]])
   })
 

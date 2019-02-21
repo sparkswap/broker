@@ -7,8 +7,8 @@ const { handleError } = require('../../utils')
  * ex: `sparkswap order cancel Aar_w9XuTtUqeqeaac5liIMR-Lqf1dJfKZikTkhJ'
  *
  * @param {Object} args
- * @param {String} args.blockOrderId
- * @param {String} [rpcaddress] opts.rpcaddress
+ * @param {string} args.blockOrderId
+ * @param {string} [rpcaddress] - opts.rpcaddress
  * @param {Logger} logger
  */
 async function cancel (args, opts, logger) {

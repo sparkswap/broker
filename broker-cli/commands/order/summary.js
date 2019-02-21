@@ -6,7 +6,7 @@ const size = require('window-size')
 
 /**
  * Prints table of the users orders
- * @param {String} market
+ * @param {string} market
  * @param {Array.<{blockOrderId, side, amount, price, timeInForce, status>}}
 
  * @returns {Void}
@@ -44,8 +44,8 @@ function createUI (market, orders) {
  *
  * @param {Object} args
  * @param {Object} opts
- * @param {String} opts.market
- * @param {String} [rpcaddress] opts.rpcaddress
+ * @param {string} opts.market
+ * @param {string} [rpcaddress] - opts.rpcaddress
  * @param {Logger} logger
  */
 async function summary (args, opts, logger) {

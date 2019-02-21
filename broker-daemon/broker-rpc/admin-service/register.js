@@ -13,7 +13,7 @@ const REGISTER_URL = 'https://sparkswap.com/register/'
  * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
  * @param {Object} request.logger
  * @param {Object} responses
- * @param {function} responses.RegisterResponse - constructor for RegisterResponse messages
+ * @param {Function} responses.RegisterResponse - constructor for RegisterResponse messages
  * @return {RegisterResponse}
  */
 async function register ({ relayer, logger }, { RegisterResponse }) {

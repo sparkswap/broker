@@ -23,7 +23,7 @@ describe('getSupportedMarkets', () => {
     GetSupportedMarketsResponse = sinon.stub()
     relayer = {
       adminService: {
-        getMarkets: sinon.stub().resolves({markets})
+        getMarkets: sinon.stub().resolves({ markets })
       }
     }
   })

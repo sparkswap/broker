@@ -12,9 +12,9 @@ const BASIC_AUTH_DELIMITER = ':'
  * called from inside the grpc-methods authorization hook.
  *
  * @see {@link https://github.com/sparkswap/grpc-methods}
- * @param {String} rpcUser
- * @param {String} rpcPass
- * @param {Boolean} [disableAuth=false]
+ * @param {string} rpcUser
+ * @param {string} rpcPass
+ * @param {boolean} [disableAuth=false]
  * @return {Function}
  */
 function createBasicAuth (rpcUser, rpcPass, disableAuth = false) {

@@ -62,7 +62,7 @@ describe('BrokerRPCServer', () => {
     router = function router (req, res, next) {
       router.handle(req, res, next)
     }
-    httpServerStub = {listen: sinon.stub()}
+    httpServerStub = { listen: sinon.stub() }
     httpServer = sinon.stub().returns(httpServerStub)
     grpcGateway = sinon.stub().returns(router)
     BrokerRPCServer.__set__('grpcGateway', grpcGateway)
@@ -261,7 +261,7 @@ describe('BrokerRPCServer', () => {
         bind: bindStub,
         start: serverStub
       }
-      server.httpServer = {listen: sinon.stub()}
+      server.httpServer = { listen: sinon.stub() }
     })
 
     beforeEach(() => {

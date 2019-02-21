@@ -7,11 +7,11 @@ const getPreimage = require('./get-preimage')
  */
 class ExternalPreimageService {
   /**
-   * @param  {String} protoPath full file path to the .proto file for the ExternalPreimageService definition
+   * @param  {string} protoPath - full file path to the .proto file for the ExternalPreimageService definition
    * @param  {Object} options
-   * @param  {SublevelIndex} options.ordersByHash Orders for which we are the maker, index by swap hash
-   * @param  {Map<String, Engine>} options.engines All available engines
-   * @param  {Object} options.logger Logger to be used in methods
+   * @param  {SublevelIndex} options.ordersByHash - Orders for which we are the maker, index by swap hash
+   * @param  {Map<string, Engine>} options.engines - All available engines
+   * @param  {Object} options.logger - Logger to be used in methods
    * @return {ExternalPreimageService}
    */
   constructor (protoPath, { ordersByHash, engines, logger }) {
@@ -28,8 +28,8 @@ class ExternalPreimageService {
 
   /**
    * Create a logging string specific to this service and method
-   * @param  {String} methodName
-   * @return {String}
+   * @param  {string} methodName
+   * @return {string}
    */
   messageId (methodName) {
     return `[${this.serviceName}:${methodName}]`

@@ -11,9 +11,9 @@ class StateMachineAbstractPlugin {
 
   /**
    * A copy of StateMachine~plugin, which is not exposed
-   * @param  {StateMachine} instance       State machine instance to be hooked
-   * @param  {String}       event          Name of the event (e.g. `persist`)
-   * @param  {Array}        additionalArgs Additional arguments to be applied to the hooked functions
+   * @param  {StateMachine} instance       - State machine instance to be hooked
+   * @param  {string}       event          - Name of the event (e.g. `persist`)
+   * @param  {Array}        additionalArgs - Additional arguments to be applied to the hooked functions
    * @return {void}
    */
   hook (instance, event, additionalArgs = []) {
@@ -32,7 +32,7 @@ class StateMachineAbstractPlugin {
    * State machine plugins expose a `configure` method that gets called against the config object when building the factory
    * By default, we use it to apply our custom transitions
    * @see {@link https://github.com/jakesgordon/javascript-state-machine/blob/master/src/config.js#L119}
-   * @param  {StateMachine~Config} config State machine configuration object
+   * @param  {StateMachine~Config} config - State machine configuration object
    * @return {void}
    */
   configure (config) {
@@ -45,7 +45,7 @@ class StateMachineAbstractPlugin {
    * State machine provides a hook when a new state machine is init'ed
    * By default, we use it to apply our custom lifecycle observers (the `lifecycle` hook provided by JSM does not support promises)
    * @see {@link https://github.com/jakesgordon/javascript-state-machine/blob/master/src/jsm.js#L22}
-   * @param  {Object} instance State machine instance being initialized
+   * @param  {Object} instance - State machine instance being initialized
    * @return {void}
    */
   init (instance) {

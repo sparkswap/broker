@@ -20,9 +20,9 @@ const BASIC_AUTH_DELIMITER = ':'
  * Example Result: `Basic
  *
  * @private
- * @param {String} username
- * @param {String} password
- * @return {String} res - Basic Authentication string (RFC 7235)
+ * @param {string} username
+ * @param {string} password
+ * @return {string} res - Basic Authentication string (RFC 7235)
  */
 function credentialsToBasicAuth (username, password) {
   const encodedCredentials = Buffer.from(`${username}${BASIC_AUTH_DELIMITER}${password}`).toString('base64')
@@ -32,8 +32,8 @@ function credentialsToBasicAuth (username, password) {
 /**
  * Generates Basic Authentication call credentials
  *
- * @param {String} username
- * @param {String} password
+ * @param {string} username
+ * @param {string} password
  * @return {grpc.credentials}
  */
 function generateBasicAuthCredentials (username, password) {

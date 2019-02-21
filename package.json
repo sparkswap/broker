@@ -11,8 +11,9 @@
     "build": "bash ./scripts/build.sh",
     "destroy": "bash ./scripts/destroy.sh",
     "dist-cli": "npm run broker-proto && bash ./scripts/publish-broker-cli.sh",
-    "format": "standard --fix",
+    "format": "npm run lint -- --fix",
     "pretest": "npm run format; exit 0",
+    "lint": "eslint broker-cli broker-daemon test --ext .js",
     "mocha-test": "NODE_PATH=. mocha 'broker-cli/{,!(node_modules)/**}/**/*.spec.js' 'broker-daemon/**/**/*.spec.js'",
     "test": "npm run check-for-cycles && npm run mocha-test",
     "coverage": "nyc npm test",
@@ -27,12 +28,6 @@
   "bin": {
     "sparkswapd": "./broker-daemon/bin/sparkswapd",
     "sparkswap": "./broker-cli/bin/sparkswap"
-  },
-  "standard": {
-    "env": [
-      "mocha",
-      "chai"
-    ]
   },
   "nyc": {
     "exclude": [
@@ -78,8 +73,13 @@
     "chai": "4.1.2",
     "chai-as-promised": "7.1.1",
     "dirty-chai": "2.0.1",
-    "eslint": "4.19.1",
-    "eslint-plugin-import": "2.11.0",
+    "eslint": "5.14.0",
+    "eslint-config-standard": "12.0.0",
+    "eslint-plugin-import": "2.16.0",
+    "eslint-plugin-jsdoc": "4.1.0",
+    "eslint-plugin-node": "8.0.1",
+    "eslint-plugin-promise": "4.0.1",
+    "eslint-plugin-standard": "4.0.0",
     "madge": "3.3.0",
     "mocha": "5.1.1",
     "mock-require": "3.0.2",
@@ -88,7 +88,6 @@
     "rewire": "4.0.1",
     "sinon": "7.2.3",
     "sinon-chai": "3.3.0",
-    "standard": "11.0.1",
     "timekeeper": "2.1.2",
     "timeout-as-promise": "1.0.0"
   },

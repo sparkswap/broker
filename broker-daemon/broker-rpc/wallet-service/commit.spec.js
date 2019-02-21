@@ -128,7 +128,7 @@ describe('commit', () => {
     })
 
     it('receives a payment channel network address from the relayer', () => {
-      expect(getAddressStub).to.have.been.calledWith({symbol: params.symbol})
+      expect(getAddressStub).to.have.been.calledWith({ symbol: params.symbol })
     })
 
     it('creates a channel through an btc engine with base units', () => {
@@ -168,7 +168,7 @@ describe('commit', () => {
 
   describe('invalid market', () => {
     it('throws an error if engine does not exist for symbol', () => {
-      const badParams = {symbol: 'BTC', market: 'BTC/BAD'}
+      const badParams = { symbol: 'BTC', market: 'BTC/BAD' }
       const errorMessage = `${badParams.market} is not being tracked as a market.`
       return expect(commit({ params: badParams, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
     })
@@ -176,7 +176,7 @@ describe('commit', () => {
 
   describe('invalid engine types', () => {
     it('throws an error if engine does not exist for symbol', () => {
-      const badParams = {symbol: 'BAD', market: 'BTC/LTC'}
+      const badParams = { symbol: 'BAD', market: 'BTC/LTC' }
       const errorMessage = `No engine is configured for symbol: ${badParams.symbol}`
       return expect(commit({ params: badParams, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
     })
@@ -191,8 +191,8 @@ describe('commit', () => {
 
   describe('checking channel balances', () => {
     it('does not throw if there are already open inbound and outbound channel', () => {
-      getMaxOutboundChannelStub.resolves({maxBalance: '10000001'})
-      getMaxInboundChannelStub.resolves({maxBalance: '100000'})
+      getMaxOutboundChannelStub.resolves({ maxBalance: '10000001' })
+      getMaxInboundChannelStub.resolves({ maxBalance: '100000' })
 
       return expect(
         commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
@@ -201,7 +201,7 @@ describe('commit', () => {
 
     it('opens an outbound channel if the outbound channel does not exist', async () => {
       getMaxOutboundChannelStub.resolves({})
-      getMaxInboundChannelStub.resolves({maxBalance: '100000'})
+      getMaxInboundChannelStub.resolves({ maxBalance: '100000' })
 
       await commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
 
@@ -210,7 +210,7 @@ describe('commit', () => {
     })
 
     it('opens an inbound channel if the inbound channel does not exist', async () => {
-      getMaxOutboundChannelStub.resolves({maxBalance: '10000001'})
+      getMaxOutboundChannelStub.resolves({ maxBalance: '10000001' })
       getMaxInboundChannelStub.resolves({})
 
       await commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
@@ -220,16 +220,16 @@ describe('commit', () => {
     })
 
     it('throws an error if the outbound channel does not have the desired amount excluding the fee estimate', () => {
-      getMaxOutboundChannelStub.resolves({maxBalance: '1000'})
-      getMaxInboundChannelStub.resolves({maxBalance: '100000'})
+      getMaxOutboundChannelStub.resolves({ maxBalance: '1000' })
+      getMaxInboundChannelStub.resolves({ maxBalance: '100000' })
       return expect(
         commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError, 'You have an existing outbound channel with a balance lower than desired, release that channel and try again.')
     })
 
     it('throws an error if the inbound channel does not have the desired amount excluding the fee estimate', () => {
-      getMaxOutboundChannelStub.resolves({maxBalance: '100000001'})
-      getMaxInboundChannelStub.resolves({maxBalance: '70000'})
+      getMaxOutboundChannelStub.resolves({ maxBalance: '100000001' })
+      getMaxInboundChannelStub.resolves({ maxBalance: '70000' })
       return expect(
         commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
       ).to.be.rejectedWith(PublicError, 'You have an existing inbound channel with a balance lower than desired, release that channel and try again.')

@@ -6,7 +6,7 @@ const logger = require('./logger')
 /**
  * Return true for every call
  * Used to create a non-filtering filter
- * @return {Boolean} True for every item passed
+ * @return {boolean} True for every item passed
  */
 const returnTrue = function () { return true }
 
@@ -38,11 +38,11 @@ const UPPER_BOUND = '\uffff'
 class Index {
   /**
    * Create a new index for sublevel store
-   * @param  {sublevel} store                 Sublevel of the base store
-   * @param  {String}   name                  Name of the index
-   * @param  {Function} getValue              User-passed function that returns the indexed value
-   * @param  {Function} [filter=returnTrue]   Filter for items to not index
-   * @param  {String}   [delimiter=DELIMITER] Delimiter between the index value and the base key. It may appear in the base key, but cannot appear in the index value produced by `getValue`.
+   * @param  {sublevel} store                 - Sublevel of the base store
+   * @param  {string}   name                  - Name of the index
+   * @param  {Function} getValue              - User-passed function that returns the indexed value
+   * @param  {Function} [filter=returnTrue]   - Filter for items to not index
+   * @param  {string}   [delimiter=DELIMITER] - Delimiter between the index value and the base key. It may appear in the base key, but cannot appear in the index value produced by `getValue`.
    * @return {Index}
    */
   constructor (store, name, getValue, filter = returnTrue, delimiter = DELIMITER) {
@@ -69,7 +69,7 @@ class Index {
 
   /**
    * Build a sublevel-compatible option range for this index
-   * @param  {Object} opts Options from which to build a range
+   * @param  {Object} opts - Options from which to build a range
    * @return {Object} Sublevel readStream options
    */
   range (opts = {}) {
@@ -90,7 +90,7 @@ class Index {
 
   /**
    * Create a read stream of the index, filtering out those keys marked for deletion and transforming index keys into base keys
-   * @param  {Object} opts Sublevel readStream options
+   * @param  {Object} opts - Sublevel readStream options
    * @return {Readable}    Readable stream
    */
   createReadStream (opts) {
@@ -125,8 +125,8 @@ class Index {
    * @example
    * // returns '123'
    * index._extractBaseKey('xyz:123')
-   * @param  {String} indexKey Key of the object in the index
-   * @return {String}          Key of the object in the base store
+   * @param  {string} indexKey - Key of the object in the index
+   * @return {string}          Key of the object in the base store
    */
   _extractBaseKey (indexKey) {
     // in most cases, we will have only two chunks: the indexValue and the baseKey
@@ -149,10 +149,10 @@ class Index {
    * index._createIndexKey('abc', 'xyz')
    * // returns 'xyz:abc:123'
    * index._createIndexKey('abc:123', 'xyz')
-   * @param  {String}   baseKey   Key of the object in the base store
-   * @param  {String}   baseValue Value of the object in the base store
+   * @param  {string}   baseKey   - Key of the object in the base store
+   * @param  {string}   baseValue - Value of the object in the base store
    * @param  {Function} getValue
-   * @return {String}
+   * @return {string}
    * @throws {Error} If the derived index value contains `this.delimiter`
    */
   _createIndexKey (baseKey, baseValue) {
@@ -169,7 +169,7 @@ class Index {
 
   /**
    * Mark a base key as being deleted in this index to avoid it being returned while its being deleted
-   * @param  {String} baseKey Key of the object in the base store
+   * @param  {string} baseKey - Key of the object in the base store
    * @return {void}
    */
   _startDeletion (baseKey) {
@@ -178,7 +178,7 @@ class Index {
 
   /**
    * Base key is removed from the index store, so we can remove from our local cache
-   * @param  {String} baseKey Key of the object in the base store
+   * @param  {string} baseKey - Key of the object in the base store
    * @return {void}
    */
   _finishDeletion (baseKey) {
@@ -187,8 +187,8 @@ class Index {
 
   /**
    * Checks whether a given index key will be removed from the index
-   * @param  {String}  indexKey Key of the object in the index
-   * @return {Boolean}
+   * @param  {string}  indexKey - Key of the object in the index
+   * @return {boolean}
    */
   _isMarkedForDeletion (indexKey) {
     const baseKey = this._extractBaseKey(indexKey)
@@ -197,7 +197,7 @@ class Index {
 
   /**
    * Queue the deletion of a base key from the index
-   * @param  {String} baseKey Key of the object in the base store
+   * @param  {string} baseKey - Key of the object in the base store
    * @return {void}
    */
   _removeFromIndex (baseKey) {
@@ -225,8 +225,8 @@ class Index {
 
   /**
    * Create a database operation to add an object to the index
-   * @param {String}   baseKey    Key of the object in the base store
-   * @param {String}   baseValue  Value of the object in the base store
+   * @param {string}   baseKey    - Key of the object in the base store
+   * @param {string}   baseValue  - Value of the object in the base store
    * @return {Object} Sublevel compatible database batch operation
    */
   _addToIndexOperation (baseKey, baseValue) {

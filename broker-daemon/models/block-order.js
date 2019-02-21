@@ -14,13 +14,13 @@ const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 class BlockOrder {
   /**
    * Instantiate a new Block Order
-   * @param  {String} options.id          Unique id for the block order
-   * @param  {String} options.marketName  Market name (e.g. BTC/LTC)
-   * @param  {String} options.side        Side of the market being taken (i.e. BID or ASK)
-   * @param  {String} options.amount      Size of the order in base currency (e.g. '10000')
-   * @param  {String} options.price       Limit price for the order (e.g. '100.1')
-   * @param  {String} options.timeInForce Time restriction on the order (e.g. GTC, FOK)
-   * @param  {String} options.status      Block Order status
+   * @param  {string} options.id          - Unique id for the block order
+   * @param  {string} options.marketName  - Market name (e.g. BTC/LTC)
+   * @param  {string} options.side        - Side of the market being taken (i.e. BID or ASK)
+   * @param  {string} options.amount      - Size of the order in base currency (e.g. '10000')
+   * @param  {string} options.price       - Limit price for the order (e.g. '100.1')
+   * @param  {string} options.timeInForce - Time restriction on the order (e.g. GTC, FOK)
+   * @param  {string} options.status      - Block Order status
    * @return {BlockOrder}
    */
   constructor ({ id, marketName, side, amount, price, timeInForce, timestamp, status = BlockOrder.STATUSES.ACTIVE }) {
@@ -68,7 +68,7 @@ class BlockOrder {
 
   /**
    * Convenience getter for the inverse side of the market
-   * @return {String} `BID` or `ASK`
+   * @return {string} `BID` or `ASK`
    */
   get inverseSide () {
     if (this.side === BlockOrder.SIDES.BID) {
@@ -80,7 +80,7 @@ class BlockOrder {
 
   /**
    * Convenience getter for baseSymbol
-   * @return {String} Base symbol from market name (e.g. BTC from BTC/LTC)
+   * @return {string} Base symbol from market name (e.g. BTC from BTC/LTC)
    */
   get baseSymbol () {
     return this.marketName.split('/')[0]
@@ -88,7 +88,7 @@ class BlockOrder {
 
   /**
    * Convenience getter for counterSymbol
-   * @return {String} Counter symbol from market name (e.g. LTC from BTC/LTC)
+   * @return {string} Counter symbol from market name (e.g. LTC from BTC/LTC)
    */
   get counterSymbol () {
     return this.marketName.split('/')[1]
@@ -112,7 +112,7 @@ class BlockOrder {
 
   /**
    * Convenience getter for baseAmount
-   * @return {String} String representation of the amount of currency to be transacted in base currency's smallest unit
+   * @return {string} String representation of the amount of currency to be transacted in base currency's smallest unit
    */
   get baseAmount () {
     return this.amount.times(this.baseCurrencyConfig.quantumsPerCommon).round(0).toString()
@@ -120,7 +120,7 @@ class BlockOrder {
 
   /**
    * Convenience getter for counterAmount calculated using the block order price
-   * @return {String} String representation of the amount of currency to be transacted in counter currency's smallest unit
+   * @return {string} String representation of the amount of currency to be transacted in counter currency's smallest unit
    */
   get counterAmount () {
     if (!this.price) {
@@ -134,7 +134,7 @@ class BlockOrder {
 
   /**
   * Convenience getter for outboundAmount
-  * @return {String} String representation of the amount of currency we will send outbound for the order
+  * @return {string} String representation of the amount of currency we will send outbound for the order
   */
   get outboundAmount () {
     return this.isBid ? this.counterAmount : this.baseAmount
@@ -142,7 +142,7 @@ class BlockOrder {
 
   /**
   * Convenience getter for inboundAmount
-  * @return {String} String representation of the amount of currency we will receive inbound for the order
+  * @return {string} String representation of the amount of currency we will receive inbound for the order
   */
   get inboundAmount () {
     return this.isBid ? this.baseAmount : this.counterAmount
@@ -150,7 +150,7 @@ class BlockOrder {
 
   /**
   * Get the symbol of the currency we will receive inbound
-  * @return {String} Currency symbol
+  * @return {string} Currency symbol
   */
   get inboundSymbol () {
     return this.isBid ? this.baseSymbol : this.counterSymbol
@@ -158,7 +158,7 @@ class BlockOrder {
 
   /**
   * Get the symbol of the currency we will send outbound
-  * @return {String} Currency symbol
+  * @return {string} Currency symbol
   */
   get outboundSymbol () {
     return this.isBid ? this.counterSymbol : this.baseSymbol
@@ -166,7 +166,7 @@ class BlockOrder {
 
   /**
    * Price of an order expressed in terms of the smallest unit of each currency
-   * @return {String} Decimal of the price expressed as a string with 16 decimal places
+   * @return {string} Decimal of the price expressed as a string with 16 decimal places
    */
   get quantumPrice () {
     if (!this.counterAmount) return
@@ -175,7 +175,7 @@ class BlockOrder {
 
   /**
    * get key for storage in leveldb
-   * @return {String} Block order id
+   * @return {string} Block order id
    */
   get key () {
     return this.id
@@ -183,7 +183,7 @@ class BlockOrder {
 
   /**
    * get value for storage in leveldb
-   * @return {String} Stringified JSON object
+   * @return {string} Stringified JSON object
    */
   get value () {
     const {
@@ -224,7 +224,7 @@ class BlockOrder {
 
   /**
    * get boolean for if the blockOrder is a bid
-   * @return {Boolean}
+   * @return {boolean}
    */
   get isBid () {
     return this.side === BlockOrder.SIDES.BID
@@ -232,7 +232,7 @@ class BlockOrder {
 
   /**
    * get boolean for if the blockOrder is an ask
-   * @return {Boolean}
+   * @return {boolean}
    */
   get isAsk () {
     return this.side === BlockOrder.SIDES.ASK
@@ -240,7 +240,7 @@ class BlockOrder {
 
   /**
    * get boolean for if the blockOrder is in an active
-   * @return {Boolean}
+   * @return {boolean}
    */
   get isActive () {
     return this.status === BlockOrder.STATUSES.ACTIVE
@@ -248,7 +248,7 @@ class BlockOrder {
 
   /**
    * get boolean for if the blockOrder is an a state to be worked
-   * @return {Boolean}
+   * @return {boolean}
    */
   get isInWorkableState () {
     return this.isActive
@@ -256,7 +256,7 @@ class BlockOrder {
 
   /**
    * get boolean for if the blockOrder is a marketOrder
-   * @return {Boolean}
+   * @return {boolean}
    */
   get isMarketOrder () {
     return !this.price
@@ -292,14 +292,14 @@ class BlockOrder {
   }
 
   activeOutboundAmount () {
-    const activeOrderAmount = this.activeOrders.reduce((acc, {order, state}) => {
+    const activeOrderAmount = this.activeOrders.reduce((acc, { order, state }) => {
       if (state === OrderStateMachine.STATES.EXECUTING) {
         return acc.plus(order.outboundFillAmount)
       } else {
         return acc.plus(order.outboundAmount)
       }
     }, Big(0))
-    const activeFillAmount = this.activeFills.reduce((acc, {fill}) => {
+    const activeFillAmount = this.activeFills.reduce((acc, { fill }) => {
       return acc.plus(fill.outboundAmount)
     }, Big(0))
 
@@ -307,14 +307,14 @@ class BlockOrder {
   }
 
   activeInboundAmount () {
-    const activeOrderAmount = this.activeOrders.reduce((acc, {order, state}) => {
+    const activeOrderAmount = this.activeOrders.reduce((acc, { order, state }) => {
       if (state === OrderStateMachine.STATES.EXECUTING) {
         return acc.plus(order.inboundFillAmount)
       } else {
         return acc.plus(order.inboundAmount)
       }
     }, Big(0))
-    const activeFillAmount = this.activeFills.reduce((acc, {fill}) => {
+    const activeFillAmount = this.activeFills.reduce((acc, { fill }) => {
       return acc.plus(fill.inboundAmount)
     }, Big(0))
 
@@ -429,8 +429,8 @@ class BlockOrder {
   /**
    * Re-instantiate a previously saved BlockOrder
    *
-   * @param  {String} key   Key used to retrieve the BlockOrder
-   * @param  {String} value Value returned from leveldb
+   * @param  {string} key   - Key used to retrieve the BlockOrder
+   * @param  {string} value - Value returned from leveldb
    * @return {BlockOrder}   BlockOrder instance
    */
   static fromStorage (key, value) {
@@ -456,8 +456,8 @@ class BlockOrder {
   /**
    * Grab a block order from a given sublevel
    *
-   * @param {Sublevel} store block order sublevel store
-   * @param {String} blockOrderId
+   * @param {Sublevel} store - block order sublevel store
+   * @param {string} blockOrderId
    * @return {BlockOrder} BlockOrder instance
    * @throws {Error} store is null
    * @throws {BlockOrderNotFoundError} block order could not be found

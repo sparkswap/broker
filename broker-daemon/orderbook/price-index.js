@@ -7,8 +7,8 @@ const { MarketEventOrder } = require('../models')
 class PriceIndex extends SublevelIndex {
   /**
    * Create an index by price for a side of the market
-   * @param  {sublevel} store    Store with the underlying orders
-   * @param  {String}   side     Side of the market to index (i.e. `BID` or `ASK`)
+   * @param  {sublevel} store    - Store with the underlying orders
+   * @param  {string}   side     - Side of the market to index (i.e. `BID` or `ASK`)
    * @return {PriceIndex}
    */
   constructor (store, side) {
@@ -20,9 +20,9 @@ class PriceIndex extends SublevelIndex {
 
   /**
    * Filter out orders that are not from this side of the market
-   * @param  {String} key   Key of the order to store
-   * @param  {String} value Value of the order to store
-   * @return {Boolean}      Whether this order should be included in the index
+   * @param  {string} key   - Key of the order to store
+   * @param  {string} value - Value of the order to store
+   * @return {boolean}      Whether this order should be included in the index
    */
   _filter (key, value) {
     const order = MarketEventOrder.fromStorage(key, value)
@@ -31,9 +31,9 @@ class PriceIndex extends SublevelIndex {
 
   /**
    * Get index values for the order being stored
-   * @param  {String} key   Key of the order to store
-   * @param  {String} value Value of the order to store
-   * @return {String}       Index value for the order
+   * @param  {string} key   - Key of the order to store
+   * @param  {string} value - Value of the order to store
+   * @return {string}       Index value for the order
    */
   _getValue (key, value) {
     const order = MarketEventOrder.fromStorage(key, value)
@@ -43,8 +43,8 @@ class PriceIndex extends SublevelIndex {
 
   /**
    * Placeholder for implementations of the price index
-   * @param  {String} quantumPrice Decimal of the quantumPrice
-   * @return {String}       Index key to be used
+   * @param  {string} quantumPrice - Decimal of the quantumPrice
+   * @return {string}       Index key to be used
    */
   keyForPrice (quantumPrice) {
     throw new Error('`keyForPrice` must be implemented by child classes.')
@@ -53,7 +53,7 @@ class PriceIndex extends SublevelIndex {
   /**
    * Create a read stream of orders with prices at least as good as the given one
    * Note: If no quantumPrice is provided, creates a read stream of all records
-   * @param  {String} quantumPrice Decimal of the price
+   * @param  {string} quantumPrice - Decimal of the price
    * @return {ReadableStream}       ReadableStream from sublevel-index
    */
   streamOrdersAtPriceOrBetter (quantumPrice) {

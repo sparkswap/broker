@@ -6,12 +6,12 @@ const { Big } = require('../../utils')
  *
  * @param {Object} request - request object
  * @param {Object} request.params
- * @param {String} request.params.symbol
- * @param {String} request.params.address
+ * @param {string} request.params.symbol
+ * @param {string} request.params.address
  * @param {RelayerClient} request.relayer
  * @param {Logger} request.logger
  * @param {Map<Engine>} request.engines
- * @param {function} responses.WithdrawFundsResponse
+ * @param {Function} responses.WithdrawFundsResponse
  * @return {WithdrawFundsResponse}
  */
 async function withdrawFunds ({ params, relayer, logger, engines }, { WithdrawFundsResponse }) {
@@ -32,7 +32,7 @@ async function withdrawFunds ({ params, relayer, logger, engines }, { WithdrawFu
     logger.info(`Attempting to withdraw ${amount} ${symbol} from wallet to ${address}`)
     const txid = await engine.withdrawFunds(address, amountInSat.toString())
     logger.info(`Successfully withdrew ${amount} ${symbol} from wallet to ${address}, transaction id: ${txid}`)
-    return new WithdrawFundsResponse({txid})
+    return new WithdrawFundsResponse({ txid })
   } catch (err) {
     throw new PublicError(err.message, err)
   }

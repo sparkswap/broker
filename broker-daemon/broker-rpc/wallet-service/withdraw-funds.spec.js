@@ -66,7 +66,7 @@ describe('withdrawFunds', () => {
     })
 
     it('returns an WithdrawFundsResponse', () => {
-      expect(WithdrawFundsResponse).to.have.been.calledWith({txid})
+      expect(WithdrawFundsResponse).to.have.been.calledWith({ txid })
     })
   })
 

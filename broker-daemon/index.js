@@ -49,9 +49,9 @@ const DEFAULT_RELAYER_HOST = 'localhost:28492'
 
 /**
  * Create an instance of an engine from provided configuration
- * @param  {String} symbol         Symbol that this engine is responsible for
- * @param  {Object} engineConfig   Configuration object for this engine
- * @param  {Logger} options.logger Logger that this engine should use
+ * @param  {string} symbol         - Symbol that this engine is responsible for
+ * @param  {Object} engineConfig   - Configuration object for this engine
+ * @param  {Logger} options.logger - Logger that this engine should use
  * @return {LndEngine}
  */
 function createEngineFromConfig (symbol, engineConfig, { logger }) {
@@ -78,19 +78,19 @@ function createEngineFromConfig (symbol, engineConfig, { logger }) {
 class BrokerDaemon {
   /**
    * @param {Object} opts
-   * @param {String} opts.privKeyPath - Path to private key for broker's identity
-   * @param {String} opts.pubKeyPath - Path to public key for broker's identity
-   * @param {String} opts.rpcAddress - Host and port where the user-facing RPC server should listen
-   * @param {String} opts.interchainRouterAddress - Host and port where the interchain router should listen
-   * @param {String} opts.dataDir - Relative path to a directory where application data should be stored
+   * @param {string} opts.privKeyPath - Path to private key for broker's identity
+   * @param {string} opts.pubKeyPath - Path to public key for broker's identity
+   * @param {string} opts.rpcAddress - Host and port where the user-facing RPC server should listen
+   * @param {string} opts.interchainRouterAddress - Host and port where the interchain router should listen
+   * @param {string} opts.dataDir - Relative path to a directory where application data should be stored
    * @param {Array}  opts.marketNames - List of market names (e.g. 'BTC/LTC') to support
    * @param {Object} opts.engines - Configuration for all the engines to instantiate
-   * @param {Boolean} [opts.disableAuth=false] - Disable SSL for the daemon
-   * @param {String} [opts.rpcUser] - RPC username, only used when auth is enabled
-   * @param {String} [opts.rpcPass] - RPC password, only used when auth is enabled
+   * @param {boolean} [opts.disableAuth=false] - Disable SSL for the daemon
+   * @param {string} [opts.rpcUser] - RPC username, only used when auth is enabled
+   * @param {string} [opts.rpcPass] - RPC password, only used when auth is enabled
    * @param {Object} opts.relayerOptions
-   * @param {String} opts.relayerOptions.relayerRpcHost - Host and port for the Relayer RPC
-   * @param {String} opts.relayerOptions.certPath - Absolute path to the root certificate for the relayer
+   * @param {string} opts.relayerOptions.relayerRpcHost - Host and port for the Relayer RPC
+   * @param {string} opts.relayerOptions.certPath - Absolute path to the root certificate for the relayer
    * @return {BrokerDaemon}
    */
   constructor ({ privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcHttpProxyAddress }) {
@@ -196,7 +196,7 @@ class BrokerDaemon {
   /**
    * Listens to the assigned markets
    *
-   * @param {Array<String>} markets
+   * @param {Array<string>} markets
    * @returns {Promise<void>} promise that resolves when markets are caught up to the remote
    * @throws {Error} If markets include a currency with no currency configuration
    */
@@ -211,7 +211,7 @@ class BrokerDaemon {
   /**
    * Creates and initializes an orderbook for every market
    *
-   * @param {String} marketName
+   * @param {string} marketName
    * @returns {Promise<void>} promise that resolves when market is caught up to the remote
    */
   async initializeMarket (marketName) {

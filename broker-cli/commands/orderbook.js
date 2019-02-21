@@ -13,14 +13,12 @@ const EVENT_TYPES = Object.freeze({
 })
 
 /**
- * Prints log statements for a psuedo UI for the orderbook
+ * Prints log statements for a psuedo UI for the OrderBook
  *
- * TODO: Use a util like clui/smart-table to represent columns/rows
- * @param {String} market
- * @param {Array.<{price: price, depth: depth>}} asks with price and depth
- * @param {Array.<{price: price, depth: depth>}} bids with price and depth
-
- * @returns {Void}
+ * @todo Use a util like cli/smart-table to represent columns/rows
+ * @param {string} market
+ * @param {Array<Object>} asks - an object with price and depth
+ * @param {Array<Object>} bids - an object with price and depth
  */
 function createUI (market, asks, bids) {
   console.clear()
@@ -102,8 +100,8 @@ function createUI (market, asks, bids) {
  *
  * @param {Object} args
  * @param {Object} opts
- * @param {String} opts.market
- * @param {String} [rpcaddress] opts.rpcaddress
+ * @param {string} opts.market
+ * @param {string} [rpcaddress] - opts.rpcaddress
  * @param {Logger} logger
  */
 async function orderbook (args, opts, logger) {
@@ -170,7 +168,7 @@ function calculateTableWidths (windowWidth) {
   const mainTableWidth = Math.round((windowWidth - borderOffset) / numTables)
   const innerTableWidth = Math.round((mainTableWidth - borderOffset) / numTables)
 
-  return {mainTableWidth, innerTableWidth}
+  return { mainTableWidth, innerTableWidth }
 }
 
 module.exports = (program) => {

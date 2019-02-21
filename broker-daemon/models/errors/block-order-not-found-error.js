@@ -3,7 +3,7 @@
  */
 class BlockOrderNotFoundError extends Error {
   /**
-   * @param {String} id - a blockorder id
+   * @param {string} id - a blockorder id
    * @param {Error} err
    */
   constructor (id, err) {

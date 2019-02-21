@@ -262,7 +262,7 @@ describe('cli wallet', () => {
         outstandingSendCapacity: '0.000001'
       }
 
-      getTradingCapacitiesStub = sinon.stub().resolves({baseSymbolCapacities, counterSymbolCapacities})
+      getTradingCapacitiesStub = sinon.stub().resolves({ baseSymbolCapacities, counterSymbolCapacities })
 
       tableStub = sinon.stub()
       tablePushStub = sinon.stub()
@@ -628,7 +628,7 @@ describe('cli wallet', () => {
       args = { symbol, amount, address }
       opts = { rpcAddress }
       txid = '1234'
-      withdrawStub = sinon.stub().resolves({txid: '1234'})
+      withdrawStub = sinon.stub().resolves({ txid: '1234' })
       askQuestionStub = sinon.stub().returns('Y')
       logger = { info: sinon.stub(), error: sinon.stub() }
 
@@ -643,7 +643,7 @@ describe('cli wallet', () => {
 
     it('calls the daemon to withdraw channels in the given market', async () => {
       await withdraw(args, opts, logger)
-      expect(withdrawStub).to.have.been.calledWith({amount, symbol, address})
+      expect(withdrawStub).to.have.been.calledWith({ amount, symbol, address })
     })
 
     it('asks the user if they are ok to withdraw channels', async () => {

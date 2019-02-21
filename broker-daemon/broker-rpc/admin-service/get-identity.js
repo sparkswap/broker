@@ -5,7 +5,7 @@
  * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
  * @param {Object} request.logger
  * @param {Object} responses
- * @param {function} responses.GetIdentityResponse - constructor for GetIdentityResponse messages
+ * @param {Function} responses.GetIdentityResponse - constructor for GetIdentityResponse messages
  * @return {responses.GetIdentityResponse}
  */
 async function getIdentity ({ relayer, logger }, { GetIdentityResponse }) {
