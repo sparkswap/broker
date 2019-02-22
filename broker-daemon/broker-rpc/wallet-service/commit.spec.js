@@ -1,6 +1,5 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
-const { PublicError } = require('grpc-methods')
 const { Big } = require('../../utils')
 
 const commit = rewire(path.resolve(__dirname, 'commit'))
@@ -83,7 +82,7 @@ describe('commit', () => {
     params.balance = '0.00000100'
     return expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-    ).to.be.rejectedWith(PublicError, 'Minimum balance of')
+    ).to.be.rejectedWith(Error, 'Minimum balance of')
   })
 
   it('balance over allowed maximum value throws an error for an incorrect balance', () => {
@@ -91,7 +90,7 @@ describe('commit', () => {
     params.balance = maxBalance + 1
     return expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-    ).to.be.rejectedWith(PublicError, 'Maximum balance')
+    ).to.be.rejectedWith(Error, 'Maximum balance')
   })
 
   it('throws an error if the inbound channel exceeds the maximum value', () => {
@@ -100,7 +99,7 @@ describe('commit', () => {
     params.balance = btcEngine.maxChannelBalance - 1
     return expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-    ).to.be.rejectedWith(PublicError, 'Maximum balance')
+    ).to.be.rejectedWith(Error, 'Maximum balance')
   })
 
   it('throws an error if creating a channel fails', () => {
@@ -108,7 +107,7 @@ describe('commit', () => {
 
     expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-    ).to.be.rejectedWith(PublicError, 'Funding error')
+    ).to.be.rejectedWith(Error, 'Funding error')
   })
 
   it('throws an error if requesting an inbound channel fails', () => {
@@ -116,7 +115,7 @@ describe('commit', () => {
 
     expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-    ).to.be.rejectedWith(PublicError, 'Error requesting inbound channel')
+    ).to.be.rejectedWith(Error, 'Error requesting inbound channel')
   })
 
   describe('committing a balance to the relayer', () => {
@@ -185,7 +184,7 @@ describe('commit', () => {
       const badEngines = new Map([['BTC', btcEngine]])
       return expect(
         commit({ params, relayer, logger, engines: badEngines, orderbooks }, { EmptyResponse })
-      ).to.be.rejectedWith(PublicError, 'No engine is configured for symbol')
+      ).to.be.rejectedWith(Error, 'No engine is configured for symbol')
     })
   })
 
@@ -224,7 +223,7 @@ describe('commit', () => {
       getMaxInboundChannelStub.resolves({ maxBalance: '100000' })
       return expect(
         commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-      ).to.be.rejectedWith(PublicError, 'You have an existing outbound channel with a balance lower than desired, release that channel and try again.')
+      ).to.be.rejectedWith(Error, 'You have an existing outbound channel with a balance lower than desired, release that channel and try again.')
     })
 
     it('throws an error if the inbound channel does not have the desired amount excluding the fee estimate', () => {
@@ -232,7 +231,7 @@ describe('commit', () => {
       getMaxInboundChannelStub.resolves({ maxBalance: '70000' })
       return expect(
         commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-      ).to.be.rejectedWith(PublicError, 'You have an existing inbound channel with a balance lower than desired, release that channel and try again.')
+      ).to.be.rejectedWith(Error, 'You have an existing inbound channel with a balance lower than desired, release that channel and try again.')
     })
   })
 })

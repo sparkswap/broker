@@ -1,6 +1,5 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
-const { PublicError } = require('grpc-methods')
 const releaseChannels = rewire(path.resolve(__dirname, 'release-channels'))
 
 describe('releaseChannels', () => {
@@ -120,14 +119,14 @@ describe('releaseChannels', () => {
       engines = new Map([['LTC', counterEngineStub]])
       return expect(
         releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
-      ).to.eventually.be.rejectedWith(PublicError, `No engine available for BTC`)
+      ).to.eventually.be.rejectedWith(Error, `No engine available for BTC`)
     })
 
     it('throws an error if the counter engine does not exist for symbol', () => {
       engines = new Map([['BTC', baseEngineStub]])
       return expect(
         releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
-      ).to.be.rejectedWith(PublicError, `No engine available for LTC`)
+      ).to.be.rejectedWith(Error, `No engine available for LTC`)
     })
   })
 

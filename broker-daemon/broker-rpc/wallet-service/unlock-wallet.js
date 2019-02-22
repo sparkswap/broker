@@ -1,5 +1,3 @@
-const { PublicError } = require('grpc-methods')
-
 /**
  * Unlock an engine's wallet
  *
@@ -11,8 +9,8 @@ const { PublicError } = require('grpc-methods')
  * @param {Map<Engine>} request.engines
  * @param {Object} responses
  * @param {Function} responses.EmptyResponse
- * @throws {PublicError} If Engine does not exist for the given symbol
- * @throws {PublicError} If Engine is not in a LOCKED state
+ * @throws {Error} If Engine does not exist for the given symbol
+ * @throws {Error} If Engine is not in a LOCKED state
  * @return {EmptyResponse}
  */
 async function unlockWallet ({ logger, params, engines }, { EmptyResponse }) {
@@ -21,12 +19,12 @@ async function unlockWallet ({ logger, params, engines }, { EmptyResponse }) {
 
   if (!engine) {
     logger.error(`Could not find engine: ${symbol}`)
-    throw new PublicError(`Unable to unlock wallet. No engine available for ${symbol}`)
+    throw new Error(`Unable to unlock wallet. No engine available for ${symbol}`)
   }
 
   if (!engine.isLocked) {
     logger.error(`Engine for ${symbol} is not locked. Current status: ${engine.status}`)
-    throw new PublicError(`Unable to unlock wallet, engine for ${symbol} is currently: ${engine.status}`)
+    throw new Error(`Unable to unlock wallet, engine for ${symbol} is currently: ${engine.status}`)
   }
 
   await engine.unlockWallet(password)

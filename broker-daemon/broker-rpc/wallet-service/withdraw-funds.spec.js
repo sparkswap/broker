@@ -1,6 +1,5 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
-const { PublicError } = require('grpc-methods')
 const { Big } = require('../../utils')
 const withdrawFunds = rewire(path.resolve(__dirname, 'withdraw-funds'))
 
@@ -75,17 +74,17 @@ describe('withdrawFunds', () => {
       const badEngines = new Map([['BTC', undefined]])
       return expect(
         withdrawFunds({ params, relayer, logger, engines: badEngines }, { WithdrawFundsResponse })
-      ).to.be.rejectedWith(PublicError, `No engine available for ${params.symbol}`)
+      ).to.be.rejectedWith(Error, `No engine available for ${params.symbol}`)
     })
   })
 
   describe('balance under minimum amount', () => {
-    it('throws a PublicError on withdraw failure', () => {
+    it('throws an Error on withdraw failure', () => {
       withdrawFundsStub.throws('Error', 'Insufficient Funds')
 
       return expect(
         withdrawFunds({ params, relayer, logger, engines }, { WithdrawFundsResponse })
-      ).to.be.rejectedWith(PublicError, 'Insufficient Funds')
+      ).to.be.rejectedWith(Error, 'Insufficient Funds')
     })
   })
 
@@ -96,7 +95,7 @@ describe('withdrawFunds', () => {
     it('throws an error currency multiplier does not exist', () => {
       return expect(
         withdrawFunds({ params, relayer, logger, engines }, { WithdrawFundsResponse })
-      ).to.be.rejectedWith(PublicError, `Invalid configuration: missing quantumsPerCommon for ${params.symbol}`)
+      ).to.be.rejectedWith(Error, `Invalid configuration: missing quantumsPerCommon for ${params.symbol}`)
     })
   })
 })

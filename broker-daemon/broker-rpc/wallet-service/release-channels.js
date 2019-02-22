@@ -1,5 +1,3 @@
-const { PublicError } = require('grpc-methods')
-
 /**
  * @constant
  * @type {Object}
@@ -64,7 +62,7 @@ async function releaseChannels ({ params, logger, engines, orderbooks, blockOrde
   const orderbook = orderbooks.get(market)
 
   if (!orderbook) {
-    throw new PublicError(`${market} is not being tracked as a market.`)
+    throw new Error(`${market} is not being tracked as a market.`)
   }
 
   const { cancelledOrders, failedToCancelOrders } = await blockOrderWorker.cancelActiveOrders(market)
@@ -77,8 +75,8 @@ async function releaseChannels ({ params, logger, engines, orderbooks, blockOrde
   const baseEngine = engines.get(baseSymbol)
   const counterEngine = engines.get(counterSymbol)
 
-  if (!baseEngine) throw new PublicError(`No engine available for ${baseSymbol}`)
-  if (!counterEngine) throw new PublicError(`No engine available for ${counterSymbol}`)
+  if (!baseEngine) throw new Error(`No engine available for ${baseSymbol}`)
+  if (!counterEngine) throw new Error(`No engine available for ${counterSymbol}`)
 
   // We want to try and close channels for both the base and counter engines
   // however if one of the engines fail to release channel, instead of failing
