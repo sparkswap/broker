@@ -29,6 +29,7 @@ services:
       - '${SECURE_PATH}:/secure'
 
     environment:
+      - NODE_ENV=production
       - DATA_DIR=${DATA_DIR:-}
       - NETWORK=${NETWORK}
       - RPC_ADDRESS=${RPC_ADDRESS:-}
