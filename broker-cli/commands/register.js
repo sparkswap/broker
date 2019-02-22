@@ -6,7 +6,7 @@ require('colors')
 
 /**
  *
- * Register publicKey with the Relayer
+ * Register Broker with the Relayer
  *
  * ex: `sparkswap register`
  *
@@ -30,7 +30,7 @@ async function register (args, opts, logger) {
     })
 
     registerTable.push([''])
-    registerTable.push([{ hAlign: 'center', content: 'Successfully registered public key with the Ϟ Sparkswap Relayer!' }])
+    registerTable.push([{ hAlign: 'center', content: 'Successfully registered Broker with the Ϟ Sparkswap Relayer!' }])
     registerTable.push([''])
     registerTable.push([{ hAlign: 'center', content: `Go to ${url.cyan} to complete registration.` }])
     registerTable.push([''])
@@ -43,7 +43,7 @@ async function register (args, opts, logger) {
 
 module.exports = (program) => {
   program
-    .command('register', 'Registers the public key with the relayer')
+    .command('register', 'Registers the Broker with the relayer')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .action(register)
 }
