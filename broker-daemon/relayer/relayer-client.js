@@ -54,6 +54,7 @@ class RelayerClient {
     let channelCredentials = credentials.createSsl()
 
     if (!PRODUCTION) {
+      logger.info('Using local certs for relayer client', { production: PRODUCTION })
       channelCredentials = credentials.createSsl(readFileSync(certPath))
     }
 

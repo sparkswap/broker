@@ -1,10 +1,6 @@
 ##########################################
-# Sparkswap Broker Daemon Regtest development sample file
+# Sparkswap Broker Daemon Regtest
 # https://sparkswap.com
-#
-# Usage:
-# 1. copy file to `docker-compose.override.yml`
-# 2. restart all containers with `docker-compose up -d`
 ##########################################
 
 version: '2.4'
@@ -12,10 +8,10 @@ version: '2.4'
 services:
   bitcoind:
     environment:
-      - CONNECT_HOST=host.docker.internal
+      - CONNECT_HOST=${BITCOIND_CONNECT_HOST}
       - CONNECT_PORT=18666
 
   litecoind:
     environment:
-      - CONNECT_HOST=host.docker.internal
+      - CONNECT_HOST=${LITECOIND_CONNECT_HOST}
       - CONNECT_PORT=19666
