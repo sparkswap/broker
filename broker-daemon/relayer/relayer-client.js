@@ -13,10 +13,17 @@ consoleLogger.debug = console.log.bind(console)
 
 /**
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const RELAYER_PROTO_PATH = './proto/relayer.proto'
+
+/**
+ * @constant
+ * @type {string}
+ * @default
+ */
+const PRODUCTION = process.env.NODE_ENV === 'production'
 
 /**
  * Interface for daemon to interact with a SparkSwap Relayer
@@ -46,7 +53,7 @@ class RelayerClient {
 
     let channelCredentials = credentials.createSsl()
 
-    if (process.env.NODE_ENV === 'development') {
+    if (!PRODUCTION) {
       channelCredentials = credentials.createSsl(readFileSync(certPath))
     }
 
