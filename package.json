@@ -54,7 +54,7 @@
     "express": "4.16.3",
     "grpc": "1.11.3",
     "grpc-caller": "0.5.0",
-    "grpc-methods": "sparkswap/grpc-methods#v0.6.3",
+    "grpc-methods": "sparkswap/grpc-methods#v0.7.0",
     "helmet": "3.13.0",
     "javascript-state-machine": "3.0.1",
     "level": "3.0.1",

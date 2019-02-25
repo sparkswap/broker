@@ -1,5 +1,3 @@
-const { PublicError } = require('grpc-methods')
-
 /**
  * Gets the payment channel network address from the specified engine
  *
@@ -17,7 +15,7 @@ async function getPaymentChannelNetworkAddress ({ logger, params, engines }, { G
 
   if (!engine) {
     logger.error(`Could not find engine: ${symbol}`)
-    throw new PublicError(`Unable to get network address for symbol: ${symbol}`)
+    throw new Error(`Unable to get network address for symbol: ${symbol}`)
   }
 
   const paymentChannelNetworkAddress = await engine.getPaymentChannelNetworkAddress()

@@ -1,5 +1,3 @@
-const { PublicError } = require('grpc-methods')
-
 const { convertBalance, Big } = require('../../utils')
 
 /**
@@ -41,12 +39,12 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
 
   if (!engine) {
     logger.error(`Could not find engine: ${symbol}`)
-    throw new PublicError(`No engine is configured for symbol: ${symbol}`)
+    throw new Error(`No engine is configured for symbol: ${symbol}`)
   }
 
   if (!inverseEngine) {
     logger.error(`Could not find inverse engine: ${inverseSymbol}`)
-    throw new PublicError(`No engine is configured for symbol: ${inverseSymbol}`)
+    throw new Error(`No engine is configured for symbol: ${inverseSymbol}`)
   }
 
   const maxChannelBalance = Big(engine.maxChannelBalance)
@@ -61,11 +59,11 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
   // friendly errors to the user.
   // TODO: Get correct fee amount from engine
   if (MINIMUM_FUNDING_AMOUNT.gt(balanceCommon)) {
-    throw new PublicError(`Minimum balance of ${MINIMUM_FUNDING_AMOUNT} needed to commit to the relayer`)
+    throw new Error(`Minimum balance of ${MINIMUM_FUNDING_AMOUNT} needed to commit to the relayer`)
   } else if (maxChannelBalance.lt(balance)) {
     const maxChannelBalanceCommon = Big(maxChannelBalance).div(engine.quantumsPerCommon).toString()
     logger.error(`Balance from the client exceeds maximum balance allowed (${maxChannelBalance.toString()}).`, { balance })
-    throw new PublicError(`Maximum balance of ${maxChannelBalanceCommon} ${symbol} exceeded for ` +
+    throw new Error(`Maximum balance of ${maxChannelBalanceCommon} ${symbol} exceeded for ` +
       `committing of ${balanceCommon} ${symbol} to the Relayer. Please try again.`)
   }
 
@@ -78,7 +76,7 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     const convertedBalanceCommon = Big(convertedBalance).div(inverseEngine.quantumsPerCommon).toString()
     const convertedMaxChannelBalanceCommon = Big(convertedMaxChannelBalance).div(inverseEngine.quantumsPerCommon).toString()
     logger.error(`Balance in desired inbound channel exceeds maximum balance allowed (${convertedMaxChannelBalance.toString()}).`, { convertedBalance })
-    throw new PublicError(`Maximum balance of ${convertedMaxChannelBalanceCommon} ${inverseSymbol} exceeded for ` +
+    throw new Error(`Maximum balance of ${convertedMaxChannelBalanceCommon} ${inverseSymbol} exceeded for ` +
       `requesting inbound channel of ${convertedBalanceCommon} ${inverseSymbol} from the Relayer. Please try again.`)
   }
 
@@ -96,12 +94,12 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
 
     if (insufficientOutboundBalance) {
       logger.error('Existing outbound channel of insufficient size', { desiredBalance: balance, feeEstimate: engine.feeEstimate, existingBalance: maxOutboundBalance })
-      throw new PublicError('You have an existing outbound channel with a balance lower than desired, release that channel and try again.')
+      throw new Error('You have an existing outbound channel with a balance lower than desired, release that channel and try again.')
     }
 
     if (insufficientInboundBalance) {
       logger.error('Existing inbound channel of insufficient size', { desiredBalance: convertedBalance, feeEstimate: inverseEngine.feeEstimate, existingBalance: maxInboundBalance })
-      throw new PublicError('You have an existing inbound channel with a balance lower than desired, release that channel and try again.')
+      throw new Error('You have an existing inbound channel with a balance lower than desired, release that channel and try again.')
     }
   }
 
@@ -112,7 +110,7 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
       await engine.createChannel(address, balance)
     } catch (e) {
       logger.error('Received error when creating outbound channel', { error: e.stack })
-      throw new PublicError(`Funding error: ${e.message}`)
+      throw new Error(`Funding error: ${e.message}`)
     }
   } else {
     logger.debug('Outbound channel already exists', { balance: maxOutboundBalance })
@@ -132,7 +130,7 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
       }, authorization)
     } catch (e) {
       // TODO: Close channel that was open if relayer call has failed
-      throw new PublicError(`Error requesting inbound channel from Relayer: ${e.message}`, e)
+      throw new Error(`Error requesting inbound channel from Relayer: ${e.message}`)
     }
   } else {
     logger.debug('Inbound channel already exists', { balance: maxInboundBalance })

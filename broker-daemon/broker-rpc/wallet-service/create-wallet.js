@@ -1,5 +1,3 @@
-const { PublicError } = require('grpc-methods')
-
 /**
  * Creates a new wallet for a specific engine
  *
@@ -19,7 +17,7 @@ async function createWallet ({ logger, params, engines }, { CreateWalletResponse
 
   if (!engine) {
     logger.error(`Could not find engine: ${symbol}`)
-    throw new PublicError(`Unable to create wallet for engine: ${symbol}`)
+    throw new Error(`Unable to create wallet for engine: ${symbol}`)
   }
 
   const recoverySeed = await engine.createWallet(password)

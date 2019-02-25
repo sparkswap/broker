@@ -1,5 +1,3 @@
-const { PublicError } = require('grpc-methods')
-
 /**
  * Creates an order with the relayer
  *
@@ -22,7 +20,7 @@ async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrde
   } = params
 
   if (TimeInForce[timeInForce] !== TimeInForce.GTC) {
-    throw new PublicError('Only Good-til-cancelled orders are currently supported')
+    throw new Error('Only Good-til-cancelled orders are currently supported')
   }
 
   const blockOrderId = await blockOrderWorker.createBlockOrder({

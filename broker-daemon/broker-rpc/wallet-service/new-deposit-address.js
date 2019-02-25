@@ -1,5 +1,3 @@
-const { PublicError } = require('grpc-methods')
-
 /**
  * Generates a new wallet address from the specified engine
  *
@@ -17,7 +15,7 @@ async function newDepositAddress ({ logger, params, engines }, { NewDepositAddre
 
   if (!engine) {
     logger.error(`Could not find engine: ${symbol}`)
-    throw new PublicError(`Unable to generate address for symbol: ${symbol}`)
+    throw new Error(`Unable to generate address for symbol: ${symbol}`)
   }
 
   const address = await engine.createNewAddress()

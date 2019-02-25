@@ -1,5 +1,4 @@
 const nano = require('nano-seconds')
-const { PublicError } = require('grpc-methods')
 
 const { BlockOrder, MarketEvent } = require('../../models')
 const { Big } = require('../../utils')
@@ -27,7 +26,7 @@ async function getMarketStats ({ params, logger, orderbooks }, { GetMarketStatsR
   const { market } = params
   const orderbook = orderbooks.get(market)
 
-  if (!orderbook) throw new PublicError(`${market} is not being tracked as a market.`)
+  if (!orderbook) throw new Error(`${market} is not being tracked as a market.`)
 
   logger.debug(`Checking currency configurations for: ${market}`)
 
