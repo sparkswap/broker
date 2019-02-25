@@ -9,7 +9,7 @@
   "supportedEngineTypes": ["LND"],
   "relayer": {
     "rpcHost": "host.docker.internal:28492",
-    "certPath": "/secure/relayer-root.pem"
+    "certPath": "/secure/relayer-root-regtest-local.pem"
   },
   "rpc": {
     "address": "0.0.0.0:27492",

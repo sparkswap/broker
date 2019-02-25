@@ -177,7 +177,7 @@ if [ "$LOCAL" == "true" ]; then
   echo "Downloading Local Relayer Cert..."
   # the path of this output is directly related to the SECURE_PATH that is set
   # in the .env file
-  curl --silent -S --output ~/.sparkswap/secure/relayer-root.pem http://localhost:8080/cert
+  curl --silent -S --output ~/.sparkswap/secure/relayer-root-regtest-local.pem http://localhost:8080/cert
   echo "Relayer cert downloaded successfully"
 fi
 
