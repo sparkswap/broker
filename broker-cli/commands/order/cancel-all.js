@@ -38,7 +38,7 @@ async function cancelAll (args, opts, logger) {
       failedToCancelOrders = []
     } = await client.orderService.cancelAllBlockOrders(request)
 
-    logger.info(`Succesfully cancelled ${cancelledOrders.length} orders on ${market} market.`)
+    logger.info(`Successfully cancelled ${cancelledOrders.length} orders on ${market} market.`)
     if (failedToCancelOrders.length) {
       logger.info(`Unable to cancel ${failedToCancelOrders.length} orders on ${market} market.`)
       logger.info('Check your Broker Daemon logs (`docker-compose logs -f sparkswapd`) for more information.')

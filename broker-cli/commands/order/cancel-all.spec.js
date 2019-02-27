@@ -70,13 +70,13 @@ describe('cli order cancel-all', () => {
     daemonStub.prototype.orderService = { cancelAllBlockOrders: cancelAllBlockOrdersStub }
     cancelAll.__set__('BrokerDaemonClient', daemonStub)
     await cancelAll(args, opts, logger)
-    expect(logger.info).to.have.been.calledWith(`Succesfully cancelled 1 orders on ${market} market.`)
+    expect(logger.info).to.have.been.calledWith(`Successfully cancelled 1 orders on ${market} market.`)
   })
 
   it('logs the results of cancelling the orders', async () => {
     await cancelAll(args, opts, logger)
     expect(logger.info).to.have.been.calledWith(
-      `Succesfully cancelled 1 orders on ${market} market.`
+      `Successfully cancelled 1 orders on ${market} market.`
     )
     expect(logger.info).to.have.been.calledWith(
       `Unable to cancel 1 orders on ${market} market.`
