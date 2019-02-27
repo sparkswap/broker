@@ -555,14 +555,22 @@ describe('cli wallet', () => {
       const status = 'FAILED'
       const symbol = 'BTC'
       const error = 'Engine is locked'
-      const channel = {
+      const base = {
         symbol,
         status,
         error: ''
       }
-      releaseStub.resolves({ base: channel, counter: channel })
+      const counter = {
+        symbol,
+        status,
+        error
+      }
+
+      releaseStub.resolves({ base, counter })
       await release(args, opts, logger)
-      expect(logger.info).to.have.been.calledWith(sinon.match(symbol, status, error))
+      expect(logger.info).to.have.been.calledWith(sinon.match(symbol))
+      expect(logger.info).to.have.been.calledWith(sinon.match(status))
+      expect(logger.info).to.have.been.calledWith(sinon.match(error))
     })
 
     it('displays an informative message to user on errors if channels can be force released', async () => {
