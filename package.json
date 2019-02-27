@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "bash ./scripts/build.sh",
+    "build-local": "npm run build -- --local",
     "destroy": "bash ./scripts/destroy.sh",
     "dist-cli": "npm run broker-proto && bash ./scripts/publish-broker-cli.sh",
     "format": "npm run lint -- --fix",

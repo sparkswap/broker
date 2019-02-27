@@ -1,10 +1,6 @@
 ##########################################
-# Sparkswap Broker Daemon Regtest development sample file
+# Sparkswap Broker Daemon Local RegTest Development
 # https://sparkswap.com
-#
-# Usage:
-# 1. copy file to `docker-compose.override.yml`
-# 2. restart all containers with `docker-compose up -d`
 ##########################################
 
 version: '2.4'
@@ -15,15 +11,7 @@ services:
       - './:/home/app/'
       - '/home/app/node_modules'
       - '/home/app/broker-cli/node_modules'
+    environment:
+      - NODE_ENV=development
     # We use this to be able to have "hot reloading" with our application
     entrypoint: bash -c 'npm run start-sparkswapd-watch'
-
-  bitcoind:
-    environment:
-      - CONNECT_HOST=host.docker.internal
-      - CONNECT_PORT=18666
-
-  litecoind:
-    environment:
-      - CONNECT_HOST=host.docker.internal
-      - CONNECT_PORT=19666

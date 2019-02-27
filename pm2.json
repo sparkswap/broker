@@ -13,8 +13,5 @@
   "watch": [
     "broker-daemon",
     "proto"
-  ],
-  "env": {
-    "NODE_ENV": "development"
-  }
+  ]
 }

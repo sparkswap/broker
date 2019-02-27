@@ -22,14 +22,6 @@ ID_PUB_KEY=${ID_PUB_KEY:-""}
 RELAYER_RPC_HOST=${RELAYER_RPC_HOST:-""}
 RELAYER_CERT_PATH=${RELAYER_CERT_PATH:-""}
 
-if [ "$NETWORK" == "mainnet" ]; then
-  echo "Using GRPC default certs"
-else
-  echo "Downloading Relayer cert..."
-  curl --silent -S --output /secure/relayer-root.pem "${RELAYER_CERT_HOST}/cert" || exit 1
-  echo "Relayer cert downloaded successfully"
-fi
-
 # For each parameter, we must check if the string is blank, because docker-compose
 # will automatically assign a blank string to the value and CLI validations will fail
 PARAMS=""

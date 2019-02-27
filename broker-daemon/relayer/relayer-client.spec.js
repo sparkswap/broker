@@ -131,18 +131,28 @@ describe('RelayerClient', () => {
       expect(relayer).to.have.property('identity', fakeId)
     })
 
-    it('creates ssl credentials', () => {
+    it('creates ssl credentials with local file if in development', () => {
       const fakePath = '/path/to/root.pem'
       const fakeCert = 'fakeydo'
       readFileSync.returns(fakeCert)
+
+      RelayerClient.__set__('PRODUCTION', false)
 
       // eslint-disable-next-line
       new RelayerClient(idKeyPath, { host: relayerHost, certPath: fakePath }, logger)
 
       expect(readFileSync).to.have.been.calledOnce()
       expect(readFileSync).to.have.been.calledWith(fakePath)
-      expect(createSslStub).to.have.been.calledOnce()
       expect(createSslStub).to.have.been.calledWith(fakeCert)
+    })
+
+    it('creates ssl credentials', () => {
+      RelayerClient.__set__('PRODUCTION', true)
+
+      // eslint-disable-next-line
+      new RelayerClient(idKeyPath, { host: relayerHost }, logger)
+
+      expect(createSslStub).to.have.been.calledOnce()
     })
 
     it('sets ssl credentials for the services', () => {

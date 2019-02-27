@@ -13,10 +13,17 @@ consoleLogger.debug = console.log.bind(console)
 
 /**
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const RELAYER_PROTO_PATH = './proto/relayer.proto'
+
+/**
+ * @constant
+ * @type {string}
+ * @default
+ */
+const PRODUCTION = process.env.NODE_ENV === 'production'
 
 /**
  * Interface for daemon to interact with a SparkSwap Relayer
@@ -43,11 +50,11 @@ class RelayerClient {
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
 
     this.identity = Identity.load(privKeyPath, pubKeyPath)
-    let channelCredentials
-    // TODO figure out a way for this check to not be in the application code
-    if (process.env.NETWORK === 'mainnet') {
-      channelCredentials = credentials.createSsl()
-    } else {
+
+    let channelCredentials = credentials.createSsl()
+
+    if (!PRODUCTION) {
+      logger.info('Using local certs for relayer client', { production: PRODUCTION })
       channelCredentials = credentials.createSsl(readFileSync(certPath))
     }
 
