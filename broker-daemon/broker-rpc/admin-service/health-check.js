@@ -6,7 +6,8 @@
 const STATUS_CODES = Object.freeze({
   UNAVAILABLE: 'UNAVAILABLE',
   OK: 'OK',
-  NOT_SYNCED: 'NOT_SYNCED'
+  NOT_SYNCED: 'NOT_SYNCED',
+  BROKER_NOT_REGISTERED: 'BROKER_NOT_REGISTERED'
 })
 
 /**
@@ -17,10 +18,16 @@ const STATUS_CODES = Object.freeze({
  */
 async function getRelayerStatus (relayer, { logger }) {
   try {
-    await relayer.adminService.healthCheck({})
+    const authorization = relayer.identity.authorize()
+    await relayer.adminService.healthCheck({}, authorization)
     return STATUS_CODES.OK
   } catch (e) {
     logger.error(`Relayer error during status check: `, { error: e.stack })
+
+    if (e.message && e.message.includes('No active entity exists')) {
+      return STATUS_CODES.BROKER_NOT_REGISTERED
+    }
+
     return STATUS_CODES.UNAVAILABLE
   }
 }

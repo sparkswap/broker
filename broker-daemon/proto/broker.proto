@@ -97,6 +97,8 @@ enum RelayerStatuses {
   OK = 0;
   // Relayer is not available
   UNAVAILABLE = 1;
+  // Broker requires registration
+  BROKER_NOT_REGISTERED = 2;
 }
 
 /**
