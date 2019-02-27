@@ -136,17 +136,6 @@ class Orderbook {
   }
 
   /**
-   * Returns all records in the current orderbook
-   *
-   * @returns {Promise<Array<MarketEventOrder>>} A promise that resolves an array of MarketEventOrder records
-   */
-  async all () {
-    this.assertSynced()
-    this.logger.info(`Retrieving all records for ${this.marketName}`)
-    return getRecords(this.store, MarketEventOrder.fromStorage.bind(MarketEventOrder))
-  }
-
-  /**
    * Gets all trades for a specific timestamp
    *
    * @param  {String} since - ISO8601 datetime lowerbound
@@ -162,6 +151,32 @@ class Orderbook {
     }
     const trades = await getRecords(this.eventStore, MarketEvent.fromStorage.bind(MarketEvent), params)
     return trades
+  }
+
+  /**
+   * Get orders in the orderbook for a given side up to a given limit. If no limit is provided, gets all orders
+   * @param {String} side Side of the orderbook to get orders for (i.e. `BID` or `ASK`)
+   * @param {String} limit int64 String of the the amount of orders to return.
+   * @return {Array<MarketEventOrder>} A promise that resolves MarketEventOrders for the limited records
+   */
+  getOrders ({ side, limit }) {
+    this.assertSynced()
+    this.logger.info('Retrieving records from orderbook', {side, limit})
+
+    const params = {}
+
+    if (limit) {
+      params.limit = parseInt(limit, 10)
+    }
+
+    if (!MarketEventOrder.SIDES[side]) {
+      throw new Error(`${side} is not a valid market side`)
+    }
+
+    const index = side === MarketEventOrder.SIDES.BID ? this.bidIndex : this.askIndex
+    return getRecords(index, (key, value) => {
+      return MarketEventOrder.fromStorage(key, value)
+    }, params)
   }
 
   /**

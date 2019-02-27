@@ -50,19 +50,14 @@ class RelayerClient {
     } else {
       channelCredentials = credentials.createSsl(readFileSync(certPath))
     }
-    // `service_url` in the line below is defined by the grpc lib, so we need to tell eslint to ignore snake case
-    // eslint-disable-next-line
-    const callCredentials = credentials.createFromMetadataGenerator(({ service_url }, callback) => {
-      callback(null, this.identity.identify())
-    })
-    this.credentials = credentials.combineChannelCredentials(channelCredentials, callCredentials)
+
+    this.credentials = channelCredentials
 
     this.makerService = caller(this.address, this.proto.MakerService, this.credentials)
     this.takerService = caller(this.address, this.proto.TakerService, this.credentials)
-    this.healthService = caller(this.address, this.proto.HealthService, this.credentials)
-    this.orderbookService = caller(this.address, this.proto.OrderBookService, this.credentials)
+    this.orderBookService = caller(this.address, this.proto.OrderBookService, this.credentials)
     this.paymentChannelNetworkService = caller(this.address, this.proto.PaymentChannelNetworkService, this.credentials)
-    this.infoService = caller(this.address, this.proto.InfoService, this.credentials)
+    this.adminService = caller(this.address, this.proto.AdminService, this.credentials)
   }
 
   /**
@@ -86,7 +81,7 @@ class RelayerClient {
     }
 
     this.logger.info('Setting up market watcher', params)
-    const watcher = this.orderbookService.watchMarket(params)
+    const watcher = this.orderBookService.watchMarket(params)
 
     return new MarketWatcher(watcher, store, RESPONSE_TYPES, this.logger)
   }

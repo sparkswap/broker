@@ -254,16 +254,24 @@ describe('FillStateMachine', () => {
       expect(fsm.fill.setSwapHash).to.have.been.calledWith(fakeHash)
     })
 
+    it('authorizes the request', async () => {
+      await fsm.create(blockOrderId, orderParams, fillParams)
+
+      expect(relayer.identity.authorize).to.have.been.calledOnce()
+    })
+
     it('creates a fill on the relayer', async () => {
       const fakeParams = {
         my: 'fake'
       }
       Fill.prototype.paramsForCreate = fakeParams
+      const fakeAuth = 'fake auth'
+      relayer.identity.authorize.returns(fakeAuth)
 
       await fsm.create(blockOrderId, orderParams, fillParams)
 
       expect(relayer.takerService.createFill).to.have.been.calledOnce()
-      expect(relayer.takerService.createFill).to.have.been.calledWith(fakeParams)
+      expect(relayer.takerService.createFill).to.have.been.calledWith(fakeParams, fakeAuth)
     })
 
     it('updates the fill with returned params', async () => {
@@ -413,7 +421,7 @@ describe('FillStateMachine', () => {
     it('authorizes the request', async () => {
       await fsm.fillOrder()
 
-      expect(relayer.identity.authorize).to.have.been.calledWith(fillId)
+      expect(relayer.identity.authorize).to.have.been.calledOnce()
     })
 
     it('fills an order on the relayer', async () => {
@@ -424,9 +432,8 @@ describe('FillStateMachine', () => {
       expect(fillOrderStub).to.have.been.calledWith({
         feeRefundPaymentRequest: invoice,
         depositRefundPaymentRequest: invoice,
-        fillId,
-        authorization: fakeAuth
-      })
+        fillId
+      }, fakeAuth)
     })
 
     it('rejects if the relayer returns a fill error', () => {
@@ -491,7 +498,6 @@ describe('FillStateMachine', () => {
     it('authorizes the request', async () => {
       await fsm.triggerExecute()
       expect(relayer.identity.authorize).to.have.been.calledOnce()
-      expect(relayer.identity.authorize).to.have.been.calledWith(fillId)
     })
 
     it('subscribes to fills on the relayer', async () => {
@@ -500,7 +506,7 @@ describe('FillStateMachine', () => {
 
       await fsm.triggerExecute()
       expect(subscribeExecuteStub).to.have.been.calledOnce()
-      expect(subscribeExecuteStub).to.have.been.calledWith(sinon.match({ fillId, authorization: fakeAuth }))
+      expect(subscribeExecuteStub).to.have.been.calledWith(sinon.match({ fillId }), fakeAuth)
     })
 
     it('rejects on error from the relayer subscribe fill hook', async () => {

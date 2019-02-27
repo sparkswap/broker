@@ -1,79 +1,46 @@
-FROM node:8.11 as builder
+ARG NODE_VERSION=8.11
+
+FROM node:${NODE_VERSION}-alpine as builder
 
 LABEL maintainer="SparkSwap <dev@sparkswap.com>"
 
-# Install git for broker dependencies
-RUN apt-get update && \
-  apt-get upgrade -y --no-install-recommends && \
-  apt-get install git
+RUN apk update
+RUN apk --no-cache add bash ca-certificates g++ git make openssl python wget && \
+    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
+    wget -q https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.28-r0/glibc-2.28-r0.apk && \
+    apk add glibc-2.28-r0.apk
 
-#############################################
-# Keypair Generation for SSL to the broker
-#
-# This step creates certs to allow a user to host a broker on a remote machine
-# and have connections to their daemon be secured through ssl
-#
-#############################################
+WORKDIR /home/app
 
-ARG KEY_PATH
-RUN : "${KEY_PATH:?KEY_PATH Build argument needs to be set.}"
-ARG CERT_PATH
-RUN : "${CERT_PATH:?CERT_PATH Build argument needs to be set.}"
-
-ARG TLS_KEY="/secure/broker-rpc-tls.key"
-ARG TLS_CERT="/secure/broker-rpc-tls.cert"
-
-COPY ${KEY_PATH} ${TLS_KEY}
-COPY ${CERT_PATH} ${TLS_CERT}
-
-#############################################
-# Keypair Generation for Relayer
-#
-# This step creates certs to allow the broker to authenticate/auth for orders
-# on the relayer
-#
-# We use a "Secure key exchange algorithm" here because these keys are exchanged
-# via a non secure channel. (ECDH)
-#
-#############################################
-
-ARG ID_PRIV_KEY='/secure/broker-identity.private.pem'
-ARG ID_PUB_KEY='/secure/broker-identity.public.pem'
-
-RUN openssl ecparam -name prime256v1 -genkey -noout -out ${ID_PRIV_KEY}
-RUN openssl ec -in ${ID_PRIV_KEY} -pubout -out ${ID_PUB_KEY}
-
-#############################################
-# Broker installation steps
-#############################################
-
-# Copy local broker files to container
 COPY . /home/app
 
-# Download relayer proto and add it to container
-ARG RELAYER_PROTO_BRANCH
-ARG RELAYER_PROTO_COMMIT_SHA
+RUN npm install --quiet --production
+# --no-docker is set so we don't get into an infinite loop
+# --no-identity makes it so we do not generate keys for the daemons identity because we do this externally
+# --no-certs  makes it so we do not re-generate tls certs for the daemon because we do this externally
+RUN npm run build -- --no-docker --no-identity --no-certs
 
-RUN mkdir -p /home/app/proto
-RUN git clone --branch ${RELAYER_PROTO_BRANCH} https://github.com/sparkswap/relayer-proto.git /home/app/proto \
-&&  (cd /home/app/proto && git checkout ${RELAYER_PROTO_COMMIT_SHA})
+# Create a final image as this will be < 50% the size of the build image
+FROM node:${NODE_VERSION}-alpine as final
 
-
-# Start a new, final image to reduce size.
-FROM node:8.11 as final
+RUN apk update
+RUN apk add bash curl
 
 RUN mkdir "/secure"
 
-# Copy certs
-COPY --from=builder /secure /secure
-
 # Copy the application
-COPY --from=builder /home/app /home/app
+COPY --from=builder /home/app/broker-daemon /home/app/broker-daemon
+COPY --from=builder /home/app/broker-cli /home/app/broker-cli
+COPY --from=builder /home/app/scripts/start-sparkswapd.sh /home/app/scripts/start-sparkswapd.sh
+COPY --from=builder /home/app/package.json /home/app/package.json
+COPY --from=builder /home/app/pm2.json /home/app/pm2.json
 
 # Copy relayer-proto files
 COPY --from=builder /home/app/proto /home/app/proto
 
+# Copy node_modules
+COPY --from=builder /home/app/node_modules /home/app/node_modules
+
 WORKDIR /home/app
 
-RUN npm install --quiet
-RUN npm run broker-proto
+CMD ["bash", "-c", "npm run start-sparkswapd"]

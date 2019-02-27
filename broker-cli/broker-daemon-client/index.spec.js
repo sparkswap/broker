@@ -25,7 +25,6 @@ describe('BrokerDaemonClient', () => {
   let generateAuthCredentialsStub
   let sslCredential
   let callCredential
-  let infoStub
 
   beforeEach(() => {
     address = '172.0.0.1:27492'
@@ -40,7 +39,6 @@ describe('BrokerDaemonClient', () => {
     orderStub = sinon.stub()
     orderbookStub = sinon.stub()
     walletStub = sinon.stub()
-    infoStub = sinon.stub()
 
     protoStub = sinon.stub().returns({
       broker: {
@@ -48,8 +46,7 @@ describe('BrokerDaemonClient', () => {
           AdminService: adminStub,
           OrderService: orderStub,
           OrderBookService: orderbookStub,
-          WalletService: walletStub,
-          InfoService: infoStub
+          WalletService: walletStub
         }
       }
     })
@@ -175,7 +172,6 @@ describe('BrokerDaemonClient', () => {
     it('creates an orderService', () => expect(callerStub).to.have.been.calledWith(broker.address, orderStub, credentialStub))
     it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(broker.address, orderbookStub, credentialStub))
     it('creates an walletService', () => expect(callerStub).to.have.been.calledWith(broker.address, walletStub, credentialStub))
-    it('creates an infoService', () => expect(callerStub).to.have.been.calledWith(broker.address, infoStub, credentialStub))
   })
 
   describe('address', () => {

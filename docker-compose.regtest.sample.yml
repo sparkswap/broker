@@ -1,36 +1,22 @@
 ##########################################
-#
-# sparkswap Broker-CLI and Broker-Daemon
+# Sparkswap Broker Daemon Regtest development sample file
 # https://sparkswap.com
 #
+# Usage:
+# 1. copy file to `docker-compose.override.yml`
+# 2. restart all containers with `docker-compose up -d`
 ##########################################
 
 version: '2.4'
 
 services:
   sparkswapd:
-    image: sparkswap_sparkswapd:latest
-    depends_on:
-      - lnd_btc
-      - lnd_ltc
     volumes:
-      - './broker-daemon:/home/app/broker-daemon/'
-      # TODO: This can be removed once utils are moved to a shared repo or into
-      # the broker-daemon itself. broker-daemon relies on these utils for ./broker-daemon/bin/sparkswapd
-      - './broker-cli/utils:/home/app/broker-cli/utils/'
-      - './proto:/home/app/proto/'
-      - './scripts:/home/app/scripts/'
-    environment:
-      # WARNING: only disable Relayer SSL/AUTH during development
-      - DISABLE_RELAYER_AUTH=false
-
-  lnd_btc:
-    depends_on:
-      - bitcoind
-
-  lnd_ltc:
-    depends_on:
-      - litecoind
+      - './:/home/app/'
+      - '/home/app/node_modules'
+      - '/home/app/broker-cli/node_modules'
+    # We use this to be able to have "hot reloading" with our application
+    entrypoint: bash -c 'npm run start-sparkswapd-watch'
 
   bitcoind:
     environment:
@@ -41,7 +27,3 @@ services:
     environment:
       - CONNECT_HOST=host.docker.internal
       - CONNECT_PORT=19666
-
-volumes:
-  shared:
-  sparkswapd:

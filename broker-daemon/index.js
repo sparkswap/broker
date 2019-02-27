@@ -133,7 +133,8 @@ class BrokerDaemon {
     })
 
     this.rpcServer = new BrokerRPCServer({
-      rpcHttpProxyAddress,
+      rpcAddress: this.rpcAddress,
+      rpcHttpProxyAddress: this.rpcHttpProxyAddress,
       logger: this.logger,
       engines: this.engines,
       relayer: this.relayer,

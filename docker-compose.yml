@@ -16,7 +16,7 @@ version: '2.4'
 
 services:
   sparkswapd:
-    image: sparkswap_sparkswapd:latest
+    image: sparkswap/broker:0.4.2-beta
     depends_on:
       - lnd_btc
       - lnd_ltc
@@ -25,6 +25,9 @@ services:
       - 'sparkswapd:/data'
       # This is populated externally w/ an engine
       - 'shared:/shared'
+      # Persistent certs/keys for broker
+      - '${SECURE_PATH}:/secure'
+
     environment:
       - DATA_DIR=${DATA_DIR:-}
       - NETWORK=${NETWORK}
@@ -45,10 +48,9 @@ services:
     networks:
       - broker
     working_dir: '/home/app'
-    entrypoint: bash -c 'npm run start-sparkswapd'
 
   lnd_btc:
-    image: sparkswap_lnd_btc:latest
+    image: sparkswap/lnd_btc:0.3.5-beta
     ports:
       - '10113:9735'
     environment:
@@ -71,7 +73,7 @@ services:
         max-size: 50m
 
   lnd_ltc:
-    image: sparkswap_lnd_ltc:latest
+    image: sparkswap/lnd_ltc:0.3.5-beta
     ports:
       - '10114:9735'
     environment:

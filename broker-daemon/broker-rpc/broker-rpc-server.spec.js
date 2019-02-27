@@ -14,8 +14,6 @@ describe('BrokerRPCServer', () => {
   let orderBookService
   let WalletService
   let walletService
-  let InfoService
-  let infoService
   let pathResolve
   let protoPath
   let engines
@@ -52,13 +50,6 @@ describe('BrokerRPCServer', () => {
     }
     WalletService = sinon.stub().returns(walletService)
     BrokerRPCServer.__set__('WalletService', WalletService)
-
-    infoService = {
-      definition: 'mydef',
-      implementation: 'myimp'
-    }
-    InfoService = sinon.stub().returns(infoService)
-    BrokerRPCServer.__set__('InfoService', InfoService)
 
     addService = sinon.stub()
     rpcServer = sinon.stub().returns({
@@ -144,12 +135,13 @@ describe('BrokerRPCServer', () => {
     })
 
     it('creates an http server', () => {
-      const rpcHttpProxyAddress = '0.0.0.0:27492'
-      const server = new BrokerRPCServer({ rpcHttpProxyAddress })
+      const rpcAddress = '0.0.0.0:27492'
+      const rpcHttpProxyAddress = '0.0.0.0:27592'
+      const server = new BrokerRPCServer({ rpcAddress, rpcHttpProxyAddress })
       expect(rpcServer).to.have.been.calledOnce()
       expect(rpcServer).to.have.been.calledWithNew()
       expect(server).to.have.property('httpServer')
-      expect(httpServer).to.have.been.calledWith(server.protoPath, rpcHttpProxyAddress)
+      expect(httpServer).to.have.been.calledWith(server.protoPath, rpcAddress, sinon.match.object)
       expect(server.httpServer).to.be.equal(httpServerStub)
     })
 
@@ -230,27 +222,6 @@ describe('BrokerRPCServer', () => {
       expect(server.walletService).to.be.equal(walletService)
     })
 
-    it('adds the info service', () => {
-      const server = new BrokerRPCServer()
-
-      expect(server).to.have.property('server')
-      expect(server.server.addService).to.be.equal(addService)
-      expect(addService).to.have.been.calledWith(infoService.definition, infoService.implementation)
-    })
-
-    it('creates a info service', () => {
-      const logger = 'mylogger'
-      const engines = 'myengines'
-
-      const server = new BrokerRPCServer({ logger, engines })
-
-      expect(InfoService).to.have.been.calledOnce()
-      expect(InfoService).to.have.been.calledWith(protoPath, sinon.match({ logger, engines }))
-      expect(InfoService).to.have.been.calledWithNew()
-      expect(server).to.have.property('infoService')
-      expect(server.infoService).to.be.equal(infoService)
-    })
-
     it('adds the orderBook service', () => {
       const server = new BrokerRPCServer()
 
@@ -282,7 +253,9 @@ describe('BrokerRPCServer', () => {
       serverStub = sinon.stub()
       bindStub = sinon.stub()
 
-      server = new BrokerRPCServer()
+      server = new BrokerRPCServer({
+        rpcHttpProxyAddress: '0.0.0.0:27592'
+      })
       server.createCredentials = credentialStub
       server.server = {
         bind: bindStub,

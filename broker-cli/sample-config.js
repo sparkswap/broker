@@ -20,7 +20,7 @@ module.exports = {
    * Default path of the Broker Daemons RPC Public Cert
    * @type {String}
    */
-  rpcCertPath: '~/.sparkswap/certs/broker-rpc-tls.cert',
+  rpcCertPath: '~/.sparkswap/secure/broker-rpc-tls.cert',
 
   /**
    * Configuration for SSL between the CLI and Daemon. This setting is only required

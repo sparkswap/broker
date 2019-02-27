@@ -6,8 +6,6 @@ const RelayerClient = rewire(path.resolve('broker-daemon', 'relayer', 'relayer-c
 describe('RelayerClient', () => {
   let logger
   let createSslStub
-  let createFromMetadataGeneratorStub
-  let combineChannelCredentialsStub
   let readFileSync
   let pathResolve
   let Identity
@@ -19,9 +17,9 @@ describe('RelayerClient', () => {
   let MakerService
   let TakerService
   let OrderBookService
-  let HealthService
-  let InfoService
   let PaymentChannelNetworkService
+  let AdminService
+
   let ResponseType = {
     EXISTING_EVENT: 'EXISTING_EVENT',
     EXISTING_EVENTS_DONE: 'EXISTING_EVENTS_DONE',
@@ -66,9 +64,8 @@ describe('RelayerClient', () => {
     MakerService = sinon.stub()
     TakerService = sinon.stub()
     OrderBookService = sinon.stub()
-    HealthService = sinon.stub()
     PaymentChannelNetworkService = sinon.stub()
-    InfoService = sinon.stub()
+    AdminService = sinon.stub()
 
     pathResolve = sinon.stub()
     RelayerClient.__set__('path', { resolve: pathResolve })
@@ -80,9 +77,8 @@ describe('RelayerClient', () => {
       MakerService,
       TakerService,
       OrderBookService,
-      HealthService,
       PaymentChannelNetworkService,
-      InfoService,
+      AdminService,
       WatchMarketResponse: {
         ResponseType
       }
@@ -95,13 +91,9 @@ describe('RelayerClient', () => {
     RelayerClient.__set__('caller', callerStub)
 
     createSslStub = sinon.stub()
-    createFromMetadataGeneratorStub = sinon.stub()
-    combineChannelCredentialsStub = sinon.stub()
 
     RelayerClient.__set__('credentials', {
-      createSsl: createSslStub,
-      createFromMetadataGenerator: createFromMetadataGeneratorStub,
-      combineChannelCredentials: combineChannelCredentialsStub
+      createSsl: createSslStub
     })
 
     RelayerClient.__set__('ENABLE_SSL', ENABLE_SSL)
@@ -153,38 +145,12 @@ describe('RelayerClient', () => {
       expect(createSslStub).to.have.been.calledWith(fakeCert)
     })
 
-    it('creates call credentials using the custom signer', () => {
-      // eslint-disable-next-line
-      new RelayerClient(idKeyPath, { host: relayerHost }, logger)
-
-      const generator = createFromMetadataGeneratorStub.args[0][0]
-
-      const fakeMeta = 'fakemetadata'
-      const fakeUrl = 'someurl'
-      const fakeCallback = sinon.stub()
-      identityIdentify.returns(fakeMeta)
-
-      generator({ service_url: fakeUrl }, fakeCallback)
-
-      expect(identityIdentify).to.have.been.calledOnce()
-      expect(identityIdentify).to.have.been.calledWithExactly()
-      expect(fakeCallback).to.have.been.calledOnce()
-      expect(fakeCallback).to.have.been.calledWith(null, fakeMeta)
-    })
-
-    it('combines ssl and custom call credentials', () => {
-      const fakeCallCreds = 'myfake'
+    it('sets ssl credentials for the services', () => {
       const fakeSslCreds = 'yourfake'
-      const fakeCombined = 'ourfake'
       createSslStub.returns(fakeSslCreds)
-      createFromMetadataGeneratorStub.returns(fakeCallCreds)
-      combineChannelCredentialsStub.returns(fakeCombined)
 
       const relayer = new RelayerClient(idKeyPath, { host: relayerHost }, logger)
-
-      expect(combineChannelCredentialsStub).to.have.been.calledOnce()
-      expect(combineChannelCredentialsStub).to.have.been.calledWith(fakeSslCreds, fakeCallCreds)
-      expect(relayer).to.have.property('credentials', fakeCombined)
+      expect(relayer).to.have.property('credentials', fakeSslCreds)
     })
 
     describe('services', () => {
@@ -193,15 +159,14 @@ describe('RelayerClient', () => {
 
       beforeEach(() => {
         fakeCreds = 'somecreds'
-        combineChannelCredentialsStub.returns(fakeCreds)
+        createSslStub.returns(fakeCreds)
         relayer = new RelayerClient(idKeyPath, { host: relayerHost }, logger)
       })
 
       it('creates a makerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, MakerService, fakeCreds))
       it('creates a takerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, TakerService, fakeCreds))
       it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(relayer.address, OrderBookService, fakeCreds))
-      it('creates a healthService', () => expect(callerStub).to.have.been.calledWith(relayer.address, HealthService, fakeCreds))
-      it('creates an infoService', () => expect(callerStub).to.have.been.calledWith(relayer.address, InfoService, fakeCreds))
+      it('creates an adminService', () => expect(callerStub).to.have.been.calledWith(relayer.address, AdminService))
     })
   })
 

@@ -185,6 +185,8 @@ const FillStateMachine = StateMachine.factory({
       const swapHash = await inboundEngine.createSwapHash(this.fill.order.orderId, inboundAmount)
       this.fill.setSwapHash(swapHash)
 
+      const authorization = this.relayer.identity.authorize()
+
       const {
         fillId,
         feePaymentRequest,
@@ -192,7 +194,7 @@ const FillStateMachine = StateMachine.factory({
         feeRequired,
         depositRequired,
         fillError
-      } = await this.relayer.takerService.createFill(this.fill.paramsForCreate)
+      } = await this.relayer.takerService.createFill(this.fill.paramsForCreate, authorization)
 
       if (fillError) {
         this.logger.error(`Encountered error with fill: ${fillError.message}`)
@@ -278,9 +280,12 @@ const FillStateMachine = StateMachine.factory({
         payDepositInvoice
       ])
 
-      const authorization = this.relayer.identity.authorize(fillId)
-      this.logger.debug(`Generated authorization for ${fillId}`, authorization)
-      const { fillError } = await this.relayer.takerService.fillOrder({ fillId, feeRefundPaymentRequest, depositRefundPaymentRequest, authorization })
+      const authorization = this.relayer.identity.authorize()
+      const { fillError } = await this.relayer.takerService.fillOrder({
+        fillId,
+        feeRefundPaymentRequest,
+        depositRefundPaymentRequest
+      }, authorization)
 
       if (fillError) {
         this.logger.error(`Encountered error with fill: ${fillError.message}`)
@@ -308,10 +313,9 @@ const FillStateMachine = StateMachine.factory({
       const { fillId } = this.fill
       this.logger.info(`In filled state, attempting to listen for executions on fill ${fillId}`)
 
-      const authorization = this.relayer.identity.authorize(fillId)
-      this.logger.debug(`Generated authorization for ${fillId}`, authorization)
+      const authorization = this.relayer.identity.authorize()
       // NOTE: this method should NOT reject a promise, as that may prevent the state of the fill from saving
-      const call = this.relayer.takerService.subscribeExecute({ fillId, authorization })
+      const call = this.relayer.takerService.subscribeExecute({ fillId }, authorization)
 
       // Stop listening to further events from the stream
       const finish = () => {

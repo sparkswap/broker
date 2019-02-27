@@ -6,7 +6,6 @@ const AdminService = require('./admin-service')
 const OrderService = require('./order-service')
 const OrderBookService = require('./orderbook-service')
 const WalletService = require('./wallet-service')
-const InfoService = require('./info-service')
 
 const { createBasicAuth, createHttpServer } = require('../utils')
 
@@ -44,7 +43,7 @@ class BrokerRPCServer {
    * @param {Boolean} [opts.disableAuth=false]
    * @return {BrokerRPCServer}
    */
-  constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, pubKeyPath, privKeyPath, disableAuth = false, enableCors = false, rpcUser = null, rpcPass = null, rpcHttpProxyAddress = '' } = {}) {
+  constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, pubKeyPath, privKeyPath, disableAuth = false, enableCors = false, rpcUser = null, rpcPass = null, rpcHttpProxyAddress, rpcAddress } = {}) {
     this.logger = logger
     this.engines = engines
     this.relayer = relayer
@@ -55,10 +54,11 @@ class BrokerRPCServer {
     this.disableAuth = disableAuth
     this.auth = createBasicAuth(rpcUser, rpcPass, disableAuth)
     this.rpcHttpProxyAddress = rpcHttpProxyAddress
+    this.rpcAddress = rpcAddress
     this.protoPath = path.resolve(BROKER_PROTO_PATH)
 
     this.server = new grpc.Server()
-    this.httpServer = createHttpServer(this.protoPath, rpcHttpProxyAddress, { disableAuth, enableCors, privKeyPath, pubKeyPath, logger })
+    this.httpServer = createHttpServer(this.protoPath, this.rpcAddress, { disableAuth, enableCors, privKeyPath, pubKeyPath, logger })
 
     this.adminService = new AdminService(this.protoPath, { logger, relayer, engines, orderbooks, auth: this.auth })
     this.server.addService(this.adminService.definition, this.adminService.implementation)
@@ -71,9 +71,6 @@ class BrokerRPCServer {
 
     this.walletService = new WalletService(this.protoPath, { logger, engines, relayer, orderbooks, blockOrderWorker, auth: this.auth })
     this.server.addService(this.walletService.definition, this.walletService.implementation)
-
-    this.infoService = new InfoService(this.protoPath, { logger, engines, relayer, orderbooks })
-    this.server.addService(this.infoService.definition, this.infoService.implementation)
   }
 
   get rpcHttpProxyHost () {

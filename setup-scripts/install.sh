@@ -7,7 +7,8 @@
 # -y, --yes                     answer "Yes" to all yes/no prompts to allow for non-interactive scripting
 # -n=, --network=[network]      'm' for MainNet, 't' for TestNet (removes prompt)
 # -i=, --public-ip=[ip address] Your public IP Address (removes prompt)
-# 
+# -b, --build                   build the images locally instead of pulling from dockerhub
+#
 #################################
 
 # Note: we don't set -u because we're sourcing from scripts (e.g. .bashrc) that may not be as strict.
@@ -22,8 +23,7 @@ RED='\033[0;31m'
 GRAY='\033[0;37m'
 NC='\033[0m' # No Color
 
-LND_ENGINE_VERSION="v0.3.0-beta"
-BROKER_VERSION="v0.3.3-beta"
+BROKER_VERSION="v0.4.2-beta"
 
 # print a message with a color, like msg "my message" $GRAY
 msg () {
@@ -34,6 +34,7 @@ msg () {
 FORCE_YES="false"
 NETWORK=""
 IP_ADDRESS=""
+BUILD="false"
 for i in "$@"
 do
 case $i in
@@ -47,6 +48,10 @@ case $i in
     ;;
     -i=*|--public-ip=*)
     IP_ADDRESS="${i#*=}"
+
+    ;;
+    -b|--build)
+    BUILD="true"
 
     ;;
     *)
@@ -107,16 +112,6 @@ case $dirok in
     ;;
 esac
 
-# Install LND Engine
-msg "Installing LND Engine (BTC and LTC support)" $WHITE
-if [ -d "lnd-engine" ]; then
-  msg "You already have a folder for the lnd-engine. Skipping." $YELLOW
-  msg "If you need to re-install, remove the folder and try again." $YELLOW
-else
-  git clone -b "$LND_ENGINE_VERSION" --single-branch --depth 1 https://github.com/sparkswap/lnd-engine.git
-  (cd lnd-engine && npm run build)
-fi
-
 # Install Broker
 msg "Installing the Sparkswap Broker (sparkswapd)" $WHITE
 if [ -d "broker" ]; then
@@ -126,8 +121,41 @@ if [ -d "broker" ]; then
 else
   git clone -b "$BROKER_VERSION" --single-branch --depth 1 https://github.com/sparkswap/broker.git
   cd broker
-  npm run build
+
+  if [[ $BUILD == "true" ]]; then
+    # Build images locally for the broker
+    npm run build -- -e=$IP_ADDRESS
+  else
+    # Run the broker build to generate certs and identity, but do not build
+    # docker images
+    npm run build -- -e=$IP_ADDRESS --no-docker
+  fi
 fi
+
+# Detect LND-Engine version
+msg "Detecting LND Version from the Broker" $WHITE
+LND_ENGINE_VERSION=$(echo "console.log($(npm list lnd-engine --json).dependencies['lnd-engine'].version);" | node)
+msg "Found LND Engine version $LND_ENGINE_VERSION" $GREEN
+
+# Move back a directory to the `sparkswap` root
+cd ..
+
+# Install LND Engine
+if [[ "$BUILD" == "true" ]]; then
+  msg "Installing LND Engine (BTC and LTC support)" $WHITE
+
+  if [ -d "lnd-engine" ]; then
+    msg "You already have a folder for the lnd-engine. Skipping." $YELLOW
+    msg "If you need to re-install, remove the folder and try again." $YELLOW
+  else
+    git clone -b "$LND_ENGINE_VERSION" --single-branch --depth 1 https://github.com/sparkswap/lnd-engine.git
+    # Build images locally for the lnd-engine
+    (cd lnd-engine && npm run build)
+  fi
+fi
+
+# Moving back to the broker directory
+cd broker
 
 # Set up environment
 msg "Setting up your Broker" $WHITE

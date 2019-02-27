@@ -1211,6 +1211,73 @@ describe('BlockOrderWorker', () => {
     })
   })
 
+  describe('#cancelActiveOrders', () => {
+    let worker
+    let getBlockOrders
+    let market
+    let cancelBlockOrder
+    let unsuccessfulBlockOrder
+    let successfulBlockOrder
+
+    beforeEach(() => {
+      market = 'BTC/LTC'
+      unsuccessfulBlockOrder = {
+        isActive: true,
+        id: 'unsuccessfulId'
+      }
+      successfulBlockOrder = {
+        isActive: true,
+        id: 'successfulId'
+      }
+      cancelBlockOrder = sinon.stub()
+      cancelBlockOrder.withArgs(unsuccessfulBlockOrder.id).rejects()
+      cancelBlockOrder.withArgs(successfulBlockOrder.id).resolves()
+
+      getBlockOrders = sinon.stub().resolves([successfulBlockOrder, unsuccessfulBlockOrder])
+
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.getBlockOrders = getBlockOrders
+      worker.cancelBlockOrder = cancelBlockOrder
+    })
+
+    it('gets all block orders', async () => {
+      await worker.cancelActiveOrders(market)
+
+      expect(getBlockOrders).to.have.been.called()
+      expect(getBlockOrders).to.have.been.calledWith(market)
+    })
+
+    it('filters out inactive block orders', async () => {
+      const inactiveBlockOrder = {
+        isActive: false,
+        id: 'inactiveBlockOrder'
+      }
+      getBlockOrders.resolves([successfulBlockOrder, unsuccessfulBlockOrder, inactiveBlockOrder])
+      await worker.cancelActiveOrders(market)
+
+      expect(cancelBlockOrder).to.not.have.been.calledWith(inactiveBlockOrder.id)
+    })
+
+    it('attempts to cancel each block order', async () => {
+      await worker.cancelActiveOrders(market)
+
+      expect(cancelBlockOrder).to.have.been.calledWith(successfulBlockOrder.id)
+      expect(cancelBlockOrder).to.have.been.calledWith(unsuccessfulBlockOrder.id)
+    })
+
+    it('returns successfully cancelled block order ids', async () => {
+      const res = await worker.cancelActiveOrders(market)
+
+      expect(res.cancelledOrders).to.eql(['successfulId'])
+    })
+
+    it('returns unsuccessfully cancelled block order ids', async () => {
+      const res = await worker.cancelActiveOrders(market)
+
+      expect(res.failedToCancelOrders).to.eql(['unsuccessfulId'])
+    })
+  })
+
   describe('#cancelOutstandingOrders', () => {
     let worker
     let blockOrder
@@ -1218,7 +1285,7 @@ describe('BlockOrderWorker', () => {
     let blockOrderKey = blockOrderId
     let blockOrderValue = blockOrder
     let orders
-    let identityStub
+    let fakeAuth
 
     beforeEach(() => {
       orders = [
@@ -1237,13 +1304,13 @@ describe('BlockOrderWorker', () => {
         orders,
         openOrders: orders
       }
-      identityStub = sinon.stub()
+      fakeAuth = 'identity'
 
       relayer.makerService = {
         cancelOrder: sinon.stub().resolves()
       }
       relayer.identity = {
-        authorize: identityStub.returns('identity')
+        authorize: sinon.stub().returns(fakeAuth)
       }
 
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
@@ -1255,16 +1322,15 @@ describe('BlockOrderWorker', () => {
     })
 
     it('authorizes the request', async () => {
-      const orderId = orders[0].order.orderId
       await worker.cancelOutstandingOrders(blockOrder)
-      expect(relayer.identity.authorize).to.have.been.calledWith(orderId)
+      expect(relayer.identity.authorize).to.have.been.calledOnce()
     })
 
     it('cancels all of the orders on the relayer', async () => {
       await worker.cancelOutstandingOrders(blockOrder)
 
       expect(relayer.makerService.cancelOrder).to.have.been.calledOnce()
-      expect(relayer.makerService.cancelOrder).to.have.been.calledWith(sinon.match({ orderId: orders[0].order.orderId }))
+      expect(relayer.makerService.cancelOrder).to.have.been.calledWith(sinon.match({ orderId: orders[0].order.orderId }), fakeAuth)
     })
   })
 

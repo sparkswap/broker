@@ -149,6 +149,13 @@ message GetIdentityResponse {
   string public_key = 1;
 }
 
+message RegisterResponse {
+  // the Identifier assigned by the Relayer for the Entity associated with the provided Public Key
+  string entity_id = 1;
+  // URL to complete user registration
+  string url = 2;
+}
+
 /**
  * The AdminService performs administrative tasks on the BrokerDaemon.
  *
@@ -256,6 +263,43 @@ service AdminService {
       get: "/v1/admin/identity"
     };
   }
+
+  /**
+   * Register takes the publicKey of users identity returns the entityId of the entity
+   * created by the Relayer and the url for the user to complete registration
+   *
+   * ```javascript
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * adminService.register({ }, { deadline }, (err, { entityId, url }) => {
+   *   if (err) return console.error(err)
+   *   console.log({ entityId, url })
+   * })
+   * ```
+   *
+   * ```shell
+   * > sparkswap register
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * {
+   *   "entityId": "BAfwIYxkUqHJ3pLLh60AAQj3",
+   *   "url": "https://sparkswap.com/register/BAfwIYxkUqHJ3pLLh60AAQj3"
+   * }
+   * ```
+   *
+   * ```shell
+   * ┌─────────────────────────────────────────────────────────────────────────────────────────┐
+   * │                                                                                         │
+   * │          Successfully registered public key with the Ϟ Sparkswap Relayer!               │
+   * │                                                                                         │
+   * │ Go to https://sparkswap.com/register/BAfwIYxkUqHJ3pLLh60AAQj3 to complete registration. │
+   * │                                                                                         │
+   * └─────────────────────────────────────────────────────────────────────────────────────────┘
+   * ```
+   */
+  rpc Register (google.protobuf.Empty) returns (RegisterResponse);
 }
 
 /**
@@ -753,6 +797,8 @@ message MarketEvent {
 message GetOrderbookRequest {
   // Market to retrieve updates for, e.g. `'BTC/LTC'`.
   string market = 1;
+  // Number to limit results of either side of orderbook
+  int64 limit_per_side = 2;
 }
 
 message Bid {
@@ -781,6 +827,121 @@ message GetOrderbookResponse {
   int64 timestamp = 3;
   // time the last entry that was added (ISO8601 datetime string)
   string datetime = 4;
+}
+
+
+/**
+ * Supported markets expose all relevant information about a market that is supported by sparkswap
+ */
+message SupportedMarket {
+  // unique id for the market
+  string id = 1;
+  // symbol of the market. e.g. `BTC/LTC`
+  string symbol = 2;
+  // symbol of base currency
+  string base = 3;
+  // symbol of counter currency
+  string counter = 4;
+  // if the market is active or not
+  bool active = 5;
+}
+
+/**
+ * Contains information about all supported markets on sparkswap
+ */
+message GetSupportedMarketsResponse {
+  // a list of all supported markets on sparkswap
+  repeated SupportedMarket supported_markets = 1;
+}
+
+message GetMarketStatsRequest {
+  // Market to commit the amount in currency to. e.g. `BTC/LTC`
+  string market = 1;
+}
+
+message GetMarketStatsResponse {
+  // symbol of the market. e.g. `BTC/LTC`
+  string symbol = 1;
+
+  // 64-bit Unix nano-second timestamp
+  int64 timestamp = 2;
+
+  // ISO8601 datetime string (nano-seconds)
+  string datetime = 3;
+
+  // NOTE:
+  // The following parameters are all float-value strings
+  //
+
+  // highest price in past 24 hours
+  string high = 4;
+
+  // lowest price in past 24 hours
+  string low = 5;
+
+  // current best bid
+  string bid = 6;
+
+  // current best bid's amount
+  string bidVolume = 7;
+
+  // current best ask
+  string ask = 8;
+
+  // current best ask's amount
+  string askVolume = 9;
+
+  // volume weighed average price (vwap) for the past 24 hours
+  string vwap = 10;
+
+  // volume of base currency in past 24 hours
+  string baseVolume = 11;
+
+  // volume of counter (quote) currency in past 24 hours
+  string counterVolume = 12;
+}
+
+/**
+ * Parameters to retrieve a list of trades within a specified time frame on a given market
+ */
+message GetTradesRequest {
+  // Market to retrieve updates for, e.g. `'BTC/LTC'`.
+  string market = 1;
+  // Starting date for the results. ISO8601
+  string since = 2;
+  // int64 number to limit results
+  int64 limit = 3;
+}
+
+/**
+ * Trade exposes all relevant information about a filled order
+ */
+message Trade {
+  // id of the trade
+  string id = 1;
+  // Trade creation unix timestamp in nanoseconds
+  string timestamp = 2;
+  // Trade creation ISO8601 datetime in nanoseconds
+  string datetime = 3;
+  // order id
+  string order = 4;
+  // market name the trade was executed on e.g. BTC/LTC
+  string market = 5;
+  // order type, 'market', 'limit' or undefined/None/null
+  string type = 6;
+  // direction of the trade, 'buy' or 'sell'
+  string side = 7;
+  // float price in quote currency
+  string price = 8;
+  // amount of base currency
+  string amount = 9;
+}
+
+/**
+ * Contains information about all trades on sparkswap
+ */
+message GetTradesResponse {
+  repeated Trade trades = 1;
 }
 
 /**
@@ -859,6 +1020,10 @@ service OrderBookService {
   rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
   /**
    * GetOrderbook returns price and amount information about the bids and asks on the orderbook in the current state.
+   *
+   * When GetOrderbookRequest includes a limit parameter, the total number of bids will not exceed the limit and the
+   * total number of asks will not exceed the limit.
+   *
    * > Below is a simple example of a console-based UI for an orderbook:
    *
    * ```javascript
@@ -882,6 +1047,181 @@ service OrderBookService {
   rpc GetOrderbook (GetOrderbookRequest) returns (GetOrderbookResponse) {
     option (.google.api.http) = {
       get: "/v1/orderbook"
+    };
+  }
+  /**
+   * getSupportedMarkets returns detailed information about markets currently supported on sparkswap.
+   *
+   * ```javascript
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * orderbookService.getSupportedMarkets({}, { deadline }, (err, { supportedMarkets }) => {
+   *   if (err) return console.error(err)
+   *   console.log({ supportedMarkets })
+   * })
+   * ```
+   *
+   * ```shell
+   * > sparkswap market supported-markets
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * {
+   *   "supportedMarkets": [
+   *     {
+   *       "id": "BTC/LTC",
+   *       "symbol": "BTC/LTC",
+   *       "base": "BTC",
+   *       "counter": "LTC",
+   *       "active": true,
+   *     }
+   *   ]
+   * }
+   * ```
+   *
+   * ```shell
+   * { supportedMarkets:
+   *   [ { id: 'BTC/LTC',
+   *       symbol: 'BTC/LTC',
+   *       base: 'BTC',
+   *       counter: 'LTC',
+   *       active: true } ] }
+   * ```
+   */
+  rpc getSupportedMarkets (google.protobuf.Empty) returns (GetSupportedMarketsResponse) {
+    option (.google.api.http) = {
+      get: "/v1/markets"
+    };
+  }
+   /**
+   * getMarketStats returns statistics (price ticker information) for a particular market/symbol for a period of the last 24 hours
+   *
+   * ```javascript
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * const market = "BTC/LTC"
+   * orderbookService.getMarketStats({ market }, { deadline }, (err, res) => {
+   *   if (err) return console.error(err)
+   *   console.log(res)
+   * })
+   * ```
+   *
+   * ```shell
+   * > sparkswap market market-stats --market BTC/LTC
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * {
+   *   "symbol": "BTC/LTC",
+   *   "timestamp": "1537386049351518282",
+   *   "datetime": "2018-09-19T19:40:49.350111174Z",
+   *   "high": "59.313",
+   *   "low": "59.212",
+   *   "bid": "0.0001",
+   *   "bidVolume": "59.311",
+   *   "ask": "0.0001",
+   *   "askVolume": "59.32",
+   *   "vwap": "59.324",
+   *   "baseVolume": "20.1233",
+   *   "counterVolume": "1207.398"
+   * }
+   * ```
+   *
+   * ```shell
+   * { "symbol": "BTC/LTC",
+   *   "timestamp": "1537386049351518282",
+   *   "datetime": "2018-09-19T19:40:49.350111174Z",
+   *   "high": "59.313",
+   *   "low": "59.212",
+   *   "bid": "0.0001",
+   *   "bidVolume": "59.311",
+   *   "ask": "0.0001",
+   *   "askVolume": "59.32",
+   *   "vwap": "59.324",
+   *   "baseVolume": "20.1233",
+   *   "counterVolume": "1207.398" }
+   * ```
+   */
+  rpc getMarketStats (GetMarketStatsRequest) returns (GetMarketStatsResponse) {
+    option (.google.api.http) = {
+      get: "/v1/market_stats"
+    };
+  }
+  /**
+   * getTrades returns detailed information about trades from a given time range.
+   *
+   * ```javascript
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * orderbookService.getTrades(
+   *   {
+   *     market: 'BTC/LTC', // trading BTC and LTC
+   *     since: '2018-09-20T18:58:07.866Z', // only retrieve records since this date
+   *     limit: 10, // retrieve first 10 records
+   *   }, { deadline }, (err, { trades }) => {
+   *   if (err) return console.error(err)
+   *   console.log({ trades })
+   * }))
+   * ```
+   *
+   * ```shell
+   * > sparkswap market trades 2018-09-20T18:58:07.866Z 50 --market BTC/LTC
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * { trades:
+   *  [ { id: 'yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm',
+   *    timestamp: '1537526431834',
+   *    datetime: '2018-09-21T10:40:31.034Z',
+   *    order: 'tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg',
+   *    market: 'BTC/LTC',
+   *    type: 'limit',
+   *    side: 'buy',
+   *    price: '0.0010000000000000',
+   *    amount: '400.000000000000',
+   *    info: '{"id":"yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm","timestamp":"1537526431834","datetime":"2018-09-21T10:40:31.034Z","order":"tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg","symbol":"BTC/LTC","type":"limit","side":"buy","price":"0.0010000000000000","amount":"400.000000000000"}' },
+   *   { id: 'd4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP',
+   *    timestamp: '1537527538513',
+   *    datetime: '2018-09-21T10:58:58.513Z',
+   *    order: 'W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt',
+   *    market: 'BTC/LTC',
+   *    type: 'limit',
+   *    side: 'sell',
+   *    price: '0.1000000000000000',
+   *    amount: '50.000000000000000',
+   *    info: '{"id":"d4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP","timestamp":"1537527538513","datetime":"2018-09-21T10:58:58.513Z","order":"W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt","symbol":"BTC/LTC","type":"limit","side":"sell","price":"0.1000000000000000","amount":"50.000000000000000"}' } ] }
+   * ```
+   *
+   * ```shell
+   * { trades:
+   *  [ { id: 'yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm',
+   *    timestamp: '1537526431834',
+   *    datetime: '2018-09-21T10:40:31.034Z',
+   *    order: 'tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg',
+   *    market: 'BTC/LTC',
+   *    type: 'limit',
+   *    side: 'buy',
+   *    price: '0.0010000000000000',
+   *    amount: '400.000000000000',
+   *    info: '{"id":"yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm","timestamp":"1537526431834","datetime":"2018-09-21T10:40:31.034Z","order":"tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg","symbol":"BTC/LTC","type":"limit","side":"buy","price":"0.0010000000000000","amount":"400.000000000000"}' },
+   *   { id: 'd4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP',
+   *    timestamp: '1537527538513',
+   *    datetime: '2018-09-21T10:58:58.513Z',
+   *    order: 'W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt',
+   *    market: 'BTC/LTC',
+   *    type: 'limit',
+   *    side: 'sell',
+   *    price: '0.1000000000000000',
+   *    amount: '50.000000000000000',
+   *    info: '{"id":"d4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP","timestamp":"1537527538513","datetime":"2018-09-21T10:58:58.513Z","order":"W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt","symbol":"BTC/LTC","type":"limit","side":"sell","price":"0.1000000000000000","amount":"50.000000000000000"}' } ] }
+   * ```
+   */
+  rpc GetTrades (GetTradesRequest) returns (GetTradesResponse) {
+    option (.google.api.http) = {
+      get: "/v1/trades"
     };
   }
 }
@@ -1469,306 +1809,6 @@ service WalletService {
     option (.google.api.http) = {
       post: "/v1/wallet/unlock"
       body: "*"
-    };
-  }
-}
-
-/**
- * Supported markets expose all relevant information about a market that is supported by sparkswap
- */
-message SupportedMarket {
-  // unique id for the market
-  string id = 1;
-  // symbol of the market. e.g. `BTC/LTC`
-  string symbol = 2;
-  // symbol of base currency
-  string base = 3;
-  // symbol of counter currency
-  string counter = 4;
-  // if the market is active or not
-  bool active = 5;
-}
-
-/**
- * Contains information about all supported markets on sparkswap
- */
-message GetSupportedMarketsResponse {
-  // a list of all supported markets on sparkswap
-  repeated SupportedMarket supported_markets = 1;
-}
-
-message GetMarketStatsRequest {
-  // Market to commit the amount in currency to. e.g. `BTC/LTC`
-  string market = 1;
-}
-
-message GetMarketStatsResponse {
-  // symbol of the market. e.g. `BTC/LTC`
-  string symbol = 1;
-
-  // 64-bit Unix nano-second timestamp
-  int64 timestamp = 2;
-
-  // ISO8601 datetime string (nano-seconds)
-  string datetime = 3;
-
-  // NOTE:
-  // The following parameters are all float-value strings
-  //
-
-  // highest price in past 24 hours
-  string high = 4;
-
-  // lowest price in past 24 hours
-  string low = 5;
-
-  // current best bid
-  string bid = 6;
-
-  // current best bid's amount
-  string bidVolume = 7;
-
-  // current best ask
-  string ask = 8;
-
-  // current best ask's amount
-  string askVolume = 9;
-
-  // volume weighed average price (vwap) for the past 24 hours
-  string vwap = 10;
-
-  // volume of base currency in past 24 hours
-  string baseVolume = 11;
-
-  // volume of counter (quote) currency in past 24 hours
-  string counterVolume = 12;
-}
-
-/**
- * Parameters to retrieve a list of trades within a specified time frame on a given market
- */
-message GetTradesRequest {
-  // Market to retrieve updates for, e.g. `'BTC/LTC'`.
-  string market = 1;
-  // Starting date for the results. ISO8601
-  string since = 2;
-  // int64 number to limit results
-  int64 limit = 3;
-}
-
-/**
- * Trade exposes all relevant information about a filled order
- */
-message Trade {
-  // id of the trade
-  string id = 1;
-  // Trade creation unix timestamp in nanoseconds
-  string timestamp = 2;
-  // Trade creation ISO8601 datetime in nanoseconds
-  string datetime = 3;
-  // order id
-  string order = 4;
-  // market name the trade was executed on e.g. BTC/LTC
-  string market = 5;
-  // order type, 'market', 'limit' or undefined/None/null
-  string type = 6;
-  // direction of the trade, 'buy' or 'sell'
-  string side = 7;
-  // float price in quote currency
-  string price = 8;
-  // amount of base currency
-  string amount = 9;
-}
-
-/**
- * Contains information about all trades on sparkswap
- */
-message GetTradesResponse {
-  repeated Trade trades = 1;
-}
-
-/**
- * The InfoService gets information about the state of the markets, currencies, transactions.
- *
- * ```javascript
- * const address = 'localhost:27492'
- * const infoService = new brokerProto.InfoService(address, grpc.credentials.createInsecure())
- * ```
- */
-service InfoService {
-  /**
-   * getSupportedMarkets returns detailed information about markets currently supported on sparkswap.
-   *
-   * ```javascript
-   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
-   * infoService.getSupportedMarkets({}, { deadline }, (err, { supportedMarkets }) => {
-   *   if (err) return console.error(err)
-   *   console.log({ supportedMarkets })
-   * })
-   * ```
-   *
-   * ```shell
-   * > sparkswap info supported-markets
-   * ```
-   *
-   * > The above command will print:
-   *
-   * ```javascript
-   * {
-   *   "supportedMarkets": [
-   *     {
-   *       "id": "BTC/LTC",
-   *       "symbol": "BTC/LTC",
-   *       "base": "BTC",
-   *       "counter": "LTC",
-   *       "active": true,
-   *     }
-   *   ]
-   * }
-   * ```
-   *
-   * ```shell
-   * { supportedMarkets:
-   *   [ { id: 'BTC/LTC',
-   *       symbol: 'BTC/LTC',
-   *       base: 'BTC',
-   *       counter: 'LTC',
-   *       active: true } ] }
-   * ```
-   */
-  rpc getSupportedMarkets (google.protobuf.Empty) returns (GetSupportedMarketsResponse) {
-    option (.google.api.http) = {
-      get: "/v1/markets"
-    };
-  }
-   /**
-   * getMarketStats returns statistics (price ticker information) for a particular market/symbol for a period of the last 24 hours
-   *
-   * ```javascript
-   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
-   * const market = "BTC/LTC"
-   * infoService.getMarketStats({ market }, { deadline }, (err, res) => {
-   *   if (err) return console.error(err)
-   *   console.log(res)
-   * })
-   * ```
-   *
-   * ```shell
-   * > sparkswap info market-stats --market BTC/LTC
-   * ```
-   *
-   * > The above command will print:
-   *
-   * ```javascript
-   * {
-   *   "symbol": "BTC/LTC",
-   *   "timestamp": "1537386049351518282",
-   *   "datetime": "2018-09-19T19:40:49.350111174Z",
-   *   "high": "59.313",
-   *   "low": "59.212",
-   *   "bid": "0.0001",
-   *   "bidVolume": "59.311",
-   *   "ask": "0.0001",
-   *   "askVolume": "59.32",
-   *   "vwap": "59.324",
-   *   "baseVolume": "20.1233",
-   *   "counterVolume": "1207.398"
-   * }
-   * ```
-   *
-   * ```shell
-   * { "symbol": "BTC/LTC",
-   *   "timestamp": "1537386049351518282",
-   *   "datetime": "2018-09-19T19:40:49.350111174Z",
-   *   "high": "59.313",
-   *   "low": "59.212",
-   *   "bid": "0.0001",
-   *   "bidVolume": "59.311",
-   *   "ask": "0.0001",
-   *   "askVolume": "59.32",
-   *   "vwap": "59.324",
-   *   "baseVolume": "20.1233",
-   *   "counterVolume": "1207.398" }
-   * ```
-   */
-  rpc getMarketStats (GetMarketStatsRequest) returns (GetMarketStatsResponse) {
-    option (.google.api.http) = {
-      get: "/v1/market_stats"
-    };
-  }
-  /**
-   * getTrades returns detailed information about trades from a given time range.
-   *
-   * ```javascript
-   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
-   * infoService.getTrades(
-   *   {
-   *     market: 'BTC/LTC', // trading BTC and LTC
-   *     since: '2018-09-20T18:58:07.866Z', // only retrieve records since this date
-   *     limit: 10, // retrieve first 10 records
-   *   }, { deadline }, (err, { trades }) => {
-   *   if (err) return console.error(err)
-   *   console.log({ trades })
-   * }))
-   * ```
-   *
-   * ```shell
-   * > sparkswap info trades 2018-09-20T18:58:07.866Z 50 --market BTC/LTC
-   * ```
-   *
-   * > The above command will print:
-   *
-   * ```javascript
-   * { trades:
-   *  [ { id: 'yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm',
-   *    timestamp: '1537526431834',
-   *    datetime: '2018-09-21T10:40:31.034Z',
-   *    order: 'tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg',
-   *    market: 'BTC/LTC',
-   *    type: 'limit',
-   *    side: 'buy',
-   *    price: '0.0010000000000000',
-   *    amount: '400.000000000000',
-   *    info: '{"id":"yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm","timestamp":"1537526431834","datetime":"2018-09-21T10:40:31.034Z","order":"tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg","symbol":"BTC/LTC","type":"limit","side":"buy","price":"0.0010000000000000","amount":"400.000000000000"}' },
-   *   { id: 'd4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP',
-   *    timestamp: '1537527538513',
-   *    datetime: '2018-09-21T10:58:58.513Z',
-   *    order: 'W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt',
-   *    market: 'BTC/LTC',
-   *    type: 'limit',
-   *    side: 'sell',
-   *    price: '0.1000000000000000',
-   *    amount: '50.000000000000000',
-   *    info: '{"id":"d4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP","timestamp":"1537527538513","datetime":"2018-09-21T10:58:58.513Z","order":"W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt","symbol":"BTC/LTC","type":"limit","side":"sell","price":"0.1000000000000000","amount":"50.000000000000000"}' } ] }
-   * ```
-   *
-   * ```shell
-   * { trades:
-   *  [ { id: 'yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm',
-   *    timestamp: '1537526431834',
-   *    datetime: '2018-09-21T10:40:31.034Z',
-   *    order: 'tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg',
-   *    market: 'BTC/LTC',
-   *    type: 'limit',
-   *    side: 'buy',
-   *    price: '0.0010000000000000',
-   *    amount: '400.000000000000',
-   *    info: '{"id":"yK2LMkgQPZRk1riK9pgwIyVjr7xMFOgn0iCF6FPm","timestamp":"1537526431834","datetime":"2018-09-21T10:40:31.034Z","order":"tgjXZ6Mr_xcRzjMZ4xUkNnUpHL7OuJvBbFGG-CTg","symbol":"BTC/LTC","type":"limit","side":"buy","price":"0.0010000000000000","amount":"400.000000000000"}' },
-   *   { id: 'd4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP',
-   *    timestamp: '1537527538513',
-   *    datetime: '2018-09-21T10:58:58.513Z',
-   *    order: 'W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt',
-   *    market: 'BTC/LTC',
-   *    type: 'limit',
-   *    side: 'sell',
-   *    price: '0.1000000000000000',
-   *    amount: '50.000000000000000',
-   *    info: '{"id":"d4OlWlhKEe3D9-UmrwfpM7T0_2bd7t8BI4tZCuKP","timestamp":"1537527538513","datetime":"2018-09-21T10:58:58.513Z","order":"W36W9r-krFzjv4L6CwOM1hoPthAd7tlqzSBHUKDt","symbol":"BTC/LTC","type":"limit","side":"sell","price":"0.1000000000000000","amount":"50.000000000000000"}' } ] }
-   * ```
-   */
-  rpc GetTrades (GetTradesRequest) returns (GetTradesResponse) {
-    option (.google.api.http) = {
-      get: "/v1/trades"
     };
   }
 }

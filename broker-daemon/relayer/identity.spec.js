@@ -120,56 +120,46 @@ describe('Identity', () => {
       })
     })
 
-    describe('#identify', () => {
-      let metadata
-
-      beforeEach(() => {
-        metadata = identity.identify()
-      })
-
-      it('creates metadata', () => {
-        expect(metadata).to.be.instanceOf(Metadata)
-      })
-
-      it('adds the pub key to the metadata', () => {
-        expect(Metadata.prototype.set).to.have.been.calledWith('pubkey', 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWOrLBCKQBQkiMJaIV5A05HqWFmR2GR5j8B19bxx7Th3/zmm7mZ8lNyseTr1YO7BwN7jKEbMe8Agx5LLCd/IP/A==')
-      })
-    })
-
     describe('#authorize', () => {
-      let id
       let auth
       let fakeRandom = Buffer.from('fake')
       let fakeSign = 'signature'
       let timeInSeconds
 
       beforeEach(() => {
-        id = 'someid'
         randomBytes.returns(fakeRandom)
         identity.sign = sinon.stub().returns(fakeSign)
         timeInSeconds = 1532045655
         nowInSeconds.returns(timeInSeconds)
 
-        auth = identity.authorize(id)
+        auth = identity.authorize()
       })
 
-      it('adds a random nonce to the auth', () => {
+      it('creates metadata', () => {
+        expect(auth).to.be.instanceOf(Metadata)
+      })
+
+      it('adds the pubkey to the metadata', () => {
+        expect(Metadata.prototype.set).to.have.been.calledWith('pubkey', identity.pubKeyBase64)
+      })
+
+      it('adds a random nonce to the metadata', () => {
         expect(randomBytes).to.have.been.calledOnce()
         expect(randomBytes).to.have.been.calledWith(32)
-        expect(auth).to.have.property('nonce', fakeRandom.toString('base64'))
+        expect(Metadata.prototype.set).to.have.been.calledWith('nonce', fakeRandom.toString('base64'))
       })
 
-      it('adds a timestamp to the auth', () => {
-        expect(auth).to.have.property('timestamp', timeInSeconds.toString())
+      it('adds a timestamp to the metadata', () => {
+        expect(Metadata.prototype.set).to.have.been.calledWith('timestamp', timeInSeconds.toString())
       })
 
       it('signs the payload', () => {
         expect(identity.sign).to.have.been.calledOnce()
-        expect(identity.sign).to.have.been.calledWith(`${timeInSeconds.toString()},${fakeRandom.toString('base64')},${id}`)
+        expect(identity.sign).to.have.been.calledWith(`${timeInSeconds.toString()},${fakeRandom.toString('base64')}`)
       })
 
-      it('adds the signature to the auth', () => {
-        expect(auth).to.have.property('signature', fakeSign)
+      it('adds the signature to the metadata', () => {
+        expect(Metadata.prototype.set).to.have.been.calledWith('signature', fakeSign)
       })
     })
   })
