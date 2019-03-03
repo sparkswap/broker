@@ -21,7 +21,7 @@ const MARKET_CONVERSION = {
  * @param {string} balance - int64 balance in the `currency` smallest unit (e.g. satoshis)
  * @param {string} currency - currency symbol
  * @param {string} currencyToConvertTo - symbol to convert to
- * @return {string} int64 string in the `currencyToConvertTo` smallest unit (e.g. litoshis)
+ * @returns {string} int64 string in the `currencyToConvertTo` smallest unit (e.g. litoshis)
  */
 function convertBalance (balance, currency, currencyToConvertTo) {
   let multiplier

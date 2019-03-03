@@ -39,17 +39,18 @@ const paramRegex = /{(\w+)}/g
 
 /**
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const GRPC_API_OPTION_ID = '.google.api.http'
 
 /**
  * generate middleware to proxy to gRPC defined by proto files
- * @param  {string[]} protoFiles - Filenames of protobuf-file
+ * @param  {Array<string>} protoFiles - Filenames of protobuf-file
  * @param  {string} grpcLocation - HOST:PORT of gRPC server
- * @param  {ChannelCredentials}  gRPC - credential context (default: grpc.credentials.createInsecure())
- * @return {Function}            Middleware
+ * @param  {ChannelCredentials} credentials - credential context (default: grpc.credentials.createInsecure())
+ * @param  {boolean} [debug=true]
+ * @returns {Function} Middleware
  */
 const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.createInsecure(), debug = true) => {
   const router = express.Router()
@@ -145,9 +146,9 @@ const getPkg = (client, pkg, create = false) => {
 
 /**
  * Parse express request params & query into params for grpc client
- * @param  {Request} req - Express request object
+ * @param  {Object} req - Express request object
  * @param  {string} url  - gRPC url field (ie "/v1/hi/{name}")
- * @return {Object}      params for gRPC client
+ * @returns {Object}      params for gRPC client
  */
 const convertParams = (req, url) => {
   const gparams = getParamsList(url)
@@ -168,8 +169,7 @@ const convertParams = (req, url) => {
 
 /**
  * Convert gRPC URL expression into express
- * @param  {string} url - gRPC URL expression
- * @returns {string} express URL expression
+ * @param {string} url - gRPC URL expression
  */
 const convertUrl = (url) => (
   // TODO: PRIORITY:LOW - use types to generate regex for numbers & strings in params
@@ -211,7 +211,7 @@ const getParamsList = (url) => {
 /**
  * Convert headers into gRPC meta
  * @param  {Object} headers - Headers: {name: value}
- * @return {meta}           grpc meta object
+ * @returns {meta}           grpc meta object
  */
 const convertHeaders = (headers) => {
   headers = headers || {}

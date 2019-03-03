@@ -6,15 +6,14 @@ class StateMachineAbstractPlugin {
    * State machine plugins are constructed before they are added to the state machine
    * Used for plugin-wide configuration.
    */
-  // eslint-disable-next-line
-  constructor () {}
+  constructor () {} // eslint-disable-line
 
   /**
    * A copy of StateMachine~plugin, which is not exposed
    * @param  {StateMachine} instance       - State machine instance to be hooked
    * @param  {string}       event          - Name of the event (e.g. `persist`)
    * @param  {Array}        additionalArgs - Additional arguments to be applied to the hooked functions
-   * @return {void}
+   * @returns {void}
    */
   hook (instance, event, additionalArgs = []) {
     const fsm = instance._fsm
@@ -31,9 +30,9 @@ class StateMachineAbstractPlugin {
   /**
    * State machine plugins expose a `configure` method that gets called against the config object when building the factory
    * By default, we use it to apply our custom transitions
-   * @see {@link https://github.com/jakesgordon/javascript-state-machine/blob/master/src/config.js#L119}
-   * @param  {StateMachine~Config} config - State machine configuration object
-   * @return {void}
+   * @see https://github.com/jakesgordon/javascript-state-machine/blob/master/src/config.js#L119
+   * @param {StateMachine~Config} config - State machine configuration object
+   * @returns {void}
    */
   configure (config) {
     this.transitions.forEach((transition) => {
@@ -44,9 +43,9 @@ class StateMachineAbstractPlugin {
   /**
    * State machine provides a hook when a new state machine is init'ed
    * By default, we use it to apply our custom lifecycle observers (the `lifecycle` hook provided by JSM does not support promises)
-   * @see {@link https://github.com/jakesgordon/javascript-state-machine/blob/master/src/jsm.js#L22}
-   * @param  {Object} instance - State machine instance being initialized
-   * @return {void}
+   * @see https://github.com/jakesgordon/javascript-state-machine/blob/master/src/jsm.js#L22
+   * @param {Object} instance - State machine instance being initialized
+   * @returns {void}
    */
   init (instance) {
     Object.entries(this.observers).forEach(([ name, func ]) => {
@@ -59,7 +58,7 @@ class StateMachineAbstractPlugin {
 
   /**
    * Our custom transitions to be added to the factory
-   * @return {Array} Array of JSM-compatible transitions
+   * @returns {Array} Array of JSM-compatible transitions
    */
   get transitions () {
     const plugin = this // eslint-disable-line
@@ -69,7 +68,7 @@ class StateMachineAbstractPlugin {
 
   /**
    * Our custom lifecycle observers to be added to every instance
-   * @return {Object} Key value of lifecycle events and functions to be called during them
+   * @returns {Object} Key value of lifecycle events and functions to be called during them
    */
   get observers () {
     const plugin = this // eslint-disable-line
@@ -79,7 +78,7 @@ class StateMachineAbstractPlugin {
 
   /**
    * State machine plugins define `methods` to be mixed into the state machine prototype
-   * @return {Object} Object of all methods to be mixed in
+   * @returns {Object} Object of all methods to be mixed in
    */
   get methods () {
     const plugin = this // eslint-disable-line
@@ -89,8 +88,8 @@ class StateMachineAbstractPlugin {
 
   /**
    * State machine plugins define `properties` to be mixed into the state machine instance
-   * @return {Object} Property definitions that can be used with `Object.defineProperties`
-   * @see {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperties|Object.defineProperties}
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperties
+   * @returns {Object} Property definitions that can be used with `Object.defineProperties`
    */
   get properties () {
     const plugin = this // eslint-disable-line
@@ -101,7 +100,7 @@ class StateMachineAbstractPlugin {
   /**
    * Upstream state machine doesn't support plugins adding static methods,
    * but ../state-machine modifies to use the `staticMethods` property
-   * @return {Object} Object of all static methods to be mixed in
+   * @returns {Object} Object of all static methods to be mixed in
    */
   get staticMethods () {
     const plugin = this // eslint-disable-line

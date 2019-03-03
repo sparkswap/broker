@@ -1,6 +1,6 @@
 /**
  * @constant
- * @type {Boolean}
+ * @type {string}
  * @default
  */
 const BASIC_AUTH_DELIMITER = ':'
@@ -9,11 +9,11 @@ const BASIC_AUTH_DELIMITER = ':'
  * Verifies a username and password from metadata sent from grpc-methods. This function is
  * called from inside the grpc-methods authorization hook.
  *
- * @see {@link https://github.com/sparkswap/grpc-methods}
+ * @see https://github.com/sparkswap/grpc-methods
  * @param {string} rpcUser
  * @param {string} rpcPass
  * @param {boolean} [disableAuth=false]
- * @return {Function}
+ * @returns {Function}
  */
 function createBasicAuth (rpcUser, rpcPass, disableAuth = false) {
   return async ({ metadata, logger }) => {

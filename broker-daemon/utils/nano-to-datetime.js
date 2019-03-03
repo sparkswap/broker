@@ -4,7 +4,7 @@ const nano = require('nano-seconds')
  * Converts nanoseconds string to ISO8601 datetime
  *
  * @param {string} nanoseconds
- * @return {string} ISO8601 string
+ * @returns {string} ISO8601 string
  */
 function nanoToDatetime (nanoseconds) {
   const timeMilliseconds = nanoseconds.substring(0, nanoseconds.length - 9)

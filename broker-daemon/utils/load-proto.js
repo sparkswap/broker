@@ -1,7 +1,18 @@
 const fs = require('fs')
 const grpc = require('grpc')
 
+/**
+ * @constant
+ * @type {string}
+ * @default
+ */
 const PROTO_FILE_TYPE = 'proto'
+
+/**
+ * @constant
+ * @type {Object}
+ * @default
+ */
 const PROTO_OPTIONS = {
   convertFieldsToCamelCase: true,
   binaryAsBase64: true,
@@ -13,7 +24,7 @@ const PROTO_OPTIONS = {
  * Loads a given proto file path into a grpc proto definition
  *
  * @param {string} protoPath
- * @return {Object} loaded grpc proto object
+ * @returns {Object} loaded grpc proto object
  * @throws {Error} proto does not exist
  */
 function loadGrpcProto (protoPath) {

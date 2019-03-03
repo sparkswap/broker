@@ -456,7 +456,7 @@ class BlockOrder {
   /**
    * Grab a block order from a given sublevel
    *
-   * @param {Sublevel} store - block order sublevel store
+   * @param {sublevel} store - block order sublevel store
    * @param {string} blockOrderId
    * @return {BlockOrder} BlockOrder instance
    * @throws {Error} store is null
