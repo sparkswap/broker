@@ -7,7 +7,7 @@
  * @param {Array<Engine>} request.engines
  * @param {Object} responses
  * @param {Function} responses.GetPaymentChannelNetworkAddressResponse - constructor
- * @return {GetPaymentChannelNetworkAddressResponse}
+ * @returns {GetPaymentChannelNetworkAddressResponse}
  */
 async function getPaymentChannelNetworkAddress ({ logger, params, engines }, { GetPaymentChannelNetworkAddressResponse }) {
   const { symbol } = params

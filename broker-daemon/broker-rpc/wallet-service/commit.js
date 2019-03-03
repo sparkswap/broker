@@ -18,7 +18,7 @@ const MINIMUM_FUNDING_AMOUNT = Big(0.00400000)
  * @param {Engine} request.engines
  * @param {Object} responses
  * @param {Function} responses.EmptyResponse
- * @return {responses.EmptyResponse}
+ * @returns {EmptyResponse}
  */
 async function commit ({ params, relayer, logger, engines, orderbooks }, { EmptyResponse }) {
   const { balance: balanceCommon, symbol, market } = params

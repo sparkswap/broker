@@ -8,7 +8,8 @@ const { handleError } = require('../../utils')
  *
  * @param {Object} args
  * @param {string} args.blockOrderId
- * @param {string} [rpcaddress] - opts.rpcaddress
+ * @param {Object} opts
+ * @param {string} opts.rpcaddress
  * @param {Logger} logger
  */
 async function status (args, opts, logger) {

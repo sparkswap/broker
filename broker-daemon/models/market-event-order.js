@@ -9,14 +9,14 @@ const CONFIG = require('../config')
 class MarketEventOrder {
   /**
    * Create a MarketEventOrder
-   * @param  {string} order.orderId       - Unique ID assigned by the relayer to identify an order
-   * @param  {string} order.createdAt     - When the order was created
-   * @param  {string} order.baseAmount    - Amount, represented as an integer in the base currency's smallest unit, to be transacted
-   * @param  {string} order.counterAmount - Amount, represented as an integer in the counter currency's smallest unit, to be transacted
-   * @param  {string} order.side          - Side of the transaction that the order is on, either BID or ASK
-   * @param  {string} order.baseSymbol    - Currency symbol for the base currency in the market, e.g. BTC
-   * @param  {string} order.counterSymbol - Currency symbol for the counter or quote currency in the market, e.g. LTC
-   * @return {MarketEventOrder}           Instance of a MarketEventOrder
+   * @param {Object} order
+   * @param {string} order.orderId       - Unique ID assigned by the relayer to identify an order
+   * @param {string} order.createdAt     - When the order was created
+   * @param {string} order.baseAmount    - Amount, represented as an integer in the base currency's smallest unit, to be transacted
+   * @param {string} order.counterAmount - Amount, represented as an integer in the counter currency's smallest unit, to be transacted
+   * @param {string} order.side          - Side of the transaction that the order is on, either BID or ASK
+   * @param {string} order.baseSymbol    - Currency symbol for the base currency in the market, e.g. BTC
+   * @param {string} order.counterSymbol - Currency symbol for the counter or quote currency in the market, e.g. LTC
    */
   constructor ({ orderId, createdAt, baseAmount, counterAmount, side, baseSymbol, counterSymbol }) {
     this.orderId = orderId
@@ -39,7 +39,7 @@ class MarketEventOrder {
 
   /**
    * Price of the order in the smallest unit for each currency
-   * @return {string} Number, rounded to 16 decimal places, represented as a string
+   * @returns {string} Number, rounded to 16 decimal places, represented as a string
    */
   get quantumPrice () {
     const counterAmount = Big(this.counterAmount)
@@ -51,7 +51,7 @@ class MarketEventOrder {
 
   /**
    * Price of the order in common units for each currency
-   * @return {string} Decimal string of the price in common units
+   * @returns {string} Decimal string of the price in common units
    */
   get price () {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
@@ -65,7 +65,7 @@ class MarketEventOrder {
 
   /**
    * Get the amount of the order - i.e. the number of common units of base currency
-   * @return {string} Decimal string of the amount
+   * @returns {string} Decimal string of the amount
    */
   get amount () {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
@@ -75,7 +75,7 @@ class MarketEventOrder {
 
   /**
    * Serialize the market event order for use by end users
-   * @return {Object}
+   * @returns {Object}
    */
   serialize () {
     const { orderId, side, price, amount } = this
@@ -87,6 +87,12 @@ class MarketEventOrder {
     }
   }
 
+  /**
+   * Serialize the market event order for use by end users
+   * @param {Object} event
+   * @param {string} marketName
+   * @returns {MarketEventOrder}
+   */
   static fromEvent (event, marketName) {
     const params = {
       orderId: event.orderId

@@ -7,7 +7,7 @@
  * @param {Object} request.logger
  * @param {Object} responses
  * @param {Function} responses.GetBlockOrderResponse - constructor for GetBlockOrderResponse messages
- * @return {responses.GetBlockOrderResponse}
+ * @returns {GetBlockOrderResponse}
  */
 async function getBlockOrder ({ params, logger, blockOrderWorker }, { GetBlockOrderResponse }) {
   const {

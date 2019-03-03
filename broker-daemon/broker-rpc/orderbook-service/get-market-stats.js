@@ -20,7 +20,7 @@ const ONE_DAY_IN_NANOSECONDS = Big('86400000000000')
  * @param {Map<Orderbook>} request.orderbooks
  * @param {Object} responses
  * @param {Function} responses.GetMarketStatsResponse
- * @return {GetMarketStatsResponse}
+ * @returns {GetMarketStatsResponse}
  */
 async function getMarketStats ({ params, logger, orderbooks }, { GetMarketStatsResponse }) {
   const { market } = params

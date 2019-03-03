@@ -31,7 +31,7 @@ const SUPPORTED_SYMBOLS = Object.freeze(
  * Supported commands for `sparkswap wallet`
  *
  * @constant
- * @type {Object<key, String>}
+ * @type {Object}
  * @default
  */
 const SUPPORTED_COMMANDS = Object.freeze({
@@ -55,7 +55,7 @@ const SUPPORTED_COMMANDS = Object.freeze({
  * @param {Object} opts
  * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function balance (args, opts, logger) {
   const { rpcAddress } = opts
@@ -111,7 +111,7 @@ async function balance (args, opts, logger) {
  * @param {Object} opts
  * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function newDepositAddress (args, opts, logger) {
   const { symbol } = args
@@ -139,7 +139,7 @@ async function newDepositAddress (args, opts, logger) {
  * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {string} [opts.market] - market to commit funds to
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function commit (args, opts, logger) {
   const { symbol, amount } = args
@@ -216,7 +216,7 @@ async function commit (args, opts, logger) {
  * @param {Object} opts
  * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function networkAddress (args, opts, logger) {
   const { symbol } = args
@@ -253,7 +253,7 @@ const NETWORK_STATUSES = Object.freeze({
  * @function
  * @param {string} balance
  * @param {string} status
- * @return {string} balance - formatted with size and color
+ * @returns {string} balance - formatted with size and color
  */
 function formatBalance (balance, status) {
   // If there were errors when receiving balances, the balance will come back
@@ -283,7 +283,7 @@ function formatBalance (balance, status) {
 
 /**
  * @constant
- * @type {Object<key, String>}
+ * @type {Object}
  * @default
  */
 const CAPACITY_STATUSES = Object.freeze({
@@ -301,7 +301,7 @@ const CAPACITY_STATUSES = Object.freeze({
  * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {string} [opts.market] - market name
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function networkStatus (args, opts, logger) {
   const { market, rpcAddress } = opts
@@ -367,7 +367,7 @@ async function networkStatus (args, opts, logger) {
  * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {string} [opts.market] - market name, i.e BTC/LTC
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function release (args, opts, logger) {
   const { market } = args
@@ -440,7 +440,7 @@ async function release (args, opts, logger) {
  * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {string} [opts.walletAddress] - wallet address to move funds to
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function withdraw (args, opts, logger) {
   const { symbol, address, amount } = args
@@ -470,7 +470,7 @@ async function withdraw (args, opts, logger) {
  * @param {string} args.symbol
  * @param {Object} opts
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function create (args, opts, logger) {
   const { symbol } = args
@@ -510,7 +510,7 @@ async function create (args, opts, logger) {
  * @param {Object} opts
  * @param {string} [opts.rpcAddress=null]
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function unlock (args, opts, logger) {
   const { symbol } = args
