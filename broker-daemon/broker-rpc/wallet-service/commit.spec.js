@@ -11,7 +11,6 @@ describe('commit', () => {
   let logger
   let btcEngine
   let ltcEngine
-  let paymentNetworkAddress
   let res
   let createChannelRelayerStub
   let createChannelStub
@@ -20,6 +19,8 @@ describe('commit', () => {
   let engines
   let getMaxOutboundChannelStub
   let orderbooks
+  let inboundPaymentNetworkAddress
+  let outboundPaymentNetworkAddress
 
   beforeEach(() => {
     EmptyResponse = sinon.stub()
@@ -142,7 +143,7 @@ describe('commit', () => {
         outboundBalance: baseUnitsBalance,
         outboundSymbol: 'BTC',
         inboundSymbol: 'LTC',
-        outboundAddress: outboundPaymentNetworkAddress,
+        outboundAddress: outboundPaymentNetworkAddress
       }, fakeAuth)
     })
 
