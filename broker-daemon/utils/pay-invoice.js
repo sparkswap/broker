@@ -1,12 +1,8 @@
 /**
  * Pay an invoice and create a refund payment request to have it paid back
- * @param  {boolean} required       - Whether this payment is required
- * @param  {string}  paymentRequest - Payment Request that should be fulfilled and can be understood by the engine
  * @param  {Engine}  engine         - Payment Channel Network engine to use to pay the invoice
- * @param  {Logger}  logger
- * @param  {string}  type           - Type of invoice, either `fee` or `deposit`. Used for logging.
- * @param  {string}  publicId       - Public ID of the object being paid for, either a `fillId` or `orderId`
- * @return {string}                 Payment request for a refund of the same amount that was paid
+ * @param  {string}  paymentRequest - Payment Request that should be fulfilled and can be understood by the engine
+ * @returns {string}                 Payment request for a refund of the same amount that was paid
  */
 async function payInvoice (engine, paymentRequest) {
   const [ refundPaymentRequest ] = await Promise.all([

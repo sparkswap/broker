@@ -4,6 +4,8 @@ const { currencies: currencyConfig } = require('../../config')
 class MarketStats {
   /**
    * @param {string} market
+   * @returns {void}
+   * @throws Currency was not found when trying to commit to market
    */
   constructor (market) {
     this.market = market

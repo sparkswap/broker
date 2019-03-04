@@ -5,7 +5,7 @@
 
 /**
  * @constant
- * @type {Number}
+ * @type {number}
  * @default
  */
 const DEFAULT_TIMEOUT_IN_SECONDS = 5
@@ -15,7 +15,7 @@ const DEFAULT_TIMEOUT_IN_SECONDS = 5
  * point in time, instead of a duration.
  *
  * @param {number} [timeoutInSeconds=DEFAULT_TIMEOUT_IN_SECONDS]
- * @return {number} deadline in seconds
+ * @returns {number} deadline in seconds
  */
 function grpcDeadline (timeoutInSeconds = DEFAULT_TIMEOUT_IN_SECONDS) {
   return new Date().setSeconds(new Date().getSeconds() + timeoutInSeconds)

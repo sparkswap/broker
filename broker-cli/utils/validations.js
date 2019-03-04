@@ -1,8 +1,11 @@
 const { isInt, isAlpha, isURL, isDecimal: validatorIsDecimal, matches } = require('validator')
 const { Big } = require('./big')
+
 /**
  * Largest int64 is our maximum value for amounts
- * @type {String}
+ * @constant
+ * @type {string}
+ * @default
  */
 const MAX_VALUE = '9223372036854775807'
 
@@ -126,7 +129,7 @@ function isFormattedPath (str) {
  * Checks if a specified string is a valid block order id.
  *
  * @param  {string}  str - block order id
- * @return {string}     block order id
+ * @returns {string}     block order id
  * @throws {Error} If string contains more than the allowed characters
  */
 function isBlockOrderId (str) {
@@ -141,7 +144,7 @@ function isBlockOrderId (str) {
  * Checks if a specified string is a valid date.
  *
  * @param  {string}  str - date
- * @return {string}  str - date
+ * @returns {string}  str - date
  * @throws {Error} If string cannot be parsed into a date
  */
 function isDate (str) {
@@ -158,7 +161,7 @@ function isDate (str) {
  * Checks if a specified string is a limit
  *
  * @param  {string}  str - limit
- * @return {string}  str - limit
+ * @returns {string}  str - limit
  * @throws {Error} If string is not a valid integer
  */
 function isPositiveInteger (str) {

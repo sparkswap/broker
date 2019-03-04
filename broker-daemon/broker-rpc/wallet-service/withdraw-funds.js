@@ -1,17 +1,20 @@
 const { currencies } = require('../../config')
 const { Big } = require('../../utils')
+
 /**
  * Withdraws funds from the wallet to specified address
  *
  * @param {Object} request - request object
  * @param {Object} request.params
  * @param {string} request.params.symbol
+ * @param {string} request.params.amount
  * @param {string} request.params.address
  * @param {RelayerClient} request.relayer
  * @param {Logger} request.logger
- * @param {Map<Engine>} request.engines
+ * @param {Map<Symbol, Engine>} request.engines
+ * @param {Object} responses
  * @param {Function} responses.WithdrawFundsResponse
- * @return {WithdrawFundsResponse}
+ * @returns {WithdrawFundsResponse}
  */
 async function withdrawFunds ({ params, relayer, logger, engines }, { WithdrawFundsResponse }) {
   const { symbol, amount, address } = params

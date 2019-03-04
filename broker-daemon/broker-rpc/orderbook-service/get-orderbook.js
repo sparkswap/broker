@@ -12,7 +12,7 @@ const { SIDES } = require('../../models/market-event-order')
  * @param {Map<Orderbook>} request.orderbooks
  * @param {Object} responses
  * @param {Function} responses.GetOrderbookResponse - constructor for GetOrderbookResponse messages
- * @return {responses.GetOrderbookResponse}
+ * @returns {GetOrderbookResponse}
  */
 async function getOrderbook ({ params, logger, orderbooks }, { GetOrderbookResponse }) {
   const { market } = params

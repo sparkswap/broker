@@ -1,8 +1,8 @@
 /**
  * Sparkswap url for completing registration
  * @constant
+ * @type {string}
  * @default
- * @type {String}
  */
 const REGISTER_URL = 'https://sparkswap.com/register/'
 
@@ -14,7 +14,7 @@ const REGISTER_URL = 'https://sparkswap.com/register/'
  * @param {Object} request.logger
  * @param {Object} responses
  * @param {Function} responses.RegisterResponse - constructor for RegisterResponse messages
- * @return {RegisterResponse}
+ * @returns {RegisterResponse}
  */
 async function register ({ relayer, logger }, { RegisterResponse }) {
   const publicKey = relayer.identity.pubKeyBase64

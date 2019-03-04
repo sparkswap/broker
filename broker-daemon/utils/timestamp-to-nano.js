@@ -1,7 +1,7 @@
 /**
  * Index of the start of millisecond/nanoseconds for a nano formatted timestamp
  * @constant
- * @type {Integer}
+ * @type {number}
  * @default
  */
 const MILLISECONDS_INDEX = 9
@@ -13,7 +13,7 @@ const MILLISECONDS_INDEX = 9
  * [ 'timestamp (10)', 'milliseconds (3), nanoseconds (6)']
  *
  * @param {string} timestamp - nano-second timestamp
- * @return {Array<string, string>}
+ * @returns {Array<string, string>}
  */
 function nanoTimestampToNanoType (timestamp) {
   return [

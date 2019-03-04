@@ -11,7 +11,7 @@
  * @param {Function} responses.EmptyResponse
  * @throws {Error} If Engine does not exist for the given symbol
  * @throws {Error} If Engine is not in a LOCKED state
- * @return {EmptyResponse}
+ * @returns {EmptyResponse}
  */
 async function unlockWallet ({ logger, params, engines }, { EmptyResponse }) {
   const { symbol, password } = params
