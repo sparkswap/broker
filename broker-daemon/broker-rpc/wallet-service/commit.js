@@ -103,10 +103,11 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
   try {
     const authorization = relayer.identity.authorize()
     await relayer.paymentChannelNetworkService.createChannel({
-      address: paymentChannelNetworkAddress,
+      inboundAddress: paymentChannelNetworkAddress,
       outboundBalance: balance,
+      inboundSymbol: inverseSymbol,
       outboundSymbol: symbol,
-      inboundSymbol: inverseSymbol
+      outboundAddress: address
     }, authorization)
   } catch (e) {
     // TODO: Close channel that was open if relayer call has failed
