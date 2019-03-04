@@ -23,9 +23,10 @@ describe('commit', () => {
 
   beforeEach(() => {
     EmptyResponse = sinon.stub()
-    paymentNetworkAddress = 'asdf12345@localhost'
+    outboundPaymentNetworkAddress = 'asdf12345@localhost'
+    inboundPaymentNetworkAddress = 'hgfd56775@localhost'
     relayerAddress = 'qwerty@localhost'
-    getAddressStub = sinon.stub().resolves({ address: paymentNetworkAddress })
+    getAddressStub = sinon.stub().resolves({ address: relayerAddress })
     createChannelRelayerStub = sinon.stub().resolves({})
     createChannelStub = sinon.stub()
     orderbooks = new Map([['BTC/LTC', {}]])
@@ -42,10 +43,11 @@ describe('commit', () => {
       symbol: 'BTC',
       feeEstimate: '20000',
       quantumsPerCommon: '100000000',
-      maxChannelBalance: '16777215'
+      maxChannelBalance: '16777215',
+      getPaymentChannelNetworkAddress: sinon.stub().resolves(outboundPaymentNetworkAddress)
     }
     ltcEngine = {
-      getPaymentChannelNetworkAddress: sinon.stub().resolves(relayerAddress),
+      getPaymentChannelNetworkAddress: sinon.stub().resolves(inboundPaymentNetworkAddress),
       symbol: 'LTC',
       feeEstimate: '20000',
       quantumsPerCommon: '100000000',
@@ -116,10 +118,14 @@ describe('commit', () => {
 
     it('creates a channel through an btc engine with base units', () => {
       const baseUnitsBalance = Big(params.balance).times(btcEngine.quantumsPerCommon).toString()
-      expect(btcEngine.createChannel).to.have.been.calledWith(paymentNetworkAddress, baseUnitsBalance)
+      expect(btcEngine.createChannel).to.have.been.calledWith(relayerAddress, baseUnitsBalance)
     })
 
-    it('retrieves the address from an inverse engine', () => {
+    it('retrieves the address from the outbound engine', () => {
+      expect(ltcEngine.getPaymentChannelNetworkAddress).to.have.been.called()
+    })
+
+    it('retrieves the address from an inbound engine', () => {
       expect(ltcEngine.getPaymentChannelNetworkAddress).to.have.been.called()
     })
 
@@ -132,10 +138,11 @@ describe('commit', () => {
 
       expect(createChannelRelayerStub).to.have.been.calledOnce()
       expect(createChannelRelayerStub).to.have.been.calledWith({
-        address: relayerAddress,
+        inboundAddress: inboundPaymentNetworkAddress,
         outboundBalance: baseUnitsBalance,
         outboundSymbol: 'BTC',
-        inboundSymbol: 'LTC'
+        inboundSymbol: 'LTC',
+        outboundAddress: outboundPaymentNetworkAddress,
       }, fakeAuth)
     })
 

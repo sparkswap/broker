@@ -96,18 +96,19 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     logger.debug('Outbound channel already exists', { balance: maxOutboundBalance })
   }
 
-  const paymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
+  const outboundPaymentChannelNetworkAddress = await engine.getPaymentChannelNetworkAddress()
+  const InboundPaymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
 
   logger.debug('Creating inbound channel', { balance, symbol, inverseSymbol })
 
   try {
     const authorization = relayer.identity.authorize()
     await relayer.paymentChannelNetworkService.createChannel({
-      inboundAddress: paymentChannelNetworkAddress,
+      inboundAddress: InboundPaymentChannelNetworkAddress,
       outboundBalance: balance,
       inboundSymbol: inverseSymbol,
       outboundSymbol: symbol,
-      outboundAddress: address
+      outboundAddress: outboundPaymentChannelNetworkAddress
     }, authorization)
   } catch (e) {
     // TODO: Close channel that was open if relayer call has failed
