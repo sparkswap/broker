@@ -139,11 +139,15 @@ describe('commit', () => {
 
       expect(createChannelRelayerStub).to.have.been.calledOnce()
       expect(createChannelRelayerStub).to.have.been.calledWith({
-        inboundAddress: inboundPaymentNetworkAddress,
-        outboundBalance: baseUnitsBalance,
-        outboundSymbol: 'BTC',
-        inboundSymbol: 'LTC',
-        outboundAddress: outboundPaymentNetworkAddress
+        outbound: {
+          balance: baseUnitsBalance,
+          symbol: 'BTC',
+          address: outboundPaymentNetworkAddress
+        },
+        inbound: {
+          symbol: 'LTC',
+          address: inboundPaymentNetworkAddress
+        }
       }, fakeAuth)
     })
 

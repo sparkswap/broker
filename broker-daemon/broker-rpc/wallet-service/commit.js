@@ -97,18 +97,22 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
   }
 
   const outboundPaymentChannelNetworkAddress = await engine.getPaymentChannelNetworkAddress()
-  const InboundPaymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
+  const inboundPaymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
 
   logger.debug('Creating inbound channel', { balance, symbol, inverseSymbol })
 
   try {
     const authorization = relayer.identity.authorize()
     await relayer.paymentChannelNetworkService.createChannel({
-      inboundAddress: InboundPaymentChannelNetworkAddress,
-      outboundBalance: balance,
-      inboundSymbol: inverseSymbol,
-      outboundSymbol: symbol,
-      outboundAddress: outboundPaymentChannelNetworkAddress
+      outbound: {
+        balance,
+        symbol,
+        address: outboundPaymentChannelNetworkAddress
+      },
+      inbound: {
+        symbol: inverseSymbol,
+        address: inboundPaymentChannelNetworkAddress
+      }
     }, authorization)
   } catch (e) {
     // TODO: Close channel that was open if relayer call has failed
