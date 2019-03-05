@@ -7,15 +7,16 @@ const { handleError, askQuestion } = require('../../utils')
  * @default
  */
 const ACCEPTED_ANSWERS = Object.freeze(['y', 'yes'])
-
 /**
  * sparkswap order cancel-all
  *
  * ex: `sparkswap order cancel-all --market btc/ltc'
  *
  * @param {Object} args
- * @param {String} args.market
- * @param {String} [rpcaddress] opts.rpcaddress
+ * @param {string} args.market
+ * @param {Object} opts
+ * @param {string} opts.rpcAddress
+ * @param {string} opts.market
  * @param {Logger} logger
  */
 async function cancelAll (args, opts, logger) {

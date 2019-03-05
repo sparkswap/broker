@@ -5,7 +5,7 @@
  * @param {Object} request.params - Request parameters from the client
  * @param {BlockOrderWorker} request.blockOrderWorker
  * @param {Object} request.logger
- * @return {Object}
+ * @returns {Object}
  */
 async function cancelAllBlockOrders ({ params, logger, blockOrderWorker }) {
   const { market } = params
