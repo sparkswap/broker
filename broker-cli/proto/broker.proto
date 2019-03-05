@@ -728,7 +728,21 @@ service OrderService {
    * > sparkswap order cancel-all --market btc/ltc
    * ```
    *
-   * > The above command will cancel the block order, but has no output.
+   * ```javascript
+   * { "cancelledOrders": [
+   *     "XH3CBeemcGrVBKpc",
+   *     "XH3CA12_5Ynujq8m",
+   *     "XH3B-6hZjRstgjsz",
+   *   ],
+   *  "failedToCancelOrders": [
+   *     "XH3CBODrC7PU3JY7"
+   *   ]
+   * }
+   * ```
+   *
+   * ```shell
+   * Successfully cancelled 4 orders on BTC/LTC market.
+   * ```
    */
   rpc CancelAllBlockOrders (CancelAllBlockOrdersRequest) returns (CancelAllBlockOrdersResponse);
   /**
