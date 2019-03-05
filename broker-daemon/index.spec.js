@@ -246,7 +246,7 @@ describe('broker daemon', () => {
         const relayerRpcHost = brokerDaemonOptions.relayerOptions.relayerRpcHost
         const relayerCertPath = brokerDaemonOptions.relayerOptions.relayerCertPath
 
-        expect(RelayerClient).to.have.been.calledWith(sinon.match.any, sinon.match({ host: relayerRpcHost, certPath: relayerCertPath }, sinon.match.any))
+        expect(RelayerClient).to.have.been.calledWith(sinon.match.any, sinon.match({ host: relayerRpcHost, certPath: relayerCertPath }), sinon.match.any)
         expect(RelayerClient).to.have.been.calledWithNew()
       })
 

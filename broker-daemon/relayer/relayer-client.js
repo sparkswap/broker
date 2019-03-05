@@ -13,10 +13,17 @@ consoleLogger.debug = console.log.bind(console)
 
 /**
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const RELAYER_PROTO_PATH = './proto/relayer.proto'
+
+/**
+ * @constant
+ * @type {string}
+ * @default
+ */
+const PRODUCTION = process.env.NODE_ENV === 'production'
 
 /**
  * Interface for daemon to interact with a SparkSwap Relayer
@@ -31,10 +38,10 @@ class RelayerClient {
    */
 
   /**
-   * @param {KeyPath} idKeyPath            Path to public and private key for the broker's identity
+   * @param {KeyPath} idKeyPath            - Path to public and private key for the broker's identity
    * @param {Object}  relayerOpts
-   * @param {String}  relayerOpts.host     Hostname and port of the Relayer RPC server
-   * @param {String}  relayerOpts.certPath Absolute path to the root certificate for the Relayer
+   * @param {string}  relayerOpts.host     - Hostname and port of the Relayer RPC server
+   * @param {string}  relayerOpts.certPath - Absolute path to the root certificate for the Relayer
    * @param {Logger}  logger
    */
   constructor ({ privKeyPath, pubKeyPath }, { certPath, host = 'localhost:28492' }, logger = consoleLogger) {
@@ -43,11 +50,11 @@ class RelayerClient {
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
 
     this.identity = Identity.load(privKeyPath, pubKeyPath)
-    let channelCredentials
-    // TODO figure out a way for this check to not be in the application code
-    if (process.env.NETWORK === 'mainnet') {
-      channelCredentials = credentials.createSsl()
-    } else {
+
+    let channelCredentials = credentials.createSsl()
+
+    if (!PRODUCTION) {
+      logger.info('Using local certs for relayer client', { production: PRODUCTION })
       channelCredentials = credentials.createSsl(readFileSync(certPath))
     }
 
@@ -65,10 +72,10 @@ class RelayerClient {
    *
    * @param {LevelUP} store
    * @param {Object} params
-   * @param {String} params.baseSymbol
-   * @param {String} params.counterSymbol
-   * @param {String} params.lastUpdated - nanosecond timestamp
-   * @param {String} params.sequence
+   * @param {string} params.baseSymbol
+   * @param {string} params.counterSymbol
+   * @param {string} params.lastUpdated - nanosecond timestamp
+   * @param {string} params.sequence
    * @returns {EventEmitter} An event emitter that emits `sync` when the market is up to date and `end` when the stream ends (by error or otherwise)
    */
   watchMarket (store, { baseSymbol, counterSymbol, lastUpdated, sequence }) {

@@ -4,7 +4,6 @@ const { expect, rewire, sinon } = require('test/test-helper')
 const createBlockOrder = rewire(path.resolve(__dirname, 'create-block-order'))
 
 describe('createBlockOrder', () => {
-  let PublicError
   let CreateBlockOrderResponse
   let blockOrderWorker
   let TimeInForce
@@ -12,8 +11,6 @@ describe('createBlockOrder', () => {
   let revert
 
   beforeEach(() => {
-    PublicError = createBlockOrder.__get__('PublicError')
-
     CreateBlockOrderResponse = sinon.stub()
     TimeInForce = {
       GTC: 1
@@ -47,7 +44,7 @@ describe('createBlockOrder', () => {
       limitPrice: '1000.678',
       timeInForce: 'FOK'
     }
-    return expect(createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })).to.be.rejectedWith(PublicError)
+    return expect(createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })).to.be.rejectedWith('Only Good-til-cancelled orders are currently supported')
   })
 
   it('creates a block order on the BlockOrderWorker', async () => {

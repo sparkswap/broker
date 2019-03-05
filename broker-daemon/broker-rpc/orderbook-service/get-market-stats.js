@@ -1,5 +1,4 @@
 const nano = require('nano-seconds')
-const { PublicError } = require('grpc-methods')
 
 const { BlockOrder, MarketEvent } = require('../../models')
 const { Big } = require('../../utils')
@@ -20,14 +19,14 @@ const ONE_DAY_IN_NANOSECONDS = Big('86400000000000')
  * @param {Logger} request.logger
  * @param {Map<Orderbook>} request.orderbooks
  * @param {Object} responses
- * @param {function} responses.GetMarketStatsResponse
- * @return {GetMarketStatsResponse}
+ * @param {Function} responses.GetMarketStatsResponse
+ * @returns {GetMarketStatsResponse}
  */
 async function getMarketStats ({ params, logger, orderbooks }, { GetMarketStatsResponse }) {
   const { market } = params
   const orderbook = orderbooks.get(market)
 
-  if (!orderbook) throw new PublicError(`${market} is not being tracked as a market.`)
+  if (!orderbook) throw new Error(`${market} is not being tracked as a market.`)
 
   logger.debug(`Checking currency configurations for: ${market}`)
 

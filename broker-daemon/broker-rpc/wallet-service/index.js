@@ -67,8 +67,8 @@ class WalletService {
    * Returns a message ID for a given method name
    *
    * @function
-   * @param {String} methodName
-   * @return {String} [serviceName:methodName]
+   * @param {string} methodName
+   * @returns {string} [serviceName:methodName]
    */
   messageId (methodName) {
     return `[${this.serviceName}:${methodName}]`

@@ -35,7 +35,7 @@ const DEFAULT_RPC_PORT = 27492
 
 class BrokerDaemonClient {
   /**
-   * @param {String} [rpcAddress=null] - grpc host address
+   * @param {string} [rpcAddress=null] - grpc host address
    */
   constructor (rpcAddress = null) {
     this.config = loadConfig()

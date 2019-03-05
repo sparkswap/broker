@@ -810,17 +810,17 @@ describe('Orderbook', () => {
         }
       ]
       orderbook = new Orderbook('BTC/LTC', relayer, baseStore, logger)
-      orderbook.getBestOrders = sinon.stub().resolves({orders, depth: targetDepth})
+      orderbook.getBestOrders = sinon.stub().resolves({ orders, depth: targetDepth })
     })
 
     it('gets the best orders given the side and depth', async () => {
       await orderbook.getAveragePrice(side, targetDepth)
       expect(orderbook.getBestOrders).to.have.been.called()
-      expect(orderbook.getBestOrders).to.have.been.calledWith({side, depth: targetDepth})
+      expect(orderbook.getBestOrders).to.have.been.calledWith({ side, depth: targetDepth })
     })
 
     it('throws an error if there is not sufficient depth in the orderbook', () => {
-      orderbook.getBestOrders.resolves({orders, depth: 8})
+      orderbook.getBestOrders.resolves({ orders, depth: 8 })
       return expect(orderbook.getAveragePrice(side, targetDepth)).to.eventually.be.rejectedWith('Insufficient depth to find averagePrice')
     })
 
@@ -884,7 +884,7 @@ describe('Orderbook', () => {
       expect(getRecordsStub).to.have.been.calledWith(
         eventStore,
         bound,
-        {limit}
+        { limit }
       )
     })
 
@@ -893,7 +893,7 @@ describe('Orderbook', () => {
       expect(getRecordsStub).to.have.been.calledWith(
         eventStore,
         bound,
-        {gte: '1537526431034000000', limit}
+        { gte: '1537526431034000000', limit }
       )
     })
   })

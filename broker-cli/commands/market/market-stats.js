@@ -2,12 +2,12 @@ const BrokerDaemonClient = require('../../broker-daemon-client')
 const { handleError } = require('../../utils')
 
 /**
- *
- * ex: `sparkswap market market-stats --market btc/ltc'
- *
+ * Market Stats
+ * @example
+ * // sparkswap market market-stats --market btc/ltc
  * @param {Object} opts
- * @param {String} opts.market
- * @param {String} [rpcaddress] opts.rpcaddress
+ * @param {string} opts.market
+ * @param {string} opts.rpcaddress
  * @param {Logger} logger
  */
 async function marketStats (opts, logger) {

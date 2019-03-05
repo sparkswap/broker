@@ -265,8 +265,9 @@ service AdminService {
   }
 
   /**
-   * Register takes the publicKey of users identity returns the entityId of the entity
-   * created by the Relayer and the url for the user to complete registration
+   * Register provides the Broker's identity (via Public Key) to the Relayer
+   * and returns the Relayer-assigned entityId for the Broker as well as
+   * the URL to use to complete user registration.
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
@@ -292,7 +293,7 @@ service AdminService {
    * ```shell
    * ┌─────────────────────────────────────────────────────────────────────────────────────────┐
    * │                                                                                         │
-   * │          Successfully registered public key with the Ϟ Sparkswap Relayer!               │
+   * │          Successfully registered Broker with the Ϟ Sparkswap Relayer!                   │
    * │                                                                                         │
    * │ Go to https://sparkswap.com/register/BAfwIYxkUqHJ3pLLh60AAQj3 to complete registration. │
    * │                                                                                         │

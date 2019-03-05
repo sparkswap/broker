@@ -5,7 +5,6 @@
   "main": "./bin/sparkswap",
   "scripts": {
     "format": "standard --fix",
-    "pretest": "npm run format; exit 0",
     "test": "NODE_PATH=. mocha './{,!(node_modules)/**/}*.spec.js'",
     "coverage": "nyc npm test",
     "ci-test": "npm run format && npm test",

@@ -2,11 +2,10 @@ const BrokerDaemonClient = require('../../broker-daemon-client')
 const { handleError } = require('../../utils')
 
 /**
- *
  * ex: `sparkswap market supported-markets'
  *
  * @param {Object} opts
- * @param {String} [rpcaddress] opts.rpcaddress
+ * @param {string} opts.rpcaddress
  * @param {Logger} logger
  */
 async function supportedMarkets (opts, logger) {

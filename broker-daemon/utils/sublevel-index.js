@@ -6,29 +6,31 @@ const logger = require('./logger')
 /**
  * Return true for every call
  * Used to create a non-filtering filter
- * @return {Boolean} True for every item passed
+ * @returns {boolean} True for every item passed
  */
 const returnTrue = function () { return true }
 
 /**
  * Default key delimiter
  * @constant
+ * @type {string}
  * @default
- * @type {String}
  */
 const DELIMITER = ':'
 
 /**
  * Lower bound for leveldb ranged queries
- * @type {String}
  * @constant
+ * @type {string}
+ * @default
  */
 const LOWER_BOUND = '\x00'
 
 /**
  * Upper bound for leveldb ranged queries
- * @type {String}
  * @constant
+ * @type {string}
+ * @default
  */
 const UPPER_BOUND = '\uffff'
 
@@ -38,12 +40,12 @@ const UPPER_BOUND = '\uffff'
 class Index {
   /**
    * Create a new index for sublevel store
-   * @param  {sublevel} store                 Sublevel of the base store
-   * @param  {String}   name                  Name of the index
-   * @param  {Function} getValue              User-passed function that returns the indexed value
-   * @param  {Function} [filter=returnTrue]   Filter for items to not index
-   * @param  {String}   [delimiter=DELIMITER] Delimiter between the index value and the base key. It may appear in the base key, but cannot appear in the index value produced by `getValue`.
-   * @return {Index}
+   * @param  {sublevel} store                 - Sublevel of the base store
+   * @param  {string}   name                  - Name of the index
+   * @param  {Function} getValue              - User-passed function that returns the indexed value
+   * @param  {Function} [filter=returnTrue]   - Filter for items to not index
+   * @param  {string}   [delimiter=DELIMITER] - Delimiter between the index value and the base key. It may appear in the base key, but cannot appear in the index value produced by `getValue`.
+   * @returns {Index}
    */
   constructor (store, name, getValue, filter = returnTrue, delimiter = DELIMITER) {
     this.store = store
@@ -57,7 +59,7 @@ class Index {
 
   /**
    * Create an index by clearing the sublevel, rebuilding for old objects, and listening for new entries
-   * @return {Promise<Index>} Resolves when the index is created
+   * @returns {Promise<Index>} Resolves when the index is created
    */
   async ensureIndex () {
     await this._clearIndex()
@@ -69,8 +71,8 @@ class Index {
 
   /**
    * Build a sublevel-compatible option range for this index
-   * @param  {Object} opts Options from which to build a range
-   * @return {Object} Sublevel readStream options
+   * @param {Object} opts - Options from which to build a range
+   * @returns {Object} Sublevel readStream options
    */
   range (opts = {}) {
     if (opts.gt) {
@@ -90,8 +92,8 @@ class Index {
 
   /**
    * Create a read stream of the index, filtering out those keys marked for deletion and transforming index keys into base keys
-   * @param  {Object} opts Sublevel readStream options
-   * @return {Readable}    Readable stream
+   * @param {Object} opts - Sublevel readStream options
+   * @returns {Readable}    Readable stream
    */
   createReadStream (opts) {
     const optionsToUpdate = Object.assign({}, opts)
@@ -125,8 +127,8 @@ class Index {
    * @example
    * // returns '123'
    * index._extractBaseKey('xyz:123')
-   * @param  {String} indexKey Key of the object in the index
-   * @return {String}          Key of the object in the base store
+   * @param  {string} indexKey - Key of the object in the index
+   * @returns {string}          Key of the object in the base store
    */
   _extractBaseKey (indexKey) {
     // in most cases, we will have only two chunks: the indexValue and the baseKey
@@ -144,15 +146,13 @@ class Index {
   /**
    * Create an index key
    * @example
-   * index.getValue = (baseKey, baseValue) => return baseValue
    * // returns 'xyz:abc'
    * index._createIndexKey('abc', 'xyz')
    * // returns 'xyz:abc:123'
    * index._createIndexKey('abc:123', 'xyz')
-   * @param  {String}   baseKey   Key of the object in the base store
-   * @param  {String}   baseValue Value of the object in the base store
-   * @param  {Function} getValue
-   * @return {String}
+   * @param  {string}   baseKey   - Key of the object in the base store
+   * @param  {string}   baseValue - Value of the object in the base store
+   * @returns {string}
    * @throws {Error} If the derived index value contains `this.delimiter`
    */
   _createIndexKey (baseKey, baseValue) {
@@ -169,8 +169,8 @@ class Index {
 
   /**
    * Mark a base key as being deleted in this index to avoid it being returned while its being deleted
-   * @param  {String} baseKey Key of the object in the base store
-   * @return {void}
+   * @param  {string} baseKey - Key of the object in the base store
+   * @returns {void}
    */
   _startDeletion (baseKey) {
     this._deleted[baseKey] = true
@@ -178,8 +178,8 @@ class Index {
 
   /**
    * Base key is removed from the index store, so we can remove from our local cache
-   * @param  {String} baseKey Key of the object in the base store
-   * @return {void}
+   * @param  {string} baseKey - Key of the object in the base store
+   * @returns {void}
    */
   _finishDeletion (baseKey) {
     delete this._deleted[baseKey]
@@ -187,8 +187,8 @@ class Index {
 
   /**
    * Checks whether a given index key will be removed from the index
-   * @param  {String}  indexKey Key of the object in the index
-   * @return {Boolean}
+   * @param  {string}  indexKey - Key of the object in the index
+   * @returns {boolean}
    */
   _isMarkedForDeletion (indexKey) {
     const baseKey = this._extractBaseKey(indexKey)
@@ -197,8 +197,8 @@ class Index {
 
   /**
    * Queue the deletion of a base key from the index
-   * @param  {String} baseKey Key of the object in the base store
-   * @return {void}
+   * @param {string} baseKey - Key of the object in the base store
+   * @returns {void}
    */
   _removeFromIndex (baseKey) {
     this._startDeletion(baseKey)
@@ -225,9 +225,9 @@ class Index {
 
   /**
    * Create a database operation to add an object to the index
-   * @param {String}   baseKey    Key of the object in the base store
-   * @param {String}   baseValue  Value of the object in the base store
-   * @return {Object} Sublevel compatible database batch operation
+   * @param {string}   baseKey    - Key of the object in the base store
+   * @param {string}   baseValue  - Value of the object in the base store
+   * @returns {Object} Sublevel compatible database batch operation
    */
   _addToIndexOperation (baseKey, baseValue) {
     const indexKey = this._createIndexKey(baseKey, baseValue)
@@ -237,7 +237,7 @@ class Index {
   /**
    * Add a hook to the store to add any new items in the base store to the index and
    * remove any objects removed from the base removed from the index
-   * @return {void}
+   * @returns {void}
    */
   _addIndexHook () {
     const indexHook = (dbOperation, add) => {
@@ -257,7 +257,7 @@ class Index {
 
   /**
    * Remove all objects in the index database
-   * @return {Promise<void>} Resolves when the database is cleared
+   * @returns {Promise<void>} Resolves when the database is cleared
    */
   _clearIndex () {
     // reset the hook if it already exists
@@ -269,7 +269,7 @@ class Index {
 
   /**
    * Rebuild the index from the base
-   * @return {Promise<void>} Resolves when the rebuild is complete
+   * @returns {Promise<void>} Resolves when the rebuild is complete
    */
   _rebuildIndex () {
     return migrateStore(this.store, this._index, (key, value) => {

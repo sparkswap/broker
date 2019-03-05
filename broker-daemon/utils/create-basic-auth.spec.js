@@ -1,6 +1,5 @@
 const path = require('path')
 const { expect, sinon, rewire } = require('test/test-helper')
-const { PublicError } = require('grpc-methods')
 
 const createBasicAuth = rewire(path.resolve(__dirname, 'create-basic-auth'))
 const credentialGenerator = rewire(path.resolve(__dirname, '..', '..', 'broker-cli', 'utils', 'basic-auth'))
@@ -34,7 +33,7 @@ describe('createBasicAuth', () => {
     const rpcUser = 'sparkswap'
     const rpcPass = 'sparkswap'
     grpcAuthHandler = createBasicAuth(rpcUser, rpcPass)
-    return expect(grpcAuthHandler({ metadata, logger })).to.eventually.be.rejectedWith(PublicError)
+    return expect(grpcAuthHandler({ metadata, logger })).to.eventually.be.rejectedWith(Error)
   })
 
   it('does not error if credentials are verified', async () => {
@@ -55,7 +54,7 @@ describe('createBasicAuth', () => {
     const metadata = { authorization: token }
     const badUser = 'sperkswap'
     grpcAuthHandler = createBasicAuth(badUser, rpcPass)
-    return expect(grpcAuthHandler({ metadata, logger })).to.eventually.be.rejectedWith(PublicError)
+    return expect(grpcAuthHandler({ metadata, logger })).to.eventually.be.rejectedWith(Error)
   })
 
   it('errors if password is incorrect', () => {
@@ -65,7 +64,7 @@ describe('createBasicAuth', () => {
     const metadata = { authorization: token }
     const badPass = 'sperkswap'
     grpcAuthHandler = createBasicAuth(rpcUser, badPass)
-    return expect(grpcAuthHandler({ metadata, logger })).to.eventually.be.rejectedWith(PublicError)
+    return expect(grpcAuthHandler({ metadata, logger })).to.eventually.be.rejectedWith(Error)
   })
 
   it('errors if username and password are incorrect', () => {
@@ -76,6 +75,6 @@ describe('createBasicAuth', () => {
     const badUser = 'sperkswap'
     const badPass = 'sperkswap'
     grpcAuthHandler = createBasicAuth(badUser, badPass)
-    return expect(grpcAuthHandler({ metadata, logger })).to.eventually.be.rejectedWith(PublicError)
+    return expect(grpcAuthHandler({ metadata, logger })).to.eventually.be.rejectedWith(Error)
   })
 })
