@@ -1,4 +1,4 @@
-const { convertBalance, Big } = require('../../utils')
+const { Big } = require('../../utils')
 
 /**
  * Minimum funding amount in common units (e.g. 0.123 BTC)
@@ -67,39 +67,19 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
       `committing of ${balanceCommon} ${symbol} to the Relayer. Please try again.`)
   }
 
-  // Also check that the inbound channel does not exceed the channel maximum,
-  // otherwise our channel will succeed, but our request to the Relayer will fail.
-  const convertedBalance = convertBalance(balance, symbol, inverseSymbol)
-  const convertedMaxChannelBalance = Big(inverseEngine.maxChannelBalance)
-
-  if (convertedMaxChannelBalance.lt(convertedBalance)) {
-    const convertedBalanceCommon = Big(convertedBalance).div(inverseEngine.quantumsPerCommon).toString()
-    const convertedMaxChannelBalanceCommon = Big(convertedMaxChannelBalance).div(inverseEngine.quantumsPerCommon).toString()
-    logger.error(`Balance in desired inbound channel exceeds maximum balance allowed (${convertedMaxChannelBalance.toString()}).`, { convertedBalance })
-    throw new Error(`Maximum balance of ${convertedMaxChannelBalanceCommon} ${inverseSymbol} exceeded for ` +
-      `requesting inbound channel of ${convertedBalanceCommon} ${inverseSymbol} from the Relayer. Please try again.`)
-  }
-
-  // Get the max balance for outbound and inbound channels to see if there are already channels with the balance open. If this is the
-  // case we do not need to go to the trouble of opening new channels
+  // Get the max balance for outbound channel to see if there are already channels with the balance open. If this is the
+  // case we do not need to go to the trouble of opening a new channel
   const { maxBalance: maxOutboundBalance } = await engine.getMaxChannel()
-  const { maxBalance: maxInboundBalance } = await inverseEngine.getMaxChannel({ outbound: false })
 
-  // If maxOutboundBalance or maxInboundBalance exist, we need to check if the balances are greater or less than the balance of the channel
-  // we are trying to open. If neither maxOutboundBalance nor maxInboundBalance exist, it means there are no channels open and we can safely
+  // If maxOutboundBalance exists, we need to check if the balance is greater or less than the balance of the channel
+  // we are trying to open. If maxOutboundBalance does not exist, it means there are no channels open and we can safely
   // attempt to create channels with the balance
-  if (maxOutboundBalance || maxInboundBalance) {
+  if (maxOutboundBalance) {
     const insufficientOutboundBalance = maxOutboundBalance && Big(maxOutboundBalance).plus(engine.feeEstimate).lt(balance)
-    const insufficientInboundBalance = maxInboundBalance && Big(maxInboundBalance).plus(inverseEngine.feeEstimate).lt(convertedBalance)
 
     if (insufficientOutboundBalance) {
       logger.error('Existing outbound channel of insufficient size', { desiredBalance: balance, feeEstimate: engine.feeEstimate, existingBalance: maxOutboundBalance })
       throw new Error('You have an existing outbound channel with a balance lower than desired, release that channel and try again.')
-    }
-
-    if (insufficientInboundBalance) {
-      logger.error('Existing inbound channel of insufficient size', { desiredBalance: convertedBalance, feeEstimate: inverseEngine.feeEstimate, existingBalance: maxInboundBalance })
-      throw new Error('You have an existing inbound channel with a balance lower than desired, release that channel and try again.')
     }
   }
 
@@ -116,24 +96,27 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     logger.debug('Outbound channel already exists', { balance: maxOutboundBalance })
   }
 
-  if (!maxInboundBalance) {
-    const paymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
+  const outboundPaymentChannelNetworkAddress = await engine.getPaymentChannelNetworkAddress()
+  const inboundPaymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
 
-    logger.debug('Creating inbound channel', { balance: convertedBalance })
+  logger.debug('Creating inbound channel', { balance, symbol, inverseSymbol })
 
-    try {
-      const authorization = relayer.identity.authorize()
-      await relayer.paymentChannelNetworkService.createChannel({
-        address: paymentChannelNetworkAddress,
-        balance: convertedBalance,
-        symbol: inverseSymbol
-      }, authorization)
-    } catch (e) {
-      // TODO: Close channel that was open if relayer call has failed
-      throw new Error(`Error requesting inbound channel from Relayer: ${e.message}`)
-    }
-  } else {
-    logger.debug('Inbound channel already exists', { balance: maxInboundBalance })
+  try {
+    const authorization = relayer.identity.authorize()
+    await relayer.paymentChannelNetworkService.createChannel({
+      outbound: {
+        balance,
+        symbol,
+        address: outboundPaymentChannelNetworkAddress
+      },
+      inbound: {
+        symbol: inverseSymbol,
+        address: inboundPaymentChannelNetworkAddress
+      }
+    }, authorization)
+  } catch (e) {
+    // TODO: Close channel that was open if relayer call has failed
+    throw new Error(`Error requesting inbound channel from Relayer: ${e.message}`)
   }
 
   return new EmptyResponse({})
