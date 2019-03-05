@@ -11,7 +11,7 @@ const { createBasicAuth, createHttpServer } = require('../utils')
 
 /**
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
@@ -20,7 +20,7 @@ const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
  * Whether we are starting this process in production based on the NODE_ENV
  *
  * @constant
- * @type {Boolean}
+ * @type {boolean}
  * @default
  */
 const IS_PRODUCTION = (process.env.NODE_ENV === 'production')
@@ -28,7 +28,7 @@ const IS_PRODUCTION = (process.env.NODE_ENV === 'production')
 /**
  * @class User-facing gRPC server for controling the BrokerDaemon
  *
- * @author SparkSwap
+ * @author Sparkswap
  */
 class BrokerRPCServer {
   /**
@@ -41,7 +41,6 @@ class BrokerRPCServer {
    * @param {string} opts.privKeyPath - Path to private key for broker rpc
    * @param {string} opts.pubKeyPath - Path to public key for broker rpc
    * @param {boolean} [opts.disableAuth=false]
-   * @return {BrokerRPCServer}
    */
   constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, pubKeyPath, privKeyPath, disableAuth = false, enableCors = false, rpcUser = null, rpcPass = null, rpcHttpProxyAddress, rpcAddress } = {}) {
     this.logger = logger
@@ -105,7 +104,7 @@ class BrokerRPCServer {
   /**
    * Creates gRPC server credentials for the broker rpc server
    *
-   * @return {grpc.Credentials}
+   * @returns {Object} grpc credentials
    */
   createCredentials () {
     if (this.disableAuth) {

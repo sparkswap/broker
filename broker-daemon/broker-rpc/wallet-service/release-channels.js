@@ -54,7 +54,8 @@ async function closeChannels (engine, symbol, force, logger) {
  * @param {Engine} request.engines
  * @param {Map<Orderbook>} request.orderbooks
  * @param {Object} responses
- * @return {Object} responses.ReleaseChannelsResponse
+ * @param {Object} responses.ReleaseChannelsResponse
+ * @returns {ReleaseChannelsResponse}
  */
 async function releaseChannels ({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse }) {
   const { market, force } = params

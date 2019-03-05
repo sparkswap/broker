@@ -2,22 +2,25 @@ const { Big } = require('../utils')
 
 /**
  * Delimiter for the block order id and order when storing orders
- * @type {String}
  * @constant
+ * @type {string}
+ * @default
  */
 const DELIMITER = ':'
 
 /**
  * Lower bound for leveldb ranged queries
- * @type {String}
  * @constant
+ * @type {string}
+ * @default
  */
 const LOWER_BOUND = '\x00'
 
 /**
  * Upper bound for leveldb ranged queries
- * @type {String}
  * @constant
+ * @type {string}
+ * @default
  */
 const UPPER_BOUND = '\uffff'
 
@@ -27,15 +30,15 @@ const UPPER_BOUND = '\uffff'
 class Order {
   /**
    * Create a new order representation
-   * @param  {string} blockOrderId          - Id of the block order that this order belongs to
-   * @param  {string} options.baseSymbol    - Currency symbol for the base currency in the market, e.g. BTC
-   * @param  {string} options.counterSymbol - Currency symbol for the counter or quote currency in the market, e.g. LTC
-   * @param  {string} options.side          - Side of the transaction that the order is on, either BID or ASK
-   * @param  {string} options.baseAmount    - Amount, represented as an integer in the base currency's smallest unit, to be transacted
-   * @param  {string} options.counterAmount - Amount, represented as an integer in the counter currency's smallest unit, to be transacted
-   * @param  {string} options.makerBaseAddress  - Identifier on the payment channel network for the maker base symbol. e.g. for the lightning network: `bolt:{node public key}`
-   * @param  {string} options.makerCounterAddress  - Identifier on the payment channel network for the maker counter symbol. e.g. for the lightning network: `bolt:{node public key}`
-   * @return {Order}                        Order instance
+   * @param {string} blockOrderId          - Id of the block order that this order belongs to
+   * @param {Object} args
+   * @param {string} args.baseSymbol    - Currency symbol for the base currency in the market, e.g. BTC
+   * @param {string} args.counterSymbol - Currency symbol for the counter or quote currency in the market, e.g. LTC
+   * @param {string} args.side          - Side of the transaction that the order is on, either BID or ASK
+   * @param {string} args.baseAmount    - Amount, represented as an integer in the base currency's smallest unit, to be transacted
+   * @param {string} args.counterAmount - Amount, represented as an integer in the counter currency's smallest unit, to be transacted
+   * @param {string} args.makerBaseAddress  - Identifier on the payment channel network for the maker base symbol. e.g. for the lightning network: `bolt:{node public key}`
+   * @param {string} args.makerCounterAddress  - Identifier on the payment channel network for the maker counter symbol. e.g. for the lightning network: `bolt:{node public key}`
    */
   constructor (blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount, makerBaseAddress, makerCounterAddress }) {
     this.blockOrderId = blockOrderId
@@ -55,11 +58,12 @@ class Order {
 
   /**
    * Add parameters to the order from its creation on the Relayer
-   * @param {string} options.orderId               - Unique identifier for the order as assigned by the Relayer
-   * @param {string} options.feePaymentRequest     - Payment channel network payment request for the order fee
-   * @param {string} options.feeRequired           - Whether the order fee is required
-   * @param {string} options.depositPaymentRequest - Payment channel network payment request for the order deposit
-   * @param {string} options.depositRequired       - Whether the deposit is required
+   * @param {Object} params
+   * @param {string} params.orderId               - Unique identifier for the order as assigned by the Relayer
+   * @param {string} params.feePaymentRequest     - Payment channel network payment request for the order fee
+   * @param {string} params.feeRequired           - Whether the order fee is required
+   * @param {string} params.depositPaymentRequest - Payment channel network payment request for the order deposit
+   * @param {string} params.depositRequired       - Whether the deposit is required
    */
   setCreatedParams ({ orderId, feePaymentRequest, feeRequired, depositPaymentRequest, depositRequired }) {
     this.orderId = orderId
@@ -71,9 +75,10 @@ class Order {
 
   /**
    * Add parameters to the order from it being filled on the Relayer
-   * @param {string} options.swapHash   - Base64 string of the swap hash being used for the fill
-   * @param {string} options.fillAmount - Int64 String of the amount, in base currency's base units, of the fill
-   * @param {string} options.takerAddress - String of payment channel network address of the taker
+   * @param {Object} params
+   * @param {string} params.swapHash   - Base64 string of the swap hash being used for the fill
+   * @param {string} params.fillAmount - Int64 String of the amount, in base currency's base units, of the fill
+   * @param {string} params.takerAddress - String of payment channel network address of the taker
    */
   setFilledParams ({ swapHash, fillAmount, takerAddress }) {
     this.swapHash = swapHash
@@ -83,7 +88,8 @@ class Order {
 
   /**
    * Add parameters to the order from it being settled on the Payment Channel Network
-   * @param {string} options.swapPreimage - Base64 string of the preimage associated with the swap hash
+   * @param {Object} params
+   * @param {string} params.swapPreimage - Base64 string of the preimage associated with the swap hash
    */
   setSettledParams ({ swapPreimage }) {
     this.swapPreimage = swapPreimage
@@ -91,7 +97,7 @@ class Order {
 
   /**
    * Alias for .fillAmount that pairs better with `counterFillAmount`
-   * @return {string} 64-bit integer represented as a string
+   * @returns {string} 64-bit integer represented as a string
    */
   get baseFillAmount () {
     return this.fillAmount
@@ -99,7 +105,7 @@ class Order {
 
   /**
    * Get the amount of the order's fill in the counter currency's smallest unit
-   * @return {string} 64-bit integer represented as a string
+   * @returns {string} 64-bit integer represented as a string
    */
   get counterFillAmount () {
     if (!this.fillAmount) {
@@ -114,7 +120,7 @@ class Order {
 
   /**
    * Get the symbol of the currency we will receive inbound
-   * @return {string} Currency symbol
+   * @returns {string} Currency symbol
    */
   get inboundSymbol () {
     return this.side === Order.SIDES.BID ? this.baseSymbol : this.counterSymbol
@@ -122,7 +128,7 @@ class Order {
 
   /**
    * Get the symbol of the currency we will send outbound
-   * @return {string} Currency symbol
+   * @returns {string} Currency symbol
    */
   get outboundSymbol () {
     return this.side === Order.SIDES.BID ? this.counterSymbol : this.baseSymbol
@@ -130,7 +136,7 @@ class Order {
 
   /**
    * Get the symbol of the currency we will receive inbound
-   * @return {string} Currency symbol
+   * @returns {string} Currency symbol
    */
   get inboundAmount () {
     return this.side === Order.SIDES.BID ? this.baseAmount : this.counterAmount
@@ -138,7 +144,7 @@ class Order {
 
   /**
    * Get the symbol of the currency we will send outbound
-   * @return {string} Currency symbol
+   * @returns {string} Currency symbol
    */
   get outboundAmount () {
     return this.side === Order.SIDES.BID ? this.counterAmount : this.baseAmount
@@ -146,7 +152,7 @@ class Order {
 
   /**
    * Get the amount (as an integer in its currency's smallest units) that we will receive inbound for this order
-   * @return {string} 64-bit integer represented as a string
+   * @returns {string} 64-bit integer represented as a string
    */
   get inboundFillAmount () {
     if (!this.fillAmount) {
@@ -158,7 +164,7 @@ class Order {
 
   /**
    * Get the amount (as an integer in its currency's smallest units) that we will send outbound for this order
-   * @return {string} 64-bit integer represented as a string
+   * @returns {string} 64-bit integer represented as a string
    */
   get outboundFillAmount () {
     if (!this.fillAmount) {
@@ -170,7 +176,7 @@ class Order {
 
   /**
    * Params required to create an order on the relayer
-   * @return {Object} Object of parameters the relayer expects
+   * @returns {Object} Object of parameters the relayer expects
    */
   get paramsForCreate () {
     const {
@@ -199,7 +205,7 @@ class Order {
    * It includes parameters for the payment requests for fees and deposits
    * which are used to pay fees prior to placing an order rather than
    * actually sent to the relayer.
-   * @return {Object} Object of parameters need to place an order
+   * @returns {Object} Object of parameters need to place an order
    */
   get paramsForPlace () {
     const {
@@ -239,7 +245,7 @@ class Order {
 
   /**
    * Params required to prepare a swap in  an engine
-   * @return {Object} Object of parameters the engine expects
+   * @returns {Object} Object of parameters the engine expects
    */
   get paramsForPrepareSwap () {
     const { orderId, swapHash, inboundSymbol, inboundFillAmount } = this
@@ -288,7 +294,7 @@ class Order {
 
   /**
    * Price of the order in the smallest unit of each currency
-   * @return {string} Number, rounded to 16 decimal places, represented as a string
+   * @returns {string} Number, rounded to 16 decimal places, represented as a string
    */
   get quantumPrice () {
     const counterAmount = Big(this.counterAmount)
@@ -301,7 +307,7 @@ class Order {
   /**
    * Get the unique key that this object can be stored with
    * It is prefixed by the blockOrderId so that it can be retrieved easily
-   * @return {string} Unique key for storage. In the case of an order, it is a combination of the blockOrderId and Relayer-assigned orderId
+   * @returns {string} Unique key for storage. In the case of an order, it is a combination of the blockOrderId and Relayer-assigned orderId
    */
   get key () {
     // if either part of our key is undefined we return undefined so as not to create
@@ -314,7 +320,7 @@ class Order {
 
   /**
    * Get the store-able representation of the object
-   * @return {string} Stringified representation of the Order object
+   * @returns {string} Stringified representation of the Order object
    */
   get value () {
     return JSON.stringify(this.valueObject)
@@ -322,7 +328,7 @@ class Order {
 
   /**
    * Get the store-able object
-   * @return {Object} Store-able version of the object
+   * @returns {Object} Store-able version of the object
    */
   get valueObject () {
     const {
@@ -362,9 +368,9 @@ class Order {
 
   /**
    * Create an instance of an order from a stored copy
-   * @param  {string} key   - Unique key for the order, i.e. its `orderId`
-   * @param  {string} orderStateMachineRecord - Stringified representation of the order state machine record
-   * @return {Order}        Inflated order object
+   * @param {string} key   - Unique key for the order, i.e. its `orderId`
+   * @param {string} orderStateMachineRecord - Stringified representation of the order state machine record
+   * @returns {Order}        Inflated order object
    */
   static fromStorage (key, orderStateMachineRecord) {
     return this.fromObject(key, JSON.parse(orderStateMachineRecord).order)
@@ -372,9 +378,9 @@ class Order {
 
   /**
    * Create an instance of an order from an object representation
-   * @param  {string} key         - Unique key for the order, i.e. its `blockOrderId` and `orderId`
-   * @param  {Object} valueObject - Plain object representation of the order
-   * @return {Order}              Inflated order object
+   * @param {string} key         - Unique key for the order, i.e. its `blockOrderId` and `orderId`
+   * @param {Object} valueObject - Plain object representation of the order
+   * @returns {Order}              Inflated order object
    */
   static fromObject (key, valueObject) {
     // keys are the unique id for the object (orderId) prefixed by the object they belong to (blockOrderId)
@@ -432,8 +438,8 @@ class Order {
    * Create a set of options that can be passed to a LevelUP `createReadStream` call
    * that limits the set to orders that belong to the given blockOrderid.
    * This works because all orders are prefixed with their blockOrderId and the Delimiter.
-   * @param  {string} Id - of of the block order to create a range for
-   * @return {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
+   * @param {string} blockOrderId - of of the block order to create a range for
+   * @returns {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
    */
   static rangeForBlockOrder (blockOrderId) {
     return {
@@ -443,7 +449,6 @@ class Order {
   }
 }
 
-// TODO: get from proto?
 Order.SIDES = Object.freeze({
   ASK: 'ASK',
   BID: 'BID'

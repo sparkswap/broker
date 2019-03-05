@@ -6,8 +6,8 @@
  * @param {Object<string>} request.params
  * @param {Array<Engine>} request.engines
  * @param {Object} responses
- * @param {Function} responses.NewDepositAddressResponse - constructor
- * @return {NewDepositAddressResponse}
+ * @param {Function} responses.NewDepositAddressResponse
+ * @returns {NewDepositAddressResponse}
  */
 async function newDepositAddress ({ logger, params, engines }, { NewDepositAddressResponse }) {
   const { symbol } = params

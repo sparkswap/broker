@@ -510,6 +510,24 @@ message CancelBlockOrderRequest {
 }
 
 /**
+ * Request to cancel all active block orders on the given market
+ */
+message CancelAllBlockOrdersRequest {
+  // Market for which to cancel block orders, expressed as a string separating two common symbols with a '/', e.g. `'BTC/LTC'`
+  string market = 1;
+}
+
+/**
+ * Response from cancelling all active orders on a market
+ */
+message CancelAllBlockOrdersResponse {
+  // Block order ids of block orders that were successfully cancelled
+  repeated string cancelled_orders = 1;
+  // Block order ids of block orders that were not successfully cancelled
+  repeated string failed_to_cancel_orders = 2;
+}
+
+/**
  * All block orders in a given market.
  */
 message GetBlockOrdersResponse {
@@ -696,6 +714,37 @@ service OrderService {
       body: "*"
     };
   }
+  /**
+   * CancelAllBlockOrders cancels all active block orders on a market.
+   *
+   * ```javascript
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * orderService.cancelAllBlockOrders({ market: 'BTC/LTC' }, { deadline }, (err) => {
+   *   if (err) return console.error(err)
+   * })
+   * ```
+   *
+   * ```shell
+   * > sparkswap order cancel-all --market btc/ltc
+   * ```
+   *
+   * ```javascript
+   * { "cancelledOrders": [
+   *     "XH3CBeemcGrVBKpc",
+   *     "XH3CA12_5Ynujq8m",
+   *     "XH3B-6hZjRstgjsz",
+   *   ],
+   *  "failedToCancelOrders": [
+   *     "XH3CBODrC7PU3JY7"
+   *   ]
+   * }
+   * ```
+   *
+   * ```shell
+   * Successfully cancelled 4 orders on BTC/LTC market.
+   * ```
+   */
+  rpc CancelAllBlockOrders (CancelAllBlockOrdersRequest) returns (CancelAllBlockOrdersResponse);
   /**
    * GetBlockOrders returns information on all of the block orders placed in a single market, like `BTC/LTC`.
    * It does not include complete information, such as the underlying orders and fills on the SparkSwap Relayer, or the amount of the order that has been filled. For that, use [GetBlockOrder](#getblockorder).

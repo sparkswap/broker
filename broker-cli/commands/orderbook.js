@@ -8,6 +8,11 @@ const Table = require('cli-table2')
 const size = require('window-size')
 require('colors')
 
+/**
+ * @constant
+ * @type {Object}
+ * @default
+ */
 const EVENT_TYPES = Object.freeze({
   ADD: 'ADD', DELETE: 'DELETE'
 })
@@ -101,8 +106,9 @@ function createUI (market, asks, bids) {
  * @param {Object} args
  * @param {Object} opts
  * @param {string} opts.market
- * @param {string} [rpcaddress] - opts.rpcaddress
+ * @param {string} opts.rpcaddress
  * @param {Logger} logger
+ * @returns {void}
  */
 async function orderbook (args, opts, logger) {
   const { market, rpcAddress } = opts

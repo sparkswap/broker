@@ -6,7 +6,7 @@
  * @param {Object} request.logger
  * @param {Object} responses
  * @param {Function} responses.GetIdentityResponse - constructor for GetIdentityResponse messages
- * @return {responses.GetIdentityResponse}
+ * @returns {GetIdentityResponse}
  */
 async function getIdentity ({ relayer, logger }, { GetIdentityResponse }) {
   const publicKey = relayer.identity.pubKey

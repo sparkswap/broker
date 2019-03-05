@@ -8,13 +8,7 @@ const StateMachinePlugin = require('./abstract')
 class StateMachineEvents extends StateMachinePlugin {
   /**
    * Setup for configuration of StateMachineEvents plugin
-   * @returns {StateMachineEvents}
-   */
-
-  /**
-   * Set the event handler on the instance
-   * @param  {Object} instance - State machine instance being initialized
-   * @return {void}
+   * @param {Object} instance - State machine instance being initialized
    */
   init (instance) {
     super.init(instance)
@@ -24,6 +18,7 @@ class StateMachineEvents extends StateMachinePlugin {
   /**
    * Adds event emition observer to all transition calls to allow for event passing
    * to external workers (BlockOrderWorker)
+   * @returns {Object} observers
    */
   get observers () {
     return {
@@ -31,7 +26,7 @@ class StateMachineEvents extends StateMachinePlugin {
        * Emit an event before a transition (prefixed by 'before:')
        * e.g. stateMachine.on('before:create')
        * @param  {Object} lifecycle
-       * @return {void}
+       * @returns {void}
        */
       onBeforeTransition: function (lifecycle) {
         const stateMachineInstance = this
@@ -52,6 +47,7 @@ class StateMachineEvents extends StateMachinePlugin {
 
   /**
    * Alias methods on a StateMachine for event handling
+   * @returns {Object} methods
    */
   get methods () {
     return {

@@ -1,6 +1,6 @@
 /**
  * Get the current timestamp in seconds
- * @return {number} Current timestamp in seconds
+ * @returns {number} Current timestamp in seconds
  */
 function nowInSeconds () {
   // JS uses milliseconds from Date.now, so we round to the nearest second

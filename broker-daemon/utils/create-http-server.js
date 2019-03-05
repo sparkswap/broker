@@ -11,6 +11,7 @@ const corsMiddleware = require('./enable-cors')
 /**
  * http 404 handler for our http (express) server
  *
+ * @param {Logger} logger
  * @param {Object} req - request object
  * @param {Object} res - response object
  */
@@ -25,10 +26,12 @@ function handle404 (logger, req, res) {
  * @param {string} protoPath
  * @param {string} rpcAddress
  * @param {Object} opts
- * @param {boolean} [disableAuth=false]
- * @param {string} privKeyPath
- * @param {string} pubKeyPath
- * @return {ExpressApp}
+ * @param {boolean} [opts.disableAuth=false]
+ * @param {boolean} [opts.enableCors=false]
+ * @param {string} opts.privKeyPath
+ * @param {string} opts.pubKeyPath
+ * @param {string} opts.logger
+ * @returns {ExpressApp}
  */
 function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableCors = false, privKeyPath, pubKeyPath, logger }) {
   const app = express()

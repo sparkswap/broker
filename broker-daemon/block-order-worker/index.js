@@ -17,12 +17,13 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Create a new BlockOrderWorker instance
    *
-   * @param  {Map<string, Orderbook>} options.orderbooks - Collection of all active Orderbooks
-   * @param  {sublevel}               options.store      - Sublevel in which to store block orders and child orders
-   * @param  {Object}                 options.logger
-   * @param  {RelayerClient}          options.relayer
-   * @param  {Map<string, Engine>}    options.engines    - Collection of all available engines
-   * @return {BlockOrderWorker}
+   * @param {Object} args
+   * @param {Map<string, Orderbook>} args.orderbooks - Collection of all active Orderbooks
+   * @param {sublevel}               args.store - Sublevel in which to store block orders and child orders
+   * @param {Object}                 args.logger
+   * @param {RelayerClient}          args.relayer
+   * @param {Map<Symbol, Engine>}    args.engines - Collection of all available engines
+   * @returns {void}
    */
   constructor ({ orderbooks, store, logger, relayer, engines }) {
     super()
@@ -64,7 +65,7 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Initialize the BlockOrderWorker by clearing and rebuilding the ordersByHash index
-   * @return {Promise}
+   * @returns {void}
    */
   async initialize () {
     await this.ordersByHash.ensureIndex()
@@ -75,7 +76,7 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * When the broker goes down, there can be orders and fills in an unresolved state. We should rehydrate the state machines
    * from the database and attempt to trigger them into a resolved state
-   * @return {Void}
+   * @returns {void}
    */
   async settleIndeterminateOrdersFills () {
     const blockOrders = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder))
@@ -98,8 +99,8 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Given a blockOrder, return associated OrderStateMachines
-   * @param {BlockOrder}
-   * @return {Array<OrderStateMachine>}
+   * @param {BlockOrder} blockOrder
+   * @returns {Array<OrderStateMachine>}
    */
   async getOrderStateMachines (blockOrder) {
     const osms = await getRecords(
@@ -127,8 +128,8 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Given a blockOrder, return associated FillStateMachines
-   * @param {BlockOrder}
-   * @return {Array<FillStateMachine>}
+   * @param {BlockOrder} blockOrder
+   * @returns {Array<FillStateMachine>}
    */
   async getFillStateMachines (blockOrder) {
     const fsms = await getRecords(
@@ -164,7 +165,7 @@ class BlockOrderWorker extends EventEmitter {
    * @param  {string} options.amount      - Amount of base currency (in base units) to transact
    * @param  {string} options.price       - Price at which to transact
    * @param  {string} options.timeInForce - Time restriction (e.g. GTC, FOK)
-   * @return {string}                     ID for the created Block Order
+   * @returns {string}                     ID for the created Block Order
    */
   async createBlockOrder ({ marketName, side, amount, price, timeInForce }) {
     const id = generateId()
@@ -202,8 +203,8 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Checks that there are valid inbound and outbound funds to place/fill the order
    *
-   * @param {BlockOrder}
-   * @return {Void}
+   * @param {BlockOrder} blockOrder
+   * @returns {void}
    * @throws {Error} If there are insufficient outbound or inbound funds
    */
   async checkFundsAreSufficient (blockOrder) {
@@ -273,7 +274,7 @@ class BlockOrderWorker extends EventEmitter {
    *
    * @param {string} marketName  - Name of the market to creat the block order in (e.g. BTC/LTC)
    * @param {string} side        - Side of the market to take (e.g. BID or ASK)
-   * @return {Object} contains activeOutboundAmount and activeInboundAmount of orders/fills
+   * @returns {Object} contains activeOutboundAmount and activeInboundAmount of orders/fills
    */
   async calculateActiveFunds (marketName, side) {
     const blockOrders = await this.getBlockOrders(marketName)
@@ -293,8 +294,8 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Get an existing block order
-   * @param  {string} blockOrderId - ID of the block order
-   * @return {BlockOrder}
+   * @param {string} blockOrderId - ID of the block order
+   * @returns {BlockOrder}
    */
   async getBlockOrder (blockOrderId) {
     this.logger.info('Getting block order', { id: blockOrderId })
@@ -310,8 +311,8 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Cancels all outstanding orders for the given block order
-   * @param {BlockOrder}
-   * @return {Void}
+   * @param {BlockOrder} blockOrder
+   * @returns {void}
    */
   async cancelOutstandingOrders (blockOrder) {
     await blockOrder.populateOrders(this.ordersStore)
@@ -333,8 +334,8 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Cancel a block order in progress
-   * @param  {string} blockOrderId - Id of the block order to cancel
-   * @return {BlockOrder}          Block order that was cancelled
+   * @param {string} blockOrderId - Id of the block order to cancel
+   * @returns {BlockOrder}          Block order that was cancelled
    */
   async cancelBlockOrder (blockOrderId) {
     this.logger.info('Cancelling block order ', { id: blockOrderId })
@@ -360,7 +361,7 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Cancel all active orders for a given market
-   * @param  {string} market - to cancel orders on
+   * @param {string} market - to cancel orders on
    * @returns {Object} result
    * @returns {Array<string>} result.cancelledOrders ids of block orders that have been cancelled
    * @returns {Array<string>} result.failedToCancelOrders ids of block orders that failed to be cancelled
@@ -385,14 +386,14 @@ class BlockOrderWorker extends EventEmitter {
       })
     )
 
-    this.logger.info(`Succesfully cancelled ${cancelledOrders.length} orders, failed to cancel ${failedToCancelOrders.length}.`)
+    this.logger.info(`Successfully cancelled ${cancelledOrders.length} orders, failed to cancel ${failedToCancelOrders.length}.`)
     return { cancelledOrders, failedToCancelOrders }
   }
 
   /**
    * Get existing block orders
-   * @param  {string} market - to filter by
-   * @return {Array<BlockOrder>}
+   * @param {string} market - to filter by
+   * @returns {Array<BlockOrder>}
    */
   async getBlockOrders (market) {
     this.logger.info(`Getting all block orders for market: ${market}`)
@@ -403,9 +404,9 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Move a block order to a failed state
-   * @param  {string} blockOrderId - ID of the block order to be failed
-   * @param  {Error}  err          - Error that caused the failure
-   * @return {void}
+   * @param {string} blockOrderId - ID of the block order to be failed
+   * @param {Error}  err          - Error that caused the failure
+   * @returns {void}
    */
   async failBlockOrder (blockOrderId, err) {
     this.logger.error('Error encountered while working block', { id: blockOrderId, error: err.stack })
@@ -431,7 +432,7 @@ class BlockOrderWorker extends EventEmitter {
    * work a block order that gets created
    * @param  {BlockOrder} blockOrder  - Block Order to work
    * @param  {Big}        targetDepth - Depth, in base currency, to reach with this work
-   * @return {void}
+   * @returns {void}
    */
   async workBlockOrder (blockOrder, targetDepth) {
     this.logger.info('Working block order', { blockOrderId: blockOrder.id })
@@ -457,9 +458,9 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Work market block order
-   * @param  {BlockOrder} blockOrder  - BlockOrder without a limit price, i.e. a market order
-   * @param  {Big}        targetDepth - Depth, in base currency, to reach with this work
-   * @return {void}
+   * @param {BlockOrder} blockOrder  - BlockOrder without a limit price, i.e. a market order
+   * @param {Big}        targetDepth - Depth, in base currency, to reach with this work
+   * @returns {void}
    */
   async workMarketBlockOrder (blockOrder, targetDepth) {
     const orderbook = this.orderbooks.get(blockOrder.marketName)
@@ -477,9 +478,9 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Work limit block order
    * @todo make limit orders more sophisticated than just sending a single limit order to the relayer
-   * @param  {BlockOrder} blockOrder  - BlockOrder with a limit price
-   * @param  {Big}        targetDepth - Depth, in base currency, to reach with this work
-   * @return {void}
+   * @param {BlockOrder} blockOrder  - BlockOrder with a limit price
+   * @param {Big}        targetDepth - Depth, in base currency, to reach with this work
+   * @returns {void}
    */
   async workLimitBlockOrder (blockOrder, targetDepth) {
     if (blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.GTC) {
@@ -538,9 +539,9 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Applies listeners to a created OrderStateMachine
    * @private
-   * @param  {OrderStateMachine} osm        - State machine to apply listeners to
-   * @param  {BlockOrder} blockOrder - Block Order associated with the state machine
-   * @return {OrderStateMachine}
+   * @param {OrderStateMachine} osm        - State machine to apply listeners to
+   * @param {BlockOrder} blockOrder - Block Order associated with the state machine
+   * @returns {OrderStateMachine}
    */
   applyOsmListeners (osm, blockOrder) {
     // Try to complete the entire block order once an underlying order completes
@@ -591,7 +592,7 @@ class BlockOrderWorker extends EventEmitter {
    * Place orders for a block order for a given amount, breaking them up based on the maximum order size
    * @param  {BlockOrder} blockOrder - Block Order to place orders on behalf of
    * @param  {string}     baseAmount - Int64 amount, in the base currency's base units, to place orders for
-   * @return {void}
+   * @returns {void}
    */
   _placeOrders (blockOrder, baseAmount) {
     const { baseSymbol, counterSymbol, quantumPrice } = blockOrder
@@ -645,8 +646,8 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Place an order for a block order of a given amount
    * @param  {BlockOrder} blockOrder - Block Order to place an order on behalf of
-   * @param  {string} amount     - Int64 amount, in base currency's base units to place the order for
-   * @return {void}
+   * @param  {string} baseAmount     - Int64 amount, in base currency's base units to place the order for
+   * @returns {void}
    */
   async _placeOrder (blockOrder, baseAmount) {
     // order params
@@ -677,10 +678,10 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Fill given orders for a given block order up to a target depth
-   * @param  {BlockOrder}              blockOrder  - BlockOrder that the orders are being filled on behalf of
-   * @param  {Array<MarketEventOrder>} orders      - Orders to be filled
-   * @param  {string}                  targetDepth - Int64 string of the maximum depth to fill
-   * @return {Promise<Array<FillStateMachine>>}    Promise that resolves the array of Fill State Machines for these fills
+   * @param {BlockOrder}              blockOrder  - BlockOrder that the orders are being filled on behalf of
+   * @param {Array<MarketEventOrder>} orders      - Orders to be filled
+   * @param {string}                  targetDepth - Int64 string of the maximum depth to fill
+   * @returns {Promise<Array<FillStateMachine>>}    Promise that resolves the array of Fill State Machines for these fills
    */
   async _fillOrders (blockOrder, orders, targetDepth) {
     this.logger.info(`Filling ${orders.length} orders for ${blockOrder.id} up to depth of ${targetDepth}`)
@@ -752,9 +753,9 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Applies listeners to the fill state machine
-   * @param  {Object<FillStateMachine>}   fill - state machine to apply the listeners to
-   * @param  {Object<BlockOrder>}         blockOrder  - BlockOrder that the orders are being filled on behalf of
-   * @return {Void}
+   * @param {FillStateMachine} fsm - state machine to apply the listeners to
+   * @param {BlockOrder} blockOrder  - BlockOrder that the orders are being filled on behalf of
+   * @returns {void}
    */
   applyFsmListeners (fsm, blockOrder) {
     // We are hooking into the execute lifecycle event of a fill state machine to trigger

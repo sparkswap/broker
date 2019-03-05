@@ -6,8 +6,9 @@ const StateMachinePlugin = require('./abstract')
 class StateMachineLogging extends StateMachinePlugin {
   /**
    * Set up configuration for the logging plugin, controlling which properties on the host object to use
-   * @param  {string} options.loggerName    - Property of the host state machine that holds the logger
-   * @return {StateMachineRejection}
+   * @param {Object} options
+   * @param {string} [options.loggerName='logger'] - Property of the host state machine that holds the logger
+   * @param {Array<string>} [options.skipTransitions=[]] - Array of transition names to be ignored
    */
   constructor ({ loggerName = 'logger', skipTransitions = [] } = {}) {
     super()
@@ -18,7 +19,7 @@ class StateMachineLogging extends StateMachinePlugin {
   /**
    * Observers object to add additional lifecycle observers
    * Adds our lifecycle observers to call the logging function
-   * @return {Object} Key value of observers
+   * @returns {Object} Key value of observers
    */
   get observers () {
     const plugin = this

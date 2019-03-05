@@ -9,7 +9,7 @@
  * @param {Map<Engine>} request.engines
  * @param {Object} responses
  * @param {Function} responses.CreateWalletResponse
- * @return {CreateWalletResponse}
+ * @returns {CreateWalletResponse}
  */
 async function createWallet ({ logger, params, engines }, { CreateWalletResponse }) {
   const { symbol, password } = params

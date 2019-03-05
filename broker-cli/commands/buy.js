@@ -15,8 +15,8 @@ const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
  * @param {string} args.price
  * @param {Object} opts
  * @param {string} opts.market
- * @param {string} [timeinforce] - opts.timeinforce
- * @param {string} [rpcaddress] - opts.rpcaddress
+ * @param {string} opts.timeinforce
+ * @param {string} opts.rpcaddress
  * @param {Logger} logger
  */
 async function buy (args, opts, logger) {

@@ -5,7 +5,7 @@
  * @param  {sublevel} targetStore       - Sublevel that is the destination of the data
  * @param  {Function} createDbOperation - Function that returns a sublevel batch-compatible database operation to take on the target store
  * @param  {number}   batchSize         - Number of operations to batch before executing on the target database
- * @return {Promise<void>}
+ * @returns {Promise<void>}
  */
 async function migrateStore (sourceStore, targetStore, createDbOperation, batchSize = 20) {
   return new Promise((resolve, reject) => {

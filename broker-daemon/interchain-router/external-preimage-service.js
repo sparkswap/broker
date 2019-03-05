@@ -12,7 +12,6 @@ class ExternalPreimageService {
    * @param  {SublevelIndex} options.ordersByHash - Orders for which we are the maker, index by swap hash
    * @param  {Map<string, Engine>} options.engines - All available engines
    * @param  {Object} options.logger - Logger to be used in methods
-   * @return {ExternalPreimageService}
    */
   constructor (protoPath, { ordersByHash, engines, logger }) {
     this.protoPath = protoPath
@@ -28,8 +27,8 @@ class ExternalPreimageService {
 
   /**
    * Create a logging string specific to this service and method
-   * @param  {string} methodName
-   * @return {string}
+   * @param {string} methodName
+   * @returns {string}
    */
   messageId (methodName) {
     return `[${this.serviceName}:${methodName}]`

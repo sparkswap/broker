@@ -5,15 +5,17 @@ const CONFIG = require('../config')
 
 /**
  * Delimiter for MarketEvent keys
- * @type {String}
  * @constant
+ * @type {string}
+ * @default
  */
 const DELIMITER = ':'
 
 /**
  * Lower bound for leveldb ranged queries
- * @type {String}
  * @constant
+ * @type {string}
+ * @default
  */
 const LOWER_BOUND = '\x00'
 
@@ -46,7 +48,8 @@ class MarketEvent {
 
   /**
    * Get the amount of the order - i.e. the number of common units of base currency
-   * @return {string} Decimal string of the amount
+   * @param {string} baseSymbol
+   * @returns {string} Decimal string of the amount
    */
   amount (baseSymbol) {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === baseSymbol)
@@ -56,7 +59,9 @@ class MarketEvent {
 
   /**
    * Price of the order in common units for each currency
-   * @return {string} Decimal string of the price in common units
+   * @param {string} baseSymbol
+   * @param {string} counterSymbol
+   * @returns {string} Decimal string of the price in common units
    */
   price (baseSymbol, counterSymbol) {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === baseSymbol)
@@ -117,9 +122,8 @@ class MarketEvent {
    * Returns a range query for leveldb from a given timestamp
    *
    * @param {string} startTime - time in nanoseconds
-   * @return {Object} range
-   * @return {string} range.gte
-   *
+   * @returns {Object} range
+   * @returns {string} range.gte
    */
   static rangeFromTimestamp (startTime) {
     return {

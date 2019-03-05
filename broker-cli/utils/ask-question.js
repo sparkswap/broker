@@ -2,21 +2,21 @@ const readline = require('readline')
 
 /**
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const NEW_LINE = '\n'
 
 /**
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const CARRIAGE_RETURN = '\r'
 
 /**
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const END_OF_TRANSMISSION = '\u0004'
@@ -51,7 +51,7 @@ function suppressInput (message, char) {
  * @param {string} message
  * @param {Object} options
  * @param {Object} [options.silent=false] - suppress typing for answer
- * @return {Promise<string>} answer
+ * @returns {Promise<string>} answer
  */
 function askQuestion (message, { silent = false } = {}) {
   const rl = readline.createInterface({

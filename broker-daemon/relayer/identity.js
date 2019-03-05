@@ -10,9 +10,8 @@ const PUB_KEY_MARKERS = {
 class Identity {
   /**
    * Create a new identity for a broker to use with the Relayer
-   * @param  {string}  privKeyPath - Absolute path to the private key to use for identity
-   * @param  {string}  pubKeyPath  - Absolute path to the public key to use for the identity
-   * @return {Identity}
+   * @param {string}  privKeyPath - Absolute path to the private key to use for identity
+   * @param {string}  pubKeyPath  - Absolute path to the public key to use for the identity
    */
   constructor (privKeyPath, pubKeyPath) {
     this.privKeyPath = privKeyPath
@@ -21,7 +20,7 @@ class Identity {
 
   /**
    * Load the identity (private and public key) from disk
-   * @return {void}
+   * @returns {void}
    * @throws {Error} If Private key path is not defined
    * @throws {Error} If Public key path is not defined
    */
@@ -39,8 +38,8 @@ class Identity {
 
   /**
    * Sign data with this identity's private key
-   * @param  {string} data - to sign
-   * @return {string} Base64 encoded signature of the data
+   * @param {string} data - to sign
+   * @returns {string} Base64 encoded signature of the data
    * @throws {Error} If private key is not loaded
    */
   sign (data) {
@@ -62,7 +61,7 @@ class Identity {
    * This payload is joined by commas (','), and signed using the public key of the broker.
    *
    * The request can then be validated by the Relayer as being genuine from the owner of the public key.
-   * @return {grpc.Metadata} Metadata object with necessary items to verify it
+   * @returns {grpc.Metadata} Metadata object with necessary items to verify it
    */
   authorize () {
     const timestamp = nowInSeconds().toString()
@@ -81,9 +80,9 @@ class Identity {
 
 /**
  * Create and load a new identity for a broker to use with the Relayer
- * @param  {string}   privKeyPath - Absolute path to the private key to use for identity
- * @param  {string}   pubKeyPath  - Absolute path to the public key to use for the identity
- * @return {Identity}
+ * @param {string} privKeyPath - Absolute path to the private key to use for identity
+ * @param {string} pubKeyPath  - Absolute path to the public key to use for the identity
+ * @returns {Identity}
  */
 Identity.load = function (privKeyPath, pubKeyPath) {
   const id = new this(privKeyPath, pubKeyPath)
@@ -93,8 +92,8 @@ Identity.load = function (privKeyPath, pubKeyPath) {
 
 /**
  * Strip the PEM file banners and newlines, returning just the PEM-encoded contents of a public key file
- * @param  {string} fileContents - string of a PEM file
- * @return {string} Pem-encoded public key without newlines or banners
+ * @param {string} fileContents - string of a PEM file
+ * @returns {string} Pem-encoded public key without newlines or banners
  */
 function pubKeyToBase64 (fileContents) {
   if (!fileContents) {
