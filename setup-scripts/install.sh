@@ -23,7 +23,7 @@ RED='\033[0;31m'
 GRAY='\033[0;37m'
 NC='\033[0m' # No Color
 
-BROKER_VERSION="v0.4.2-beta"
+BROKER_VERSION="v0.5.0-beta"
 
 # print a message with a color, like msg "my message" $GRAY
 msg () {
