@@ -19,7 +19,9 @@ async function register ({ relayer, logger, network }, { RegisterResponse }) {
 
   logger.info('Successfully registered Broker with relayer', { entityId })
 
-  const registerUrl = registerUrls[network]
+  console.log('what the fuck is this', { network, globalNetwork: global.sparkswap.network })
+
+  const registerUrl = registerUrls[global.sparkswap.network]
 
   if (!registerUrl) {
     throw new Error(`Could not find registration url for network ${network}, please check broker configuration`)

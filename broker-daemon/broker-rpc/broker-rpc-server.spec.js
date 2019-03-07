@@ -4,7 +4,6 @@ const { expect, sinon, rewire } = require('test/test-helper')
 const BrokerRPCServer = rewire(path.resolve(__dirname, 'broker-rpc-server'))
 
 describe('BrokerRPCServer', () => {
-  let network
   let rpcServer
   let addService
   let AdminService
@@ -71,7 +70,6 @@ describe('BrokerRPCServer', () => {
 
     engines = new Map()
 
-    network = 'mainnet'
     protoPath = 'mypath'
     pathResolve = sinon.stub().returns(protoPath)
     BrokerRPCServer.__set__('path', {
@@ -80,11 +78,6 @@ describe('BrokerRPCServer', () => {
   })
 
   describe('new', () => {
-    it('assigns a network', () => {
-      const server = new BrokerRPCServer({ network })
-      expect(server.network).to.be.eql(network)
-    })
-
     it('assigns a logger', () => {
       const logger = 'mylogger'
       const server = new BrokerRPCServer({ logger })
@@ -156,10 +149,10 @@ describe('BrokerRPCServer', () => {
       const logger = 'mylogger'
       const relayer = 'myrelayer'
 
-      const server = new BrokerRPCServer({ logger, relayer, engines, network })
+      const server = new BrokerRPCServer({ logger, relayer, engines })
 
       expect(AdminService).to.have.been.calledOnce()
-      expect(AdminService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer, engines, network }))
+      expect(AdminService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer, engines }))
       expect(AdminService).to.have.been.calledWithNew()
       expect(server).to.have.property('adminService')
       expect(server.adminService).to.be.equal(adminService)

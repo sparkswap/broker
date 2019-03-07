@@ -13,7 +13,6 @@ describe('AdminService', () => {
   let fakeRegistered
   let loadProto
   let proto
-  let network
 
   let protoPath
   let logger
@@ -26,7 +25,6 @@ describe('AdminService', () => {
   let server
 
   beforeEach(() => {
-    network = 'mainnet'
     protoPath = 'fakePath'
     proto = {
       broker: {
@@ -67,7 +65,7 @@ describe('AdminService', () => {
   })
 
   beforeEach(() => {
-    server = new AdminService(protoPath, { logger, relayer, engines, orderbooks, auth, network })
+    server = new AdminService(protoPath, { logger, relayer, engines, orderbooks, auth })
   })
 
   it('assigns a proto path', () => {
@@ -240,10 +238,6 @@ describe('AdminService', () => {
 
       it('passes in a relayer', () => {
         expect(callArgs[2]).to.have.property('relayer', relayer)
-      })
-
-      it('passes in a network', () => {
-        expect(callArgs[2]).to.have.property('network', network)
       })
     })
 

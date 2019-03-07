@@ -15,7 +15,7 @@ class AdminService {
    * @param {Map} opts.orderbooks
    * @param {Function} opts.auth
    */
-  constructor (protoPath, { logger, relayer, engines, orderbooks, network, auth }) {
+  constructor (protoPath, { logger, relayer, engines, orderbooks, auth }) {
     this.protoPath = protoPath
     this.proto = loadProto(this.protoPath)
     this.logger = logger
@@ -32,7 +32,7 @@ class AdminService {
     this.implementation = {
       healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer, engines, orderbooks, auth }, { HealthCheckResponse }).register(),
       getIdentity: new GrpcUnaryMethod(getIdentity, this.messageId('getIdentity'), { logger, relayer, auth }, { GetIdentityResponse }).register(),
-      register: new GrpcUnaryMethod(register, this.messageId('register'), { logger, relayer, network }, { RegisterResponse }).register()
+      register: new GrpcUnaryMethod(register, this.messageId('register'), { logger, relayer }, { RegisterResponse }).register()
     }
   }
 
