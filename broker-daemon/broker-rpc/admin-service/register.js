@@ -22,7 +22,7 @@ async function register ({ relayer, logger, network }, { RegisterResponse }) {
   const registerUrl = registerUrls[network]
 
   if (!registerUrl) {
-    throw new Error('Unable to find registration url, please check your broker configuration')
+    throw new Error(`Could not find registration url for network ${network}, please check broker configuration`)
   }
 
   const url = `${registerUrl}${entityId}`

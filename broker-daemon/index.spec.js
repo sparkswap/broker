@@ -4,6 +4,7 @@ const { expect, sinon, rewire } = require('test/test-helper')
 const BrokerDaemon = rewire(path.resolve('broker-daemon', 'index'))
 
 describe('broker daemon', () => {
+  let network
   let rpcServer
   let interchainRouter
   let eventEmitter
@@ -95,6 +96,7 @@ describe('broker daemon', () => {
     BrokerDaemon.__set__('InterchainRouter', interchainRouter)
     BrokerDaemon.__set__('logger', logger)
 
+    network = 'mainnet'
     privRpcKeyPath = '/my/private/rpc/key/path'
     pubRpcKeyPath = '/my/public/rpc/key/path'
     privIdKeyPath = '/my/private/id/key/path'
@@ -136,12 +138,17 @@ describe('broker daemon', () => {
       disableAuth,
       rpcUser,
       rpcPass,
-      relayerOptions
+      relayerOptions,
+      network
     }
   })
 
   it('throws if required keys are not defined', () => {
     expect(() => new BrokerDaemon({})).to.throw()
+  })
+
+  it('throws if network is null', () => {
+    expect(() => new BrokerDaemon({})).to.throw('')
   })
 
   it('throws if the public key path is null', () => {
