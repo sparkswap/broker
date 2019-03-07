@@ -148,15 +148,15 @@ describe('broker daemon', () => {
   })
 
   it('throws if network is null', () => {
-    expect(() => new BrokerDaemon({})).to.throw('')
+    expect(() => new BrokerDaemon({})).to.throw('Network is required to create')
   })
 
   it('throws if the public key path is null', () => {
-    expect(() => new BrokerDaemon({ privIdKeyPath: 'somepath' })).to.throw('Public Key path is required')
+    expect(() => new BrokerDaemon({ network, privIdKeyPath: 'somepath' })).to.throw('Public Key path is required')
   })
 
   it('throws if the private key path is null', () => {
-    expect(() => new BrokerDaemon({ privIdKeyPath: null })).to.throw('Private Key path is required')
+    expect(() => new BrokerDaemon({ network, privIdKeyPath: null })).to.throw('Private Key path is required')
   })
 
   it('throws for unrecognized engine types', () => {
