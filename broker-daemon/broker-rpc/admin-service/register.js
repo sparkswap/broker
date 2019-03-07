@@ -11,7 +11,7 @@ const { registerUrls } = require('../../config')
  * @returns {RegisterResponse}
  * @throws {Error} Unable to find registration url
  */
-async function register ({ relayer, logger, network }, { RegisterResponse }) {
+async function register ({ relayer, logger }, { RegisterResponse }) {
   const publicKey = relayer.identity.pubKeyBase64
 
   // Currently we don't do anything with this entityId but we will need it in the future
@@ -19,12 +19,14 @@ async function register ({ relayer, logger, network }, { RegisterResponse }) {
 
   logger.info('Successfully registered Broker with relayer', { entityId })
 
-  console.log('what the fuck is this', { network, globalNetwork: global.sparkswap.network })
+  if (!global.sparkswap || !global.sparkswap.network) {
+    throw new Error('Configuration error: Could not find network for broker')
+  }
 
   const registerUrl = registerUrls[global.sparkswap.network]
 
   if (!registerUrl) {
-    throw new Error(`Could not find registration url for network ${network}, please check broker configuration`)
+    throw new Error(`Could not find registration url for network ${global.sparkswap.network}, please check broker configuration`)
   }
 
   const url = `${registerUrl}${entityId}`

@@ -97,11 +97,10 @@ class BrokerDaemon {
    * @returns {BrokerDaemon}
    */
   constructor ({ network, privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcHttpProxyAddress }) {
-    // Set a global namespace for sparkswap
+    // Set a global namespace for sparkswap that we can use for properties not
+    // related to application configuration
     if (!global.sparkswap) {
       global.sparkswap = {}
-    } else {
-      throw new Error('Sparkswap global namespace already exists. Exiting')
     }
 
     if (!network) throw new Error('Network is required to create a BrokerDaemon')
@@ -109,7 +108,7 @@ class BrokerDaemon {
     if (!pubIdKeyPath) throw new Error('Public Key path is required to create a BrokerDaemon')
 
     // Set the network in the global sparkswap namespace
-    global.sparkswap.network = 'mainnet'
+    global.sparkswap.network = network
 
     const { relayerRpcHost, relayerCertPath } = relayerOptions
 
@@ -148,7 +147,6 @@ class BrokerDaemon {
     })
 
     this.rpcServer = new BrokerRPCServer({
-      network,
       rpcAddress: this.rpcAddress,
       rpcHttpProxyAddress: this.rpcHttpProxyAddress,
       logger: this.logger,

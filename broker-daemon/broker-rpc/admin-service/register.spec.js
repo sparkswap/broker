@@ -34,15 +34,24 @@ describe('register', () => {
     })
   })
 
+  beforeEach(() => {
+    global.sparkswap = {}
+    global.sparkswap.network = network
+  })
+
+  afterEach(() => {
+    delete global['sparkswap']
+  })
+
   it('registers the publickey with the relayer', async () => {
-    await register({ relayer, logger, network }, { RegisterResponse })
+    await register({ relayer, logger }, { RegisterResponse })
 
     expect(registerStub).to.have.been.calledOnce()
     expect(registerStub).to.have.been.calledWith({ publicKey })
   })
 
   it('returns the entityId created by the relayer', async () => {
-    const res = await register({ relayer, logger, network }, { RegisterResponse })
+    const res = await register({ relayer, logger }, { RegisterResponse })
 
     expect(res).to.be.an.instanceOf(RegisterResponse)
     expect(RegisterResponse).to.have.been.calledOnce()
@@ -50,7 +59,13 @@ describe('register', () => {
     expect(RegisterResponse).to.have.been.calledWith({ entityId, url: `${url}${entityId}` })
   })
 
-  it('throws an error if registration url cannot be found', async () => {
-    return expect(register({ relayer, logger, network: 'badnetwork' }, { RegisterResponse })).to.eventually.be.rejectedWith('Could not find registration url')
+  it('throws an error if registration url could not be found', async () => {
+    global.sparkswap.network = 'badnetwork'
+    return expect(register({ relayer, logger }, { RegisterResponse })).to.eventually.be.rejectedWith('Could not find registration url')
+  })
+
+  it('throws an error if network could not be found', async () => {
+    delete global.sparkswap['network']
+    return expect(register({ relayer, logger }, { RegisterResponse })).to.eventually.be.rejectedWith('Configuration error: Could not find network')
   })
 })
