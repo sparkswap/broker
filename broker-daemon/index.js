@@ -80,6 +80,7 @@ function createEngineFromConfig (symbol, engineConfig, { logger }) {
 class BrokerDaemon {
   /**
    * @param {Object} opts
+   * @param {string} opts.network - current blockchain network of the daemon
    * @param {string} opts.privKeyPath - Path to private key for broker's identity
    * @param {string} opts.pubKeyPath - Path to public key for broker's identity
    * @param {string} opts.rpcAddress - Host and port where the user-facing RPC server should listen
@@ -95,11 +96,22 @@ class BrokerDaemon {
    * @param {string} opts.relayerOptions.certPath - Absolute path to the root certificate for the relayer
    * @returns {BrokerDaemon}
    */
-  constructor ({ privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcHttpProxyAddress }) {
+  constructor ({ network, privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcHttpProxyAddress }) {
+    // Set a global namespace for sparkswap that we can use for properties not
+    // related to application configuration
+    if (!global.sparkswap) {
+      global.sparkswap = {}
+    }
+
+    if (!network) throw new Error('Network is required to create a BrokerDaemon')
     if (!privIdKeyPath) throw new Error('Private Key path is required to create a BrokerDaemon')
     if (!pubIdKeyPath) throw new Error('Public Key path is required to create a BrokerDaemon')
 
+    // Set the network in the global sparkswap namespace
+    global.sparkswap.network = network
+
     const { relayerRpcHost, relayerCertPath } = relayerOptions
+
     this.idKeyPath = {
       privKeyPath: privIdKeyPath,
       pubKeyPath: pubIdKeyPath
