@@ -78,5 +78,24 @@ describe('ask-password', () => {
       const askConf = rl.question.args[1][1]
       askConf(inputConfirm)
     })
+
+    it('closes the readline stream', () => {
+      askPassword().then(() => {
+        expect(rl.close).to.have.been.calledOnce()
+      })
+      const askPass = rl.question.args[0][1]
+      askPass(inputPassword)
+      const askConf = rl.question.args[1][1]
+      askConf(inputConfirm)
+    })
+
+    it('closes the readline stream on failure', () => {
+      const error = new Error('failure')
+      rl.question.throws(error)
+      askPassword().catch((e) => {
+        expect(e).to.be.eql(error)
+        expect(rl.close).to.have.been.called()
+      })
+    })
   })
 })

@@ -43,6 +43,15 @@ describe('ask-question', () => {
       expect(createInterfaceStub).to.have.been.calledWith(sinon.match({ input: stdinStub, output: stdoutStub }))
     })
 
+    it('closes the readline stream on failure', () => {
+      const error = new Error('failure')
+      rlStub.question.throws(error)
+      askQuestion().catch((e) => {
+        expect(e).to.be.eql(error)
+        expect(rlStub.close).to.have.been.called()
+      })
+    })
+
     context('silent', () => {
       it('suppresses user input if silent is set to true', () => {
         askQuestion(message, { silent: true })
