@@ -10,6 +10,17 @@ const { Big } = require('./big')
 const MAX_VALUE = '9223372036854775807'
 
 /**
+ * @constant
+ * @type {Object}
+ * @default
+ */
+const BLOCKCHAIN_NETWORKS = Object.freeze([
+  'mainnet',
+  'testnet',
+  'regtest'
+])
+
+/**
  * Checks if the specified string is a valid decimal format
  *
  * @param {string} str
@@ -172,6 +183,21 @@ function isPositiveInteger (str) {
   throw new Error('Not a valid integer value')
 }
 
+/**
+ * Checks if the given network is a valid blockchain network
+ * for the broker
+ * @param {string} network - blockchain network
+ * @returns {string}
+ * @throws {Error} Invalid network
+ */
+function isBlockchainNetwork (network) {
+  if (BLOCKCHAIN_NETWORKS.includes(network)) {
+    return network
+  }
+
+  throw new Error(`Invalid blockchain network: ${network}`)
+}
+
 module.exports = {
   isDecimal,
   isMarketName,
@@ -180,5 +206,6 @@ module.exports = {
   areValidMarketNames,
   isBlockOrderId,
   isDate,
-  isPositiveInteger
+  isPositiveInteger,
+  isBlockchainNetwork
 }

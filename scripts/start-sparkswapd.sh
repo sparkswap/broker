@@ -12,6 +12,7 @@ set -eu
 # We set value defaults here to mimic the behaivor of docker-compose in-case
 # this script is called outside of docker-compose
 DATA_DIR=${DATA_DIR:-""}
+NETWORK=${NETWORK:-""}
 RPC_ADDRESS=${RPC_ADDRESS:-""}
 RPC_USER=${RPC_USER:-""}
 RPC_PASS=${RPC_PASS:-""}
@@ -28,6 +29,10 @@ PARAMS=""
 
 if [ ! -z "$DATA_DIR" ]; then
   PARAMS="$PARAMS --data-dir=$DATA_DIR"
+fi
+
+if [ ! -z "$NETWORK" ]; then
+  PARAMS="$PARAMS --network=$NETWORK"
 fi
 
 if [ ! -z "$ID_PUB_KEY" ]; then

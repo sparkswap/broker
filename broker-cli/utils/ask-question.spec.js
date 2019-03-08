@@ -11,6 +11,7 @@ describe('ask-question', () => {
     let rlStub
     let stdinStub
     let stdoutStub
+    let suppressInputStub
 
     beforeEach(() => {
       rlStub = {
@@ -23,7 +24,9 @@ describe('ask-question', () => {
       }
       stdoutStub = sinon.stub()
       createInterfaceStub = sinon.stub().returns(rlStub)
+      suppressInputStub = sinon.stub()
 
+      askQuestion.__set__('suppressInput', suppressInputStub)
       askQuestion.__set__('readline', {
         createInterface: createInterfaceStub
       })

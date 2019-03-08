@@ -4,6 +4,7 @@ const { expect, sinon, rewire } = require('test/test-helper')
 const BrokerDaemon = rewire(path.resolve('broker-daemon', 'index'))
 
 describe('broker daemon', () => {
+  let network
   let rpcServer
   let interchainRouter
   let eventEmitter
@@ -95,6 +96,7 @@ describe('broker daemon', () => {
     BrokerDaemon.__set__('InterchainRouter', interchainRouter)
     BrokerDaemon.__set__('logger', logger)
 
+    network = 'mainnet'
     privRpcKeyPath = '/my/private/rpc/key/path'
     pubRpcKeyPath = '/my/public/rpc/key/path'
     privIdKeyPath = '/my/private/id/key/path'
@@ -136,7 +138,8 @@ describe('broker daemon', () => {
       disableAuth,
       rpcUser,
       rpcPass,
-      relayerOptions
+      relayerOptions,
+      network
     }
   })
 
@@ -144,12 +147,16 @@ describe('broker daemon', () => {
     expect(() => new BrokerDaemon({})).to.throw()
   })
 
+  it('throws if network is null', () => {
+    expect(() => new BrokerDaemon({})).to.throw('Network is required to create')
+  })
+
   it('throws if the public key path is null', () => {
-    expect(() => new BrokerDaemon({ privIdKeyPath: 'somepath' })).to.throw('Public Key path is required')
+    expect(() => new BrokerDaemon({ network, privIdKeyPath: 'somepath' })).to.throw('Public Key path is required')
   })
 
   it('throws if the private key path is null', () => {
-    expect(() => new BrokerDaemon({ privIdKeyPath: null })).to.throw('Private Key path is required')
+    expect(() => new BrokerDaemon({ network, privIdKeyPath: null })).to.throw('Private Key path is required')
   })
 
   it('throws for unrecognized engine types', () => {
