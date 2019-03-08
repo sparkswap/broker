@@ -4,13 +4,15 @@ const { sinon, rewire, expect } = require('test/test-helper')
 const sparkswapd = rewire(path.resolve(__dirname, 'sparkswapd.js'))
 const config = rewire(path.resolve(__dirname, '..', 'config.json'))
 
-describe('sparkswapd', () => {
+describe.only('sparkswapd', () => {
   let BrokerDaemon
   let argv
   let network
+  let env
 
   beforeEach(() => {
     network = 'regtest'
+    env = 'production'
     BrokerDaemon = sinon.stub()
     BrokerDaemon.prototype.initialize = sinon.stub()
 
@@ -19,7 +21,8 @@ describe('sparkswapd', () => {
     argv = [
       'node',
       './broker-daemon/bin/sparkswapd',
-      `--network=${network}`
+      `--network=${network}`,
+      `--environment=${env}`
     ]
   })
 

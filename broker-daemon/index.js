@@ -96,21 +96,9 @@ class BrokerDaemon {
    * @param {string} opts.relayerOptions.certPath - Absolute path to the root certificate for the relayer
    * @returns {BrokerDaemon}
    */
-  constructor ({ network, environment, privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcHttpProxyAddress }) {
-    // Set a global namespace for sparkswap that we can use for properties not
-    // related to application configuration
-    if (!global.sparkswap) {
-      global.sparkswap = {}
-    }
-
-    if (!network) throw new Error('Network is required to create a BrokerDaemon')
+  constructor ({ privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcHttpProxyAddress }) {
     if (!privIdKeyPath) throw new Error('Private Key path is required to create a BrokerDaemon')
     if (!pubIdKeyPath) throw new Error('Public Key path is required to create a BrokerDaemon')
-
-    // Set the network in the global sparkswap namespace
-    global.sparkswap.network = network
-    // Set environment in the global sparkswap namespace
-    global.sparkswap.env = environment
 
     const { relayerRpcHost, relayerCertPath } = relayerOptions
 

@@ -111,9 +111,18 @@ program
     // `markets` will be a string of market symbols that are delimited by a comma
     const marketNames = (markets || '').split(',').filter(m => m)
 
+    // Set a global namespace for sparkswap that we can use for properties not
+    // related to application configuration
+    if (!global.sparkswap) {
+      global.sparkswap = {}
+    }
+
+    // Set the network in the global sparkswap namespace
+    global.sparkswap.network = network
+    // Set environment in the global sparkswap namespace
+    global.sparkswap.env = environment
+
     const brokerOptions = {
-      network,
-      environment,
       pubRpcKeyPath,
       privRpcKeyPath,
       privIdKeyPath,
