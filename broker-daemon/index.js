@@ -96,7 +96,7 @@ class BrokerDaemon {
    * @param {string} opts.relayerOptions.certPath - Absolute path to the root certificate for the relayer
    * @returns {BrokerDaemon}
    */
-  constructor ({ network, privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcHttpProxyAddress }) {
+  constructor ({ network, environment, privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcHttpProxyAddress }) {
     // Set a global namespace for sparkswap that we can use for properties not
     // related to application configuration
     if (!global.sparkswap) {
@@ -109,6 +109,8 @@ class BrokerDaemon {
 
     // Set the network in the global sparkswap namespace
     global.sparkswap.network = network
+    // Set environment in the global sparkswap namespace
+    global.sparkswap.env = environment
 
     const { relayerRpcHost, relayerCertPath } = relayerOptions
 

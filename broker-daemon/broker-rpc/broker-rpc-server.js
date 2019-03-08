@@ -17,15 +17,6 @@ const { createBasicAuth, createHttpServer } = require('../utils')
 const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
 
 /**
- * Whether we are starting this process in production based on the NODE_ENV
- *
- * @constant
- * @type {boolean}
- * @default
- */
-const IS_PRODUCTION = (process.env.NODE_ENV === 'production')
-
-/**
  * @class User-facing gRPC server for controling the BrokerDaemon
  *
  * @author Sparkswap
@@ -87,8 +78,8 @@ class BrokerRPCServer {
    * @returns {void}
    */
   listen (host) {
-    if (IS_PRODUCTION && this.disableAuth) {
-      throw new Error(`Cannot disable TLS in production. Set DISABLE_AUTH to FALSE.`)
+    if (global.sparkswap.network === 'mainnet' && this.disableAuth) {
+      throw new Error(`Cannot disable TLS on mainnet. Set DISABLE_AUTH to FALSE.`)
     }
 
     const rpcCredentials = this.createCredentials()

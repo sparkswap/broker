@@ -50,7 +50,7 @@ function createLogger () {
   })
 
   const logger = winston.createLogger({
-    level: (process.env.NODE_ENV === 'production') ? 'info' : 'debug',
+    level: (global.sparkswap.env === 'production') ? 'info' : 'debug',
     format: winston.format.combine(
       filterSensitive(),
       winston.format.timestamp(),

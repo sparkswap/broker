@@ -19,22 +19,15 @@ consoleLogger.debug = console.log.bind(console)
 const RELAYER_PROTO_PATH = './proto/relayer.proto'
 
 /**
- * @constant
- * @type {string}
- * @default
- */
-const PRODUCTION = process.env.NODE_ENV === 'production'
-
-/**
  * Interface for daemon to interact with a SparkSwap Relayer
  *
- * @author SparkSwap
+ * @author Sparkswap
  */
 class RelayerClient {
   /**
    * @typedef {Object} KeyPath
-   * @property {String} privKeyPath Path to a private key
-   * @property {String} pubKeyPath  Path to the public key corresponding to the private key
+   * @property {string} privKeyPath Path to a private key
+   * @property {string} pubKeyPath  Path to the public key corresponding to the private key
    */
 
   /**
@@ -53,8 +46,8 @@ class RelayerClient {
 
     let channelCredentials = credentials.createSsl()
 
-    if (!PRODUCTION) {
-      logger.info('Using local certs for relayer client', { production: PRODUCTION })
+    if (global.sparkswap.network === 'regtest' && global.sparkswap.env !== 'production') {
+      logger.info('Using local certs for relayer client', { env: global.sparkswap.env, network: global.sparkswap.network })
       channelCredentials = credentials.createSsl(readFileSync(certPath))
     }
 

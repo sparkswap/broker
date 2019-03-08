@@ -21,6 +21,16 @@ const BLOCKCHAIN_NETWORKS = Object.freeze([
 ])
 
 /**
+ * @constant
+ * @type {Object}
+ * @default
+ */
+const APP_ENVIRONMENTS = Object.freeze([
+  'dev',
+  'production'
+])
+
+/**
  * Checks if the specified string is a valid decimal format
  *
  * @param {string} str
@@ -198,6 +208,14 @@ function isBlockchainNetwork (network) {
   throw new Error(`Invalid blockchain network: ${network}`)
 }
 
+function isValidEnvironment (env) {
+  if (APP_ENVIRONMENTS.includes(env)) {
+    return env
+  }
+
+  throw new Error(`Invalid application environment: ${env}`)
+}
+
 module.exports = {
   isDecimal,
   isMarketName,
@@ -207,5 +225,6 @@ module.exports = {
   isBlockOrderId,
   isDate,
   isPositiveInteger,
-  isBlockchainNetwork
+  isBlockchainNetwork,
+  isValidEnvironment
 }

@@ -13,6 +13,7 @@ set -eu
 # this script is called outside of docker-compose
 DATA_DIR=${DATA_DIR:-""}
 NETWORK=${NETWORK:-""}
+NODE_ENV=${NODE_ENV:-""}
 RPC_ADDRESS=${RPC_ADDRESS:-""}
 RPC_USER=${RPC_USER:-""}
 RPC_PASS=${RPC_PASS:-""}
@@ -33,6 +34,10 @@ fi
 
 if [ ! -z "$NETWORK" ]; then
   PARAMS="$PARAMS --network=$NETWORK"
+fi
+
+if [ ! -z "$NODE_ENV" ]; then
+  PARAMS="$PARAMS --environment=$NODE_ENV"
 fi
 
 if [ ! -z "$ID_PUB_KEY" ]; then

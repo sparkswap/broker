@@ -37,6 +37,7 @@ program
   // Broker configuration options
   .option('--data-dir [data-dir]', 'Location to store SparkSwap data', validations.isFormattedPath, config.dataDir)
   .option('--network [network]', 'The current blockchain network. (mainnet, testnet, or regtest)', validations.isBlockchainNetwork, null, true)
+  .option('--environment [environment]', 'The current application environment (dev or production)', validations.isValidEnvironment, null, true)
   .option('--interchain-router-address [interchain-router-address]', 'Add a host/port to listen for interchain router RPC connections', validations.isHost, config.interchainRouterAddress)
   .option('--id-pub-key-path [id-pub-key-path]', 'Location of the public key for the broker\'s identity', validations.isFormattedPath, config.idPubKeyPath)
   .option('--id-priv-key-path [id-priv-key-path]', 'Location of private key for the broker\'s identity', validations.isFormattedPath, config.idPrivKeyPath)
@@ -73,6 +74,7 @@ program
     const {
       dataDir,
       network,
+      environment,
       interchainRouterAddress,
       idPubKeyPath: pubIdKeyPath,
       idPrivKeyPath: privIdKeyPath,
@@ -111,6 +113,7 @@ program
 
     const brokerOptions = {
       network,
+      environment,
       pubRpcKeyPath,
       privRpcKeyPath,
       privIdKeyPath,
