@@ -679,7 +679,7 @@ describe('cli wallet', () => {
     let createWalletStub
     let seeds
     let errorStub
-    let askQuestionStub
+    let askPasswordStub
     let symbol
     let infoStub
 
@@ -688,7 +688,7 @@ describe('cli wallet', () => {
     beforeEach(() => {
       errorStub = sinon.stub()
       infoStub = sinon.stub()
-      askQuestionStub = sinon.stub()
+      askPasswordStub = sinon.stub()
       symbol = 'BTC'
       args = {
         symbol
@@ -707,26 +707,25 @@ describe('cli wallet', () => {
       }
 
       program.__set__('BrokerDaemonClient', daemonStub)
-      program.__set__('askQuestion', askQuestionStub)
+      program.__set__('askPassword', askPasswordStub)
     })
 
     it('logs an error if passwords do not match', async () => {
-      askQuestionStub.onFirstCall().resolves('realpassword')
-      askQuestionStub.onSecondCall().resolves('relpassword')
+      askPasswordStub.resolves({ password: 'realpassword', confirm: 'jsdfkjsdf' })
       await create(args, opts, logger)
       expect(errorStub).to.have.been.calledWith(sinon.match('Passwords did not match'))
     })
 
     it('creates a wallet', async () => {
       const password = 'password'
-      askQuestionStub.resolves(password)
+      askPasswordStub.resolves({ password, confirm: password })
       await create(args, opts, logger)
       expect(createWalletStub).to.have.been.calledWith({ symbol, password })
     })
 
     it('outputs a cipher seed', async () => {
       const password = 'password'
-      askQuestionStub.resolves(password)
+      askPasswordStub.resolves({ password, confirm: password })
       await create(args, opts, logger)
       expect(infoStub).to.have.been.calledWith(seeds)
     })
