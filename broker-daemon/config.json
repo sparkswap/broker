@@ -9,8 +9,8 @@
   "supportedEngineTypes": ["LND"],
   "registerUrls": {
     "mainnet": "https://sparkswap.com/register/",
-    "testnet": "https://sparkswap.com/sandbox-register/",
-    "regtest": "https://sparkswap.com/sandbox-register/"
+    "testnet": "https://sparkswap.com/register-sandbox/",
+    "regtest": "https://sparkswap.com/register-sandbox/"
   },
   "relayer": {
     "rpcHost": "host.docker.internal:28492",
