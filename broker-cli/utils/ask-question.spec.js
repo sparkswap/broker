@@ -22,7 +22,9 @@ describe('ask-question', () => {
       stdinStub = {
         on: sinon.stub()
       }
-      stdoutStub = sinon.stub()
+      stdoutStub = {
+        write: sinon.stub()
+      }
       createInterfaceStub = sinon.stub().returns(rlStub)
       suppressInputStub = sinon.stub()
 
@@ -39,6 +41,15 @@ describe('ask-question', () => {
     it('creates a readline interface', () => {
       askQuestion(message)
       expect(createInterfaceStub).to.have.been.calledWith(sinon.match({ input: stdinStub, output: stdoutStub }))
+    })
+
+    context('silent', () => {
+      it('suppresses user input if silent is set to true', () => {
+        askQuestion(message, { silent: true })
+        const call = rlStub.question.args[0][1]
+        call()
+        expect(rlStub.silent).to.be.true()
+      })
     })
 
     context('response', () => {

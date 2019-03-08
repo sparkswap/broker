@@ -11,7 +11,8 @@ const readline = require('readline')
 function askQuestion (message, { silent = false } = {}) {
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
+    historySize: 0
   })
 
   // We override the _writeToOutput method so that we can suppress the output
@@ -28,7 +29,9 @@ function askQuestion (message, { silent = false } = {}) {
       // Do not suppress the output for the question
       rl.silent = false
       rl.question(`${message} `, (answer) => {
-        rl.history = rl.history.slice(1)
+        // Add a new line after the question
+        process.stdout.write('\n')
+
         rl.close()
         return resolve(answer)
       })

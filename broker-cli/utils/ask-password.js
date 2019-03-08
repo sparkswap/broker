@@ -9,7 +9,8 @@ const readline = require('readline')
 function askPassword () {
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
+    historySize: 0
   })
 
   // We override the _writeToOutput method so that we can suppress the output
@@ -35,10 +36,6 @@ function askPassword () {
         rl.question('Please confirm password: ', (confirm) => {
           // Add a new line after the second question
           process.stdout.write('\n')
-
-          // Remove both entries of the password from readline history
-          rl.history = rl.history.slice(1)
-          rl.history = rl.history.slice(1)
 
           // Close the interface
           rl.close()
