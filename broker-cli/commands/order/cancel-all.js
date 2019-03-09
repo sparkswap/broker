@@ -22,15 +22,20 @@ const ACCEPTED_ANSWERS = Object.freeze(['y', 'yes'])
 async function cancelAll (args, opts, logger) {
   const {
     rpcAddress,
-    market
+    market,
+    noPrompt
   } = opts
 
   const request = {
     market
   }
 
-  const answer = await askQuestion(`Are you sure you want to cancel all your orders on the ${market} market? (Y/N)`)
-  if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
+  if (!noPrompt) {
+    const answer = await askQuestion(`Are you sure you want to cancel all your orders on the ${market} market? (Y/N)`)
+    if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) {
+      return
+    }
+  }
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)

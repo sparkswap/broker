@@ -32,9 +32,11 @@ module.exports = (program) => {
     .argument('[sub-arguments...]')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
+    .option('--no-prompt', 'Removes the interactive prompt from a specific command', null, false)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
-      const { market } = opts
+      const { market, noPrompt } = opts
+
       let blockOrderId
 
       switch (command) {
@@ -57,6 +59,7 @@ module.exports = (program) => {
 
         case SUPPORTED_COMMANDS.CANCEL_ALL:
           opts.market = validations.isMarketName(market)
+          opts.noPrompt = noPrompt
           return cancelAll(args, opts, logger)
       }
     })
@@ -74,4 +77,5 @@ module.exports = (program) => {
     .command(`order ${SUPPORTED_COMMANDS.CANCEL_ALL}`, 'Cancel all block orders on market')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
+    .option('--no-prompt', 'Removes interactive prompt for cancelling orders. This is potentially dangerous when used', null, false)
 }

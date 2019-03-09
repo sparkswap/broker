@@ -143,7 +143,7 @@ async function newDepositAddress (args, opts, logger) {
  */
 async function commit (args, opts, logger) {
   const { symbol, amount } = args
-  const { rpcAddress, market } = opts
+  const { rpcAddress, market, noPrompt } = opts
   const currentCurrencyConfig = currencyConfig.find(({ symbol: configSymbol }) => configSymbol === symbol)
 
   try {
@@ -189,9 +189,15 @@ async function commit (args, opts, logger) {
     logger.info(`For your knowledge, the Maximum supported balance at this time is: ${maxSupportedBalance.toString()} ${symbol}`)
     logger.info(`Your current uncommitted wallet balance is: ${uncommittedBalance.toString()} ${symbol}`)
 
-    const answer = await askQuestion(`Are you OK committing ${maxSupportedBalance.toString()} ${symbol} to sparkswap? (Y/N)`)
+    if (noPrompt) {
+      logger.info(`Committing ${maxSupportedBalance.toString()} ${symbol} to sparkswap.`)
+    } else {
+      const answer = await askQuestion(`Are you OK committing ${maxSupportedBalance.toString()} ${symbol} to sparkswap? (Y/N)`)
 
-    if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
+      if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) {
+        return
+      }
+    }
 
     if (maxSupportedBalance.gt(uncommittedBalance)) {
       throw new Error(`Amount specified is larger than your current uncommitted balance of ${uncommittedBalance} ${symbol}`)
@@ -371,21 +377,28 @@ async function networkStatus (args, opts, logger) {
  */
 async function release (args, opts, logger) {
   const { market } = args
-  const { rpcAddress, force } = opts
+  const { rpcAddress, force, noPrompt } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
 
     let question
+
     if (force) {
       question = `Are you sure you want to FORCE the release of all channels you have open on the ${market} market? (Y/N)`
     } else {
       question = `Are you sure you want to release all channels you have open on the ${market} market? (Y/N)`
     }
 
-    const answer = await askQuestion(question)
-
-    if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
+    // If a user includes `--no-prompt` in this command's options, then we will
+    // omit asking them if they are OK with closing channels. This is destructive
+    // for the user, but is documented in the CLI help menu
+    if (!noPrompt) {
+      const answer = await askQuestion(question)
+      if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) {
+        return
+      }
+    }
 
     try {
       // We want to keep track if any returned channel had an error while attempting
@@ -444,14 +457,17 @@ async function release (args, opts, logger) {
  */
 async function withdraw (args, opts, logger) {
   const { symbol, address, amount } = args
-  const { rpcAddress } = opts
+  const { rpcAddress, noPrompt } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
 
-    const answer = await askQuestion(`Are you sure you want to withdraw ${amount} ${symbol} from your wallet? (Y/N)`)
-
-    if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
+    if (!noPrompt) {
+      const answer = await askQuestion(`Are you sure you want to withdraw ${amount} ${symbol} from your wallet? (Y/N)`)
+      if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) {
+        return
+      }
+    }
 
     const { txid } = await client.walletService.withdrawFunds({ symbol, address, amount })
     logger.info(`Successfully withdrew ${amount} ${symbol} from your wallet!`, { id: txid })
@@ -474,16 +490,22 @@ async function withdraw (args, opts, logger) {
  */
 async function create (args, opts, logger) {
   const { symbol } = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress, password: cliPassword } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
 
-    const password = await askQuestion(`Please enter a password:`, { silent: true })
-    const confirmPass = await askQuestion(`Please confirm password:`, { silent: true })
+    let password = null
 
-    if (password !== confirmPass) {
-      return logger.error('Error: Passwords did not match, please try again'.red)
+    if (cliPassword) {
+      password = cliPassword
+    } else {
+      password = await askQuestion(`Please enter a password:`, { silent: true })
+      const confirmPass = await askQuestion(`Please confirm password:`, { silent: true })
+
+      if (password !== confirmPass) {
+        return logger.error('Error: Passwords did not match, please try again'.red)
+      }
     }
 
     const { recoverySeed } = await client.walletService.createWallet({ symbol, password })
@@ -514,12 +536,21 @@ async function create (args, opts, logger) {
  */
 async function unlock (args, opts, logger) {
   const { symbol } = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress, password: cliPassword } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const password = await askQuestion(`Enter the wallet password:`, { silent: true })
+
+    let password = null
+
+    if (cliPassword) {
+      password = cliPassword
+    } else {
+      password = await askQuestion(`Enter the wallet password:`, { silent: true })
+    }
+
     await client.walletService.unlockWallet({ symbol, password })
+
     logger.info(`Successfully Unlocked ${symbol.toUpperCase()} Wallet!`.green)
   } catch (e) {
     logger.error(handleError(e))
@@ -539,9 +570,11 @@ module.exports = (program) => {
     // not receive the variable in the `opts` object
     .option('--wallet-address [address]', 'used in sparkswap withdraw ONLY')
     .option('--force', 'Force close all channels. This options is only used in the sparkswap release command', null, false)
+    .option('--no-prompt', 'Removes the interactive prompt from a specific command', null, false)
+    .option('--password', 'Password used for create/unlock commands. This disables interactive prompt when used.', null)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
-      const { market } = opts
+      const { market, noPrompt, password } = opts
 
       // TODO: Figure out a way to handle subArguments that could be dynamic
       // for each command
@@ -570,6 +603,7 @@ module.exports = (program) => {
           args.symbol = symbol
           args.amount = amount
           opts.market = validations.isMarketName(market)
+          opts.noPrompt = noPrompt
 
           return commit(args, opts, logger)
         case SUPPORTED_COMMANDS.NETWORK_ADDRESS:
@@ -587,6 +621,8 @@ module.exports = (program) => {
           return networkStatus(args, opts, logger)
         case SUPPORTED_COMMANDS.RELEASE:
           args.market = validations.isMarketName(market)
+          opts.noPrompt = noPrompt
+
           return release(args, opts, logger)
         case SUPPORTED_COMMANDS.WITHDRAW:
           symbol = symbol.toUpperCase()
@@ -609,6 +645,7 @@ module.exports = (program) => {
           }
 
           args.symbol = symbol
+          opts.password = password
 
           return create(args, opts, logger)
         case SUPPORTED_COMMANDS.UNLOCK:
@@ -619,6 +656,7 @@ module.exports = (program) => {
           }
 
           args.symbol = symbol
+          opts.password = password
 
           return unlock(args, opts, logger)
       }
@@ -626,8 +664,10 @@ module.exports = (program) => {
     .command(`wallet ${SUPPORTED_COMMANDS.CREATE}`, 'Create a wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
+    .option('--password', 'Wallet password for create command. This removes the password prompt.', null)
     .command(`wallet ${SUPPORTED_COMMANDS.UNLOCK}`, 'Unlock a wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
+    .option('--password', 'Wallet password for create command. This removes the password prompt.', null)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.BALANCE}`, 'Current daemon wallet balance')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
@@ -647,6 +687,7 @@ module.exports = (program) => {
     .option('--market <marketName>', MARKET_NAME_HELP_STRING, null, null, true)
     .option('--force', 'Force close all channels', null, false)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
+    .option('--no-prompt', 'Removes interactive prompt for releasing channels. This is potentially dangerous if used with --force.', null, false)
     .command(`wallet ${SUPPORTED_COMMANDS.NETWORK_ADDRESS}`, 'Payment Channel Network Public key for a given currency')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
