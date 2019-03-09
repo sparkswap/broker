@@ -7,17 +7,8 @@ const Table = require('cli-table2')
 require('colors')
 
 const BrokerDaemonClient = require('../broker-daemon-client')
-const {
-  validations,
-  askQuestion,
-  askPassword,
-  Big,
-  handleError
-} = require('../utils')
-const {
-  RPC_ADDRESS_HELP_STRING,
-  MARKET_NAME_HELP_STRING
-} = require('../utils/strings')
+const { validations, askQuestion, Big, handleError } = require('../utils')
+const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../utils/strings')
 const { currencies: currencyConfig } = require('../config')
 
 /**
@@ -488,11 +479,11 @@ async function create (args, opts, logger) {
   try {
     const client = new BrokerDaemonClient(rpcAddress)
 
-    const { password, confirm } = await askPassword()
+    const password = await askQuestion(`Please enter a password:`, { silent: true })
+    const confirmPass = await askQuestion(`Please confirm password:`, { silent: true })
 
-    // Super basic check for if passwords match
-    if (password !== confirm) {
-      return logger.error('Passwords did not match, please try again'.red)
+    if (password !== confirmPass) {
+      return logger.error('Error: Passwords did not match, please try again'.red)
     }
 
     const { recoverySeed } = await client.walletService.createWallet({ symbol, password })
