@@ -4,6 +4,84 @@ const { expect, rewire, sinon } = require('test/test-helper')
 const askQuestion = rewire(path.resolve(__dirname, 'ask-question'))
 
 describe('ask-question', () => {
+  describe('suppressInput', () => {
+    const message = 'my message'
+    const reverts = []
+
+    let processStub
+    let stdinPauseStub
+    let stdoutClearLineStub
+    let stdoutWriteStub
+    let suppressInput
+    let cursorStub
+
+    beforeEach(() => {
+      cursorStub = sinon.stub()
+      stdinPauseStub = sinon.stub()
+      stdoutClearLineStub = sinon.stub()
+      stdoutWriteStub = sinon.stub()
+      processStub = {
+        stdin: {
+          pause: stdinPauseStub
+        },
+        stdout: {
+          clearLine: stdoutClearLineStub,
+          write: stdoutWriteStub
+        }
+      }
+
+      reverts.push(askQuestion.__set__('process', processStub))
+      reverts.push(askQuestion.__set__('readline', {
+        cursorTo: cursorStub
+      }))
+    })
+
+    beforeEach(() => {
+      suppressInput = askQuestion.__get__('suppressInput')
+    })
+
+    afterEach(() => {
+      reverts.forEach(r => r())
+    })
+
+    it('pauses a stdin stream when receiving a new line', () => {
+      const newLine = askQuestion.__get__('NEW_LINE')
+      suppressInput(message, newLine)
+      expect(stdinPauseStub).to.have.been.calledOnce()
+    })
+
+    it('pauses a stdin stream when receiving a carriage return', () => {
+      const carriageReturn = askQuestion.__get__('CARRIAGE_RETURN')
+      suppressInput(message, carriageReturn)
+      expect(stdinPauseStub).to.have.been.calledOnce()
+    })
+
+    it('pauses a stdin stream when receiving an end of transmission code', () => {
+      const endOfTransmission = askQuestion.__get__('END_OF_TRANSMISSION')
+      suppressInput(message, endOfTransmission)
+      expect(stdinPauseStub).to.have.been.calledOnce()
+    })
+
+    context('user input', () => {
+      const input = Buffer.from('t')
+
+      it('clears stdout', () => {
+        suppressInput(message, input)
+        expect(stdoutClearLineStub).to.have.been.calledOnce()
+      })
+
+      it('returns the cursor to the beginning of the line', () => {
+        suppressInput(message, input)
+        expect(cursorStub).to.have.been.calledWith(processStub.stdout, 0)
+      })
+
+      it('rewrites the message to stdout', () => {
+        suppressInput(message, input)
+        expect(stdoutWriteStub).to.have.been.calledWith(sinon.match(message))
+      })
+    })
+  })
+
   describe('askQuestion', () => {
     const message = 'my message'
 
@@ -22,9 +100,7 @@ describe('ask-question', () => {
       stdinStub = {
         on: sinon.stub()
       }
-      stdoutStub = {
-        write: sinon.stub()
-      }
+      stdoutStub = sinon.stub()
       createInterfaceStub = sinon.stub().returns(rlStub)
       suppressInputStub = sinon.stub()
 
@@ -43,22 +119,17 @@ describe('ask-question', () => {
       expect(createInterfaceStub).to.have.been.calledWith(sinon.match({ input: stdinStub, output: stdoutStub }))
     })
 
-    it('closes the readline stream on failure', () => {
-      const error = new Error('failure')
-      rlStub.question.throws(error)
-      askQuestion().catch((e) => {
-        expect(e).to.be.eql(error)
-        expect(rlStub.close).to.have.been.called()
-      })
+    it('adds a stdin watcher if output needs to be private', () => {
+      askQuestion(message, { silent: true })
+      expect(stdinStub.on).to.have.been.calledWith('data', sinon.match.func)
     })
 
-    context('silent', () => {
-      it('suppresses user input if silent is set to true', () => {
-        askQuestion(message, { silent: true })
-        const call = rlStub.question.args[0][1]
-        call()
-        expect(rlStub.silent).to.be.true()
-      })
+    it('it suppresses input if output needs to be private', () => {
+      const input = 'l'
+      askQuestion(message, { silent: true })
+      const call = stdinStub.on.args[0][1]
+      call(input)
+      expect(suppressInputStub).to.have.been.calledWith(message, input)
     })
 
     context('response', () => {
