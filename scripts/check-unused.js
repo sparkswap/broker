@@ -6,7 +6,7 @@ require('colors')
  * @type {string}
  * @constant
  */
-const REGEXP_TO_EXCLUDE = '.spec.js$'
+const TEST_FILE_REGEXP = '.spec.js$'
 
 /**
  * directory to check for orphans
@@ -23,7 +23,7 @@ const DIRECTORY = 'broker-daemon/'
 const ENTRYPOINT = 'bin/sparkswapd.js'
 
 const config = {
-  excludeRegExp: [ REGEXP_TO_EXCLUDE ]
+  excludeRegExp: [ TEST_FILE_REGEXP ]
 }
 
 ;(async function () {
@@ -35,4 +35,4 @@ const config = {
      console.error(`There are modules with no dependencies: ${orphans}`.red)
      process.exit(1)
    }
-})();
+})()
