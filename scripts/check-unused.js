@@ -26,12 +26,13 @@ const config = {
   excludeRegExp: [ REGEXP_TO_EXCLUDE ]
 }
 
-madge(DIRECTORY, config).then((res) => {
-  const orphans = res.orphans()
-  if (orphans.length === 1 && orphans[0] === ENTRYPOINT) {
-    return
-  } else {
-    console.error(`There are modules with no dependencies: ${orphans}`.red)
-    process.exit(1)
-  }
-})
+;(async function () {
+   const tree = await madge(DIRECTORY, config)
+   const orphans = tree.orphans()
+   if (orphans.length === 1 && orphans[0] === ENTRYPOINT) {
+     return
+   } else {
+     console.error(`There are modules with no dependencies: ${orphans}`.red)
+     process.exit(1)
+   }
+})();
