@@ -23,6 +23,15 @@ const {
 const UNASSIGNED_PREFIX = 'NO_ASSIGNED_ID_'
 
 /**
+ * Error codes that can come back from the relayer
+ * Note: Error code 14 is associated with gRPC status code 14, the service is UNAVAILABLE
+ * @type {Object}
+ */
+const ORDER_ERROR_CODES = Object.freeze({
+  RELAYER_UNAVAILABLE: 'RELAYER_UNAVAILABLE'
+})
+
+/**
  * @class Finite State Machine for managing order lifecycle
  */
 const OrderStateMachine = StateMachine.factory({
@@ -280,7 +289,8 @@ const OrderStateMachine = StateMachine.factory({
       }
 
       const errHandler = (e) => {
-        this.reject(e)
+        const relayerError = new Error(ORDER_ERROR_CODES.RELAYER_UNAVAILABLE)
+        this.reject(relayerError)
         finish()
       }
       const endHandler = () => {
@@ -344,6 +354,15 @@ const OrderStateMachine = StateMachine.factory({
      */
     onAfterExecute: function (lifecycle) {
       this.triggerComplete()
+    },
+
+    /**
+     * Returns true if there is a relayer error associated with the order, false if not
+     * This is just a getter function, no transition associated
+     * @returns {boolean}
+     */
+    shouldRetry: function () {
+      return !!this.order.error && this.order.error.message === ORDER_ERROR_CODES.RELAYER_UNAVAILABLE
     },
 
     /**

@@ -7,7 +7,8 @@ const {
   Big,
   getRecords,
   SublevelIndex,
-  generateId
+  generateId,
+  exponentialBackoff
 } = require('../utils')
 
 /**
@@ -573,7 +574,15 @@ class BlockOrderWorker extends EventEmitter {
     // reject the entire block order if an underlying order fails
     osm.once('reject', async () => {
       try {
-        await this.failBlockOrder(blockOrder.id, osm.order.error)
+        if (osm.shouldRetry()) {
+          const validation = async () => {
+            await this.relayer.adminService.healthCheck({})
+            await this.workBlockOrder(blockOrder, Big(osm.order.baseAmount))
+          }
+          await exponentialBackoff(validation, 10)
+        } else {
+          await this.failBlockOrder(blockOrder.id, osm.order.error)
+        }
       } catch (e) {
         this.logger.error(`BlockOrder failed on setting a failed status from order`, { id: blockOrder.id, error: e.stack })
       }
