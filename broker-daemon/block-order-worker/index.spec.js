@@ -2015,10 +2015,12 @@ describe('BlockOrderWorker', () => {
     let order
     let onceStub
     let removeAllListenersStub
+    let shouldRetryStub
 
     beforeEach(async () => {
       onceStub = sinon.stub()
       removeAllListenersStub = sinon.stub()
+      shouldRetryStub = sinon.stub()
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
 
       blockOrder = {
@@ -2041,7 +2043,8 @@ describe('BlockOrderWorker', () => {
           baseAmount: '100',
           fillAmount: '90'
         },
-        removeAllListeners: removeAllListenersStub
+        removeAllListeners: removeAllListenersStub,
+        shouldRetry: shouldRetryStub
       }
 
       await worker.applyOsmListeners(order, blockOrder)
@@ -2115,12 +2118,31 @@ describe('BlockOrderWorker', () => {
     })
 
     describe('reject event', () => {
+      let workBlockOrderStub
       let failBlockOrderStub
+      let relayerIsAvailableStub
+      let getBlockOrderStub
+      let updatedBlockOrder
       let rejectListener
+      let retry
 
       beforeEach(() => {
+        workBlockOrderStub = sinon.stub().resolves()
+        worker.workBlockOrder = workBlockOrderStub
+
         failBlockOrderStub = sinon.stub().resolves(true)
         worker.failBlockOrder = failBlockOrderStub
+
+        relayerIsAvailableStub = sinon.stub().resolves(true)
+        worker.relayerIsAvailable = relayerIsAvailableStub
+
+        updatedBlockOrder = blockOrder
+        getBlockOrderStub = sinon.stub().resolves(updatedBlockOrder)
+        worker.getBlockOrder = getBlockOrderStub
+
+        retry = sinon.stub()
+        BlockOrderWorker.__set__('retry', retry)
+
         rejectListener = onceStub.withArgs('reject').args[0][1]
       })
 
@@ -2128,9 +2150,45 @@ describe('BlockOrderWorker', () => {
         expect(onceStub).to.have.been.calledWith('reject', sinon.match.func)
       })
 
-      it('fails a block order if the call is rejected', async () => {
+      it('retries the block order when it should', async () => {
+        order.shouldRetry.returns(true)
+        await rejectListener()
+        expect(retry).to.have.been.calledOnce()
+        expect(retry).to.have.been.calledWith(sinon.match.func, sinon.match.string, sinon.match.number, sinon.match.number)
+      })
+
+      it('works the correct block order when it should', async () => {
+        order.shouldRetry.returns(true)
+        relayerIsAvailableStub.resolves(true)
+
+        await rejectListener()
+
+        const retryStub = retry.args[0][0]
+        await retryStub()
+
+        expect(getBlockOrderStub).to.have.been.calledOnce()
+        expect(getBlockOrderStub).to.have.been.calledWith(blockOrder.id)
+
+        expect(workBlockOrderStub).to.have.been.calledOnce()
+        expect(workBlockOrderStub).to.have.been.calledWith(updatedBlockOrder, Big(order.order.baseAmount))
+      })
+
+      it('does not try re-placing the block order when relayer is not available', async () => {
+        order.shouldRetry.returns(true)
+        relayerIsAvailableStub.resolves(false)
+
+        await rejectListener()
+        const retryStub = retry.args[0][0]
+        expect(retryStub()).to.have.been.rejectedWith('not available')
+      })
+
+      it('fails the block order when it should not retry', async () => {
+        order.shouldRetry.returns(false)
+        order.order.error = 'an error'
+
         await rejectListener()
         expect(failBlockOrderStub).to.have.been.calledOnce()
+        expect(failBlockOrderStub).to.have.been.calledWith(blockOrder.id, 'an error')
       })
 
       it('catches an exception if failBlockOrder fails', async () => {

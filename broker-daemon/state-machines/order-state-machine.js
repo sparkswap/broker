@@ -289,8 +289,13 @@ const OrderStateMachine = StateMachine.factory({
       }
 
       const errHandler = (e) => {
-        const relayerError = new Error(ORDER_ERROR_CODES.RELAYER_UNAVAILABLE)
-        this.reject(relayerError)
+        // code 14 corresponds to gRPC UNAVAILABLE
+        if (e.code === 14) {
+          const relayerError = new Error(ORDER_ERROR_CODES.RELAYER_UNAVAILABLE)
+          this.reject(relayerError)
+        } else {
+          this.reject(e)
+        }
         finish()
       }
       const endHandler = () => {

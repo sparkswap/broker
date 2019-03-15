@@ -12,6 +12,20 @@ const {
 } = require('../utils')
 
 /**
+ * Number of attempts to retry a block order when connection with relayer goes down
+ * @constant
+ * @type {number}
+ */
+const RETRY_ATTEMPTS = 30
+
+/**
+ * Interval, in ms, between retries of re-placing a block order when relayer goes down
+ * @constant
+ * @type {number}
+ */
+const DELAY = 10000
+
+/**
  * @class Create and work Block Orders
  */
 class BlockOrderWorker extends EventEmitter {
@@ -571,15 +585,25 @@ class BlockOrderWorker extends EventEmitter {
       }
     })
 
-    // reject the entire block order if an underlying order fails
+    // try to re-place the block order if the relayer drops connection, while allowing the broker to
+    // update block order status (i.e. broker can still cancel orders if relayer goes down)
     osm.once('reject', async () => {
       try {
         if (osm.shouldRetry()) {
-          const validation = async () => {
-            await this.relayer.adminService.healthCheck({})
-            await this.workBlockOrder(blockOrder, Big(osm.order.baseAmount))
+          const retryBlockOrder = async () => {
+            if (!await this.relayerIsAvailable()) {
+              throw new Error('Relayer not available')
+            }
+
+            this.logger.info('Retrying order for block order', { order: osm.order })
+
+            // Get the existing order in case an update to order status happened between retries
+            const updatedBlockOrder = await this.getBlockOrder(blockOrder.id)
+            await this.workBlockOrder(updatedBlockOrder, Big(osm.order.baseAmount))
           }
-          await retry(validation, 'Reworking block order due to relayer error', 10, 10000)
+
+          // This will try to rework each order within a block order every 10 seconds for 5 minutes
+          await retry(retryBlockOrder, 'Error reworking block order', RETRY_ATTEMPTS, DELAY)
         } else {
           await this.failBlockOrder(blockOrder.id, osm.order.error)
         }
@@ -798,6 +822,21 @@ class BlockOrderWorker extends EventEmitter {
     fsm.once('cancel', async () => {
       fsm.removeAllListeners()
     })
+  }
+
+  /**
+   * Checks if the relayer is available by pinging the healthCheck endpoint. If available,
+   * returns true. False otherwise.
+   * @private
+   * @returns {Promise<boolean>}
+   */
+  async relayerIsAvailable () {
+    try {
+      await this.relayer.adminService.healthCheck({})
+      return true
+    } catch (e) {
+      return false
+    }
   }
 }
 
