@@ -8,7 +8,7 @@ const {
   getRecords,
   SublevelIndex,
   generateId,
-  exponentialBackoff
+  retry
 } = require('../utils')
 
 /**
@@ -579,7 +579,7 @@ class BlockOrderWorker extends EventEmitter {
             await this.relayer.adminService.healthCheck({})
             await this.workBlockOrder(blockOrder, Big(osm.order.baseAmount))
           }
-          await exponentialBackoff(validation, 10)
+          await retry(validation, 'Reworking block order due to relayer error', 10, 10000)
         } else {
           await this.failBlockOrder(blockOrder.id, osm.order.error)
         }
