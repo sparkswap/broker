@@ -1,4 +1,5 @@
 const StateMachineHistory = require('javascript-state-machine/lib/history')
+const grpc = require('grpc')
 
 // We require order directly to avoid cycles with models index
 const Order = require('../models/order')
@@ -289,8 +290,7 @@ const OrderStateMachine = StateMachine.factory({
       }
 
       const errHandler = (e) => {
-        // code 14 corresponds to gRPC UNAVAILABLE
-        if (e.code === 14) {
+        if (e.code === grpc.status.UNAVAILABLE) {
           const relayerError = new Error(ORDER_ERROR_CODES.RELAYER_UNAVAILABLE)
           this.reject(relayerError)
         } else {

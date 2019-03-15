@@ -2150,7 +2150,7 @@ describe('BlockOrderWorker', () => {
         expect(onceStub).to.have.been.calledWith('reject', sinon.match.func)
       })
 
-      it('retries the block order when it should', async () => {
+      it('retries the block order when the relayer is unavailable', async () => {
         order.shouldRetry.returns(true)
         await rejectListener()
         expect(retry).to.have.been.calledOnce()
