@@ -173,10 +173,23 @@ describe('RelayerClient', () => {
         relayer = new RelayerClient(idKeyPath, { host: relayerHost }, logger)
       })
 
-      it('creates a makerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, MakerService, fakeCreds))
-      it('creates a takerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, TakerService, fakeCreds))
-      it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(relayer.address, OrderBookService, fakeCreds))
-      it('creates an adminService', () => expect(callerStub).to.have.been.calledWith(relayer.address, AdminService))
+      it('creates a makerService', () => {
+        const options = RelayerClient.__get__('GRPC_STREAM_OPTIONS')
+        expect(callerStub).to.have.been.calledWithExactly(relayer.address, MakerService, fakeCreds, options)
+      })
+
+      it('creates a takerService', () => {
+        const options = RelayerClient.__get__('GRPC_STREAM_OPTIONS')
+        expect(callerStub).to.have.been.calledWithExactly(relayer.address, TakerService, fakeCreds, options)
+      })
+
+      it('creates an orderBookService', () => {
+        const options = RelayerClient.__get__('GRPC_STREAM_OPTIONS')
+        expect(callerStub).to.have.been.calledWithExactly(relayer.address, OrderBookService, fakeCreds, options)
+      })
+
+      it('creates a paymentChannelNetworkService', () => expect(callerStub).to.have.been.calledWithExactly(relayer.address, PaymentChannelNetworkService, fakeCreds))
+      it('creates an adminService', () => expect(callerStub).to.have.been.calledWithExactly(relayer.address, AdminService, fakeCreds))
     })
   })
 

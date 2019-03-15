@@ -168,10 +168,15 @@ describe('BrokerDaemonClient', () => {
       broker = new BrokerDaemonClient()
     })
 
-    it('creates an adminService', () => expect(callerStub).to.have.been.calledWith(broker.address, adminStub, credentialStub))
-    it('creates an orderService', () => expect(callerStub).to.have.been.calledWith(broker.address, orderStub, credentialStub))
-    it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(broker.address, orderbookStub, credentialStub))
-    it('creates an walletService', () => expect(callerStub).to.have.been.calledWith(broker.address, walletStub, credentialStub))
+    it('creates an adminService', () => expect(callerStub).to.have.been.calledWithExactly(broker.address, adminStub, credentialStub))
+    it('creates an orderService', () => expect(callerStub).to.have.been.calledWithExactly(broker.address, orderStub, credentialStub))
+
+    it('creates an orderBookService', () => {
+      const options = BrokerDaemonClient.__get__('GRPC_STREAM_OPTIONS')
+      expect(callerStub).to.have.been.calledWithExactly(broker.address, orderbookStub, credentialStub, options)
+    })
+
+    it('creates an walletService', () => expect(callerStub).to.have.been.calledWithExactly(broker.address, walletStub, credentialStub))
   })
 
   describe('address', () => {

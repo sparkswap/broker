@@ -6,7 +6,9 @@ const caller = require('grpc-caller')
 const Identity = require('./identity')
 const MarketWatcher = require('./market-watcher')
 
-const { loadProto } = require('../utils')
+const {
+  loadProto
+} = require('../utils')
 
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
@@ -24,6 +26,29 @@ const RELAYER_PROTO_PATH = './proto/relayer.proto'
  * @default
  */
 const PRODUCTION = process.env.NODE_ENV === 'production'
+
+/**
+ * gRPC service options for any streaming calls on the relayer. This configuration
+ * provides "keep-alive" functionality so that stream calls will not be prematurely
+ * cancelled, leaving the broker in an offline/weird state where communication
+ * is dead, but the broker hasn't been notified
+ *
+ * @constant
+ * @type {Object}
+ * @default
+ */
+const GRPC_STREAM_OPTIONS = Object.freeze({
+  // Set to 30 seconds, keep-alive time is an arbitrary number, but needs to be
+  // less than default tcp timeout of AWS/ELB which is 1 minute
+  'grpc.keepalive_time_ms': 30000,
+  // Set to true. We want to send keep-alive pings even if the stream is not in use
+  'grpc.keepalive_permit_without_calls': 1,
+  //  Set to 30 seconds, Minimum time between sending successive ping frames
+  // without receiving any data frame
+  'grpc.http2.min_time_between_pings_ms': 30000,
+  // Set to infinity, this means the server will continually send keep-alive pings
+  'grpc.http2.max_pings_without_data': 0
+})
 
 /**
  * Interface for daemon to interact with a SparkSwap Relayer
@@ -48,7 +73,6 @@ class RelayerClient {
     this.logger = logger
     this.address = host
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
-
     this.identity = Identity.load(privKeyPath, pubKeyPath)
 
     let channelCredentials = credentials.createSsl()
@@ -60,9 +84,9 @@ class RelayerClient {
 
     this.credentials = channelCredentials
 
-    this.makerService = caller(this.address, this.proto.MakerService, this.credentials)
-    this.takerService = caller(this.address, this.proto.TakerService, this.credentials)
-    this.orderBookService = caller(this.address, this.proto.OrderBookService, this.credentials)
+    this.makerService = caller(this.address, this.proto.MakerService, this.credentials, GRPC_STREAM_OPTIONS)
+    this.takerService = caller(this.address, this.proto.TakerService, this.credentials, GRPC_STREAM_OPTIONS)
+    this.orderBookService = caller(this.address, this.proto.OrderBookService, this.credentials, GRPC_STREAM_OPTIONS)
     this.paymentChannelNetworkService = caller(this.address, this.proto.PaymentChannelNetworkService, this.credentials)
     this.adminService = caller(this.address, this.proto.AdminService, this.credentials)
   }
