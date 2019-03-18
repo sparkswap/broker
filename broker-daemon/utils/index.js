@@ -17,6 +17,7 @@ const delay = require('./delay')
 const eachRecord = require('./each-record')
 const Checksum = require('./checksum')
 const payInvoice = require('./pay-invoice')
+const retry = require('./retry')
 
 module.exports = {
   getRecords,
@@ -37,5 +38,6 @@ module.exports = {
   delay,
   eachRecord,
   Checksum,
-  payInvoice
+  payInvoice,
+  retry
 }
