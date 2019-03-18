@@ -33,6 +33,7 @@ describe('retry', () => {
   it('returns the response of the callFunction if there were no errors', async () => {
     const result = await retry(callFunction, message, attempts, delayTime)
     expect(result).to.eql(res)
+    expect(callFunction).to.have.been.calledOnce()
   })
 
   it('retries the callFunction if there was an error and there are still retries left', async () => {

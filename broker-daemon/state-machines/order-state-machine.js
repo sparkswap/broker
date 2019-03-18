@@ -290,12 +290,8 @@ const OrderStateMachine = StateMachine.factory({
       }
 
       const errHandler = (e) => {
-        if (e.code === grpc.status.UNAVAILABLE) {
-          const relayerError = new Error(ORDER_ERROR_CODES.RELAYER_UNAVAILABLE)
-          this.reject(relayerError)
-        } else {
-          this.reject(e)
-        }
+        const relayerError = e.code === grpc.status.UNAVAILABLE ? new Error(ORDER_ERROR_CODES.RELAYER_UNAVAILABLE) : e
+        this.reject(relayerError)
         finish()
       }
       const endHandler = () => {

@@ -36,9 +36,9 @@ async function retry (callFunction, message, attempts = RETRY_ATTEMPTS, delayTim
       const attemptsLeft = attempts - 1
 
       if (message) {
-        logger.error(message, { delayTime: delayTime / 1000, attemptsLeft })
+        logger.error(message, { delayTime: Math.round(delayTime / 1000), attemptsLeft })
       } else {
-        logger.error(`Error calling ${callFunction}. Retrying in ${delayTime / 1000} seconds, attempts left: ${attemptsLeft}`)
+        logger.error(`Error calling ${callFunction.name}. Retrying in ${Math.round(delayTime / 1000)} seconds, attempts left: ${attemptsLeft}`)
       }
 
       await delay(delayTime)

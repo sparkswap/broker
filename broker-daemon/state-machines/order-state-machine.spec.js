@@ -801,6 +801,34 @@ describe('OrderStateMachine', () => {
     })
   })
 
+  describe('#shouldRetry', () => {
+    let fakeOrder
+    let osm
+
+    beforeEach(() => {
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
+      const { RELAYER_UNAVAILABLE } = OrderStateMachine.__get__('ORDER_ERROR_CODES')
+      fakeOrder = { error: { message: RELAYER_UNAVAILABLE } }
+      osm.order = fakeOrder
+    })
+
+    it('returns true if the osm error is a relayer error', async () => {
+      expect(osm.shouldRetry()).to.be.true()
+    })
+
+    it('returns false if there are no errors associated with the fill', async () => {
+      osm.order.error = undefined
+
+      expect(osm.shouldRetry()).to.be.false()
+    })
+
+    it('returns false if the error code does not match the relayer error code', async () => {
+      osm.order.error = { error: { code: 'NOT_RELAYER_ERROR' } }
+
+      expect(osm.shouldRetry()).to.be.false()
+    })
+  })
+
   describe('#triggerState', () => {
     let key
     let state

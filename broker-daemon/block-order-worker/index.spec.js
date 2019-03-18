@@ -1337,6 +1337,8 @@ describe('BlockOrderWorker', () => {
   describe('#workBlockOrder', () => {
     let worker
     let blockOrder
+    let updatedBlockOrder
+    let getBlockOrderStub
 
     beforeEach(() => {
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
@@ -1345,10 +1347,22 @@ describe('BlockOrderWorker', () => {
         price: Big('1000'),
         isInWorkableState: true
       }
+      updatedBlockOrder = Object.assign({}, blockOrder)
+      getBlockOrderStub = sinon.stub().resolves(updatedBlockOrder)
+      worker.getBlockOrder = getBlockOrderStub
+    })
+
+    it('pulls the updated order', async () => {
+      worker.workLimitBlockOrder = sinon.stub().resolves()
+      worker.workMarketBlockOrder = sinon.stub().resolves()
+      await worker.workBlockOrder(blockOrder, Big('100'))
+
+      expect(getBlockOrderStub).to.have.been.calledOnce()
+      expect(getBlockOrderStub).to.have.been.calledWith(updatedBlockOrder.id)
     })
 
     it('returns early if blockOrder is not in a state to be worked', async () => {
-      blockOrder.isInWorkableState = false
+      updatedBlockOrder.isInWorkableState = false
       worker.workMarketBlockOrder = sinon.stub().resolves()
       worker.workLimitBlockOrder = sinon.stub().resolves()
 
@@ -1367,13 +1381,13 @@ describe('BlockOrderWorker', () => {
     })
 
     it('sends market orders to #workMarketBlockOrder', async () => {
-      blockOrder.isMarketOrder = true
+      updatedBlockOrder.isMarketOrder = true
       worker.workMarketBlockOrder = sinon.stub().resolves()
 
       await worker.workBlockOrder(blockOrder, Big('100'))
 
       expect(worker.workMarketBlockOrder).to.have.been.calledOnce()
-      expect(worker.workMarketBlockOrder).to.have.been.calledWith(blockOrder, Big('100'))
+      expect(worker.workMarketBlockOrder).to.have.been.calledWith(updatedBlockOrder, Big('100'))
     })
 
     it('sends limit orders to #workLimitBlockOrder', async () => {
@@ -1382,7 +1396,7 @@ describe('BlockOrderWorker', () => {
       await worker.workBlockOrder(blockOrder, Big('100'))
 
       expect(worker.workLimitBlockOrder).to.have.been.calledOnce()
-      expect(worker.workLimitBlockOrder).to.have.been.calledWith(blockOrder, Big('100'))
+      expect(worker.workLimitBlockOrder).to.have.been.calledWith(sinon.match.same(updatedBlockOrder), Big('100'))
     })
   })
 
@@ -2136,7 +2150,7 @@ describe('BlockOrderWorker', () => {
         relayerIsAvailableStub = sinon.stub().resolves(true)
         worker.relayerIsAvailable = relayerIsAvailableStub
 
-        updatedBlockOrder = blockOrder
+        updatedBlockOrder = Object.assign({}, blockOrder)
         getBlockOrderStub = sinon.stub().resolves(updatedBlockOrder)
         worker.getBlockOrder = getBlockOrderStub
 
@@ -2169,9 +2183,6 @@ describe('BlockOrderWorker', () => {
           const retryBlockOrderStub = retry.args[0][0]
           await retryBlockOrderStub()
 
-          expect(getBlockOrderStub).to.have.been.calledOnce()
-          expect(getBlockOrderStub).to.have.been.calledWith(blockOrder.id)
-
           expect(workBlockOrderStub).to.have.been.calledOnce()
           expect(workBlockOrderStub).to.have.been.calledWith(updatedBlockOrder, Big(order.order.baseAmount))
         })
@@ -2197,6 +2208,12 @@ describe('BlockOrderWorker', () => {
       context('should NOT retry', () => {
         beforeEach(() => {
           order.shouldRetry.returns(false)
+        })
+
+        it('does not try to re-work block orders', async () => {
+          await rejectListener()
+
+          expect(retry).to.not.have.been.called()
         })
 
         it('fails the block order when it should not retry', async () => {

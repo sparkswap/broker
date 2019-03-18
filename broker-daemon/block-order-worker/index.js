@@ -452,22 +452,25 @@ class BlockOrderWorker extends EventEmitter {
   async workBlockOrder (blockOrder, targetDepth) {
     this.logger.info('Working block order', { blockOrderId: blockOrder.id })
 
-    if (!blockOrder.isInWorkableState) {
-      this.logger.info('BlockOrder is not in a state to be worked', { blockOrderId: blockOrder.id })
+    // Get the existing order in case an update to order status happened between calls to workBlockOrder
+    const updatedBlockOrder = await this.getBlockOrder(blockOrder.id)
+
+    if (!updatedBlockOrder.isInWorkableState) {
+      this.logger.info('BlockOrder is not in a state to be worked', { blockOrderId: updatedBlockOrder.id })
       return
     }
 
-    const orderbook = this.orderbooks.get(blockOrder.marketName)
+    const orderbook = this.orderbooks.get(updatedBlockOrder.marketName)
 
     if (!orderbook) {
-      throw new Error(`No orderbook is initialized for created order in the ${blockOrder.marketName} market.`)
+      throw new Error(`No orderbook is initialized for created order in the ${updatedBlockOrder.marketName} market.`)
     }
 
-    if (blockOrder.isMarketOrder) {
+    if (updatedBlockOrder.isMarketOrder) {
       // block orders without prices are Market orders and take the best available price
-      await this.workMarketBlockOrder(blockOrder, targetDepth)
+      await this.workMarketBlockOrder(updatedBlockOrder, targetDepth)
     } else {
-      await this.workLimitBlockOrder(blockOrder, targetDepth)
+      await this.workLimitBlockOrder(updatedBlockOrder, targetDepth)
     }
   }
 
@@ -561,12 +564,12 @@ class BlockOrderWorker extends EventEmitter {
   applyOsmListeners (osm, blockOrder) {
     // Try to complete the entire block order once an underlying order completes
     osm.once('complete', async () => {
+      osm.removeAllListeners()
       try {
         await this.checkBlockOrderCompletion(blockOrder.id)
       } catch (e) {
         this.logger.error(`BlockOrder failed to be completed from order`, { id: blockOrder.id, error: e.stack })
       }
-      osm.removeAllListeners()
     })
 
     // if the fill for this order isn't for the entire order, re-place the remainder
@@ -588,26 +591,25 @@ class BlockOrderWorker extends EventEmitter {
     // try to re-place the block order if the relayer drops connection, while allowing the broker to
     // update block order status (i.e. broker can still cancel orders if relayer goes down)
     osm.once('reject', async () => {
+      osm.removeAllListeners()
       if (osm.shouldRetry()) {
         const retryBlockOrder = async () => {
           if (!await this.relayerIsAvailable()) {
             throw new Error('Relayer not available')
           }
 
-          this.logger.info('Retrying order for block order', { order: osm.order })
+          this.logger.info('Retrying order for block order', { order: osm.order.orderId })
 
-          // Get the existing order in case an update to order status happened between retries
-          const updatedBlockOrder = await this.getBlockOrder(blockOrder.id)
-          await this.workBlockOrder(updatedBlockOrder, Big(osm.order.baseAmount))
+          await this.workBlockOrder(blockOrder, Big(osm.order.baseAmount))
         }
 
         // This will try to rework each order within a block order every 10 seconds for 5 minutes
         // We return the retry function so we can fail the block order if the retry logic fails
         try {
-          return retry(retryBlockOrder, 'Error reworking block order', RETRY_ATTEMPTS, DELAY)
+          return retry(retryBlockOrder, `Error reworking block order: ${blockOrder.id}`, RETRY_ATTEMPTS, DELAY)
         } catch (e) {
           // If retry has failed, we log and fall through to fail the block order below
-          this.logger.error('Retrying block order has failed. Attempting to change order status to failed.')
+          this.logger.error('Failed retrying block order. Attempting to change order status to failed.', { blockOrder: blockOrder.id, order: osm.order.orderId })
         }
       }
 
@@ -617,8 +619,6 @@ class BlockOrderWorker extends EventEmitter {
       } catch (e) {
         this.logger.error(`BlockOrder failed on setting a failed status from order`, { id: blockOrder.id, error: e.stack })
       }
-
-      osm.removeAllListeners()
     })
 
     // remove listeners if the osm is cancelled, should not affect block order status
