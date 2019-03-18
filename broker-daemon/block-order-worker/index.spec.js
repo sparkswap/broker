@@ -2150,45 +2150,62 @@ describe('BlockOrderWorker', () => {
         expect(onceStub).to.have.been.calledWith('reject', sinon.match.func)
       })
 
-      it('retries the block order when the relayer is unavailable', async () => {
-        order.shouldRetry.returns(true)
-        await rejectListener()
-        expect(retry).to.have.been.calledOnce()
-        expect(retry).to.have.been.calledWith(sinon.match.func, sinon.match.string, sinon.match.number, sinon.match.number)
+      context('should retry', () => {
+        beforeEach(() => {
+          order.shouldRetry.returns(true)
+        })
+
+        it('retries the block order after the relayer has gone down and becomes available', async () => {
+          await rejectListener()
+          expect(retry).to.have.been.calledOnce()
+          expect(retry).to.have.been.calledWith(sinon.match.func, sinon.match.string, sinon.match.number, sinon.match.number)
+        })
+
+        it('works the correct block order when it should retry', async () => {
+          relayerIsAvailableStub.resolves(true)
+
+          await rejectListener()
+
+          const retryBlockOrderStub = retry.args[0][0]
+          await retryBlockOrderStub()
+
+          expect(getBlockOrderStub).to.have.been.calledOnce()
+          expect(getBlockOrderStub).to.have.been.calledWith(blockOrder.id)
+
+          expect(workBlockOrderStub).to.have.been.calledOnce()
+          expect(workBlockOrderStub).to.have.been.calledWith(updatedBlockOrder, Big(order.order.baseAmount))
+        })
+
+        it('fails the block order when the retry logic throws', async () => {
+          order.order.error = 'an error'
+          retry.throws()
+          await rejectListener()
+
+          expect(failBlockOrderStub).to.have.been.calledOnce()
+          expect(failBlockOrderStub).to.have.been.calledWith(blockOrder.id, 'an error')
+        })
+
+        it('does not try re-placing the block order when relayer is not available', async () => {
+          relayerIsAvailableStub.resolves(false)
+
+          await rejectListener()
+          const retryStub = retry.args[0][0]
+          expect(retryStub()).to.have.been.rejectedWith('not available')
+        })
       })
 
-      it('works the correct block order when it should', async () => {
-        order.shouldRetry.returns(true)
-        relayerIsAvailableStub.resolves(true)
+      context('should NOT retry', () => {
+        beforeEach(() => {
+          order.shouldRetry.returns(false)
+        })
 
-        await rejectListener()
+        it('fails the block order when it should not retry', async () => {
+          order.order.error = 'an error'
 
-        const retryStub = retry.args[0][0]
-        await retryStub()
-
-        expect(getBlockOrderStub).to.have.been.calledOnce()
-        expect(getBlockOrderStub).to.have.been.calledWith(blockOrder.id)
-
-        expect(workBlockOrderStub).to.have.been.calledOnce()
-        expect(workBlockOrderStub).to.have.been.calledWith(updatedBlockOrder, Big(order.order.baseAmount))
-      })
-
-      it('does not try re-placing the block order when relayer is not available', async () => {
-        order.shouldRetry.returns(true)
-        relayerIsAvailableStub.resolves(false)
-
-        await rejectListener()
-        const retryStub = retry.args[0][0]
-        expect(retryStub()).to.have.been.rejectedWith('not available')
-      })
-
-      it('fails the block order when it should not retry', async () => {
-        order.shouldRetry.returns(false)
-        order.order.error = 'an error'
-
-        await rejectListener()
-        expect(failBlockOrderStub).to.have.been.calledOnce()
-        expect(failBlockOrderStub).to.have.been.calledWith(blockOrder.id, 'an error')
+          await rejectListener()
+          expect(failBlockOrderStub).to.have.been.calledOnce()
+          expect(failBlockOrderStub).to.have.been.calledWith(blockOrder.id, 'an error')
+        })
       })
 
       it('catches an exception if failBlockOrder fails', async () => {

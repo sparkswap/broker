@@ -588,28 +588,36 @@ class BlockOrderWorker extends EventEmitter {
     // try to re-place the block order if the relayer drops connection, while allowing the broker to
     // update block order status (i.e. broker can still cancel orders if relayer goes down)
     osm.once('reject', async () => {
-      try {
-        if (osm.shouldRetry()) {
-          const retryBlockOrder = async () => {
-            if (!await this.relayerIsAvailable()) {
-              throw new Error('Relayer not available')
-            }
-
-            this.logger.info('Retrying order for block order', { order: osm.order })
-
-            // Get the existing order in case an update to order status happened between retries
-            const updatedBlockOrder = await this.getBlockOrder(blockOrder.id)
-            await this.workBlockOrder(updatedBlockOrder, Big(osm.order.baseAmount))
+      if (osm.shouldRetry()) {
+        const retryBlockOrder = async () => {
+          if (!await this.relayerIsAvailable()) {
+            throw new Error('Relayer not available')
           }
 
-          // This will try to rework each order within a block order every 10 seconds for 5 minutes
-          await retry(retryBlockOrder, 'Error reworking block order', RETRY_ATTEMPTS, DELAY)
-        } else {
-          await this.failBlockOrder(blockOrder.id, osm.order.error)
+          this.logger.info('Retrying order for block order', { order: osm.order })
+
+          // Get the existing order in case an update to order status happened between retries
+          const updatedBlockOrder = await this.getBlockOrder(blockOrder.id)
+          await this.workBlockOrder(updatedBlockOrder, Big(osm.order.baseAmount))
         }
+
+        // This will try to rework each order within a block order every 10 seconds for 5 minutes
+        // We return the retry function so we can fail the block order if the retry logic fails
+        try {
+          return retry(retryBlockOrder, 'Error reworking block order', RETRY_ATTEMPTS, DELAY)
+        } catch (e) {
+          // If retry has failed, we log and fall through to fail the block order below
+          this.logger.error('Retrying block order has failed. Attempting to change order status to failed.')
+        }
+      }
+
+      // This handles failing block orders if retrying has failed or the osm shouldn't retry
+      try {
+        await this.failBlockOrder(blockOrder.id, osm.order.error)
       } catch (e) {
         this.logger.error(`BlockOrder failed on setting a failed status from order`, { id: blockOrder.id, error: e.stack })
       }
+
       osm.removeAllListeners()
     })
 
