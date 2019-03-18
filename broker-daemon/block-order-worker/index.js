@@ -445,32 +445,32 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * work a block order that gets created
-   * @param  {BlockOrder} blockOrder  - Block Order to work
-   * @param  {Big}        targetDepth - Depth, in base currency, to reach with this work
+   * @param  {string} blockOrderId - ID of block order to work
+   * @param  {Big}    targetDepth  - Depth, in base currency, to reach with this work
    * @returns {void}
    */
-  async workBlockOrder (blockOrder, targetDepth) {
-    this.logger.info('Working block order', { blockOrderId: blockOrder.id })
+  async workBlockOrder ({ id: blockOrderId }, targetDepth) {
+    this.logger.info('Working block order', { blockOrderId })
 
     // Get the existing order in case an update to order status happened between calls to workBlockOrder
-    const updatedBlockOrder = await this.getBlockOrder(blockOrder.id)
+    const blockOrder = await this.getBlockOrder(blockOrderId)
 
-    if (!updatedBlockOrder.isInWorkableState) {
-      this.logger.info('BlockOrder is not in a state to be worked', { blockOrderId: updatedBlockOrder.id })
+    if (!blockOrder.isInWorkableState) {
+      this.logger.info('BlockOrder is not in a state to be worked', { blockOrderId: blockOrder.id })
       return
     }
 
-    const orderbook = this.orderbooks.get(updatedBlockOrder.marketName)
+    const orderbook = this.orderbooks.get(blockOrder.marketName)
 
     if (!orderbook) {
-      throw new Error(`No orderbook is initialized for created order in the ${updatedBlockOrder.marketName} market.`)
+      throw new Error(`No orderbook is initialized for created order in the ${blockOrder.marketName} market.`)
     }
 
-    if (updatedBlockOrder.isMarketOrder) {
+    if (blockOrder.isMarketOrder) {
       // block orders without prices are Market orders and take the best available price
-      await this.workMarketBlockOrder(updatedBlockOrder, targetDepth)
+      await this.workMarketBlockOrder(blockOrder, targetDepth)
     } else {
-      await this.workLimitBlockOrder(updatedBlockOrder, targetDepth)
+      await this.workLimitBlockOrder(blockOrder, targetDepth)
     }
   }
 
