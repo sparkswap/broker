@@ -5,7 +5,7 @@
 #
 # Options:
 # -y, --yes                     answer "Yes" to all yes/no prompts to allow for non-interactive scripting
-# -n=, --network=[network]      'm' for MainNet, 't' for TestNet (removes prompt)
+# -n=, --network=[network]      'm' for MainNet, 'r' for Sparkswap's Hosted RegTest (removes prompt)
 # -i=, --public-ip=[ip address] Your public IP Address (removes prompt)
 # -b, --build                   build the images locally instead of pulling from dockerhub
 #
