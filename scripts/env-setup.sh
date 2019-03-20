@@ -4,7 +4,7 @@
 # Generates and sets environment variables for broker
 #
 # Options:
-# -n=, --network=[network] 'm' for MainNet, 'r' for Sparkswap's Hosted RegTest (removes prompt)
+# -n=, --network=[network] 'm' for MainNet, 'r' for RegTest hosted by Sparkswap (removes prompt)
 # -i=, --public-ip=[ip address] Your public IP Address (removes prompt)
 #
 ##########################################################
@@ -42,7 +42,7 @@ fi
 if [ "$NETWORK" == "" ]; then
   echo "Enter the network:"
   echo "m - MainNet"
-  echo "r - Sparkswap's Hosted Regtest"
+  echo "r - RegTest (Hosted by Sparkswap)"
   read NETWORK
 fi
 
