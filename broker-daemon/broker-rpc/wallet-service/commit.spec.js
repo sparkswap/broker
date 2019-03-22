@@ -21,6 +21,7 @@ describe('commit', () => {
   let orderbooks
   let inboundPaymentNetworkAddress
   let outboundPaymentNetworkAddress
+  let getUncommittedBalanceStub
 
   beforeEach(() => {
     EmptyResponse = sinon.stub()
@@ -37,7 +38,7 @@ describe('commit', () => {
       debug: sinon.stub()
     }
     getMaxOutboundChannelStub = sinon.stub().resolves({})
-
+    getUncommittedBalanceStub = sinon.stub().resolves('200000000')
     btcEngine = {
       createChannel: createChannelStub,
       getMaxChannel: getMaxOutboundChannelStub,
@@ -45,7 +46,8 @@ describe('commit', () => {
       feeEstimate: '20000',
       quantumsPerCommon: '100000000',
       maxChannelBalance: '16777215',
-      getPaymentChannelNetworkAddress: sinon.stub().resolves(outboundPaymentNetworkAddress)
+      getPaymentChannelNetworkAddress: sinon.stub().resolves(outboundPaymentNetworkAddress),
+      getUncommittedBalance: getUncommittedBalanceStub
     }
     ltcEngine = {
       getPaymentChannelNetworkAddress: sinon.stub().resolves(inboundPaymentNetworkAddress),
@@ -103,6 +105,22 @@ describe('commit', () => {
     expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
     ).to.be.rejectedWith(Error, 'Error requesting inbound channel')
+  })
+
+  it('throws an error if uncommitted balance is 0', () => {
+    getUncommittedBalanceStub.resolves('0')
+
+    expect(
+      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+    ).to.be.rejectedWith(Error, 'Your current uncommitted balance is 0, please add funds to your daemon')
+  })
+
+  it('throws an error if uncommitted balance is less than outbound channel to be opened', () => {
+    getUncommittedBalanceStub.resolves('1000000')
+
+    expect(
+      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+    ).to.be.rejectedWith(Error, 'Amount specified is larger than your current uncommitted balance of 0.01 BTC')
   })
 
   describe('committing a balance to the relayer', () => {
