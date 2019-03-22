@@ -110,9 +110,10 @@ describe('commit', () => {
   it('throws an error if uncommitted balance is less than outbound channel balance and feeEstimate to be opened', () => {
     getUncommittedBalanceStub.resolves('10019999')
 
+    const errorMessage = 'Amount specified 0.10000000 plus the fee estimate 0.0002 is larger than your current uncommitted balance of 0.10019999 BTC'
     expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-    ).to.be.rejectedWith(Error, 'Amount specified is larger than your current uncommitted balance of 0.10019999 BTC')
+    ).to.be.rejectedWith(Error, errorMessage)
   })
 
   describe('committing a balance to the relayer', () => {
