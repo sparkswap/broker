@@ -87,10 +87,6 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     const uncommittedBalance = await engine.getUncommittedBalance()
     const totalUncommittedBalance = Big(uncommittedBalance)
 
-    if (totalUncommittedBalance.eq(0)) {
-      throw new Error('Your current uncommitted balance is 0, please add funds to your daemon')
-    }
-
     if (Big(balance).gt(totalUncommittedBalance)) {
       const uncommittedCommon = totalUncommittedBalance.div(engine.quantumsPerCommon)
       throw new Error(`Amount specified is larger than your current uncommitted balance of ${uncommittedCommon.toString()} ${symbol}`)

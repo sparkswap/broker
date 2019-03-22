@@ -107,14 +107,6 @@ describe('commit', () => {
     ).to.be.rejectedWith(Error, 'Error requesting inbound channel')
   })
 
-  it('throws an error if uncommitted balance is 0', () => {
-    getUncommittedBalanceStub.resolves('0')
-
-    expect(
-      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-    ).to.be.rejectedWith(Error, 'Your current uncommitted balance is 0, please add funds to your daemon')
-  })
-
   it('throws an error if uncommitted balance is less than outbound channel to be opened', () => {
     getUncommittedBalanceStub.resolves('1000000')
 
