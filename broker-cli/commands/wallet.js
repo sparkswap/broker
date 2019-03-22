@@ -163,10 +163,6 @@ async function commit (args, opts, logger) {
 
     const totalUncommittedBalance = Big(uncommittedBalance)
 
-    if (totalUncommittedBalance.eq(0)) {
-      return logger.info('Your current uncommitted balance is 0, please add funds to your daemon')
-    }
-
     // We try to take the lowest total here between 2 Big numbers due to a
     // commit limit specified as `maxChannelBalance` in the currency configuration
     let maxSupportedBalance = totalUncommittedBalance
@@ -192,10 +188,6 @@ async function commit (args, opts, logger) {
     const answer = await askQuestion(`Are you OK committing ${maxSupportedBalance.toString()} ${symbol} to sparkswap? (Y/N)`)
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
-
-    if (maxSupportedBalance.gt(uncommittedBalance)) {
-      throw new Error(`Amount specified is larger than your current uncommitted balance of ${uncommittedBalance} ${symbol}`)
-    }
 
     await client.walletService.commit({ balance: maxSupportedBalance.toString(), symbol, market })
 
