@@ -107,12 +107,12 @@ describe('commit', () => {
     ).to.be.rejectedWith(Error, 'Error requesting inbound channel')
   })
 
-  it('throws an error if uncommitted balance is less than outbound channel to be opened', () => {
-    getUncommittedBalanceStub.resolves('1000000')
+  it('throws an error if uncommitted balance is less than outbound channel balance and feeEstimate to be opened', () => {
+    getUncommittedBalanceStub.resolves('10019999')
 
     expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-    ).to.be.rejectedWith(Error, 'Amount specified is larger than your current uncommitted balance of 0.01 BTC')
+    ).to.be.rejectedWith(Error, 'Amount specified is larger than your current uncommitted balance of 0.10019999 BTC')
   })
 
   describe('committing a balance to the relayer', () => {
