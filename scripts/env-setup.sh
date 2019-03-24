@@ -2,9 +2,9 @@
 
 ##########################################################
 # Generates and sets environment variables for broker
-# 
+#
 # Options:
-# -n=, --network=[network] 'm' for MainNet, 't' for TestNet (removes prompt)
+# -n=, --network=[network] 'm' for MainNet, 'r' for RegTest hosted by Sparkswap (removes prompt)
 # -i=, --public-ip=[ip address] Your public IP Address (removes prompt)
 #
 ##########################################################
@@ -42,14 +42,14 @@ fi
 if [ "$NETWORK" == "" ]; then
   echo "Enter the network:"
   echo "m - MainNet"
-  echo "t - TestNet"
+  echo "r - RegTest (Hosted by Sparkswap)"
   read NETWORK
 fi
 
 if [ $NETWORK = 'm' ]; then
   cp .env-mainnet-sample .env
-elif [ $NETWORK = 't' ]; then
-  cp .env-testnet-sample .env
+elif [ $NETWORK = 'r' ]; then
+  cp .env-regtest-sample .env
 else
   echo "$NETWORK is not a valid option for network"
   exit 1
