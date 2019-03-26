@@ -13,11 +13,13 @@ const PROTO_PATH = path.resolve(__dirname, 'rpc.proto')
  * gRPC server options that add keep-alive configuration for all streaming service
  * calls
  *
+ * NOTE: This object will be mutated by gRPC (do not use Object.freeze)
+ *
  * @constant
  * @type {Object}
  * @default
  */
-const GRPC_SERVER_OPTIONS = Object.freeze({
+const GRPC_SERVER_OPTIONS = {
   // keep-alive time is an arbitrary number, but needs to be less than default
   // timeout of AWS/ELB which is 1 minute
   'grpc.keepalive_time_ms': 30000,
@@ -25,7 +27,7 @@ const GRPC_SERVER_OPTIONS = Object.freeze({
   'grpc.keepalive_permit_without_calls': 1,
   // Set to infinity, this means the server will continually send keep-alive pings
   'grpc.http2.max_pings_without_data': 0
-})
+}
 
 /**
  * Interchain Router for retriving preimages from other payment channel networks
