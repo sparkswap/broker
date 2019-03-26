@@ -84,17 +84,6 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
   }
 
   if (!maxOutboundBalance) {
-    const uncommittedBalance = await engine.getUncommittedBalance()
-    const totalUncommittedBalance = Big(uncommittedBalance)
-
-    if ((Big(balance).plus(engine.feeEstimate)).gt(totalUncommittedBalance)) {
-      const uncommittedCommon = totalUncommittedBalance.div(engine.quantumsPerCommon)
-      const feeEstimateCommon = Big(engine.feeEstimate).div(engine.quantumsPerCommon)
-      const errorMessage = `Amount specified ${balanceCommon} plus the fee estimate ${feeEstimateCommon} is larger than ` +
-      `your current uncommitted balance of ${uncommittedCommon.toString()} ${symbol}`
-      throw new Error(errorMessage)
-    }
-
     logger.debug('Creating outbound channel', { address, balance })
 
     try {
