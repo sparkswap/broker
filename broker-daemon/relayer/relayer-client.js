@@ -7,7 +7,8 @@ const Identity = require('./identity')
 const MarketWatcher = require('./market-watcher')
 
 const {
-  loadProto
+  loadProto,
+  grpcDeadlineInterceptor
 } = require('../utils')
 
 const consoleLogger = console
@@ -86,11 +87,20 @@ class RelayerClient {
 
     this.credentials = channelCredentials
 
-    this.makerService = caller(this.address, this.proto.MakerService, this.credentials, GRPC_STREAM_OPTIONS)
-    this.takerService = caller(this.address, this.proto.TakerService, this.credentials, GRPC_STREAM_OPTIONS)
-    this.orderBookService = caller(this.address, this.proto.OrderBookService, this.credentials, GRPC_STREAM_OPTIONS)
-    this.paymentChannelNetworkService = caller(this.address, this.proto.PaymentChannelNetworkService, this.credentials)
-    this.adminService = caller(this.address, this.proto.AdminService, this.credentials)
+    const makerServiceClient = new this.proto.MakerService(this.address, this.credentials, GRPC_STREAM_OPTIONS)
+    this.makerServiceClient = caller.wrap(makerServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+
+    const takerServiceClient = new this.proto.TakerService(this.address, this.credentials, GRPC_STREAM_OPTIONS)
+    this.takerService = caller.wrap(takerServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+
+    const orderBookServiceClient = new this.proto.OrderBookService(this.address, this.credentials, GRPC_STREAM_OPTIONS)
+    this.orderBookService = caller.wrap(orderBookServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+
+    const paymentChannelNetworkServiceClient = new this.proto.PaymentChannelNetworkService(this.address, this.credentials)
+    this.paymentChannelNetworkService = caller.wrap(paymentChannelNetworkServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+
+    const adminServiceClient = new this.proto.AdminService(this.address, this.credentials)
+    this.adminService = caller.wrap(adminServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
   }
 
   /**

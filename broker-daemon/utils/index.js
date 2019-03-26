@@ -18,6 +18,7 @@ const eachRecord = require('./each-record')
 const Checksum = require('./checksum')
 const payInvoice = require('./pay-invoice')
 const retry = require('./retry')
+const grpcDeadlineInterceptor = require('./grpc-deadline-interceptor')
 
 module.exports = {
   getRecords,
@@ -39,5 +40,6 @@ module.exports = {
   eachRecord,
   Checksum,
   payInvoice,
-  retry
+  retry,
+  grpcDeadlineInterceptor
 }
