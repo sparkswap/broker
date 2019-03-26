@@ -1,3 +1,5 @@
+const { grpcDeadline } = require('../../utils')
+
 /**
  * @constant
  * @type {Object}
@@ -19,7 +21,7 @@ const STATUS_CODES = Object.freeze({
  */
 async function getRelayerStatus (relayer, { logger }) {
   try {
-    await relayer.adminService.healthCheck({})
+    await relayer.adminService.healthCheck({}, { deadline: grpcDeadline() })
     return STATUS_CODES.OK
   } catch (e) {
     logger.error(`Relayer error during status check: `, { error: e.stack })
