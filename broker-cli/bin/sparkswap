@@ -2,7 +2,7 @@
 
 const program = require('caporal')
 const compareVersions = require('compare-versions')
-const colors = require('colors') // eslint-disable-line no-unused-vars
+require('colors') // eslint-disable-line no-unused-vars
 
 const {
   version: CLI_VERSION,
