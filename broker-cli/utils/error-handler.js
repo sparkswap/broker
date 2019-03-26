@@ -31,10 +31,12 @@ function handleError (error) {
  * @returns {string}
  */
 function handleInternalError (error) {
-  const message = `Broker Daemon encountered an Internal Error: ${error.details} `.red +
+  let message = `Broker Daemon encountered an Internal Error: ${error.details} `.red +
     '\nCheck your Broker Daemon logs (`docker-compose logs -f sparkswapd`) for more information.'
-  const actionMessage = '\nPlease run `sparkswap register` to register your Broker Daemon with the Relayer.'
 
-  return error.details.includes(NOT_REGISTERED_ERROR) ? message + actionMessage : message
+  if (error.details.includes(NOT_REGISTERED_ERROR)) {
+    message += '\nPlease run `sparkswap register` to register your Broker Daemon with the Relayer.'
+  }
+  return message
 }
 module.exports = handleError
