@@ -1,5 +1,13 @@
 const { isInt, isAlpha, isURL, isDecimal: validatorIsDecimal, matches } = require('validator')
 const { Big } = require('./big')
+require('colors')
+
+class ValidationError extends Error {
+  constructor (...args) {
+    super(...args)
+    this.message = this.message.red
+  }
+}
 
 /**
  * Largest int64 is our maximum value for amounts
@@ -32,7 +40,7 @@ function isDecimal (str) {
     return str
   }
 
-  throw new Error('Invalid decimal format')
+  throw new ValidationError('Invalid decimal format')
 }
 
 /**
@@ -65,9 +73,9 @@ function isMarketName (str) {
       return str.toUpperCase()
     }
 
-    throw new Error()
+    throw new Error('[empty error to trigger the catch]')
   } catch (e) {
-    throw new Error('Market Name format is incorrect')
+    throw new ValidationError(`Market Name should be specified with '--market <marketName>', where <marketName> is the base and counter symbols separated by a '/' e.g. 'BTC/LTC'`)
   }
 }
 
@@ -94,7 +102,7 @@ function areValidMarketNames (marketNames) {
       return marketNames
     }
   } catch (e) {
-    throw new Error('One or more market names is invalid')
+    throw new ValidationError('One or more market names is invalid')
   }
 }
 
@@ -117,7 +125,7 @@ function isHost (str) {
     return str
   }
 
-  throw new Error('Invalid address')
+  throw new ValidationError('Invalid address')
 }
 
 /**
@@ -133,7 +141,7 @@ function isFormattedPath (str) {
     return str
   }
 
-  throw new Error('Path format is incorrect')
+  throw new ValidationError('Path format is incorrect')
 }
 
 /**
@@ -148,7 +156,7 @@ function isBlockOrderId (str) {
     return str
   }
 
-  throw new Error('Block order IDs only contain upper and lower case letters, numbers, dashes (-) and underscores (_).')
+  throw new ValidationError('Block order IDs only contain upper and lower case letters, numbers, dashes (-) and underscores (_).')
 }
 
 /**
@@ -165,7 +173,7 @@ function isDate (str) {
     }
   }
 
-  throw new Error('Given datetime is not in a valid date format')
+  throw new ValidationError('Given datetime is not in a valid date format')
 }
 
 /**
@@ -180,7 +188,7 @@ function isPositiveInteger (str) {
     return str
   }
 
-  throw new Error('Not a valid integer value')
+  throw new ValidationError('Not a valid integer value')
 }
 
 /**
@@ -195,7 +203,7 @@ function isBlockchainNetwork (network) {
     return network
   }
 
-  throw new Error(`Invalid blockchain network: ${network}`)
+  throw new ValidationError(`Invalid blockchain network: ${network}`)
 }
 
 module.exports = {
