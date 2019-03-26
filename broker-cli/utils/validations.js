@@ -75,7 +75,7 @@ function isMarketName (str) {
 
     throw new Error('[empty error to trigger the catch]')
   } catch (e) {
-    throw new ValidationError(`Market Name should be specified with '--market <marketName>', where <marketName> is two symbols separated by a '/' e.g. 'BTC/LTC'`)
+    throw new ValidationError(`Market Name should be specified with '--market <marketName>', where <marketName> is the base and counter symbols separated by a '/' e.g. 'BTC/LTC'`)
   }
 }
 
