@@ -192,22 +192,26 @@ describe('BrokerDaemonClient', () => {
     it('creates an adminService', () => {
       expect(adminStub).to.have.been.calledWithExactly(broker.address, credentialStub)
       expect(callerStub.wrap).to.have.been.calledWithExactly(adminServiceInstance, {}, { interceptors: [fakeInterceptor] })
+      expect(broker).to.have.property('adminService')
     })
 
     it('creates an orderService', () => {
       expect(orderStub).to.have.been.calledWithExactly(broker.address, credentialStub)
       expect(callerStub.wrap).to.have.been.calledWithExactly(orderServiceInstance, {}, { interceptors: [fakeInterceptor] })
+      expect(broker).to.have.property('orderService')
     })
 
     it('creates an orderBookService', () => {
       const options = BrokerDaemonClient.__get__('GRPC_STREAM_OPTIONS')
       expect(orderbookStub).to.have.been.calledWithExactly(broker.address, credentialStub, options)
       expect(callerStub.wrap).to.have.been.calledWithExactly(orderBookServiceInstance, {}, { interceptors: [fakeInterceptor] })
+      expect(broker).to.have.property('orderBookService')
     })
 
     it('creates an walletService', () => {
       expect(walletStub).to.have.been.calledWithExactly(broker.address, credentialStub)
       expect(callerStub.wrap).to.have.been.calledWithExactly(walletServiceInstance, {}, { interceptors: [fakeInterceptor] })
+      expect(broker).to.have.property('walletService')
     })
   })
 

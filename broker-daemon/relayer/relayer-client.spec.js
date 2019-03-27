@@ -200,28 +200,33 @@ describe('RelayerClient', () => {
         const options = RelayerClient.__get__('GRPC_STREAM_OPTIONS')
         expect(proto.MakerService).to.have.been.calledWithExactly(relayer.address, fakeCreds, options)
         expect(callerStub.wrap).to.have.been.calledWithExactly(makerServiceInstance, {}, { interceptors: [fakeInterceptor] })
+        expect(relayer).to.have.property('makerService')
       })
 
       it('creates a takerService', () => {
         const options = RelayerClient.__get__('GRPC_STREAM_OPTIONS')
         expect(proto.TakerService).to.have.been.calledWithExactly(relayer.address, fakeCreds, options)
         expect(callerStub.wrap).to.have.been.calledWithExactly(takerServiceInstance, {}, { interceptors: [fakeInterceptor] })
+        expect(relayer).to.have.property('takerService')
       })
 
       it('creates an orderBookService', () => {
         const options = RelayerClient.__get__('GRPC_STREAM_OPTIONS')
         expect(proto.OrderBookService).to.have.been.calledWithExactly(relayer.address, fakeCreds, options)
         expect(callerStub.wrap).to.have.been.calledWithExactly(orderBookServiceInstance, {}, { interceptors: [fakeInterceptor] })
+        expect(relayer).to.have.property('orderBookService')
       })
 
       it('creates a paymentChannelNetworkService', () => {
         expect(proto.PaymentChannelNetworkService).to.have.been.calledWithExactly(relayer.address, fakeCreds)
         expect(callerStub.wrap).to.have.been.calledWithExactly(paymentChannelNetworkServiceInstance, {}, { interceptors: [fakeInterceptor] })
+        expect(relayer).to.have.property('paymentChannelNetworkService')
       })
 
       it('creates an adminService', () => {
         expect(proto.AdminService).to.have.been.calledWithExactly(relayer.address, fakeCreds)
         expect(callerStub.wrap).to.have.been.calledWithExactly(adminServiceInstance, {}, { interceptors: [fakeInterceptor] })
+        expect(relayer).to.have.property('adminService')
       })
     })
   })
