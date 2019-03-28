@@ -22,13 +22,6 @@ async function createWallet ({ logger, params, engines }, { CreateWalletResponse
 
   const recoverySeed = await engine.createWallet(password)
 
-  // We need to re-validate the node after wallet creation, however, this might
-  // cause the daemon to have multiple validation processes running at the same time.
-  //
-  // Additionally, we do not await the validation of an engine as it will be retried
-  // on its own.
-  engine.validateEngine()
-
   return new CreateWalletResponse({ recoverySeed })
 }
 

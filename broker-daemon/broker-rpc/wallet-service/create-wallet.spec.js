@@ -20,8 +20,7 @@ describe('create-wallet', () => {
     CreateWalletResponse = sinon.stub()
     seeds = ['my', 'seeds']
     engineStub = {
-      createWallet: sinon.stub().resolves(seeds),
-      validateEngine: sinon.stub()
+      createWallet: sinon.stub().resolves(seeds)
     }
     engines = new Map([['BTC', engineStub]])
     params = {
@@ -38,11 +37,6 @@ describe('create-wallet', () => {
   it('creates a wallet', async () => {
     await createWallet({ logger, params, engines }, { CreateWalletResponse })
     expect(engineStub.createWallet).to.have.been.calledWith(params.password)
-  })
-
-  it('validates an engine after wallet creation', async () => {
-    await createWallet({ logger, params, engines }, { CreateWalletResponse })
-    expect(engineStub.validateEngine).to.have.been.calledOnce()
   })
 
   it('returns a recovery seed', async () => {
