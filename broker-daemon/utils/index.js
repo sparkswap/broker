@@ -1,7 +1,6 @@
 const getRecords = require('./get-records')
 const logger = require('./logger')
 const loadProto = require('./load-proto')
-const grpcDeadline = require('./grpc-deadline')
 const Big = require('./big')
 const migrateStore = require('./migrate-store')
 const SublevelIndex = require('./sublevel-index')
@@ -18,13 +17,11 @@ const eachRecord = require('./each-record')
 const Checksum = require('./checksum')
 const payInvoice = require('./pay-invoice')
 const retry = require('./retry')
-const grpcDeadlineInterceptor = require('./grpc-deadline-interceptor')
 
 module.exports = {
   getRecords,
   logger,
   loadProto,
-  grpcDeadline,
   Big,
   migrateStore,
   SublevelIndex,
@@ -40,6 +37,5 @@ module.exports = {
   eachRecord,
   Checksum,
   payInvoice,
-  retry,
-  grpcDeadlineInterceptor
+  retry
 }

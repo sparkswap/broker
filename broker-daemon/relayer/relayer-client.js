@@ -6,10 +6,8 @@ const caller = require('grpc-caller')
 const Identity = require('./identity')
 const MarketWatcher = require('./market-watcher')
 
-const {
-  loadProto,
-  grpcDeadlineInterceptor
-} = require('../utils')
+const { loadProto } = require('../utils')
+const { grpcDeadlineInterceptor } = require('../../broker-cli/utils')
 
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
