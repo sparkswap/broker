@@ -1,4 +1,5 @@
 ARG NODE_VERSION=8.11
+ARG USER=root
 
 FROM node:${NODE_VERSION}-alpine as builder
 
@@ -18,6 +19,10 @@ RUN npm install --quiet --production
 # --no-identity makes it so we do not generate keys for the daemons identity because we do this externally
 # --no-certs  makes it so we do not re-generate tls certs for the daemon because we do this externally
 RUN npm run build -- --no-docker --no-identity --no-certs
+
+WORKDIR /home/app/broker-cli
+
+RUN npm install --quiet --production
 
 # Create a final image as this will be < 50% the size of the build image
 FROM node:${NODE_VERSION}-alpine as final
@@ -39,7 +44,9 @@ COPY --from=builder /home/app/proto /home/app/proto
 
 # Copy node_modules
 COPY --from=builder /home/app/node_modules /home/app/node_modules
-
+COPY --from=builder /home/app/broker-cli/node_modules /home/app/broker-cli/node_modules
+COPY --from=builder /home/app/.sparkswap/config.js /${USER}/.sparkswap/config.js
+ENV PATH="./broker-cli/bin:${PATH}"
 WORKDIR /home/app
 
 CMD ["bash", "-c", "npm run start-sparkswapd"]
