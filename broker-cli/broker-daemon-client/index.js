@@ -8,7 +8,8 @@ require('colors')
 const { loadConfig } = require('./config')
 const {
   loadProto,
-  basicAuth
+  basicAuth,
+  grpcDeadlineInterceptor
 } = require('../utils')
 
 /**
@@ -114,10 +115,17 @@ class BrokerDaemonClient {
       this.credentials = grpc.credentials.combineChannelCredentials(channelCredentials, callCredentials)
     }
 
-    this.adminService = caller(this.address, this.proto.broker.rpc.AdminService, this.credentials)
-    this.orderService = caller(this.address, this.proto.broker.rpc.OrderService, this.credentials)
-    this.orderBookService = caller(this.address, this.proto.broker.rpc.OrderBookService, this.credentials, GRPC_STREAM_OPTIONS)
-    this.walletService = caller(this.address, this.proto.broker.rpc.WalletService, this.credentials)
+    const adminServiceClient = new this.proto.broker.rpc.AdminService(this.address, this.credentials)
+    this.adminService = caller.wrap(adminServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+
+    const orderServiceClient = new this.proto.broker.rpc.OrderService(this.address, this.credentials)
+    this.orderService = caller.wrap(orderServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+
+    const orderBookServiceClient = new this.proto.broker.rpc.OrderBookService(this.address, this.credentials, GRPC_STREAM_OPTIONS)
+    this.orderBookService = caller.wrap(orderBookServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+
+    const walletServiceClient = new this.proto.broker.rpc.WalletService(this.address, this.credentials)
+    this.walletService = caller.wrap(walletServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
   }
 }
 
