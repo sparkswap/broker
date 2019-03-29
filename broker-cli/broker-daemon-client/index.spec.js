@@ -76,7 +76,7 @@ describe('BrokerDaemonClient', () => {
     BrokerDaemonClient.__set__('loadProto', protoStub)
     BrokerDaemonClient.__set__('caller', callerStub)
     BrokerDaemonClient.__set__('readFileSync', readFileSyncStub)
-    BrokerDaemonClient.__set__('path', { join: joinStub })
+    BrokerDaemonClient.__set__('path', { join: joinStub, sep: '/' })
     BrokerDaemonClient.__set__('basicAuth', {
       generateBasicAuthCredentials: generateAuthCredentialsStub
     })
@@ -125,7 +125,6 @@ describe('BrokerDaemonClient', () => {
       homedir = '/home'
       osStub = { homedir: sinon.stub().returns(homedir) }
       joinStub = sinon.stub().returns(certPath)
-      BrokerDaemonClient.__set__('path', { join: joinStub, sep: '/' })
       BrokerDaemonClient.__set__('os', osStub)
     })
 
@@ -135,7 +134,8 @@ describe('BrokerDaemonClient', () => {
     })
 
     it('expands the filepath if it is pointing to home', () => {
-      joinStub = sinon.stub().returns(`${homedir}/.sparkswap/config.js`)
+      const newPath = `${homedir}/.sparkswap/config.js`
+      joinStub = sinon.stub().returns(newPath)
       BrokerDaemonClient.__set__('path', { join: joinStub, sep: '/' })
       loadConfigStub.returns({
         rpcAddress: address,

@@ -105,9 +105,10 @@ class BrokerDaemonClient {
       let certPathParts = this.certPath.split(path.sep)
       if (certPathParts[0] === '~') {
         certPathParts[0] = os.homedir()
+        this.cert = readFileSync(path.join(...certPathParts))
+      } else {
+        this.cert = readFileSync(this.certPath)
       }
-      const certPath = path.join(...certPathParts)
-      this.cert = readFileSync(certPath)
 
       const channelCredentials = grpc.credentials.createSsl(this.cert)
       const callCredentials = basicAuth.generateBasicAuthCredentials(this.username, this.password)
