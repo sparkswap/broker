@@ -81,12 +81,39 @@ msg "Installing node.js@8.11" $WHITE
 nvm install 8.11 --latest-npm
 
 if [ "$(command -v docker)" == "" ]; then
-  msg "Docker is not installed. Please install it before continuing" $RED
+  msg "Docker is not installed." $RED
+  if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    # Get the version of Linux distribution
+    LINUX_DISTRO=$(cat /etc/*-release | grep -E '^ID=' | sed 's/^.*=//' | tr -d \")
+    msg "Looks like you're using Linux." $GREEN
+    msg "To install Docker using the convenience script for Linux, run" $GREEN
+    msg "    $ curl -fsSL https://get.docker.com -o get-docker.sh" $WHITE
+    msg "    $ sudo sh get-docker.sh" $WHITE
+    msg "Alternatively, you can follow Docker's installation steps for Linux (https://docs.docker.com/install/linux/docker-ce/$(echo $LINUX_DISTRO)/)" $GREEN
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    msg "Looks like you're using Mac." $GREEN
+    msg "Please use the following link to download and install Docker for Mac Version 2.0.0.3 or greater (this installs Docker Community Edition and Docker Compose)" $GREEN
+    msg "https://docs.docker.com/docker-for-mac/release-notes/#docker-community-edition-2003-2019-02-15" $WHITE
+  else
+    msg "Please install Docker before continuing." $GREEN
+  fi
   exit 1
 fi
 
 if [ "$(command -v docker-compose)" == "" ]; then
-  msg "Docker Compose is not installed. Please install it before continuing" $RED
+  msg "Docker Compose is not installed." $RED
+  if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    msg "To install Docker Compose using Linux, run" $GREEN
+    msg '    $ curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose' $WHITE
+    msg "    $ sudo chmod +x /usr/local/bin/docker-compose" $WHITE
+    msg "Alternatively, you can follow Docker's installation steps for Linux (https://docs.docker.com/compose/install/)" $GREEN
+  elif [[ "" == "" ]]; then
+    msg "Looks like you're using Mac." $GREEN
+    msg "Please use the following link to download and install Docker for Mac Version 2.0.0.3 or greater (this installs Docker Community Edition and Docker Compose)" $GREEN
+    msg "https://docs.docker.com/docker-for-mac/release-notes/#docker-community-edition-2003-2019-02-15" $WHITE
+  else
+    msg "Please install Docker before continuing" $RED
+  fi
   exit 1
 fi
 
