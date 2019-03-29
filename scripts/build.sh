@@ -38,6 +38,7 @@ NO_CLI="false"
 NO_DOCKER="false"
 NO_CERTS="false"
 NO_IDENTITY="false"
+FORCE_CERTS="false"
 
 # Setting this env is ONLY required for a hosted broker setup.
 #
@@ -72,6 +73,10 @@ case $i in
     LOCAL="true"
 
     ;;
+    -f|--force-certs)
+    FORCE_CERTS="true"
+
+    ;;
     *)
             # unknown option
     ;;
@@ -99,6 +104,14 @@ mkdir -p $SPARKSWAP_DIRECTORY/secure
 KEY_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-tls.key
 CERT_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-tls.cert
 CSR_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-csr.csr
+
+# If we force the cert creation, we'll simply remove the certs from the sparkswap
+# directory, and then regenerate them below
+if [[ "$FORCE_CERTS" == "true" ]] && [[ "$NO_CERTS" != "true" ]]; then
+  echo "Removing existing Broker TLS certs: --force-certs set to true"
+  rm -f $KEY_PATH
+  rm -f $CERT_PATH
+fi
 
 if [[ -f "$KEY_PATH" ]]; then
   echo "WARNING: TLS Private Key already exists at $KEY_PATH for Broker Daemon. Skipping cert generation"
