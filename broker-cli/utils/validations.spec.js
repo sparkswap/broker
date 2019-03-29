@@ -37,7 +37,7 @@ describe('Validations', () => {
   })
 
   describe('isMarketName', () => {
-    const expectedError = 'Market Name format is incorrect'
+    const expectedError = 'Market Name should be specified with \'--market <marketName>\', where <marketName> is the base and counter symbols separated by a \'/\' e.g. \'BTC/LTC\''
 
     it('returns a market name if market name is valid', () => {
       const validMarket = 'BTC/LTC'

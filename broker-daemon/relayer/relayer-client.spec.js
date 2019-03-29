@@ -19,6 +19,11 @@ describe('RelayerClient', () => {
   let OrderBookService
   let PaymentChannelNetworkService
   let AdminService
+  let makerServiceInstance
+  let takerServiceInstance
+  let orderBookServiceInstance
+  let paymentChannelNetworkServiceInstance
+  let adminServiceInstance
 
   let ResponseType = {
     EXISTING_EVENT: 'EXISTING_EVENT',
@@ -61,11 +66,19 @@ describe('RelayerClient', () => {
     MarketWatcher = sinon.stub()
     RelayerClient.__set__('MarketWatcher', MarketWatcher)
 
-    MakerService = sinon.stub()
-    TakerService = sinon.stub()
-    OrderBookService = sinon.stub()
-    PaymentChannelNetworkService = sinon.stub()
-    AdminService = sinon.stub()
+    // All of these stubs are called with `new`, but in order to stub the return
+    // value, we must use an Object or else we cannot match the values correctly.
+    // see: https://github.com/sinonjs/sinon/issues/1676
+    makerServiceInstance = { name: 'MakerService' }
+    MakerService = sinon.stub().returns(makerServiceInstance)
+    takerServiceInstance = { name: 'TakerService' }
+    TakerService = sinon.stub().returns(takerServiceInstance)
+    orderBookServiceInstance = { name: 'OrderBookService' }
+    OrderBookService = sinon.stub().returns(orderBookServiceInstance)
+    paymentChannelNetworkServiceInstance = { name: 'PaymentChannelNetworkService' }
+    PaymentChannelNetworkService = sinon.stub().returns(paymentChannelNetworkServiceInstance)
+    adminServiceInstance = { name: 'AdminService' }
+    AdminService = sinon.stub().returns(adminServiceInstance)
 
     pathResolve = sinon.stub()
     RelayerClient.__set__('path', { resolve: pathResolve })
@@ -87,7 +100,9 @@ describe('RelayerClient', () => {
 
     RelayerClient.__set__('loadProto', loadProto)
 
-    callerStub = sinon.stub()
+    callerStub = {
+      wrap: sinon.stub()
+    }
     RelayerClient.__set__('caller', callerStub)
 
     createSslStub = sinon.stub()
@@ -166,17 +181,53 @@ describe('RelayerClient', () => {
     describe('services', () => {
       let relayer
       let fakeCreds
+      let fakeInterceptor
+      let revert
 
       beforeEach(() => {
         fakeCreds = 'somecreds'
         createSslStub.returns(fakeCreds)
+        fakeInterceptor = sinon.stub()
+        revert = RelayerClient.__set__('grpcDeadlineInterceptor', fakeInterceptor)
         relayer = new RelayerClient(idKeyPath, { host: relayerHost }, logger)
       })
 
-      it('creates a makerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, MakerService, fakeCreds))
-      it('creates a takerService', () => expect(callerStub).to.have.been.calledWith(relayer.address, TakerService, fakeCreds))
-      it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(relayer.address, OrderBookService, fakeCreds))
-      it('creates an adminService', () => expect(callerStub).to.have.been.calledWith(relayer.address, AdminService))
+      afterEach(() => {
+        revert()
+      })
+
+      it('creates a makerService', () => {
+        const options = RelayerClient.__get__('GRPC_STREAM_OPTIONS')
+        expect(proto.MakerService).to.have.been.calledWithExactly(relayer.address, fakeCreds, options)
+        expect(callerStub.wrap).to.have.been.calledWithExactly(makerServiceInstance, {}, { interceptors: [fakeInterceptor] })
+        expect(relayer).to.have.property('makerService')
+      })
+
+      it('creates a takerService', () => {
+        const options = RelayerClient.__get__('GRPC_STREAM_OPTIONS')
+        expect(proto.TakerService).to.have.been.calledWithExactly(relayer.address, fakeCreds, options)
+        expect(callerStub.wrap).to.have.been.calledWithExactly(takerServiceInstance, {}, { interceptors: [fakeInterceptor] })
+        expect(relayer).to.have.property('takerService')
+      })
+
+      it('creates an orderBookService', () => {
+        const options = RelayerClient.__get__('GRPC_STREAM_OPTIONS')
+        expect(proto.OrderBookService).to.have.been.calledWithExactly(relayer.address, fakeCreds, options)
+        expect(callerStub.wrap).to.have.been.calledWithExactly(orderBookServiceInstance, {}, { interceptors: [fakeInterceptor] })
+        expect(relayer).to.have.property('orderBookService')
+      })
+
+      it('creates a paymentChannelNetworkService', () => {
+        expect(proto.PaymentChannelNetworkService).to.have.been.calledWithExactly(relayer.address, fakeCreds)
+        expect(callerStub.wrap).to.have.been.calledWithExactly(paymentChannelNetworkServiceInstance, {}, { interceptors: [fakeInterceptor] })
+        expect(relayer).to.have.property('paymentChannelNetworkService')
+      })
+
+      it('creates an adminService', () => {
+        expect(proto.AdminService).to.have.been.calledWithExactly(relayer.address, fakeCreds)
+        expect(callerStub.wrap).to.have.been.calledWithExactly(adminServiceInstance, {}, { interceptors: [fakeInterceptor] })
+        expect(relayer).to.have.property('adminService')
+      })
     })
   })
 
@@ -194,7 +245,7 @@ describe('RelayerClient', () => {
 
       watchMarket = sinon.stub().returns(stream)
 
-      callerStub.withArgs(sinon.match.any, OrderBookService).returns({ watchMarket })
+      callerStub.wrap.withArgs(orderBookServiceInstance, sinon.match.any, sinon.match.any).returns({ watchMarket })
       relayer = new RelayerClient(idKeyPath, { host: relayerHost }, logger)
       store = {
         put: sinon.stub()

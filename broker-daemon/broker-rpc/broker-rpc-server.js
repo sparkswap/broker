@@ -7,7 +7,10 @@ const OrderService = require('./order-service')
 const OrderBookService = require('./orderbook-service')
 const WalletService = require('./wallet-service')
 
-const { createBasicAuth, createHttpServer } = require('../utils')
+const {
+  createBasicAuth,
+  createHttpServer
+} = require('../utils')
 
 /**
  * @constant
@@ -24,6 +27,26 @@ const BROKER_PROTO_PATH = './broker-daemon/proto/broker.proto'
  * @default
  */
 const IS_PRODUCTION = (process.env.NODE_ENV === 'production')
+
+/**
+ * gRPC server options that add keep-alive configuration for all streaming service
+ * calls
+ *
+ * NOTE: This object will be mutated by gRPC (do not use Object.freeze)
+ *
+ * @constant
+ * @type {Object}
+ * @default
+ */
+const GRPC_SERVER_OPTIONS = {
+  // keep-alive time is an arbitrary number, but needs to be less than default
+  // timeout of AWS/ELB which is 1 minute
+  'grpc.keepalive_time_ms': 30000,
+  // Set to true. We want to send keep-alive pings even if the stream is not in use
+  'grpc.keepalive_permit_without_calls': 1,
+  // Set to infinity, this means the server will continually send keep-alive pings
+  'grpc.http2.max_pings_without_data': 0
+}
 
 /**
  * @class User-facing gRPC server for controling the BrokerDaemon
@@ -56,7 +79,8 @@ class BrokerRPCServer {
     this.rpcAddress = rpcAddress
     this.protoPath = path.resolve(BROKER_PROTO_PATH)
 
-    this.server = new grpc.Server()
+    this.server = new grpc.Server(GRPC_SERVER_OPTIONS)
+
     this.httpServer = createHttpServer(this.protoPath, this.rpcAddress, { disableAuth, enableCors, privKeyPath, pubKeyPath, logger })
 
     this.adminService = new AdminService(this.protoPath, { logger, relayer, engines, orderbooks, auth: this.auth })

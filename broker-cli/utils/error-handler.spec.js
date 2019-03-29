@@ -24,6 +24,15 @@ describe('handleError', () => {
     expect(handleError(error)).to.include(expectedMessage)
   })
 
+  it('logs a suggested action if broker daemon encountered an internal error from an unregistered entity', () => {
+    error = new Error('13 INTERNAL: Call terminated before completion')
+    error.details = 'not registered'
+    error.code = 13
+    expectedMessage = 'Please run `sparkswap register` to register your Broker Daemon with the Relayer.'
+
+    expect(handleError(error)).to.include(expectedMessage)
+  })
+
   it('logs the error message of the original error if the broker daemon is not down', () => {
     error = new Error('normal error')
     expectedMessage = 'normal error'

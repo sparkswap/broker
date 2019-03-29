@@ -30,8 +30,8 @@ module.exports = (program) => {
     .help(`Available Commands: ${Object.values(SUPPORTED_COMMANDS).join(', ')}`)
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
-    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
       const { market } = opts
@@ -61,17 +61,17 @@ module.exports = (program) => {
       }
     })
     .command(`order ${SUPPORTED_COMMANDS.SUMMARY}`, 'View your orders')
+    .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
-    .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
     .command(`order ${SUPPORTED_COMMANDS.STATUS}`, 'Get the status of a block order')
     .argument('<blockOrderId>', 'Block order to get status of', validations.isBlockOrderId)
+    .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
-    .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
     .command(`order ${SUPPORTED_COMMANDS.CANCEL}`, 'Cancel a block order')
-    .argument('<blockOrderId>', 'Block Order to cancel.', validations.isBlockOrderId)
+    .argument('<blockOrderId>', 'Block Order to cancel.', validations.isBlockOrderId, null, true)
+    .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
-    .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
     .command(`order ${SUPPORTED_COMMANDS.CANCEL_ALL}`, 'Cancel all block orders on market')
+    .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
-    .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
 }

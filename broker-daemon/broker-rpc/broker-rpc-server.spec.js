@@ -126,9 +126,10 @@ describe('BrokerRPCServer', () => {
       }
       rpcServer.returns(instanceServer)
       const server = new BrokerRPCServer()
+      const serverOptions = BrokerRPCServer.__get__('GRPC_SERVER_OPTIONS')
 
       expect(rpcServer).to.have.been.calledOnce()
-      expect(rpcServer).to.have.been.calledWith()
+      expect(rpcServer).to.have.been.calledWithExactly(serverOptions)
       expect(rpcServer).to.have.been.calledWithNew()
       expect(server).to.have.property('server')
       expect(server.server).to.be.equal(instanceServer)

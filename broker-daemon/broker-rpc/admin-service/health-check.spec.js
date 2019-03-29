@@ -95,7 +95,7 @@ describe('health-check', () => {
       getRelayerStatus = healthCheck.__get__('getRelayerStatus')
     })
 
-    it('returns an OK if relayer#healtCheck is successful', async () => {
+    it('returns an OK if relayer#healthCheck is successful', async () => {
       const { OK } = healthCheck.__get__('STATUS_CODES')
       const res = await getRelayerStatus(relayerStub, { logger })
       expect(res).to.eql(OK)
