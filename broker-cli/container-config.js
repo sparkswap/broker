@@ -1,7 +1,7 @@
 /**
  * Sparkswap configuration for using the cli inside the container. (Note the rpcCertPath is relative to being inside the container)
  *
- * It will use the user defined rpc address, user and password if they exist, otherwise
+ * It will use the user defined rpc username and password if they exist, otherwise
  * they will use the default.
  */
 

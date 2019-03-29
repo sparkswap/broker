@@ -44,6 +44,8 @@ COPY --from=builder /home/app/proto /home/app/proto
 COPY --from=builder /home/app/node_modules /home/app/node_modules
 COPY --from=builder /home/app/broker-cli/node_modules /home/app/broker-cli/node_modules
 
+# Broker CLI expects config to be at ~/.sparkswap, so we need the default docker user's home
+# directory to install our container config into
 ARG USER_HOME=/root
 
 # Copy configuration file for use inside the container
