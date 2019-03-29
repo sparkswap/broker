@@ -8,9 +8,10 @@
 module.exports = {
   /**
    * Address of the host for the Broker Daemon gRPC Server
+   * Because we are inside the container, the address will be localhost and the port is hardcoded to 27492
    * @type {String}
    */
-  rpcAddress: process.env.RPC_ADDRESS || 'localhost:27492',
+  rpcAddress: 'localhost:27492',
 
   /**
    * Default path of the Broker Daemons RPC Public Cert
