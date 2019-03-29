@@ -1,5 +1,5 @@
 /**
- * Sparkswap configuration for use inside the container. (Note the rpcCertPath is relative to being inside the container)
+ * Sparkswap configuration for using the cli inside the container. (Note the rpcCertPath is relative to being inside the container)
  *
  * It will use the user defined rpc address, user and password if they exist, otherwise
  * they will use the default.
@@ -14,16 +14,10 @@ module.exports = {
 
   /**
    * Default path of the Broker Daemons RPC Public Cert
+   * The cert will always be at this path because that is where it is mounted in the container.
    * @type {String}
    */
   rpcCertPath: '/secure/broker-rpc-tls.cert',
-
-  /**
-   * Configuration for SSL between the CLI and Daemon. This setting is only required
-   * if you will be hosting the daemon remotely
-   * @type {Boolean}
-   */
-  disableAuth: false,
 
   /**
    * The username specified on the remote Broker Daemon RPC

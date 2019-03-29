@@ -44,10 +44,10 @@ COPY --from=builder /home/app/proto /home/app/proto
 COPY --from=builder /home/app/node_modules /home/app/node_modules
 COPY --from=builder /home/app/broker-cli/node_modules /home/app/broker-cli/node_modules
 
-ARG USER=root
+ARG USER_HOME=/root
 
 # Copy configuration file for use inside the container
-COPY --from=builder /home/app/.sparkswap/config.js /${USER}/.sparkswap/config.js
+COPY --from=builder /home/app/broker-cli/container-config.js ${USER_HOME}/.sparkswap/config.js
 
 # Set path so we can directly use `sparkswap` command
 ENV PATH="./broker-cli/bin:${PATH}"
