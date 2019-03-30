@@ -1,5 +1,5 @@
 const path = require('path')
-const { readFileSync } = require('fs')
+const { readFileSync, existsSync } = require('fs')
 const { credentials } = require('grpc')
 const caller = require('grpc-caller')
 
@@ -13,8 +13,17 @@ const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
 
 /**
+ * Path for Proto files for the Relayer when doing local development
  * @constant
  * @type {string}
+ * @default
+ */
+const LOCAL_RELAYER_PROTO_PATH = './proto-local/relayer.proto'
+
+/**
+ * Path for the Proto files for the Relayer
+ * @type {string}
+ * @constant
  * @default
  */
 const RELAYER_PROTO_PATH = './proto/relayer.proto'
@@ -81,6 +90,11 @@ class RelayerClient {
     if (!PRODUCTION) {
       logger.info('Using local certs for relayer client', { production: PRODUCTION })
       channelCredentials = credentials.createSsl(readFileSync(certPath))
+
+      if (existsSync(path.resolve(LOCAL_RELAYER_PROTO_PATH))) {
+        logger.info('Using local proto files for the relayer client', { production: PRODUCTION, path: LOCAL_RELAYER_PROTO_PATH })
+        this.proto = loadProto(path.resolve(LOCAL_RELAYER_PROTO_PATH))
+      }
     }
 
     this.credentials = channelCredentials

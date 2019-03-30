@@ -39,6 +39,7 @@ COPY --from=builder /home/app/pm2.json /home/app/pm2.json
 
 # Copy relayer-proto files
 COPY --from=builder /home/app/proto /home/app/proto
+COPY --from=builder /home/app/proto-local /home/app/proto-local
 
 # Copy node_modules
 COPY --from=builder /home/app/node_modules /home/app/node_modules

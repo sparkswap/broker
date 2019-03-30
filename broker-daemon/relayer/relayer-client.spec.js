@@ -7,6 +7,7 @@ describe('RelayerClient', () => {
   let logger
   let createSslStub
   let readFileSync
+  let existsSync
   let pathResolve
   let Identity
   let identityIdentify
@@ -85,6 +86,8 @@ describe('RelayerClient', () => {
 
     readFileSync = sinon.stub()
     RelayerClient.__set__('readFileSync', readFileSync)
+    existsSync = sinon.stub()
+    RelayerClient.__set__('existsSync', existsSync)
 
     proto = {
       MakerService,
@@ -125,6 +128,9 @@ describe('RelayerClient', () => {
     it('loads the proto', () => {
       const fakePath = 'mypath'
       pathResolve.returns(fakePath)
+
+      RelayerClient.__set__('PRODUCTION', true)
+
       const relayer = new RelayerClient(idKeyPath, { host: relayerHost }, logger)
 
       expect(pathResolve).to.have.been.calledOnce()
@@ -159,6 +165,43 @@ describe('RelayerClient', () => {
       expect(readFileSync).to.have.been.calledOnce()
       expect(readFileSync).to.have.been.calledWith(fakePath)
       expect(createSslStub).to.have.been.calledWith(fakeCert)
+    })
+
+    it('uses a local proto file if in development and the file exists', () => {
+      RelayerClient.__set__('PRODUCTION', false)
+      pathResolve.withArgs('./proto-local/relayer.proto').returns('fake local path')
+      existsSync.withArgs('fake local path').returns(true)
+
+      // eslint-disable-next-line
+      new RelayerClient(idKeyPath, { host: relayerHost }, logger)
+
+      expect(pathResolve).to.have.been.calledWith('./proto-local/relayer.proto')
+      expect(existsSync).to.have.been.calledOnce()
+      expect(existsSync).to.have.been.calledWith('fake local path')
+      expect(loadProto).to.have.been.calledWith('fake local path')
+    })
+
+    it('does not use the local proto file if the file does not exist', () => {
+      RelayerClient.__set__('PRODUCTION', false)
+      existsSync.withArgs('./proto-local/relayer.proto').returns(false)
+      pathResolve.withArgs('./proto-local/relayer.proto').returns('fake local path')
+
+      // eslint-disable-next-line
+      new RelayerClient(idKeyPath, { host: relayerHost }, logger)
+
+      expect(loadProto).to.not.have.been.calledWith('fake local path')
+    })
+
+    it('does not use the local proto file if not in development', () => {
+      RelayerClient.__set__('PRODUCTION', true)
+      existsSync.withArgs('./proto-local/relayer.proto').returns(false)
+      pathResolve.withArgs('./proto-local/relayer.proto').returns('fake local path')
+
+      // eslint-disable-next-line
+      new RelayerClient(idKeyPath, { host: relayerHost }, logger)
+
+      expect(loadProto).to.have.been.calledOnce()
+      expect(loadProto).to.not.have.been.calledWith('fake local path')
     })
 
     it('creates ssl credentials', () => {

@@ -63,8 +63,8 @@ typings/
 # Mac
 .DS_Store
 
-# Proto build files
-proto
+# Local Relayer proto build files
+proto-local
 
 # Override file which we use dynamically in the broker setup
 docker-compose.override.yml
