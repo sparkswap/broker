@@ -85,7 +85,7 @@ describe('orderbook', () => {
     expect(stream.on).to.have.been.calledWith('end', sinon.match.func)
   })
 
-  it('sets an data handler', async () => {
+  it('sets a data handler', async () => {
     await orderbook(args, opts, logger)
 
     expect(stream.on).to.have.been.calledWith('data', sinon.match.func)
