@@ -25,9 +25,49 @@ NC='\033[0m' # No Color
 
 BROKER_VERSION="v0.5.2-beta"
 
+# Set the minimum to approx. 6 months prior
+MIN_DOCKER_VERSION=18.09.0
+MIN_DOCKER_COMPOSE_VERSION=1.23.0
+
+# For current versions, don't include patches
+CURRENT_DOCKER_VERSION=18.09
+CURRENT_DOCKER_COMPOSE_VERSION=1.24
+
 # print a message with a color, like msg "my message" $GRAY
 msg () {
   echo -e "${GRAY}${TAG}${NC}:  $2$1${NC}"
+}
+
+# Compares two versions using dot notation (e.g. 1.2.3 < 1.2.4)
+compare_versions () {
+  if [[ $1 == $2 ]]
+  then
+    return 0
+  fi
+  local IFS=.
+  local i ver1=($1) ver2=($2)
+  # fill empty fields in ver1 with zeros
+  for ((i=${#ver1[@]}; i<${#ver2[@]}; i++))
+  do
+    ver1[i]=0
+  done
+  for ((i=0; i<${#ver1[@]}; i++))
+  do
+    if [[ -z ${ver2[i]} ]]
+    then
+      # fill empty fields in ver2 with zeros
+      ver2[i]=0
+    fi
+    if ((10#${ver1[i]} > 10#${ver2[i]}))
+    then
+      return 1
+    fi
+    if ((10#${ver1[i]} < 10#${ver2[i]}))
+    then
+      return 2
+    fi
+  done
+  return 0
 }
 
 # parse options
@@ -92,12 +132,25 @@ if [ "$(command -v docker)" == "" ]; then
     msg "Alternatively, you can follow Docker's installation steps for Linux (https://docs.docker.com/install/linux/docker-ce/$(echo $LINUX_DISTRO)/)" $GREEN
   elif [[ "$OSTYPE" == "darwin"* ]]; then
     msg "Looks like you're using Mac." $GREEN
-    msg "Please use the following link to download and install Docker for Mac Version 2.0.0.3 or greater (this installs Docker Community Edition and Docker Compose)" $GREEN
+    msg "You can use the following link to download and install Docker for Mac Version 2.0.0.3 or greater (this installs Docker Community Edition and Docker Compose)" $GREEN
     msg "https://docs.docker.com/docker-for-mac/release-notes/#docker-community-edition-2003-2019-02-15" $WHITE
   else
     msg "Please install Docker before continuing." $GREEN
   fi
   exit 1
+fi
+
+# Ensure version of Docker meets minimum requirements. Warn if version is not the latest
+DOCKER_VERSION=$(docker version | grep Version | head -n 1 | grep -oE '[.0-9]*$')
+compare_versions $DOCKER_VERSION $MIN_DOCKER_VERSION
+if [[ $? == 2 ]]; then
+  msg "Your version of Docker is older than the minimum required version. Please update to the latest version of Docker." $RED
+  exit 1
+fi
+
+compare_versions $DOCKER_VERSION $CURRENT_DOCKER_VERSION
+if [[ $? == 2 ]]; then
+  msg "Your version of Docker isn't up to date. Please update to the latest version." $YELLOW
 fi
 
 if [ "$(command -v docker-compose)" == "" ]; then
@@ -107,14 +160,27 @@ if [ "$(command -v docker-compose)" == "" ]; then
     msg '    $ curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose' $WHITE
     msg "    $ sudo chmod +x /usr/local/bin/docker-compose" $WHITE
     msg "Alternatively, you can follow Docker's installation steps for Linux (https://docs.docker.com/compose/install/)" $GREEN
-  elif [[ "" == "" ]]; then
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
     msg "Looks like you're using Mac." $GREEN
-    msg "Please use the following link to download and install Docker for Mac Version 2.0.0.3 or greater (this installs Docker Community Edition and Docker Compose)" $GREEN
-    msg "https://docs.docker.com/docker-for-mac/release-notes/#docker-community-edition-2003-2019-02-15" $WHITE
+    msg "You can use the following link to install Docker Compose for Mac." $GREEN
+    msg "https://docs.docker.com/compose/install/" $WHITE
   else
-    msg "Please install Docker before continuing" $RED
+    msg "Please install Docker Compose before continuing" $RED
   fi
   exit 1
+fi
+
+# Ensure version of Docker Compose meets minimum requirements. Warn if version is not the latest
+DOCKER_COMPOSE_VERSION=$(docker-compose version | grep 'docker-compose version' | sed 's/,.*//' | grep -oE '[.0-9]*$')
+compare_versions $DOCKER_COMPOSE_VERSION $MIN_DOCKER_COMPOSE_VERSION
+if [[ $? == 2 ]]; then
+  msg "Your version of Docker Compose is older than the minimum required version. Please update to the latest version of Docker Compose." $RED
+  exit 1
+fi
+
+compare_versions $DOCKER_COMPOSE_VERSION $CURRENT_DOCKER_COMPOSE_VERSION
+if [[ $? == 2 ]]; then
+  msg "Your version of Docker Compose isn't up to date. Please update to the latest version." $YELLOW
 fi
 
 msg "We're about to create a directory named 'sparkswap' in ${PWD}." $WHITE
