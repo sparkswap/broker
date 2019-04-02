@@ -146,24 +146,23 @@ elif [ "$NO_IDENTITY" != "true" ]; then
   openssl ec -in $ID_PRIV_KEY -pubout -out $ID_PUB_KEY
 fi
 
-# Create proto directories so they can be copied by Docker
-mkdir -p ./proto
-mkdir -p ./proto-local
-
 if [ "$LOCAL" == "true" ]; then
   # When running locally we can rely on our local proto files from the Relayer
   echo "Downloading relayer proto files"
   # Blow away proto directory and recreate or git-clone will yell at us
-  if [ -d ./proto-local ]; then
-    rm -rf ./proto-local
+  if [ -d ./proto ]; then
+    rm -rf ./proto
   fi
 
   # Using anything other than "master" is unsupported since this repository does
   # not correctly pick up all Relayer changes and only changes that affect the proto
   # files themselves.
   RELAYER_PROTO_VERSION='master'
-  git clone -b ${RELAYER_PROTO_VERSION} https://github.com/sparkswap/relayer-proto.git ./proto-local
-  rm -rf ./proto-local/.git
+
+  # Note: this will override the proto files in version control. You should not commit changes
+  # to these files unless it is part of the change you are making to the Broker.
+  git clone -b ${RELAYER_PROTO_VERSION} https://github.com/sparkswap/relayer-proto.git ./proto
+  rm -rf ./proto/.git
 fi
 
 if [ "$NO_DOCKER" == "false" ]; then
