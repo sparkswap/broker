@@ -144,13 +144,34 @@ fi
 DOCKER_VERSION=$(docker version | grep Version | head -n 1 | grep -oE '[.0-9]*$')
 compare_versions $DOCKER_VERSION $MIN_DOCKER_VERSION
 if [[ $? == 2 ]]; then
-  msg "Your version of Docker is older than the minimum required version. Please update to the latest version of Docker." $RED
+  msg "Your version of Docker ($DOCKER_VERSION) is older than the minimum required version. Please upgrade to version $CURRENT_DOCKER_VERSION or greater." $RED
+
+  if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    # Get the version of Linux distribution
+    LINUX_DISTRO=$(cat /etc/*-release | grep -E '^ID=' | sed 's/^.*=//' | tr -d \")
+    msg "You can find steps to upgrade Docker for Linux using the following link." $WHITE
+    msg "https://docs.docker.com/install/linux/docker-ce/$(echo $LINUX_DISTRO)/" $WHITE
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    msg "You can find steps to upgrade Docker for Mac using the following link." $WHITE
+    msg "https://docs.docker.com/docker-for-mac/release-notes/" $WHITE
+  fi
+
   exit 1
 fi
 
 compare_versions $DOCKER_VERSION $CURRENT_DOCKER_VERSION
 if [[ $? == 2 ]]; then
-  msg "Your version of Docker isn't up to date. Please update to the latest version." $YELLOW
+  msg "Your version of Docker ($DOCKER_VERSION) isn't up to date. It's recommended that you upgrade to version $CURRENT_DOCKER_VERSION or greater." $YELLOW
+
+  if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    # Get the version of Linux distribution
+    LINUX_DISTRO=$(cat /etc/*-release | grep -E '^ID=' | sed 's/^.*=//' | tr -d \")
+    msg "You can find steps to upgrade Docker for Linux using the following link." $WHITE
+    msg "https://docs.docker.com/install/linux/docker-ce/$(echo $LINUX_DISTRO)/" $WHITE
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    msg "You can find steps to upgrade Docker for Mac using the following link." $WHITE
+    msg "https://docs.docker.com/docker-for-mac/release-notes/" $WHITE
+  fi
 fi
 
 if [ "$(command -v docker-compose)" == "" ]; then
@@ -174,13 +195,30 @@ fi
 DOCKER_COMPOSE_VERSION=$(docker-compose version | grep 'docker-compose version' | sed 's/,.*//' | grep -oE '[.0-9]*$')
 compare_versions $DOCKER_COMPOSE_VERSION $MIN_DOCKER_COMPOSE_VERSION
 if [[ $? == 2 ]]; then
-  msg "Your version of Docker Compose is older than the minimum required version. Please update to the latest version of Docker Compose." $RED
+  msg "Your version of Docker Compose ($DOCKER_COMPOSE_VERSION) is older than the minimum required version. Please upgrade to version $CURRENT_DOCKER_COMPOSE_VERSION or greater." $RED
+
+  if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    msg "You can find steps to upgrade Docker Compose for Linux using the following link." $WHITE
+    msg "https://docs.docker.com/compose/install/" $WHITE
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    msg "You can find steps to upgrade Docker for Mac using the following link." $WHITE
+    msg "https://docs.docker.com/docker-for-mac/release-notes/" $WHITE
+  fi
+
   exit 1
 fi
 
 compare_versions $DOCKER_COMPOSE_VERSION $CURRENT_DOCKER_COMPOSE_VERSION
 if [[ $? == 2 ]]; then
-  msg "Your version of Docker Compose isn't up to date. Please update to the latest version." $YELLOW
+  msg "Your version of Docker Compose ($DOCKER_COMPOSE_VERSION) isn't up to date. It's recommended you upgrade to version $CURRENT_DOCKER_COMPOSE_VERSION or greater." $YELLOW
+
+  if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    msg "You can find steps to upgrade Docker Compose for Linux using the following link." $WHITE
+    msg "https://docs.docker.com/compose/install/" $WHITE
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    msg "You can find steps to upgrade Docker for Mac using the following link." $WHITE
+    msg "https://docs.docker.com/docker-for-mac/release-notes/" $WHITE
+  fi
 fi
 
 msg "We're about to create a directory named 'sparkswap' in ${PWD}." $WHITE
