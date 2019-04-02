@@ -96,10 +96,20 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     logger.debug('Outbound channel already exists', { balance: maxOutboundBalance })
   }
 
-  const outboundPaymentChannelNetworkAddress = await engine.getPaymentChannelNetworkAddress()
-  const inboundPaymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
+  logger.debug(`Connecting to the relayer with inverse engine: ${inverseSymbol}`)
+
+  // We want to make sure we are connected to the relayer on the inverseSymbol before
+  // we ask the relayer to open a channel to us. This is to ensure that the relayer
+  // knows about the engine and wont fail when creating a channel with us. Additionally,
+  // this action allows our node to not have a public IP and ports opened
+  const { address: inverseAddress } = await relayer.paymentChannelNetworkService.getAddress({ symbol: inverseSymbol })
+
+  await inverseEngine.connectUser(inverseAddress)
 
   logger.debug('Creating inbound channel', { balance, symbol, inverseSymbol })
+
+  const outboundPaymentChannelNetworkAddress = await engine.getPaymentChannelNetworkAddress()
+  const inboundPaymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
 
   try {
     const authorization = relayer.identity.authorize()
