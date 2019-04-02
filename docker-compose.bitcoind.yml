@@ -21,7 +21,7 @@ services:
       - ZMQPUBRAWTX=tcp://bitcoind:28334
 
   bitcoind:
-    image: sparkswap/bitcoind:0.5.0-beta-rc1
+    image: sparkswap/bitcoind:0.5.0-beta-rc2
     volumes:
       - shared:/shared
       - bitcoin:/data
