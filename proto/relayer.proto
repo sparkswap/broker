@@ -1,0 +1,243 @@
+syntax = "proto3";
+
+enum Side {
+
+    BID = 0;
+    ASK = 1;
+}
+
+enum OrderStatus {
+
+    CREATED = 0;
+    PLACED = 1;
+    CANCELLED = 2;
+    FILLED = 3;
+    COMPLETED = 4;
+}
+
+message CreateOrderRequest {
+
+    string base_symbol = 2;
+    string counter_symbol = 3;
+    int64 base_amount = 4;
+    int64 counter_amount = 5;
+    Side side = 6;
+    string maker_base_address = 7;
+    string maker_counter_address = 8;
+}
+
+message CreateOrderResponse {
+
+    string order_id = 0;
+    string fee_payment_request = 1;
+    string deposit_payment_request = 2;
+    bool fee_required = 3;
+    bool deposit_required = 4;
+}
+
+message PlaceOrderRequest {
+
+    string order_id = 0;
+    string deposit_refund_payment_request = 1;
+    string fee_refund_payment_request = 2;
+}
+
+message CancelOrderRequest {
+
+    string order_id = 0;
+}
+
+message Fill {
+
+    bytes swap_hash = 0;
+    int64 fill_amount = 1;
+    string taker_address = 2;
+}
+
+message PlaceOrderResponse {
+
+    OrderStatus order_status = 0;
+    Fill fill = 1;
+}
+
+message ExecuteOrderRequest {
+
+    string order_id = 0;
+}
+
+message CompleteOrderRequest {
+
+    string order_id = 0;
+    bytes swap_preimage = 1;
+}
+service MakerService {
+    rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
+    rpc PlaceOrder (PlaceOrderRequest) returns (stream PlaceOrderResponse);
+    rpc CancelOrder (CancelOrderRequest) returns (google.protobuf.Empty);
+    rpc ExecuteOrder (ExecuteOrderRequest) returns (google.protobuf.Empty);
+    rpc CompleteOrder (CompleteOrderRequest) returns (google.protobuf.Empty);
+}
+
+message google {
+
+    message protobuf {
+
+        message Empty {
+        }
+    }
+}
+
+enum Code {
+
+    ORDER_NOT_PLACED = 0;
+}
+
+message FillError {
+
+    string message = 0;
+    Code code = 1;
+}
+
+message CreateFillRequest {
+
+    string order_id = 0;
+    bytes swap_hash = 1;
+    int64 fill_amount = 2;
+    string taker_base_address = 3;
+    string taker_counter_address = 4;
+}
+
+message CreateFillResponse {
+
+    string fill_id = 0;
+    string fee_payment_request = 1;
+    string deposit_payment_request = 2;
+    bool fee_required = 3;
+    bool deposit_required = 4;
+    FillError fill_error = 10;
+}
+
+message FillOrderRequest {
+
+    string fill_id = 0;
+    string deposit_refund_payment_request = 1;
+    string fee_refund_payment_request = 2;
+}
+
+message FillOrderResponse {
+
+    FillError fill_error = 0;
+}
+
+message SubscribeExecuteRequest {
+
+    string fill_id = 0;
+}
+
+message SubscribeExecuteResponse {
+
+    string maker_address = 0;
+}
+service TakerService {
+    rpc CreateFill (CreateFillRequest) returns (CreateFillResponse);
+    rpc FillOrder (FillOrderRequest) returns (FillOrderResponse);
+    rpc SubscribeExecute (SubscribeExecuteRequest) returns (stream SubscribeExecuteResponse);
+}
+
+message MarketEvent {
+
+    string event_id = 1;
+    EventType event_type = 2;
+    int64 timestamp = 3;
+    string order_id = 4;
+    int64 sequence = 5;
+    int64 base_amount = 10;
+    int64 counter_amount = 11;
+    Side side = 12;
+    int64 fill_amount = 20;
+
+    enum EventType {
+
+        PLACED = 1;
+        CANCELLED = 2;
+        FILLED = 3;
+    }
+}
+
+message WatchMarketResponse {
+
+    ResponseType type = 1;
+    MarketEvent market_event = 2;
+    bytes checksum = 3;
+
+    enum ResponseType {
+
+        NEW_EVENT = 1;
+        EXISTING_EVENT = 2;
+        EXISTING_EVENTS_DONE = 3;
+        START_OF_EVENTS = 4;
+    }
+}
+
+message WatchMarketRequest {
+
+    string base_symbol = 1;
+    string counter_symbol = 2;
+    int64 last_updated = 3;
+    int64 sequence = 4;
+}
+service OrderBookService {
+    rpc WatchMarket (WatchMarketRequest) returns (stream WatchMarketResponse);
+}
+
+message GetAddressRequest {
+
+    string symbol = 1;
+}
+
+message GetAddressResponse {
+
+    string address = 1;
+}
+
+message Channel {
+
+    string address = 1;
+    string symbol = 2;
+    int64 balance = 3;
+}
+
+message CreateChannelRequest {
+
+    Channel outbound = 1;
+    Channel inbound = 2;
+}
+service PaymentChannelNetworkService {
+    rpc GetAddress (GetAddressRequest) returns (GetAddressResponse);
+    rpc CreateChannel (CreateChannelRequest) returns (google.protobuf.Empty);
+}
+
+message RegisterRequest {
+
+    string public_key = 1;
+}
+
+message RegisterResponse {
+
+    string entity_id = 1;
+}
+
+message HealthCheckResponse {
+
+    string status = 1;
+}
+
+message GetMarketsResponse {
+
+    repeated string markets = 1;
+}
+service AdminService {
+    rpc Register (RegisterRequest) returns (RegisterResponse);
+    rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
+    rpc GetMarkets (google.protobuf.Empty) returns (GetMarketsResponse);
+}
