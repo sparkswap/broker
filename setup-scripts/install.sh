@@ -120,6 +120,7 @@ fi
 msg "Installing node.js@8.11" $WHITE
 nvm install 8.11 --latest-npm
 
+# Check if Docker is installed. Fail install if not
 if [ "$(command -v docker)" == "" ]; then
   msg "Docker is not installed." $RED
   if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -140,7 +141,7 @@ if [ "$(command -v docker)" == "" ]; then
   exit 1
 fi
 
-# Ensure version of Docker meets minimum requirements. Warn if version is not the latest
+# Ensure version of Docker meets minimum requirements. Fail install if not
 DOCKER_VERSION=$(docker version | grep Version | head -n 1 | grep -oE '[.0-9]*$')
 compare_versions $DOCKER_VERSION $MIN_DOCKER_VERSION
 if [[ $? == 2 ]]; then
@@ -159,6 +160,7 @@ if [[ $? == 2 ]]; then
   exit 1
 fi
 
+# Check if running the latest version of Docker. Warn if not and continue with install
 compare_versions $DOCKER_VERSION $CURRENT_DOCKER_VERSION
 if [[ $? == 2 ]]; then
   msg "Your version of Docker ($DOCKER_VERSION) isn't up to date. It's recommended that you upgrade to version $CURRENT_DOCKER_VERSION or greater." $YELLOW
@@ -174,6 +176,7 @@ if [[ $? == 2 ]]; then
   fi
 fi
 
+# Check if Docker Compose is installed. Fail install if not
 if [ "$(command -v docker-compose)" == "" ]; then
   msg "Docker Compose is not installed." $RED
   if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -191,7 +194,7 @@ if [ "$(command -v docker-compose)" == "" ]; then
   exit 1
 fi
 
-# Ensure version of Docker Compose meets minimum requirements. Warn if version is not the latest
+# Ensure version of Docker Compose meets minimum requirements. Fail install if not
 DOCKER_COMPOSE_VERSION=$(docker-compose version | grep 'docker-compose version' | sed 's/,.*//' | grep -oE '[.0-9]*$')
 compare_versions $DOCKER_COMPOSE_VERSION $MIN_DOCKER_COMPOSE_VERSION
 if [[ $? == 2 ]]; then
@@ -208,6 +211,7 @@ if [[ $? == 2 ]]; then
   exit 1
 fi
 
+# Check if running the latest version of Docker Compose. Warn if not and continue with install
 compare_versions $DOCKER_COMPOSE_VERSION $CURRENT_DOCKER_COMPOSE_VERSION
 if [[ $? == 2 ]]; then
   msg "Your version of Docker Compose ($DOCKER_COMPOSE_VERSION) isn't up to date. It's recommended you upgrade to version $CURRENT_DOCKER_COMPOSE_VERSION or greater." $YELLOW
