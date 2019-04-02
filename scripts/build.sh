@@ -26,12 +26,6 @@ echo "░  ░  ░  ░░         ░   ▒     ░░   ░ ░ ░░ ░ �
 echo "      ░                 ░  ░   ░     ░  ░         ░      ░          ░  ░         ";
 echo "                                                                                 ";
 
-# Setting this env is ONLY required for a hosted broker setup.
-#
-# This address is used during the build process so that certs can be generated
-# correctly for a hosted (remote) broker daemon.
-RELAYER_PROTO_VERSION='master'
-
 # The directory where we store the sparkswap configuration, certs, and keys.
 SPARKSWAP_DIRECTORY=~/.sparkswap
 
@@ -40,6 +34,11 @@ NO_CLI="false"
 NO_DOCKER="false"
 NO_CERTS="false"
 NO_IDENTITY="false"
+
+# Setting this env is ONLY required for a hosted broker setup.
+#
+# This address is used during the build process so that certs can be generated
+# correctly for a hosted (remote) broker daemon.
 EXTERNAL_ADDRESS="localhost"
 LOCAL="false"
 for i in "$@"
@@ -83,15 +82,6 @@ fi
 echo ""
 echo "It's time to BUILD! All resistance is futile."
 echo ""
-
-echo "Downloading relayer proto files"
-# Blow away proto directory and recreate or git-clone will yell at us
-if [ -d ./proto ]; then
-  rm -rf ./proto
-fi
-
-git clone -b ${RELAYER_PROTO_VERSION} https://github.com/sparkswap/relayer-proto.git ./proto
-rm -rf ./proto/.git
 
 #############################################
 # Keypair Generation for SSL to the broker
@@ -154,6 +144,25 @@ elif [[ -f "$ID_PUB_KEY" ]]; then
 elif [ "$NO_IDENTITY" != "true" ]; then
   openssl ecparam -name prime256v1 -genkey -noout -out $ID_PRIV_KEY
   openssl ec -in $ID_PRIV_KEY -pubout -out $ID_PUB_KEY
+fi
+
+if [ "$LOCAL" == "true" ]; then
+  # When running locally we can rely on our local proto files from the Relayer
+  echo "Downloading relayer proto files"
+  # Blow away proto directory and recreate or git-clone will yell at us
+  if [ -d ./proto ]; then
+    rm -rf ./proto
+  fi
+
+  # Using anything other than "master" is unsupported since this repository does
+  # not correctly pick up all Relayer changes and only changes that affect the proto
+  # files themselves.
+  RELAYER_PROTO_VERSION='master'
+
+  # Note: this will override the proto files in version control. You should not commit changes
+  # to these files unless it is part of the change you are making to the Broker.
+  git clone -b ${RELAYER_PROTO_VERSION} https://github.com/sparkswap/relayer-proto.git ./proto
+  rm -rf ./proto/.git
 fi
 
 if [ "$NO_DOCKER" == "false" ]; then
