@@ -53,6 +53,7 @@ services:
       - RPC_PASS=${BTC_RPC_PASS}
       - RPC_HOST=${BTC_RPC_HOST:-}
       - EXTERNAL_ADDRESS=${EXTERNAL_BTC_ADDRESS:-}
+      - EXTERNAL_PORT=10113
       - NETWORK=${NETWORK}
       - DEBUG=info
       - EXTPREIMAGE_HOST=sparkswapd:40369
@@ -76,6 +77,7 @@ services:
       - RPC_PASS=${LTC_RPC_PASS}
       - RPC_HOST=${LTC_RPC_HOST:-}
       - EXTERNAL_ADDRESS=${EXTERNAL_LTC_ADDRESS:-}
+      - EXTERNAL_PORT=10114
       - NETWORK=${NETWORK}
       - DEBUG=info
       - EXTPREIMAGE_HOST=sparkswapd:40369
