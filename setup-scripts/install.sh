@@ -129,12 +129,14 @@ if [ "$(command -v docker)" == "" ]; then
     # Get the version of Linux distribution
     LINUX_DISTRO=$(cat /etc/*-release | grep -E '^ID=' | sed 's/^.*=//' | tr -d \")
     msg "Looks like you're using Linux." $GREEN
-    msg "To install Docker using the convenience script for Linux, run" $GREEN
-    msg "    curl -fsSL https://get.docker.com -o get-docker.sh && sudo sh get-docker.sh" $WHITE
-    msg "Alternatively, you can follow Docker's installation steps for Linux (https://docs.docker.com/install/linux/docker-ce/$(echo $LINUX_DISTRO)/)" $GREEN
-    msg "You will also need Docker Compose. Once you've installed Docker in the previous step, run" $GREEN
-    msg "    curl -L \"https://github.com/docker/compose/releases/download/$RECOMMENDED_DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose" $WHITE
-    msg "Alternatively, you can follow Docker's installation steps for Linux (https://docs.docker.com/compose/install/)" $GREEN
+    msg "You will need to install Docker and Docker Compose. To install both, run" $GREEN
+    echo ""
+    echo "curl -fsSL https://get.docker.com -o get-docker.sh && \\"
+    echo "sudo sh get-docker.sh && \\"
+    echo "curl -L \"https://github.com/docker/compose/releases/download/$RECOMMENDED_DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && \\"
+    echo "sudo chmod +x /usr/local/bin/docker-compose"
+    echo ""
+    msg "Alternatively, you can follow Docker's installation steps for Linux (https://docs.docker.com/install/linux/docker-ce/$(echo $LINUX_DISTRO)/) and Docker's installation steps for Docker Compose (https://docs.docker.com/compose/install/)" $GREEN
   elif [[ "$OSTYPE" == "darwin"* ]]; then
     msg "Looks like you're using Mac." $GREEN
     msg "You can use the following link to download and install Docker for Mac Version 2.0.0.3 or greater (this installs Docker Community Edition and Docker Compose)" $GREEN
@@ -186,7 +188,7 @@ if [ "$(command -v docker-compose)" == "" ]; then
   if [[ "$OSTYPE" == "linux-gnu" ]]; then
     msg "To install Docker Compose using Linux, run" $GREEN
     msg "    curl -L \"https://github.com/docker/compose/releases/download/$RECOMMENDED_DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose" $WHITE
-    msg "Alternatively, you can follow Docker's installation steps for Linux (https://docs.docker.com/compose/install/)" $GREEN
+    msg "Alternatively, you can follow Docker's installation steps for Docker Compose (https://docs.docker.com/compose/install/)" $GREEN
   elif [[ "$OSTYPE" == "darwin"* ]]; then
     msg "Looks like you're using Mac." $GREEN
     msg "You can use the following link to install Docker Compose for Mac." $GREEN
