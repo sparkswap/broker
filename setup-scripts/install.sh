@@ -238,8 +238,9 @@ else
 
   # Download the Broker and extract it
   curl -L "https://github.com/sparkswap/broker/archive/${BROKER_VERSION}.tar.gz" -o "broker-${BROKER_VERSION}.tar.gz"
-  tar -xzf "broker-${BROKER_VERSION}.tar.gz"
-  mv "broker-${BROKER_VERSION}" broker
+  mkdir broker
+  tar -xzf "broker-${BROKER_VERSION}.tar.gz" -C broker --strip-components=1
+  rm "broker-${BROKER_VERSION}.tar.gz"
 
   # Move into the Broker directory to build it
   cd broker
@@ -272,8 +273,9 @@ if [[ "$BUILD" == "true" ]]; then
 
     # Download the LND Engine and extract it
     curl -L "https://github.com/sparkswap/lnd-engine/archive/${LND_ENGINE_VERSION}.tar.gz" -o "lnd-engine-${LND_ENGINE_VERSION}.tar.gz"
-    tar -xzf "lnd-engine-${LND_ENGINE_VERSION}.tar.gz"
-    mv "lnd-engine-${LND_ENGINE_VERSION}" lnd-engine
+    mkdir lnd-engine
+    tar -xzf "lnd-engine-${LND_ENGINE_VERSION}.tar.gz" -C lnd-engine --strip-components=1
+    rm "lnd-engine-${LND_ENGINE_VERSION}.tar.gz"
 
     # Build images locally for the lnd-engine
     (cd lnd-engine && bash ./scripts/build.sh)
