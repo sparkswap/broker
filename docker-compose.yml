@@ -67,6 +67,7 @@ services:
     logging:
       options:
         max-size: 50m
+    restart: on-failure
 
   lnd_ltc:
     image: sparkswap/lnd_ltc:0.5.0-beta-rc2
@@ -91,6 +92,7 @@ services:
     logging:
       options:
         max-size: 50m
+    restart: on-failure
 
 volumes:
   shared:
