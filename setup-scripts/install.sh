@@ -102,24 +102,6 @@ done
 
 msg "You're about to install Sparkswap. Good for you!" $GREEN
 
-# Source nvm 🤢
-test -f ~/.nvm/nvm.sh && . ~/.nvm/nvm.sh
-test -f ~/.profile && . ~/.profile
-test -f ~/.bashrc && . ~/.bashrc
-if [ "$(command -v brew)" != "" ]; then
-  test -f "$(brew --prefix nvm)/nvm.sh" && . "$(brew --prefix nvm)/nvm.sh" --no-use
-fi
-
-# Ensure nvm is installed
-if [ "$(command -v nvm)" == "" ]; then
-  msg "nvm is not installed. Please install it before continuing." $RED
-  exit 1
-fi
-
-# Install node.js 8.11
-msg "Installing node.js@8.11" $WHITE
-nvm install 8.11 --latest-npm
-
 # Check if Docker is installed. Fail install if not
 if [ "$(command -v docker)" == "" ]; then
   msg "Docker is not installed." $RED
@@ -259,18 +241,13 @@ else
 
   if [[ $BUILD == "true" ]]; then
     # Build images locally for the broker
-    npm run build -- -e=$IP_ADDRESS
+    bash ./scripts/build.sh -e=$IP_ADDRESS
   else
     # Run the broker build to generate certs and identity, but do not build
     # docker images
-    npm run build -- -e=$IP_ADDRESS --no-docker
+    bash ./scripts/build.sh -e=$IP_ADDRESS --no-docker
   fi
 fi
-
-# Detect LND-Engine version
-msg "Detecting LND Version from the Broker" $WHITE
-LND_ENGINE_VERSION=$(echo "console.log($(npm list lnd-engine --json).dependencies['lnd-engine'].version);" | node)
-msg "Found LND Engine version $LND_ENGINE_VERSION" $GREEN
 
 # Move back a directory to the `sparkswap` root
 cd ..
@@ -283,9 +260,14 @@ if [[ "$BUILD" == "true" ]]; then
     msg "You already have a folder for the lnd-engine. Skipping." $YELLOW
     msg "If you need to re-install, remove the folder and try again." $YELLOW
   else
+    # Detect LND-Engine version
+    msg "Detecting LND Version from the Broker" $WHITE
+    LND_ENGINE_VERSION=$(sed -n 's/.*github:sparkswap\/lnd-engine#\(.*\)".*/\1/p' package.json)
+    msg "Found LND Engine version $LND_ENGINE_VERSION" $GREEN
+
     git clone -b "$LND_ENGINE_VERSION" --single-branch --depth 1 https://github.com/sparkswap/lnd-engine.git
     # Build images locally for the lnd-engine
-    (cd lnd-engine && npm run build)
+    (cd lnd-engine && bash ./scripts/build.sh)
   fi
 fi
 
@@ -294,12 +276,7 @@ cd broker
 
 # Set up environment
 msg "Setting up your Broker" $WHITE
-npm run env-setup -- -n=$NETWORK -i=$IP_ADDRESS
-
-# Install CLI
-msg "Installing the CLI" $WHITE
-npm install -g ./broker-cli
-(cd $(dirname $(which sparkswap))/../lib/node_modules/broker-cli && npm run install-config)
+bash ./scripts/env-setup.sh -n=$NETWORK -i=$IP_ADDRESS
 
 msg "Creating random username and password" $WHITE
 ## Re-do this step so we can copy into the config
