@@ -14,17 +14,20 @@
 
 set -eu
 
-echo "                                                   "
-echo "  ██████  ██▓███   ▄▄▄       ██▀███   ██ ▄█▀  ██████  █     █░ ▄▄▄       ██▓███  ";
-echo "▒██    ▒ ▓██░  ██▒▒████▄    ▓██ ▒ ██▒ ██▄█▒ ▒██    ▒ ▓█░ █ ░█░▒████▄    ▓██░  ██▒";
-echo "░ ▓██▄   ▓██░ ██▓▒▒██  ▀█▄  ▓██ ░▄█ ▒▓███▄░ ░ ▓██▄   ▒█░ █ ░█ ▒██  ▀█▄  ▓██░ ██▓▒";
-echo "  ▒   ██▒▒██▄█▓▒ ▒░██▄▄▄▄██ ▒██▀▀█▄  ▓██ █▄   ▒   ██▒░█░ █ ░█ ░██▄▄▄▄██ ▒██▄█▓▒ ▒";
-echo "▒██████▒▒▒██▒ ░  ░ ▓█   ▓██▒░██▓ ▒██▒▒██▒ █▄▒██████▒▒░░██▒██▓  ▓█   ▓██▒▒██▒ ░  ░";
-echo "▒ ▒▓▒ ▒ ░▒▓▒░ ░  ░ ▒▒   ▓▒█░░ ▒▓ ░▒▓░▒ ▒▒ ▓▒▒ ▒▓▒ ▒ ░░ ▓░▒ ▒   ▒▒   ▓▒█░▒▓▒░ ░  ░";
-echo "░ ░▒  ░ ░░▒ ░       ▒   ▒▒ ░  ░▒ ░ ▒░░ ░▒ ▒░░ ░▒  ░ ░  ▒ ░ ░    ▒   ▒▒ ░░▒ ░     ";
-echo "░  ░  ░  ░░         ░   ▒     ░░   ░ ░ ░░ ░ ░  ░  ░    ░   ░    ░   ▒   ░░       ";
-echo "      ░                 ░  ░   ░     ░  ░         ░      ░          ░  ░         ";
-echo "                                                                                 ";
+
+echo "  :DMMMMMMM:                                                                   "
+echo " MMMMMMMMM&MM:                              MM                                 "
+echo "MMMMMMD  MMMMM      MMM  MMNMM   MMM:  MM=M MM  MM  MMM MM  MM  MM MMM:  MMNMM "
+echo "MMMMM   MMMMMMM    MM,   MM  :M   ,:MM MM   MMMM   MM,   M ,MM  M   ,:MM MM  :M"
+echo "MMMMMM   NMMMMM      +MM MM   M MM  MM MM   MM MM    +MM MMM NMM& MM  MM MM   M"
+echo "MMMMM  ,MMMMMM     MMMM  MMMMM   MMMMM MM   MM  MM MMMM   MM  MM   MMMMM MMMMM "
+echo " MMIMMMMMMMMM:           MM                                              MM    "
+echo "   \`MMMMMM+                                                                   "
+echo "                                                          https://sparkswap.com"
+echo ""
+echo "Broker Build starting..."
+echo ""
+echo ""
 
 # The directory where we store the sparkswap configuration, certs, and keys.
 SPARKSWAP_DIRECTORY=~/.sparkswap
@@ -78,10 +81,6 @@ if [ "$EXTERNAL_ADDRESS" == "" ]; then
   echo "Please provide your public IP address or hostname"
   read EXTERNAL_ADDRESS
 fi
-
-echo ""
-echo "It's time to BUILD! All resistance is futile."
-echo ""
 
 #############################################
 # Keypair Generation for SSL to the broker
