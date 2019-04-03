@@ -6,7 +6,7 @@
 # Options:
 # -c, --no-cli                    do not copy certs for local cli installation
 # -d, --no-docker                 do not build docker images
-# -e=, --external-address=        your public IP address (removes prompt)
+# -e=, --external-address=        your public IP address (used for cert generation)
 # -i, --no-identity               does not generate keys for the daemons identity
 # -n, --no-certs                  does not re-generate tls certs for the daemon
 #
@@ -79,8 +79,7 @@ esac
 done
 
 if [ "$EXTERNAL_ADDRESS" == "" ]; then
-  echo "Please provide your public IP address or hostname"
-  read EXTERNAL_ADDRESS
+  EXTERNAL_ADDRESS="localhost"
 fi
 
 # Create an openssl docker image if the command does not exist
