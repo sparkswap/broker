@@ -6,7 +6,6 @@
 # Options:
 # -y, --yes                     answer "Yes" to all yes/no prompts to allow for non-interactive scripting
 # -n=, --network=[network]      'm' for MainNet, 'r' for RegTest hosted by Sparkswap (removes prompt)
-# -i=, --public-ip=[ip address] Your public IP Address (removes prompt)
 # -b, --build                   build the images locally instead of pulling from dockerhub
 #
 #################################
@@ -73,7 +72,6 @@ compare_versions () {
 # parse options
 FORCE_YES="false"
 NETWORK=""
-IP_ADDRESS=""
 BUILD="false"
 for i in "$@"
 do
@@ -84,10 +82,6 @@ case $i in
     ;;
     -n=*|--network=*)
     NETWORK="${i#*=}"
-
-    ;;
-    -i=*|--public-ip=*)
-    IP_ADDRESS="${i#*=}"
 
     ;;
     -b|--build)
@@ -247,11 +241,11 @@ else
 
   if [[ $BUILD == "true" ]]; then
     # Build images locally for the broker
-    bash ./scripts/build.sh -e=$IP_ADDRESS
+    bash ./scripts/build.sh
   else
     # Run the broker build to generate certs and identity, but do not build
     # docker images
-    bash ./scripts/build.sh -e=$IP_ADDRESS --no-docker
+    bash ./scripts/build.sh --no-docker
   fi
 
   # Move back a directory to the `sparkswap` root
@@ -287,7 +281,7 @@ cd broker
 
 # Set up environment
 msg "Setting up your Broker" $WHITE
-bash ./scripts/env-setup.sh -n=$NETWORK -i=$IP_ADDRESS
+bash ./scripts/env-setup.sh -n=$NETWORK
 
 msg "Creating random username and password" $WHITE
 ## Re-do this step so we can copy into the config
