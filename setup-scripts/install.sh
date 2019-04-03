@@ -289,7 +289,7 @@ if [[ "$BUILD" == "true" ]]; then
   else
     # Detect LND-Engine version
     msg "Detecting LND Version from the Broker" $WHITE
-    LND_ENGINE_VERSION=$(sed -n 's/.*github:sparkswap\/lnd-engine#\(.*\)".*/\1/p' package.json)
+    LND_ENGINE_VERSION=$(sed -n 's/.*github:sparkswap\/lnd-engine#\(.*\)".*/\1/p' broker/package.json)
     msg "Found LND Engine version $LND_ENGINE_VERSION" $GREEN
 
     # Download the LND Engine and extract it
