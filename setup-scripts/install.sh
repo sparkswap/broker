@@ -234,9 +234,14 @@ msg "Installing the Sparkswap Broker (sparkswapd)" $WHITE
 if [ -d "broker" ]; then
   msg "You already have a folder for the broker. Skipping" $YELLOW
   msg "If you need to re-install, remove the folder and try again." $YELLOW
-  cd broker
 else
-  git clone -b "$BROKER_VERSION" --single-branch --depth 1 https://github.com/sparkswap/broker.git
+
+  # Download the Broker and extract it
+  curl -L "https://github.com/sparkswap/broker/archive/${BROKER_VERSION}.tar.gz" -o "broker-${BROKER_VERSION}.tar.gz"
+  tar -xzf "broker-${BROKER_VERSION}.tar.gz"
+  mv "broker-${BROKER_VERSION}" broker
+
+  # Move into the Broker directory to build it
   cd broker
 
   if [[ $BUILD == "true" ]]; then
@@ -247,10 +252,10 @@ else
     # docker images
     bash ./scripts/build.sh -e=$IP_ADDRESS --no-docker
   fi
-fi
 
-# Move back a directory to the `sparkswap` root
-cd ..
+  # Move back a directory to the `sparkswap` root
+  cd ..
+fi
 
 # Install LND Engine
 if [[ "$BUILD" == "true" ]]; then
@@ -265,7 +270,11 @@ if [[ "$BUILD" == "true" ]]; then
     LND_ENGINE_VERSION=$(sed -n 's/.*github:sparkswap\/lnd-engine#\(.*\)".*/\1/p' package.json)
     msg "Found LND Engine version $LND_ENGINE_VERSION" $GREEN
 
-    git clone -b "$LND_ENGINE_VERSION" --single-branch --depth 1 https://github.com/sparkswap/lnd-engine.git
+    # Download the LND Engine and extract it
+    curl -L "https://github.com/sparkswap/lnd-engine/archive/${LND_ENGINE_VERSION}.tar.gz" -o "lnd-engine-${LND_ENGINE_VERSION}.tar.gz"
+    tar -xzf "lnd-engine-${LND_ENGINE_VERSION}.tar.gz"
+    mv "lnd-engine-${LND_ENGINE_VERSION}" lnd-engine
+
     # Build images locally for the lnd-engine
     (cd lnd-engine && bash ./scripts/build.sh)
   fi
