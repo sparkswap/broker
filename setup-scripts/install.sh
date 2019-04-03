@@ -35,16 +35,21 @@ MIN_DOCKER_COMPOSE_VERSION=1.23.0
 CURRENT_DOCKER_VERSION=18.09
 CURRENT_DOCKER_COMPOSE_VERSION=1.24
 
+# Used for generating download URL
+RECOMMENDED_DOCKER_COMPOSE_VERSION=1.24.0
+
 # print a message with a color, like msg "my message" $GRAY
 msg () {
   echo -e "${GRAY}${TAG}${NC}:  $2$1${NC}"
 }
 
 # Compares two versions using dot notation (e.g. 1.2.3 < 1.2.4)
+compare_result=""
 compare_versions () {
   if [[ $1 == $2 ]]
   then
-    return 0
+    compare_result=0
+    return
   fi
   local IFS=.
   local i ver1=($1) ver2=($2)
@@ -62,14 +67,17 @@ compare_versions () {
     fi
     if ((10#${ver1[i]} > 10#${ver2[i]}))
     then
-      return 1
+      compare_result=1
+      return
     fi
     if ((10#${ver1[i]} < 10#${ver2[i]}))
     then
-      return 2
+      compare_result=2
+      return
     fi
   done
-  return 0
+  compare_result=0
+  return
 }
 
 # parse options
@@ -119,10 +127,14 @@ if [ "$(command -v docker)" == "" ]; then
     # Get the version of Linux distribution
     LINUX_DISTRO=$(cat /etc/*-release | grep -E '^ID=' | sed 's/^.*=//' | tr -d \")
     msg "Looks like you're using Linux." $GREEN
-    msg "To install Docker using the convenience script for Linux, run" $GREEN
-    msg "    $ curl -fsSL https://get.docker.com -o get-docker.sh" $WHITE
-    msg "    $ sudo sh get-docker.sh" $WHITE
-    msg "Alternatively, you can follow Docker's installation steps for Linux (https://docs.docker.com/install/linux/docker-ce/$(echo $LINUX_DISTRO)/)" $GREEN
+    msg "You will need to install Docker and Docker Compose. To install both, run" $GREEN
+    echo ""
+    echo "curl -fsSL https://get.docker.com -o get-docker.sh && \\"
+    echo "sudo sh get-docker.sh && \\"
+    echo "curl -L \"https://github.com/docker/compose/releases/download/$RECOMMENDED_DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && \\"
+    echo "sudo chmod +x /usr/local/bin/docker-compose"
+    echo ""
+    msg "Alternatively, you can follow Docker's installation steps for Linux (https://docs.docker.com/install/linux/docker-ce/$(echo $LINUX_DISTRO)/) and Docker's installation steps for Docker Compose (https://docs.docker.com/compose/install/)" $GREEN
   elif [[ "$OSTYPE" == "darwin"* ]]; then
     msg "Looks like you're using Mac." $GREEN
     msg "You can use the following link to download and install Docker for Mac Version 2.0.0.3 or greater (this installs Docker Community Edition and Docker Compose)" $GREEN
@@ -136,7 +148,7 @@ fi
 # Ensure version of Docker meets minimum requirements. Fail install if not
 DOCKER_VERSION=$(docker version | grep Version | head -n 1 | grep -oE '[.0-9]*$')
 compare_versions $DOCKER_VERSION $MIN_DOCKER_VERSION
-if [[ $? == 2 ]]; then
+if [[ $compare_result == 2 ]]; then
   msg "Your version of Docker ($DOCKER_VERSION) is older than the minimum required version. Please upgrade to version $CURRENT_DOCKER_VERSION or greater." $RED
 
   if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -154,7 +166,7 @@ fi
 
 # Check if running the latest version of Docker. Warn if not and continue with install
 compare_versions $DOCKER_VERSION $CURRENT_DOCKER_VERSION
-if [[ $? == 2 ]]; then
+if [[ $compare_result == 2 ]]; then
   msg "Your version of Docker ($DOCKER_VERSION) isn't up to date. It's recommended that you upgrade to version $CURRENT_DOCKER_VERSION or greater." $YELLOW
 
   if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -173,9 +185,8 @@ if [ "$(command -v docker-compose)" == "" ]; then
   msg "Docker Compose is not installed." $RED
   if [[ "$OSTYPE" == "linux-gnu" ]]; then
     msg "To install Docker Compose using Linux, run" $GREEN
-    msg '    $ curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose' $WHITE
-    msg "    $ sudo chmod +x /usr/local/bin/docker-compose" $WHITE
-    msg "Alternatively, you can follow Docker's installation steps for Linux (https://docs.docker.com/compose/install/)" $GREEN
+    msg "    curl -L \"https://github.com/docker/compose/releases/download/$RECOMMENDED_DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose" $WHITE
+    msg "Alternatively, you can follow Docker's installation steps for Docker Compose (https://docs.docker.com/compose/install/)" $GREEN
   elif [[ "$OSTYPE" == "darwin"* ]]; then
     msg "Looks like you're using Mac." $GREEN
     msg "You can use the following link to install Docker Compose for Mac." $GREEN
@@ -189,7 +200,7 @@ fi
 # Ensure version of Docker Compose meets minimum requirements. Fail install if not
 DOCKER_COMPOSE_VERSION=$(docker-compose version | grep 'docker-compose version' | sed 's/,.*//' | grep -oE '[.0-9]*$')
 compare_versions $DOCKER_COMPOSE_VERSION $MIN_DOCKER_COMPOSE_VERSION
-if [[ $? == 2 ]]; then
+if [[ $compare_result == 2 ]]; then
   msg "Your version of Docker Compose ($DOCKER_COMPOSE_VERSION) is older than the minimum required version. Please upgrade to version $CURRENT_DOCKER_COMPOSE_VERSION or greater." $RED
 
   if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -205,7 +216,7 @@ fi
 
 # Check if running the latest version of Docker Compose. Warn if not and continue with install
 compare_versions $DOCKER_COMPOSE_VERSION $CURRENT_DOCKER_COMPOSE_VERSION
-if [[ $? == 2 ]]; then
+if [[ $compare_result == 2 ]]; then
   msg "Your version of Docker Compose ($DOCKER_COMPOSE_VERSION) isn't up to date. It's recommended you upgrade to version $CURRENT_DOCKER_COMPOSE_VERSION or greater." $YELLOW
 
   if [[ "$OSTYPE" == "linux-gnu" ]]; then
