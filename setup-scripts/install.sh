@@ -318,5 +318,5 @@ docker-compose up -d
 echo ""
 echo ""
 msg "All done with installation!" $GREEN
-msg "Go into your container with ${NC}${BLUE}docker-compose exec bash${NC}" $WHITE
+msg "Go into your container with ${NC}${BLUE}docker-compose exec sparkswapd bash${NC}" $WHITE
 msg "And run ${NC}${BLUE}sparkswap healthcheck${NC}${WHITE} to see how things are looking." $WHITE
