@@ -15,6 +15,7 @@
 set -eu
 
 
+echo ""
 echo "  :DMMMMMMM:                                                                   "
 echo " MMMMMMMMM&MM:                              MM                                 "
 echo "MMMMMMD  MMMMM      MMM  MMNMM   MMM:  MM=M MM  MM  MMM MM  MM  MM MMM:  MMNMM "
