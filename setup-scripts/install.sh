@@ -38,10 +38,12 @@ msg () {
 }
 
 # Compares two versions using dot notation (e.g. 1.2.3 < 1.2.4)
+compare_result=""
 compare_versions () {
   if [[ $1 == $2 ]]
   then
-    return 0
+    compare_result=0
+    return
   fi
   local IFS=.
   local i ver1=($1) ver2=($2)
@@ -59,14 +61,17 @@ compare_versions () {
     fi
     if ((10#${ver1[i]} > 10#${ver2[i]}))
     then
-      return 1
+      compare_result=1
+      return
     fi
     if ((10#${ver1[i]} < 10#${ver2[i]}))
     then
-      return 2
+      compare_result=2
+      return
     fi
   done
-  return 0
+  compare_result=0
+  return
 }
 
 # parse options
@@ -138,7 +143,7 @@ fi
 # Ensure version of Docker meets minimum requirements. Fail install if not
 DOCKER_VERSION=$(docker version | grep Version | head -n 1 | grep -oE '[.0-9]*$')
 compare_versions $DOCKER_VERSION $MIN_DOCKER_VERSION
-if [[ $? == 2 ]]; then
+if [[ $compare_result == 2 ]]; then
   msg "Your version of Docker ($DOCKER_VERSION) is older than the minimum required version. Please upgrade to version $CURRENT_DOCKER_VERSION or greater." $RED
 
   if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -156,7 +161,7 @@ fi
 
 # Check if running the latest version of Docker. Warn if not and continue with install
 compare_versions $DOCKER_VERSION $CURRENT_DOCKER_VERSION
-if [[ $? == 2 ]]; then
+if [[ $compare_result == 2 ]]; then
   msg "Your version of Docker ($DOCKER_VERSION) isn't up to date. It's recommended that you upgrade to version $CURRENT_DOCKER_VERSION or greater." $YELLOW
 
   if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -191,7 +196,7 @@ fi
 # Ensure version of Docker Compose meets minimum requirements. Fail install if not
 DOCKER_COMPOSE_VERSION=$(docker-compose version | grep 'docker-compose version' | sed 's/,.*//' | grep -oE '[.0-9]*$')
 compare_versions $DOCKER_COMPOSE_VERSION $MIN_DOCKER_COMPOSE_VERSION
-if [[ $? == 2 ]]; then
+if [[ $compare_result == 2 ]]; then
   msg "Your version of Docker Compose ($DOCKER_COMPOSE_VERSION) is older than the minimum required version. Please upgrade to version $CURRENT_DOCKER_COMPOSE_VERSION or greater." $RED
 
   if [[ "$OSTYPE" == "linux-gnu" ]]; then
@@ -207,7 +212,7 @@ fi
 
 # Check if running the latest version of Docker Compose. Warn if not and continue with install
 compare_versions $DOCKER_COMPOSE_VERSION $CURRENT_DOCKER_COMPOSE_VERSION
-if [[ $? == 2 ]]; then
+if [[ $compare_result == 2 ]]; then
   msg "Your version of Docker Compose ($DOCKER_COMPOSE_VERSION) isn't up to date. It's recommended you upgrade to version $CURRENT_DOCKER_COMPOSE_VERSION or greater." $YELLOW
 
   if [[ "$OSTYPE" == "linux-gnu" ]]; then
