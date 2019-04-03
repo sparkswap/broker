@@ -147,12 +147,14 @@ if [ "$(command -v docker)" == "" ]; then
     echo "curl -fsSL https://get.docker.com -o get-docker.sh && \\"
     echo "sudo sh get-docker.sh && \\"
     echo "sudo curl -L \"https://github.com/docker/compose/releases/download/$RECOMMENDED_DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && \\"
+
+    DOCKER_COMPOSE_CHMOD_CMD="sudo chmod +x /usr/local/bin/docker-compose"
     if [[ $EUID == 0 ]]; then
       # User is running as root, so only provide the last installation step for Docker Compose
-      echo "sudo chmod +x /usr/local/bin/docker-compose"
+      echo $DOCKER_COMPOSE_CHMOD_CMD
     else
       # User is not running as root, run commands to add user to docker group
-      echo "sudo chmod +x /usr/local/bin/docker-compose && \\"
+      echo $DOCKER_COMPOSE_CHMOD_CMD" && \\"
       echo "sudo usermod -aG docker $USER && \\"
       echo "newgrp docker"
     fi
