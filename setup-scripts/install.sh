@@ -352,5 +352,6 @@ docker-compose up -d
 echo ""
 echo ""
 msg "All done with installation!" $GREEN
+msg "Change directories to your Broker with ${NC}${BLUE}cd sparkswap/broker${NC}" $WHITE
 msg "Go into your container with ${NC}${BLUE}docker-compose exec sparkswapd bash${NC}" $WHITE
 msg "And run ${NC}${BLUE}sparkswap healthcheck${NC}${WHITE} to see how things are looking." $WHITE
