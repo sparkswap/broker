@@ -4,17 +4,11 @@
  */
 
 /**
- * Default gRPC deadline timeout for rpc calls on the broker.
- *
- * We've chosen 10 seconds as a conservative deadline because some calls to
- * engine RPCs take around 5 seconds which produced false negatives when the default
- * was set at a lower number
- *
  * @constant
  * @type {number}
  * @default
  */
-const DEFAULT_TIMEOUT_IN_SECONDS = 10
+const DEFAULT_TIMEOUT_IN_SECONDS = 5
 
 /**
  * gRPC uses the term `deadline` which is a timeout feature that is an absolute
