@@ -94,7 +94,20 @@ case $i in
 esac
 done
 
-msg "You're about to install Sparkswap. Good for you!" $GREEN
+echo ""
+echo "  :DMMMMMMM:                                                                   "
+echo " MMMMMMMMM&MM:                              MM                                 "
+echo "MMMMMMD  MMMMM      MMM  MMNMM   MMM:  MM=M MM  MM  MMM MM  MM  MM MMM:  MMNMM "
+echo "MMMMM   MMMMMMM    MM,   MM  :M   ,:MM MM   MMMM   MM,   M ,MM  M   ,:MM MM  :M"
+echo "MMMMMM   NMMMMM      +MM MM   M MM  MM MM   MM MM    +MM MMM NMM& MM  MM MM   M"
+echo "MMMMM  ,MMMMMM     MMMM  MMMMM   MMMMM MM   MM  MM MMMM   MM  MM   MMMMM MMMMM "
+echo " MMIMMMMMMMMM:           MM                                              MM    "
+echo "   \`MMMMMM+                                                                   "
+echo "                                                          https://sparkswap.com"
+echo ""
+echo "Sparkswap Installer starting..."
+echo ""
+echo ""
 
 # Source nvm 🤢
 test -f ~/.nvm/nvm.sh && . ~/.nvm/nvm.sh
