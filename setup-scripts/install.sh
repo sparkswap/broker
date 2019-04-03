@@ -6,7 +6,6 @@
 # Options:
 # -y, --yes                     answer "Yes" to all yes/no prompts to allow for non-interactive scripting
 # -n=, --network=[network]      'm' for MainNet, 'r' for RegTest hosted by Sparkswap (removes prompt)
-# -i=, --public-ip=[ip address] Your public IP Address (removes prompt)
 # -b, --build                   build the images locally instead of pulling from dockerhub
 #
 #################################
@@ -73,7 +72,6 @@ compare_versions () {
 # parse options
 FORCE_YES="false"
 NETWORK=""
-IP_ADDRESS=""
 BUILD="false"
 for i in "$@"
 do
@@ -84,10 +82,6 @@ case $i in
     ;;
     -n=*|--network=*)
     NETWORK="${i#*=}"
-
-    ;;
-    -i=*|--public-ip=*)
-    IP_ADDRESS="${i#*=}"
 
     ;;
     -b|--build)
@@ -259,11 +253,11 @@ else
 
   if [[ $BUILD == "true" ]]; then
     # Build images locally for the broker
-    npm run build -- -e=$IP_ADDRESS
+    npm run build
   else
     # Run the broker build to generate certs and identity, but do not build
     # docker images
-    npm run build -- -e=$IP_ADDRESS --no-docker
+    npm run build -- --no-docker
   fi
 fi
 
@@ -294,7 +288,7 @@ cd broker
 
 # Set up environment
 msg "Setting up your Broker" $WHITE
-npm run env-setup -- -n=$NETWORK -i=$IP_ADDRESS
+npm run env-setup -- -n=$NETWORK
 
 # Install CLI
 msg "Installing the CLI" $WHITE
