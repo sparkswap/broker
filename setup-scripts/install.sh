@@ -22,6 +22,9 @@ RED='\033[0;31m'
 GRAY='\033[0;37m'
 NC='\033[0m' # No Color
 
+# The directory where we store the sparkswap configuration, certs, and keys.
+SPARKSWAP_DIRECTORY=~/.sparkswap
+
 BROKER_VERSION="v0.5.2-beta"
 
 # Set the minimum to approx. 6 months prior
@@ -296,6 +299,13 @@ cd broker
 msg "Setting up your Broker" $WHITE
 bash ./scripts/env-setup.sh -n=$NETWORK
 
+# Create the sparkswap config file
+if [ ! -f "$SPARKSWAP_DIRECTORY/config.js" ]; then
+  cp -n ./broker-cli/sample-config.js "$SPARKSWAP_DIRECTORY/config.js"
+else
+  msg "You already have a Sparkswap configuration file, skipping creation."
+fi
+
 msg "Creating random username and password" $WHITE
 ## Re-do this step so we can copy into the config
 array=(RPC_USER:rpcUser
@@ -316,11 +326,11 @@ do
   if [ $(uname) = 'Darwin' ]; then
     # for MacOS
     sed -i '' -e "s/^${PARTS[0]}.*/${PARTS[0]}=$string/" .env
-    sed -i '' -e "s/${PARTS[1]}.*/${PARTS[1]}: '$string'${ENDOFLINE}/" ~/.sparkswap/config.js
+    sed -i '' -e "s/${PARTS[1]}.*/${PARTS[1]}: '$string'${ENDOFLINE}/" "${SPARKSWAP_DIRECTORY}/config.js"
   else
     # for Linux and Windows
     sed -i'' -e "s/^${PARTS[0]}.*/${PARTS[0]}=$string/" .env
-    sed -i'' -e "s/${PARTS[1]}.*/${PARTS[1]}: '$string'${ENDOFLINE}/" ~/.sparkswap/config.js
+    sed -i'' -e "s/${PARTS[1]}.*/${PARTS[1]}: '$string'${ENDOFLINE}/" "${SPARKSWAP_DIRECTORY}/config.js"
   fi
 done
 
