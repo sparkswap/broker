@@ -164,7 +164,8 @@ function createUI (market, asks, bids) {
     },
     colWidths: [COLUMN_WIDTHS, COLUMN_WIDTHS],
     style: {
-      'padding-left': 20
+      'padding-left': 0,
+      'padding-right': 0
     }
   })
 
