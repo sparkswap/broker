@@ -435,7 +435,7 @@ function formatText (text, type) {
   let lastZeroIndex = -1
   for (let i = 0; i < text.length; i++) {
     const remaining = [...text].slice(i)
-    const allZeroesRemaining = remaining.every(char => { return char === '0' })
+    const allZeroesRemaining = remaining.every(char => { return char === '0' || char === '.' })
 
     if (allZeroesRemaining) {
       lastZeroIndex = i
