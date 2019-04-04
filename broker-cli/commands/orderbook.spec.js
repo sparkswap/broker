@@ -184,14 +184,3 @@ describe('orderbook', () => {
     expect(resizeHandleStub).to.have.been.calledWith('resize', sinon.match.func)
   })
 })
-
-describe('calculateTableWidths', () => {
-  const calculateTableWidths = program.__get__('calculateTableWidths')
-
-  it('takes in window width and outputs widths for outer and inner tables', () => {
-    let windowWidth = 60
-    let innerTableWidth = 12
-    let mainTableWidth = 28
-    expect(calculateTableWidths(windowWidth)).to.to.eql({ innerTableWidth, mainTableWidth })
-  })
-})
