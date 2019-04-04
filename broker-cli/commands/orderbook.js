@@ -17,12 +17,21 @@ const EVENT_TYPES = Object.freeze({
   ADD: 'ADD', DELETE: 'DELETE'
 })
 
+/**
+ * @constant
+ * @type {Object}
+ */
 const FORMAT_TYPES = Object.freeze({
   ASK: 'ASK',
   BID: 'BID',
   DEPTH: 'DEPTH'
 })
 
+/**
+ * Used for defining the column width for `Price` and `Depth (currency)`
+ * @constant
+ * @type {number}
+ */
 const COLUMN_WIDTHS = 30
 
 /**
