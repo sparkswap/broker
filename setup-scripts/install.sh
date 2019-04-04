@@ -161,11 +161,6 @@ cd broker
 msg "Setting up your Broker" $WHITE
 npm run env-setup -- -n=$NETWORK -i=$IP_ADDRESS
 
-# Install CLI
-msg "Installing the CLI" $WHITE
-npm install -g ./broker-cli
-(cd $(dirname $(which sparkswap))/../lib/node_modules/broker-cli && npm run install-config)
-
 msg "Creating random username and password" $WHITE
 ## Re-do this step so we can copy into the config
 array=(RPC_USER:rpcUser
