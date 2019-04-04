@@ -108,7 +108,7 @@ CERT_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-tls.cert
 CSR_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-csr.csr
 
 # We want to fail out if the user has both cert flags set in the script
-if [[ "$FORCE_CERTS" == "true" ]] && [[ "$NO_CERTS" == "true " ]]; then
+if [[ "$FORCE_CERTS" == "true" ]] && [[ "$NO_CERTS" == "true" ]]; then
   echo "ERROR: You cannot have --force-certs and --no-certs enabled at the same time"
   exit 0
 fi
