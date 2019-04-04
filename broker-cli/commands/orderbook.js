@@ -36,7 +36,10 @@ let testAsks = [
   { price: '64.3000000000000000', amount: '0.0000100000000000' },
   { price: '64.3000000000000000', amount: '0.0000100000000000' },
   { price: '64.3000000000000000', amount: '0.0000100000000000' },
-  { price: '64.3000000000000000', amount: '0.0000100000000000' }
+  { price: '64.3000000000000000', amount: '0.0000100000000000' },
+  { price: '64.3000000000000000', amount: '0.0000100000000000' },
+  { price: '64.3000000000000000', amount: '0.0000100000000000' },
+  { price: '84.3000000000000000', amount: '0.0000100000000000' }
 ]
 
 let testBids = [
@@ -53,60 +56,7 @@ let testBids = [
   { price: '63.3000000000000000', amount: '0.0000100000000000' },
   { price: '63.3000000000000000', amount: '0.0000100000000000' },
   { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
-  { price: '63.3000000000000000', amount: '0.0000100000000000' }
+  { price: '73.3000000000000000', amount: '0.0000100000000000' }
 ]
 
 /**
@@ -120,8 +70,6 @@ let testBids = [
 function createUI (market, asks, bids) {
   asks = testAsks
   bids = testBids
-  asks = Array.from(asks)
-  bids = Array.from(bids)
   console.clear()
   const windowHeight = size.get().height
   // Fill as many orders as the screen allows, accounting for line spacing
@@ -224,32 +172,52 @@ function createUI (market, asks, bids) {
 
   // Create empty space if records are less than max, so alignment of orderbook is the same as orders are
   // added and removed
-  if (asks.length < maxLengthPerSide) {
+  if (asks.length <= maxLengthPerSide) {
     const emptyRecords = maxLengthPerSide - asks.length
     for (let i = 0; i < emptyRecords; i++) {
       asksTable.push([' ', ' '])
     }
+
+    [...asks].sort((a, b) => {
+      return b.price - a.price
+    }).forEach((ask) => {
+      const formattedPrice = formatText(ask.price, FORMAT_TYPES.ASK)
+      const formattedDepth = formatText(ask.amount, FORMAT_TYPES.DEPTH)
+      asksTable.push([{ hAlign: 'center', content: formattedPrice }, { hAlign: 'center', content: formattedDepth }])
+    })
   } else {
-    asks.splice(maxLengthPerSide)
+    // No empty records, so we display all the records that will fit, notifying the user how many records aren't displayed
+    const asksNotDisplayed = asks.length - maxLengthPerSide + 1
+    if (asksNotDisplayed) {
+      const message = ` ${asksNotDisplayed} more...`.gray
+      asksTable.push([{ hAlign: 'left', content: message }, ''])
+    }
+
+    const bestAsks = asks.slice(0, maxLengthPerSide - 1)
+    bestAsks.sort((a, b) => {
+      return b.price - a.price
+    }).forEach((ask) => {
+      const formattedPrice = formatText(ask.price, FORMAT_TYPES.ASK)
+      const formattedDepth = formatText(ask.amount, FORMAT_TYPES.DEPTH)
+      asksTable.push([{ hAlign: 'center', content: formattedPrice }, { hAlign: 'center', content: formattedDepth }])
+    })
   }
 
-  asks.sort((a, b) => {
-    return b.price - a.price
-  }).forEach((ask) => {
-    const formattedPrice = formatText(ask.price, FORMAT_TYPES.ASK)
-    const formattedDepth = formatText(ask.amount, FORMAT_TYPES.DEPTH)
-    asksTable.push([{ hAlign: 'center', content: formattedPrice }, { hAlign: 'center', content: formattedDepth }])
-  })
-
-  // Create empty row for spacing purposes (symmetric around line between bids and asks)
+  // Create empty row for symmetric spacing around horizontal line separator
   bidsTable.push([' ', ' '])
 
-  bids.splice(maxLengthPerSide)
-  bids.forEach((bid) => {
+  for (const [index, bid] of bids.entries()) {
+    if (index === maxLengthPerSide) {
+      const bidsNotDisplayed = bids.length - maxLengthPerSide
+      const message = ` ${bidsNotDisplayed} more...`.gray
+      bidsTable.push([{ hAlighn: 'left', content: message }, ''])
+      break
+    }
+
     const formattedPrice = formatText(bid.price, FORMAT_TYPES.BID)
     const formattedDepth = formatText(bid.amount, FORMAT_TYPES.DEPTH)
     bidsTable.push([{ hAlign: 'center', content: formattedPrice }, { hAlign: 'center', content: formattedDepth }])
-  })
+  }
 
   if (bids.length < maxLengthPerSide) {
     const emptyRecords = maxLengthPerSide - bids.length
