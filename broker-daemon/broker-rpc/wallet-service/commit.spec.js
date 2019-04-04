@@ -22,13 +22,17 @@ describe('commit', () => {
   let inboundPaymentNetworkAddress
   let outboundPaymentNetworkAddress
   let getUncommittedBalanceStub
+  let relayerInverseAddress
 
   beforeEach(() => {
     EmptyResponse = sinon.stub()
     outboundPaymentNetworkAddress = 'asdf12345@localhost'
     inboundPaymentNetworkAddress = 'hgfd56775@localhost'
     relayerAddress = 'qwerty@localhost'
-    getAddressStub = sinon.stub().resolves({ address: relayerAddress })
+    relayerInverseAddress = 'lol@localhost'
+    getAddressStub = sinon.stub()
+    getAddressStub.withArgs({ symbol: 'BTC' }).resolves({ address: relayerAddress })
+    getAddressStub.withArgs({ symbol: 'LTC' }).resolves({ address: relayerInverseAddress })
     createChannelRelayerStub = sinon.stub().resolves({})
     createChannelStub = sinon.stub()
     orderbooks = new Map([['BTC/LTC', {}]])
@@ -54,7 +58,8 @@ describe('commit', () => {
       symbol: 'LTC',
       feeEstimate: '20000',
       quantumsPerCommon: '100000000',
-      maxChannelBalance: '1006632900'
+      maxChannelBalance: '1006632900',
+      connectUser: sinon.stub()
     }
     engines = new Map([
       ['BTC', btcEngine],
@@ -109,6 +114,7 @@ describe('commit', () => {
 
   describe('committing a balance to the relayer', () => {
     let fakeAuth
+
     beforeEach(async () => {
       fakeAuth = 'fake auth'
       relayer.identity.authorize.returns(fakeAuth)
@@ -134,6 +140,10 @@ describe('commit', () => {
 
     it('authorizes a request to the relayer', () => {
       expect(relayer.identity.authorize).to.have.been.calledOnce()
+    })
+
+    it('connects to the relayer through its inverse engine', () => {
+      expect(ltcEngine.connectUser).to.have.been.calledWith(relayerInverseAddress)
     })
 
     it('makes a request to the relayer to create a channel', () => {
@@ -163,7 +173,7 @@ describe('commit', () => {
   })
 
   describe('invalid market', () => {
-    it('throws an error if engine does not exist for symbol', () => {
+    it('throws an error if market is not being tracked', () => {
       const badParams = { symbol: 'BTC', market: 'BTC/BAD' }
       const errorMessage = `${badParams.market} is not being tracked as a market.`
       return expect(commit({ params: badParams, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
@@ -174,6 +184,7 @@ describe('commit', () => {
     it('throws an error if engine does not exist for symbol', () => {
       const badParams = { symbol: 'BAD', market: 'BTC/LTC' }
       const errorMessage = `No engine is configured for symbol: ${badParams.symbol}`
+      getAddressStub.withArgs({ symbol: 'BAD' }).resolves({ address: relayerAddress })
       return expect(commit({ params: badParams, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
     })
 

@@ -13,8 +13,9 @@ const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
 
 /**
- * @constant
+ * Path for the Proto files for the Relayer
  * @type {string}
+ * @constant
  * @default
  */
 const RELAYER_PROTO_PATH = './proto/relayer.proto'

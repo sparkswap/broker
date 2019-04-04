@@ -125,6 +125,9 @@ describe('RelayerClient', () => {
     it('loads the proto', () => {
       const fakePath = 'mypath'
       pathResolve.returns(fakePath)
+
+      RelayerClient.__set__('PRODUCTION', true)
+
       const relayer = new RelayerClient(idKeyPath, { host: relayerHost }, logger)
 
       expect(pathResolve).to.have.been.calledOnce()

@@ -6,7 +6,6 @@
 # Options:
 # -y, --yes                     answer "Yes" to all yes/no prompts to allow for non-interactive scripting
 # -n=, --network=[network]      'm' for MainNet, 'r' for RegTest hosted by Sparkswap (removes prompt)
-# -i=, --public-ip=[ip address] Your public IP Address (removes prompt)
 # -b, --build                   build the images locally instead of pulling from dockerhub
 #
 #################################
@@ -25,15 +24,62 @@ NC='\033[0m' # No Color
 
 BROKER_VERSION="v0.5.2-beta"
 
+# Set the minimum to approx. 6 months prior
+MIN_DOCKER_VERSION=18.09.0
+MIN_DOCKER_COMPOSE_VERSION=1.23.0
+
+# For current versions, don't include patches
+CURRENT_DOCKER_VERSION=18.09
+CURRENT_DOCKER_COMPOSE_VERSION=1.24
+
+# Used for generating download URL
+RECOMMENDED_DOCKER_COMPOSE_VERSION=1.24.0
+
 # print a message with a color, like msg "my message" $GRAY
 msg () {
   echo -e "${GRAY}${TAG}${NC}:  $2$1${NC}"
 }
 
+# Compares two versions using dot notation (e.g. 1.2.3 < 1.2.4)
+compare_result=""
+compare_versions () {
+  if [[ $1 == $2 ]]
+  then
+    compare_result=0
+    return
+  fi
+  local IFS=.
+  local i ver1=($1) ver2=($2)
+  # fill empty fields in ver1 with zeros
+  for ((i=${#ver1[@]}; i<${#ver2[@]}; i++))
+  do
+    ver1[i]=0
+  done
+  for ((i=0; i<${#ver1[@]}; i++))
+  do
+    if [[ -z ${ver2[i]} ]]
+    then
+      # fill empty fields in ver2 with zeros
+      ver2[i]=0
+    fi
+    if ((10#${ver1[i]} > 10#${ver2[i]}))
+    then
+      compare_result=1
+      return
+    fi
+    if ((10#${ver1[i]} < 10#${ver2[i]}))
+    then
+      compare_result=2
+      return
+    fi
+  done
+  compare_result=0
+  return
+}
+
 # parse options
 FORCE_YES="false"
 NETWORK=""
-IP_ADDRESS=""
 BUILD="false"
 for i in "$@"
 do
@@ -46,10 +92,6 @@ case $i in
     NETWORK="${i#*=}"
 
     ;;
-    -i=*|--public-ip=*)
-    IP_ADDRESS="${i#*=}"
-
-    ;;
     -b|--build)
     BUILD="true"
 
@@ -60,7 +102,20 @@ case $i in
 esac
 done
 
-msg "You're about to install Sparkswap. Good for you!" $GREEN
+echo ""
+echo "  :DMMMMMMM:                                                                   "
+echo " MMMMMMMMM&MM:                              MM                                 "
+echo "MMMMMMD  MMMMM      MMM  MMNMM   MMM:  MM=M MM  MM  MMM MM  MM  MM MMM:  MMNMM "
+echo "MMMMM   MMMMMMM    MM,   MM  :M   ,:MM MM   MMMM   MM,   M ,MM  M   ,:MM MM  :M"
+echo "MMMMMM   NMMMMM      +MM MM   M MM  MM MM   MM MM    +MM MMM NMM& MM  MM MM   M"
+echo "MMMMM  ,MMMMMM     MMMM  MMMMM   MMMMM MM   MM  MM MMMM   MM  MM   MMMMM MMMMM "
+echo " MMIMMMMMMMMM:           MM                                              MM    "
+echo "   \`MMMMMM+                                                                   "
+echo "                                                          https://sparkswap.com"
+echo ""
+echo "Sparkswap Installer starting..."
+echo ""
+echo ""
 
 # Source nvm 🤢
 test -f ~/.nvm/nvm.sh && . ~/.nvm/nvm.sh
@@ -80,14 +135,132 @@ fi
 msg "Installing node.js@8.11" $WHITE
 nvm install 8.11 --latest-npm
 
+# Check if Docker is installed. Fail install if not
 if [ "$(command -v docker)" == "" ]; then
-  msg "Docker is not installed. Please install it before continuing" $RED
+  msg "Docker is not installed." $RED
+  if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    # Get the version of Linux distribution
+    LINUX_DISTRO=$(cat /etc/*-release | grep -E '^ID=' | sed 's/^.*=//' | tr -d \")
+    msg "Looks like you're using Linux." $GREEN
+    msg "You will need to install Docker and Docker Compose. To install both, run" $GREEN
+    echo ""
+    echo "curl -fsSL https://get.docker.com -o get-docker.sh && \\"
+    echo "sudo sh get-docker.sh && \\"
+    echo "sudo curl -L \"https://github.com/docker/compose/releases/download/$RECOMMENDED_DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && \\"
+
+    DOCKER_COMPOSE_CHMOD_CMD="sudo chmod +x /usr/local/bin/docker-compose"
+    if [[ $EUID == 0 ]]; then
+      # User is running as root, so only provide the last installation step for Docker Compose
+      echo $DOCKER_COMPOSE_CHMOD_CMD
+    else
+      # User is not running as root, run commands to add user to docker group
+      echo $DOCKER_COMPOSE_CHMOD_CMD" && \\"
+      echo "sudo usermod -aG docker $USER && \\"
+      echo "newgrp docker"
+    fi
+    echo ""
+    msg "Alternatively, you can follow Docker's installation steps for Linux (https://docs.docker.com/install/linux/docker-ce/$(echo $LINUX_DISTRO)/) and Docker's installation steps for Docker Compose (https://docs.docker.com/compose/install/)" $GREEN
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    msg "Looks like you're using Mac." $GREEN
+    msg "You can use the following link to download and install Docker for Mac Version 2.0.0.3 or greater (this installs Docker Community Edition and Docker Compose)" $GREEN
+    msg "https://docs.docker.com/docker-for-mac/release-notes/#docker-community-edition-2003-2019-02-15" $WHITE
+  else
+    msg "Please install Docker before continuing." $GREEN
+  fi
   exit 1
 fi
 
-if [ "$(command -v docker-compose)" == "" ]; then
-  msg "Docker Compose is not installed. Please install it before continuing" $RED
+# Ensure version of Docker meets minimum requirements. Fail install if not
+DOCKER_VERSION=$(docker version | grep Version | head -n 1 | grep -oE '[.0-9]*$')
+compare_versions $DOCKER_VERSION $MIN_DOCKER_VERSION
+if [[ $compare_result == 2 ]]; then
+  msg "Your version of Docker ($DOCKER_VERSION) is older than the minimum required version. Please upgrade to version $CURRENT_DOCKER_VERSION or greater." $RED
+
+  if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    # Get the version of Linux distribution
+    LINUX_DISTRO=$(cat /etc/*-release | grep -E '^ID=' | sed 's/^.*=//' | tr -d \")
+    msg "You can find steps to upgrade Docker for Linux using the following link." $WHITE
+    msg "https://docs.docker.com/install/linux/docker-ce/$(echo $LINUX_DISTRO)/" $WHITE
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    msg "You can find steps to upgrade Docker for Mac using the following link." $WHITE
+    msg "https://docs.docker.com/docker-for-mac/release-notes/" $WHITE
+  fi
+
   exit 1
+fi
+
+# Check if running the latest version of Docker. Warn if not and continue with install
+compare_versions $DOCKER_VERSION $CURRENT_DOCKER_VERSION
+if [[ $compare_result == 2 ]]; then
+  msg "Your version of Docker ($DOCKER_VERSION) isn't up to date. It's recommended that you upgrade to version $CURRENT_DOCKER_VERSION or greater." $YELLOW
+
+  if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    # Get the version of Linux distribution
+    LINUX_DISTRO=$(cat /etc/*-release | grep -E '^ID=' | sed 's/^.*=//' | tr -d \")
+    msg "You can find steps to upgrade Docker for Linux using the following link." $WHITE
+    msg "https://docs.docker.com/install/linux/docker-ce/$(echo $LINUX_DISTRO)/" $WHITE
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    msg "You can find steps to upgrade Docker for Mac using the following link." $WHITE
+    msg "https://docs.docker.com/docker-for-mac/release-notes/" $WHITE
+  fi
+fi
+
+# Check if Docker Compose is installed. Fail install if not
+if [ "$(command -v docker-compose)" == "" ]; then
+  msg "Docker Compose is not installed." $RED
+  if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    msg "To install Docker Compose using Linux, run" $GREEN
+    echo "sudo curl -L \"https://github.com/docker/compose/releases/download/$RECOMMENDED_DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && \\"
+    if [[ $EUID == 0 ]]; then
+      # User is running as root, so only provide the last installation step for Docker Compose
+      echo "sudo chmod +x /usr/local/bin/docker-compose"
+    else
+      # User is not running as root, run commands to add user to docker group
+      echo "sudo chmod +x /usr/local/bin/docker-compose && \\"
+      echo "sudo usermod -aG docker $USER && \\"
+      echo "newgrp docker"
+    fi
+    echo ""
+    msg "Alternatively, you can follow Docker's installation steps for Docker Compose (https://docs.docker.com/compose/install/)" $GREEN
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    msg "Looks like you're using Mac." $GREEN
+    msg "You can use the following link to install Docker Compose for Mac." $GREEN
+    msg "https://docs.docker.com/compose/install/" $WHITE
+  else
+    msg "Please install Docker Compose before continuing" $RED
+  fi
+  exit 1
+fi
+
+# Ensure version of Docker Compose meets minimum requirements. Fail install if not
+DOCKER_COMPOSE_VERSION=$(docker-compose version | grep 'docker-compose version' | sed 's/,.*//' | grep -oE '[.0-9]*$')
+compare_versions $DOCKER_COMPOSE_VERSION $MIN_DOCKER_COMPOSE_VERSION
+if [[ $compare_result == 2 ]]; then
+  msg "Your version of Docker Compose ($DOCKER_COMPOSE_VERSION) is older than the minimum required version. Please upgrade to version $CURRENT_DOCKER_COMPOSE_VERSION or greater." $RED
+
+  if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    msg "You can find steps to upgrade Docker Compose for Linux using the following link." $WHITE
+    msg "https://docs.docker.com/compose/install/" $WHITE
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    msg "You can find steps to upgrade Docker for Mac using the following link." $WHITE
+    msg "https://docs.docker.com/docker-for-mac/release-notes/" $WHITE
+  fi
+
+  exit 1
+fi
+
+# Check if running the latest version of Docker Compose. Warn if not and continue with install
+compare_versions $DOCKER_COMPOSE_VERSION $CURRENT_DOCKER_COMPOSE_VERSION
+if [[ $compare_result == 2 ]]; then
+  msg "Your version of Docker Compose ($DOCKER_COMPOSE_VERSION) isn't up to date. It's recommended you upgrade to version $CURRENT_DOCKER_COMPOSE_VERSION or greater." $YELLOW
+
+  if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    msg "You can find steps to upgrade Docker Compose for Linux using the following link." $WHITE
+    msg "https://docs.docker.com/compose/install/" $WHITE
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    msg "You can find steps to upgrade Docker for Mac using the following link." $WHITE
+    msg "https://docs.docker.com/docker-for-mac/release-notes/" $WHITE
+  fi
 fi
 
 msg "We're about to create a directory named 'sparkswap' in ${PWD}." $WHITE
@@ -124,11 +297,11 @@ else
 
   if [[ $BUILD == "true" ]]; then
     # Build images locally for the broker
-    npm run build -- -e=$IP_ADDRESS
+    npm run build
   else
     # Run the broker build to generate certs and identity, but do not build
     # docker images
-    npm run build -- -e=$IP_ADDRESS --no-docker
+    npm run build -- --no-docker
   fi
 fi
 
@@ -159,7 +332,7 @@ cd broker
 
 # Set up environment
 msg "Setting up your Broker" $WHITE
-npm run env-setup -- -n=$NETWORK -i=$IP_ADDRESS
+npm run env-setup -- -n=$NETWORK
 
 # Install CLI
 msg "Installing the CLI" $WHITE
