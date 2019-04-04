@@ -103,7 +103,10 @@ let testAsks = [
 ]
 
 let testBids = [
-  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3333333333333333', amount: '0.0000100000000000' },
+  { price: '63.3333333333333330', amount: '0.0000100000000000' },
+  { price: '63.3333333333333300', amount: '0.0000100000000000' },
+  { price: '60.3303333333333300', amount: '0.0000100000000000' },
   { price: '63.3000000000000000', amount: '0.0000100000000000' },
   { price: '63.3000000000000000', amount: '0.0000100000000000' },
   { price: '63.3000000000000000', amount: '0.0000100000000000' },
@@ -432,9 +435,7 @@ function formatText (text, type) {
   let lastZeroIndex = -1
   for (let i = 0; i < text.length; i++) {
     const remaining = [...text].slice(i)
-    const allZeroesRemaining = remaining.every(char => {
-      return char === '0'
-    })
+    const allZeroesRemaining = remaining.every(char => { return char === '0' })
 
     if (allZeroesRemaining) {
       lastZeroIndex = i
@@ -442,37 +443,30 @@ function formatText (text, type) {
     }
   }
 
+  const needsGrayColoring = lastZeroIndex > -1
+
+  const addColoring = (text) => {
+    switch (type) {
+      case FORMAT_TYPES.BID:
+        return text.green
+      case FORMAT_TYPES.ASK:
+        return text.red
+      case FORMAT_TYPES.DEPTH:
+        return text.white
+    }
+  }
+
   let formatted = ''
-  if (lastZeroIndex > -1) {
+  if (needsGrayColoring) {
     for (let i = 0; i < text.length; i++) {
       if (i < lastZeroIndex) {
-        switch (type) {
-          case FORMAT_TYPES.BID:
-            formatted += text.charAt(i).green
-            break
-          case FORMAT_TYPES.ASK:
-            formatted += text.charAt(i).red
-            break
-          case FORMAT_TYPES.DEPTH:
-            formatted += text.charAt(i).white
-            break
-        }
+        formatted += addColoring(text.charAt(i))
       } else {
         formatted += text.charAt(i).gray
       }
     }
   } else {
-    switch (type) {
-      case FORMAT_TYPES.BID:
-        formatted = text.green
-        break
-      case FORMAT_TYPES.ASK:
-        formatted = text.red
-        break
-      case FORMAT_TYPES.DEPTH:
-        formatted = text.white
-        break
-    }
+    formatted = addColoring(text)
   }
 
   return formatted
