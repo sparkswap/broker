@@ -17,6 +17,100 @@ const EVENT_TYPES = Object.freeze({
   ADD: 'ADD', DELETE: 'DELETE'
 })
 
+const FORMAT_TYPES = Object.freeze({
+  ASK: 'ASK',
+  BID: 'BID',
+  DEPTH: 'DEPTH'
+})
+
+const COLUMN_WIDTHS = 30
+
+let testAsks = [
+  { price: '64.3000000000000000', amount: '0.0000100000000000' },
+  { price: '64.3000000000000000', amount: '0.0000100000000000' },
+  { price: '64.3000000000000000', amount: '0.0000100000000000' },
+  { price: '64.3000000000000000', amount: '0.0000100000000000' },
+  { price: '64.3000000000000000', amount: '0.0000100000000000' },
+  { price: '64.3000000000000000', amount: '0.0000100000000000' },
+  { price: '64.3000000000000000', amount: '0.0000100000000000' },
+  { price: '64.3000000000000000', amount: '0.0000100000000000' },
+  { price: '64.3000000000000000', amount: '0.0000100000000000' },
+  { price: '64.3000000000000000', amount: '0.0000100000000000' },
+  { price: '64.3000000000000000', amount: '0.0000100000000000' },
+  { price: '600.0000000000000000', amount: '0.0000100000000000' },
+  { price: '604.3000000000000000', amount: '0.0000100000000000' }
+]
+
+let testBids = [
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' },
+  { price: '63.3000000000000000', amount: '0.0000100000000000' }
+]
+
 /**
  * Prints log statements for a psuedo UI for the OrderBook
  *
@@ -26,22 +120,32 @@ const EVENT_TYPES = Object.freeze({
  * @param {Array<Object>} bids - an object with price and depth
  */
 function createUI (market, asks, bids) {
+  asks = testAsks
+  bids = testBids
   console.clear()
+  const windowHeight = size.get().height
+  // Fill as many orders as the screen allows, accounting for line spacing
+  const maxLengthPerSide = Math.floor((windowHeight - 12) / 2)
   const baseCurrencySymbol = market.split('/')[0].toUpperCase()
-  const windowWidth = size.get().width
-  const { mainTableWidth, innerTableWidth } = calculateTableWidths(windowWidth)
-  const table = new Table({
-    head: ['ASKS', 'BIDS'],
-    style: { head: ['gray'] },
-    colWidths: [mainTableWidth, mainTableWidth]
+  const parentTable = new Table({
+    head: [],
+    chars: {
+      'top-mid': '',
+      'bottom-mid': '',
+      'left-mid': '',
+      'mid': '',
+      'mid-mid': '',
+      'right-mid': '',
+      'middle': ''
+    },
+    style: {
+      'padding-left': 0,
+      'padding-right': 0
+    }
   })
 
-  // The extensive options are required because the default for cli-table is to have
-  // borders between every row and column.
-  const innerTableOptions = {
-    head: ['Price', `Depth (${baseCurrencySymbol})`],
-    style: { head: ['gray'] },
-    colWidths: [innerTableWidth, innerTableWidth],
+  const tableHeaders = new Table({
+    head: [],
     chars: {
       'top': '',
       'top-mid': '',
@@ -58,10 +162,131 @@ function createUI (market, asks, bids) {
       'right': '',
       'right-mid': '',
       'middle': ''
+    },
+    colWidths: [COLUMN_WIDTHS, COLUMN_WIDTHS],
+    style: {
+      'padding-left': 0,
+      'padding-right': 0
+    }
+  })
+
+  tableHeaders.push([{ hAlign: 'center', content: 'Price' }, { hAlign: 'center', content: `Depth (${baseCurrencySymbol})` }])
+
+  const asksTable = new Table({
+    head: [],
+    chars: {
+      'top': '',
+      'top-mid': '',
+      'top-left': '',
+      'top-right': '',
+      'bottom': '',
+      'bottom-mid': '',
+      'bottom-left': '',
+      'bottom-right': '',
+      'left': '',
+      'left-mid': '',
+      'mid': '',
+      'mid-mid': '',
+      'right': '',
+      'right-mid': '',
+      'middle': ''
+    },
+    colWidths: [COLUMN_WIDTHS, COLUMN_WIDTHS],
+    style: {
+      'padding-left': 0,
+      'padding-right': 0
+    }
+  })
+
+  // Create empty space if records are less than max, so alignment of orderbook is the same as orders are
+  // added and removed
+  if (asks.length < maxLengthPerSide) {
+    const emptyRecords = maxLengthPerSide - asks.length
+    for (let i = 0; i < emptyRecords; i++) {
+      asksTable.push([' ', ' '])
+    }
+  } else {
+    asks.splice(maxLengthPerSide)
+  }
+
+  asks.sort((a, b) => {
+    return b.price - a.price
+  }).forEach((ask) => {
+    const formattedPrice = formatText(ask.price, FORMAT_TYPES.ASK)
+    const formattedDepth = formatText(ask.amount, FORMAT_TYPES.DEPTH)
+    asksTable.push([{ hAlign: 'center', content: formattedPrice }, { hAlign: 'center', content: formattedDepth }])
+  })
+
+  const bidsTable = new Table({
+    head: [],
+    chars: {
+      'top': '',
+      'top-mid': '',
+      'top-left': '',
+      'top-right': '',
+      'bottom': '',
+      'bottom-mid': '',
+      'bottom-left': '',
+      'bottom-right': '',
+      'left': '',
+      'left-mid': '',
+      'mid': '',
+      'mid-mid': '',
+      'right': '',
+      'right-mid': '',
+      'middle': ''
+    },
+    colWidths: [COLUMN_WIDTHS, COLUMN_WIDTHS],
+    style: {
+      'padding-left': 0,
+      'padding-right': 0
+    }
+  })
+
+  // Create empty row for spacing purposes (symmetric around line between bids and asks)
+  bidsTable.push([' ', ' '])
+
+  bids.splice(maxLengthPerSide)
+  bids.forEach((bid) => {
+    const formattedPrice = formatText(bid.price, FORMAT_TYPES.BID)
+    const formattedDepth = formatText(bid.amount, FORMAT_TYPES.DEPTH)
+    bidsTable.push([{ hAlign: 'center', content: formattedPrice }, { hAlign: 'center', content: formattedDepth }])
+  })
+
+  if (bids.length < maxLengthPerSide) {
+    const emptyRecords = maxLengthPerSide - bids.length
+    for (let i = 0; i < emptyRecords; i++) {
+      bidsTable.push([' ', ' '])
     }
   }
-  const askTable = new Table(innerTableOptions)
-  const bidTable = new Table(innerTableOptions)
+
+  // Used for creating border between bids / asks
+  const gapTable = new Table({
+    head: [],
+    rowHeights: [1],
+    chars: {
+      'top': '',
+      'top-mid': '',
+      'top-left': '',
+      'top-right': '',
+      // 'bottom': '',
+      'bottom-mid': '',
+      'bottom-left': '',
+      'bottom-right': '',
+      'left': '',
+      'left-mid': '',
+      'mid': '',
+      'mid-mid': '',
+      'right': '',
+      'right-mid': '',
+      'middle': ''
+    },
+    colWidths: [COLUMN_WIDTHS, COLUMN_WIDTHS],
+    style: {
+      'padding-left': 20
+    }
+  })
+  gapTable.push([' ', ' '])
 
   const ui = []
 
@@ -71,30 +296,15 @@ function createUI (market, asks, bids) {
   let rightSubSubHeader = 'http://sparkswap.com'
 
   ui.push('')
-  ui.push(' ' + leftHeader.bold.white + Array(windowWidth - 1 - leftHeader.length - rightHeader.length).join(' ') + rightHeader.bold.cyan)
-  ui.push(' ' + Array(windowWidth - 1 - rightSubHeader.length).join(' ') + rightSubHeader.gray)
-  ui.push(' ' + Array(windowWidth - 1 - rightSubSubHeader.length).join(' ') + rightSubSubHeader.underline.gray)
+  ui.push(' ' + leftHeader.bold.white + Array((COLUMN_WIDTHS * 2) - leftHeader.length - rightHeader.length).join(' ') + rightHeader.bold.cyan)
+  ui.push(' ' + Array((COLUMN_WIDTHS * 2) - rightSubHeader.length).join(' ') + rightSubHeader.gray)
+  ui.push(' ' + Array((COLUMN_WIDTHS * 2) - rightSubSubHeader.length).join(' ') + rightSubSubHeader.underline.gray)
   ui.push('')
-
-  // TODO: collapse orders at the same price point into a single line
-
-  asks.forEach((ask) => {
-    // TODO: make display of amounts consistent with inputs (buys, prices, etc)
-    let price = String(` ${ask.price} `)
-    let depth = String(` ${ask.amount} `)
-    askTable.push([price.red, depth.white])
-  })
-
-  bids.forEach((bid) => {
-    // TODO: make display of amounts consistent with inputs (buys, prices, etc)
-    let price = String(` ${bid.price} `)
-    let depth = String(` ${bid.amount} `)
-    bidTable.push([price.green, depth.white])
-  })
-
-  table.push([askTable.toString(), bidTable.toString()])
-
-  ui.push(table.toString())
+  parentTable.push([tableHeaders.toString()])
+  parentTable.push([asksTable.toString()])
+  parentTable.push([gapTable.toString()])
+  parentTable.push([bidsTable.toString()])
+  ui.push(parentTable.toString())
   console.log(ui.join('\n') + '\n')
 }
 
@@ -150,6 +360,7 @@ async function orderbook (args, opts, logger) {
     })
 
     process.stdout.on('resize', function () {
+      console.clear()
       createUI(market, sortedAsks, sortedBids)
     })
 
@@ -164,7 +375,7 @@ async function orderbook (args, opts, logger) {
 /**
  * Takes in an window width and returns object with appropriate table widths
  * for the orderbook
- * @param {Integer} window width
+ * @param {Integer} windowWidth width
  * @returns {Object} with mainTableWidth and innerTableWidth
  */
 
@@ -175,6 +386,63 @@ function calculateTableWidths (windowWidth) {
   const innerTableWidth = Math.round((mainTableWidth - borderOffset) / numTables)
 
   return { mainTableWidth, innerTableWidth }
+}
+
+/**
+ * Takes a number formatted as a string and applies coloring so all digits following
+ * the last significant digit are grayed out
+ * @param {string} text
+ * @param {string} type - represents whether to format as a bid, ask, or depth
+ * @returns {string}
+ */
+function formatText (text, type) {
+  let lastZeroIndex = -1
+  for (let i = 0; i < text.length; i++) {
+    const remaining = [...text].slice(i)
+    const allZeroesRemaining = remaining.every(char => {
+      return char === '0'
+    })
+
+    if (allZeroesRemaining) {
+      lastZeroIndex = i
+      break
+    }
+  }
+
+  let formatted = ''
+  if (lastZeroIndex > -1) {
+    for (let i = 0; i < text.length; i++) {
+      if (i < lastZeroIndex) {
+        switch (type) {
+          case FORMAT_TYPES.BID:
+            formatted += text.charAt(i).green
+            break
+          case FORMAT_TYPES.ASK:
+            formatted += text.charAt(i).red
+            break
+          case FORMAT_TYPES.DEPTH:
+            formatted += text.charAt(i).white
+            break
+        }
+      } else {
+        formatted += text.charAt(i).gray
+      }
+    }
+  } else {
+    switch (type) {
+      case FORMAT_TYPES.BID:
+        formatted = text.green
+        break
+      case FORMAT_TYPES.ASK:
+        formatted = text.red
+        break
+      case FORMAT_TYPES.DEPTH:
+        formatted = text.white
+        break
+    }
+  }
+
+  return formatted
 }
 
 module.exports = (program) => {
