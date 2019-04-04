@@ -36,9 +36,7 @@ let testAsks = [
   { price: '64.3000000000000000', amount: '0.0000100000000000' },
   { price: '64.3000000000000000', amount: '0.0000100000000000' },
   { price: '64.3000000000000000', amount: '0.0000100000000000' },
-  { price: '64.3000000000000000', amount: '0.0000100000000000' },
-  { price: '600.0000000000000000', amount: '0.0000100000000000' },
-  { price: '604.3000000000000000', amount: '0.0000100000000000' }
+  { price: '64.3000000000000000', amount: '0.0000100000000000' }
 ]
 
 let testBids = [
@@ -122,6 +120,8 @@ let testBids = [
 function createUI (market, asks, bids) {
   asks = testAsks
   bids = testBids
+  asks = Array.from(asks)
+  bids = Array.from(bids)
   console.clear()
   const windowHeight = size.get().height
   // Fill as many orders as the screen allows, accounting for line spacing
@@ -144,25 +144,27 @@ function createUI (market, asks, bids) {
     }
   })
 
+  const noBorders = {
+    'top': '',
+    'top-mid': '',
+    'top-left': '',
+    'top-right': '',
+    'bottom': '',
+    'bottom-mid': '',
+    'bottom-left': '',
+    'bottom-right': '',
+    'left': '',
+    'left-mid': '',
+    'mid': '',
+    'mid-mid': '',
+    'right': '',
+    'right-mid': '',
+    'middle': ''
+  }
+
   const tableHeaders = new Table({
     head: [],
-    chars: {
-      'top': '',
-      'top-mid': '',
-      'top-left': '',
-      'top-right': '',
-      'bottom': '',
-      'bottom-mid': '',
-      'bottom-left': '',
-      'bottom-right': '',
-      'left': '',
-      'left-mid': '',
-      'mid': '',
-      'mid-mid': '',
-      'right': '',
-      'right-mid': '',
-      'middle': ''
-    },
+    chars: noBorders,
     colWidths: [COLUMN_WIDTHS, COLUMN_WIDTHS],
     style: {
       'padding-left': 0,
@@ -174,12 +176,33 @@ function createUI (market, asks, bids) {
 
   const asksTable = new Table({
     head: [],
+    chars: noBorders,
+    colWidths: [COLUMN_WIDTHS, COLUMN_WIDTHS],
+    style: {
+      'padding-left': 0,
+      'padding-right': 0
+    }
+  })
+
+  const bidsTable = new Table({
+    head: [],
+    chars: noBorders,
+    colWidths: [COLUMN_WIDTHS, COLUMN_WIDTHS],
+    style: {
+      'padding-left': 0,
+      'padding-right': 0
+    }
+  })
+
+  // Used for creating border between bids / asks
+  const gapTable = new Table({
+    head: [],
+    rowHeights: [1],
     chars: {
       'top': '',
       'top-mid': '',
       'top-left': '',
       'top-right': '',
-      'bottom': '',
       'bottom-mid': '',
       'bottom-left': '',
       'bottom-right': '',
@@ -193,10 +216,11 @@ function createUI (market, asks, bids) {
     },
     colWidths: [COLUMN_WIDTHS, COLUMN_WIDTHS],
     style: {
-      'padding-left': 0,
-      'padding-right': 0
+      'padding-left': 20
     }
   })
+
+  gapTable.push([' ', ' '])
 
   // Create empty space if records are less than max, so alignment of orderbook is the same as orders are
   // added and removed
@@ -217,32 +241,6 @@ function createUI (market, asks, bids) {
     asksTable.push([{ hAlign: 'center', content: formattedPrice }, { hAlign: 'center', content: formattedDepth }])
   })
 
-  const bidsTable = new Table({
-    head: [],
-    chars: {
-      'top': '',
-      'top-mid': '',
-      'top-left': '',
-      'top-right': '',
-      'bottom': '',
-      'bottom-mid': '',
-      'bottom-left': '',
-      'bottom-right': '',
-      'left': '',
-      'left-mid': '',
-      'mid': '',
-      'mid-mid': '',
-      'right': '',
-      'right-mid': '',
-      'middle': ''
-    },
-    colWidths: [COLUMN_WIDTHS, COLUMN_WIDTHS],
-    style: {
-      'padding-left': 0,
-      'padding-right': 0
-    }
-  })
-
   // Create empty row for spacing purposes (symmetric around line between bids and asks)
   bidsTable.push([' ', ' '])
 
@@ -259,34 +257,6 @@ function createUI (market, asks, bids) {
       bidsTable.push([' ', ' '])
     }
   }
-
-  // Used for creating border between bids / asks
-  const gapTable = new Table({
-    head: [],
-    rowHeights: [1],
-    chars: {
-      'top': '',
-      'top-mid': '',
-      'top-left': '',
-      'top-right': '',
-      // 'bottom': '',
-      'bottom-mid': '',
-      'bottom-left': '',
-      'bottom-right': '',
-      'left': '',
-      'left-mid': '',
-      'mid': '',
-      'mid-mid': '',
-      'right': '',
-      'right-mid': '',
-      'middle': ''
-    },
-    colWidths: [COLUMN_WIDTHS, COLUMN_WIDTHS],
-    style: {
-      'padding-left': 20
-    }
-  })
-  gapTable.push([' ', ' '])
 
   const ui = []
 
@@ -371,22 +341,6 @@ async function orderbook (args, opts, logger) {
     logger.error(handleError(e))
   }
 };
-
-/**
- * Takes in an window width and returns object with appropriate table widths
- * for the orderbook
- * @param {Integer} windowWidth width
- * @returns {Object} with mainTableWidth and innerTableWidth
- */
-
-function calculateTableWidths (windowWidth) {
-  const borderOffset = 4
-  const numTables = 2
-  const mainTableWidth = Math.round((windowWidth - borderOffset) / numTables)
-  const innerTableWidth = Math.round((mainTableWidth - borderOffset) / numTables)
-
-  return { mainTableWidth, innerTableWidth }
-}
 
 /**
  * Takes a number formatted as a string and applies coloring so all digits following
