@@ -131,8 +131,18 @@ if [ "$(command -v docker)" == "" ]; then
     echo ""
     echo "curl -fsSL https://get.docker.com -o get-docker.sh && \\"
     echo "sudo sh get-docker.sh && \\"
-    echo "curl -L \"https://github.com/docker/compose/releases/download/$RECOMMENDED_DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && \\"
-    echo "sudo chmod +x /usr/local/bin/docker-compose"
+    echo "sudo curl -L \"https://github.com/docker/compose/releases/download/$RECOMMENDED_DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && \\"
+
+    DOCKER_COMPOSE_CHMOD_CMD="sudo chmod +x /usr/local/bin/docker-compose"
+    if [[ $EUID == 0 ]]; then
+      # User is running as root, so only provide the last installation step for Docker Compose
+      echo $DOCKER_COMPOSE_CHMOD_CMD
+    else
+      # User is not running as root, run commands to add user to docker group
+      echo $DOCKER_COMPOSE_CHMOD_CMD" && \\"
+      echo "sudo usermod -aG docker $USER && \\"
+      echo "newgrp docker"
+    fi
     echo ""
     msg "Alternatively, you can follow Docker's installation steps for Linux (https://docs.docker.com/install/linux/docker-ce/$(echo $LINUX_DISTRO)/) and Docker's installation steps for Docker Compose (https://docs.docker.com/compose/install/)" $GREEN
   elif [[ "$OSTYPE" == "darwin"* ]]; then
@@ -185,7 +195,17 @@ if [ "$(command -v docker-compose)" == "" ]; then
   msg "Docker Compose is not installed." $RED
   if [[ "$OSTYPE" == "linux-gnu" ]]; then
     msg "To install Docker Compose using Linux, run" $GREEN
-    msg "    curl -L \"https://github.com/docker/compose/releases/download/$RECOMMENDED_DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && sudo chmod +x /usr/local/bin/docker-compose" $WHITE
+    echo "sudo curl -L \"https://github.com/docker/compose/releases/download/$RECOMMENDED_DOCKER_COMPOSE_VERSION/docker-compose-$(uname -s)-$(uname -m)\" -o /usr/local/bin/docker-compose && \\"
+    if [[ $EUID == 0 ]]; then
+      # User is running as root, so only provide the last installation step for Docker Compose
+      echo "sudo chmod +x /usr/local/bin/docker-compose"
+    else
+      # User is not running as root, run commands to add user to docker group
+      echo "sudo chmod +x /usr/local/bin/docker-compose && \\"
+      echo "sudo usermod -aG docker $USER && \\"
+      echo "newgrp docker"
+    fi
+    echo ""
     msg "Alternatively, you can follow Docker's installation steps for Docker Compose (https://docs.docker.com/compose/install/)" $GREEN
   elif [[ "$OSTYPE" == "darwin"* ]]; then
     msg "Looks like you're using Mac." $GREEN
