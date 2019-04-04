@@ -9,6 +9,8 @@
 # -e=, --external-address=        your public IP address (removes prompt)
 # -i, --no-identity               does not generate keys for the daemons identity
 # -n, --no-certs                  does not re-generate tls certs for the daemon
+# -l, --local                     run the build script for development
+# -f, --force-certs               forces the generation tls certs for the daemon
 #
 ################################################
 
@@ -105,9 +107,15 @@ KEY_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-tls.key
 CERT_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-tls.cert
 CSR_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-csr.csr
 
+# We want to fail out if the user has both cert flags set in the script
+if [[ "$FORCE_CERTS" == "true" ]] && [[ "$NO_CERTS" == "true " ]]; then
+  echo "ERROR: You cannot have --force-certs and --no-certs enabled at the same time"
+  exit 0
+fi
+
 # If we force the cert creation, we'll simply remove the certs from the sparkswap
 # directory, and then regenerate them below
-if [[ "$FORCE_CERTS" == "true" ]] && [[ "$NO_CERTS" != "true" ]]; then
+if [[ "$FORCE_CERTS" == "true" ]]; then
   echo "Removing existing Broker TLS certs: --force-certs set to true"
   rm -f $KEY_PATH
   rm -f $CERT_PATH
