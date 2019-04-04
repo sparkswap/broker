@@ -6,7 +6,7 @@
 # Options:
 # -c, --no-cli                    do not copy certs for local cli installation
 # -d, --no-docker                 do not build docker images
-# -e=, --external-address=        your public IP address (removes prompt)
+# -e=, --external-address=        your public IP address (used for cert generation)
 # -i, --no-identity               does not generate keys for the daemons identity
 # -n, --no-certs                  does not re-generate tls certs for the daemon
 #
@@ -79,8 +79,19 @@ esac
 done
 
 if [ "$EXTERNAL_ADDRESS" == "" ]; then
-  echo "Please provide your public IP address or hostname"
-  read EXTERNAL_ADDRESS
+  EXTERNAL_ADDRESS="localhost"
+fi
+
+# Create an openssl docker image if the command does not exist
+if [ "$(command -v openssl)" == "" ]; then
+  echo "WARNING: openssl is not installed, using a Docker image instead."
+
+  if [ "$NO_DOCKER" == "false" ]; then
+    echo "Building openssl docker image"
+    docker build -t sparkswap/openssl -f ./docker/openssl/Dockerfile ./
+  fi
+
+  alias openssl="docker run sparkswap/openssl"
 fi
 
 #############################################
@@ -107,18 +118,18 @@ elif [[ -f "$CERT_PATH" ]]; then
 elif [ "$NO_CERTS" != "true" ]; then
   echo "Generating TLS certs for Broker Daemon"
 
-  openssl ecparam -genkey -name prime256v1 -out $KEY_PATH
-  openssl req -new -sha256 -key $KEY_PATH -out $CSR_PATH \
+  openssl ecparam -genkey -name prime256v1 > $KEY_PATH
+  openssl req -new -sha256 -key $KEY_PATH \
     -reqexts SAN \
     -extensions SAN \
     -config <(cat /etc/ssl/openssl.cnf \
       <(printf "\n[SAN]\nsubjectAltName=DNS:$EXTERNAL_ADDRESS,DNS:localhost")) \
-    -subj "/CN=$EXTERNAL_ADDRESS/O=sparkswap"
-  openssl req -x509 -sha256 -key $KEY_PATH -in $CSR_PATH -out $CERT_PATH -days 36500 \
+    -subj "/CN=$EXTERNAL_ADDRESS/O=sparkswap" > $CSR_PATH
+  openssl req -x509 -sha256 -key $KEY_PATH -in $CSR_PATH -days 36500 \
     -reqexts SAN \
     -extensions SAN \
     -config <(cat /etc/ssl/openssl.cnf \
-      <(printf "\n[SAN]\nsubjectAltName=DNS:$EXTERNAL_ADDRESS,DNS:localhost"))
+      <(printf "\n[SAN]\nsubjectAltName=DNS:$EXTERNAL_ADDRESS,DNS:localhost")) > $CERT_PATH
 
   rm -f $CSR_PATH
 fi
@@ -142,8 +153,8 @@ if [[ -f "$ID_PRIV_KEY" ]]; then
 elif [[ -f "$ID_PUB_KEY" ]]; then
   echo "WARNING: ID Public Key already exists for Broker Daemon. Skipping ID generation"
 elif [ "$NO_IDENTITY" != "true" ]; then
-  openssl ecparam -name prime256v1 -genkey -noout -out $ID_PRIV_KEY
-  openssl ec -in $ID_PRIV_KEY -pubout -out $ID_PUB_KEY
+  openssl ecparam -name prime256v1 -genkey -noout > $ID_PRIV_KEY
+  openssl ec -in $ID_PRIV_KEY -pubout > $ID_PUB_KEY
 fi
 
 if [ "$LOCAL" == "true" ]; then

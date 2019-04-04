@@ -22,6 +22,9 @@ RED='\033[0;31m'
 GRAY='\033[0;37m'
 NC='\033[0m' # No Color
 
+# The directory where we store the sparkswap configuration, certs, and keys.
+SPARKSWAP_DIRECTORY=~/.sparkswap
+
 BROKER_VERSION="v0.5.2-beta"
 
 # Set the minimum to approx. 6 months prior
@@ -116,24 +119,6 @@ echo ""
 echo "Sparkswap Installer starting..."
 echo ""
 echo ""
-
-# Source nvm 🤢
-test -f ~/.nvm/nvm.sh && . ~/.nvm/nvm.sh
-test -f ~/.profile && . ~/.profile
-test -f ~/.bashrc && . ~/.bashrc
-if [ "$(command -v brew)" != "" ]; then
-  test -f "$(brew --prefix nvm)/nvm.sh" && . "$(brew --prefix nvm)/nvm.sh" --no-use
-fi
-
-# Ensure nvm is installed
-if [ "$(command -v nvm)" == "" ]; then
-  msg "nvm is not installed. Please install it before continuing." $RED
-  exit 1
-fi
-
-# Install node.js 8.11
-msg "Installing node.js@8.11" $WHITE
-nvm install 8.11 --latest-npm
 
 # Check if Docker is installed. Fail install if not
 if [ "$(command -v docker)" == "" ]; then
@@ -290,28 +275,29 @@ msg "Installing the Sparkswap Broker (sparkswapd)" $WHITE
 if [ -d "broker" ]; then
   msg "You already have a folder for the broker. Skipping" $YELLOW
   msg "If you need to re-install, remove the folder and try again." $YELLOW
-  cd broker
 else
-  git clone -b "$BROKER_VERSION" --single-branch --depth 1 https://github.com/sparkswap/broker.git
+
+  # Download the Broker and extract it
+  curl -L "https://github.com/sparkswap/broker/archive/${BROKER_VERSION}.tar.gz" -o "broker-${BROKER_VERSION}.tar.gz"
+  mkdir broker
+  tar -xzf "broker-${BROKER_VERSION}.tar.gz" -C broker --strip-components=1
+  rm "broker-${BROKER_VERSION}.tar.gz"
+
+  # Move into the Broker directory to build it
   cd broker
 
   if [[ $BUILD == "true" ]]; then
     # Build images locally for the broker
-    npm run build
+    bash ./scripts/build.sh
   else
     # Run the broker build to generate certs and identity, but do not build
     # docker images
-    npm run build -- --no-docker
+    bash ./scripts/build.sh --no-docker
   fi
+
+  # Move back a directory to the `sparkswap` root
+  cd ..
 fi
-
-# Detect LND-Engine version
-msg "Detecting LND Version from the Broker" $WHITE
-LND_ENGINE_VERSION=$(echo "console.log($(npm list lnd-engine --json).dependencies['lnd-engine'].version);" | node)
-msg "Found LND Engine version $LND_ENGINE_VERSION" $GREEN
-
-# Move back a directory to the `sparkswap` root
-cd ..
 
 # Install LND Engine
 if [[ "$BUILD" == "true" ]]; then
@@ -321,9 +307,19 @@ if [[ "$BUILD" == "true" ]]; then
     msg "You already have a folder for the lnd-engine. Skipping." $YELLOW
     msg "If you need to re-install, remove the folder and try again." $YELLOW
   else
-    git clone -b "$LND_ENGINE_VERSION" --single-branch --depth 1 https://github.com/sparkswap/lnd-engine.git
+    # Detect LND-Engine version
+    msg "Detecting LND Version from the Broker" $WHITE
+    LND_ENGINE_VERSION=$(sed -n 's/.*github:sparkswap\/lnd-engine#\(.*\)".*/\1/p' broker/package.json)
+    msg "Found LND Engine version $LND_ENGINE_VERSION" $GREEN
+
+    # Download the LND Engine and extract it
+    curl -L "https://github.com/sparkswap/lnd-engine/archive/${LND_ENGINE_VERSION}.tar.gz" -o "lnd-engine-${LND_ENGINE_VERSION}.tar.gz"
+    mkdir lnd-engine
+    tar -xzf "lnd-engine-${LND_ENGINE_VERSION}.tar.gz" -C lnd-engine --strip-components=1
+    rm "lnd-engine-${LND_ENGINE_VERSION}.tar.gz"
+
     # Build images locally for the lnd-engine
-    (cd lnd-engine && npm run build)
+    (cd lnd-engine && bash ./scripts/build.sh)
   fi
 fi
 
@@ -332,12 +328,14 @@ cd broker
 
 # Set up environment
 msg "Setting up your Broker" $WHITE
-npm run env-setup -- -n=$NETWORK
+bash ./scripts/env-setup.sh -n=$NETWORK
 
-# Install CLI
-msg "Installing the CLI" $WHITE
-npm install -g ./broker-cli
-(cd $(dirname $(which sparkswap))/../lib/node_modules/broker-cli && npm run install-config)
+# Create the sparkswap config file
+if [ ! -f "$SPARKSWAP_DIRECTORY/config.js" ]; then
+  cp -n ./broker-cli/sample-config.js "$SPARKSWAP_DIRECTORY/config.js"
+else
+  msg "You already have a Sparkswap configuration file, skipping creation."
+fi
 
 msg "Creating random username and password" $WHITE
 ## Re-do this step so we can copy into the config
@@ -359,11 +357,11 @@ do
   if [ $(uname) = 'Darwin' ]; then
     # for MacOS
     sed -i '' -e "s/^${PARTS[0]}.*/${PARTS[0]}=$string/" .env
-    sed -i '' -e "s/${PARTS[1]}.*/${PARTS[1]}: '$string'${ENDOFLINE}/" ~/.sparkswap/config.js
+    sed -i '' -e "s/${PARTS[1]}.*/${PARTS[1]}: '$string'${ENDOFLINE}/" "${SPARKSWAP_DIRECTORY}/config.js"
   else
     # for Linux and Windows
     sed -i'' -e "s/^${PARTS[0]}.*/${PARTS[0]}=$string/" .env
-    sed -i'' -e "s/${PARTS[1]}.*/${PARTS[1]}: '$string'${ENDOFLINE}/" ~/.sparkswap/config.js
+    sed -i'' -e "s/${PARTS[1]}.*/${PARTS[1]}: '$string'${ENDOFLINE}/" "${SPARKSWAP_DIRECTORY}/config.js"
   fi
 done
 
@@ -373,4 +371,7 @@ docker-compose up -d
 
 echo ""
 echo ""
-msg "All done with installation! Try \`${NC}${BLUE}sparkswap healthcheck${NC}${GREEN}\` to see how things are looking." $GREEN
+msg "All done with installation!" $GREEN
+msg "Change directories to your Broker with ${NC}${BLUE}cd sparkswap/broker${NC}" $WHITE
+msg "Go into your container with ${NC}${BLUE}docker-compose exec sparkswapd bash${NC}" $WHITE
+msg "And run ${NC}${BLUE}sparkswap healthcheck${NC}${WHITE} to see how things are looking." $WHITE
