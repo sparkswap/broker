@@ -119,6 +119,8 @@ function createUI (market, asks, bids) {
     }
   })
 
+  addOrdersToTable(asks, asksTable, FORMAT_TYPES.ASK, maxLengthPerSide)
+
   const bidsTable = new Table({
     head: [],
     chars: noBorders,
@@ -128,6 +130,11 @@ function createUI (market, asks, bids) {
       'padding-right': 0
     }
   })
+
+  // Create empty row for symmetric spacing around horizontal line separator
+  bidsTable.push([' ', ' '])
+
+  addOrdersToTable(bids, bidsTable, FORMAT_TYPES.BID, maxLengthPerSide)
 
   // Used for creating border between bids / asks
   const gapTable = new Table({
@@ -159,64 +166,6 @@ function createUI (market, asks, bids) {
   })
 
   gapTable.push([' ', ' '])
-
-  const displayAsks = (asks) => {
-    // Asks are added to the table with highest (worst) price at top, so need to sort
-    [...asks].sort((a, b) => {
-      return b.price - a.price
-    }).forEach((ask) => {
-      const formattedPrice = formatText(ask.price, FORMAT_TYPES.ASK)
-      const formattedDepth = formatText(ask.amount, FORMAT_TYPES.DEPTH)
-      asksTable.push([{ hAlign: 'center', content: formattedPrice }, { hAlign: 'center', content: formattedDepth }])
-    })
-  }
-
-  if (asks.length <= maxLengthPerSide) {
-    // Total asks will fit within screen, so add extra spacing if needed
-    const emptyRecords = maxLengthPerSide - asks.length
-    for (let i = 0; i < emptyRecords; i++) {
-      asksTable.push([' ', ' '])
-    }
-
-    displayAsks(asks)
-  } else {
-    // There are more asks than can be displayed on screen. Display to user how many aren't displayed then add the rest
-    const asksNotDisplayed = asks.length - maxLengthPerSide + 1
-    if (asksNotDisplayed) {
-      const message = ` ${asksNotDisplayed} more...`.gray
-      asksTable.push([{ hAlign: 'left', content: message }, ''])
-    }
-
-    // Need to subtract 1 from maxLengthPerSide and use this space to display how many remaining asks aren't shown
-    const bestAsks = asks.slice(0, maxLengthPerSide - 1)
-    displayAsks(bestAsks)
-  }
-
-  // Create empty row for symmetric spacing around horizontal line separator
-  bidsTable.push([' ', ' '])
-
-  for (const [index, bid] of bids.entries()) {
-    // Bids are displayed with highest (best) price at top, so we don't need to sort. Once we hit max length, we end
-    // printing and let the user know how many bids remain
-    if (index === maxLengthPerSide) {
-      const bidsNotDisplayed = bids.length - maxLengthPerSide
-      const message = ` ${bidsNotDisplayed} more...`.gray
-      bidsTable.push([{ hAlighn: 'left', content: message }, ''])
-      break
-    }
-
-    const formattedPrice = formatText(bid.price, FORMAT_TYPES.BID)
-    const formattedDepth = formatText(bid.amount, FORMAT_TYPES.DEPTH)
-    bidsTable.push([{ hAlign: 'center', content: formattedPrice }, { hAlign: 'center', content: formattedDepth }])
-  }
-
-  // Add additional spacing at bottom to keep orderbook height symmetric
-  if (bids.length < maxLengthPerSide) {
-    const emptyRecords = maxLengthPerSide - bids.length
-    for (let i = 0; i < emptyRecords; i++) {
-      bidsTable.push([' ', ' '])
-    }
-  }
 
   const ui = []
 
@@ -364,6 +313,48 @@ function findFirstNonSigZero (text) {
   }
 
   return firstNonSigZero
+}
+
+/**
+ * Takes an array of order objects and adds the formatted orders to the given orders table.
+ *
+ * @param {Array<Object>} orders - the orders to format, given as an object with price and depth
+ * @param {number} maxLength - maximum number of orders that can be displayed
+ * @param {Object} ordersTable - table to add formatted orders to
+ * @param {string} type - represents whether to format as bids or asks
+ * @returns {void}
+ */
+function addOrdersToTable (orders, ordersTable, type, maxLength) {
+  const formattedOrders = []
+
+  for (const [index, order] of orders.entries()) {
+    if (index === maxLength) {
+      // If there are more orders than can be displayed, we notify the user the amount not displayed
+      const ordersNotDisplayed = orders.length - maxLength
+      const message = ` ${ordersNotDisplayed} more...`.gray
+      formattedOrders.push([{ hAlign: 'left', content: message }, ''])
+      break
+    }
+
+    const formattedPrice = formatText(order.price, type)
+    const formattedDepth = formatText(order.amount, FORMAT_TYPES.DEPTH)
+    formattedOrders.push([{ hAlign: 'center', content: formattedPrice }, { hAlign: 'center', content: formattedDepth }])
+  }
+
+  if (orders.length < maxLength) {
+    // The number of orders don't fill up the provided space. Add empty rows to keep the orderbook consistently spaced
+    const emptyRecords = maxLength - orders.length
+    for (let i = 0; i < emptyRecords; i++) {
+      formattedOrders.push([' ', ' '])
+    }
+  }
+
+  if (type === FORMAT_TYPES.ASK) {
+    // Asks are given as lowest price first, however for the UI we want to display the highest price first
+    formattedOrders.reverse().forEach((order) => ordersTable.push(order))
+  } else {
+    formattedOrders.forEach((order) => ordersTable.push(order))
+  }
 }
 
 module.exports = (program) => {
