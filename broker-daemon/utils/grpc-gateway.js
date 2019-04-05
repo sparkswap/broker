@@ -81,9 +81,9 @@ const middleware = (protoFiles, grpcLocation, { credentials = grpc.credentials.c
           if (m.options[GRPC_API_OPTION_ID]) {
             supportedMethods.forEach(httpMethod => {
               // We should limit methods to those included on the whitelist
-              const shouldGateway = whitelist.includes(WILDCARD) || whitelist.includes(m.options[GRPC_API_OPTION_ID][httpMethod])
+              const permitMethod = whitelist.includes(WILDCARD) || whitelist.includes(m.options[GRPC_API_OPTION_ID][httpMethod])
 
-              if (m.options[GRPC_API_OPTION_ID][httpMethod] && shouldGateway) {
+              if (m.options[GRPC_API_OPTION_ID][httpMethod] && permitMethod) {
                 if (debug) {
                   console.log(httpMethod.toUpperCase().green, m.options[GRPC_API_OPTION_ID][httpMethod].blue)
                 }
