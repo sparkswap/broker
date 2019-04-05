@@ -146,6 +146,38 @@ describe('BrokerRPCServer', () => {
       expect(server.httpServer).to.be.equal(httpServerStub)
     })
 
+    it('passes through http server options', () => {
+      const rpcAddress = '0.0.0.0:27492'
+      const rpcHttpProxyAddress = '0.0.0.0:27592'
+      const disableAuth = true
+      const enableCors = true
+      const privKeyPath = '/fake/privpath'
+      const pubKeyPath = '/fake/pubpath'
+      const httpMethods = ['/fake/method']
+      const logger = { fake: 'logger' }
+
+      // eslint-disable-next-line
+      new BrokerRPCServer({
+        rpcAddress,
+        rpcHttpProxyAddress,
+        disableAuth,
+        enableCors,
+        privKeyPath,
+        pubKeyPath,
+        rpcHttpProxyMethods: httpMethods,
+        logger
+      })
+
+      expect(httpServer).to.have.been.calledWith(sinon.match.any, sinon.match.any, {
+        disableAuth,
+        enableCors,
+        privKeyPath,
+        pubKeyPath,
+        httpMethods,
+        logger
+      })
+    })
+
     it('creates a admin service', () => {
       const logger = 'mylogger'
       const relayer = 'myrelayer'

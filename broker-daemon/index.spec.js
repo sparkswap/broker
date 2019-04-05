@@ -26,6 +26,8 @@ describe('broker daemon', () => {
   let privIdKeyPath
   let pubIdKeyPath
   let rpcAddress
+  let rpcHttpProxyAddress
+  let rpcHttpProxyMethods
   let interchainRouterAddress
   let dataDir
   let marketNames
@@ -102,6 +104,8 @@ describe('broker daemon', () => {
     privIdKeyPath = '/my/private/id/key/path'
     pubIdKeyPath = '/my/public/id/key/path'
     rpcAddress = '0.0.0.0:27492'
+    rpcHttpProxyAddress = '0.0.0.0:28592'
+    rpcHttpProxyMethods = [ '/v1/admin/healthcheck' ]
     interchainRouterAddress = '0.0.0.0:40369'
     dataDir = '/datadir'
     marketNames = [ 'BTC/LTC' ]
@@ -125,12 +129,17 @@ describe('broker daemon', () => {
       relayerRpcHost: 'fakehost'
     }
 
+    rpcUser = 'fakeUser'
+    rpcPass = 'fakePass'
+
     brokerDaemonOptions = {
       privRpcKeyPath,
       pubRpcKeyPath,
       privIdKeyPath,
       pubIdKeyPath,
       rpcAddress,
+      rpcHttpProxyAddress,
+      rpcHttpProxyMethods,
       interchainRouterAddress,
       dataDir,
       marketNames,
@@ -185,6 +194,62 @@ describe('broker daemon', () => {
         expect(LndEngine).to.have.been.calledTwice()
         expect(LndEngine).to.have.been.calledWith(engines.BTC.lndRpc, 'BTC', { logger, tlsCertPath: engines.BTC.lndTls, macaroonPath: engines.BTC.lndMacaroon })
         expect(LndEngine).to.have.been.calledWith(engines.BTC.lndRpc, 'LTC', { logger, tlsCertPath: engines.BTC.lndTls, macaroonPath: engines.BTC.lndMacaroon })
+      })
+    })
+
+    describe('BrokerRPCServer', () => {
+      it('creates a BrokerRPCServer', () => {
+        expect(rpcServer).to.have.been.calledOnce()
+        expect(rpcServer).to.have.been.calledWithNew()
+        expect(brokerDaemon.rpcServer).to.be.an.instanceOf(rpcServer)
+      })
+
+      it('sets the rpc address', () => {
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ rpcAddress }))
+      })
+
+      it('sets the rpc http proxy address', () => {
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ rpcHttpProxyAddress }))
+      })
+
+      it('sets the rpc http proxy methods', () => {
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ rpcHttpProxyMethods }))
+      })
+
+      it('sets the logger', () => {
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ logger }))
+      })
+
+      it('sets the engines', () => {
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ engines: brokerDaemon.engines }))
+      })
+
+      it('sets the relayer client', () => {
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ relayer: brokerDaemon.relayer }))
+      })
+
+      it('sets the block order worker', () => {
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ blockOrderWorker: brokerDaemon.blockOrderWorker }))
+      })
+
+      it('sets the private key path', () => {
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ privKeyPath: privRpcKeyPath }))
+      })
+
+      it('sets the public key path', () => {
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ pubKeyPath: pubRpcKeyPath }))
+      })
+
+      it('sets the auth', () => {
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ disableAuth }))
+      })
+
+      it('sets the username', () => {
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ rpcUser }))
+      })
+
+      it('sets the password', () => {
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ rpcPass }))
       })
     })
 
@@ -476,6 +541,7 @@ describe('broker daemon', () => {
 
   describe('rpcUser', () => {
     it('defaults to null', () => {
+      delete brokerDaemonOptions.rpcUser
       brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
       expect(brokerDaemon.rpcUser).to.be.null()
     })
@@ -489,6 +555,7 @@ describe('broker daemon', () => {
 
   describe('rpcPass', () => {
     it('defaults to null', () => {
+      delete brokerDaemonOptions.rpcPass
       brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
       expect(brokerDaemon.rpcPass).to.be.null()
     })

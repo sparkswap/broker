@@ -69,7 +69,7 @@ class BrokerRPCServer {
    * @param {string} opts.pubKeyPath - Path to public key for broker rpc
    * @param {boolean} [opts.disableAuth=false]
    */
-  constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, pubKeyPath, privKeyPath, disableAuth = false, enableCors = false, rpcUser = null, rpcPass = null, rpcHttpProxyAddress, rpcAddress } = {}) {
+  constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, pubKeyPath, privKeyPath, disableAuth = false, enableCors = false, rpcUser = null, rpcPass = null, rpcHttpProxyAddress, rpcHttpProxyMethods, rpcAddress } = {}) {
     this.logger = logger
     this.engines = engines
     this.relayer = relayer
@@ -85,7 +85,7 @@ class BrokerRPCServer {
 
     this.server = new grpc.Server(GRPC_SERVER_OPTIONS)
 
-    this.httpServer = createHttpServer(this.protoPath, this.rpcAddress, { disableAuth, enableCors, privKeyPath, pubKeyPath, logger })
+    this.httpServer = createHttpServer(this.protoPath, this.rpcAddress, { disableAuth, enableCors, privKeyPath, pubKeyPath, httpMethods: rpcHttpProxyMethods, logger })
 
     this.adminService = new AdminService(this.protoPath, { logger, relayer, engines, orderbooks, auth: this.auth })
     this.server.addService(this.adminService.definition, this.adminService.implementation)

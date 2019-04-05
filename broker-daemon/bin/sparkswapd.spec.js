@@ -51,7 +51,9 @@ describe('sparkswapd', () => {
         user: rpcUser,
         pass: rpcPass,
         pubKeyPath: pubRpcKeyPath,
-        privKeyPath: privRpcKeyPath
+        privKeyPath: privRpcKeyPath,
+        httpProxyAddress: rpcHttpProxyAddress,
+        httpProxyMethods: rpcHttpProxyMethods
       },
       relayer: {
         rpcHost: relayerRpcHost,
@@ -70,6 +72,8 @@ describe('sparkswapd', () => {
       rpcAddress,
       rpcUser,
       rpcPass,
+      rpcHttpProxyAddress,
+      rpcHttpProxyMethods: [rpcHttpProxyMethods],
       pubRpcKeyPath,
       privRpcKeyPath,
       relayerOptions: {
@@ -182,6 +186,28 @@ describe('sparkswapd', () => {
       sparkswapd(argv)
 
       expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ rpcAddress }))
+    })
+
+    it('provides an rpc http proxy address', () => {
+      const rpcHttpProxyAddress = '0.0.0.0:9877'
+
+      argv.push('--rpc.http-proxy-address')
+      argv.push(rpcHttpProxyAddress)
+
+      sparkswapd(argv)
+
+      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ rpcHttpProxyAddress }))
+    })
+
+    it('provides a list of rpc http proxy methods', () => {
+      const rpcHttpProxyMethods = '/v1/admin/healthcheck,/v1/admin/id'
+
+      argv.push('--rpc.http-proxy-methods')
+      argv.push(rpcHttpProxyMethods)
+
+      sparkswapd(argv)
+
+      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ rpcHttpProxyMethods: ['/v1/admin/healthcheck', '/v1/admin/id'] }))
     })
   })
 
