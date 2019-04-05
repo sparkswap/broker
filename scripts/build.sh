@@ -9,6 +9,8 @@
 # -e=, --external-address=        your public IP address (used for cert generation)
 # -i, --no-identity               does not generate keys for the daemons identity
 # -n, --no-certs                  does not re-generate tls certs for the daemon
+# -l, --local                     run the build script for development
+# -f, --force-certs               forces the generation tls certs for the daemon
 #
 ################################################
 
@@ -38,6 +40,7 @@ NO_CLI="false"
 NO_DOCKER="false"
 NO_CERTS="false"
 NO_IDENTITY="false"
+FORCE_CERTS="false"
 
 # Setting this env is ONLY required for a hosted broker setup.
 #
@@ -70,6 +73,10 @@ case $i in
     ;;
     -l|--local)
     LOCAL="true"
+
+    ;;
+    -f|--force-certs)
+    FORCE_CERTS="true"
 
     ;;
     *)
@@ -110,6 +117,20 @@ mkdir -p $SPARKSWAP_DIRECTORY/secure
 KEY_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-tls.key
 CERT_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-tls.cert
 CSR_PATH=$SPARKSWAP_DIRECTORY/secure/broker-rpc-csr.csr
+
+# We want to fail out if the user has both cert flags set in the script
+if [[ "$FORCE_CERTS" == "true" ]] && [[ "$NO_CERTS" == "true" ]]; then
+  echo "ERROR: You cannot have --force-certs and --no-certs enabled at the same time"
+  exit 0
+fi
+
+# If we force the cert creation, we'll simply remove the certs from the sparkswap
+# directory, and then regenerate them below
+if [[ "$FORCE_CERTS" == "true" ]]; then
+  echo "Removing existing Broker TLS certs: --force-certs set to true"
+  rm -f $KEY_PATH
+  rm -f $CERT_PATH
+fi
 
 if [[ -f "$KEY_PATH" ]]; then
   echo "WARNING: TLS Private Key already exists at $KEY_PATH for Broker Daemon. Skipping cert generation"
