@@ -35,6 +35,17 @@ const FORMAT_TYPES = Object.freeze({
 const COLUMN_WIDTHS = 30
 
 /**
+ * Number of lines that aren't used for displaying `Price` and `Depth` from
+ * a Bid or Ask. Can be empty spaces, marketing, borders, etc.
+ *
+ * This is used for calculating how many orders can be displayed in the UI.
+ *
+ * @constant
+ * @type {number}
+ */
+const NON_MARKET_INFO = 12
+
+/**
  * Prints log statements for a psuedo UI for the OrderBook
  *
  * @todo Use a util like cli/smart-table to represent columns/rows
@@ -47,7 +58,7 @@ function createUI (market, asks, bids) {
   const windowHeight = size.get().height
 
   // Fill as many orders as the screen allows less other info displayed
-  const maxLengthPerSide = Math.floor((windowHeight - 12) / 2)
+  const maxLengthPerSide = Math.floor((windowHeight - NON_MARKET_INFO) / 2)
   const baseCurrencySymbol = market.split('/')[0].toUpperCase()
 
   const parentTable = new Table({
@@ -128,6 +139,7 @@ function createUI (market, asks, bids) {
       'top-mid': '',
       'top-left': '',
       'top-right': '',
+      'bottom': String.fromCharCode(9472), // Default bottom border in cli-table2; provided for clarity
       'bottom-mid': '',
       'bottom-left': '',
       'bottom-right': '',
@@ -254,7 +266,6 @@ async function orderbook (args, opts, logger) {
     let sortedBids = []
 
     // Lets initialize the view AND just to be sure, we will clear the view
-    console.clear()
     createUI(market, [], [])
 
     call.on('data', (order) => {
@@ -273,12 +284,10 @@ async function orderbook (args, opts, logger) {
 
       sortedAsks = Array.from(asks.values()).sort(function (a, b) { return (Big(a.price).cmp(b.price)) })
       sortedBids = Array.from(bids.values()).sort(function (a, b) { return (Big(b.price).cmp(a.price)) })
-      console.clear()
       createUI(market, sortedAsks, sortedBids)
     })
 
     process.stdout.on('resize', function () {
-      console.clear()
       createUI(market, sortedAsks, sortedBids)
     })
 
@@ -292,50 +301,69 @@ async function orderbook (args, opts, logger) {
 
 /**
  * Takes a number formatted as a string and applies coloring so all digits following
- * the last significant digit are grayed out
+ * the last significant digit are grayed out.
+ *
  * @param {string} text
  * @param {string} type - represents whether to format as a bid, ask, or depth
  * @returns {string}
  */
 function formatText (text, type) {
-  let lastZeroIndex = -1
-  for (let i = 0; i < text.length; i++) {
-    const remaining = [...text].slice(i)
-    const allZeroesRemaining = remaining.every(char => { return char === '0' || char === '.' })
-
-    if (allZeroesRemaining) {
-      lastZeroIndex = i
-      break
-    }
-  }
-
-  const needsGrayColoring = lastZeroIndex > -1
-
-  const addColoring = (text) => {
-    switch (type) {
-      case FORMAT_TYPES.BID:
-        return text.green
-      case FORMAT_TYPES.ASK:
-        return text.red
-      case FORMAT_TYPES.DEPTH:
-        return text.white
-    }
-  }
+  const firstNonSigZero = findFirstNonSigZero(text)
+  const needsGrayColoring = firstNonSigZero > -1
 
   let formatted = ''
   if (needsGrayColoring) {
     for (let i = 0; i < text.length; i++) {
-      if (i < lastZeroIndex) {
-        formatted += addColoring(text.charAt(i))
+      if (i < firstNonSigZero) {
+        formatted += addColoring(text.charAt(i), type)
       } else {
         formatted += text.charAt(i).gray
       }
     }
   } else {
-    formatted = addColoring(text)
+    formatted = addColoring(text, type)
   }
 
   return formatted
+}
+
+/**
+ * Adds coloring based on the type of text (Bid, Aks, Depth).
+ *
+ * @param {string} text
+ * @param {string} type - represents whether to format as a bid, ask, or depth
+ * @returns {string}
+ */
+function addColoring (text, type) {
+  switch (type) {
+    case FORMAT_TYPES.BID:
+      return text.green
+    case FORMAT_TYPES.ASK:
+      return text.red
+    case FORMAT_TYPES.DEPTH:
+      return text.white
+  }
+}
+
+/**
+ * Finds the index of the first non significant zero. Returns index, or -1 if none.
+ *
+ * @param {string} text
+ * @returns {number} Index of the first non significant zero
+ */
+function findFirstNonSigZero (text) {
+  let firstNonSigZero = -1
+  for (let i = 0; i < text.length; i++) {
+    const remaining = [...text].slice(i)
+    const allZeroesRemaining = remaining.every(char => { return char === '0' || char === '.' })
+
+    if (allZeroesRemaining) {
+      firstNonSigZero = i
+      break
+    }
+  }
+
+  return firstNonSigZero
 }
 
 module.exports = (program) => {
