@@ -13,7 +13,7 @@ version: '2.4'
 
 services:
   sparkswapd:
-    image: sparkswap/broker:0.5.2-beta
+    image: sparkswap/broker:0.6.0-beta-rc1
     depends_on:
       - lnd_btc
       - lnd_ltc
