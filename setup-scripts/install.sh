@@ -38,6 +38,18 @@ CURRENT_DOCKER_COMPOSE_VERSION=1.24
 # Used for generating download URL
 RECOMMENDED_DOCKER_COMPOSE_VERSION=1.24.0
 
+catch_error () {
+  last_call="$?"
+  if [[ last_call -ne 0 ]]; then
+    echo ""
+    msg "Looks like there was a problem during installation. Please reach out to us for support. You can find us on Discord (https://sparkswap.com/chat) or email us at support@sparkswap.com" $WHITE
+    msg "You can also schedule a one-on-one onboarding session at https://sparkswap.com/onboarding"
+    echo ""
+  fi
+}
+
+trap catch_error EXIT
+
 # print a message with a color, like msg "my message" $GRAY
 msg () {
   echo -e "${GRAY}${TAG}${NC}:  $2$1${NC}"
@@ -118,6 +130,11 @@ echo "                                                          https://sparkswa
 echo ""
 echo "Sparkswap Installer starting..."
 echo ""
+echo ""
+
+msg "If you encounter any problems during installation, please reach out to us." $WHITE
+msg "We're available on Discord (https://sparkswap.com/chat) and also at support@sparkswap.com" $WHITE
+msg "You can also sign up for a one-on-one onboarding session at https://sparkswap.com/onboarding" $WHITE
 echo ""
 
 # Check if Docker is installed. Fail install if not
