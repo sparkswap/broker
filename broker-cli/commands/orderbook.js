@@ -319,9 +319,9 @@ function findFirstNonSigZero (text) {
  * Takes an array of order objects and adds the formatted orders to the given orders table.
  *
  * @param {Array<Object>} orders - the orders to format, given as an object with price and depth
- * @param {number} maxLength - maximum number of orders that can be displayed
  * @param {Object} ordersTable - table to add formatted orders to
  * @param {string} type - represents whether to format as bids or asks
+ * @param {number} maxLength - maximum number of orders that can be displayed
  * @returns {void}
  */
 function addOrdersToTable (orders, ordersTable, type, maxLength) {
