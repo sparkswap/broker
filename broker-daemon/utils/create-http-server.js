@@ -33,7 +33,7 @@ function handle404 (logger, req, res) {
  * @param {string} opts.logger
  * @returns {ExpressApp}
  */
-function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableCors = false, privKeyPath, pubKeyPath, httpMethods = ['*'], logger }) {
+function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableCors = false, privKeyPath, pubKeyPath, httpMethods, logger }) {
   const app = express()
 
   app.use(helmet())

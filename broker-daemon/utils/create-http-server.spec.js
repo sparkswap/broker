@@ -74,12 +74,6 @@ describe('createHttpServer', () => {
       expect(grpcGatewayStub).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match({ whitelist: options.httpMethods }))
     })
 
-    it('uses all methods by default', () => {
-      delete options.httpMethods
-      createHttpServer(protoPath, rpcAddress, options)
-      expect(grpcGatewayStub).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match({ whitelist: ['*'] }))
-    })
-
     it('returns the configured app', () => {
       expect(createHttpServer(protoPath, rpcAddress, options)).to.eql(expressStub)
     })

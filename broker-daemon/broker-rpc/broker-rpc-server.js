@@ -69,7 +69,7 @@ class BrokerRPCServer {
    * @param {string} opts.pubKeyPath - Path to public key for broker rpc
    * @param {boolean} [opts.disableAuth=false]
    */
-  constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, pubKeyPath, privKeyPath, disableAuth = false, enableCors = false, rpcUser = null, rpcPass = null, rpcHttpProxyAddress, rpcHttpProxyMethods = ['*'], rpcAddress } = {}) {
+  constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, pubKeyPath, privKeyPath, disableAuth = false, enableCors = false, rpcUser = null, rpcPass = null, rpcHttpProxyAddress, rpcHttpProxyMethods, rpcAddress } = {}) {
     this.logger = logger
     this.engines = engines
     this.relayer = relayer

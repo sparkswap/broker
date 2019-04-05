@@ -164,8 +164,7 @@ describe('BrokerRPCServer', () => {
         enableCors,
         privKeyPath,
         pubKeyPath,
-        rpcHttpProxyMethods:
-        httpMethods,
+        rpcHttpProxyMethods: httpMethods,
         logger
       })
 
