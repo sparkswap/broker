@@ -18,36 +18,135 @@ const EVENT_TYPES = Object.freeze({
 })
 
 /**
+ * @constant
+ * @type {Object}
+ */
+const FORMAT_TYPES = Object.freeze({
+  ASK: 'ASK',
+  BID: 'BID',
+  DEPTH: 'DEPTH'
+})
+
+/**
+ * Used for defining the column width for `Price` and `Depth (currency)`.
+ * @constant
+ * @type {number}
+ */
+const COLUMN_WIDTHS = 30
+
+/**
+ * Number of lines that aren't used for displaying `Price` and `Depth` from
+ * a Bid or Ask. Can be empty spaces, marketing, borders, etc.
+ *
+ * This is used for calculating how many orders can be displayed in the UI.
+ *
+ * @constant
+ * @type {number}
+ */
+const NON_MARKET_INFO = 12
+
+/**
  * Prints log statements for a psuedo UI for the OrderBook
  *
  * @todo Use a util like cli/smart-table to represent columns/rows
  * @param {string} market
- * @param {Array<Object>} asks - an object with price and depth
- * @param {Array<Object>} bids - an object with price and depth
+ * @param {Array<Object>} asks - an array of objects with price and depth
+ * @param {Array<Object>} bids - an array of object with price and depth
  */
 function createUI (market, asks, bids) {
   console.clear()
+  const windowHeight = size.get().height
+
+  // Fill as many orders as the screen allows less other info displayed
+  const maxLengthPerSide = Math.floor((windowHeight - NON_MARKET_INFO) / 2)
   const baseCurrencySymbol = market.split('/')[0].toUpperCase()
-  const windowWidth = size.get().width
-  const { mainTableWidth, innerTableWidth } = calculateTableWidths(windowWidth)
-  const table = new Table({
-    head: ['ASKS', 'BIDS'],
-    style: { head: ['gray'] },
-    colWidths: [mainTableWidth, mainTableWidth]
+
+  const parentTable = new Table({
+    head: [],
+    chars: {
+      'top-mid': '',
+      'bottom-mid': '',
+      'left-mid': '',
+      'mid': '',
+      'mid-mid': '',
+      'right-mid': '',
+      'middle': ''
+    },
+    style: {
+      'padding-left': 0,
+      'padding-right': 0
+    }
   })
 
-  // The extensive options are required because the default for cli-table is to have
-  // borders between every row and column.
-  const innerTableOptions = {
-    head: ['Price', `Depth (${baseCurrencySymbol})`],
-    style: { head: ['gray'] },
-    colWidths: [innerTableWidth, innerTableWidth],
+  // Used for `chars` property when instantiating a new Table with no borders
+  const noBorders = {
+    'top': '',
+    'top-mid': '',
+    'top-left': '',
+    'top-right': '',
+    'bottom': '',
+    'bottom-mid': '',
+    'bottom-left': '',
+    'bottom-right': '',
+    'left': '',
+    'left-mid': '',
+    'mid': '',
+    'mid-mid': '',
+    'right': '',
+    'right-mid': '',
+    'middle': ''
+  }
+
+  const tableHeaders = new Table({
+    head: [],
+    chars: noBorders,
+    colWidths: [COLUMN_WIDTHS, COLUMN_WIDTHS],
+    style: {
+      'padding-left': 0,
+      'padding-right': 0
+    }
+  })
+
+  tableHeaders.push([{ hAlign: 'center', content: 'Price' }, { hAlign: 'center', content: `Depth (${baseCurrencySymbol})` }])
+
+  const asksTable = new Table({
+    head: [],
+    chars: noBorders,
+    colWidths: [COLUMN_WIDTHS, COLUMN_WIDTHS],
+    style: {
+      'padding-left': 0,
+      'padding-right': 0
+    }
+  })
+
+  addOrdersToTable(asks, asksTable, FORMAT_TYPES.ASK, maxLengthPerSide)
+
+  const bidsTable = new Table({
+    head: [],
+    chars: noBorders,
+    colWidths: [COLUMN_WIDTHS, COLUMN_WIDTHS],
+    style: {
+      'padding-left': 0,
+      'padding-right': 0
+    }
+  })
+
+  // Create empty row for symmetric spacing around horizontal line separator
+  bidsTable.push([' ', ' '])
+
+  addOrdersToTable(bids, bidsTable, FORMAT_TYPES.BID, maxLengthPerSide)
+
+  // Used for creating border between bids / asks
+  const gapTable = new Table({
+    head: [],
+    rowHeights: [1],
+    // Only need bottom border, so remove all other characters
     chars: {
       'top': '',
       'top-mid': '',
       'top-left': '',
       'top-right': '',
-      'bottom': '',
+      'bottom': String.fromCharCode(9472), // Default bottom border in cli-table2; provided for clarity
       'bottom-mid': '',
       'bottom-left': '',
       'bottom-right': '',
@@ -58,10 +157,15 @@ function createUI (market, asks, bids) {
       'right': '',
       'right-mid': '',
       'middle': ''
+    },
+    colWidths: [COLUMN_WIDTHS, COLUMN_WIDTHS],
+    style: {
+      'padding-left': 0,
+      'padding-right': 0
     }
-  }
-  const askTable = new Table(innerTableOptions)
-  const bidTable = new Table(innerTableOptions)
+  })
+
+  gapTable.push([' ', ' '])
 
   const ui = []
 
@@ -71,30 +175,15 @@ function createUI (market, asks, bids) {
   let rightSubSubHeader = 'http://sparkswap.com'
 
   ui.push('')
-  ui.push(' ' + leftHeader.bold.white + Array(windowWidth - 1 - leftHeader.length - rightHeader.length).join(' ') + rightHeader.bold.cyan)
-  ui.push(' ' + Array(windowWidth - 1 - rightSubHeader.length).join(' ') + rightSubHeader.gray)
-  ui.push(' ' + Array(windowWidth - 1 - rightSubSubHeader.length).join(' ') + rightSubSubHeader.underline.gray)
+  ui.push(' ' + leftHeader.bold.white + Array((COLUMN_WIDTHS * 2) - leftHeader.length - rightHeader.length).join(' ') + rightHeader.bold.cyan)
+  ui.push(' ' + Array((COLUMN_WIDTHS * 2) - rightSubHeader.length).join(' ') + rightSubHeader.gray)
+  ui.push(' ' + Array((COLUMN_WIDTHS * 2) - rightSubSubHeader.length).join(' ') + rightSubSubHeader.underline.gray)
   ui.push('')
-
-  // TODO: collapse orders at the same price point into a single line
-
-  asks.forEach((ask) => {
-    // TODO: make display of amounts consistent with inputs (buys, prices, etc)
-    let price = String(` ${ask.price} `)
-    let depth = String(` ${ask.amount} `)
-    askTable.push([price.red, depth.white])
-  })
-
-  bids.forEach((bid) => {
-    // TODO: make display of amounts consistent with inputs (buys, prices, etc)
-    let price = String(` ${bid.price} `)
-    let depth = String(` ${bid.amount} `)
-    bidTable.push([price.green, depth.white])
-  })
-
-  table.push([askTable.toString(), bidTable.toString()])
-
-  ui.push(table.toString())
+  parentTable.push([tableHeaders.toString()])
+  parentTable.push([asksTable.toString()])
+  parentTable.push([gapTable.toString()])
+  parentTable.push([bidsTable.toString()])
+  ui.push(parentTable.toString())
   console.log(ui.join('\n') + '\n')
 }
 
@@ -126,7 +215,6 @@ async function orderbook (args, opts, logger) {
     let sortedBids = []
 
     // Lets initialize the view AND just to be sure, we will clear the view
-    console.clear()
     createUI(market, [], [])
 
     call.on('data', (order) => {
@@ -145,7 +233,6 @@ async function orderbook (args, opts, logger) {
 
       sortedAsks = Array.from(asks.values()).sort(function (a, b) { return (Big(a.price).cmp(b.price)) })
       sortedBids = Array.from(bids.values()).sort(function (a, b) { return (Big(b.price).cmp(a.price)) })
-      console.clear()
       createUI(market, sortedAsks, sortedBids)
     })
 
@@ -162,19 +249,112 @@ async function orderbook (args, opts, logger) {
 };
 
 /**
- * Takes in an window width and returns object with appropriate table widths
- * for the orderbook
- * @param {Integer} window width
- * @returns {Object} with mainTableWidth and innerTableWidth
+ * Takes a number formatted as a string and applies coloring so all digits following
+ * the last significant digit are grayed out.
+ *
+ * @param {string} text
+ * @param {string} type - represents whether to format as a bid, ask, or depth
+ * @returns {string}
  */
+function formatText (text, type) {
+  const firstNonSigZero = findFirstNonSigZero(text)
+  const needsGrayColoring = firstNonSigZero > -1
 
-function calculateTableWidths (windowWidth) {
-  const borderOffset = 4
-  const numTables = 2
-  const mainTableWidth = Math.round((windowWidth - borderOffset) / numTables)
-  const innerTableWidth = Math.round((mainTableWidth - borderOffset) / numTables)
+  let formatted = ''
+  if (needsGrayColoring) {
+    for (let i = 0; i < text.length; i++) {
+      if (i < firstNonSigZero) {
+        formatted += addColoring(text.charAt(i), type)
+      } else {
+        formatted += text.charAt(i).gray
+      }
+    }
+  } else {
+    formatted = addColoring(text, type)
+  }
 
-  return { mainTableWidth, innerTableWidth }
+  return formatted
+}
+
+/**
+ * Adds coloring based on the type of text (Bid, Aks, Depth).
+ *
+ * @param {string} text
+ * @param {string} type - represents whether to format as a bid, ask, or depth
+ * @returns {string}
+ */
+function addColoring (text, type) {
+  switch (type) {
+    case FORMAT_TYPES.BID:
+      return text.green
+    case FORMAT_TYPES.ASK:
+      return text.red
+    case FORMAT_TYPES.DEPTH:
+      return text.white
+  }
+}
+
+/**
+ * Finds the index of the first non significant zero. Returns index, or -1 if none.
+ *
+ * @param {string} text
+ * @returns {number} Index of the first non significant zero
+ */
+function findFirstNonSigZero (text) {
+  let firstNonSigZero = -1
+  for (let i = 0; i < text.length; i++) {
+    const remaining = [...text].slice(i)
+    const allZeroesRemaining = remaining.every(char => { return char === '0' || char === '.' })
+
+    if (allZeroesRemaining) {
+      firstNonSigZero = i
+      break
+    }
+  }
+
+  return firstNonSigZero
+}
+
+/**
+ * Takes an array of order objects and adds the formatted orders to the given orders table.
+ *
+ * @param {Array<Object>} orders - the orders to format, given as an object with price and depth
+ * @param {Object} ordersTable - table to add formatted orders to
+ * @param {string} type - represents whether to format as bids or asks
+ * @param {number} maxLength - maximum number of orders that can be displayed
+ * @returns {void}
+ */
+function addOrdersToTable (orders, ordersTable, type, maxLength) {
+  const formattedOrders = []
+
+  for (const [index, order] of orders.entries()) {
+    if (index === maxLength) {
+      // If there are more orders than can be displayed, we notify the user the amount not displayed
+      const ordersNotDisplayed = orders.length - maxLength
+      const message = ` ${ordersNotDisplayed} more...`.gray
+      formattedOrders.push([{ hAlign: 'left', content: message }, ''])
+      break
+    }
+
+    const formattedPrice = formatText(order.price, type)
+    const formattedDepth = formatText(order.amount, FORMAT_TYPES.DEPTH)
+    formattedOrders.push([{ hAlign: 'center', content: formattedPrice }, { hAlign: 'center', content: formattedDepth }])
+  }
+
+  if (orders.length < maxLength) {
+    // The number of orders don't fill up the provided space. Add empty rows to keep the orderbook consistently spaced
+    const emptyRecords = maxLength - orders.length
+    for (let i = 0; i < emptyRecords; i++) {
+      formattedOrders.push([' ', ' '])
+    }
+  }
+
+  if (type === FORMAT_TYPES.ASK) {
+    // Asks are given as lowest price first, however for the UI we want to display the highest price first
+    formattedOrders.reverse().forEach((order) => ordersTable.push(order))
+  } else {
+    formattedOrders.forEach((order) => ordersTable.push(order))
+  }
 }
 
 module.exports = (program) => {
