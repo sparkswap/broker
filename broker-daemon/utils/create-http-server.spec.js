@@ -9,6 +9,7 @@ describe('createHttpServer', () => {
   let expressStub
   let bodyParserStub
   let grpcGatewayStub
+  let grpcGateway
   let corsMiddlewareStub
   let express
   let options
@@ -19,13 +20,15 @@ describe('createHttpServer', () => {
         disableAuth: true,
         privKeyPath: 'priv-key',
         pubKeyPath: 'pub-key',
-        logger: {}
+        logger: {},
+        httpMethods: [ 'fake/method' ]
       }
       protoPath = '/path/to/proto'
-      rpcAddress = '0.0.0.0:8080'
+      rpcAddress = 'my-daemon-rpc-address:8080'
       expressStub = { use: sinon.stub() }
       bodyParserStub = { json: sinon.stub(), urlencoded: sinon.stub() }
-      grpcGatewayStub = sinon.stub().withArgs([`/${protoPath}`], rpcAddress)
+      grpcGateway = { fake: 'gateway' }
+      grpcGatewayStub = sinon.stub().returns(grpcGateway)
       corsMiddlewareStub = sinon.stub()
       express = sinon.stub().returns(expressStub)
       createHttpServer.__set__('express', express)
@@ -56,7 +59,25 @@ describe('createHttpServer', () => {
     })
 
     it('sets the app to use grpcGateway defined routing', () => {
-      expect(expressStub.use).to.have.been.calledWith('/', grpcGatewayStub([`/${protoPath}`], rpcAddress))
+      expect(expressStub.use).to.have.been.calledWith('/', grpcGateway)
+    })
+
+    it('uses the rpc address specified in the daemon', () => {
+      expect(grpcGatewayStub).to.have.been.calledWith(sinon.match.any, rpcAddress)
+    })
+
+    it('prefixes with the proto path', () => {
+      expect(grpcGatewayStub).to.have.been.calledWith([`/${protoPath}`])
+    })
+
+    it('passes the whitelist of methods', () => {
+      expect(grpcGatewayStub).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match({ whitelist: options.httpMethods }))
+    })
+
+    it('uses all methods by default', () => {
+      delete options.httpMethods
+      createHttpServer(protoPath, rpcAddress, options)
+      expect(grpcGatewayStub).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match({ whitelist: ['*'] }))
     })
 
     it('returns the configured app', () => {
@@ -83,7 +104,8 @@ describe('createHttpServer', () => {
         pubKeyPath: 'pub-key',
         logger: {
           debug: sinon.stub()
-        }
+        },
+        httpMethods: [ 'fake/method' ]
       }
       pubKey = 'pubkey'
       privKey = 'privkey'
@@ -93,7 +115,8 @@ describe('createHttpServer', () => {
       rpcAddress = 'my-daemon-rpc-address:8080'
       expressStub = { use: sinon.stub() }
       bodyParserStub = { json: sinon.stub(), urlencoded: sinon.stub() }
-      grpcGatewayStub = sinon.stub().withArgs([`/${protoPath}`], rpcAddress)
+      grpcGateway = { fake: 'gateway' }
+      grpcGatewayStub = sinon.stub().returns(grpcGateway)
       corsMiddlewareStub = sinon.stub()
       express = sinon.stub().returns(expressStub)
 
@@ -131,7 +154,7 @@ describe('createHttpServer', () => {
     })
 
     it('sets the app to use grpcGateway defined routing with grpc credentials', () => {
-      expect(expressStub.use).to.have.been.calledWith('/', grpcGatewayStub([`/${protoPath}`], rpcAddress, channelCredentialStub))
+      expect(expressStub.use).to.have.been.calledWith('/', grpcGateway)
     })
 
     it('defaults a 0.0.0.0 address to localhost for certificate normalization', () => {
@@ -141,6 +164,24 @@ describe('createHttpServer', () => {
 
     it('uses the rpc address specified in the daemon', () => {
       expect(grpcGatewayStub).to.have.been.calledWith(sinon.match.any, rpcAddress, sinon.match.any)
+    })
+
+    it('prefixes with the proto path', () => {
+      expect(grpcGatewayStub).to.have.been.calledWith([`/${protoPath}`])
+    })
+
+    it('uses channel credentials to secure the connection', () => {
+      expect(grpcGatewayStub).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match({ credentials: channelCredentialStub }))
+    })
+
+    it('passes the whitelist of methods', () => {
+      expect(grpcGatewayStub).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match({ whitelist: options.httpMethods }))
+    })
+
+    it('uses all methods by default', () => {
+      delete options.httpMethods
+      createHttpServer(protoPath, rpcAddress, options)
+      expect(grpcGatewayStub).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match({ whitelist: ['*'] }))
     })
 
     it('creates an https server', () => {
