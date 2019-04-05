@@ -82,7 +82,7 @@ const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.cre
 
                   if (debug) {
                     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
-                    console.log(`GATEWAY: ${(new Date()).toISOString().yellow} (${ip.blue}): /${pkg.replace(/\./g, '.'.white).blue}.${svc.blue}/${m.name.blue}(${params})`)
+                    console.log(`GATEWAY: ${(new Date()).toISOString().yellow} (${ip.blue}): /${pkg.replace(/\./g, '.'.white).blue}.${svc.blue}/${m.name.blue}(${JSON.stringify(params)})`)
                   }
 
                   try {
@@ -109,7 +109,7 @@ const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.cre
                     }
 
                     // gRPC call (e.g. broker.rpc.AdminService.HealthCheck)
-                    services[svc][implementationName]({}, meta, requestHandler)
+                    services[svc][implementationName](params, meta, requestHandler)
                   } catch (err) {
                     console.error(`${svc}.${m.name}: `.red, err.message.red)
                     console.trace()
