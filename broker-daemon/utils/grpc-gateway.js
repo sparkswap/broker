@@ -38,6 +38,13 @@ const supportedMethods = Object.freeze([
 const paramRegex = /{(\w+)}/g
 
 /**
+ * Wildcard method to indicate every method is available for the whitelist
+ * @type {string}
+ * @constant
+ */
+const WILDCARD = '*'
+
+/**
  * @constant
  * @type {string}
  * @default
@@ -48,11 +55,13 @@ const GRPC_API_OPTION_ID = '.google.api.http'
  * generate middleware to proxy to gRPC defined by proto files
  * @param  {Array<string>} protoFiles - Filenames of protobuf-file
  * @param  {string} grpcLocation - HOST:PORT of gRPC server
- * @param  {ChannelCredentials} credentials - credential context (default: grpc.credentials.createInsecure())
- * @param  {boolean} [debug=true]
+ * @param  {Object} options
+ * @param  {ChannelCredentials} options.credentials - credential context (default: grpc.credentials.createInsecure())
+ * @param  {boolean} [options.debug=true]
+ * @param  {Array} [options.whitelist=['*']] - Whitelist of methods to include. By default, includes all methods as a wildcard.
  * @returns {Function} Middleware
  */
-const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.createInsecure(), debug = true) => {
+const middleware = (protoFiles, grpcLocation, { credentials = grpc.credentials.createInsecure(), debug = true, whitelist = [ WILDCARD ] } = {}) => {
   const router = express.Router()
   const clients = {}
   const protos = protoFiles.map(p => grpc.load(p))
@@ -71,7 +80,10 @@ const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.cre
         s.methods.forEach(m => {
           if (m.options[GRPC_API_OPTION_ID]) {
             supportedMethods.forEach(httpMethod => {
-              if (m.options[GRPC_API_OPTION_ID][httpMethod]) {
+              // We should limit methods to those included on the whitelist
+              const shouldGateway = whitelist.includes(WILDCARD) || whitelist.includes(m.options[GRPC_API_OPTION_ID][httpMethod])
+
+              if (m.options[GRPC_API_OPTION_ID][httpMethod] && shouldGateway) {
                 if (debug) {
                   console.log(httpMethod.toUpperCase().green, m.options[GRPC_API_OPTION_ID][httpMethod].blue)
                 }

@@ -49,6 +49,7 @@ program
   // Broker RPC configuration options
   .option('--rpc.address [rpc-address]', 'Add a host/port to listen for daemon RPC connections', validations.isHost, config.rpc.address)
   .option('--rpc.http-proxy-address [rpc-http-proxy-address]', 'Add a host/port to listen for HTTP RPC proxy connections', validations.isHost, config.rpc.httpProxyAddress)
+  .option('--rpc.http-proxy-methods [rpc-http-proxy-methods]', 'Comma-separated methods for the HTTP RPC Proxy', program.String, config.rpc.httpProxyMethods)
   .option('--rpc.user [rpc-user]', 'Broker rpc user name', program.String, config.rpc.user)
   .option('--rpc.pass [rpc-pass]', 'Broker rpc password', program.String, config.rpc.pass)
   .option('--rpc.pub-key-path [rpc-pub-key-path]', 'Location of the public key for the broker\'s rpc', validations.isFormattedPath, config.rpc.pubKeyPath)
@@ -82,6 +83,7 @@ program
       relayerCertPath,
       rpcAddress,
       rpcHttpProxyAddress,
+      rpcHttpProxyMethods: proxyMethods,
       rpcUser,
       rpcPass,
       rpcPubKeyPath: pubRpcKeyPath,
@@ -109,6 +111,9 @@ program
     // `markets` will be a string of market symbols that are delimited by a comma
     const marketNames = (markets || '').split(',').filter(m => m)
 
+    // proxyMethods will be a string of method names that are delimited by a comma
+    const rpcHttpProxyMethods = (proxyMethods || '').split(',').filter(p => p)
+
     const brokerOptions = {
       network,
       pubRpcKeyPath,
@@ -117,6 +122,7 @@ program
       pubIdKeyPath,
       rpcAddress,
       rpcHttpProxyAddress,
+      rpcHttpProxyMethods,
       interchainRouterAddress,
       dataDir,
       marketNames,
@@ -129,6 +135,7 @@ program
         relayerCertPath
       }
     }
+
     return new BrokerDaemon(brokerOptions).initialize()
   })
 

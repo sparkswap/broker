@@ -33,7 +33,7 @@ function handle404 (logger, req, res) {
  * @param {string} opts.logger
  * @returns {ExpressApp}
  */
-function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableCors = false, privKeyPath, pubKeyPath, logger }) {
+function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableCors = false, privKeyPath, pubKeyPath, httpMethods = ['*'], logger }) {
   const app = express()
 
   app.use(helmet())
@@ -59,7 +59,7 @@ function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableC
   }
 
   if (disableAuth) {
-    app.use('/', grpcGateway([`/${protoPath}`], rpcAddress))
+    app.use('/', grpcGateway([`/${protoPath}`], rpcAddress, { whitelist: httpMethods }))
     app.use(handle404.bind(null, logger))
     return app
   } else {
@@ -69,7 +69,7 @@ function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableC
 
     logger.debug(`Securing RPC proxy connections with TLS: key: ${privKeyPath}, cert: ${pubKeyPath}`)
 
-    app.use('/', grpcGateway([`/${protoPath}`], rpcAddress, channelCredentials))
+    app.use('/', grpcGateway([`/${protoPath}`], rpcAddress, { credentials: channelCredentials, whitelist: httpMethods }))
     app.use(handle404.bind(null, logger))
     return https.createServer({ key, cert }, app)
   }
