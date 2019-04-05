@@ -28,7 +28,7 @@ const FORMAT_TYPES = Object.freeze({
 })
 
 /**
- * Used for defining the column width for `Price` and `Depth (currency)`
+ * Used for defining the column width for `Price` and `Depth (currency)`.
  * @constant
  * @type {number}
  */
