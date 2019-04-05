@@ -172,12 +172,6 @@ describe('createHttpServer', () => {
       expect(grpcGatewayStub).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match({ whitelist: options.httpMethods }))
     })
 
-    it('uses all methods by default', () => {
-      delete options.httpMethods
-      createHttpServer(protoPath, rpcAddress, options)
-      expect(grpcGatewayStub).to.have.been.calledWith(sinon.match.any, sinon.match.any, sinon.match({ whitelist: ['*'] }))
-    })
-
     it('creates an https server', () => {
       expect(createServerStub).to.have.been.calledWith({ key: privKey, cert: pubKey }, expressStub)
     })
