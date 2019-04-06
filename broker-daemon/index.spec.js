@@ -26,6 +26,7 @@ describe('broker daemon', () => {
   let privIdKeyPath
   let pubIdKeyPath
   let rpcAddress
+  let rpcInternalProxyAddress
   let rpcHttpProxyAddress
   let rpcHttpProxyMethods
   let interchainRouterAddress
@@ -105,6 +106,7 @@ describe('broker daemon', () => {
     privIdKeyPath = '/my/private/id/key/path'
     pubIdKeyPath = '/my/public/id/key/path'
     rpcAddress = '0.0.0.0:27492'
+    rpcInternalProxyAddress = 'my-fake-domain:27492'
     rpcHttpProxyAddress = '0.0.0.0:28592'
     rpcHttpProxyMethods = [ '/v1/admin/healthcheck' ]
     interchainRouterAddress = '0.0.0.0:40369'
@@ -140,6 +142,7 @@ describe('broker daemon', () => {
       privIdKeyPath,
       pubIdKeyPath,
       rpcAddress,
+      rpcInternalProxyAddress,
       rpcHttpProxyAddress,
       rpcHttpProxyMethods,
       interchainRouterAddress,
@@ -208,7 +211,14 @@ describe('broker daemon', () => {
       })
 
       it('sets the rpc address', () => {
-        expect(rpcServer).to.have.been.calledWith(sinon.match({ rpcAddress }))
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ rpcAddress: rpcInternalProxyAddress }))
+      })
+
+      it('defaults to localhost', () => {
+        delete brokerDaemonOptions.rpcInternalProxyAddress
+        // eslint-disable-next-line
+        new BrokerDaemon(brokerDaemonOptions)
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ rpcAddress: 'localhost:27492' }))
       })
 
       it('sets the rpc http proxy address', () => {

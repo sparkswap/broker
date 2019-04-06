@@ -53,6 +53,7 @@ describe('sparkswapd', () => {
         pass: rpcPass,
         pubKeyPath: pubRpcKeyPath,
         privKeyPath: privRpcKeyPath,
+        proxyAddress: rpcInternalProxyAddress,
         httpProxyAddress: rpcHttpProxyAddress,
         httpProxyMethods: rpcHttpProxyMethods
       },
@@ -74,6 +75,7 @@ describe('sparkswapd', () => {
       rpcAddress,
       rpcUser,
       rpcPass,
+      rpcInternalProxyAddress,
       rpcHttpProxyAddress,
       rpcHttpProxyMethods: [rpcHttpProxyMethods],
       pubRpcKeyPath,
@@ -188,6 +190,16 @@ describe('sparkswapd', () => {
       sparkswapd(argv)
 
       expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ rpcAddress }))
+    })
+
+    it('provides an internal rpc proxy address', () => {
+      const rpcProxyAddress = 'my-fake-domain:9876'
+      argv.push('--rpc.proxy-address')
+      argv.push(rpcProxyAddress)
+
+      sparkswapd(argv)
+
+      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ rpcInternalProxyAddress: rpcProxyAddress }))
     })
 
     it('provides an rpc http proxy address', () => {

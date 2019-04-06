@@ -50,14 +50,6 @@ function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableC
     app.use(corsMiddleware())
   }
 
-  // If the RPC address we use for daemon is set to a default route (0.0.0.0)
-  // then we want to make sure that we are instead making a request w/ grpc-gateway
-  // to `localhost`. `0.0.0.0` would be an invalid address w/ the current cert
-  // setup
-  if (rpcAddress.includes('0.0.0.0')) {
-    rpcAddress = rpcAddress.replace('0.0.0.0', 'localhost')
-  }
-
   if (disableAuth) {
     app.use('/', grpcGateway([`/${protoPath}`], rpcAddress, { whitelist: httpMethods }))
     app.use(handle404.bind(null, logger))

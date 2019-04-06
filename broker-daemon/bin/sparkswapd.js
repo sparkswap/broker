@@ -48,6 +48,7 @@ program
   .option('--relayer.cert-path [cert-path]', 'Location of the root certificate for the SparkSwap Relayer (only used in development)', validations.isFormattedPath, config.relayer.certPath)
   // Broker RPC configuration options
   .option('--rpc.address [rpc-address]', 'Add a host/port to listen for daemon RPC connections', validations.isHost, config.rpc.address)
+  .option('--rpc.proxy-address [rpc-proxy-address]', 'Add a host/port where the daemon RPC will be reachable', validations.isHost, config.rpc.proxyAddress)
   .option('--rpc.http-proxy-address [rpc-http-proxy-address]', 'Add a host/port to listen for HTTP RPC proxy connections', validations.isHost, config.rpc.httpProxyAddress)
   .option('--rpc.http-proxy-methods [rpc-http-proxy-methods]', 'Comma-separated methods for the HTTP RPC Proxy', program.String, config.rpc.httpProxyMethods)
   .option('--rpc.http-proxy-cors [enable-cors]', 'Enable CORS for the HTTP RPC Proxy', program.BOOL, config.enableCors)
@@ -83,6 +84,7 @@ program
       relayerRpcHost,
       relayerCertPath,
       rpcAddress,
+      rpcProxyAddress: rpcInternalProxyAddress,
       rpcHttpProxyAddress,
       rpcHttpProxyMethods: proxyMethods,
       rpcHttpProxyCors: enableCors,
@@ -123,6 +125,7 @@ program
       privIdKeyPath,
       pubIdKeyPath,
       rpcAddress,
+      rpcInternalProxyAddress,
       rpcHttpProxyAddress,
       rpcHttpProxyMethods,
       interchainRouterAddress,
