@@ -33,7 +33,7 @@ function handle404 (logger, req, res) {
  * @param {string} opts.logger
  * @returns {ExpressApp}
  */
-function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableCors = false, privKeyPath, pubKeyPath, httpMethods, logger }) {
+function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableCors = false, isCertSelfSigned = true, privKeyPath, pubKeyPath, httpMethods, logger }) {
   const app = express()
 
   app.use(helmet())
@@ -57,12 +57,18 @@ function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableC
   } else {
     const key = fs.readFileSync(privKeyPath)
     const cert = fs.readFileSync(pubKeyPath)
-    const channelCredentials = grpc.credentials.createSsl(cert)
 
-    logger.debug(`Securing RPC proxy connections with TLS: key: ${privKeyPath}, cert: ${pubKeyPath}`)
+    let channelCredentials = grpc.credentials.createSsl()
+
+    if (isCertSelfSigned) {
+      logger.debug(`Using self-signed cert to connect to internal RPC for proxy: cert: ${pubKeyPath}`)
+      channelCredentials = grpc.credentials.createSsl(cert)
+    }
 
     app.use('/', grpcGateway([`/${protoPath}`], rpcAddress, { credentials: channelCredentials, whitelist: httpMethods }))
     app.use(handle404.bind(null, logger))
+
+    logger.debug(`Securing RPC proxy connections with TLS: key: ${privKeyPath}, cert: ${pubKeyPath}`)
     return https.createServer({ key, cert }, app)
   }
 }

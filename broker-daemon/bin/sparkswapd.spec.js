@@ -55,7 +55,8 @@ describe('sparkswapd', () => {
         privKeyPath: privRpcKeyPath,
         proxyAddress: rpcInternalProxyAddress,
         httpProxyAddress: rpcHttpProxyAddress,
-        httpProxyMethods: rpcHttpProxyMethods
+        httpProxyMethods: rpcHttpProxyMethods,
+        selfSignedCert: isCertSelfSigned
       },
       relayer: {
         rpcHost: relayerRpcHost,
@@ -72,6 +73,7 @@ describe('sparkswapd', () => {
       marketNames: [markets],
       disableAuth,
       enableCors,
+      isCertSelfSigned,
       rpcAddress,
       rpcUser,
       rpcPass,
@@ -231,6 +233,15 @@ describe('sparkswapd', () => {
       sparkswapd(argv)
 
       expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ enableCors: true }))
+    })
+
+    it('provides whether to the cert is self signed', () => {
+      argv.push('--rpc.self-signed-cert')
+      argv.push('true')
+
+      sparkswapd(argv)
+
+      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ isCertSelfSigned: true }))
     })
   })
 

@@ -34,6 +34,7 @@ describe('broker daemon', () => {
   let marketNames
   let disableAuth
   let enableCors
+  let isCertSelfSigned
   let relayerOptions
   let brokerDaemonOptions
   let rpcUser
@@ -128,6 +129,7 @@ describe('broker daemon', () => {
     }
     disableAuth = false
     enableCors = true
+    isCertSelfSigned = false
     relayerOptions = {
       relayerCertPath: '/fake/path',
       relayerRpcHost: 'fakehost'
@@ -151,6 +153,7 @@ describe('broker daemon', () => {
       engines,
       disableAuth,
       enableCors,
+      isCertSelfSigned,
       rpcUser,
       rpcPass,
       relayerOptions,
@@ -259,6 +262,10 @@ describe('broker daemon', () => {
 
       it('sets cors', () => {
         expect(rpcServer).to.have.been.calledWith(sinon.match({ enableCors }))
+      })
+
+      it('sets cert signer', () => {
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ isCertSelfSigned }))
       })
 
       it('sets the username', () => {
