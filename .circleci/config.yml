@@ -15,16 +15,16 @@ jobs:
       - checkout
 
       # Download and cache dependencies
-      - restore_cache:
-          keys:
-          - v3-dependencies-{{ checksum "package.json" }}
+      # - restore_cache:
+      #     keys:
+      #     - v3-dependencies-{{ checksum "package.json" }}
 
       - run: npm install
 
-      - save_cache:
-          paths:
-            - node_modules
-          key: v3-dependencies-{{ checksum "package.json" }}
+      # - save_cache:
+      #     paths:
+      #       - node_modules
+      #     key: v3-dependencies-{{ checksum "package.json" }}
 
       # This checks if the broker proto files are valid during our CI run
       - run: npm run broker-proto
@@ -37,16 +37,16 @@ jobs:
     steps:
       - checkout
       # Download and cache dependencies
-      - restore_cache:
-          keys:
-          - v3-dependencies-{{ checksum "package.json" }}
+      # - restore_cache:
+      #     keys:
+      #     - v3-dependencies-{{ checksum "package.json" }}
 
       - run: npm install
 
-      - save_cache:
-          paths:
-            - node_modules
-          key: v3-dependencies-{{ checksum "package.json" }}
+      # - save_cache:
+      #     paths:
+      #       - node_modules
+      #     key: v3-dependencies-{{ checksum "package.json" }}
 
       - run: npm run dist-cli
 
