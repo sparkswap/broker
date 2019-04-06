@@ -89,6 +89,7 @@ class BrokerDaemon {
    * @param {Array}  opts.marketNames - List of market names (e.g. 'BTC/LTC') to support
    * @param {Object} opts.engines - Configuration for all the engines to instantiate
    * @param {boolean} [opts.disableAuth=false] - Disable SSL for the daemon
+   * @param {boolean} [opts.enableCors=false] - Enable CORS for the HTTP Proxy
    * @param {string} [opts.rpcUser] - RPC username, only used when auth is enabled
    * @param {string} [opts.rpcPass] - RPC password, only used when auth is enabled
    * @param {Object} [opts.relayerOptions={}]
