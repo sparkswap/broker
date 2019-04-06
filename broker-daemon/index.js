@@ -89,6 +89,7 @@ class BrokerDaemon {
    * @param {Array}  opts.marketNames - List of market names (e.g. 'BTC/LTC') to support
    * @param {Object} opts.engines - Configuration for all the engines to instantiate
    * @param {boolean} [opts.disableAuth=false] - Disable SSL for the daemon
+   * @param {boolean} [opts.enableCors=false] - Enable CORS for the HTTP Proxy
    * @param {string} [opts.rpcUser] - RPC username, only used when auth is enabled
    * @param {string} [opts.rpcPass] - RPC password, only used when auth is enabled
    * @param {Object} [opts.relayerOptions={}]
@@ -96,7 +97,7 @@ class BrokerDaemon {
    * @param {string} opts.relayerOptions.certPath - Absolute path to the root certificate for the relayer
    * @returns {BrokerDaemon}
    */
-  constructor ({ network, privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcHttpProxyAddress, rpcHttpProxyMethods }) {
+  constructor ({ network, privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, enableCors = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcHttpProxyAddress, rpcHttpProxyMethods }) {
     // Set a global namespace for sparkswap that we can use for properties not
     // related to application configuration
     if (!global.sparkswap) {
@@ -158,6 +159,7 @@ class BrokerDaemon {
       privKeyPath: privRpcKeyPath,
       pubKeyPath: pubRpcKeyPath,
       disableAuth,
+      enableCors,
       rpcUser,
       rpcPass
     })

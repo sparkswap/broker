@@ -32,6 +32,7 @@ describe('broker daemon', () => {
   let dataDir
   let marketNames
   let disableAuth
+  let enableCors
   let relayerOptions
   let brokerDaemonOptions
   let rpcUser
@@ -124,6 +125,7 @@ describe('broker daemon', () => {
       }
     }
     disableAuth = false
+    enableCors = true
     relayerOptions = {
       relayerCertPath: '/fake/path',
       relayerRpcHost: 'fakehost'
@@ -145,6 +147,7 @@ describe('broker daemon', () => {
       marketNames,
       engines,
       disableAuth,
+      enableCors,
       rpcUser,
       rpcPass,
       relayerOptions,
@@ -242,6 +245,10 @@ describe('broker daemon', () => {
 
       it('sets the auth', () => {
         expect(rpcServer).to.have.been.calledWith(sinon.match({ disableAuth }))
+      })
+
+      it('sets cors', () => {
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ enableCors }))
       })
 
       it('sets the username', () => {

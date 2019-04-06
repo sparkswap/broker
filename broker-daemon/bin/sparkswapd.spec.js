@@ -46,6 +46,7 @@ describe('sparkswapd', () => {
       idPrivKeyPath: privIdKeyPath,
       markets,
       disableAuth,
+      enableCors,
       rpc: {
         address: rpcAddress,
         user: rpcUser,
@@ -69,6 +70,7 @@ describe('sparkswapd', () => {
       privIdKeyPath,
       marketNames: [markets],
       disableAuth,
+      enableCors,
       rpcAddress,
       rpcUser,
       rpcPass,
@@ -208,6 +210,15 @@ describe('sparkswapd', () => {
       sparkswapd(argv)
 
       expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ rpcHttpProxyMethods: ['/v1/admin/healthcheck', '/v1/admin/id'] }))
+    })
+
+    it('provides whether to enable CORS', () => {
+      argv.push('--rpc.http-proxy-cors')
+      argv.push('true')
+
+      sparkswapd(argv)
+
+      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ enableCors: true }))
     })
   })
 

@@ -6,6 +6,7 @@
   "markets": "BTC/LTC",
   "//": "WARNING: Only disable broker SSL during development",
   "disableAuth": false,
+  "enableCors": false,
   "supportedEngineTypes": ["LND"],
   "registerUrls": {
     "mainnet": "https://sparkswap.com/register/",

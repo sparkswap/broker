@@ -22,8 +22,12 @@ describe('enableCors', () => {
     expect(res.header).to.have.been.calledWith('Access-Control-Allow-Origin', '*')
   })
 
+  it('sets the access control allow credentials to true', () => {
+    expect(res.header).to.have.been.calledWith('Access-Control-Allow-Credentials', true)
+  })
+
   it('sets the access control allow headers header', () => {
-    expect(res.header).to.have.been.calledWith('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+    expect(res.header).to.have.been.calledWith('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
   })
 
   it('moves to the next middleware', () => {

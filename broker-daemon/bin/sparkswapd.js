@@ -50,6 +50,7 @@ program
   .option('--rpc.address [rpc-address]', 'Add a host/port to listen for daemon RPC connections', validations.isHost, config.rpc.address)
   .option('--rpc.http-proxy-address [rpc-http-proxy-address]', 'Add a host/port to listen for HTTP RPC proxy connections', validations.isHost, config.rpc.httpProxyAddress)
   .option('--rpc.http-proxy-methods [rpc-http-proxy-methods]', 'Comma-separated methods for the HTTP RPC Proxy', program.String, config.rpc.httpProxyMethods)
+  .option('--rpc.http-proxy-cors [enable-cors]', 'Enable CORS for the HTTP RPC Proxy', program.BOOL, config.enableCors)
   .option('--rpc.user [rpc-user]', 'Broker rpc user name', program.String, config.rpc.user)
   .option('--rpc.pass [rpc-pass]', 'Broker rpc password', program.String, config.rpc.pass)
   .option('--rpc.pub-key-path [rpc-pub-key-path]', 'Location of the public key for the broker\'s rpc', validations.isFormattedPath, config.rpc.pubKeyPath)
@@ -84,6 +85,7 @@ program
       rpcAddress,
       rpcHttpProxyAddress,
       rpcHttpProxyMethods: proxyMethods,
+      rpcHttpProxyCors: enableCors,
       rpcUser,
       rpcPass,
       rpcPubKeyPath: pubRpcKeyPath,
@@ -128,6 +130,7 @@ program
       marketNames,
       engines,
       disableAuth,
+      enableCors,
       rpcUser,
       rpcPass,
       relayerOptions: {
