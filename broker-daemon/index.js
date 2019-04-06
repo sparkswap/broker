@@ -158,7 +158,7 @@ class BrokerDaemon {
       privKeyPath: privRpcKeyPath,
       pubKeyPath: pubRpcKeyPath,
       disableAuth,
-      enableCors
+      enableCors,
       rpcUser,
       rpcPass
     })

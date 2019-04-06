@@ -214,7 +214,7 @@ describe('sparkswapd', () => {
 
     it('provides whether to enable CORS', () => {
       argv.push('--rpc.http-proxy-cors')
-      argv.push(true)
+      argv.push('true')
 
       sparkswapd(argv)
 

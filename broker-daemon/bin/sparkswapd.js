@@ -80,12 +80,12 @@ program
       idPrivKeyPath: privIdKeyPath,
       markets,
       disableAuth,
-      enableCors
       relayerRpcHost,
       relayerCertPath,
       rpcAddress,
       rpcHttpProxyAddress,
       rpcHttpProxyMethods: proxyMethods,
+      rpcHttpProxyCors: enableCors,
       rpcUser,
       rpcPass,
       rpcPubKeyPath: pubRpcKeyPath,

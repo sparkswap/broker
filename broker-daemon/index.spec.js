@@ -147,6 +147,7 @@ describe('broker daemon', () => {
       marketNames,
       engines,
       disableAuth,
+      enableCors,
       rpcUser,
       rpcPass,
       relayerOptions,
