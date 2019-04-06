@@ -125,7 +125,7 @@ class BrokerRPCServer {
 
     this.httpServer.listen(this.rpcHttpProxyPort, this.rpcHttpProxyHost, () => {
       const protocol = this.disableAuth ? 'http' : 'https'
-      this.logger.info(`Listening on ${protocol}://${this.rpcHttpProxyAddress}`)
+      this.logger.info(`Listening on ${protocol}://${this.rpcHttpProxyAddress} as proxy for ${this.rpcAddress}`)
     })
   }
 

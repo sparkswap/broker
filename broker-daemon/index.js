@@ -97,7 +97,7 @@ class BrokerDaemon {
    * @param {string} opts.relayerOptions.certPath - Absolute path to the root certificate for the relayer
    * @returns {BrokerDaemon}
    */
-  constructor ({ network, privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, enableCors = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcHttpProxyAddress, rpcHttpProxyMethods }) {
+  constructor ({ network, privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, enableCors = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcInternalProxyAddress, rpcHttpProxyAddress, rpcHttpProxyMethods }) {
     // Set a global namespace for sparkswap that we can use for properties not
     // related to application configuration
     if (!global.sparkswap) {
@@ -118,6 +118,7 @@ class BrokerDaemon {
       pubKeyPath: pubIdKeyPath
     }
     this.rpcAddress = rpcAddress || DEFAULT_RPC_ADDRESS
+    this.rpcInternalProxyAddress = rpcInternalProxyAddress || `localhost:${this.rpcAddress.split(':')[1]}`
     this.rpcHttpProxyAddress = rpcHttpProxyAddress
     this.dataDir = dataDir || DEFAULT_DATA_DIR
     this.marketNames = marketNames || []
@@ -148,7 +149,7 @@ class BrokerDaemon {
     })
 
     this.rpcServer = new BrokerRPCServer({
-      rpcAddress: this.rpcAddress,
+      rpcAddress: this.rpcInternalProxyAddress,
       rpcHttpProxyAddress: this.rpcHttpProxyAddress,
       rpcHttpProxyMethods,
       logger: this.logger,
