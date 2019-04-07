@@ -396,6 +396,8 @@ message Fill {
     COMPLETED = 3;
     // The fill has encountered a failure.
     REJECTED = 4;
+    // The fill has been cancelled.
+    CANCELLED = 5;
   }
   // The Relayer-assigned unique ID of the order that this fill is for.
   string order_id = 1;

@@ -426,7 +426,8 @@ FillStateMachine.STATES = Object.freeze({
   CREATED: 'created',
   FILLED: 'filled',
   EXECUTED: 'executed',
-  CANCELLED: 'cancelled'
+  CANCELLED: 'cancelled',
+  REJECTED: 'rejected'
 })
 
 FillStateMachine.INDETERMINATE_STATES = Object.freeze({
