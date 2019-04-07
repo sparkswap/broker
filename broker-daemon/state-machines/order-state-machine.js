@@ -452,7 +452,9 @@ OrderStateMachine.STATES = Object.freeze({
   CREATED: 'created',
   PLACED: 'placed',
   CANCELLED: 'cancelled',
-  EXECUTING: 'executing'
+  EXECUTING: 'executing',
+  COMPLETED: 'completed',
+  REJECTED: 'rejected'
 })
 
 OrderStateMachine.INDETERMINATE_STATES = Object.freeze({

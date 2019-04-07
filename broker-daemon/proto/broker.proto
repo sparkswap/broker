@@ -355,10 +355,8 @@ message Order {
     CREATED = 0;
     // The order has been placed and communicated to other marker participants.
     PLACED = 1;
-    // The order has been filled by another market participant.
-    FILLED = 2;
-    // The swap has been executed on the Payment Channel Networks
-    EXECUTED = 3;
+    // The swap is being executed on the Payment Channel Networks
+    EXECUTING = 3;
     // The swap preimage has been returned to the Relayer.
     COMPLETED = 4;
     // The order has encountered a failure.
