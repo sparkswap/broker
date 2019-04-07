@@ -48,13 +48,6 @@ const DEFAULT_INTERCHAIN_ROUTER_ADDRESS = '0.0.0.0:40369'
 const DEFAULT_RELAYER_HOST = 'localhost:28492'
 
 /**
- * @constant
- * @type {number}
- * @default
- */
-const BLOCK_ORDER_RETRY = 10000
-
-/**
  * Create an instance of an engine from provided configuration
  * @param {string} symbol         - Symbol that this engine is responsible for
  * @param {Object} engineConfig   - Configuration object for this engine
@@ -180,10 +173,6 @@ class BrokerDaemon {
     })
   }
 
-  get allEnginesValid () {
-    return Array.from(this.engines).every(([ symbol, engine ]) => engine.validated)
-  }
-
   /**
    * Initialize the broker daemon which:
    * - Sets up the orderbooks (listens to market events on the Relayer, re-indexes data store)
@@ -194,13 +183,10 @@ class BrokerDaemon {
    */
   async initialize () {
     try {
-      // Since these are potentially long-running operations, we run them in parallel to speed
-      // up BrokerDaemon startup time.
-      await Promise.all([
-        this.validateEngines(),
-        this.initializeMarkets(this.marketNames),
-        this.initializeBlockOrder()
-      ])
+      const enginesAreValidated = this.validateEngines()
+
+      this.initializeMarkets(this.marketNames)
+      this.initializeBlockOrder(enginesAreValidated)
 
       this.rpcServer.listen(this.rpcAddress)
       this.logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
@@ -217,22 +203,13 @@ class BrokerDaemon {
 
   /**
    * Initializes all block orders for the engine.
+   * @param {Promise} enginesAreValidated - a promise that resolves when engines are validated
    * @returns {void}
    */
-  async initializeBlockOrder () {
-    // All engines must be validated before we continue or else we may try to work
-    // an indeterminate blockorder and inadvertently cause it to fail cause the engines
-    // aren't validated
-    if (this.allEnginesValid) {
-      this.logger.info(`Initializing BlockOrderWorker`)
-      await this.blockOrderWorker.initialize()
-      this.logger.info('BlockOrderWorker initialized')
-    } else {
-      setTimeout(() => {
-        this.logger.debug('Waiting on engines, Retrying block order initialization')
-        this.initializeBlockOrder()
-      }, BLOCK_ORDER_RETRY)
-    }
+  async initializeBlockOrder (enginesAreValidated) {
+    this.logger.info(`Initializing BlockOrderWorker`)
+    await this.blockOrderWorker.initialize(enginesAreValidated)
+    this.logger.info('BlockOrderWorker initialized')
   }
 
   /**
@@ -277,13 +254,14 @@ class BrokerDaemon {
 
   /**
    * Validates engines
-   * We do not await this function because we want the validations to run in the background.
-   * It can take time for the engines to be ready, so we use exponential backoff to retry validation
-   * for a period of time, until it is either successful or there is actually something wrong.
+   * We do not await this function because we want the validations to run in the background
+   * as it can take time for the engines to be ready
    * @returns {void}
    */
   validateEngines () {
-    this.engines.forEach((engine, _) => engine.validateEngine())
+    return Promise.all(
+      Array.from(this.engines).map(([ _, engine ]) => engine.validateEngine())
+    )
   }
 }
 

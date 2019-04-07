@@ -80,11 +80,16 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Initialize the BlockOrderWorker by clearing and rebuilding the ordersByHash index
+   * @param {Promise} enginesAreValidated - promise that returns when engines are validated
    * @returns {void}
    */
-  async initialize () {
+  async initialize (enginesAreValidated) {
     await this.ordersByHash.ensureIndex()
     await this.ordersByOrderId.ensureIndex()
+    // This will return when engines are validated on the Broker. We do not want
+    // to settle orders until we know that engines are full functional or else we'll
+    // have inadvertent failures in orders that _could_ have been settled
+    await enginesAreValidated
     await this.settleIndeterminateOrdersFills()
   }
 
