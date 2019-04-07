@@ -48,6 +48,13 @@ const DEFAULT_INTERCHAIN_ROUTER_ADDRESS = '0.0.0.0:40369'
 const DEFAULT_RELAYER_HOST = 'localhost:28492'
 
 /**
+ * @constant
+ * @type {number}
+ * @default
+ */
+const BLOCK_ORDER_RETRY = 10000
+
+/**
  * Create an instance of an engine from provided configuration
  * @param {string} symbol         - Symbol that this engine is responsible for
  * @param {Object} engineConfig   - Configuration object for this engine
@@ -173,6 +180,10 @@ class BrokerDaemon {
     })
   }
 
+  get allEnginesValid () {
+    return Array.from(this.engines).every(([ symbol, engine ]) => engine.validated)
+  }
+
   /**
    * Initialize the broker daemon which:
    * - Sets up the orderbooks (listens to market events on the Relayer, re-indexes data store)
@@ -186,17 +197,10 @@ class BrokerDaemon {
       // Since these are potentially long-running operations, we run them in parallel to speed
       // up BrokerDaemon startup time.
       await Promise.all([
+        this.validateEngines(),
         this.initializeMarkets(this.marketNames),
-        (async () => {
-          this.logger.info(`Initializing BlockOrderWorker`)
-          await this.blockOrderWorker.initialize()
-          this.logger.info('BlockOrderWorker initialized')
-        })()
+        this.initializeBlockOrder()
       ])
-
-      // This will run in the background. It is implemented with exponential backoff so
-      // the validation will be retried on the engine until successful or until final failure.
-      this.validateEngines()
 
       this.rpcServer.listen(this.rpcAddress)
       this.logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
@@ -208,6 +212,26 @@ class BrokerDaemon {
       this.logger.error(e.toString(), e)
       this.logger.info('BrokerDaemon shutting down...')
       process.exit(1)
+    }
+  }
+
+  /**
+   * Initializes all block orders for the engine.
+   * @returns {void}
+   */
+  async initializeBlockOrder () {
+    // All engines must be validated before we continue or else we may try to work
+    // an indeterminate blockorder and inadvertently cause it to fail cause the engines
+    // aren't validated
+    if (this.allEnginesValid) {
+      this.logger.info(`Initializing BlockOrderWorker`)
+      await this.blockOrderWorker.initialize()
+      this.logger.info('BlockOrderWorker initialized')
+    } else {
+      setTimeout(() => {
+        this.logger.debug('Waiting on engines, Retrying block order initialization')
+        this.initializeBlockOrder()
+      }, BLOCK_ORDER_RETRY)
     }
   }
 
