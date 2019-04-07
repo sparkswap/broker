@@ -290,10 +290,13 @@ describe('BlockOrderWorker', () => {
     })
   })
 
-  describe('initialize', () => {
+  describe.only('initialize', () => {
     let worker
+    let resolve
+    let engineValidPromise
 
     beforeEach(() => {
+      engineValidPromise = new Promise((_resolve) => { resolve = _resolve }) // eslint-disable-line
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       worker.ordersByHash = { ensureIndex: sinon.stub().resolves() }
       worker.ordersByOrderId = { ensureIndex: sinon.stub().resolves() }
@@ -301,13 +304,15 @@ describe('BlockOrderWorker', () => {
     })
 
     it('rebuilds the ordersByHash index', async () => {
-      await worker.initialize()
+      resolve()
+      await worker.initialize(engineValidPromise)
 
       expect(worker.ordersByHash.ensureIndex).to.have.been.calledOnce()
     })
 
     it('rebuilds the ordersByOrderId index', async () => {
-      await worker.initialize()
+      resolve()
+      await worker.initialize(engineValidPromise)
 
       expect(worker.ordersByOrderId.ensureIndex).to.have.been.calledOnce()
     })
@@ -315,12 +320,22 @@ describe('BlockOrderWorker', () => {
     it('waits for index rebuilding to complete', () => {
       worker.ordersByHash.ensureIndex.rejects()
 
-      return expect(worker.initialize()).to.eventually.be.rejectedWith(Error)
+      resolve()
+      return expect(worker.initialize(engineValidPromise)).to.eventually.be.rejectedWith(Error)
     })
 
     it('settles orders and fills in indeterminate states', async () => {
-      await worker.initialize()
+      resolve()
+      await worker.initialize(engineValidPromise)
 
+      expect(worker.settleIndeterminateOrdersFills).to.have.been.calledOnce()
+    })
+
+    it('settles orders and fills in indeterminate states when engines are valid ', async () => {
+      const init = worker.initialize(engineValidPromise)
+      expect(worker.settleIndeterminateOrdersFills).to.not.have.been.calledOnce()
+      resolve()
+      await init
       expect(worker.settleIndeterminateOrdersFills).to.have.been.calledOnce()
     })
   })
