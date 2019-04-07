@@ -185,7 +185,9 @@ class BrokerDaemon {
     try {
       await this.initializeMarkets(this.marketNames)
 
-      // Start the validation of the engines
+      // Starts the validation of all engines on the broker. We do not await this
+      // function because we want the validations to run in the background as it
+      // can take time for the engines to be ready
       const enginesAreValidated = this.validateEngines()
 
       // We run this asynchronously so that it doesn't block the start of the rpc
@@ -258,8 +260,6 @@ class BrokerDaemon {
 
   /**
    * Validates engines
-   * We do not await this function because we want the validations to run in the background
-   * as it can take time for the engines to be ready
    * @returns {void}
    */
   validateEngines () {

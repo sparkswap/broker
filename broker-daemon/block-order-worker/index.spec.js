@@ -290,7 +290,7 @@ describe('BlockOrderWorker', () => {
     })
   })
 
-  describe.only('initialize', () => {
+  describe('initialize', () => {
     let worker
     let resolve
     let engineValidPromise
