@@ -151,6 +151,7 @@ describe('BrokerRPCServer', () => {
       const rpcHttpProxyAddress = '0.0.0.0:27592'
       const disableAuth = true
       const enableCors = true
+      const isCertSelfSigned = false
       const privKeyPath = '/fake/privpath'
       const pubKeyPath = '/fake/pubpath'
       const httpMethods = ['/fake/method']
@@ -162,6 +163,7 @@ describe('BrokerRPCServer', () => {
         rpcHttpProxyAddress,
         disableAuth,
         enableCors,
+        isCertSelfSigned,
         privKeyPath,
         pubKeyPath,
         rpcHttpProxyMethods: httpMethods,
@@ -170,6 +172,7 @@ describe('BrokerRPCServer', () => {
 
       expect(httpServer).to.have.been.calledWith(sinon.match.any, sinon.match.any, {
         disableAuth,
+        isCertSelfSigned,
         enableCors,
         privKeyPath,
         pubKeyPath,

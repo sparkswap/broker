@@ -81,6 +81,7 @@ describe('createHttpServer', () => {
     let channelCredentialStub
     let createServerStub
     let httpsApp
+    let createSsl
 
     beforeEach(() => {
       readFileSyncStub = sinon.stub()
@@ -108,6 +109,7 @@ describe('createHttpServer', () => {
       grpcGatewayStub = sinon.stub().returns(grpcGateway)
       corsMiddlewareStub = sinon.stub()
       express = sinon.stub().returns(expressStub)
+      createSsl = sinon.stub().returns(channelCredentialStub)
 
       createHttpServer.__set__('express', express)
       createHttpServer.__set__('bodyParser', bodyParserStub)
@@ -115,7 +117,7 @@ describe('createHttpServer', () => {
       createHttpServer.__set__('corsMiddleware', corsMiddlewareStub)
       createHttpServer.__set__('grpc', {
         credentials: {
-          createSsl: sinon.stub().returns(channelCredentialStub)
+          createSsl
         }
       })
       createHttpServer.__set__('fs', {
@@ -152,6 +154,20 @@ describe('createHttpServer', () => {
 
     it('prefixes with the proto path', () => {
       expect(grpcGatewayStub).to.have.been.calledWith([`/${protoPath}`])
+    })
+
+    it('uses the self signed cert to secure the connection', () => {
+      expect(createSsl).to.have.been.calledWith(pubKey)
+    })
+
+    it('uses a non self signed cert to secure the connection', () => {
+      createSsl.reset()
+
+      options.isCertSelfSigned = false
+      createHttpServer(protoPath, rpcAddress, options)
+
+      expect(createSsl).to.have.been.calledOnce()
+      expect(createSsl).to.not.have.been.calledWith(pubKey)
     })
 
     it('uses channel credentials to secure the connection', () => {

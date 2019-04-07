@@ -25,7 +25,8 @@
     "user": "sparkswap",
     "pass": "sparkswap",
     "pubKeyPath": "/secure/broker-rpc-tls.cert",
-    "privKeyPath": "/secure/broker-rpc-tls.key"
+    "privKeyPath": "/secure/broker-rpc-tls.key",
+    "selfSignedCert": true
   },
   "currencies": [
     {

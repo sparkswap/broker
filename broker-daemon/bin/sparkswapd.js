@@ -56,6 +56,7 @@ program
   .option('--rpc.pass [rpc-pass]', 'Broker rpc password', program.String, config.rpc.pass)
   .option('--rpc.pub-key-path [rpc-pub-key-path]', 'Location of the public key for the broker\'s rpc', validations.isFormattedPath, config.rpc.pubKeyPath)
   .option('--rpc.priv-key-path [rpc-priv-key-path]', 'Location of private key for the broker\'s rpc', validations.isFormattedPath, config.rpc.privKeyPath)
+  .option('--rpc.self-signed-cert [rpc-cert-self-signed]', 'Whether the certificate used to secure the rpc connection is self-signed', program.BOOL, config.rpc.selfSignedCert)
 
 // For each currency, we will add expected options for an engine
 for (let currency of currencies) {
@@ -91,7 +92,8 @@ program
       rpcUser,
       rpcPass,
       rpcPubKeyPath: pubRpcKeyPath,
-      rpcPrivKeyPath: privRpcKeyPath
+      rpcPrivKeyPath: privRpcKeyPath,
+      rpcSelfSignedCert: isCertSelfSigned
     } = opts
 
     const engines = {}
@@ -134,6 +136,7 @@ program
       engines,
       disableAuth,
       enableCors,
+      isCertSelfSigned,
       rpcUser,
       rpcPass,
       relayerOptions: {
