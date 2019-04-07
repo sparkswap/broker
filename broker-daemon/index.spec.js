@@ -536,6 +536,13 @@ describe('broker daemon', () => {
       expect(btcEngine.validateEngine).to.have.been.called()
       expect(ltcEngine.validateEngine).to.have.been.called()
     })
+
+    it('synchronously validates the node config on each engine', async () => {
+      await brokerDaemon.validateEngines()
+
+      expect(btcEngine.validateEngine).to.have.been.called()
+      expect(ltcEngine.validateEngine).to.have.been.called()
+    })
   })
 
   describe('rpcAddress', () => {
