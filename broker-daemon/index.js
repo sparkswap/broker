@@ -183,9 +183,13 @@ class BrokerDaemon {
    */
   async initialize () {
     try {
+      await this.initializeMarkets(this.marketNames)
+
+      // Start the validation of the engines
       const enginesAreValidated = this.validateEngines()
 
-      this.initializeMarkets(this.marketNames)
+      // We run this asynchronously so that it doesn't block the start of the rpc
+      // server. This function will not return until the engines are validated
       this.initializeBlockOrder(enginesAreValidated)
 
       this.rpcServer.listen(this.rpcAddress)
