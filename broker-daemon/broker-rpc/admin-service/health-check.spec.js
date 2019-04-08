@@ -41,7 +41,7 @@ describe('health-check', () => {
         debug: sinon.stub()
       }
       HealthCheckResponse = sinon.stub()
-      orderbookStatusOK = healthCheck.__get__('ORDERBOOK_STATUS_CODES').OK
+      orderbookStatusOK = healthCheck.__get__('ORDERBOOK_STATUS_CODES').ORDERBOOK_OK
       relayerStatusOK = healthCheck.__get__('RELAYER_STATUS_CODES').RELAYER_OK
       relayerStatusStub = sinon.stub().returns(relayerStatusOK)
 
@@ -104,10 +104,10 @@ describe('health-check', () => {
     })
 
     it('returns an UNAVAILABLE status code if the call to relayer fails', async () => {
-      const { UNAVAILABLE } = healthCheck.__get__('RELAYER_STATUS_CODES')
+      const { RELAYER_UNAVAILABLE } = healthCheck.__get__('RELAYER_STATUS_CODES')
       healthCheckStub.throws()
       const res = await getRelayerStatus(relayerStub, { logger })
-      expect(res).to.eql(UNAVAILABLE)
+      expect(res).to.eql(RELAYER_UNAVAILABLE)
     })
   })
 })

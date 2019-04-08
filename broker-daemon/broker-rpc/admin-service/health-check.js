@@ -4,8 +4,8 @@
  * @default
  */
 const ORDERBOOK_STATUS_CODES = Object.freeze({
-  OK: 'OK',
-  NOT_SYNCED: 'NOT_SYNCED'
+  ORDERBOOK_OK: 'ORDERBOOK_OK',
+  ORDERBOOK_NOT_SYNCED: 'ORDERBOOK_NOT_SYNCED'
 })
 
 /**
@@ -15,7 +15,7 @@ const ORDERBOOK_STATUS_CODES = Object.freeze({
  */
 const RELAYER_STATUS_CODES = Object.freeze({
   RELAYER_OK: 'RELAYER_OK',
-  NOT_SYNCED: 'NOT_SYNCED'
+  RELAYER_NOT_SYNCED: 'RELAYER_NOT_SYNCED'
 })
 
 /**
@@ -32,7 +32,7 @@ async function getRelayerStatus (relayer, { logger }) {
     return RELAYER_STATUS_CODES.RELAYER_OK
   } catch (e) {
     logger.error(`Relayer error during status check: `, { error: e.stack })
-    return RELAYER_STATUS_CODES.UNAVAILABLE
+    return RELAYER_STATUS_CODES.RELAYER_UNAVAILABLE
   }
 }
 
@@ -59,7 +59,7 @@ async function healthCheck ({ relayer, logger, engines, orderbooks }, { HealthCh
   logger.debug(`Received status from relayer`, { relayerStatus })
 
   const orderbookStatus = Array.from(orderbooks).map(([ market, orderbook ]) => {
-    const status = orderbook.synced ? ORDERBOOK_STATUS_CODES.OK : ORDERBOOK_STATUS_CODES.NOT_SYNCED
+    const status = orderbook.synced ? ORDERBOOK_STATUS_CODES.ORDERBOOK_OK : ORDERBOOK_STATUS_CODES.ORDERBOOK_NOT_SYNCED
     return { market, status }
   })
 
