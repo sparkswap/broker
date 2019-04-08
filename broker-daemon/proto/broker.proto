@@ -77,9 +77,9 @@ message HealthCheckResponse {
   // Statuses of an orderbook
   enum OrderbookStatuses {
     // Orderbook is synced
-    OK = 0;
+    ORDERBOOK_OK = 0;
     // Orderbook is not synced
-    NOT_SYNCED = 1;
+    ORDERBOOK_NOT_SYNCED = 1;
   }
 
   // Statuses of the relayer
@@ -87,7 +87,7 @@ message HealthCheckResponse {
     // Relayer is available
     RELAYER_OK = 0;
     // Relayer is not available
-    UNAVAILABLE = 1;
+    RELAYER_UNAVAILABLE = 1;
   }
 
   // The status of every engine available on the BrokerDaemon.
