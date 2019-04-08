@@ -202,7 +202,7 @@ if [ "$NO_DOCKER" == "false" ]; then
   # NOTE: The names specified with `-t` directly map to the service names in
   # the applicable services docker-compose file
   echo "Building broker docker images"
-  BROKER_VERSION=$(awk -F'\"' '/\"version\": \".+\"/{ print $4; exit; }' package.json)
+  BROKER_VERSION=$(awk -F'\"' '/\"version\": \".+\"/{ print $4; exit; }' ./package.json)
   docker build -t sparkswap/broker:$BROKER_VERSION -f ./docker/sparkswapd/Dockerfile ./
 fi
 
