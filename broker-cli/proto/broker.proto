@@ -69,50 +69,27 @@ enum Side {
   ASK = 1;
 }
 
-/**
- * Statuses of an engine
- */
-enum EngineStatuses {
-  // Default state of the engine
-  UNKNOWN = 0;
-  // Engine is unavailable
-  UNAVAILABLE = 1;
-  // Wallet does not exist
-  NEEDS_WALLET = 2;
-  // Wallet exists but is not locked
-  LOCKED = 3;
-  // Wallet is unlocked but the configuration of the node and chain sync status are not known
-  UNLOCKED = 4;
-  // Engine is not yet synced to chain
-  NOT_SYNCED = 5;
-  // Engine is validated and ready for use
-  VALIDATED = 6;
-}
-
-/**
- * Statuses of the relayer
- */
-enum RelayerStatuses {
-  // Relayer is available
-  OK = 0;
-  // Relayer is not available
-  UNAVAILABLE = 1;
-}
-
-/**
- * Statuses of an orderbook
- */
-enum OrderbookStatuses {
-  // Orderbook is synced
-  OK = 0;
-  // Orderbook is not synced
-  NOT_SYNCED = 1;
-}
 
 /**
  * HealthCheckResponse provides information on the health of a BrokerDaemon.
  */
 message HealthCheckResponse {
+  // Statuses of an orderbook
+  enum OrderbookStatuses {
+    // Orderbook is synced
+    ORDERBOOK_OK = 0;
+    // Orderbook is not synced
+    ORDERBOOK_NOT_SYNCED = 1;
+  }
+
+  // Statuses of the relayer
+  enum RelayerStatuses {
+    // Relayer is available
+    RELAYER_OK = 0;
+    // Relayer is not available
+    RELAYER_UNAVAILABLE = 1;
+  }
+
   // The status of every engine available on the BrokerDaemon.
   repeated EngineStatus engine_status = 1;
   // The status of the relayer this BrokerDaemon is connected to, either `'OK'` or the error message returned when connecting to it.
@@ -124,6 +101,24 @@ message HealthCheckResponse {
    * EngineStatus provides the status of an engine for a currency.
    */
   message EngineStatus {
+    // Statuses of an engine
+    enum EngineStatuses {
+      // Default state of the engine
+      UNKNOWN = 0;
+      // Engine is unavailable
+      UNAVAILABLE = 1;
+      // Wallet does not exist
+      NEEDS_WALLET = 2;
+      // Wallet exists but is not locked
+      LOCKED = 3;
+      // Wallet is unlocked but the configuration of the node and chain sync status are not known
+      UNLOCKED = 4;
+      // Engine is not yet synced to chain
+      NOT_SYNCED = 5;
+      // Engine is validated and ready for use
+      VALIDATED = 6;
+    }
+
     // The common symbol that the engine is responsible for, e.g. `BTC` or `LTC`
     string symbol = 1;
     // The status of the engine

@@ -16,6 +16,24 @@ const STATUS_CODES = Object.freeze({
 })
 
 /**
+ * @constant
+ * @type {Object<key, String>}
+ * @default
+ */
+const RELAYER_STATUS_CODES = Object.freeze({
+  RELAYER_OK: 'RELAYER_OK'
+})
+
+/**
+ * @constant
+ * @type {Object<key, String>}
+ * @default
+ */
+const ORDERBOOK_STATUS_CODES = Object.freeze({
+  ORDERBOOK_OK: 'ORDERBOOK_OK'
+})
+
+/**
  * Engine status codes we expect to be returned from the engine, defined in:
  * https://github.com/sparkswap/lnd-engine/blob/master/src/constants/engine-statuses.js
  * @constant
@@ -47,7 +65,7 @@ async function healthCheck (args, opts, logger) {
 
     const {
       engineStatus = [],
-      orderbookStatus = [],
+      orderbookStatus: orderbookStatuses = [],
       relayerStatus = STATUS_CODES.UNKNOWN
     } = await client.adminService.healthCheck({})
 
@@ -71,12 +89,12 @@ async function healthCheck (args, opts, logger) {
       healthcheckTable.push(['Engines', 'No Statuses Returned'.red])
     }
 
-    const relayerStatusString = (relayerStatus === STATUS_CODES.OK) ? relayerStatus.green : relayerStatus.red
+    const relayerStatusString = (relayerStatus === RELAYER_STATUS_CODES.RELAYER_OK) ? `${STATUS_CODES.OK}`.green : relayerStatus.red
     healthcheckTable.push(['Relayer', relayerStatusString])
 
-    if (orderbookStatus.length > 0) {
-      orderbookStatus.forEach(({ market, status }) => {
-        const orderbookStatusString = (status === STATUS_CODES.OK) ? status.green : status.red
+    if (orderbookStatuses.length) {
+      orderbookStatuses.forEach(({ market, status: orderbookStatus }) => {
+        const orderbookStatusString = (orderbookStatus === ORDERBOOK_STATUS_CODES.ORDERBOOK_OK) ? `${STATUS_CODES.OK}`.green : orderbookStatus.red
         healthcheckTable.push([`${market} Orderbook`, orderbookStatusString])
       })
     } else {
