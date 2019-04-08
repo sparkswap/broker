@@ -292,8 +292,10 @@ describe('BlockOrderWorker', () => {
 
   describe('initialize', () => {
     let worker
+    let engineValidPromise
 
     beforeEach(() => {
+      engineValidPromise = sinon.stub()
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       worker.ordersByHash = { ensureIndex: sinon.stub().resolves() }
       worker.ordersByOrderId = { ensureIndex: sinon.stub().resolves() }
@@ -301,13 +303,13 @@ describe('BlockOrderWorker', () => {
     })
 
     it('rebuilds the ordersByHash index', async () => {
-      await worker.initialize()
+      await worker.initialize(engineValidPromise)
 
       expect(worker.ordersByHash.ensureIndex).to.have.been.calledOnce()
     })
 
     it('rebuilds the ordersByOrderId index', async () => {
-      await worker.initialize()
+      await worker.initialize(engineValidPromise)
 
       expect(worker.ordersByOrderId.ensureIndex).to.have.been.calledOnce()
     })
@@ -315,13 +317,13 @@ describe('BlockOrderWorker', () => {
     it('waits for index rebuilding to complete', () => {
       worker.ordersByHash.ensureIndex.rejects()
 
-      return expect(worker.initialize()).to.eventually.be.rejectedWith(Error)
+      return expect(worker.initialize(engineValidPromise)).to.eventually.be.rejectedWith(Error)
     })
 
     it('settles orders and fills in indeterminate states', async () => {
-      await worker.initialize()
+      await worker.initialize(engineValidPromise)
 
-      expect(worker.settleIndeterminateOrdersFills).to.have.been.calledOnce()
+      expect(worker.settleIndeterminateOrdersFills).to.have.been.calledOnceWith(engineValidPromise)
     })
   })
 
@@ -334,8 +336,11 @@ describe('BlockOrderWorker', () => {
     let executedFsm
     let fillStateMachines
     let getRecords
+    let resolve
+    let engineValidPromise
 
     beforeEach(() => {
+      engineValidPromise = new Promise((_resolve) => { resolve = _resolve }) // eslint-disable-line
       cancelledOsm = { state: 'cancelled', triggerState: sinon.stub() }
       createdOsm = { state: 'created', triggerState: sinon.stub() }
       createdFsm = { state: 'created', triggerState: sinon.stub() }
@@ -356,68 +361,72 @@ describe('BlockOrderWorker', () => {
       worker.applyFsmListeners = sinon.stub()
     })
 
+    beforeEach(() => {
+      resolve()
+    })
+
     it('retrieves all blockOrders from the store', async () => {
-      await worker.settleIndeterminateOrdersFills()
+      await worker.settleIndeterminateOrdersFills(engineValidPromise)
 
       expect(getRecords).to.have.been.calledWith(store, BlockOrder.fromStorage.bind(BlockOrder))
     })
 
     it('retrieves orderStateMachines for each blockOrder', async () => {
-      await worker.settleIndeterminateOrdersFills()
+      await worker.settleIndeterminateOrdersFills(engineValidPromise)
 
       expect(worker.getFillStateMachines).to.have.been.calledWith({ blockOrderId: '1234' })
     })
 
     it('does not apply listeners to osm in finished state', async () => {
-      await worker.settleIndeterminateOrdersFills()
+      await worker.settleIndeterminateOrdersFills(engineValidPromise)
 
       expect(worker.applyOsmListeners).to.not.have.been.calledWith(cancelledOsm, { blockOrderId: '1234' })
     })
 
     it('applies listeners to each osm in an indeterminate state', async () => {
-      await worker.settleIndeterminateOrdersFills()
+      await worker.settleIndeterminateOrdersFills(engineValidPromise)
 
       expect(worker.applyOsmListeners).to.have.been.calledWith(createdOsm, { blockOrderId: '1234' })
     })
 
     it('triggers the osm to the next state if the osm is in an indeterminate state', async () => {
-      await worker.settleIndeterminateOrdersFills()
+      await worker.settleIndeterminateOrdersFills(engineValidPromise)
 
       expect(createdOsm.triggerState).to.have.been.called()
     })
 
     it('does not trigger the osm to the next state if the osm is in a finished state', async () => {
-      await worker.settleIndeterminateOrdersFills()
+      await worker.settleIndeterminateOrdersFills(engineValidPromise)
 
       expect(cancelledOsm.triggerState).to.not.have.been.called()
     })
 
     it('retrieves fillStateMachines for each blockOrder', async () => {
-      await worker.settleIndeterminateOrdersFills()
+      await worker.settleIndeterminateOrdersFills(engineValidPromise)
 
       expect(worker.getOrderStateMachines).to.have.been.calledWith({ blockOrderId: '1234' })
     })
 
     it('does not apply listeners to fsm in finished state', async () => {
-      await worker.settleIndeterminateOrdersFills()
+      await worker.settleIndeterminateOrdersFills(engineValidPromise)
 
       expect(worker.applyFsmListeners).to.not.have.been.calledWith(executedFsm, { blockOrderId: '1234' })
     })
 
     it('applies listeners to each fsm in an indeterminate state', async () => {
-      await worker.settleIndeterminateOrdersFills()
+      await worker.settleIndeterminateOrdersFills(engineValidPromise)
 
       expect(worker.applyFsmListeners).to.have.been.calledWith(createdFsm, { blockOrderId: '1234' })
     })
 
     it('triggers the fsm to the next state if the fsm is in an indeterminate state', async () => {
-      await worker.settleIndeterminateOrdersFills()
+      await worker.settleIndeterminateOrdersFills(engineValidPromise)
 
       expect(createdFsm.triggerState).to.have.been.called()
     })
 
     it('does not trigger the fsm to the next state if the fsm is in a finished state', async () => {
-      await worker.settleIndeterminateOrdersFills()
+      await worker.settleIndeterminateOrdersFills(engineValidPromise)
 
       expect(executedFsm.triggerState).to.not.have.been.called()
     })

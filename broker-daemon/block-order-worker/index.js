@@ -8,7 +8,8 @@ const {
   getRecords,
   SublevelIndex,
   generateId,
-  retry
+  retry,
+  logger
 } = require('../utils')
 
 /**
@@ -80,20 +81,34 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Initialize the BlockOrderWorker by clearing and rebuilding the ordersByHash index
+   * @param {Promise} enginesAreValidated - promise that returns when engines are validated
    * @returns {void}
    */
-  async initialize () {
+  async initialize (enginesAreValidated) {
     await this.ordersByHash.ensureIndex()
     await this.ordersByOrderId.ensureIndex()
-    await this.settleIndeterminateOrdersFills()
+    // We do not await the settlement of indeterminate orders to allow indexes
+    // which can be a long process, to be awaited on start, but prevents locking
+    // the event loop if our engines are not validated.
+    this.settleIndeterminateOrdersFills(enginesAreValidated)
   }
 
   /**
    * When the broker goes down, there can be orders and fills in an unresolved state. We should rehydrate the state machines
    * from the database and attempt to trigger them into a resolved state
+   * @param {Promise} enginesAreValidated - promise that returns when engines are validated
    * @returns {void}
    */
-  async settleIndeterminateOrdersFills () {
+  async settleIndeterminateOrdersFills (enginesAreValidated) {
+    logger.info('Waiting on engine validation to settle outstanding orders')
+
+    // This function will be ran when engines are validated on the Broker. We do not
+    // want to settle orders until we know that engines are full functional or else
+    // we'll have inadvertent failures in orders that _could_ have been settled
+    await enginesAreValidated
+
+    logger.info('Starting settlement of outstanding orders')
+
     const blockOrders = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder))
     for (let blockOrder of blockOrders) {
       const orderStateMachines = await this.getOrderStateMachines(blockOrder)

@@ -459,10 +459,27 @@ describe('broker daemon', () => {
     })
   })
 
-  describe('#initialize', () => {
+  describe('#initializeBlockOrder', () => {
+    let engineValidatePromise
+
     beforeEach(() => {
+      engineValidatePromise = sinon.stub()
       brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
-      brokerDaemon.validateEngines = sinon.stub().returns()
+    })
+
+    it('calls initialize on the blockorder', async () => {
+      await brokerDaemon.initializeBlockOrder(engineValidatePromise)
+      expect(brokerDaemon.blockOrderWorker.initialize).to.have.been.calledOnceWith(engineValidatePromise)
+    })
+  })
+
+  describe('#initialize', () => {
+    let validatePromise
+
+    beforeEach(() => {
+      validatePromise = sinon.stub()
+      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
+      brokerDaemon.validateEngines = sinon.stub().returns(validatePromise)
       brokerDaemon.initializeMarkets = sinon.stub().resolves()
     })
 
@@ -490,7 +507,7 @@ describe('broker daemon', () => {
     })
 
     it('initializes the block order worker', async () => {
-      expect(BlockOrderWorker.prototype.initialize).to.have.been.calledOnce()
+      expect(BlockOrderWorker.prototype.initialize).to.have.been.calledOnceWith(validatePromise)
     })
   })
 
@@ -515,6 +532,13 @@ describe('broker daemon', () => {
 
     it('validates the node config on each engine', () => {
       brokerDaemon.validateEngines()
+
+      expect(btcEngine.validateEngine).to.have.been.called()
+      expect(ltcEngine.validateEngine).to.have.been.called()
+    })
+
+    it('synchronously validates the node config on each engine', async () => {
+      await brokerDaemon.validateEngines()
 
       expect(btcEngine.validateEngine).to.have.been.called()
       expect(ltcEngine.validateEngine).to.have.been.called()

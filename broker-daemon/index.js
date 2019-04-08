@@ -183,20 +183,17 @@ class BrokerDaemon {
    */
   async initialize () {
     try {
+      // Starts the validation of all engines on the broker. We do not await this
+      // function because we want the validations to run in the background as it
+      // can take time for the engines to be ready
+      const enginesAreValidated = this.validateEngines()
+
       // Since these are potentially long-running operations, we run them in parallel to speed
       // up BrokerDaemon startup time.
       await Promise.all([
         this.initializeMarkets(this.marketNames),
-        (async () => {
-          this.logger.info(`Initializing BlockOrderWorker`)
-          await this.blockOrderWorker.initialize()
-          this.logger.info('BlockOrderWorker initialized')
-        })()
+        this.initializeBlockOrder(enginesAreValidated)
       ])
-
-      // This will run in the background. It is implemented with exponential backoff so
-      // the validation will be retried on the engine until successful or until final failure.
-      this.validateEngines()
 
       this.rpcServer.listen(this.rpcAddress)
       this.logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
@@ -209,6 +206,17 @@ class BrokerDaemon {
       this.logger.info('BrokerDaemon shutting down...')
       process.exit(1)
     }
+  }
+
+  /**
+   * Initializes all block orders for the engine.
+   * @param {Promise} enginesAreValidated - a promise that resolves when engines are validated
+   * @returns {void}
+   */
+  async initializeBlockOrder (enginesAreValidated) {
+    this.logger.info(`Initializing BlockOrderWorker`)
+    await this.blockOrderWorker.initialize(enginesAreValidated)
+    this.logger.info('BlockOrderWorker initialized')
   }
 
   /**
@@ -253,13 +261,12 @@ class BrokerDaemon {
 
   /**
    * Validates engines
-   * We do not await this function because we want the validations to run in the background.
-   * It can take time for the engines to be ready, so we use exponential backoff to retry validation
-   * for a period of time, until it is either successful or there is actually something wrong.
    * @returns {void}
    */
   validateEngines () {
-    this.engines.forEach((engine, _) => engine.validateEngine())
+    return Promise.all(
+      Array.from(this.engines).map(([ _, engine ]) => engine.validateEngine())
+    )
   }
 }
 
