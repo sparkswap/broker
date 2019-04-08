@@ -183,16 +183,17 @@ class BrokerDaemon {
    */
   async initialize () {
     try {
-      await this.initializeMarkets(this.marketNames)
-
       // Starts the validation of all engines on the broker. We do not await this
       // function because we want the validations to run in the background as it
       // can take time for the engines to be ready
       const enginesAreValidated = this.validateEngines()
 
-      // We run this asynchronously so that it doesn't block the start of the rpc
-      // server. This function will not return until the engines are validated
-      this.initializeBlockOrder(enginesAreValidated)
+      // Since these are potentially long-running operations, we run them in parallel to speed
+      // up BrokerDaemon startup time.
+      await Promise.all([
+        this.initializeMarkets(this.marketNames),
+        this.initializeBlockOrder(enginesAreValidated)
+      ])
 
       this.rpcServer.listen(this.rpcAddress)
       this.logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
