@@ -33,12 +33,12 @@ describe('healthCheck', () => {
     healthCheckStub = sinon.stub().returns({
       engineStatus: [
         { symbol: 'BTC', status: 'VALIDATED' },
-        { symbol: 'LTC', status: 'NOT VALIDATED' }
+        { symbol: 'LTC', status: 'NOT_SYNCED' }
       ],
-      relayerStatus: 'OK',
+      relayerStatus: 'RELAYER_OK',
       orderbookStatus: [
-        { market: 'BTC/LTC', status: 'OK' },
-        { market: 'ABC/XYZ', status: 'NOT_SYNCED' }
+        { market: 'BTC/LTC', status: 'ORDERBOOK_OK' },
+        { market: 'ABC/XYZ', status: 'ORDERBOOK_NOT_SYNCED' }
       ]
     })
     instanceTableStub = { push: sinon.stub() }
@@ -69,7 +69,7 @@ describe('healthCheck', () => {
   it('adds engine statuses to the healthcheck table', async () => {
     await healthCheck(args, opts, logger)
     expect(instanceTableStub.push).to.have.been.calledWith(['BTC Engine', 'OK'.green])
-    expect(instanceTableStub.push).to.have.been.calledWith(['LTC Engine', 'NOT VALIDATED'.red])
+    expect(instanceTableStub.push).to.have.been.calledWith(['LTC Engine', 'NOT_SYNCED'.red])
   })
 
   it('adds engine error status if no engines are returned', async () => {
@@ -98,6 +98,6 @@ describe('healthCheck', () => {
   it('adds orderbook status to the healthcheck table', async () => {
     await healthCheck(args, opts, logger)
     expect(instanceTableStub.push).to.have.been.calledWith(['BTC/LTC Orderbook', 'OK'.green])
-    expect(instanceTableStub.push).to.have.been.calledWith(['ABC/XYZ Orderbook', 'NOT_SYNCED'.red])
+    expect(instanceTableStub.push).to.have.been.calledWith(['ABC/XYZ Orderbook', 'ORDERBOOK_NOT_SYNCED'.red])
   })
 })
