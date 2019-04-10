@@ -25,10 +25,10 @@ const GRPC_SERVER_OPTIONS = {
   'grpc.keepalive_time_ms': 30000,
   // Set to true. We want to send keep-alive pings even if the stream is not in use
   'grpc.keepalive_permit_without_calls': 1,
-  // Set to 30 seconds, Minimum allowed time of a series of pings from clients. If the
+  // Set to 25 seconds, Minimum allowed time of a series of pings from clients. If the
   // client tries to ping faster than this default, we will send a ENHANCE_YOUR_CALM/GO_AWAY
   // and the stream will close
-  'grpc.http2.min_ping_interval_without_data_ms': 30000,
+  'grpc.http2.min_ping_interval_without_data_ms': 25000,
   // Set to infinity, this means the server will continually send keep-alive pings
   'grpc.http2.max_pings_without_data': 0
 }
