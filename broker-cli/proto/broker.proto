@@ -70,70 +70,70 @@ enum Side {
 }
 
 
+// Statuses of the relayer
+enum RelayerStatuses {
+  // Relayer is available
+  RELAYER_OK = 0;
+  // Relayer is not available
+  RELAYER_UNAVAILABLE = 1;
+}
+
+// Statuses of an engine
+enum EngineStatuses {
+  // Default state of the engine
+  UNKNOWN = 0;
+  // Engine is unavailable
+  UNAVAILABLE = 1;
+  // Wallet does not exist
+  NEEDS_WALLET = 2;
+  // Wallet exists but is not locked
+  LOCKED = 3;
+  // Wallet is unlocked but the configuration of the node and chain sync status are not known
+  UNLOCKED = 4;
+  // Engine is not yet synced to chain
+  NOT_SYNCED = 5;
+  // Engine is validated and ready for use
+  VALIDATED = 6;
+}
+
+/**
+ * EngineStatus provides the status of an engine for a currency.
+ */
+message EngineStatus {
+  // The common symbol that the engine is responsible for, e.g. `BTC` or `LTC`
+  string symbol = 1;
+  // The status of the engine
+  EngineStatuses status = 2;
+}
+
+// Statuses of an orderbook
+enum OrderbookStatuses {
+  // Orderbook is synced
+  ORDERBOOK_OK = 0;
+  // Orderbook is not synced
+  ORDERBOOK_NOT_SYNCED = 1;
+}
+
+/**
+ * OrderbookStatus provides the status of an orderbook for a market.
+ */
+message OrderbookStatus {
+  // The market for the orderbook, e.g. `BTC/LTC`
+  string market = 1;
+  // The status of the market
+  OrderbookStatuses status = 2;
+}
+
 /**
  * HealthCheckResponse provides information on the health of a BrokerDaemon.
  */
 message HealthCheckResponse {
-  // Statuses of an orderbook
-  enum OrderbookStatuses {
-    // Orderbook is synced
-    ORDERBOOK_OK = 0;
-    // Orderbook is not synced
-    ORDERBOOK_NOT_SYNCED = 1;
-  }
-
-  // Statuses of the relayer
-  enum RelayerStatuses {
-    // Relayer is available
-    RELAYER_OK = 0;
-    // Relayer is not available
-    RELAYER_UNAVAILABLE = 1;
-  }
-
   // The status of every engine available on the BrokerDaemon.
   repeated EngineStatus engine_status = 1;
   // The status of the relayer this BrokerDaemon is connected to, either `'OK'` or the error message returned when connecting to it.
   RelayerStatuses relayer_status = 2;
   // The status of every orderbook available on the BrokerDaemon.
   repeated OrderbookStatus orderbook_status = 3;
-
-  /**
-   * EngineStatus provides the status of an engine for a currency.
-   */
-  message EngineStatus {
-    // Statuses of an engine
-    enum EngineStatuses {
-      // Default state of the engine
-      UNKNOWN = 0;
-      // Engine is unavailable
-      UNAVAILABLE = 1;
-      // Wallet does not exist
-      NEEDS_WALLET = 2;
-      // Wallet exists but is not locked
-      LOCKED = 3;
-      // Wallet is unlocked but the configuration of the node and chain sync status are not known
-      UNLOCKED = 4;
-      // Engine is not yet synced to chain
-      NOT_SYNCED = 5;
-      // Engine is validated and ready for use
-      VALIDATED = 6;
-    }
-
-    // The common symbol that the engine is responsible for, e.g. `BTC` or `LTC`
-    string symbol = 1;
-    // The status of the engine
-    EngineStatuses status = 2;
-  }
-
-  /**
-   * OrderbookStatus provides the status of an orderbook for a market.
-   */
-  message OrderbookStatus {
-    // The market for the orderbook, e.g. `BTC/LTC`
-    string market = 1;
-    // The status of the market
-    OrderbookStatuses status = 2;
-  }
 }
 
 /**
@@ -1311,6 +1311,8 @@ message Balance {
   string total_pending_channel_balance = 4;
   // Balance in the listed currency that is currently in pending closing channels and unconfirmed wallet balance. This is currently in common units (e.g. 0.5 BTC)
   string uncommitted_pending_balance = 5;
+  // Total balance across all channels that are reserved (reasons may include fees reserved on the underlying network). This is currently in common units (e.g. 0.5 BTC)
+  string total_reserved_channel_balance = 6;
   // Error message if balances are not available
   string error = 10;
 }
@@ -1481,6 +1483,40 @@ message UnlockWalletRequest {
 }
 
 /**
+ * Get the wallet summary of a given currency
+ */
+message WalletSummaryRequest {
+  // Currency of the wallet
+  Symbol symbol = 1;
+}
+
+message WalletSummaryResponse {
+  enum TransactionType {
+    CHANNEL_CLOSE = 1;
+    CHANNEL_OPEN = 2;
+    DEPOSIT = 3;
+    UNKNOWN = 4;
+    WITHDRAW = 5;
+  }
+
+  message Transaction {
+    // Type of the transaction
+    TransactionType type = 1;
+    // The amount of the transaction. This is a string float value
+    string amount = 2;
+    string transaction_hash = 3;
+    int64 block_height = 4;
+    // UNIX epoch integer timestamp
+    int64 timestamp = 5;
+    // The amount of fees incurred from the transactions. This is a string float value
+    string fees = 6;
+    bool pending = 7;
+  }
+
+  repeated Transaction transactions = 1;
+}
+
+/**
  * The WalletService is for interacting with the wallets managed by the Broker on behalf of the user.
  *
  * It is used primarily during set up (e.g. making deposits) of a Broker.
@@ -1523,9 +1559,10 @@ service WalletService {
   /**
    * GetBalances retrieves the balance in all currency in wallets managed by Payment Channel Network nodes for this Broker.
    *
-   * Balances are divided into `uncommittedBalance`, i.e. everything not in a channel, `totalChannelBalance` (i.e. everything in channels opened by the Payment Channel Network nodes),
-   * `totalPendingChannelBalance`, i.e. funds in channels that have finished the funding workflow and are waiting for confirmations for the funding txn, and
-   * `uncommittedPendingBalance`, i.e funds in channels that are pending closure or unconfirmed unspent outputs under control of the wallet.
+   * Balances are divided into `uncommittedBalance` (i.e. everything not in a channel), `totalChannelBalance` (i.e. everything in channels opened by the Payment Channel Network nodes),
+   * `totalPendingChannelBalance` (i.e. funds in channels that have finished the funding workflow and are waiting for confirmations for the funding txn), `uncommittedPendingBalance`
+   * (i.e funds in channels that are pending closure or unconfirmed unspent outputs under control of the wallet), and `totalReservedChannelBalance` (i.e. funds in a channel that aren't
+   * available for the channel initiator to send).`
    *
    * NOTE: If an engine is unavailable, the balances for the particular engine will be empty `''`
    *
@@ -1550,14 +1587,16 @@ service WalletService {
    *     "uncommittedBalance": "10.0000000000000000",
    *     "totalChannelBalance": "0.1670000000000000",
    *     "totalPendingChannelBalance": "0.0001000000000000",
-   *     "uncommittedPendingBalance": "0"
+   *     "uncommittedPendingBalance": "0",
+   *     "totalReservedChannelBalance": "0.0000905000000000"
    *   },
    *   {
    *     "symbol": "LTC",
    *     "uncommittedBalance": "10.0000000000000000",
    *     "totalChannelBalance": "0.1670000000000000",
    *     "totalPendingChannelBalance": "0.0002000000000000",
-   *     "uncommittedPendingBalance": "0"
+   *     "uncommittedPendingBalance": "0",
+   *     "totalReservedChannelBalance": "0.0000905000000000"
    *   }
    * ]
    * ```
@@ -1571,6 +1610,19 @@ service WalletService {
    * ├──────────┼──────────────────────────────────┼──────────────────────────────────┤
    * │ LTC      │ 0.0000000000000000 (0.00000000)  │ 10.0000000000000000 (0.00000000) │
    * └──────────┴──────────────────────────────────┴──────────────────────────────────┘
+   * ```
+   * ```shell
+   * > sparkswap wallet balance --reserved
+   * ```
+   * Passing the optional `--reserved` flag will print
+   * ```shell
+   * ┌─────┬──────────────────────────────────────────────────────┬──────────────────────────────────┐
+   * │     │ Committed (Pending) [Reserved]                       │ Uncommitted (Pending)            │
+   * ├─────┼──────────────────────────────────────────────────────┼──────────────────────────────────┤
+   * │ BTC │ 0.1676816500000000 (0.00000000) [0.0000905000000000] │ 0.8321399800000000 (0.00000000)  │
+   * ├─────┼──────────────────────────────────────────────────────┼──────────────────────────────────┤
+   * │ LTC │ 0.0000000000000000 (0.00000000) [0.0000000000000000] │ 10.0000000000000000 (0.00000000) │
+   * └─────┴──────────────────────────────────────────────────────┴──────────────────────────────────┘
    * ```
    */
   rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse) {
@@ -1854,6 +1906,14 @@ service WalletService {
     option (.google.api.http) = {
       post: "/v1/wallet/unlock"
       body: "*"
+    };
+  }
+
+  /**
+  */
+  rpc WalletSummary (WalletSummaryRequest) returns (WalletSummaryResponse) {
+    option (.google.api.http) = {
+      get: "/v1/wallet/summary/{symbol}"
     };
   }
 }
