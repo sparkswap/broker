@@ -65,7 +65,7 @@ async function balance (args, opts, logger) {
     const { balances } = await client.walletService.getBalances({})
 
     const balancesTable = new Table({
-      head: ['', 'Committed (Pending)', 'Uncommitted (Pending)'],
+      head: ['', 'Committed (Pending)', 'Uncommitted (Pending)', 'Commit Fees'],
       style: { head: ['gray'] }
     })
 
@@ -76,11 +76,13 @@ async function balance (args, opts, logger) {
         totalChannelBalance,
         totalPendingChannelBalance,
         uncommittedBalance,
-        uncommittedPendingBalance
+        uncommittedPendingBalance,
+        commitFees
       } = balance
 
       totalChannelBalance = error ? 'Not Available'.yellow : totalChannelBalance.green
       uncommittedBalance = error ? 'Not Available'.yellow : uncommittedBalance
+      commitFees = error ? 'Not Available'.yellow : commitFees
 
       // We fix all pending balances to 8 decimal places due to aesthetics. Since
       // this balance should only be temporary, we do not care as much about precision
@@ -90,7 +92,8 @@ async function balance (args, opts, logger) {
       balancesTable.push([
         symbol,
         `${totalChannelBalance} ${totalPendingChannelBalance}`,
-        `${uncommittedBalance} ${uncommittedPendingBalance}`
+        `${uncommittedBalance} ${uncommittedPendingBalance}`,
+        `${commitFees}`
       ])
     })
 
