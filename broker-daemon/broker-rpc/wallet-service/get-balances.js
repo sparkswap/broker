@@ -23,28 +23,28 @@ const BALANCE_PRECISION = 16
 async function getEngineBalances (symbol, engine, logger) {
   const { quantumsPerCommon } = engine
 
-  let [uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance, commitFees] = await Promise.all([
+  let [uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance, totalCommitFees] = await Promise.all([
     engine.getUncommittedBalance(),
     engine.getTotalChannelBalance(),
     engine.getTotalPendingChannelBalance(),
     engine.getUncommittedPendingBalance(),
-    engine.getCommitFees()
+    engine.getTotalCommitFees()
   ])
 
-  logger.debug(`Received balances from ${symbol} engine`, { uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance, commitFees })
+  logger.debug(`Received balances from ${symbol} engine`, { uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance, totalCommitFees })
 
   totalChannelBalance = Big(totalChannelBalance).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
   totalPendingChannelBalance = Big(totalPendingChannelBalance).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
   uncommittedBalance = Big(uncommittedBalance).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
   uncommittedPendingBalance = Big(uncommittedPendingBalance).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
-  commitFees = Big(commitFees).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
+  totalCommitFees = Big(totalCommitFees).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
 
   return {
     uncommittedBalance,
     totalChannelBalance,
     totalPendingChannelBalance,
     uncommittedPendingBalance,
-    commitFees
+    totalCommitFees
   }
 }
 
