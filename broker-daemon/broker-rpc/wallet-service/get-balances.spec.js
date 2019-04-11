@@ -150,7 +150,7 @@ describe('get-balances', () => {
         totalChannelBalance: '0.0001000000000000',
         totalPendingChannelBalance: '0.0000100000000000',
         uncommittedPendingBalance: '0.0000500000000000',
-        totalCommitFees: '0.0000100000000000'
+        totalReservedChannelBalance: '0.0000100000000000'
       })
     })
   })
