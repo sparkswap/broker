@@ -28,7 +28,7 @@ describe('get-balances', () => {
         totalChannelBalance: '0.0000000000000001',
         totalPendingChannelBalance: '0.0000000000000001',
         uncommittedPendingBalance: '0.0000000000000001',
-        totalCommitFees: '0.0000000000000001'
+        totalReservedChannelBalance: '0.0000000000000001'
       }
       engineStub = sinon.stub()
       engines = new Map([['BTC', engineStub]])
@@ -90,8 +90,8 @@ describe('get-balances', () => {
     let uncommittedPendingBalance
     let uncommittedPendingBalanceStub
     let totalPendingBalanceStub
-    let totalCommitFees
-    let totalCommitFeesStub
+    let totalReservedChannelBalance
+    let totalReservedChannelBalanceStub
 
     beforeEach(() => {
       symbol = 'BTC'
@@ -99,19 +99,19 @@ describe('get-balances', () => {
       totalChannelBalance = 10000
       totalPendingChannelBalance = 1000
       uncommittedPendingBalance = 5000
-      totalCommitFees = 1000
+      totalReservedChannelBalance = 1000
 
       uncommittedBalanceStub = sinon.stub().resolves(uncommittedBalance)
       totalChannelBalanceStub = sinon.stub().resolves(totalChannelBalance)
       totalPendingBalanceStub = sinon.stub().resolves(totalPendingChannelBalance)
       uncommittedPendingBalanceStub = sinon.stub().resolves(uncommittedPendingBalance)
-      totalCommitFeesStub = sinon.stub().resolves(totalCommitFees)
+      totalReservedChannelBalanceStub = sinon.stub().resolves(totalReservedChannelBalance)
       engineStub = {
         getUncommittedBalance: uncommittedBalanceStub,
         getTotalChannelBalance: totalChannelBalanceStub,
         getTotalPendingChannelBalance: totalPendingBalanceStub,
         getUncommittedPendingBalance: uncommittedPendingBalanceStub,
-        getTotalCommitFees: totalCommitFeesStub,
+        getTotalReservedChannelBalance: totalReservedChannelBalanceStub,
         quantumsPerCommon: '100000000'
       }
 
@@ -138,9 +138,9 @@ describe('get-balances', () => {
       expect(uncommittedPendingBalanceStub).to.have.been.calledOnce()
     })
 
-    it('gets the total commit fees of an engine', async () => {
+    it('gets the total reserved channel balance of an engine', async () => {
       await getEngineBalances(symbol, engineStub, logger)
-      expect(totalCommitFeesStub).to.have.been.calledOnce()
+      expect(totalReservedChannelBalanceStub).to.have.been.calledOnce()
     })
 
     it('returns balances for an engine', async () => {

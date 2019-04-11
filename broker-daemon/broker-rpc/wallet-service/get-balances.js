@@ -28,7 +28,7 @@ async function getEngineBalances (symbol, engine, logger) {
     engine.getTotalChannelBalance(),
     engine.getTotalPendingChannelBalance(),
     engine.getUncommittedPendingBalance(),
-    engine.getTotalCommitFees()
+    engine.getTotalReservedChannelBalance()
   ])
 
   logger.debug(`Received balances from ${symbol} engine`, { uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance, totalReservedChannelBalance })

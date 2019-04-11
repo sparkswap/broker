@@ -80,7 +80,7 @@ describe('cli wallet', () => {
     let daemonStub
     let walletBalanceStub
     let rpcAddress
-    let commitFees
+    let reserved
     let symbol
     let args
     let opts
@@ -97,8 +97,8 @@ describe('cli wallet', () => {
       symbol = 'BTC'
       args = { symbol }
       rpcAddress = 'test:1337'
-      commitFees = false
-      opts = { rpcAddress, commitFees }
+      reserved = false
+      opts = { rpcAddress, reserved }
       logger = { info: sinon.stub(), error: sinon.stub() }
       btcBalance = {
         symbol,
@@ -107,7 +107,7 @@ describe('cli wallet', () => {
         totalChannelBalance: '0.0000200000000000',
         totalPendingChannelBalance: '0.0000100000000000',
         uncommittedPendingBalance: '0.0000300000000000',
-        totalCommitFees: '0.0000905000000000'
+        totalReservedChannelBalance: '0.0000905000000000'
       }
       ltcBalance = {
         symbol: 'LTC',
@@ -116,7 +116,7 @@ describe('cli wallet', () => {
         totalChannelBalance: '0.0000020000000000',
         totalPendingChannelBalance: '0.0000050000000000',
         uncommittedPendingBalance: '0.0000010000000000',
-        totalCommitFees: '0.0000000000000000'
+        totalReservedChannelBalance: '0.0000000000000000'
       }
       balances = [btcBalance, ltcBalance]
 
@@ -163,9 +163,9 @@ describe('cli wallet', () => {
       })
     })
 
-    it('adds correct fees for BTC', async () => {
-      commitFees = true
-      opts = { rpcAddress, commitFees }
+    it('adds correct reserved channel balance for BTC', async () => {
+      reserved = true
+      opts = { rpcAddress, reserved }
       await balance(args, opts, logger)
       const expectedResult = ['BTC', '0.0000200000000000', '0.000100000000000', '0.0000905000000000']
 
@@ -178,9 +178,9 @@ describe('cli wallet', () => {
       })
     })
 
-    it('adds correct fees for LTC', async () => {
-      commitFees = true
-      opts = { rpcAddress, commitFees }
+    it('adds correct reserved channel balance for LTC', async () => {
+      reserved = true
+      opts = { rpcAddress, reserved }
       await balance(args, opts, logger)
       const expectedResult = ['LTC', '0.0000020000000000', '0.0000020000000000', '0.0000000000000000']
 
@@ -224,7 +224,7 @@ describe('cli wallet', () => {
           totalChannelBalance: '',
           totalPendingChannelBalance: '',
           uncommittedPendingBalance: '',
-          totalCommitFees: ''
+          totalReservedChannelBalance: ''
         }
         balances = [btcBalance, emptyLtcBalance]
 
