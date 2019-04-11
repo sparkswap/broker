@@ -94,7 +94,9 @@ async function balance (args, opts, logger) {
       uncommittedPendingBalance = error ? '' : `(${Big(uncommittedPendingBalance).toFixed(8)})`.grey
 
       let channelBalanceCell = `${totalChannelBalance} ${totalPendingChannelBalance}`
-      if (reserved) { channelBalanceCell += ` ${totalReservedChannelBalance}` }
+      if (reserved) {
+        channelBalanceCell += ` ${totalReservedChannelBalance}`
+      }
 
       const row = [
         symbol,
