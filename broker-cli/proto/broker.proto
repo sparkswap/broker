@@ -1311,8 +1311,8 @@ message Balance {
   string total_pending_channel_balance = 4;
   // Balance in the listed currency that is currently in pending closing channels and unconfirmed wallet balance. This is currently in common units (e.g. 0.5 BTC)
   string uncommitted_pending_balance = 5;
-  // Total balance across all channels that are reserved as fees due to a force close. This is currently in common units (e.g. 0.5 BTC)
-  string total_commit_fees = 6;
+  // Total balance across all channels that are reserved (reasons may include fees reserved on the underlying network). This is currently in common units (e.g. 0.5 BTC)
+  string total_reserved_channel_balance = 6;
   // Error message if balances are not available
   string error = 10;
 }
@@ -1525,9 +1525,10 @@ service WalletService {
   /**
    * GetBalances retrieves the balance in all currency in wallets managed by Payment Channel Network nodes for this Broker.
    *
-   * Balances are divided into `uncommittedBalance`, i.e. everything not in a channel, `totalChannelBalance` (i.e. everything in channels opened by the Payment Channel Network nodes),
-   * `totalPendingChannelBalance`, i.e. funds in channels that have finished the funding workflow and are waiting for confirmations for the funding txn, and
-   * `uncommittedPendingBalance`, i.e funds in channels that are pending closure or unconfirmed unspent outputs under control of the wallet.
+   * Balances are divided into `uncommittedBalance` (i.e. everything not in a channel), `totalChannelBalance` (i.e. everything in channels opened by the Payment Channel Network nodes),
+   * `totalPendingChannelBalance` (i.e. funds in channels that have finished the funding workflow and are waiting for confirmations for the funding txn), `uncommittedPendingBalance`
+   * (i.e funds in channels that are pending closure or unconfirmed unspent outputs under control of the wallet), and `totalReservedChannelBalance` (i.e. funds in a channel that aren't
+   * available for the channel initiator to send).`
    *
    * NOTE: If an engine is unavailable, the balances for the particular engine will be empty `''`
    *
@@ -1552,14 +1553,16 @@ service WalletService {
    *     "uncommittedBalance": "10.0000000000000000",
    *     "totalChannelBalance": "0.1670000000000000",
    *     "totalPendingChannelBalance": "0.0001000000000000",
-   *     "uncommittedPendingBalance": "0"
+   *     "uncommittedPendingBalance": "0",
+   *     "totalReservedChannelBalance": "0.0000905000000000"
    *   },
    *   {
    *     "symbol": "LTC",
    *     "uncommittedBalance": "10.0000000000000000",
    *     "totalChannelBalance": "0.1670000000000000",
    *     "totalPendingChannelBalance": "0.0002000000000000",
-   *     "uncommittedPendingBalance": "0"
+   *     "uncommittedPendingBalance": "0",
+   *     "totalReservedChannelBalance": "0.0000905000000000"
    *   }
    * ]
    * ```
@@ -1573,6 +1576,19 @@ service WalletService {
    * ├──────────┼──────────────────────────────────┼──────────────────────────────────┤
    * │ LTC      │ 0.0000000000000000 (0.00000000)  │ 10.0000000000000000 (0.00000000) │
    * └──────────┴──────────────────────────────────┴──────────────────────────────────┘
+   * ```
+   * ```shell
+   * > sparkswap wallet balance --reserved
+   * ```
+   * Passing the optional `--reserved` flag will print
+   * ```shell
+   * ┌─────┬──────────────────────────────────────────────────────┬──────────────────────────────────┐
+   * │     │ Committed (Pending) [Reserved]                       │ Uncommitted (Pending)            │
+   * ├─────┼──────────────────────────────────────────────────────┼──────────────────────────────────┤
+   * │ BTC │ 0.1676816500000000 (0.00000000) [0.0000905000000000] │ 0.8321399800000000 (0.00000000)  │
+   * ├─────┼──────────────────────────────────────────────────────┼──────────────────────────────────┤
+   * │ LTC │ 0.0000000000000000 (0.00000000) [0.0000000000000000] │ 10.0000000000000000 (0.00000000) │
+   * └─────┴──────────────────────────────────────────────────────┴──────────────────────────────────┘
    * ```
    */
   rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse) {
