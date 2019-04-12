@@ -338,7 +338,7 @@ class Fill {
    * @returns {Fill}              Inflated fill object
    */
   static fromObject (key, valueObject) {
-    // keys are the unique id for the object (orderId) prefixed by the object they belong to (blockOrderId)
+    // keys are the unique id for the object (fillId) prefixed by the object they belong to (blockOrderId)
     // and are separated by the delimiter (:)
     const [ blockOrderId, fillId ] = key.split(DELIMITER)
 
@@ -396,6 +396,42 @@ class Fill {
     })
 
     return fill
+  }
+
+  /**
+   * Create an object with fill information
+   * @param {string} key - Unique key for the fill, i.e. its `blockOrderId` and `fillId`
+   * @param {Object} orderStateMachineRecord - Stringified representation of the fill state machine record
+   * @returns {Object} - contains information about the fill and it's state
+   */
+  static fromStorageWithStatus (key, fillStateMachineRecord) {
+    const valueObject = JSON.parse(fillStateMachineRecord)
+
+    // keys are the unique id for the object (fillId) prefixed by the object they belong to (blockOrderId)
+    // and are separated by the delimiter (:)
+    const [ blockOrderId, fillId ] = key.split(DELIMITER)
+
+    const {
+      state,
+      order,
+      dates
+    } = valueObject
+
+    const formattedFill = {
+      fillId,
+      orderId,
+      blockOrderId,
+      baseSymbol,
+      counterSymbol,
+      side,
+      baseAmount,
+      counterAmount,
+      fillAmount,
+      state,
+      ...dates
+    }
+
+    return formattedFill
   }
 
   /**

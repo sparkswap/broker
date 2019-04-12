@@ -435,6 +435,47 @@ class Order {
   }
 
   /**
+   * Create an object with order information
+   * @param {string} key - Unique key for the order, i.e. its `blockOrderId` and `orderId`
+   * @param {Object} orderStateMachineRecord - Stringified representation of the order state machine record
+   * @returns {Object} - contains information about the order and it's state          
+   */
+  static fromStorageWithStatus (key, orderStateMachineRecord) {
+    const valueObject = JSON.parse(orderStateMachineRecord)
+    // keys are the unique id for the object (orderId) prefixed by the object they belong to (blockOrderId)
+    // and are separated by the delimiter (:)
+    const [ blockOrderId, orderId ] = key.split(DELIMITER)
+
+    const {
+      state,
+      order,
+      dates
+    } = valueObject
+
+    const {
+      baseSymbol,
+      counterSymbol,
+      side,
+      baseAmount,
+      counterAmount
+    } = order
+
+    const formattedOrder = {
+      orderId,
+      blockOrderId,
+      baseSymbol,
+      counterSymbol,
+      side,
+      baseAmount,
+      counterAmount,
+      state,
+      ...dates
+    }
+
+    return formattedOrder
+  }
+
+  /**
    * Create a set of options that can be passed to a LevelUP `createReadStream` call
    * that limits the set to orders that belong to the given blockOrderid.
    * This works because all orders are prefixed with their blockOrderId and the Delimiter.

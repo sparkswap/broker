@@ -848,6 +848,25 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
+   * Get all completed trade info
+   * @returns {Object} result
+   * @returns {Array<Object>} result.orders all orders for a user
+   * @returns {Array<Object>} result.fills all fills for a user
+   */
+  async getTrades () {
+    const [
+      orders,
+      fills
+    ] = await Promise.all([
+      getRecords(this.ordersStore, Order.fromStorageWithStatus.bind(Order)),
+      getRecords(this.fillsStore, Fill.fromStorageWithStatus.bind(Fill))
+    ])
+
+    return { orders, fills }
+  }
+}
+
+  /**
    * Checks if the relayer is available by pinging the healthCheck endpoint. If available,
    * returns true. False otherwise.
    * @private

@@ -10,7 +10,8 @@ const {
   StateMachinePersistence,
   StateMachineRejection,
   StateMachineLogging,
-  StateMachineEvents
+  StateMachineEvents,
+  StateMachineDateHistory
 } = require('./plugins')
 
 /**
@@ -40,6 +41,9 @@ const OrderStateMachine = StateMachine.factory({
     new StateMachineHistory(),
     new StateMachineRejection(),
     new StateMachineLogging({
+      skipTransitions: [ 'goto' ]
+    }),
+    new StateMachineDateHistory({
       skipTransitions: [ 'goto' ]
     }),
     new StateMachineEvents(),
@@ -84,9 +88,8 @@ const OrderStateMachine = StateMachine.factory({
         },
         /**
          * @type {StateMachinePersistence~FieldAccessor}
-         * @param {Object}   orderObject - Stored plain object description of the Order associated with the State machine
-         * @param {string}   key         - Unique key for the order/state machine
-         * @returns {Object}             Plain object description of the Order associated with the State machine
+         * @param {Object}   dates - Stored plain object of dates for the states that have been entered on the State machine
+         * @returns {Object} dates - Plain object of dates for the states that have been entered on the State machine
          */
         dates: function (dates) {
           if (dates) {
@@ -161,7 +164,7 @@ const OrderStateMachine = StateMachine.factory({
    * @returns {Object}                                  Data to attach to the state machine
    */
   data: function ({ store, logger, relayer, engines }) {
-    return { store, logger, relayer, engines, order: {} }
+    return { store, logger, relayer, engines, order: {}, dates: {} }
   },
   methods: {
     /**
@@ -182,7 +185,6 @@ const OrderStateMachine = StateMachine.factory({
      */
 
     onBeforeCreate: async function (lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
-      this.dates = {}
       this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount })
       // TODO: figure out a way to cache the maker address instead of making a request
       const baseEngine = this.engines.get(this.order.baseSymbol)
