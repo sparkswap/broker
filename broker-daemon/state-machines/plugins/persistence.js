@@ -163,6 +163,8 @@ class StateMachinePersistence extends StateMachinePlugin {
           data[name] = getter.call(this)
         })
 
+        data['dates'][`date${this.state.charAt(0).toUpperCase()}${this.state.slice(1)}`] = new Date()
+
         plugin.hook(this, 'persist', [key, data])
 
         // somehow spit an error if this fails?

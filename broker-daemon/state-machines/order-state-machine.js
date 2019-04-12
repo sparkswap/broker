@@ -84,6 +84,19 @@ const OrderStateMachine = StateMachine.factory({
         },
         /**
          * @type {StateMachinePersistence~FieldAccessor}
+         * @param {Object}   orderObject - Stored plain object description of the Order associated with the State machine
+         * @param {string}   key         - Unique key for the order/state machine
+         * @returns {Object}             Plain object description of the Order associated with the State machine
+         */
+        dates: function (dates) {
+          if (dates) {
+            this.dates = dates
+          }
+
+          return this.dates
+        },
+        /**
+         * @type {StateMachinePersistence~FieldAccessor}
          * @param {string}   errorMessage - Stored error message for a state machine in an errored state
          * @returns {string}              Error message for a state machine in an errored state
          */
@@ -169,6 +182,7 @@ const OrderStateMachine = StateMachine.factory({
      */
 
     onBeforeCreate: async function (lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
+      this.dates = {}
       this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount })
       // TODO: figure out a way to cache the maker address instead of making a request
       const baseEngine = this.engines.get(this.order.baseSymbol)
