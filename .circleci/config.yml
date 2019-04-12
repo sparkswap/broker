@@ -14,8 +14,8 @@ jobs:
     steps:
       - checkout
 
-      # Make sure we are on the latest npm version
-      - run: npm i -g npm
+      # Make sure we are on atleast v6 npm
+      - run: npm i -g npm@6
 
       # Download and cache dependencies
       - restore_cache:
@@ -40,8 +40,8 @@ jobs:
     steps:
       - checkout
 
-      # Make sure we are on the latest npm version
-      - run: npm i -g npm
+      # Make sure we are on atleast v6 npm
+      - run: npm i -g npm@6
 
       # Download and cache dependencies
       - restore_cache:
