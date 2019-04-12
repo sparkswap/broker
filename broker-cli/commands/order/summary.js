@@ -15,8 +15,8 @@ function createUI (market, orders) {
   const unitWidth = Math.floor(windowWidth / 16)
 
   const orderTable = new Table({
-    head: ['Order ID', 'Side', 'Amount', 'Limit Price', 'Time', 'Status'],
-    colWidths: [5 * unitWidth, unitWidth, 3 * unitWidth, 3 * unitWidth, unitWidth, 2 * unitWidth],
+    head: ['Order ID', 'Status', 'Side', 'Amount', 'Limit Price', 'Time', 'Created At'],
+    colWidths: [2 * unitWidth, unitWidth, unitWidth, 3 * unitWidth, 3 * unitWidth, unitWidth, 3 * unitWidth],
     style: { head: ['gray'] }
   })
 
@@ -29,7 +29,8 @@ function createUI (market, orders) {
   orders.forEach((order) => {
     const price = order.isMarketOrder ? 'MARKET' : order.limitPrice
     const side = order.side === ORDER_TYPES.BID ? order.side.green : order.side.red
-    orderTable.push([order.blockOrderId, side, order.amount, price, order.timeInForce, order.status])
+    const date = new Date(order.datetime).toISOString()
+    orderTable.push([order.blockOrderId, order.status, side, order.amount, price, order.timeInForce, date])
   })
 
   ui.push(orderTable.toString())
