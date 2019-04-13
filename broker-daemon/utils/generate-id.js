@@ -1,4 +1,5 @@
 const crypto = require('crypto')
+const base64Lex = require('../utils/base64-lex')
 
 /**
  * Generate a unique ID string
@@ -20,19 +21,7 @@ function generateId () {
   const rand = crypto.randomBytes(8)
   rand.copy(id, 4)
 
-  return urlEncode(id.toString('base64'))
-}
-
-/**
- * Convert a string from Base64 to [Base64url]{@link https://tools.ietf.org/html/rfc4648}
- * @param  {string} base64Str - Base64 encoded String
- * @returns {string}           Base64url encoded string
- */
-function urlEncode (base64Str) {
-  return base64Str
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
+  return base64Lex(id.toString('base64'))
 }
 
 module.exports = generateId
