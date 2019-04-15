@@ -88,14 +88,11 @@ describe('encodeBase64Lex', () => {
     ]
 
     // Convert timestamps to base64 encoding then convert to lex ordering
-    const lexIds = []
-    timestamps.forEach(ts => {
+    const lexIds = timestamps.map(ts => {
       const id = Buffer.alloc(4)
       id.writeUInt32BE(ts / 1000)
-      lexIds.push(encodeBase64Lex(id.toString('base64')))
-    })
-
-    lexIds.sort()
+      return encodeBase64Lex(id.toString('base64'))
+    }).sort()
 
     expect(lexIds).to.be.eql(expected)
   })
