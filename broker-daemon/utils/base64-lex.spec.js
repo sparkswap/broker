@@ -12,6 +12,10 @@ describe('encodeBase64Lex', () => {
   let base64HigherIndex
   let lexLowerIndex
   let lexHigherIndex
+  let lowerBase64Encoded
+  let higherBase64Encoded
+  let base64Encodings
+  let lexEncodings
 
   it('strips off base64 padding', () => {
     // base64 encoding will have padding of only 1 or 2 '='
@@ -21,78 +25,115 @@ describe('encodeBase64Lex', () => {
   })
 
   it('preserves lexicographic ordering for numbers vs uppercase letters', () => {
-    base64LowerIndex = 'A' // base64 index for 'A' is 0
-    base64HigherIndex = '0' // base64 index for '0' is 52
+    base64LowerIndex = Buffer.from('000000', 'hex') // base64 index for 0x00 is 'A'
+    base64HigherIndex = Buffer.from('000034', 'hex') // base64 index for 0x34 is '0'
+
+    lowerBase64Encoded = base64LowerIndex.toString('base64')
+    higherBase64Encoded = base64HigherIndex.toString('base64')
+
+    base64Encodings = [lowerBase64Encoded, higherBase64Encoded]
+    base64Encodings.sort()
 
     // ASCII character codes would incorrectly sort based on base64 for this case
-    expect(base64LowerIndex.charCodeAt(0)).to.be.greaterThan(base64HigherIndex.charCodeAt(0))
+    expect(base64Encodings).to.be.eql([higherBase64Encoded, lowerBase64Encoded])
 
-    lexLowerIndex = encodeBase64Lex(base64LowerIndex)
-    lexHigherIndex = encodeBase64Lex(base64HigherIndex)
+    lexLowerIndex = encodeBase64Lex(lowerBase64Encoded)
+    lexHigherIndex = encodeBase64Lex(higherBase64Encoded)
 
-    expect(lexLowerIndex.charCodeAt(0)).to.be.lessThan(lexHigherIndex.charCodeAt(0))
+    lexEncodings = [lexLowerIndex, lexHigherIndex]
+    lexEncodings.sort()
+
+    expect(lexEncodings).to.be.eql([lexLowerIndex, lexHigherIndex])
   })
 
   it('preserves lexicographic ordering for numbers vs lowercase letters', () => {
-    base64LowerIndex = 'a' // base64 index for 'a' is 26
-    base64HigherIndex = '0' // base64 index for '0' is 52
+    base64LowerIndex = Buffer.from('00001a', 'hex') // base64 index for 0x1a is 'a'
+    base64HigherIndex = Buffer.from('000034', 'hex') // base64 index for 0x34 is '0'
 
-    // ASCII character codes would incorrectly sort based on base64 in this case
-    expect(base64LowerIndex.charCodeAt(0)).to.be.greaterThan(base64HigherIndex.charCodeAt(0))
+    lowerBase64Encoded = base64LowerIndex.toString('base64')
+    higherBase64Encoded = base64HigherIndex.toString('base64')
 
-    lexLowerIndex = encodeBase64Lex(base64LowerIndex)
-    lexHigherIndex = encodeBase64Lex(base64HigherIndex)
+    base64Encodings = [lowerBase64Encoded, higherBase64Encoded]
+    base64Encodings.sort()
 
-    expect(lexLowerIndex.charCodeAt(0)).to.be.lessThan(lexHigherIndex.charCodeAt(0))
+    // ASCII character codes would incorrectly sort based on base64 for this case
+    expect(base64Encodings).to.be.eql([higherBase64Encoded, lowerBase64Encoded])
+
+    lexLowerIndex = encodeBase64Lex(lowerBase64Encoded)
+    lexHigherIndex = encodeBase64Lex(higherBase64Encoded)
+
+    lexEncodings = [lexLowerIndex, lexHigherIndex]
+    lexEncodings.sort()
+
+    expect(lexEncodings).to.be.eql([lexLowerIndex, lexHigherIndex])
   })
 
   it('preserves lexicographic ordering for `/`', () => {
-    base64LowerIndex = '0' // base64 index for '0' is 52
-    base64HigherIndex = '/' // base64 index for '/' is 63
+    base64LowerIndex = Buffer.from('000034', 'hex') // base64 index for 0x34 is '0'
+    base64HigherIndex = Buffer.from('00003f', 'hex') // base64 index for 0x3f is '/'
+
+    lowerBase64Encoded = base64LowerIndex.toString('base64')
+    higherBase64Encoded = base64HigherIndex.toString('base64')
+
+    base64Encodings = [lowerBase64Encoded, higherBase64Encoded]
+    base64Encodings.sort()
 
     // ASCII character codes would incorrectly sort based on base64 for this case
-    expect(base64LowerIndex.charCodeAt(0)).to.be.greaterThan(base64HigherIndex.charCodeAt(0))
+    expect(base64Encodings).to.be.eql([higherBase64Encoded, lowerBase64Encoded])
 
-    lexLowerIndex = encodeBase64Lex(base64LowerIndex)
-    lexHigherIndex = encodeBase64Lex(base64HigherIndex)
+    lexLowerIndex = encodeBase64Lex(lowerBase64Encoded)
+    lexHigherIndex = encodeBase64Lex(higherBase64Encoded)
 
-    expect(lexLowerIndex.charCodeAt(0)).to.be.lessThan(lexHigherIndex.charCodeAt(0))
+    lexEncodings = [lexLowerIndex, lexHigherIndex]
+    lexEncodings.sort()
+
+    expect(lexEncodings).to.be.eql([lexLowerIndex, lexHigherIndex])
   })
 
   it('preserves lexicographic ordering for `+`', () => {
-    base64LowerIndex = '0' // base64 index for '0' is 52
-    base64HigherIndex = '+' // base64 index for '+' is 62
+    base64LowerIndex = Buffer.from('000034', 'hex') // base64 index for 0x34 is '0'
+    base64HigherIndex = Buffer.from('00003e', 'hex') // base64 index for 0x3e is '+'
+
+    lowerBase64Encoded = base64LowerIndex.toString('base64')
+    higherBase64Encoded = base64HigherIndex.toString('base64')
+
+    base64Encodings = [lowerBase64Encoded, higherBase64Encoded]
+    base64Encodings.sort()
 
     // ASCII character codes would incorrectly sort based on base64 for this case
-    expect(base64LowerIndex.charCodeAt(0)).to.be.greaterThan(base64HigherIndex.charCodeAt(0))
+    expect(base64Encodings).to.be.eql([higherBase64Encoded, lowerBase64Encoded])
 
-    lexLowerIndex = encodeBase64Lex(base64LowerIndex)
-    lexHigherIndex = encodeBase64Lex(base64HigherIndex)
+    lexLowerIndex = encodeBase64Lex(lowerBase64Encoded)
+    lexHigherIndex = encodeBase64Lex(higherBase64Encoded)
 
-    expect(lexLowerIndex.charCodeAt(0)).to.be.lessThan(lexHigherIndex.charCodeAt(0))
+    lexEncodings = [lexLowerIndex, lexHigherIndex]
+    lexEncodings.sort()
+
+    expect(lexEncodings).to.be.eql([lexLowerIndex, lexHigherIndex])
   })
 
-  it('preserves lexicographic ordering for data used as order IDs', () => {
-    // When the following timestamps are base64 encoded, they lose their ordering by timestamp
-    // Using encodeBase64Lex preserves the ordering by timestamp
-    const timestamps = [
-      1554914185000,
-      1554505000000,
-      1554831515000
+  it('preserves lexicographic ordering for multiple data inputs', () => {
+    // The following hex data will not be ordered lexicographically when the base64 characters are
+    // sorted using ASCII character codes
+    const trickyData = [
+      Buffer.from('000000', 'hex'), // base64 index for 'A'
+      Buffer.from('00001a', 'hex'), // base64 index for 'a'
+      Buffer.from('000034', 'hex'), // base64 index for '0'
+      Buffer.from('00003e', 'hex'), // base64 index for '+'
+      Buffer.from('00003f', 'hex') // base64 index for '/'
     ]
+
+    const lexIds = trickyData.map(data => {
+      return encodeBase64Lex(data.toString('base64'))
+    }).sort()
 
     const expected = [
-      'M9US9-', // corresponds to 1554505000000
-      'M9nNak', // corresponds to 1554831515000
-      'M9sQXF' // corresponds to 1554914185000
+      '----', // 0x00 in base64
+      '---P', // 0x1a in base64
+      '---o', // 0x34 in base64
+      '---y', // 0x3e in base64
+      '---z' // 0x3f in base64
     ]
-
-    // Convert timestamps to base64 encoding then convert to lex ordering
-    const lexIds = timestamps.map(ts => {
-      const id = Buffer.alloc(4)
-      id.writeUInt32BE(ts / 1000)
-      return encodeBase64Lex(id.toString('base64'))
-    }).sort()
 
     expect(lexIds).to.be.eql(expected)
   })
