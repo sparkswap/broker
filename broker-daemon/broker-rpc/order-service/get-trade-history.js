@@ -1,25 +1,22 @@
 /**
- * Retrieve information about trades (filled orders) since a specified date.
+ * Retrieve information about completed trades
  *
  * @param {GrpcUnaryMethod~request} request - request object
- * @param {Object} request.params - Request parameters from the client
- * @param {String} request.params.market - market symbol e.g. BTC/LTC
- * @param {String} request.params.since - ISO8601 millisecond timestamp
- * @param {String} request.params.limit
  * @param {Object} request.logger
- * @param  {Map<String, Orderbook>} request.orderbooks Collection of all active Orderbooks
+ * @param {BlockOrderWorker} request.blockOrderWorker
  * @param {Object} responses
- * @param {function} responses.GetTradesResponse - constructor for GetTradesResponse messages
- * @return {responses.GetTradesResponse}
+ * @param {function} responses.GetTradeHistoryResponse - constructor for GetTradeHistoryResponse messages
+ * @return {responses.GetTradeHistoryResponse}
  */
 
-async function getTradeHistory ({ params, logger, blockOrderWorker }, { GetTradesResponse }) {
+async function getTradeHistory ({ logger, blockOrderWorker }, { GetTradeHistoryResponse }) {
   try {
     const { orders, fills } = await blockOrderWorker.getTrades()
+
     const filteredOrders = orders.filter(order => order.state === 'completed' || order.state === 'executing')
     const filteredFills = fills.filter(fill => fill.state === 'accepted' || fill.state === 'executed')
 
-    return new GetTradesResponse({
+    return new GetTradeHistoryResponse({
       orders: filteredOrders,
       fills: filteredFills
     })

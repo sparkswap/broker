@@ -864,7 +864,6 @@ class BlockOrderWorker extends EventEmitter {
 
     return { orders, fills }
   }
-}
 
   /**
    * Checks if the relayer is available by pinging the healthCheck endpoint. If available,

@@ -538,6 +538,47 @@ message GetBlockOrdersRequest {
   string market = 1;
 }
 
+message TradeOrder {
+  string order_id = 1;
+  string block_order_id = 2;
+  string base_symbol = 3;
+  string counter_symbol = 4;
+  string side = 5;
+  string base_amount = 6;
+  string counter_amount = 7;
+  string state = 8;
+  string date_created = 9;
+  string date_placed = 10;
+  string date_rejected = 11;
+  string date_cancelled = 12;
+  string date_executing = 13;
+  string date_completed = 14;
+}
+
+message TradeFill {
+  string fill_id = 1;
+  string order_id = 2;
+  string block_order_id = 3;
+  string base_symbol = 4;
+  string counter_symbol = 5;
+  string side = 6;
+  string base_amount = 7;
+  string counter_amount = 8;
+  string state = 9;
+  string date_created = 10;
+  string date_filled = 11;
+  string date_executed = 12;
+  string date_cancelled = 13;
+  string date_rejected = 14;
+}
+
+message GetTradeHistoryResponse {
+  // A list of completed and execting orders
+  repeated TradeOrder orders = 1;
+  // A list of accepted and executed fills
+  repeated TradeFill fills = 2;
+}
+
 /**
  * The OrderService manages all trading activity on the Broker.
  * It is the primary way that users interact with the Broker on a day-to-day basis.
@@ -794,6 +835,8 @@ service OrderService {
       get: "/v1/orders"
     };
   }
+
+  rpc GetTradeHistory (google.protobuf.Empty) returns (GetTradeHistoryResponse);
 }
 
 /**
