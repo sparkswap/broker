@@ -14,7 +14,10 @@ describe('encodeBase64Lex', () => {
   let lexHigherIndex
 
   it('strips off base64 padding', () => {
+    // base64 encoding will have padding of only 1 or 2 '='
+    // (3 bytes are represented in 4 6-bit base64 digits, i.e. encoding is mod 3)
     expect(encodeBase64Lex('12345=')).to.be.eql('pqrst')
+    expect(encodeBase64Lex('12345==')).to.be.eql('pqrst')
   })
 
   it('preserves lexicographic ordering for numbers vs uppercase letters', () => {
@@ -79,9 +82,9 @@ describe('encodeBase64Lex', () => {
     ]
 
     const expected = [
-      { timestamp: 1554505000000, lexId: 'M9US9-' },
-      { timestamp: 1554831515000, lexId: 'M9nNak' },
-      { timestamp: 1554914185000, lexId: 'M9sQXF' }
+      'M9US9-', // corresponds to 1554505000000
+      'M9nNak', // corresponds to 1554831515000
+      'M9sQXF' // corresponds to 1554914185000
     ]
 
     // Convert timestamps to base64 encoding then convert to lex ordering
@@ -89,21 +92,10 @@ describe('encodeBase64Lex', () => {
     timestamps.forEach(ts => {
       const id = Buffer.alloc(4)
       id.writeUInt32BE(ts / 1000)
-      lexIds.push({
-        timestamp: ts,
-        lexId: encodeBase64Lex(id.toString('base64'))
-      })
+      lexIds.push(encodeBase64Lex(id.toString('base64')))
     })
 
-    lexIds.sort((a, b) => {
-      if (a.lexId < b.lexId) {
-        return -1
-      }
-      if (a.lexId > b.lexId) {
-        return 1
-      }
-      return 0
-    })
+    lexIds.sort()
 
     expect(lexIds).to.be.eql(expected)
   })
