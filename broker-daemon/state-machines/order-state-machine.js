@@ -11,7 +11,7 @@ const {
   StateMachineRejection,
   StateMachineLogging,
   StateMachineEvents,
-  StateMachineDateHistory
+  StateMachineDates
 } = require('./plugins')
 
 /**
@@ -43,7 +43,7 @@ const OrderStateMachine = StateMachine.factory({
     new StateMachineLogging({
       skipTransitions: [ 'goto' ]
     }),
-    new StateMachineDateHistory({
+    new StateMachineDates({
       skipTransitions: [ 'goto' ]
     }),
     new StateMachineEvents(),

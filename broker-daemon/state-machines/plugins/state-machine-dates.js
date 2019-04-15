@@ -7,7 +7,6 @@ class StateMachineDates extends StateMachinePlugin {
   /**
    * Set up configuration for the dates plugin, controlling which properties on the host object to use
    * @param {Object} options
-   * @param {string} [options.loggerName='logger'] - Property of the host state machine that holds the logger
    * @param {Array<string>} [options.skipTransitions=[]] - Array of transition names to be ignored
    */
   constructor ({ skipTransitions = [] } = {}) {
@@ -34,4 +33,4 @@ class StateMachineDates extends StateMachinePlugin {
   }
 }
 
-module.exports = StateMachineDateHistory
+module.exports = StateMachineDates

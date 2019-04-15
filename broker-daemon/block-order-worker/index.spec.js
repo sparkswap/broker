@@ -2438,4 +2438,56 @@ describe('BlockOrderWorker', () => {
       expect(res).to.eql([firstBlockOrder])
     })
   })
+
+  describe('getTrades', () => {
+    let worker
+    let getRecords
+    let order
+    let fill
+    let ordersStore
+    let fillsStore
+
+    beforeEach(() => {
+      order = { orderId: 'asdf' }
+      fill = { fillId: 'lkjh' }
+      Order.fromStorageWithStatus = {
+        bind: sinon.stub()
+      }
+      Fill.fromStorageWithStatus = {
+        bind: sinon.stub()
+      }
+      ordersStore = {
+        put: sinon.stub()
+      }
+      fillsStore = {
+        put: sinon.stub()
+      }
+      getRecords = sinon.stub()
+      getRecords.withArgs(ordersStore, Order.fromStorageWithStatus.bind(Order)).resolves([order])
+      getRecords.withArgs(fillsStore, Fill.fromStorageWithStatus.bind(Fill)).resolves([fill])
+
+      BlockOrderWorker.__set__('getRecords', getRecords)
+
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.ordersStore = ordersStore
+      worker.fillsStore = fillsStore
+    })
+
+    it('retrieves all orders from the store', async () => {
+      await worker.getTrades()
+
+      expect(getRecords).to.have.been.calledTwice()
+      expect(getRecords).to.have.been.calledWith(ordersStore, Order.fromStorageWithStatus.bind(Order))
+      expect(getRecords).to.have.been.calledWith(fillsStore, Fill.fromStorageWithStatus.bind(Fill))
+    })
+
+    it('returns orders and fills', async () => {
+      const res = await worker.getTrades()
+
+      expect(res).to.eql({
+        orders: [order],
+        fills: [fill]
+      })
+    })
+  })
 })

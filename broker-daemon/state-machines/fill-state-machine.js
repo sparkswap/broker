@@ -9,7 +9,8 @@ const {
   StateMachinePersistence,
   StateMachineRejection,
   StateMachineLogging,
-  StateMachineEvents
+  StateMachineEvents,
+  StateMachineDates
 } = require('./plugins')
 
 /**
@@ -40,6 +41,9 @@ const FillStateMachine = StateMachine.factory({
     new StateMachineRejection(),
     new StateMachineEvents(),
     new StateMachineLogging({
+      skipTransitions: [ 'goto' ]
+    }),
+    new StateMachineDates({
       skipTransitions: [ 'goto' ]
     }),
     new StateMachinePersistence({
@@ -94,6 +98,18 @@ const FillStateMachine = StateMachine.factory({
           if (this.error) {
             return this.error.message
           }
+        },
+        /**
+         * @type {StateMachinePersistence~FieldAccessor}
+         * @param {Object}   dates - Stored plain object of dates for the states that have been entered on the State machine
+         * @returns {Object} dates - Plain object of dates for the states that have been entered on the State machine
+         */
+        dates: function (dates) {
+          if (dates) {
+            this.dates = dates
+          }
+
+          return this.dates
         }
       }
     })
@@ -140,7 +156,7 @@ const FillStateMachine = StateMachine.factory({
    * @returns {Object} Data to attach to the state machine
    */
   data: function ({ store, logger, relayer, engines }) {
-    return { store, logger, relayer, engines, fill: {} }
+    return { store, logger, relayer, engines, fill: {}, dates: {} }
   },
   methods: {
     /**

@@ -25,7 +25,7 @@ describe('Order', () => {
   })
 
   describe('::fromStorage', () => {
-    it('defines a static method for creating orderss from storage', () => {
+    it('defines a static method for creating orders from storage', () => {
       expect(Order).itself.to.respondTo('fromStorage')
     })
 
@@ -82,6 +82,47 @@ describe('Order', () => {
       expect(order).to.have.property('orderId', orderId)
       expect(order).to.have.property('feePaymentRequest', params.order.feePaymentRequest)
       expect(order).to.have.property('depositPaymentRequest', params.order.depositPaymentRequest)
+    })
+  })
+
+  describe('::fromStorageWithStatus', () => {
+    it('defines a static method for creating orders from storage with status', () => {
+      expect(Order).itself.to.respondTo('fromStorageWithStatus')
+    })
+
+    it('creates orders from a key and value', () => {
+      const params = {
+        dates: {
+          dateCreated: '2019-04-15T17:22:26.672Z',
+          datePlaced: '2019-04-15T17:22:26.672Z'
+        },
+        state: 'placed',
+        order: {
+          baseSymbol: 'BTC',
+          counterSymbol: 'LTC',
+          side: 'BID',
+          baseAmount: '10000',
+          counterAmount: '100000',
+          makerBaseAddress: 'bolt:123019230jasofdij',
+          makerCounterAddress: 'bolt:65433455asdfasdf'
+        }
+      }
+      const blockOrderId = 'blockid'
+      const orderId = 'myid'
+      const key = `${blockOrderId}:${orderId}`
+
+      const order = Order.fromStorageWithStatus(key, JSON.stringify(params))
+
+      expect(order).to.have.property('blockOrderId', blockOrderId)
+      expect(order).to.have.property('orderId', orderId)
+      expect(order).to.have.property('baseSymbol', params.order.baseSymbol)
+      expect(order).to.have.property('counterSymbol', params.order.counterSymbol)
+      expect(order).to.have.property('side', params.order.side)
+      expect(order).to.have.property('baseAmount', params.order.baseAmount)
+      expect(order).to.have.property('counterAmount', params.order.counterAmount)
+      expect(order).to.have.property('state', params.state)
+      expect(order).to.have.property('dateCreated', params.dates.dateCreated)
+      expect(order).to.have.property('datePlaced', params.dates.datePlaced)
     })
   })
 

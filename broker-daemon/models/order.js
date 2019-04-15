@@ -438,7 +438,7 @@ class Order {
    * Create an object with order information
    * @param {string} key - Unique key for the order, i.e. its `blockOrderId` and `orderId`
    * @param {Object} orderStateMachineRecord - Stringified representation of the order state machine record
-   * @returns {Object} - contains information about the order and it's state          
+   * @returns {Object} - contains information about the order and it's state
    */
   static fromStorageWithStatus (key, orderStateMachineRecord) {
     const valueObject = JSON.parse(orderStateMachineRecord)

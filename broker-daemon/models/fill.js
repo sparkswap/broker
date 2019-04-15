@@ -401,7 +401,7 @@ class Fill {
   /**
    * Create an object with fill information
    * @param {string} key - Unique key for the fill, i.e. its `blockOrderId` and `fillId`
-   * @param {Object} orderStateMachineRecord - Stringified representation of the fill state machine record
+   * @param {Object} fillStateMachineRecord - Stringified representation of the fill state machine record
    * @returns {Object} - contains information about the fill and it's state
    */
   static fromStorageWithStatus (key, fillStateMachineRecord) {
@@ -412,8 +412,18 @@ class Fill {
     const [ blockOrderId, fillId ] = key.split(DELIMITER)
 
     const {
+      fill: {
+        order: {
+          orderId,
+          baseSymbol,
+          counterSymbol,
+          side,
+          baseAmount,
+          counterAmount
+        },
+        fillAmount
+      },
       state,
-      order,
       dates
     } = valueObject
 

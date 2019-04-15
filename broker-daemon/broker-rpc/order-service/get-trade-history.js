@@ -1,13 +1,3 @@
-const { MarketEvent } = require('../../models')
-const { Big } = require('../../utils')
-
-/**
- * Default limit for number of records returned per call
- * @type {Integer}
- * @constant
- */
-const DEFAULT_LIMIT = Big(50)
-
 /**
  * Retrieve information about trades (filled orders) since a specified date.
  *
@@ -26,23 +16,17 @@ const DEFAULT_LIMIT = Big(50)
 async function getTradeHistory ({ params, logger, blockOrderWorker }, { GetTradesResponse }) {
   try {
     const { orders, fills } = await blockOrderWorker.getTrades()
-    const completedOrders = orders.filter(order => order.state === 'placed')
-    const executingOrders = orders.filter(order => order.state === 'executing')
-    const acceptedFills = fills.filter(fill => fill.state === 'accepted')
-    const executedFills = fills.filter(fill => fill.state === 'executed')
+    const filteredOrders = orders.filter(order => order.state === 'completed' || order.state === 'executing')
+    const filteredFills = fills.filter(fill => fill.state === 'accepted' || fill.state === 'executed')
 
     return new GetTradesResponse({
-      completedOrders,
-      executingOrders,
-      acceptedFills,
-      executedFills
+      orders: filteredOrders,
+      fills: filteredFills
     })
-
   } catch (err) {
     logger.error('Received error when grabbing trades', { error: err.stack })
     throw new Error(err.message)
   }
-
 }
 
 module.exports = getTradeHistory
