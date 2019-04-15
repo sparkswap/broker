@@ -74,15 +74,17 @@ const ENCODE_TABLE = {
 }
 
 /**
- * Converts a Base64 encoded string and returns a URL-safe lexicographically ordered string.
+ * Encodes data from a buffer to a variant of Base64 encoding that preserves
+ * lexicographic order in a URL-safe string.
  *
- * @param {string} base64Str - Base64 encoded string
+ * @param {Buffer} buffer - buffer with data to encode lexicographically
  * @returns {string}
  */
-function encodeBase64Lex (base64Str) {
+function encodeBase64Lex (buffer) {
+  const base64Encoded = buffer.toString('base64')
   // Padding is removed since the encoded data can be reconstructed when either the data is
   // the same size or the encoded data is never concatenated
-  const noPadding = base64Str.replace(/=/g, '')
+  const noPadding = base64Encoded.replace(/=/g, '')
 
   let encoded = ''
   for (let i = 0; i < noPadding.length; i++) {

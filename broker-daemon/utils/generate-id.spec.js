@@ -25,7 +25,7 @@ describe('generateId', () => {
 
     // the data should be the timestamp on the front, followed by
     // our random data at the end
-    randomBase64 = Buffer.from(randomHex, 'hex').toString('base64')
+    randomBase64 = Buffer.from(randomHex, 'hex')
     randomBase64Lex = 'asfdjJF09809ASDFasdf-asdf_asdf'
 
     base64LexStub = sinon.stub().returns(randomBase64Lex)

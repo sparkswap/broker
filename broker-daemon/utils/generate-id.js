@@ -7,7 +7,7 @@ const base64Lex = require('../utils/base64-lex')
  * We start with the current timestamp so that they are automatically time ordered.
  * The randomness can be increased for particularly high-frequency brokers as nothing
  * should depend on the length of this ID.
- * @returns {string} 16 characters in [base64url encoding]{@link https://tools.ietf.org/html/rfc4648}
+ * @returns {string} 16 characters ordered by timestamp
  */
 function generateId () {
   // initialize the buffer to hold our 12 byte  ID
@@ -21,7 +21,7 @@ function generateId () {
   const rand = crypto.randomBytes(8)
   rand.copy(id, 4)
 
-  return base64Lex(id.toString('base64'))
+  return base64Lex(id)
 }
 
 module.exports = generateId
