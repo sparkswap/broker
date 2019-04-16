@@ -81,6 +81,10 @@ const ENCODE_TABLE = {
  * @returns {string}
  */
 function encodeBase64Lex (buffer) {
+  if (!Buffer.isBuffer(buffer)) {
+    throw new Error(`Invalid type ${typeof buffer}. Expected type Buffer.`)
+  }
+
   const base64Encoded = buffer.toString('base64')
   // Padding is removed since the encoded data can be reconstructed when either the data is
   // the same size or the encoded data is never concatenated

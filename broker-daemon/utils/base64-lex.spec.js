@@ -17,6 +17,11 @@ describe('encodeBase64Lex', () => {
   let base64Encodings
   let lexEncodings
 
+  it('throws when passed a non Buffer object', () => {
+    const nonBufferObj = {}
+    expect(() => encodeBase64Lex(nonBufferObj)).to.throw()
+  })
+
   it('strips off base64 padding', () => {
     // base64 encoding will have padding of only 1 or 2 '='
     // (3 bytes are represented in 4 6-bit base64 digits, i.e. encoding is mod 3)
