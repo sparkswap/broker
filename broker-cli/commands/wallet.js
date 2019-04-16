@@ -54,18 +54,22 @@ const SUPPORTED_COMMANDS = Object.freeze({
  * @param {Object} args
  * @param {Object} opts
  * @param {string} [opts.rpcAddress] - broker rpc address
+ * @param {boolean} [opts.reserved] - whether total reserved balance should be included
  * @param {Logger} logger
  * @returns {void}
  */
 async function balance (args, opts, logger) {
-  const { rpcAddress } = opts
+  const { rpcAddress, reserved } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const { balances } = await client.walletService.getBalances({})
 
+    const commitedColumnHeader = reserved ? 'Committed (Pending) [Reserved]' : 'Committed (Pending)'
+    const tableHeaders = ['', commitedColumnHeader, 'Uncommitted (Pending)']
+
     const balancesTable = new Table({
-      head: ['', 'Committed (Pending)', 'Uncommitted (Pending)'],
+      head: tableHeaders,
       style: { head: ['gray'] }
     })
 
@@ -76,22 +80,31 @@ async function balance (args, opts, logger) {
         totalChannelBalance,
         totalPendingChannelBalance,
         uncommittedBalance,
-        uncommittedPendingBalance
+        uncommittedPendingBalance,
+        totalReservedChannelBalance
       } = balance
 
       totalChannelBalance = error ? 'Not Available'.yellow : totalChannelBalance.green
       uncommittedBalance = error ? 'Not Available'.yellow : uncommittedBalance
+      totalReservedChannelBalance = error ? 'Not Available'.yellow : `[${totalReservedChannelBalance}]`.grey
 
       // We fix all pending balances to 8 decimal places due to aesthetics. Since
       // this balance should only be temporary, we do not care as much about precision
       totalPendingChannelBalance = error ? '' : `(${Big(totalPendingChannelBalance).toFixed(8)})`.grey
       uncommittedPendingBalance = error ? '' : `(${Big(uncommittedPendingBalance).toFixed(8)})`.grey
 
-      balancesTable.push([
+      let channelBalanceCell = `${totalChannelBalance} ${totalPendingChannelBalance}`
+      if (reserved) {
+        channelBalanceCell += ` ${totalReservedChannelBalance}`
+      }
+
+      const row = [
         symbol,
-        `${totalChannelBalance} ${totalPendingChannelBalance}`,
+        channelBalanceCell,
         `${uncommittedBalance} ${uncommittedPendingBalance}`
-      ])
+      ]
+
+      balancesTable.push(row)
     })
 
     logger.info('Wallet Balances'.bold.white)
@@ -530,6 +543,7 @@ module.exports = (program) => {
     // hook has been added in caporal. If the option is omitted, the subcommand will
     // not receive the variable in the `opts` object
     .option('--wallet-address [address]', 'used in sparkswap withdraw ONLY')
+    .option('--reserved', 'Display total reserved balance')
     .option('--force', 'Force close all channels. This options is only used in the sparkswap release command', null, false)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
@@ -623,6 +637,7 @@ module.exports = (program) => {
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.BALANCE}`, 'Current daemon wallet balance')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
+    .option('--reserved', 'Display total reserved balance')
     .command(`wallet ${SUPPORTED_COMMANDS.NEW_DEPOSIT_ADDRESS}`, 'Generates a new wallet address for a daemon instance')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
