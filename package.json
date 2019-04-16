@@ -22,7 +22,7 @@
     "ci-test": "npm run format && npm test",
     "start-sparkswapd": "pm2-docker pm2.json",
     "start-sparkswapd-watch": "pm2-docker pm2.json --watch",
-    "validate-config": "eslint ~/.sparkswap/config.js --max-warnings=0",
+    "validate-config": "eslint ~/.sparkswap/config.js --ext .js --max-warnings=0 --no-ignore -c ./.eslintrc",
     "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp -r ./broker-daemon/proto/ ./broker-cli/proto/",
     "check-for-cycles": "madge --circular broker-daemon/",
     "check-unused": "node ./scripts/check-unused.js",
