@@ -1916,7 +1916,7 @@ service WalletService {
   }
 
   /**
-   * WalletHistory returns all transactionss for a specific wallet
+   * WalletHistory returns all transactions for a specific wallet
    *
    * ```javascript
    * await walletService.walletHistory({ symbol: 'BTC' })
