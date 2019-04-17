@@ -44,7 +44,7 @@ const SUPPORTED_COMMANDS = Object.freeze({
   WITHDRAW: 'withdraw',
   CREATE: 'create',
   UNLOCK: 'unlock',
-  SUMMARY: 'summary'
+  HISTORY: 'history'
 })
 
 /**
@@ -533,7 +533,7 @@ async function unlock (args, opts, logger) {
 }
 
 /**
- * Summary of all on-chain history of your wallet
+ * Returns all on-chain history of a specific wallet
  * @param {Object} args
  * @param {string} args.symbol
  * @param {Object} opts
@@ -541,13 +541,13 @@ async function unlock (args, opts, logger) {
  * @param {Logger} logger
  * @returns {void}
  */
-async function summary (args, opts, logger) {
+async function history (args, opts, logger) {
   const { symbol } = args
   const { rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { transactions = [] } = await client.walletService.walletSummary({ symbol })
+    const { transactions = [] } = await client.walletService.walletHistory({ symbol })
 
     if (!transactions) {
       logger.info(`No summary available for ${symbol}`)
@@ -562,8 +562,6 @@ async function summary (args, opts, logger) {
     transactions.forEach(({ type, amount, fees, timestamp, transactionHash, blockHeight, pending }) => {
       transactionTable.push([type, amount, fees, timestamp, transactionHash, blockHeight, pending])
     })
-
-    console.log(transactionTable.toString())
 
     logger.info('')
     logger.info('  Transactions:')
@@ -670,7 +668,7 @@ module.exports = (program) => {
           args.symbol = symbol
 
           return unlock(args, opts, logger)
-        case SUPPORTED_COMMANDS.SUMMARY:
+        case SUPPORTED_COMMANDS.HISTORY:
           symbol = symbol.toUpperCase()
 
           if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
@@ -679,7 +677,7 @@ module.exports = (program) => {
 
           args.symbol = symbol
 
-          return summary(args, opts, logger)
+          return history(args, opts, logger)
       }
     })
     .command(`wallet ${SUPPORTED_COMMANDS.CREATE}`, 'Create a wallet')
@@ -713,7 +711,7 @@ module.exports = (program) => {
     .command(`wallet ${SUPPORTED_COMMANDS.NETWORK_STATUS}`, 'Payment Channel Network status for trading in different markets')
     .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
-    .command(`wallet ${SUPPORTED_COMMANDS.SUMMARY}`, 'LOL noice')
+    .command(`wallet ${SUPPORTED_COMMANDS.HISTORY}`, 'Transaction History of a wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
 }

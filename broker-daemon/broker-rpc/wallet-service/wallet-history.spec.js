@@ -5,12 +5,12 @@ const {
   sinon
 } = require('test/test-helper')
 
-const walletSummary = rewire(path.resolve(__dirname, 'wallet-summary'))
+const walletHistory = rewire(path.resolve(__dirname, 'wallet-history'))
 
-describe('wallet-summary', () => {
+describe('wallet-history', () => {
   let logger
   let params
-  let WalletSummaryResponse
+  let WalletHistoryResponse
   let symbol
   let engine
   let engines
@@ -31,17 +31,17 @@ describe('wallet-summary', () => {
       ['BTC', engine]
     ])
 
-    WalletSummaryResponse = sinon.stub()
+    WalletHistoryResponse = sinon.stub()
   })
 
   it('throws an error is engine could not be found', () => {
     params = { symbol: 'LTC' }
-    return expect(walletSummary({ logger, params, engines }, { WalletSummaryResponse })).to.eventually.be.rejected('No engine found for symbol')
+    return expect(walletHistory({ logger, params, engines }, { WalletHistoryResponse })).to.eventually.be.rejected('No engine found for symbol')
   })
 
   it('logs if no transactions exist', async () => {
-    await walletSummary({ logger, params, engines }, { WalletSummaryResponse })
-    expect(WalletSummaryResponse).to.have.been.calledWith({ transactions: [] })
+    await walletHistory({ logger, params, engines }, { WalletHistoryResponse })
+    expect(WalletHistoryResponse).to.have.been.calledWith({ transactions: [] })
     expect(logger.debug).to.have.been.calledWith(sinon.match('No transactions found'))
   })
 
@@ -73,7 +73,7 @@ describe('wallet-summary', () => {
     }]
 
     engine.getChainTransactions.resolves(expectedTransactions)
-    await walletSummary({ logger, params, engines }, { WalletSummaryResponse })
-    expect(WalletSummaryResponse).to.have.been.calledWith({ transactions: expectedTransactions })
+    await walletHistory({ logger, params, engines }, { WalletHistoryResponse })
+    expect(WalletHistoryResponse).to.have.been.calledWith({ transactions: expectedTransactions })
   })
 })

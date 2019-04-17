@@ -9,7 +9,7 @@
  * @param {Function} responses.EmptyResponse
  * @returns {EmptyResponse}
  */
-async function walletSummary ({ logger, params, engines }, { WalletSummaryResponse }) {
+async function walletHistory ({ logger, params, engines }, { WalletHistoryResponse }) {
   const { symbol } = params
   const engine = engines.get(symbol)
 
@@ -21,10 +21,10 @@ async function walletSummary ({ logger, params, engines }, { WalletSummaryRespon
   const transactions = await engine.getChainTransactions()
 
   if (!transactions.length) {
-    logger.debug('No transactions found in walletSummary')
+    logger.debug('No transactions found in walletHistory')
   }
 
-  return new WalletSummaryResponse({ transactions })
+  return new WalletHistoryResponse({ transactions })
 }
 
-module.exports = walletSummary
+module.exports = walletHistory

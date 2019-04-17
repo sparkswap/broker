@@ -10,7 +10,7 @@ const releaseChannels = require('./release-channels')
 const withdrawFunds = require('./withdraw-funds')
 const createWallet = require('./create-wallet')
 const unlockWallet = require('./unlock-wallet')
-const walletSummary = require('./wallet-summary')
+const walletHistory = require('./wallet-history')
 
 /**
  * WalletService provides interactions with an engine's crypto wallet
@@ -44,7 +44,7 @@ class WalletService {
       WithdrawFundsResponse,
       CreateWalletResponse,
       ReleaseChannelsResponse,
-      WalletSummaryResponse,
+      WalletHistoryResponse,
       google: {
         protobuf: {
           Empty: EmptyResponse
@@ -62,7 +62,7 @@ class WalletService {
       withdrawFunds: new GrpcUnaryMethod(withdrawFunds, this.messageId('withdrawFunds'), { logger, engines, auth }, { WithdrawFundsResponse }).register(),
       createWallet: new GrpcUnaryMethod(createWallet, this.messageId('createWallet'), { logger, engines, auth }, { CreateWalletResponse }).register(),
       unlockWallet: new GrpcUnaryMethod(unlockWallet, this.messageId('unlockWallet'), { logger, engines, auth }, { EmptyResponse }).register(),
-      walletSummary: new GrpcUnaryMethod(walletSummary, this.messageId('walletSummary'), { logger, engines, auth }, { WalletSummaryResponse }).register()
+      walletHistory: new GrpcUnaryMethod(walletHistory, this.messageId('walletHistory'), { logger, engines, auth }, { WalletHistoryResponse }).register()
     }
   }
 

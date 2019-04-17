@@ -833,7 +833,7 @@ describe('cli wallet', () => {
     })
   })
 
-  describe('summary', () => {
+  describe('history', () => {
     let args
     let opts
     let logger
@@ -843,7 +843,7 @@ describe('cli wallet', () => {
     let transactions
     let revert
 
-    const summary = program.__get__('summary')
+    const history = program.__get__('history')
 
     beforeEach(() => {
       transactions = [{
@@ -857,7 +857,7 @@ describe('cli wallet', () => {
       }]
       walletServiceStub = {
         walletService: {
-          walletSummary: sinon.stub().resolves({ transactions })
+          walletHistory: sinon.stub().resolves({ transactions })
         }
       }
       daemonStub = sinon.stub().returns(walletServiceStub)
@@ -875,7 +875,7 @@ describe('cli wallet', () => {
     })
 
     beforeEach(async () => {
-      await summary(args, opts, logger)
+      await history(args, opts, logger)
     })
 
     afterEach(() => {
@@ -886,8 +886,8 @@ describe('cli wallet', () => {
       expect(daemonStub).to.have.been.calledOnce()
     })
 
-    it('makes a call to walletSummary', () => {
-      expect(walletServiceStub.walletService.walletSummary).to.have.been.calledWith({ symbol })
+    it('makes a call to walletHistory', () => {
+      expect(walletServiceStub.walletService.walletHistory).to.have.been.calledWith({ symbol })
     })
 
     it('prints a table of transactions', () => {

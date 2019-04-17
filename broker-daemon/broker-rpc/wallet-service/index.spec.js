@@ -23,7 +23,7 @@ describe('WalletService', () => {
   let withdrawFunds
   let createWallet
   let unlockWallet
-  let walletSummary
+  let walletHistory
   let auth
   let blockOrderWorker
 
@@ -41,7 +41,7 @@ describe('WalletService', () => {
           WithdrawFundsResponse: responseStub,
           CreateWalletResponse: responseStub,
           ReleaseChannelsResponse: responseStub,
-          WalletSummaryResponse: responseStub,
+          WalletHistoryResponse: responseStub,
           google: {
             protobuf: {
               Empty: responseStub
@@ -62,7 +62,7 @@ describe('WalletService', () => {
     withdrawFunds = sinon.stub()
     createWallet = sinon.stub()
     unlockWallet = sinon.stub()
-    walletSummary = sinon.stub()
+    walletHistory = sinon.stub()
     balanceSpy = sinon.spy()
     commitSpy = sinon.spy()
     unaryMethodStub = sinon.stub()
@@ -81,7 +81,7 @@ describe('WalletService', () => {
     WalletService.__set__('withdrawFunds', withdrawFunds)
     WalletService.__set__('createWallet', createWallet)
     WalletService.__set__('unlockWallet', unlockWallet)
-    WalletService.__set__('walletSummary', walletSummary)
+    WalletService.__set__('walletHistory', walletHistory)
 
     wallet = new WalletService(protoPath, { logger, engines, relayer, orderbooks, auth, blockOrderWorker })
   })
@@ -194,14 +194,14 @@ describe('WalletService', () => {
       )
     })
 
-    it('creates a unary method for walletSummary', () => {
-      const expectedMessageId = '[WalletService:walletSummary]'
+    it('creates a unary method for walletHistory', () => {
+      const expectedMessageId = '[WalletService:walletHistory]'
 
       expect(unaryMethodStub).to.have.been.calledWith(
-        walletSummary,
+        walletHistory,
         expectedMessageId,
         { logger, engines, auth },
-        { WalletSummaryResponse: responseStub }
+        { WalletHistoryResponse: responseStub }
       )
     })
   })
