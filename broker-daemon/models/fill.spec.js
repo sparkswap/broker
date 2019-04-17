@@ -5,6 +5,7 @@ const Fill = rewire(path.resolve(__dirname, 'fill'))
 
 describe('Fill', () => {
   let Order
+  let CONFIG
 
   beforeEach(() => {
     Order = {
@@ -14,6 +15,24 @@ describe('Fill', () => {
       }
     }
 
+    CONFIG = {
+      currencies: [
+        {
+          symbol: 'BTC',
+          quantumsPerCommon: '100000000'
+        },
+        {
+          symbol: 'XYZ',
+          quantumsPerCommon: '10000'
+        },
+        {
+          symbol: 'LTC',
+          quantumsPerCommon: '100000000'
+        }
+      ]
+    }
+
+    Fill.__set__('CONFIG', CONFIG)
     Fill.__set__('Order', Order)
   })
 
@@ -88,19 +107,20 @@ describe('Fill', () => {
     })
   })
 
-  describe('::fromStorageWithStatus', () => {
-    it('defines a static method for creating fills from storage with status', () => {
-      expect(Fill).itself.to.respondTo('fromStorageWithStatus')
+  describe('::serialize', () => {
+    it('defines a static method for serialize a fillObject', () => {
+      expect(Fill).itself.to.respondTo('serialize')
     })
 
-    it('creates orders from a key and value', () => {
+    it('returns a serialized version of the fill', () => {
       const params = {
-        state: 'accepted',
+        state: 'ACCEPTED',
         dates: {
           dateAccepted: '2019-04-15T17:22:26.672Z'
         },
         fill: {
           order: {
+            blockOrderId: 'asdfasdf',
             orderId: 'fakeID',
             baseSymbol: 'BTC',
             counterSymbol: 'LTC',
@@ -108,25 +128,22 @@ describe('Fill', () => {
             baseAmount: '10000',
             counterAmount: '100000'
           },
+          fillId: 'asdf',
           fillAmount: '9000'
         }
       }
-      const blockOrderId = 'blockid'
-      const fillId = 'myid'
-      const key = `${blockOrderId}:${fillId}`
 
-      const fill = Fill.fromStorageWithStatus(key, JSON.stringify(params))
+      const fill = Fill.serialize(params)
 
-      expect(fill).to.have.property('blockOrderId', blockOrderId)
-      expect(fill).to.have.property('fillId', fillId)
+      expect(fill).to.have.property('blockOrderId', params.fill.order.blockOrderId)
+      expect(fill).to.have.property('fillId', params.fill.fillId)
       expect(fill).to.have.property('fillAmount', params.fill.fillAmount)
       expect(fill).to.have.property('baseSymbol', params.fill.order.baseSymbol)
       expect(fill).to.have.property('counterSymbol', params.fill.order.counterSymbol)
       expect(fill).to.have.property('side', params.fill.order.side)
-      expect(fill).to.have.property('baseAmount', params.fill.order.baseAmount)
-      expect(fill).to.have.property('counterAmount', params.fill.order.counterAmount)
-      expect(fill).to.have.property('state', params.state)
-      expect(fill).to.have.property('dateAccepted', params.dates.dateAccepted)
+      expect(fill).to.have.property('price', '10.0000000000000000')
+      expect(fill).to.have.property('status', params.state.toUpperCase())
+      expect(fill).to.have.property('dates', params.dates)
     })
   })
 

@@ -19,28 +19,28 @@ describe('getTradeHistory', () => {
     GetTradeHistoryResponse = sinon.stub()
     completedOrder = {
       orderId: 'orderId',
-      state: 'completed'
+      status: 'COMPLETED'
     }
     executingOrder = {
       orderId: 'orderId2',
-      state: 'executing'
+      status: 'EXECUTING'
     }
     rejectedOrder = {
       orderId: 'orderId3',
-      state: 'rejected'
+      status: 'REJECTED'
     }
 
     acceptedFill = {
       fillId: 'fillId',
-      state: 'accepted'
+      status: 'ACCEPTED'
     }
     executedFill = {
       fillId: 'fillId2',
-      state: 'executed'
+      status: 'EXECUTED'
     }
     rejectedFill = {
       fillId: 'fillId3',
-      state: 'rejected'
+      status: 'REJECTED'
     }
     orders = [
       completedOrder,

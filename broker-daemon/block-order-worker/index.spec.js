@@ -2450,12 +2450,6 @@ describe('BlockOrderWorker', () => {
     beforeEach(() => {
       order = { orderId: 'asdf' }
       fill = { fillId: 'lkjh' }
-      Order.fromStorageWithStatus = {
-        bind: sinon.stub()
-      }
-      Fill.fromStorageWithStatus = {
-        bind: sinon.stub()
-      }
       ordersStore = {
         put: sinon.stub()
       }
@@ -2463,22 +2457,36 @@ describe('BlockOrderWorker', () => {
         put: sinon.stub()
       }
       getRecords = sinon.stub()
-      getRecords.withArgs(ordersStore, Order.fromStorageWithStatus.bind(Order)).resolves([order])
-      getRecords.withArgs(fillsStore, Fill.fromStorageWithStatus.bind(Fill)).resolves([fill])
+      getRecords.withArgs(
+        ordersStore,
+        sinon.match.func
+      ).resolves([order])
+      getRecords.withArgs(
+        fillsStore,
+        sinon.match.func
+      ).resolves([fill])
 
       BlockOrderWorker.__set__('getRecords', getRecords)
 
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       worker.ordersStore = ordersStore
       worker.fillsStore = fillsStore
+      Order.serialize = sinon.stub().returns(order)
+      Fill.serialize = sinon.stub().returns(fill)
     })
 
-    it('retrieves all orders from the store', async () => {
+    it('retrieves all orders and fills from the store', async () => {
       await worker.getTrades()
 
       expect(getRecords).to.have.been.calledTwice()
-      expect(getRecords).to.have.been.calledWith(ordersStore, Order.fromStorageWithStatus.bind(Order))
-      expect(getRecords).to.have.been.calledWith(fillsStore, Fill.fromStorageWithStatus.bind(Fill))
+      expect(getRecords).to.have.been.calledWith(
+        ordersStore,
+        sinon.match.func
+      )
+      expect(getRecords).to.have.been.calledWith(
+        fillsStore,
+        sinon.match.func
+      )
     })
 
     it('returns orders and fills', async () => {

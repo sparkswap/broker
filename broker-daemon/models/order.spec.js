@@ -85,9 +85,9 @@ describe('Order', () => {
     })
   })
 
-  describe('::fromStorageWithStatus', () => {
+  describe('::serialize', () => {
     it('defines a static method for creating orders from storage with status', () => {
-      expect(Order).itself.to.respondTo('fromStorageWithStatus')
+      expect(Order).itself.to.respondTo('serialize')
     })
 
     it('creates orders from a key and value', () => {
@@ -98,31 +98,29 @@ describe('Order', () => {
         },
         state: 'placed',
         order: {
+          orderId: 'asdf',
+          blockOrderid: 'asdfasdf',
           baseSymbol: 'BTC',
           counterSymbol: 'LTC',
           side: 'BID',
-          baseAmount: '10000',
-          counterAmount: '100000',
+          baseAmount: '1000',
+          counterAmount: '10000',
           makerBaseAddress: 'bolt:123019230jasofdij',
           makerCounterAddress: 'bolt:65433455asdfasdf'
         }
       }
-      const blockOrderId = 'blockid'
-      const orderId = 'myid'
-      const key = `${blockOrderId}:${orderId}`
 
-      const order = Order.fromStorageWithStatus(key, JSON.stringify(params))
+      const order = Order.serialize(params)
 
-      expect(order).to.have.property('blockOrderId', blockOrderId)
-      expect(order).to.have.property('orderId', orderId)
+      expect(order).to.have.property('blockOrderId', params.order.blockOrderId)
+      expect(order).to.have.property('orderId', params.order.orderId)
       expect(order).to.have.property('baseSymbol', params.order.baseSymbol)
       expect(order).to.have.property('counterSymbol', params.order.counterSymbol)
       expect(order).to.have.property('side', params.order.side)
-      expect(order).to.have.property('baseAmount', params.order.baseAmount)
-      expect(order).to.have.property('counterAmount', params.order.counterAmount)
-      expect(order).to.have.property('state', params.state)
-      expect(order).to.have.property('dateCreated', params.dates.dateCreated)
-      expect(order).to.have.property('datePlaced', params.dates.datePlaced)
+      expect(order).to.have.property('amount', '0.0000100000000000')
+      expect(order).to.have.property('price', '10.0000000000000000')
+      expect(order).to.have.property('status', params.state.toUpperCase())
+      expect(order).to.have.property('dates', params.dates)
     })
   })
 

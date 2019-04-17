@@ -395,6 +395,8 @@ message Order {
   string side = 10;
   // Dates that the order has reached each status
   Date dates = 11;
+  // Amount of the order filled, expressed in a decimal string of common units for a currency (e.g. bitcoins for BTC). This can be any amount greater than zero and less than or equal to the amount in the order.
+  string fill_amount = 12;
 }
 
 /**
@@ -890,6 +892,7 @@ service OrderService {
    *         "dateRejected": "",
    *         "dateCancelled": ""
    *       }
+   *       "fillAmount": "0.0001000000000000",
    *     },
    *     {
    *       "orderId": "U6WQ8Al2lDXqHthXx7UORN0c",

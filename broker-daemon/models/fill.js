@@ -409,10 +409,10 @@ class Fill {
 
     const { order } = fill
 
-    const baseAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === fill.baseSymbol).quantumsPerCommon
-    const counterAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === fill.counterSymbol).quantumsPerCommon
-    const baseCommonAmount = Big(fill.fillAmount).div(baseAmountFactor)
-    const counterCommonAmount = Big(fill.counterFillAmount).div(counterAmountFactor)
+    const baseAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === order.baseSymbol).quantumsPerCommon
+    const counterAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === order.counterSymbol).quantumsPerCommon
+    const baseCommonAmount = Big(order.baseAmount).div(baseAmountFactor)
+    const counterCommonAmount = Big(order.counterAmount).div(counterAmountFactor)
 
     return {
       fillId: fill.fillId,
@@ -421,7 +421,6 @@ class Fill {
       side: order.side,
       baseSymbol: order.baseSymbol,
       counterSymbol: order.counterSymbol,
-      amount: baseCommonAmount.toFixed(16),
       price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
       fillAmount: fill.fillAmount,
       status: state.toUpperCase(),
