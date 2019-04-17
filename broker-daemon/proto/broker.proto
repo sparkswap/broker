@@ -760,33 +760,45 @@ service OrderService {
    *
    * ```javascript
    * [
-   *   {
-   *     "status": "",
-   *     "market": "BTC/LTC",
-   *     "side": "BID",
-   *     "amount": "0.0001",
-   *     "isMarketOrder": true,
-   *     "timeInForce": "GTC"
-   *   },
-   *   {
-   *     "status": "",
-   *     "market": "BTC/LTC",
-   *     "side": "BID",
-   *     "amount": "0.0001",
-   *     "limitPrice": "1.1",
-   *     "timeInForce": "GTC"
-   *   }
+       {
+          price_restriction: 'limitPrice',
+          blockOrderId: 'XLEdhQqW_vQfJ1xW',
+          market: 'BTC/LTC',
+          side: 'BID',
+          amount: '0.0001000000000000',
+          isMarketOrder: false,
+          limitPrice: '60.0000000000000000',
+          timeInForce: 'GTC',
+          status: 'ACTIVE',
+          timestamp: '1555111302274449400',
+          datetime: '2019-04-12T23:21:42.2744494Z'
+        },
+        {
+          price_restriction: 'isMarketOrder',
+          blockOrderId: 'XLEeQPNXsyJ3_MsV',
+          market: 'BTC/LTC',
+          side: 'BID',
+          amount: '0.0001000000000000',
+          isMarketOrder: true,
+          limitPrice: '',
+          timeInForce: 'GTC',
+          status: 'ACTIVE',
+          timestamp: '1555111488621020800',
+          datetime: '2019-04-12T23:24:48.6210208Z'
+        }
    * ]
    * ```
    *
    * ```shell
-   * ┌─────────────────────────────────────────────┬───────┬──────────────────┬──────────────────┬──────┬──────────┐
-   * │ Order ID                                    │ Side  │ Amount           │ Limit Price      │ Time │ Status   │
-   * ├─────────────────────────────────────────────┼───────┼──────────────────┼──────────────────┼──────┼──────────┤
-   * │ o2tSlSibkCsw6zi4-mpVuMogeLaz_GZuGqJlhWVs    │ BID   │ 0.0001000000000… │ 1.1000000000000… │ GTC  │ ACTIVE   │
-   * ├─────────────────────────────────────────────┼───────┼──────────────────┼──────────────────┼──────┼──────────┤
-   * │ vQPeeYWTlpTPreJxE3My_mpTBiYwYPnTkd6aU2XX    │ BID   │ 0.0001000000000… │ MARKET           │ GTC  │ ACTIVE   │
-   * └─────────────────────────────────────────────┴───────┴──────────────────┴──────────────────┴──────┴──────────┘
+   * Orders: BTC/LTC
+   * 
+   * ┌────────────────────┬──────────┬──────────┬───────────────┬────────────────┬──────────┬──────────────────────────┐
+   * │ Order ID           │ Status   │ Side     │ Amount        │ Limit Price    │ Time     │ Created At               │
+   * ├────────────────────┼──────────┼──────────┼───────────────┼────────────────┼──────────┼──────────────────────────┤
+   * │ XLEdhQqW_vQfJ1xW   │ ACTIVE   │ BID      │ 0.00010000000 │ 60.00000000000 │ GTC      │ 2019-04-12T23:21:42.274Z │
+   * ├────────────────────┼──────────┼──────────┼───────────────┼────────────────┼──────────┼──────────────────────────┤
+   * │ XLEeQPNXsyJ3_MsV   │ ACTIVE   │ BID      │ 0.00010000000 │ 60.00000000000 │ GTC      │ 2019-04-12T23:24:48.621Z │
+   * └────────────────────┴──────────┴──────────┴───────────────┴────────────────┴──────────┴──────────────────────────┘
    * ```
    */
   rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse) {

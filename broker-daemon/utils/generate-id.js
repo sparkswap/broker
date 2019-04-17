@@ -1,4 +1,5 @@
 const crypto = require('crypto')
+const base64Lex = require('../utils/base64-lex')
 
 /**
  * Generate a unique ID string
@@ -6,7 +7,7 @@ const crypto = require('crypto')
  * We start with the current timestamp so that they are automatically time ordered.
  * The randomness can be increased for particularly high-frequency brokers as nothing
  * should depend on the length of this ID.
- * @returns {string} 16 characters in [base64url encoding]{@link https://tools.ietf.org/html/rfc4648}
+ * @returns {string} 16 characters ordered by timestamp
  */
 function generateId () {
   // initialize the buffer to hold our 12 byte  ID
@@ -20,19 +21,7 @@ function generateId () {
   const rand = crypto.randomBytes(8)
   rand.copy(id, 4)
 
-  return urlEncode(id.toString('base64'))
-}
-
-/**
- * Convert a string from Base64 to [Base64url]{@link https://tools.ietf.org/html/rfc4648}
- * @param  {string} base64Str - Base64 encoded String
- * @returns {string}           Base64url encoded string
- */
-function urlEncode (base64Str) {
-  return base64Str
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
+  return base64Lex(id)
 }
 
 module.exports = generateId
