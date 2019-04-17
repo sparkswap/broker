@@ -549,8 +549,8 @@ async function history (args, opts, logger) {
     const client = new BrokerDaemonClient(rpcAddress)
     const { transactions = [] } = await client.walletService.walletHistory({ symbol })
 
-    if (!transactions) {
-      logger.info(`No summary available for ${symbol}`)
+    if (!transactions.length) {
+      logger.info(`No wallet history available for ${symbol}`)
       return
     }
 
@@ -564,7 +564,6 @@ async function history (args, opts, logger) {
     })
 
     logger.info('')
-    logger.info('  Transactions:')
     logger.info(transactionTable.toString())
     logger.info('')
   } catch (e) {

@@ -20,9 +20,7 @@ async function walletHistory ({ logger, params, engines }, { WalletHistoryRespon
 
   const transactions = await engine.getChainTransactions()
 
-  if (!transactions.length) {
-    logger.debug('No transactions found in walletHistory')
-  }
+  logger.debug(`${transactions.length} transactions found in walletHistory`)
 
   return new WalletHistoryResponse({ transactions })
 }

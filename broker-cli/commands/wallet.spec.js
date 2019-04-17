@@ -891,7 +891,7 @@ describe('cli wallet', () => {
     })
 
     it('prints a table of transactions', () => {
-      const table = logger.info.args[2][0]
+      const table = logger.info.args[1][0]
       expect(table).to.include(transactions[0].type)
       expect(table).to.include(transactions[0].amount)
       expect(table).to.include(transactions[0].fees)

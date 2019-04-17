@@ -39,10 +39,10 @@ describe('wallet-history', () => {
     return expect(walletHistory({ logger, params, engines }, { WalletHistoryResponse })).to.eventually.be.rejected('No engine found for symbol')
   })
 
-  it('logs if no transactions exist', async () => {
+  it('logs a transaction count', async () => {
     await walletHistory({ logger, params, engines }, { WalletHistoryResponse })
     expect(WalletHistoryResponse).to.have.been.calledWith({ transactions: [] })
-    expect(logger.debug).to.have.been.calledWith(sinon.match('No transactions found'))
+    expect(logger.debug).to.have.been.calledWith(sinon.match('0 transactions'))
   })
 
   it('returns transactions', async () => {
