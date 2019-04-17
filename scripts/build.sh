@@ -206,15 +206,6 @@ if [ "$NO_DOCKER" == "false" ]; then
   docker build -t sparkswap/broker:$BROKER_VERSION -f ./docker/sparkswapd/Dockerfile ./
 fi
 
-if [ -f docker-compose.override.yml ]; then
-  # Let the user know that an override file exists which may mean that the user
-  # will have settings they do not expect
-  echo ""
-  echo "WARNING: A 'docker-compose.override.yml' file exists"
-  echo "WARNING: This may add unwanted settings to the broker that could affect how your daemon runs."
-  echo ""
-fi
-
 if [ "$LOCAL" == "true" ]; then
   echo "Downloading Local Relayer Cert..."
   # the path of this output is directly related to the SECURE_PATH that is set
