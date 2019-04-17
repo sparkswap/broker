@@ -40,7 +40,8 @@ describe('summary', () => {
       isMarketOrder: false,
       timeInForce: 'GTC',
       blockOrderId: 'asdfasdf',
-      status: 'FAILED'
+      status: 'FAILED',
+      datetime: '2019-04-12T23:21:42.2744494Z'
     }
     getBlockOrdersStub = sinon.stub().resolves({ blockOrders: [order] })
 
@@ -71,7 +72,7 @@ describe('summary', () => {
     await summary(args, opts, logger)
 
     expect(instanceTableStub.push).to.have.been.called()
-    expect(instanceTableStub.push).to.have.been.calledWith([order.blockOrderId, order.side.green, order.amount, order.limitPrice, order.timeInForce, order.status])
+    expect(instanceTableStub.push).to.have.been.calledWith([order.blockOrderId, order.status, order.side.green, order.amount, order.limitPrice, order.timeInForce, '2019-04-12T23:21:42.274Z'])
   })
 
   it('uses MARKET as price if there is no price', async () => {
@@ -82,12 +83,13 @@ describe('summary', () => {
       isMarketOrder: true,
       timeInForce: 'GTC',
       blockOrderId: 'asdfasdf',
-      status: 'FAILED'
+      status: 'FAILED',
+      datetime: '2019-04-12T23:21:42.2744494Z'
     }
     brokerStub.prototype.orderService = { getBlockOrders: sinon.stub().resolves({ blockOrders: [order] }) }
     await summary(args, opts, logger)
 
     expect(instanceTableStub.push).to.have.been.called()
-    expect(instanceTableStub.push).to.have.been.calledWith([order.blockOrderId, order.side.green, order.amount, 'MARKET', order.timeInForce, order.status])
+    expect(instanceTableStub.push).to.have.been.calledWith([order.blockOrderId, order.status, order.side.green, order.amount, 'MARKET', order.timeInForce, '2019-04-12T23:21:42.274Z'])
   })
 })
