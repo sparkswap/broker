@@ -1,5 +1,5 @@
 const { Big } = require('../utils')
-
+const CONFIG = require('../config')
 /**
  * Delimiter for the block order id and order when storing orders
  * @constant
@@ -434,45 +434,32 @@ class Order {
     return order
   }
 
-  /**
-   * Create an object with order information
-   * @param {string} key - Unique key for the order, i.e. its `blockOrderId` and `orderId`
-   * @param {Object} orderStateMachineRecord - Stringified representation of the order state machine record
-   * @returns {Object} - contains information about the order and it's state
-   */
-  static fromStorageWithStatus (key, orderStateMachineRecord) {
-    const valueObject = JSON.parse(orderStateMachineRecord)
-    // keys are the unique id for the object (orderId) prefixed by the object they belong to (blockOrderId)
-    // and are separated by the delimiter (:)
-    const [ blockOrderId, orderId ] = key.split(DELIMITER)
-
+  static serialize (orderObject) {
     const {
-      state,
       order,
-      dates
-    } = valueObject
-
-    const {
-      baseSymbol,
-      counterSymbol,
-      side,
-      baseAmount,
-      counterAmount
-    } = order
-
-    const formattedOrder = {
-      orderId,
-      blockOrderId,
-      baseSymbol,
-      counterSymbol,
-      side,
-      baseAmount,
-      counterAmount,
       state,
-      ...dates
-    }
+      error,
+      dates
+    } = orderObject
 
-    return formattedOrder
+    const baseAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === order.baseSymbol).quantumsPerCommon
+    const counterAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === order.counterSymbol).quantumsPerCommon
+    const baseCommonAmount = Big(order.baseAmount).div(baseAmountFactor)
+    const counterCommonAmount = Big(order.counterAmount).div(counterAmountFactor)
+
+    return {
+      orderId: order.orderId,
+      blockOrderId: order.blockOrderId,
+      side: order.side,
+      baseSymbol: order.baseSymbol,
+      counterSymbol: order.counterSymbol,
+      amount: baseCommonAmount.toFixed(16),
+      price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
+      fillAmount: order.fillAmount,
+      status: state.toUpperCase(),
+      error: error ? error.toString() : undefined,
+      dates
+    }
   }
 
   /**

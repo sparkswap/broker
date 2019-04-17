@@ -1,5 +1,6 @@
 const Order = require('./order')
 const { Big } = require('../utils')
+const CONFIG = require('../config')
 
 /**
  * Delimiter for the block order id and fill id when storing fills
@@ -398,50 +399,35 @@ class Fill {
     return fill
   }
 
-  /**
-   * Create an object with fill information
-   * @param {string} key - Unique key for the fill, i.e. its `blockOrderId` and `fillId`
-   * @param {Object} fillStateMachineRecord - Stringified representation of the fill state machine record
-   * @returns {Object} - contains information about the fill and it's state
-   */
-  static fromStorageWithStatus (key, fillStateMachineRecord) {
-    const valueObject = JSON.parse(fillStateMachineRecord)
-
-    // keys are the unique id for the object (fillId) prefixed by the object they belong to (blockOrderId)
-    // and are separated by the delimiter (:)
-    const [ blockOrderId, fillId ] = key.split(DELIMITER)
-
+  static serialize (fillObject) {
     const {
-      fill: {
-        order: {
-          orderId,
-          baseSymbol,
-          counterSymbol,
-          side,
-          baseAmount,
-          counterAmount
-        },
-        fillAmount
-      },
+      fill,
       state,
+      error,
       dates
-    } = valueObject
+    } = fillObject
 
-    const formattedFill = {
-      fillId,
-      orderId,
-      blockOrderId,
-      baseSymbol,
-      counterSymbol,
-      side,
-      baseAmount,
-      counterAmount,
-      fillAmount,
-      state,
-      ...dates
+    const { order } = fill
+
+    const baseAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === fill.baseSymbol).quantumsPerCommon
+    const counterAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === fill.counterSymbol).quantumsPerCommon
+    const baseCommonAmount = Big(fill.fillAmount).div(baseAmountFactor)
+    const counterCommonAmount = Big(fill.counterFillAmount).div(counterAmountFactor)
+
+    return {
+      fillId: fill.fillId,
+      orderId: order.orderId,
+      blockOrderId: order.blockOrderId,
+      side: order.side,
+      baseSymbol: order.baseSymbol,
+      counterSymbol: order.counterSymbol,
+      amount: baseCommonAmount.toFixed(16),
+      price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
+      fillAmount: fill.fillAmount,
+      status: state.toUpperCase(),
+      error: error ? error.toString() : undefined,
+      dates
     }
-
-    return formattedFill
   }
 
   /**

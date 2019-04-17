@@ -450,7 +450,7 @@ describe('BlockOrder', () => {
 
           const serialized = blockOrder.serialize()
 
-          expect(serialized.orders[0]).to.have.property('orderStatus', 'CREATED')
+          expect(serialized.orders[0]).to.have.property('status', 'CREATED')
         })
 
         it('returns an undefined value for orderError for a successful order', () => {

@@ -13,8 +13,8 @@ async function getTradeHistory ({ logger, blockOrderWorker }, { GetTradeHistoryR
   try {
     const { orders, fills } = await blockOrderWorker.getTrades()
 
-    const filteredOrders = orders.filter(order => order.state === 'completed' || order.state === 'executing')
-    const filteredFills = fills.filter(fill => fill.state === 'accepted' || fill.state === 'executed')
+    const filteredOrders = orders.filter(order => order.status === 'COMPLETED' || order.status === 'EXECUTING')
+    const filteredFills = fills.filter(fill => fill.status === 'ACCEPTED' || fill.status === 'EXECUTED')
 
     return new GetTradeHistoryResponse({
       orders: filteredOrders,

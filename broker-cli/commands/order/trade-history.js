@@ -16,7 +16,7 @@ async function tradeHistory (args, opts, logger) {
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const tradeHistory = await client.orderService.getTradeHistory({})
-    logger.info(tradeHistory)
+    logger.info(JSON.stringify(tradeHistory, null, 2))
   } catch (e) {
     logger.error(handleError(e))
   }

@@ -858,11 +858,25 @@ class BlockOrderWorker extends EventEmitter {
       orders,
       fills
     ] = await Promise.all([
-      getRecords(this.ordersStore, Order.fromStorageWithStatus.bind(Order)),
-      getRecords(this.fillsStore, Fill.fromStorageWithStatus.bind(Fill))
+      getRecords(this.ordersStore,
+        (key, value) => {
+          const { order, state, error, dates } = JSON.parse(value)
+          return { order: Order.fromObject(key, order), state, error, dates }
+        }),
+      getRecords(this.fillsStore,
+        (key, value) => {
+          const { fill, state, error, dates } = JSON.parse(value)
+          return { fill: Fill.fromObject(key, fill), state, error, dates }
+        })
     ])
 
-    return { orders, fills }
+    const serializedOrders = orders.map(o => Order.serialize(o))
+    const serializedFills = fills.map(f => Fill.serialize(f))
+
+    return {
+      orders: serializedOrders,
+      fills: serializedFills
+    }
   }
 
   /**
