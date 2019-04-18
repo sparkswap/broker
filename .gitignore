@@ -62,6 +62,3 @@ typings/
 
 # Mac
 .DS_Store
-
-# Override file which we use dynamically in the broker setup
-docker-compose.override.yml
