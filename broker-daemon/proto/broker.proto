@@ -791,7 +791,7 @@ service OrderService {
    *
    * ```shell
    * Orders: BTC/LTC
-   * 
+   *
    * ┌────────────────────┬──────────┬──────────┬───────────────┬────────────────┬──────────┬──────────────────────────┐
    * │ Order ID           │ Status   │ Side     │ Amount        │ Limit Price    │ Time     │ Created At               │
    * ├────────────────────┼──────────┼──────────┼───────────────┼────────────────┼──────────┼──────────────────────────┤
@@ -1495,6 +1495,46 @@ message UnlockWalletRequest {
 }
 
 /**
+ * Get the wallet summary of a given currency
+ */
+message WalletHistoryRequest {
+  // Currency of the wallet
+  Symbol symbol = 1;
+}
+
+/**
+ * WalletHistory response that contains transaction history for a specific wallet
+ */
+message WalletHistoryResponse {
+  enum TransactionType {
+    CHANNEL_CLOSE = 1;
+    CHANNEL_OPEN = 2;
+    DEPOSIT = 3;
+    WITHDRAW = 4;
+    UNKNOWN = 10;
+  }
+
+  message Transaction {
+    // Type of transaction
+    TransactionType type = 1;
+    // The amount of the transaction (string float value)
+    string amount = 2;
+    // The transaction hash of a transaction
+    string transaction_hash = 3;
+    // Block height of the transaction
+    int64 block_height = 4;
+    // unix timestamp
+    int64 timestamp = 5;
+    // The amount of fees from the transaction (string float value)
+    string fees = 6;
+    // Specifies if the transaction is still pending a block confirmation
+    bool pending = 7;
+  }
+
+  repeated Transaction transactions = 1;
+}
+
+/**
  * The WalletService is for interacting with the wallets managed by the Broker on behalf of the user.
  *
  * It is used primarily during set up (e.g. making deposits) of a Broker.
@@ -1884,6 +1924,58 @@ service WalletService {
     option (.google.api.http) = {
       post: "/v1/wallet/unlock"
       body: "*"
+    };
+  }
+
+  /**
+   * WalletHistory returns all transactions for a specific wallet
+   *
+   * ```javascript
+   * await walletService.walletHistory({ symbol: 'BTC' })
+   * ```
+   *
+   * ```shell
+   * > sparkswap wallet history BTC
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * { transactions:
+   *    [ { type: 'DEPOSIT',
+   *        amount: '2.00000000',
+   *        transactionHash: '1063267467518d78ab56e439a6ec5d6b72eb2eca3ae5093d466beab3832e2dab',
+   *        blockHeight: '122',
+   *        timestamp: '1555479381',
+   *        fees: '0.00000000',
+   *        pending: false },
+   *      { type: 'CHANNEL_OPEN',
+   *        amount: '-0.16786002',
+   *        transactionHash: 'c56d35e6b4fa661b52704d3516dc9c12b43e39c8c6e94996760ef4014a1c1669',
+   *        blockHeight: '124',
+   *        timestamp: '1555479401',
+   *        fees: '0.00008787',
+   *        pending: false },
+   *     ...
+   *   ]
+   * }
+   * ```
+   *
+   * ```shell
+   *  ┌───────────────┬─────────────┬────────────┬────────────┬──────────────────────────────────────────────────────────────────┬────────┬─────────┐
+   *  │ Type          │ Amount      │ Fees       │ Timestamp  │ Transaction                                                      │ Height │ Pending │
+   *  ├───────────────┼─────────────┼────────────┼────────────┼──────────────────────────────────────────────────────────────────┼────────┼─────────┤
+   *  │ DEPOSIT       │ 2.00000000  │ 0.00000000 │ 1555479381 │ 1063267467518d78ab56e439a6ec5d6b72eb2eca3ae5093d466beab3832e2dab │ 122    │ false   │
+   *  ├───────────────┼─────────────┼────────────┼────────────┼──────────────────────────────────────────────────────────────────┼────────┼─────────┤
+   *  │ CHANNEL_OPEN  │ -0.16786002 │ 0.00008787 │ 1555479401 │ c56d35e6b4fa661b52704d3516dc9c12b43e39c8c6e94996760ef4014a1c1669 │ 124    │ false   │
+   *  ├───────────────┼─────────────┼────────────┼────────────┼──────────────────────────────────────────────────────────────────┼────────┼─────────┤
+   *  │ CHANNEL_CLOSE │ 0.16768165  │ 0.00009050 │ 1555479471 │ 1960481be7a01df5c1b28e1fd24083fa7afe30dbff47c12c7fe30b448df11092 │ 131    │ false   │
+   *  └───────────────┴─────────────┴────────────┴────────────┴──────────────────────────────────────────────────────────────────┴────────┴─────────┘
+   * ```
+  */
+  rpc WalletHistory (WalletHistoryRequest) returns (WalletHistoryResponse) {
+    option (.google.api.http) = {
+      get: "/v1/wallet/summary/{symbol}"
     };
   }
 }

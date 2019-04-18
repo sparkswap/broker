@@ -90,6 +90,7 @@ describe('cli wallet', () => {
     let btcBalance
     let tableStub
     let tablePushStub
+    let reverts = []
 
     const balance = program.__get__('balance')
 
@@ -127,8 +128,12 @@ describe('cli wallet', () => {
       daemonStub = sinon.stub()
       daemonStub.prototype.walletService = { getBalances: walletBalanceStub }
 
-      program.__set__('BrokerDaemonClient', daemonStub)
-      program.__set__('Table', tableStub)
+      reverts.push(program.__set__('BrokerDaemonClient', daemonStub))
+      reverts.push(program.__set__('Table', tableStub))
+    })
+
+    afterEach(() => {
+      reverts.forEach(r => r())
     })
 
     it('calls broker daemon for a wallet balance', async () => {
@@ -261,6 +266,7 @@ describe('cli wallet', () => {
     let baseSymbolCapacities
     let counterSymbolCapacities
     let NETWORK_STATUSES
+    let reverts = []
 
     const networkStatus = program.__get__('networkStatus')
     const formatBalance = program.__get__('formatBalance')
@@ -305,13 +311,18 @@ describe('cli wallet', () => {
       daemonStub = sinon.stub()
       daemonStub.prototype.walletService = { getTradingCapacities: getTradingCapacitiesStub }
 
-      program.__set__('BrokerDaemonClient', daemonStub)
-      program.__set__('Table', tableStub)
+      reverts.push(program.__set__('BrokerDaemonClient', daemonStub))
+      reverts.push(program.__set__('Table', tableStub))
+
       NETWORK_STATUSES = program.__get__('NETWORK_STATUSES')
     })
 
     beforeEach(async () => {
       await networkStatus({}, opts, logger)
+    })
+
+    afterEach(() => {
+      reverts.forEach(r => r())
     })
 
     it('calls broker daemon for the network status', () => {
@@ -819,6 +830,75 @@ describe('cli wallet', () => {
 
     it('calls unlock wallet', () => {
       expect(unlockWalletStub).to.have.been.calledWith(sinon.match({ symbol, password }))
+    })
+  })
+
+  describe('history', () => {
+    let args
+    let opts
+    let logger
+    let daemonStub
+    let symbol
+    let walletServiceStub
+    let transactions
+    let revert
+
+    const history = program.__get__('history')
+
+    beforeEach(() => {
+      transactions = [{
+        type: 'mytype',
+        amount: '10000',
+        fees: '0.23442',
+        timestamp: '1555369297619',
+        transactionHash: 'transactionshash',
+        blockHeight: '1337',
+        pending: false
+      }]
+      walletServiceStub = {
+        walletService: {
+          walletHistory: sinon.stub().resolves({ transactions })
+        }
+      }
+      daemonStub = sinon.stub().returns(walletServiceStub)
+      symbol = 'BTC'
+      args = {
+        symbol
+      }
+      opts = {}
+      logger = {
+        info: sinon.stub(),
+        error: sinon.stub()
+      }
+
+      revert = program.__set__('BrokerDaemonClient', daemonStub)
+    })
+
+    beforeEach(async () => {
+      await history(args, opts, logger)
+    })
+
+    afterEach(() => {
+      revert()
+    })
+
+    it('create a broker daemon client', () => {
+      expect(daemonStub).to.have.been.calledOnce()
+    })
+
+    it('makes a call to walletHistory', () => {
+      expect(walletServiceStub.walletService.walletHistory).to.have.been.calledWith({ symbol })
+    })
+
+    it('prints a table of transactions', () => {
+      const table = logger.info.args[1][0]
+      expect(table).to.include(transactions[0].type)
+      expect(table).to.include(transactions[0].amount)
+      expect(table).to.include(transactions[0].fees)
+      expect(table).to.include(transactions[0].timestamp)
+      expect(table).to.include(transactions[0].transactionHash)
+      expect(table).to.include(transactions[0].blockHeight)
+      expect(table).to.include(transactions[0].pending)
     })
   })
 })

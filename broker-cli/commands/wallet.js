@@ -43,7 +43,8 @@ const SUPPORTED_COMMANDS = Object.freeze({
   RELEASE: 'release',
   WITHDRAW: 'withdraw',
   CREATE: 'create',
-  UNLOCK: 'unlock'
+  UNLOCK: 'unlock',
+  HISTORY: 'history'
 })
 
 /**
@@ -519,13 +520,52 @@ async function create (args, opts, logger) {
  */
 async function unlock (args, opts, logger) {
   const { symbol } = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const password = await askQuestion(`Enter the wallet password:`, { silent: true })
     await client.walletService.unlockWallet({ symbol, password })
     logger.info(`Successfully Unlocked ${symbol.toUpperCase()} Wallet!`.green)
+  } catch (e) {
+    logger.error(handleError(e))
+  }
+}
+
+/**
+ * Returns all on-chain history of a specific wallet
+ * @param {Object} args
+ * @param {string} args.symbol
+ * @param {Object} opts
+ * @param {string} opts.rpcAddress
+ * @param {Logger} logger
+ * @returns {void}
+ */
+async function history (args, opts, logger) {
+  const { symbol } = args
+  const { rpcAddress } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+    const { transactions = [] } = await client.walletService.walletHistory({ symbol })
+
+    if (!transactions.length) {
+      logger.info(`No wallet history available for ${symbol}`)
+      return
+    }
+
+    const transactionTable = new Table({
+      head: ['Type', 'Amount', 'Fees', 'Timestamp', 'Transaction', 'Height', 'Pending'],
+      style: { head: ['gray'] }
+    })
+
+    transactions.forEach(({ type, amount, fees, timestamp, transactionHash, blockHeight, pending }) => {
+      transactionTable.push([type, amount, fees, timestamp, transactionHash, blockHeight, pending])
+    })
+
+    logger.info('')
+    logger.info(transactionTable.toString())
+    logger.info('')
   } catch (e) {
     logger.error(handleError(e))
   }
@@ -627,6 +667,16 @@ module.exports = (program) => {
           args.symbol = symbol
 
           return unlock(args, opts, logger)
+        case SUPPORTED_COMMANDS.HISTORY:
+          symbol = symbol.toUpperCase()
+
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
+            throw new Error(`Provided symbol is not a valid currency for the broker`)
+          }
+
+          args.symbol = symbol
+
+          return history(args, opts, logger)
       }
     })
     .command(`wallet ${SUPPORTED_COMMANDS.CREATE}`, 'Create a wallet')
@@ -659,5 +709,8 @@ module.exports = (program) => {
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.NETWORK_STATUS}`, 'Payment Channel Network status for trading in different markets')
     .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
+    .command(`wallet ${SUPPORTED_COMMANDS.HISTORY}`, 'Transaction History of a wallet')
+    .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
 }
