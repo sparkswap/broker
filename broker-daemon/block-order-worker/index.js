@@ -16,6 +16,7 @@ const {
  * Number of attempts to retry a block order when connection with relayer goes down
  * @constant
  * @type {number}
+ * @default
  */
 const RETRY_ATTEMPTS = 30
 
@@ -23,8 +24,16 @@ const RETRY_ATTEMPTS = 30
  * Interval, in ms, between retries of re-placing a block order when relayer goes down
  * @constant
  * @type {number}
+ * @default
  */
 const DELAY = 10000
+
+/**
+ * @constant
+ * @type {number}
+ * @default
+ */
+const RELAYER_STATUS_INTERVAL = 5000
 
 /**
  * @class Create and work Block Orders
@@ -855,9 +864,23 @@ class BlockOrderWorker extends EventEmitter {
    */
   async relayerIsAvailable () {
     try {
+      if (this.lastRelayerStatusCheck && (this.lastRelayerStatusCheck + RELAYER_STATUS_INTERVAL) > Date.now()) {
+        this.logger.info('Using cached result')
+        return this.previousRelayerStatus
+      }
+
+      // Set this immediately to make sure we hit the cached result above. This
+      // prevents the broker from spamming the relayer with healthchecks on every
+      // order failure
+      this.lastRelayerStatusCheck = Date.now()
+
+      this.logger.info('Checking status of the relayer')
       await this.relayer.adminService.healthCheck({})
+
+      this.previousRelayerStatus = true
       return true
     } catch (e) {
+      this.previousRelayerStatus = false
       return false
     }
   }
