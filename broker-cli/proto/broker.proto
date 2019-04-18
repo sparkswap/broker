@@ -791,7 +791,7 @@ service OrderService {
    *
    * ```shell
    * Orders: BTC/LTC
-   * 
+   *
    * ┌────────────────────┬──────────┬──────────┬───────────────┬────────────────┬──────────┬──────────────────────────┐
    * │ Order ID           │ Status   │ Side     │ Amount        │ Limit Price    │ Time     │ Created At               │
    * ├────────────────────┼──────────┼──────────┼───────────────┼────────────────┼──────────┼──────────────────────────┤
@@ -1928,7 +1928,7 @@ service WalletService {
   }
 
   /**
-   * WalletHistory returns all transactionss for a specific wallet
+   * WalletHistory returns all transactions for a specific wallet
    *
    * ```javascript
    * await walletService.walletHistory({ symbol: 'BTC' })
@@ -1962,7 +1962,6 @@ service WalletService {
    * ```
    *
    * ```shell
-   *   Transactions:
    *  ┌───────────────┬─────────────┬────────────┬────────────┬──────────────────────────────────────────────────────────────────┬────────┬─────────┐
    *  │ Type          │ Amount      │ Fees       │ Timestamp  │ Transaction                                                      │ Height │ Pending │
    *  ├───────────────┼─────────────┼────────────┼────────────┼──────────────────────────────────────────────────────────────────┼────────┼─────────┤
