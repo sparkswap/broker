@@ -2,7 +2,7 @@ const logger = require('./logger')
 const delay = require('./delay')
 
 /**
- * Max attempts for retries during exponential backoff
+ * Max attempts for retries
  *
  * @constant
  * @type {number}
@@ -36,9 +36,9 @@ async function retry (callFunction, message, attempts = RETRY_ATTEMPTS, delayTim
       const attemptsLeft = attempts - 1
 
       if (message) {
-        logger.error(message, { delayTime: Math.round(delayTime / 1000), attemptsLeft })
+        logger.error(message, { delayTime: Math.round(delayTime / 1000), attemptsLeft, errorMessage: error.message })
       } else {
-        logger.error(`Error calling ${callFunction.name}. Retrying in ${Math.round(delayTime / 1000)} seconds, attempts left: ${attemptsLeft}`)
+        logger.error(`Error calling ${callFunction.name}. Retrying in ${Math.round(delayTime / 1000)} seconds, attempts left: ${attemptsLeft}`, { errorMessage: error.message })
       }
 
       await delay(delayTime)

@@ -864,25 +864,35 @@ class BlockOrderWorker extends EventEmitter {
    */
   async relayerIsAvailable () {
     try {
-      if (this.lastRelayerStatusCheck && (this.lastRelayerStatusCheck + RELAYER_STATUS_INTERVAL) > Date.now()) {
-        this.logger.info('Using cached result')
-        return this.previousRelayerStatus
+      // We check the last status time to see if we should either hit the relayer's
+      // healthcheck endpoint, or use our own stored value.
+      //
+      // This variable is used in a check that prevents the broker from spamming the
+      // relayer with healthchecks
+      const shouldUseCache = (this.lastRelayerStatusTime && (this.lastRelayerStatusTime + RELAYER_STATUS_INTERVAL) > Date.now())
+
+      // This check prevents the broker from spamming the relayer with healthchecks by
+      // returning the most recent status of the relayer
+      if (shouldUseCache) {
+        return this.relayerStatus
       }
 
-      // Set this immediately to make sure we hit the cached result above. This
-      // prevents the broker from spamming the relayer with healthchecks on every
-      // order failure
-      this.lastRelayerStatusCheck = Date.now()
+      // Set 'lastRelayerStatusTime' immediately to prevent other calls from hitting
+      // the relayer if multiple block orders are retrying simultaneously
+      this.lastRelayerStatusTime = Date.now()
 
-      this.logger.info('Checking status of the relayer')
+      // We make sure we have a status or set the variable to null if this is
+      // the first time we are checking the status
+      this.relayerStatus = this.relayerStatus || false
+
       await this.relayer.adminService.healthCheck({})
 
-      this.previousRelayerStatus = true
-      return true
+      this.relayerStatus = true
     } catch (e) {
-      this.previousRelayerStatus = false
-      return false
+      this.relayerStatus = false
     }
+
+    return this.relayerStatus
   }
 }
 
