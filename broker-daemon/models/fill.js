@@ -399,10 +399,9 @@ class Fill {
     return fill
   }
 
-
   /**
-   * serialize an fukk for transmission via grpc
-   * @param {Object} fukkObject - Plain object representation of the fukk, state, dates
+   * serialize an fill for transmission via grpc
+   * @param {Object} fillObject - Plain object representation of the fill, state, dates
    * @returns {Object} Object to be serialized into a GRPC message
    */
   static serialize (fillObject) {
