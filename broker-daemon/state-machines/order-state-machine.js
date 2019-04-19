@@ -188,7 +188,7 @@ const OrderStateMachine = StateMachine.factory({
 
     onBeforeCreate: async function (lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
       this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount })
-      // TODO: figure out a way to cache the maker address instead of making a request
+
       const baseEngine = this.engines.get(this.order.baseSymbol)
       if (!baseEngine) {
         throw new Error(`No engine available for ${this.order.baseSymbol}`)
@@ -198,6 +198,8 @@ const OrderStateMachine = StateMachine.factory({
       if (!counterEngine) {
         throw new Error(`No engine available for ${this.order.counterSymbol}`)
       }
+
+      // TODO: figure out a way to cache the maker address instead of making a request
       this.order.makerBaseAddress = await baseEngine.getPaymentChannelNetworkAddress()
       this.order.makerCounterAddress = await counterEngine.getPaymentChannelNetworkAddress()
 
