@@ -434,6 +434,11 @@ class Order {
     return order
   }
 
+  /**
+   * serialize an order for transmission via grpc
+   * @param {Object} orderObject - Plain object representation of the order, state, dates
+   * @returns {Object} Object to be serialized into a GRPC message
+   */
   static serialize (orderObject) {
     const {
       order,
