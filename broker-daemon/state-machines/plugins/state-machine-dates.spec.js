@@ -45,7 +45,7 @@ describe('StateMachineLogging', () => {
       stateMachine.create()
 
       expect(stateMachine.dates).to.eql({
-        dateCreated: now
+        created: now
       })
     })
 
@@ -59,8 +59,8 @@ describe('StateMachineLogging', () => {
       stateMachine.place()
 
       expect(stateMachine.dates).to.eql({
-        dateCreated: now,
-        datePlaced: now
+        created: now,
+        placed: now
       })
     })
   })

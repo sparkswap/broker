@@ -25,8 +25,11 @@ class StateMachineDates extends StateMachinePlugin {
     return {
       onEnterState: function (lifecycle) {
         if (!plugin.skipTransitions.includes(lifecycle.transition)) {
-          // set the date the state was entered, for example, 'dateCreated'
-          this.dates[`date${this.state.charAt(0).toUpperCase()}${this.state.slice(1)}`] = new Date()
+          if (this.dates === undefined) {
+            this.dates = {}
+          }
+          // set the date the state was entered, for example, 'created'
+          this.dates[this.state] = new Date()
         }
       }
     }

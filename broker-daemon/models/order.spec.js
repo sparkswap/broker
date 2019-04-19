@@ -93,8 +93,8 @@ describe('Order', () => {
     it('creates orders from a key and value', () => {
       const params = {
         dates: {
-          dateCreated: '2019-04-15T17:22:26.672Z',
-          datePlaced: '2019-04-15T17:22:26.672Z'
+          created: '2019-04-15T17:22:26.672Z',
+          placed: '2019-04-15T17:22:26.672Z'
         },
         state: 'placed',
         order: {
@@ -119,7 +119,7 @@ describe('Order', () => {
       expect(order).to.have.property('side', params.order.side)
       expect(order).to.have.property('amount', '0.0000100000000000')
       expect(order).to.have.property('price', '10.0000000000000000')
-      expect(order).to.have.property('status', params.state.toUpperCase())
+      expect(order).to.have.property('orderStatus', params.state.toUpperCase())
       expect(order).to.have.property('dates', params.dates)
     })
   })

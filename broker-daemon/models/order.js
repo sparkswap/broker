@@ -456,7 +456,7 @@ class Order {
       amount: baseCommonAmount.toFixed(16),
       price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
       fillAmount: order.fillAmount,
-      status: state.toUpperCase(),
+      orderStatus: state.toUpperCase(),
       error: error ? error.toString() : undefined,
       dates
     }

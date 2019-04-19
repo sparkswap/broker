@@ -850,8 +850,8 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Get all completed trade info
    * @returns {Object} result
-   * @returns {Array<Object>} result.orders all orders for a user
-   * @returns {Array<Object>} result.fills all fills for a user
+   * @returns {Array<Object>} result.orders all completed orders for a user
+   * @returns {Array<Object>} result.fills all completed fills for a user
    */
   async getTrades () {
     const [
@@ -870,8 +870,15 @@ class BlockOrderWorker extends EventEmitter {
         })
     ])
 
-    const serializedOrders = orders.map(o => Order.serialize(o))
-    const serializedFills = fills.map(f => Fill.serialize(f))
+    const filteredOrders = orders.filter(order =>
+      order.state === OrderStateMachine.STATES.COMPLETED || order.state === OrderStateMachine.STATES.EXECUTING
+    )
+    const filteredFills = fills.filter(fill =>
+      fill.state === FillStateMachine.STATES.ACCEPTED || fill.state === FillStateMachine.STATES.EXECUTED
+    )
+
+    const serializedOrders = filteredOrders.map(o => Order.serialize(o))
+    const serializedFills = filteredFills.map(f => Fill.serialize(f))
 
     return {
       orders: serializedOrders,

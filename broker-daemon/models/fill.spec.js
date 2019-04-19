@@ -142,7 +142,7 @@ describe('Fill', () => {
       expect(fill).to.have.property('counterSymbol', params.fill.order.counterSymbol)
       expect(fill).to.have.property('side', params.fill.order.side)
       expect(fill).to.have.property('price', '10.0000000000000000')
-      expect(fill).to.have.property('status', params.state.toUpperCase())
+      expect(fill).to.have.property('fillStatus', params.state.toUpperCase())
       expect(fill).to.have.property('dates', params.dates)
     })
   })

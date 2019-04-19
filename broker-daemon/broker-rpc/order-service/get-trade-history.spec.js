@@ -8,49 +8,29 @@ describe('getTradeHistory', () => {
   let blockOrderWorker
   let orders
   let fills
-  let completedOrder
-  let executingOrder
-  let rejectedOrder
-  let acceptedFill
-  let executedFill
-  let rejectedFill
 
   beforeEach(() => {
     GetTradeHistoryResponse = sinon.stub()
-    completedOrder = {
-      orderId: 'orderId',
-      status: 'COMPLETED'
-    }
-    executingOrder = {
-      orderId: 'orderId2',
-      status: 'EXECUTING'
-    }
-    rejectedOrder = {
-      orderId: 'orderId3',
-      status: 'REJECTED'
-    }
-
-    acceptedFill = {
-      fillId: 'fillId',
-      status: 'ACCEPTED'
-    }
-    executedFill = {
-      fillId: 'fillId2',
-      status: 'EXECUTED'
-    }
-    rejectedFill = {
-      fillId: 'fillId3',
-      status: 'REJECTED'
-    }
     orders = [
-      completedOrder,
-      executingOrder,
-      rejectedOrder
+      {
+        orderId: 'orderId',
+        status: 'COMPLETED'
+      },
+      {
+        orderId: 'orderId2',
+        status: 'EXECUTING'
+      }
     ]
+
     fills = [
-      acceptedFill,
-      executedFill,
-      rejectedFill
+      {
+        fillId: 'fillId',
+        status: 'ACCEPTED'
+      },
+      {
+        fillId: 'fillId2',
+        status: 'EXECUTED'
+      }
     ]
 
     blockOrderWorker = {
@@ -73,20 +53,14 @@ describe('getTradeHistory', () => {
     expect(blockOrderWorker.getTrades).to.have.been.calledOnce()
   })
 
-  it('returns filtered trades', async () => {
+  it('returns trades', async () => {
     const res = await getTradeHistory({ blockOrderWorker }, { GetTradeHistoryResponse })
 
     expect(GetTradeHistoryResponse).to.have.been.calledOnce()
     expect(GetTradeHistoryResponse).to.have.been.calledWithNew()
     expect(GetTradeHistoryResponse).to.have.been.calledWith({
-      orders: [
-        completedOrder,
-        executingOrder
-      ],
-      fills: [
-        acceptedFill,
-        executedFill
-      ]
+      orders,
+      fills
     })
     expect(res).to.be.instanceOf(GetTradeHistoryResponse)
   })

@@ -360,25 +360,25 @@ message Order {
     CANCELLED = 6;
   }
 
-  message Date {
+  message OrderStateDates {
     // The date the order has been created on the Relayer.
-    string date_created = 1;
+    string created = 1;
     // The date the order has been placed and communicated to other marker participants.
-    string date_placed = 2;
+    string placed = 2;
     // The date the swap is being executed on the Payment Channel Networks
-    string date_executing = 3;
+    string executing = 3;
     // The date the swap preimage has been returned to the Relayer.
-    string date_completed = 4;
+    string completed = 4;
     // The date the order has encountered a failure.
-    string date_rejected = 5;
+    string rejected = 5;
     // The date the order has been cancelled by the user.
-    string date_cancelled = 6;
+    string cancelled = 6;
   }
 
   // Unique ID assigned by the Relayer for this order.
   string order_id = 1;
   // Status of the order on the Relayer.
-  OrderStatus status = 2;
+  OrderStatus order_status = 2;
   // Amount of the order expressed in a decimal string of common units for a currency (e.g. bitcoins for BTC).
   string amount = 3;
   // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the SparkSwap Relayer have prices.
@@ -394,8 +394,10 @@ message Order {
   // The side of the market that the order is taking.
   string side = 10;
   // Dates that the order has reached each status
-  Date dates = 11;
-  // Amount of the order filled, expressed in a decimal string of common units for a currency (e.g. bitcoins for BTC). This can be any amount greater than zero and less than or equal to the amount in the order.
+  OrderStateDates dates = 11;
+  // Amount of the order filled, expressed in a decimal string of common units for a currency (e.g. bitcoins for BTC).
+  // This can be any amount greater than zero and less than or equal to the amount in the order. This will be an empty
+  // string if the order has not been filled.
   string fill_amount = 12;
 }
 
@@ -422,27 +424,27 @@ message Fill {
     CANCELLED = 5;
   }
 
-  message Date {
+  message FillStateDates {
     // The date the fill has been created on the Relayer.
-    string date_created = 1;
+    string created = 1;
     // The date the fill has been accepted as the fill for the given order.
-    string date_filled = 2;
+    string filled = 2;
     // The date the swap has been executed on the Payment Channel Networks.
-    string date_executed = 3;
+    string executed = 3;
     // The date the preimage has been returned to the Relayer by the Maker.
-    string date_completed = 4;
+    string completed = 4;
     // The date the fill has encountered a failure.
-    string date_rejected = 5;
+    string rejected = 5;
     // The date the fill has been cancelled.
-    string date_cancelled = 6;
+    string cancelled = 6;
   }
 
   // The Relayer-assigned unique ID of the order that this fill is for.
   string order_id = 1;
-  // The Relayer-assignded unique ID for this fill.
+  // The Relayer-assigned unique ID for this fill.
   string fill_id = 2;
   // Status of the fill on the Relayer.
-  FillStatus status = 3;
+  FillStatus fill_status = 3;
   // Amount of the order to fill, expressed in a decimal string of common units for a currency (e.g. bitcoins for BTC). This can be any amount greater than zero and less than or equal to the amount in the order.
   string amount = 4;
   // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the SparkSwap Relayer have prices.
@@ -458,7 +460,7 @@ message Fill {
   // The side of the market that the order is taking.
   string side = 10;
   // Dates that the fill has reached each status
-  Date dates = 11;
+  FillStateDates dates = 11;
 }
 
 /**
@@ -876,7 +878,7 @@ service OrderService {
    *   "orders": [
    *     {
    *       "orderId": "Ky13eTmuhZY-NIbqIng_in3D",
-   *       "orderStatus": "PLACED",
+   *       "orderStatus": "EXECUTING",
    *       "amount": "0.0001000000000000",
    *       "price": "0.0001000000000000",
    *       "orderError": "",
@@ -885,18 +887,18 @@ service OrderService {
    *       "counterSymbol": "LTC",
    *       "side": "ASK",
    *       "dates": {
-   *         "dateCreated": "2019-04-12T18:22:13.111Z",
-   *         "datePlaced": "2019-04-12T18:22:13.121Z",
-   *         "dateExecuting": "",
-   *         "dateCompleted": "",
-   *         "dateRejected": "",
-   *         "dateCancelled": ""
+   *         "created": "2019-04-12T18:22:13.111Z",
+   *         "placed": "2019-04-12T18:22:13.121Z",
+   *         "executing": "2019-04-12T18:22:20.121Z",
+   *         "completed": "",
+   *         "rejected": "",
+   *         "cancelled": ""
    *       }
    *       "fillAmount": "0.0001000000000000",
    *     },
    *     {
    *       "orderId": "U6WQ8Al2lDXqHthXx7UORN0c",
-   *       "orderStatus": "PLACED",
+   *       "orderStatus": "COMPLETED",
    *       "amount": "0.0001000000000000",
    *       "price": "0.0001000000000000",
    *       "orderError": "",
@@ -905,12 +907,12 @@ service OrderService {
    *       "counterSymbol": "LTC",
    *       "side": "ASK",
    *       "dates": {
-   *         "dateCreated": "2019-04-12T18:22:42.519Z",
-   *         "datePlaced": "2019-04-12T18:22:42.534Z",
-   *         "dateExecuting": "",
-   *         "dateCompleted": "",
-   *         "dateRejected": "",
-   *         "dateCancelled": ""
+   *         "created": "2019-04-12T18:22:42.519Z",
+   *         "placed": "2019-04-12T18:22:42.534Z",
+   *         "executing": "2019-04-12T18:22:44.534Z",
+   *         "completed": "2019-04-12T18:25:44.121Z",
+   *         "rejected": "",
+   *         "cancelled": ""
    *       }
    *     }
    *   ],

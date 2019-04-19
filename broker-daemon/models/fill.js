@@ -423,7 +423,7 @@ class Fill {
       counterSymbol: order.counterSymbol,
       price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
       fillAmount: fill.fillAmount,
-      status: state.toUpperCase(),
+      fillStatus: state.toUpperCase(),
       error: error ? error.toString() : undefined,
       dates
     }
