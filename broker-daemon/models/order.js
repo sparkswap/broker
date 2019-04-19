@@ -446,6 +446,7 @@ class Order {
     const counterAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === order.counterSymbol).quantumsPerCommon
     const baseCommonAmount = Big(order.baseAmount).div(baseAmountFactor)
     const counterCommonAmount = Big(order.counterAmount).div(counterAmountFactor)
+    const fillCommonAmount = order.fillAmount ? Big(order.fillAmount).div(baseAmountFactor).toFixed(16) : order.fillAmount
 
     return {
       orderId: order.orderId,
@@ -455,7 +456,7 @@ class Order {
       counterSymbol: order.counterSymbol,
       amount: baseCommonAmount.toFixed(16),
       price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
-      fillAmount: order.fillAmount,
+      fillAmount: fillCommonAmount,
       orderStatus: state.toUpperCase(),
       error: error ? error.toString() : undefined,
       dates

@@ -417,12 +417,12 @@ class Fill {
     return {
       fillId: fill.fillId,
       orderId: order.orderId,
-      blockOrderId: order.blockOrderId,
+      blockOrderId: fill.blockOrderId,
       side: order.side,
       baseSymbol: order.baseSymbol,
       counterSymbol: order.counterSymbol,
       price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
-      fillAmount: fill.fillAmount,
+      amount: Big(fill.fillAmount).div(baseAmountFactor).toFixed(16),
       fillStatus: state.toUpperCase(),
       error: error ? error.toString() : undefined,
       dates

@@ -130,7 +130,7 @@ describe('FillStateMachine', () => {
     it('saves state machine data in the database', async () => {
       await fsm.persist(key)
 
-      expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('{"state":"none","fill":{"my":"fill"},"history":[],"dates":{}}'))
+      expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('{"state":"none","fill":{"my":"fill"},"history":[]}'))
     })
 
     it('saves the fill to the database', async () => {

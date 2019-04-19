@@ -417,8 +417,6 @@ message Fill {
     // The swap has been executed on the Payment Channel Networks.
     EXECUTED = 2;
     // The preimage has been returned to the Relayer by the Maker.
-    COMPLETED = 3;
-    // The fill has encountered a failure.
     REJECTED = 4;
     // The fill has been cancelled.
     CANCELLED = 5;
@@ -432,8 +430,6 @@ message Fill {
     // The date the swap has been executed on the Payment Channel Networks.
     string executed = 3;
     // The date the preimage has been returned to the Relayer by the Maker.
-    string completed = 4;
-    // The date the fill has encountered a failure.
     string rejected = 5;
     // The date the fill has been cancelled.
     string cancelled = 6;
@@ -877,46 +873,47 @@ service OrderService {
    * {
    *   "orders": [
    *     {
-   *       "orderId": "Ky13eTmuhZY-NIbqIng_in3D",
-   *       "orderStatus": "EXECUTING",
-   *       "amount": "0.0001000000000000",
-   *       "price": "0.0001000000000000",
-   *       "orderError": "",
-   *       "blockOrderId": "XLDXVDZiXxdifizQ",
+   *       "orderId": "GZnWxbVT6hK_2KM-r_hbSXp0",
+   *       "orderStatus": "COMPLETED",
+   *       "amount": "0.0040000000000000",
+   *       "price": "0.0040000000000000",
+   *       "error": "",
+   *       "blockOrderId": "XLoVOEJdJgO8JWAB",
    *       "baseSymbol": "BTC",
    *       "counterSymbol": "LTC",
    *       "side": "ASK",
    *       "dates": {
-   *         "created": "2019-04-12T18:22:13.111Z",
-   *         "placed": "2019-04-12T18:22:13.121Z",
-   *         "executing": "2019-04-12T18:22:20.121Z",
-   *         "completed": "",
+   *         "created": "2019-04-19T18:36:40.809Z",
+   *         "placed": "2019-04-19T18:36:40.816Z",
+   *         "executing": "2019-04-19T18:36:52.556Z",
+   *         "completed": "2019-04-19T18:36:53.357Z",
    *         "rejected": "",
    *         "cancelled": ""
-   *       }
-   *       "fillAmount": "0.0001000000000000",
-   *     },
+   *       },
+   *       "fillAmount": "0.0010000000000000"
+   *     }
+   *   ],
+   *   "fills": [
    *     {
-   *       "orderId": "U6WQ8Al2lDXqHthXx7UORN0c",
-   *       "orderStatus": "COMPLETED",
-   *       "amount": "0.0001000000000000",
-   *       "price": "0.0001000000000000",
-   *       "orderError": "",
-   *       "blockOrderId": "XLDXclazEcJjK8Po",
+   *       "orderId": "PBt5GmSgJte9agAfDCj28j_7",
+   *       "fillId": "YQRN_XXJysf_toi73wZTTnQW",
+   *       "fillStatus": "EXECUTED",
+   *       "amount": "0.0030000000000000",
+   *       "price": "0.0030000000000000",
+   *       "error": "",
+   *       "blockOrderId": "XLoRm8Df_0Wa-A57",
    *       "baseSymbol": "BTC",
    *       "counterSymbol": "LTC",
-   *       "side": "ASK",
+   *       "side": "BID",
    *       "dates": {
-   *         "created": "2019-04-12T18:22:42.519Z",
-   *         "placed": "2019-04-12T18:22:42.534Z",
-   *         "executing": "2019-04-12T18:22:44.534Z",
-   *         "completed": "2019-04-12T18:25:44.121Z",
+   *         "created": "2019-04-19T18:21:15.751Z",
+   *         "filled": "2019-04-19T18:21:15.820Z",
+   *         "executed": "2019-04-19T18:21:16.824Z",
    *         "rejected": "",
    *         "cancelled": ""
    *       }
    *     }
-   *   ],
-   *   "fills": []
+   *   ]
    * }
    * ```
    *
@@ -924,45 +921,47 @@ service OrderService {
    * {
    *   "orders": [
    *     {
-   *       "orderId": "Ky13eTmuhZY-NIbqIng_in3D",
-   *       "orderStatus": "PLACED",
-   *       "amount": "0.0001000000000000",
-   *       "price": "0.0001000000000000",
-   *       "orderError": "",
-   *       "blockOrderId": "XLDXVDZiXxdifizQ",
+   *       "orderId": "GZnWxbVT6hK_2KM-r_hbSXp0",
+   *       "orderStatus": "COMPLETED",
+   *       "amount": "0.0040000000000000",
+   *       "price": "0.0040000000000000",
+   *       "error": "",
+   *       "blockOrderId": "XLoVOEJdJgO8JWAB",
    *       "baseSymbol": "BTC",
    *       "counterSymbol": "LTC",
    *       "side": "ASK",
    *       "dates": {
-   *         "dateCreated": "2019-04-12T18:22:13.111Z",
-   *         "datePlaced": "2019-04-12T18:22:13.121Z",
-   *         "dateExecuting": "",
-   *         "dateCompleted": "",
-   *         "dateRejected": "",
-   *         "dateCancelled": ""
-   *       }
-   *     },
-   *     {
-   *       "orderId": "U6WQ8Al2lDXqHthXx7UORN0c",
-   *       "orderStatus": "PLACED",
-   *       "amount": "0.0001000000000000",
-   *       "price": "0.0001000000000000",
-   *       "orderError": "",
-   *       "blockOrderId": "XLDXclazEcJjK8Po",
-   *       "baseSymbol": "BTC",
-   *       "counterSymbol": "LTC",
-   *       "side": "ASK",
-   *       "dates": {
-   *         "dateCreated": "2019-04-12T18:22:42.519Z",
-   *         "datePlaced": "2019-04-12T18:22:42.534Z",
-   *         "dateExecuting": "",
-   *         "dateCompleted": "",
-   *         "dateRejected": "",
-   *         "dateCancelled": ""
-   *       }
+   *         "created": "2019-04-19T18:36:40.809Z",
+   *         "placed": "2019-04-19T18:36:40.816Z",
+   *         "executing": "2019-04-19T18:36:52.556Z",
+   *         "completed": "2019-04-19T18:36:53.357Z",
+   *         "rejected": "",
+   *         "cancelled": ""
+   *       },
+   *       "fillAmount": "0.0010000000000000"
    *     }
    *   ],
-   *   "fills": []
+   *   "fills": [
+   *     {
+   *       "orderId": "PBt5GmSgJte9agAfDCj28j_7",
+   *       "fillId": "YQRN_XXJysf_toi73wZTTnQW",
+   *       "fillStatus": "EXECUTED",
+   *       "amount": "0.0030000000000000",
+   *       "price": "0.0030000000000000",
+   *       "error": "",
+   *       "blockOrderId": "XLoRm8Df_0Wa-A57",
+   *       "baseSymbol": "BTC",
+   *       "counterSymbol": "LTC",
+   *       "side": "BID",
+   *       "dates": {
+   *         "created": "2019-04-19T18:21:15.751Z",
+   *         "filled": "2019-04-19T18:21:15.820Z",
+   *         "executed": "2019-04-19T18:21:16.824Z",
+   *         "rejected": "",
+   *         "cancelled": ""
+   *       }
+   *     }
+   *   ]
    * }
    * ```
    */

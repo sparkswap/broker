@@ -23,7 +23,7 @@ async function status (args, opts, logger) {
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const blockOrderResult = await client.orderService.getBlockOrder(request)
-    logger.info(blockOrderResult)
+    logger.info(JSON.stringify(blockOrderResult, null, 2))
   } catch (e) {
     logger.error(handleError(e))
   }

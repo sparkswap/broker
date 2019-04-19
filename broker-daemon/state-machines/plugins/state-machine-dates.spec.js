@@ -41,7 +41,7 @@ describe('StateMachineLogging', () => {
       expect(stateMachineDates.observers).to.have.property('onEnterState')
     })
 
-    it('should log onEnterState if transition should not be skipped', () => {
+    it('should add state date if transition should not be skipped', () => {
       stateMachine.create()
 
       expect(stateMachine.dates).to.eql({
@@ -49,12 +49,12 @@ describe('StateMachineLogging', () => {
       })
     })
 
-    it('should not log the onEnterState if the transition should be skipped', () => {
+    it('should not add state date if transition should be skipped', () => {
       stateMachine.goto('create')
       expect(stateMachine.dates).to.eql({})
     })
 
-    it('should add multiple dates if it goes through multiple transitions', () => {
+    it('should add multiple state dates if transitions should not be skipped', () => {
       stateMachine.create()
       stateMachine.place()
 

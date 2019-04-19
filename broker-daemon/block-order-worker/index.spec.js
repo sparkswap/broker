@@ -78,7 +78,6 @@ describe('BlockOrderWorker', () => {
       NONE: 'none',
       CREATED: 'created',
       FILLED: 'filled',
-      ACCEPTED: 'accepted',
       EXECUTED: 'executed'
     }
 
@@ -2450,7 +2449,7 @@ describe('BlockOrderWorker', () => {
     let completedOrder
     let executingOrder
     let rejectedOrder
-    let acceptedFill
+    let filledFill
     let executedFill
     let rejectedFill
 
@@ -2475,9 +2474,9 @@ describe('BlockOrderWorker', () => {
         state: 'rejected'
       }
 
-      acceptedFill = {
+      filledFill = {
         fillId: 'fillId',
-        state: 'accepted'
+        state: 'filled'
       }
       executedFill = {
         fillId: 'fillId2',
@@ -2501,7 +2500,7 @@ describe('BlockOrderWorker', () => {
         fillsStore,
         sinon.match.func
       ).resolves([
-        acceptedFill,
+        filledFill,
         executedFill,
         rejectedFill
       ])
@@ -2538,7 +2537,7 @@ describe('BlockOrderWorker', () => {
           executingOrder
         ],
         fills: [
-          acceptedFill,
+          filledFill,
           executedFill
         ]
       })

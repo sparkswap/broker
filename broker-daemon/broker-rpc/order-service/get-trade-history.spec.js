@@ -25,7 +25,7 @@ describe('getTradeHistory', () => {
     fills = [
       {
         fillId: 'fillId',
-        status: 'ACCEPTED'
+        status: 'FILLED'
       },
       {
         fillId: 'fillId2',

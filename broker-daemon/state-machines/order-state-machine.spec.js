@@ -170,7 +170,7 @@ describe('OrderStateMachine', () => {
     it('saves state machine data in the database', async () => {
       await osm.persist(key)
 
-      expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('{"state":"none","order":{"my":"order"},"history":[],"dates":{}}'))
+      expect(store.put).to.have.been.calledWith(sinon.match.any, sinon.match('{"state":"none","order":{"my":"order"},"history":[]}'))
     })
 
     it('saves the order to the database', async () => {

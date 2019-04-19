@@ -156,7 +156,7 @@ const FillStateMachine = StateMachine.factory({
    * @returns {Object} Data to attach to the state machine
    */
   data: function ({ store, logger, relayer, engines }) {
-    return { store, logger, relayer, engines, fill: {}, dates: {} }
+    return { store, logger, relayer, engines, fill: {} }
   },
   methods: {
     /**

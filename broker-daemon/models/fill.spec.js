@@ -114,13 +114,13 @@ describe('Fill', () => {
 
     it('returns a serialized version of the fill', () => {
       const params = {
-        state: 'ACCEPTED',
+        state: 'FILLED',
         dates: {
-          dateAccepted: '2019-04-15T17:22:26.672Z'
+          filled: '2019-04-15T17:22:26.672Z'
         },
         fill: {
+          blockOrderId: 'asdfasdf',
           order: {
-            blockOrderId: 'asdfasdf',
             orderId: 'fakeID',
             baseSymbol: 'BTC',
             counterSymbol: 'LTC',
@@ -135,9 +135,9 @@ describe('Fill', () => {
 
       const fill = Fill.serialize(params)
 
-      expect(fill).to.have.property('blockOrderId', params.fill.order.blockOrderId)
+      expect(fill).to.have.property('blockOrderId', params.fill.blockOrderId)
       expect(fill).to.have.property('fillId', params.fill.fillId)
-      expect(fill).to.have.property('fillAmount', params.fill.fillAmount)
+      expect(fill).to.have.property('amount', '0.0000900000000000')
       expect(fill).to.have.property('baseSymbol', params.fill.order.baseSymbol)
       expect(fill).to.have.property('counterSymbol', params.fill.order.counterSymbol)
       expect(fill).to.have.property('side', params.fill.order.side)
