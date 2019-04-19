@@ -360,6 +360,9 @@ message Order {
     CANCELLED = 6;
   }
 
+  /**
+   * Date that the order has reached each status.
+   */
   message OrderStateDates {
     // The date the order has been created on the Relayer.
     string created = 1;
@@ -422,12 +425,15 @@ message Fill {
     CANCELLED = 5;
   }
 
+  /**
+   * Date that the fill has reached each status.
+   */
   message FillStateDates {
     // The date the fill has been created on the Relayer.
     string created = 1;
     // The date the fill has been accepted as the fill for the given order.
     string filled = 2;
-    // The date the swap has been executed on the Payment Channel Networks.
+    // The date the fill has encountered a failure.
     string executed = 3;
     // The date the preimage has been returned to the Relayer by the Maker.
     string rejected = 5;
@@ -589,6 +595,9 @@ message GetBlockOrdersRequest {
   string market = 1;
 }
 
+/**
+ * Gets all completed trades for a user.
+ */
 message GetTradeHistoryResponse {
   // A list of completed and execting orders
   repeated Order orders = 1;

@@ -43,6 +43,8 @@ const FillStateMachine = StateMachine.factory({
     new StateMachineLogging({
       skipTransitions: [ 'goto' ]
     }),
+    // StateMachineDates plugin needs to be instantiated before StateMachinePersistence plugin
+    // because the first date onEnterState needs to be set before we persist
     new StateMachineDates({
       skipTransitions: [ 'goto' ]
     }),

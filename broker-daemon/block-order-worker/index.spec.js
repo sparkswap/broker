@@ -2542,5 +2542,21 @@ describe('BlockOrderWorker', () => {
         ]
       })
     })
+
+    it('serializes the filtered orders', async () => {
+      await worker.getTrades()
+
+      expect(Order.serialize).to.have.been.calledWith(completedOrder)
+      expect(Order.serialize).to.have.been.calledWith(executingOrder)
+      expect(Order.serialize).to.not.have.been.calledWith(rejectedOrder)
+    })
+
+    it('serializes the filtered fills', async () => {
+      await worker.getTrades()
+
+      expect(Fill.serialize).to.have.been.calledWith(filledFill)
+      expect(Fill.serialize).to.have.been.calledWith(executedFill)
+      expect(Fill.serialize).to.not.have.been.calledWith(rejectedFill)
+    })
   })
 })
