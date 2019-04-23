@@ -25,7 +25,7 @@ NC='\033[0m' # No Color
 # The directory where we store the sparkswap configuration, certs, and keys.
 SPARKSWAP_DIRECTORY=~/.sparkswap
 
-BROKER_VERSION="v0.6.1-beta"
+BROKER_VERSION="v0.6.2-beta"
 
 # Set the minimum to approx. 6 months prior
 MIN_DOCKER_VERSION=18.09.0
