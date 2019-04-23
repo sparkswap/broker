@@ -1,6 +1,6 @@
 {
   "name": "broker",
-  "version": "0.6.1-beta",
+  "version": "0.6.2-beta",
   "description": "Broker software to interact with the Sparkswap Relayer.",
   "main": "src/index.js",
   "config": {
