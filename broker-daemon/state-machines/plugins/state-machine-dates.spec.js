@@ -3,7 +3,7 @@ const { expect, timekeeper } = require('test/test-helper')
 const StateMachineDates = require('./state-machine-dates')
 const StateMachine = require('../state-machine')
 
-describe('StateMachineLogging', () => {
+describe('StateMachineDates', () => {
   describe('observers', () => {
     let stateMachineDates
     let Machine
