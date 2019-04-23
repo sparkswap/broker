@@ -9,7 +9,8 @@ const {
   StateMachinePersistence,
   StateMachineRejection,
   StateMachineLogging,
-  StateMachineEvents
+  StateMachineEvents,
+  StateMachineDates
 } = require('./plugins')
 
 /**
@@ -40,6 +41,11 @@ const FillStateMachine = StateMachine.factory({
     new StateMachineRejection(),
     new StateMachineEvents(),
     new StateMachineLogging({
+      skipTransitions: [ 'goto' ]
+    }),
+    // StateMachineDates plugin needs to be instantiated before StateMachinePersistence plugin
+    // because the first date onEnterState needs to be set before we persist
+    new StateMachineDates({
       skipTransitions: [ 'goto' ]
     }),
     new StateMachinePersistence({
@@ -94,6 +100,18 @@ const FillStateMachine = StateMachine.factory({
           if (this.error) {
             return this.error.message
           }
+        },
+        /**
+         * @type {StateMachinePersistence~FieldAccessor}
+         * @param {Object}   dates - Stored plain object of dates for the states that have been entered on the State machine
+         * @returns {Object} dates - Plain object of dates for the states that have been entered on the State machine
+         */
+        dates: function (dates) {
+          if (dates) {
+            this.dates = dates
+          }
+
+          return this.dates
         }
       }
     })
@@ -405,6 +423,29 @@ const FillStateMachine = StateMachine.factory({
     }
   }
 })
+
+/**
+ * serialize an fill for transmission via grpc
+ * @param {Object} fillObject - Plain object representation of the fill, state, dates
+ * @returns {Object} Object to be serialized into a GRPC message
+ */
+FillStateMachine.serialize = function (fillObject) {
+  const {
+    fill,
+    state,
+    error,
+    dates
+  } = fillObject
+
+  const serializedFill = fill.serialize()
+
+  return {
+    fillStatus: state.toUpperCase(),
+    error: error ? error.toString() : undefined,
+    dates,
+    ...serializedFill
+  }
+}
 
 /**
  * Instantiate and create a fill

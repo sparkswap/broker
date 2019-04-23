@@ -360,6 +360,24 @@ message Order {
     CANCELLED = 6;
   }
 
+  /**
+   * Date that the order has reached each status.
+   */
+  message OrderStateDates {
+    // The date the order has been created on the Relayer.
+    string created = 1;
+    // The date the order has been placed and communicated to other marker participants.
+    string placed = 2;
+    // The date the swap is being executed on the Payment Channel Networks
+    string executing = 3;
+    // The date the swap preimage has been returned to the Relayer.
+    string completed = 4;
+    // The date the order has encountered a failure.
+    string rejected = 5;
+    // The date the order has been cancelled by the user.
+    string cancelled = 6;
+  }
+
   // Unique ID assigned by the Relayer for this order.
   string order_id = 1;
   // Status of the order on the Relayer.
@@ -369,7 +387,21 @@ message Order {
   // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the SparkSwap Relayer have prices.
   string price = 4;
   // Any error messages related to the status of a REJECTED or FAILED order
-  string order_error = 6;
+  string error = 6;
+  // The unique ID for the block order assigned by the Broker that this order belongs to.
+  string block_order_id = 7;
+  // The base currency for the order
+  string base_symbol = 8;
+  // The counter currency for the order
+  string counter_symbol = 9;
+  // The side of the market that the order is taking.
+  string side = 10;
+  // Dates that the order has reached each status
+  OrderStateDates dates = 11;
+  // Amount of the order filled, expressed in a decimal string of common units for a currency (e.g. bitcoins for BTC).
+  // This can be any amount greater than zero and less than or equal to the amount in the order. This will be an empty
+  // string if the order has not been filled.
+  string fill_amount = 12;
 }
 
 /**
@@ -387,16 +419,31 @@ message Fill {
     FILLED = 1;
     // The swap has been executed on the Payment Channel Networks.
     EXECUTED = 2;
-    // The preimage has been returned to the Relayer by the Maker.
-    COMPLETED = 3;
     // The fill has encountered a failure.
     REJECTED = 4;
     // The fill has been cancelled.
     CANCELLED = 5;
   }
+
+  /**
+   * Date that the fill has reached each status.
+   */
+  message FillStateDates {
+    // The date the fill has been created on the Relayer.
+    string created = 1;
+    // The date the fill has been accepted as the fill for the given order.
+    string filled = 2;
+    // The date the fill has encountered a failure.
+    string executed = 3;
+    // The date the fill has encountered a failure.
+    string rejected = 5;
+    // The date the fill has been cancelled.
+    string cancelled = 6;
+  }
+
   // The Relayer-assigned unique ID of the order that this fill is for.
   string order_id = 1;
-  // The Relayer-assignded unique ID for this fill.
+  // The Relayer-assigned unique ID for this fill.
   string fill_id = 2;
   // Status of the fill on the Relayer.
   FillStatus fill_status = 3;
@@ -405,7 +452,17 @@ message Fill {
   // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the SparkSwap Relayer have prices.
   string price = 5;
   // Any error messages related to the status of a REJECTED or FAILED fill
-  string fill_error = 6;
+  string error = 6;
+  // The unique ID for the block order assigned by the Broker that this fill belongs to.
+  string block_order_id = 7;
+  // The base currency for the fill
+  string base_symbol = 8;
+  // The counter currency for the fill
+  string counter_symbol = 9;
+  // The side of the market that the order is taking.
+  string side = 10;
+  // Dates that the fill has reached each status
+  FillStateDates dates = 11;
 }
 
 /**
@@ -536,6 +593,16 @@ message GetBlockOrdersResponse {
 message GetBlockOrdersRequest {
   // Market for which to retrieve block orders, expressed as a string separating two common symbols with a '/', e.g. `'BTC/LTC'`
   string market = 1;
+}
+
+/**
+ * Gets all completed trades for a user.
+ */
+message GetTradeHistoryResponse {
+  // A list of completed and execting orders
+  repeated Order orders = 1;
+  // A list of accepted and executed fills
+  repeated Fill fills = 2;
 }
 
 /**
@@ -806,6 +873,120 @@ service OrderService {
       get: "/v1/orders"
     };
   }
+  /**
+   * GetTradeHistory returns all completed and executing orders and all accepted and executed fills.
+   *
+   * ```javascript
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * const blockOrder = orderService.getTradeHistory({}, { deadline }, (err, res) => {
+   *   if (err) return console.error(err)
+   *   console.log(res)
+   * })
+   * ```
+   *
+   * ```shell
+   * > sparkswap order trade-history
+   * ```
+   *
+   * > The above command will retrieve the trades on the Broker and will print:
+   *
+   * ```javascript
+   * {
+   *   "orders": [
+   *     {
+   *       "orderId": "GZnWxbVT6hK_2KM-r_hbSXp0",
+   *       "orderStatus": "COMPLETED",
+   *       "amount": "0.0040000000000000",
+   *       "price": "0.0040000000000000",
+   *       "error": "",
+   *       "blockOrderId": "XLoVOEJdJgO8JWAB",
+   *       "baseSymbol": "BTC",
+   *       "counterSymbol": "LTC",
+   *       "side": "ASK",
+   *       "dates": {
+   *         "created": "2019-04-19T18:36:40.809Z",
+   *         "placed": "2019-04-19T18:36:40.816Z",
+   *         "executing": "2019-04-19T18:36:52.556Z",
+   *         "completed": "2019-04-19T18:36:53.357Z",
+   *         "rejected": "",
+   *         "cancelled": ""
+   *       },
+   *       "fillAmount": "0.0010000000000000"
+   *     }
+   *   ],
+   *   "fills": [
+   *     {
+   *       "orderId": "PBt5GmSgJte9agAfDCj28j_7",
+   *       "fillId": "YQRN_XXJysf_toi73wZTTnQW",
+   *       "fillStatus": "EXECUTED",
+   *       "amount": "0.0030000000000000",
+   *       "price": "0.0030000000000000",
+   *       "error": "",
+   *       "blockOrderId": "XLoRm8Df_0Wa-A57",
+   *       "baseSymbol": "BTC",
+   *       "counterSymbol": "LTC",
+   *       "side": "BID",
+   *       "dates": {
+   *         "created": "2019-04-19T18:21:15.751Z",
+   *         "filled": "2019-04-19T18:21:15.820Z",
+   *         "executed": "2019-04-19T18:21:16.824Z",
+   *         "rejected": "",
+   *         "cancelled": ""
+   *       }
+   *     }
+   *   ]
+   * }
+   * ```
+   *
+   * ```shell
+   * {
+   *   "orders": [
+   *     {
+   *       "orderId": "GZnWxbVT6hK_2KM-r_hbSXp0",
+   *       "orderStatus": "COMPLETED",
+   *       "amount": "0.0040000000000000",
+   *       "price": "0.0040000000000000",
+   *       "error": "",
+   *       "blockOrderId": "XLoVOEJdJgO8JWAB",
+   *       "baseSymbol": "BTC",
+   *       "counterSymbol": "LTC",
+   *       "side": "ASK",
+   *       "dates": {
+   *         "created": "2019-04-19T18:36:40.809Z",
+   *         "placed": "2019-04-19T18:36:40.816Z",
+   *         "executing": "2019-04-19T18:36:52.556Z",
+   *         "completed": "2019-04-19T18:36:53.357Z",
+   *         "rejected": "",
+   *         "cancelled": ""
+   *       },
+   *       "fillAmount": "0.0010000000000000"
+   *     }
+   *   ],
+   *   "fills": [
+   *     {
+   *       "orderId": "PBt5GmSgJte9agAfDCj28j_7",
+   *       "fillId": "YQRN_XXJysf_toi73wZTTnQW",
+   *       "fillStatus": "EXECUTED",
+   *       "amount": "0.0030000000000000",
+   *       "price": "0.0030000000000000",
+   *       "error": "",
+   *       "blockOrderId": "XLoRm8Df_0Wa-A57",
+   *       "baseSymbol": "BTC",
+   *       "counterSymbol": "LTC",
+   *       "side": "BID",
+   *       "dates": {
+   *         "created": "2019-04-19T18:21:15.751Z",
+   *         "filled": "2019-04-19T18:21:15.820Z",
+   *         "executed": "2019-04-19T18:21:16.824Z",
+   *         "rejected": "",
+   *         "cancelled": ""
+   *       }
+   *     }
+   *   ]
+   * }
+   * ```
+   */
+  rpc GetTradeHistory (google.protobuf.Empty) returns (GetTradeHistoryResponse);
 }
 
 /**

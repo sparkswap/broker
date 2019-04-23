@@ -848,6 +848,45 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
+   * Get all completed trade info
+   * @returns {Object} result
+   * @returns {Array<Object>} result.orders all completed orders for a user
+   * @returns {Array<Object>} result.fills all completed fills for a user
+   */
+  async getTrades () {
+    const [
+      orders,
+      fills
+    ] = await Promise.all([
+      getRecords(this.ordersStore,
+        (key, value) => {
+          const { order, state, error, dates } = JSON.parse(value)
+          return { order: Order.fromObject(key, order), state, error, dates }
+        }),
+      getRecords(this.fillsStore,
+        (key, value) => {
+          const { fill, state, error, dates } = JSON.parse(value)
+          return { fill: Fill.fromObject(key, fill), state, error, dates }
+        })
+    ])
+
+    const filteredOrders = orders.filter(order =>
+      order.state === OrderStateMachine.STATES.COMPLETED || order.state === OrderStateMachine.STATES.EXECUTING
+    )
+    const filteredFills = fills.filter(fill =>
+      fill.state === FillStateMachine.STATES.FILLED || fill.state === FillStateMachine.STATES.EXECUTED
+    )
+
+    const serializedOrders = filteredOrders.map(o => OrderStateMachine.serialize(o))
+    const serializedFills = filteredFills.map(f => FillStateMachine.serialize(f))
+
+    return {
+      orders: serializedOrders,
+      fills: serializedFills
+    }
+  }
+
+  /**
    * Checks if the relayer is available by pinging the healthCheck endpoint. If available,
    * returns true. False otherwise.
    * @private

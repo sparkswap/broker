@@ -16,13 +16,15 @@ const SUPPORTED_COMMANDS = Object.freeze({
   STATUS: 'status',
   CANCEL: 'cancel',
   SUMMARY: 'summary',
-  CANCEL_ALL: 'cancel-all'
+  CANCEL_ALL: 'cancel-all',
+  TRADE_HISTORY: 'trade-history'
 })
 
 const status = require('./status')
 const cancel = require('./cancel')
 const summary = require('./summary')
 const cancelAll = require('./cancel-all')
+const tradeHistory = require('./trade-history')
 
 module.exports = (program) => {
   program
@@ -58,6 +60,9 @@ module.exports = (program) => {
         case SUPPORTED_COMMANDS.CANCEL_ALL:
           opts.market = validations.isMarketName(market)
           return cancelAll(args, opts, logger)
+
+        case SUPPORTED_COMMANDS.TRADE_HISTORY:
+          return tradeHistory(args, opts, logger)
       }
     })
     .command(`order ${SUPPORTED_COMMANDS.SUMMARY}`, 'View your orders')
@@ -73,5 +78,7 @@ module.exports = (program) => {
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .command(`order ${SUPPORTED_COMMANDS.CANCEL_ALL}`, 'Cancel all block orders on market')
     .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
+    .command(`order ${SUPPORTED_COMMANDS.TRADE_HISTORY}`, 'Get information about completed and processing trades')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
 }

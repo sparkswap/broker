@@ -1,5 +1,5 @@
 const { Big } = require('../utils')
-
+const CONFIG = require('../config')
 /**
  * Delimiter for the block order id and order when storing orders
  * @constant
@@ -93,6 +93,29 @@ class Order {
    */
   setSettledParams ({ swapPreimage }) {
     this.swapPreimage = swapPreimage
+  }
+
+  /**
+   * serialize an order for transmission via grpc
+   * @returns {Object} serialzed order to send in a GRPC message
+   */
+  serialize () {
+    const baseAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol).quantumsPerCommon
+    const counterAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.counterSymbol).quantumsPerCommon
+    const baseCommonAmount = Big(this.baseAmount).div(baseAmountFactor)
+    const counterCommonAmount = Big(this.counterAmount).div(counterAmountFactor)
+    const fillCommonAmount = this.fillAmount ? Big(this.fillAmount).div(baseAmountFactor).toFixed(16) : this.fillAmount
+
+    return {
+      orderId: this.orderId,
+      blockOrderId: this.blockOrderId,
+      side: this.side,
+      baseSymbol: this.baseSymbol,
+      counterSymbol: this.counterSymbol,
+      amount: baseCommonAmount.toFixed(16),
+      price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
+      fillAmount: fillCommonAmount
+    }
   }
 
   /**

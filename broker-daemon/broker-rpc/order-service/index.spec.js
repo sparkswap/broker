@@ -9,6 +9,7 @@ describe('OrderService', () => {
   let cancelBlockOrderStub
   let getBlockOrdersStub
   let cancelAllBlockOrdersStub
+  let getTradeHistoryStub
 
   let GrpcMethod
   let register
@@ -36,6 +37,7 @@ describe('OrderService', () => {
           GetBlockOrderResponse: sinon.stub(),
           GetBlockOrdersResponse: sinon.stub(),
           CancelAllBlockOrdersResponse: sinon.stub(),
+          GetTradeHistoryResponse: sinon.stub(),
           TimeInForce: {
             GTC: 0
           }
@@ -72,6 +74,9 @@ describe('OrderService', () => {
 
     cancelAllBlockOrdersStub = sinon.stub()
     OrderService.__set__('cancelAllBlockOrders', cancelAllBlockOrdersStub)
+
+    getTradeHistoryStub = sinon.stub()
+    OrderService.__set__('getTradeHistory', getTradeHistoryStub)
   })
 
   beforeEach(() => {
@@ -346,6 +351,53 @@ describe('OrderService', () => {
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.an('object')
       expect(callArgs[3]).to.have.property('CancelAllBlockOrdersResponse', proto.broker.rpc.CancelAllBlockOrdersResponse)
+    })
+  })
+
+  describe('#getTradeHistory', () => {
+    let callOrder = 5
+    let callArgs
+
+    beforeEach(() => {
+      callArgs = GrpcMethod.args[callOrder]
+    })
+
+    it('exposes an implementation', () => {
+      expect(server.implementation).to.have.property('getTradeHistory')
+      expect(server.implementation.getTradeHistory).to.be.a('function')
+    })
+
+    it('creates a GrpcMethod', () => {
+      expect(GrpcMethod).to.have.been.called()
+      expect(GrpcMethod).to.have.been.calledWithNew()
+      expect(server.implementation.getTradeHistory).to.be.equal(fakeRegistered)
+    })
+
+    it('provides the method', () => {
+      expect(callArgs[0]).to.be.equal(getTradeHistoryStub)
+    })
+
+    it('provides a message id', () => {
+      expect(callArgs[1]).to.be.equal('[OrderService:getTradeHistory]')
+    })
+
+    describe('request options', () => {
+      it('passes in the logger', () => {
+        expect(callArgs[2]).to.have.property('logger', logger)
+      })
+
+      it('block order worker', () => {
+        expect(callArgs[2]).to.have.property('blockOrderWorker', blockOrderWorker)
+      })
+
+      it('passes in auth', () => {
+        expect(callArgs[2]).to.have.property('auth', auth)
+      })
+    })
+
+    it('passes in the response', () => {
+      expect(callArgs[3]).to.be.an('object')
+      expect(callArgs[3]).to.have.property('GetTradeHistoryResponse', proto.broker.rpc.GetTradeHistoryResponse)
     })
   })
 })

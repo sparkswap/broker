@@ -1,5 +1,6 @@
 const Order = require('./order')
 const { Big } = require('../utils')
+const CONFIG = require('../config')
 
 /**
  * Delimiter for the block order id and fill id when storing fills
@@ -98,6 +99,28 @@ class Fill {
    */
   setExecuteParams ({ makerAddress }) {
     this.makerAddress = makerAddress
+  }
+
+  /**
+   * serialize an fill for transmission via grpc
+   * @returns {Object} Object to be serialized into a GRPC message
+   */
+  serialize () {
+    const baseAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.order.baseSymbol).quantumsPerCommon
+    const counterAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.order.counterSymbol).quantumsPerCommon
+    const baseCommonAmount = Big(this.order.baseAmount).div(baseAmountFactor)
+    const counterCommonAmount = Big(this.order.counterAmount).div(counterAmountFactor)
+
+    return {
+      fillId: this.fillId,
+      orderId: this.order.orderId,
+      blockOrderId: this.blockOrderId,
+      side: this.order.side,
+      baseSymbol: this.order.baseSymbol,
+      counterSymbol: this.order.counterSymbol,
+      price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
+      amount: Big(this.fillAmount).div(baseAmountFactor).toFixed(16)
+    }
   }
 
   /**
@@ -338,7 +361,7 @@ class Fill {
    * @returns {Fill}              Inflated fill object
    */
   static fromObject (key, valueObject) {
-    // keys are the unique id for the object (orderId) prefixed by the object they belong to (blockOrderId)
+    // keys are the unique id for the object (fillId) prefixed by the object they belong to (blockOrderId)
     // and are separated by the delimiter (:)
     const [ blockOrderId, fillId ] = key.split(DELIMITER)
 

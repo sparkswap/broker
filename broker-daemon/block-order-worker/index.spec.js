@@ -62,7 +62,8 @@ describe('BlockOrderWorker', () => {
       CREATED: 'created',
       PLACED: 'placed',
       EXECUTING: 'executing',
-      CANCELLED: 'cancelled'
+      CANCELLED: 'cancelled',
+      COMPLETED: 'completed'
     }
 
     OrderStateMachine.INDETERMINATE_STATES = {
@@ -76,7 +77,8 @@ describe('BlockOrderWorker', () => {
     FillStateMachine.STATES = {
       NONE: 'none',
       CREATED: 'created',
-      FILLED: 'filled'
+      FILLED: 'filled',
+      EXECUTED: 'executed'
     }
 
     FillStateMachine.INDETERMINATE_STATES = {
@@ -2436,6 +2438,125 @@ describe('BlockOrderWorker', () => {
       const res = await worker.getBlockOrders(market)
 
       expect(res).to.eql([firstBlockOrder])
+    })
+  })
+
+  describe('getTrades', () => {
+    let worker
+    let getRecords
+    let ordersStore
+    let fillsStore
+    let completedOrder
+    let executingOrder
+    let rejectedOrder
+    let filledFill
+    let executedFill
+    let rejectedFill
+
+    beforeEach(() => {
+      ordersStore = {
+        put: sinon.stub()
+      }
+      fillsStore = {
+        put: sinon.stub()
+      }
+
+      completedOrder = {
+        orderId: 'orderId',
+        state: 'completed'
+      }
+      executingOrder = {
+        orderId: 'orderId2',
+        state: 'executing'
+      }
+      rejectedOrder = {
+        orderId: 'orderId3',
+        state: 'rejected'
+      }
+
+      filledFill = {
+        fillId: 'fillId',
+        state: 'filled'
+      }
+      executedFill = {
+        fillId: 'fillId2',
+        state: 'executed'
+      }
+      rejectedFill = {
+        fillId: 'fillId3',
+        state: 'rejected'
+      }
+
+      getRecords = sinon.stub()
+      getRecords.withArgs(
+        ordersStore,
+        sinon.match.func
+      ).resolves([
+        completedOrder,
+        executingOrder,
+        rejectedOrder
+      ])
+      getRecords.withArgs(
+        fillsStore,
+        sinon.match.func
+      ).resolves([
+        filledFill,
+        executedFill,
+        rejectedFill
+      ])
+
+      BlockOrderWorker.__set__('getRecords', getRecords)
+
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+      worker.ordersStore = ordersStore
+      worker.fillsStore = fillsStore
+      OrderStateMachine.serialize = sinon.stub().returnsArg(0)
+      FillStateMachine.serialize = sinon.stub().returnsArg(0)
+    })
+
+    it('retrieves all orders and fills from the store', async () => {
+      await worker.getTrades()
+
+      expect(getRecords).to.have.been.calledTwice()
+      expect(getRecords).to.have.been.calledWith(
+        ordersStore,
+        sinon.match.func
+      )
+      expect(getRecords).to.have.been.calledWith(
+        fillsStore,
+        sinon.match.func
+      )
+    })
+
+    it('returns filtered orders and fills', async () => {
+      const res = await worker.getTrades()
+
+      expect(res).to.eql({
+        orders: [
+          completedOrder,
+          executingOrder
+        ],
+        fills: [
+          filledFill,
+          executedFill
+        ]
+      })
+    })
+
+    it('serializes the filtered orders', async () => {
+      await worker.getTrades()
+
+      expect(OrderStateMachine.serialize).to.have.been.calledWith(completedOrder)
+      expect(OrderStateMachine.serialize).to.have.been.calledWith(executingOrder)
+      expect(OrderStateMachine.serialize).to.not.have.been.calledWith(rejectedOrder)
+    })
+
+    it('serializes the filtered fills', async () => {
+      await worker.getTrades()
+
+      expect(FillStateMachine.serialize).to.have.been.calledWith(filledFill)
+      expect(FillStateMachine.serialize).to.have.been.calledWith(executedFill)
+      expect(FillStateMachine.serialize).to.not.have.been.calledWith(rejectedFill)
     })
   })
 })

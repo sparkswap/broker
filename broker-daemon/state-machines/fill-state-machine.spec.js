@@ -909,4 +909,36 @@ describe('FillStateMachine', () => {
       expect(fsm.fill).to.be.equal(myObject)
     })
   })
+
+  describe('::serialize', () => {
+    let fillObject
+
+    beforeEach(() => {
+      fillObject = {
+        fill: {
+          serialize: sinon.stub().returns({})
+        },
+        state: 'EXECUTED',
+        dates: {
+          'created': '2019-04-19T18:21:15.751Z',
+          'filled': '2019-04-19T18:21:15.820Z',
+          'executed': '2019-04-19T18:21:16.824Z'
+        }
+      }
+    })
+
+    it('serializes the fill', async () => {
+      await FillStateMachine.serialize(fillObject)
+
+      expect(fillObject.fill.serialize).to.have.been.called()
+    })
+
+    it('returns the serialized fill with state and dates', async () => {
+      const serializedFill = await FillStateMachine.serialize(fillObject)
+
+      expect(serializedFill).to.have.property('fillStatus', fillObject.state.toUpperCase())
+      expect(serializedFill).to.have.property('dates', fillObject.dates)
+      expect(serializedFill).to.have.property('error', undefined)
+    })
+  })
 })

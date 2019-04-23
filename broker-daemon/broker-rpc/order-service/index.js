@@ -6,6 +6,7 @@ const getBlockOrder = require('./get-block-order')
 const cancelBlockOrder = require('./cancel-block-order')
 const getBlockOrders = require('./get-block-orders')
 const cancelAllBlockOrders = require('./cancel-all-block-orders')
+const getTradeHistory = require('./get-trade-history')
 
 class OrderService {
   /**
@@ -28,7 +29,8 @@ class OrderService {
       TimeInForce,
       GetBlockOrderResponse,
       GetBlockOrdersResponse,
-      CancelAllBlockOrdersResponse
+      CancelAllBlockOrdersResponse,
+      GetTradeHistoryResponse
     } = this.proto.broker.rpc
 
     this.implementation = {
@@ -36,7 +38,8 @@ class OrderService {
       getBlockOrder: new GrpcUnaryMethod(getBlockOrder, this.messageId('getBlockOrder'), { logger, blockOrderWorker, auth }, { GetBlockOrderResponse }).register(),
       cancelBlockOrder: new GrpcUnaryMethod(cancelBlockOrder, this.messageId('cancelBlockOrder'), { logger, blockOrderWorker, auth }).register(),
       getBlockOrders: new GrpcUnaryMethod(getBlockOrders, this.messageId('getBlockOrders'), { logger, blockOrderWorker, auth }, { GetBlockOrdersResponse }).register(),
-      cancelAllBlockOrders: new GrpcUnaryMethod(cancelAllBlockOrders, this.messageId('cancelAllBlockOrders'), { logger, blockOrderWorker, auth }, { CancelAllBlockOrdersResponse }).register()
+      cancelAllBlockOrders: new GrpcUnaryMethod(cancelAllBlockOrders, this.messageId('cancelAllBlockOrders'), { logger, blockOrderWorker, auth }, { CancelAllBlockOrdersResponse }).register(),
+      getTradeHistory: new GrpcUnaryMethod(getTradeHistory, this.messageId('getTradeHistory'), { logger, blockOrderWorker, auth }, { GetTradeHistoryResponse }).register()
     }
   }
 

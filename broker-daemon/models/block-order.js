@@ -338,8 +338,8 @@ class BlockOrder {
     const orders = await getRecords(
       store,
       (key, value) => {
-        const { order, state, error } = JSON.parse(value)
-        return { order: Order.fromObject(key, order), state, error }
+        const { order, state, error, dates } = JSON.parse(value)
+        return { order: Order.fromObject(key, order), state, error, dates }
       },
       // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
       // its prefix range.
@@ -357,8 +357,8 @@ class BlockOrder {
     const fills = await getRecords(
       store,
       (key, value) => {
-        const { fill, state, error } = JSON.parse(value)
-        return { fill: Fill.fromObject(key, fill), state, error }
+        const { fill, state, error, dates } = JSON.parse(value)
+        return { fill: Fill.fromObject(key, fill), state, error, dates }
       },
       // limit the fills we retrieve to those that belong to this blockOrder, i.e. those that are in
       // its prefix range.
@@ -372,34 +372,12 @@ class BlockOrder {
    * @returns {Object} Object to be serialized into a GRPC message
    */
   serialize () {
-    const baseAmountFactor = this.baseCurrencyConfig.quantumsPerCommon
-    const counterAmountFactor = this.counterCurrencyConfig.quantumsPerCommon
-
-    const orders = this.orders.map(({ order, state, error }) => {
-      const baseCommonAmount = Big(order.baseAmount).div(baseAmountFactor)
-      const counterCommonAmount = Big(order.counterAmount).div(counterAmountFactor)
-
-      return {
-        orderId: order.orderId,
-        amount: baseCommonAmount.toFixed(16),
-        price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
-        orderStatus: state.toUpperCase(),
-        orderError: error ? error.toString() : undefined
-      }
+    const orders = this.orders.map((orderObject) => {
+      return OrderStateMachine.serialize(orderObject)
     })
 
-    const fills = this.fills.map(({ fill, state, error }) => {
-      const baseCommonAmount = Big(fill.fillAmount).div(baseAmountFactor)
-      const counterCommonAmount = Big(fill.counterFillAmount).div(counterAmountFactor)
-
-      return {
-        orderId: fill.order.orderId,
-        fillId: fill.fillId,
-        amount: baseCommonAmount.toFixed(16),
-        price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
-        fillStatus: state.toUpperCase(),
-        fillError: error ? error.toString() : undefined
-      }
+    const fills = this.fills.map((fillObject) => {
+      return FillStateMachine.serialize(fillObject)
     })
 
     const serialized = {
@@ -411,7 +389,7 @@ class BlockOrder {
       timestamp: this.timestamp,
       datetime: this.datetime,
       orders,
-      fills: fills
+      fills
     }
 
     if (this.price) {

@@ -10,7 +10,8 @@ const {
   StateMachinePersistence,
   StateMachineRejection,
   StateMachineLogging,
-  StateMachineEvents
+  StateMachineEvents,
+  StateMachineDates
 } = require('./plugins')
 
 /**
@@ -40,6 +41,11 @@ const OrderStateMachine = StateMachine.factory({
     new StateMachineHistory(),
     new StateMachineRejection(),
     new StateMachineLogging({
+      skipTransitions: [ 'goto' ]
+    }),
+    // StateMachineDates plugin needs to be instantiated before StateMachinePersistence plugin
+    // because the first date onEnterState needs to be set before we persist
+    new StateMachineDates({
       skipTransitions: [ 'goto' ]
     }),
     new StateMachineEvents(),
@@ -81,6 +87,18 @@ const OrderStateMachine = StateMachine.factory({
           }
 
           return this.history
+        },
+        /**
+         * @type {StateMachinePersistence~FieldAccessor}
+         * @param {Object}   dates - Stored plain object of dates for the states that have been entered on the State machine
+         * @returns {Object} dates - Plain object of dates for the states that have been entered on the State machine
+         */
+        dates: function (dates) {
+          if (dates) {
+            this.dates = dates
+          }
+
+          return this.dates
         },
         /**
          * @type {StateMachinePersistence~FieldAccessor}
@@ -170,7 +188,7 @@ const OrderStateMachine = StateMachine.factory({
 
     onBeforeCreate: async function (lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
       this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount })
-      // TODO: figure out a way to cache the maker address instead of making a request
+
       const baseEngine = this.engines.get(this.order.baseSymbol)
       if (!baseEngine) {
         throw new Error(`No engine available for ${this.order.baseSymbol}`)
@@ -180,6 +198,8 @@ const OrderStateMachine = StateMachine.factory({
       if (!counterEngine) {
         throw new Error(`No engine available for ${this.order.counterSymbol}`)
       }
+
+      // TODO: figure out a way to cache the maker address instead of making a request
       this.order.makerBaseAddress = await baseEngine.getPaymentChannelNetworkAddress()
       this.order.makerCounterAddress = await counterEngine.getPaymentChannelNetworkAddress()
 
@@ -434,6 +454,29 @@ const OrderStateMachine = StateMachine.factory({
     }
   }
 })
+
+/**
+ * serialize an order, its state and dates for transmission via grpc
+ * @param {Object} orderObject - Plain object representation of the order, state, dates
+ * @returns {Object} Object (order) to be serialized into a GRPC message
+ */
+OrderStateMachine.serialize = function (orderObject) {
+  const {
+    order,
+    state,
+    error,
+    dates
+  } = orderObject
+
+  const serializedOrder = order.serialize()
+
+  return {
+    orderStatus: state.toUpperCase(),
+    error: error ? error.toString() : undefined,
+    dates,
+    ...serializedOrder
+  }
+}
 
 /**
  * Instantiate and create an order
