@@ -419,7 +419,7 @@ message Fill {
     FILLED = 1;
     // The swap has been executed on the Payment Channel Networks.
     EXECUTED = 2;
-    // The preimage has been returned to the Relayer by the Maker.
+    // The fill has encountered a failure.
     REJECTED = 4;
     // The fill has been cancelled.
     CANCELLED = 5;
@@ -435,7 +435,7 @@ message Fill {
     string filled = 2;
     // The date the fill has encountered a failure.
     string executed = 3;
-    // The date the preimage has been returned to the Relayer by the Maker.
+    // The date the fill has encountered a failure.
     string rejected = 5;
     // The date the fill has been cancelled.
     string cancelled = 6;

@@ -253,6 +253,8 @@ describe('BlockOrder', () => {
     let timestamp
     let Order
     let Fill
+    let OrderStateMachine
+    let FillStateMachine
 
     let reverts = []
 
@@ -288,20 +290,46 @@ describe('BlockOrder', () => {
       Order = {
         fromObject: sinon.stub(),
         fromStorage: sinon.stub(),
-        rangeForBlockOrder: sinon.stub(),
-        serialize: sinon.stub()
+        rangeForBlockOrder: sinon.stub()
       }
+      OrderStateMachine = {
+        serialize: sinon.stub(),
+        STATES: {
+          NONE: 'none',
+          CREATED: 'created',
+          PLACED: 'placed',
+          CANCELLED: 'cancelled',
+          EXECUTING: 'executing',
+          COMPLETED: 'completed',
+          REJECTED: 'rejected'
+        }
+      }
+
+      FillStateMachine = {
+        serialize: sinon.stub(),
+        STATES: {
+          NONE: 'none',
+          CREATED: 'created',
+          FILLED: 'filled',
+          EXECUTED: 'executed',
+          CANCELLED: 'cancelled',
+          REJECTED: 'rejected'
+        }
+      }
+
       BlockOrder.__set__('Order', Order)
 
       Fill = {
         fromObject: sinon.stub(),
-        rangeForBlockOrder: sinon.stub(),
-        serialize: sinon.stub()
+        rangeForBlockOrder: sinon.stub()
       }
+
       BlockOrder.__set__('Fill', Fill)
 
       reverts.push(BlockOrder.__set__('CONFIG', CONFIG))
       reverts.push(BlockOrder.__set__('nanoToDatetime', nanoToDatetimeStub))
+      reverts.push(BlockOrder.__set__('OrderStateMachine', OrderStateMachine))
+      reverts.push(BlockOrder.__set__('FillStateMachine', FillStateMachine))
 
       blockOrder = new BlockOrder(params)
     })
@@ -416,7 +444,7 @@ describe('BlockOrder', () => {
 
         it('serializes all of the orders', () => {
           blockOrder.orders = [ osm ]
-          Order.serialize.returns([ osm ])
+          OrderStateMachine.serialize.returns([ osm ])
 
           const serialized = blockOrder.serialize()
 
@@ -458,7 +486,7 @@ describe('BlockOrder', () => {
 
         it('serializes all of the fills', () => {
           blockOrder.fills = [ fsm ]
-          Fill.serialize.returns([ fsm ])
+          FillStateMachine.serialize.returns([ fsm ])
 
           const serialized = blockOrder.serialize()
 

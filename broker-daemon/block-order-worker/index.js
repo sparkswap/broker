@@ -877,8 +877,8 @@ class BlockOrderWorker extends EventEmitter {
       fill.state === FillStateMachine.STATES.FILLED || fill.state === FillStateMachine.STATES.EXECUTED
     )
 
-    const serializedOrders = filteredOrders.map(o => Order.serialize(o))
-    const serializedFills = filteredFills.map(f => Fill.serialize(f))
+    const serializedOrders = filteredOrders.map(o => OrderStateMachine.serialize(o))
+    const serializedFills = filteredFills.map(f => FillStateMachine.serialize(f))
 
     return {
       orders: serializedOrders,

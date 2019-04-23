@@ -1014,4 +1014,37 @@ describe('OrderStateMachine', () => {
       expect(osm.order).to.be.equal(myObject)
     })
   })
+
+  describe('::serialize', () => {
+    let orderObject
+
+    beforeEach(() => {
+      orderObject = {
+        order: {
+          serialize: sinon.stub().returns({})
+        },
+        state: 'COMPLETED',
+        dates: {
+          'created': '2019-04-19T22:35:12.049Z',
+          'placed': '2019-04-19T22:35:12.054Z',
+          'executing': '2019-04-19T22:35:44.941Z',
+          'completed': '2019-04-19T22:35:45.780Z'
+        }
+      }
+    })
+
+    it('serializes the order', async () => {
+      await OrderStateMachine.serialize(orderObject)
+
+      expect(orderObject.order.serialize).to.have.been.called()
+    })
+
+    it('returns the serialized order with state and dates', async () => {
+      const serializedOrder = await OrderStateMachine.serialize(orderObject)
+
+      expect(serializedOrder).to.have.property('orderStatus', orderObject.state.toUpperCase())
+      expect(serializedOrder).to.have.property('dates', orderObject.dates)
+      expect(serializedOrder).to.have.property('error', undefined)
+    })
+  })
 })

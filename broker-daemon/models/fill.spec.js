@@ -107,46 +107,6 @@ describe('Fill', () => {
     })
   })
 
-  describe('::serialize', () => {
-    it('defines a static method for serialize a fillObject', () => {
-      expect(Fill).itself.to.respondTo('serialize')
-    })
-
-    it('returns a serialized version of the fill', () => {
-      const params = {
-        state: 'FILLED',
-        dates: {
-          filled: '2019-04-15T17:22:26.672Z'
-        },
-        fill: {
-          blockOrderId: 'asdfasdf',
-          order: {
-            orderId: 'fakeID',
-            baseSymbol: 'BTC',
-            counterSymbol: 'LTC',
-            side: 'BID',
-            baseAmount: '10000',
-            counterAmount: '100000'
-          },
-          fillId: 'asdf',
-          fillAmount: '9000'
-        }
-      }
-
-      const fill = Fill.serialize(params)
-
-      expect(fill).to.have.property('blockOrderId', params.fill.blockOrderId)
-      expect(fill).to.have.property('fillId', params.fill.fillId)
-      expect(fill).to.have.property('amount', '0.0000900000000000')
-      expect(fill).to.have.property('baseSymbol', params.fill.order.baseSymbol)
-      expect(fill).to.have.property('counterSymbol', params.fill.order.counterSymbol)
-      expect(fill).to.have.property('side', params.fill.order.side)
-      expect(fill).to.have.property('price', '10.0000000000000000')
-      expect(fill).to.have.property('fillStatus', params.state.toUpperCase())
-      expect(fill).to.have.property('dates', params.dates)
-    })
-  })
-
   describe('::fromObject', () => {
     it('defines a static method for creating orders from a plain object', () => {
       expect(Fill).itself.to.respondTo('fromObject')
@@ -471,6 +431,20 @@ describe('Fill', () => {
         fill.setExecuteParams(executeParams)
 
         expect(fill.value).to.include(`"makerAddress":"${executeParams.makerAddress}"`)
+      })
+    })
+
+    describe('serialize', () => {
+      it('returns a serialized version of the fill', () => {
+        const serializedFill = fill.serialize()
+
+        expect(serializedFill).to.have.property('blockOrderId', fill.blockOrderId)
+        expect(serializedFill).to.have.property('fillId', fill.fillId)
+        expect(serializedFill).to.have.property('amount', '0.0000900000000000')
+        expect(serializedFill).to.have.property('baseSymbol', fill.order.baseSymbol)
+        expect(serializedFill).to.have.property('counterSymbol', fill.order.counterSymbol)
+        expect(serializedFill).to.have.property('side', fill.order.side)
+        expect(serializedFill).to.have.property('price', '10.0000000000000000')
       })
     })
   })

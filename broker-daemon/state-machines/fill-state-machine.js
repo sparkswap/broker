@@ -425,6 +425,30 @@ const FillStateMachine = StateMachine.factory({
 })
 
 /**
+ * serialize an fill for transmission via grpc
+ * @param {Object} fillObject - Plain object representation of the fill, state, dates
+ * @returns {Object} Object to be serialized into a GRPC message
+ */
+FillStateMachine.serialize = function (fillObject) {
+  const {
+    fill,
+    state,
+    error,
+    dates
+  } = fillObject
+
+  const serializedFill = fill.serialize()
+
+  Object.assign(serializedFill, {
+    fillStatus: state.toUpperCase(),
+    error: error ? error.toString() : undefined,
+    dates
+  })
+
+  return serializedFill
+}
+
+/**
  * Instantiate and create a fill
  * This method is a pure pass through to the state machine, so any parameter checking should happen in
  * `data` and `onBeforeCreate`, respectively.

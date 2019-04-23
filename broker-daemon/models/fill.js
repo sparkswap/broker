@@ -102,6 +102,28 @@ class Fill {
   }
 
   /**
+   * serialize an fill for transmission via grpc
+   * @returns {Object} Object to be serialized into a GRPC message
+   */
+  serialize () {
+    const baseAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.order.baseSymbol).quantumsPerCommon
+    const counterAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.order.counterSymbol).quantumsPerCommon
+    const baseCommonAmount = Big(this.order.baseAmount).div(baseAmountFactor)
+    const counterCommonAmount = Big(this.order.counterAmount).div(counterAmountFactor)
+
+    return {
+      fillId: this.fillId,
+      orderId: this.order.orderId,
+      blockOrderId: this.blockOrderId,
+      side: this.order.side,
+      baseSymbol: this.order.baseSymbol,
+      counterSymbol: this.order.counterSymbol,
+      price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
+      amount: Big(this.fillAmount).div(baseAmountFactor).toFixed(16)
+    }
+  }
+
+  /**
    * Params required to create an order on the relayer
    * @returns {Object} Object of parameters the relayer expects
    */
@@ -397,41 +419,6 @@ class Fill {
     })
 
     return fill
-  }
-
-  /**
-   * serialize an fill for transmission via grpc
-   * @param {Object} fillObject - Plain object representation of the fill, state, dates
-   * @returns {Object} Object to be serialized into a GRPC message
-   */
-  static serialize (fillObject) {
-    const {
-      fill,
-      state,
-      error,
-      dates
-    } = fillObject
-
-    const { order } = fill
-
-    const baseAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === order.baseSymbol).quantumsPerCommon
-    const counterAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === order.counterSymbol).quantumsPerCommon
-    const baseCommonAmount = Big(order.baseAmount).div(baseAmountFactor)
-    const counterCommonAmount = Big(order.counterAmount).div(counterAmountFactor)
-
-    return {
-      fillId: fill.fillId,
-      orderId: order.orderId,
-      blockOrderId: fill.blockOrderId,
-      side: order.side,
-      baseSymbol: order.baseSymbol,
-      counterSymbol: order.counterSymbol,
-      price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
-      amount: Big(fill.fillAmount).div(baseAmountFactor).toFixed(16),
-      fillStatus: state.toUpperCase(),
-      error: error ? error.toString() : undefined,
-      dates
-    }
   }
 
   /**

@@ -2510,8 +2510,8 @@ describe('BlockOrderWorker', () => {
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       worker.ordersStore = ordersStore
       worker.fillsStore = fillsStore
-      Order.serialize = sinon.stub().returnsArg(0)
-      Fill.serialize = sinon.stub().returnsArg(0)
+      OrderStateMachine.serialize = sinon.stub().returnsArg(0)
+      FillStateMachine.serialize = sinon.stub().returnsArg(0)
     })
 
     it('retrieves all orders and fills from the store', async () => {
@@ -2546,17 +2546,17 @@ describe('BlockOrderWorker', () => {
     it('serializes the filtered orders', async () => {
       await worker.getTrades()
 
-      expect(Order.serialize).to.have.been.calledWith(completedOrder)
-      expect(Order.serialize).to.have.been.calledWith(executingOrder)
-      expect(Order.serialize).to.not.have.been.calledWith(rejectedOrder)
+      expect(OrderStateMachine.serialize).to.have.been.calledWith(completedOrder)
+      expect(OrderStateMachine.serialize).to.have.been.calledWith(executingOrder)
+      expect(OrderStateMachine.serialize).to.not.have.been.calledWith(rejectedOrder)
     })
 
     it('serializes the filtered fills', async () => {
       await worker.getTrades()
 
-      expect(Fill.serialize).to.have.been.calledWith(filledFill)
-      expect(Fill.serialize).to.have.been.calledWith(executedFill)
-      expect(Fill.serialize).to.not.have.been.calledWith(rejectedFill)
+      expect(FillStateMachine.serialize).to.have.been.calledWith(filledFill)
+      expect(FillStateMachine.serialize).to.have.been.calledWith(executedFill)
+      expect(FillStateMachine.serialize).to.not.have.been.calledWith(rejectedFill)
     })
   })
 })

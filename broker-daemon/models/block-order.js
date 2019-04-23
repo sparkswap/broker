@@ -373,11 +373,11 @@ class BlockOrder {
    */
   serialize () {
     const orders = this.orders.map((orderObject) => {
-      return Order.serialize(orderObject)
+      return OrderStateMachine.serialize(orderObject)
     })
 
     const fills = this.fills.map((fillObject) => {
-      return Fill.serialize(fillObject)
+      return FillStateMachine.serialize(fillObject)
     })
 
     const serialized = {

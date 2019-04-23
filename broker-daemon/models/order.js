@@ -96,6 +96,29 @@ class Order {
   }
 
   /**
+   * serialize an order for transmission via grpc
+   * @returns {Object} serialzed order to send in a GRPC message
+   */
+  serialize () {
+    const baseAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol).quantumsPerCommon
+    const counterAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.counterSymbol).quantumsPerCommon
+    const baseCommonAmount = Big(this.baseAmount).div(baseAmountFactor)
+    const counterCommonAmount = Big(this.counterAmount).div(counterAmountFactor)
+    const fillCommonAmount = this.fillAmount ? Big(this.fillAmount).div(baseAmountFactor).toFixed(16) : this.fillAmount
+
+    return {
+      orderId: this.orderId,
+      blockOrderId: this.blockOrderId,
+      side: this.side,
+      baseSymbol: this.baseSymbol,
+      counterSymbol: this.counterSymbol,
+      amount: baseCommonAmount.toFixed(16),
+      price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
+      fillAmount: fillCommonAmount
+    }
+  }
+
+  /**
    * Alias for .fillAmount that pairs better with `counterFillAmount`
    * @returns {string} 64-bit integer represented as a string
    */
@@ -432,40 +455,6 @@ class Order {
     })
 
     return order
-  }
-
-  /**
-   * serialize an order for transmission via grpc
-   * @param {Object} orderObject - Plain object representation of the order, state, dates
-   * @returns {Object} Object to be serialized into a GRPC message
-   */
-  static serialize (orderObject) {
-    const {
-      order,
-      state,
-      error,
-      dates
-    } = orderObject
-
-    const baseAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === order.baseSymbol).quantumsPerCommon
-    const counterAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === order.counterSymbol).quantumsPerCommon
-    const baseCommonAmount = Big(order.baseAmount).div(baseAmountFactor)
-    const counterCommonAmount = Big(order.counterAmount).div(counterAmountFactor)
-    const fillCommonAmount = order.fillAmount ? Big(order.fillAmount).div(baseAmountFactor).toFixed(16) : order.fillAmount
-
-    return {
-      orderId: order.orderId,
-      blockOrderId: order.blockOrderId,
-      side: order.side,
-      baseSymbol: order.baseSymbol,
-      counterSymbol: order.counterSymbol,
-      amount: baseCommonAmount.toFixed(16),
-      price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
-      fillAmount: fillCommonAmount,
-      orderStatus: state.toUpperCase(),
-      error: error ? error.toString() : undefined,
-      dates
-    }
   }
 
   /**

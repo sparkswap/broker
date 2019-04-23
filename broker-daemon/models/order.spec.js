@@ -85,45 +85,6 @@ describe('Order', () => {
     })
   })
 
-  describe('::serialize', () => {
-    it('defines a static method for creating orders from storage with status', () => {
-      expect(Order).itself.to.respondTo('serialize')
-    })
-
-    it('creates orders from a key and value', () => {
-      const params = {
-        dates: {
-          created: '2019-04-15T17:22:26.672Z',
-          placed: '2019-04-15T17:22:26.672Z'
-        },
-        state: 'placed',
-        order: {
-          orderId: 'asdf',
-          blockOrderid: 'asdfasdf',
-          baseSymbol: 'BTC',
-          counterSymbol: 'LTC',
-          side: 'BID',
-          baseAmount: '1000',
-          counterAmount: '10000',
-          makerBaseAddress: 'bolt:123019230jasofdij',
-          makerCounterAddress: 'bolt:65433455asdfasdf'
-        }
-      }
-
-      const order = Order.serialize(params)
-
-      expect(order).to.have.property('blockOrderId', params.order.blockOrderId)
-      expect(order).to.have.property('orderId', params.order.orderId)
-      expect(order).to.have.property('baseSymbol', params.order.baseSymbol)
-      expect(order).to.have.property('counterSymbol', params.order.counterSymbol)
-      expect(order).to.have.property('side', params.order.side)
-      expect(order).to.have.property('amount', '0.0000100000000000')
-      expect(order).to.have.property('price', '10.0000000000000000')
-      expect(order).to.have.property('orderStatus', params.state.toUpperCase())
-      expect(order).to.have.property('dates', params.dates)
-    })
-  })
-
   describe('::fromObject', () => {
     it('defines a static method for creating orders from a plain object', () => {
       expect(Order).itself.to.respondTo('fromObject')
@@ -503,6 +464,20 @@ describe('Order', () => {
         expect(order.value).to.include(`"swapHash":"${filledParams.swapHash}"`)
         expect(order.value).to.include(`"fillAmount":"${filledParams.fillAmount}"`)
         expect(order.value).to.include(`"takerAddress":"${filledParams.takerAddress}"`)
+      })
+    })
+
+    describe('serialize', () => {
+      it('serializes the order for grpc transfer', () => {
+        const serializedOrder = order.serialize()
+
+        expect(serializedOrder).to.have.property('blockOrderId', order.blockOrderId)
+        expect(serializedOrder).to.have.property('orderId', order.orderId)
+        expect(serializedOrder).to.have.property('baseSymbol', order.baseSymbol)
+        expect(serializedOrder).to.have.property('counterSymbol', order.counterSymbol)
+        expect(serializedOrder).to.have.property('side', order.side)
+        expect(serializedOrder).to.have.property('amount', '0.0001000000000000')
+        expect(serializedOrder).to.have.property('price', '10.0000000000000000')
       })
     })
   })

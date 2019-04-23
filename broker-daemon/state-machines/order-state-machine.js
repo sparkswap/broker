@@ -453,6 +453,30 @@ const OrderStateMachine = StateMachine.factory({
 })
 
 /**
+ * serialize an order, its state and dates for transmission via grpc
+ * @param {Object} orderObject - Plain object representation of the order, state, dates
+ * @returns {Object} Object (order) to be serialized into a GRPC message
+ */
+OrderStateMachine.serialize = function (orderObject) {
+  const {
+    order,
+    state,
+    error,
+    dates
+  } = orderObject
+
+  const serializedOrder = order.serialize()
+
+  Object.assign(serializedOrder, {
+    orderStatus: state.toUpperCase(),
+    error: error ? error.toString() : undefined,
+    dates
+  })
+
+  return serializedOrder
+}
+
+/**
  * Instantiate and create an order
  * This method is a pure pass through to the state machine, so any parameter checking should happen in
  * `data` and `onBeforeCreate`, respectively.
