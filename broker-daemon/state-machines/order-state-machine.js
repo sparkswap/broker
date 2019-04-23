@@ -467,13 +467,12 @@ OrderStateMachine.serialize = function (orderObject) {
 
   const serializedOrder = order.serialize()
 
-  Object.assign(serializedOrder, {
+  return {
     orderStatus: state.toUpperCase(),
     error: error ? error.toString() : undefined,
-    dates
-  })
-
-  return serializedOrder
+    dates,
+    ...serializedOrder
+  }
 }
 
 /**

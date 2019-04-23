@@ -439,13 +439,12 @@ FillStateMachine.serialize = function (fillObject) {
 
   const serializedFill = fill.serialize()
 
-  Object.assign(serializedFill, {
+  return {
     fillStatus: state.toUpperCase(),
     error: error ? error.toString() : undefined,
-    dates
-  })
-
-  return serializedFill
+    dates,
+    ...serializedFill
+  }
 }
 
 /**
