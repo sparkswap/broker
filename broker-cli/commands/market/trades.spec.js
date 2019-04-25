@@ -38,6 +38,6 @@ describe('cli market trades', () => {
   })
   it('calls broker daemon for the info trades', () => {
     expect(daemonStub).to.have.been.calledWith(rpcAddress)
-    expect(getTradesStub).to.have.been.calledWith({market, since, limit})
+    expect(getTradesStub).to.have.been.calledWith({ market, since, limit })
   })
 })

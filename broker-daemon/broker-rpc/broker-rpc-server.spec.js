@@ -62,7 +62,7 @@ describe('BrokerRPCServer', () => {
     router = function router (req, res, next) {
       router.handle(req, res, next)
     }
-    httpServerStub = {listen: sinon.stub()}
+    httpServerStub = { listen: sinon.stub() }
     httpServer = sinon.stub().returns(httpServerStub)
     grpcGateway = sinon.stub().returns(router)
     BrokerRPCServer.__set__('grpcGateway', grpcGateway)
@@ -126,9 +126,10 @@ describe('BrokerRPCServer', () => {
       }
       rpcServer.returns(instanceServer)
       const server = new BrokerRPCServer()
+      const serverOptions = BrokerRPCServer.__get__('GRPC_SERVER_OPTIONS')
 
       expect(rpcServer).to.have.been.calledOnce()
-      expect(rpcServer).to.have.been.calledWith()
+      expect(rpcServer).to.have.been.calledWithExactly(serverOptions)
       expect(rpcServer).to.have.been.calledWithNew()
       expect(server).to.have.property('server')
       expect(server.server).to.be.equal(instanceServer)
@@ -143,6 +144,41 @@ describe('BrokerRPCServer', () => {
       expect(server).to.have.property('httpServer')
       expect(httpServer).to.have.been.calledWith(server.protoPath, rpcAddress, sinon.match.object)
       expect(server.httpServer).to.be.equal(httpServerStub)
+    })
+
+    it('passes through http server options', () => {
+      const rpcAddress = '0.0.0.0:27492'
+      const rpcHttpProxyAddress = '0.0.0.0:27592'
+      const disableAuth = true
+      const enableCors = true
+      const isCertSelfSigned = false
+      const privKeyPath = '/fake/privpath'
+      const pubKeyPath = '/fake/pubpath'
+      const httpMethods = ['/fake/method']
+      const logger = { fake: 'logger' }
+
+      // eslint-disable-next-line
+      new BrokerRPCServer({
+        rpcAddress,
+        rpcHttpProxyAddress,
+        disableAuth,
+        enableCors,
+        isCertSelfSigned,
+        privKeyPath,
+        pubKeyPath,
+        rpcHttpProxyMethods: httpMethods,
+        logger
+      })
+
+      expect(httpServer).to.have.been.calledWith(sinon.match.any, sinon.match.any, {
+        disableAuth,
+        isCertSelfSigned,
+        enableCors,
+        privKeyPath,
+        pubKeyPath,
+        httpMethods,
+        logger
+      })
     })
 
     it('creates a admin service', () => {
@@ -261,7 +297,7 @@ describe('BrokerRPCServer', () => {
         bind: bindStub,
         start: serverStub
       }
-      server.httpServer = {listen: sinon.stub()}
+      server.httpServer = { listen: sinon.stub() }
     })
 
     beforeEach(() => {

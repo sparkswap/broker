@@ -31,7 +31,7 @@ const SUPPORTED_SYMBOLS = Object.freeze(
  * Supported commands for `sparkswap wallet`
  *
  * @constant
- * @type {Object<key, String>}
+ * @type {Object}
  * @default
  */
 const SUPPORTED_COMMANDS = Object.freeze({
@@ -43,7 +43,8 @@ const SUPPORTED_COMMANDS = Object.freeze({
   RELEASE: 'release',
   WITHDRAW: 'withdraw',
   CREATE: 'create',
-  UNLOCK: 'unlock'
+  UNLOCK: 'unlock',
+  HISTORY: 'history'
 })
 
 /**
@@ -53,19 +54,23 @@ const SUPPORTED_COMMANDS = Object.freeze({
  * @function
  * @param {Object} args
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {string} [opts.rpcAddress] - broker rpc address
+ * @param {boolean} [opts.reserved] - whether total reserved balance should be included
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function balance (args, opts, logger) {
-  const { rpcAddress } = opts
+  const { rpcAddress, reserved } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const { balances } = await client.walletService.getBalances({})
 
+    const commitedColumnHeader = reserved ? 'Committed (Pending) [Reserved]' : 'Committed (Pending)'
+    const tableHeaders = ['', commitedColumnHeader, 'Uncommitted (Pending)']
+
     const balancesTable = new Table({
-      head: ['', 'Committed (Pending)', 'Uncommitted (Pending)'],
+      head: tableHeaders,
       style: { head: ['gray'] }
     })
 
@@ -76,22 +81,31 @@ async function balance (args, opts, logger) {
         totalChannelBalance,
         totalPendingChannelBalance,
         uncommittedBalance,
-        uncommittedPendingBalance
+        uncommittedPendingBalance,
+        totalReservedChannelBalance
       } = balance
 
       totalChannelBalance = error ? 'Not Available'.yellow : totalChannelBalance.green
       uncommittedBalance = error ? 'Not Available'.yellow : uncommittedBalance
+      totalReservedChannelBalance = error ? 'Not Available'.yellow : `[${totalReservedChannelBalance}]`.grey
 
       // We fix all pending balances to 8 decimal places due to aesthetics. Since
       // this balance should only be temporary, we do not care as much about precision
       totalPendingChannelBalance = error ? '' : `(${Big(totalPendingChannelBalance).toFixed(8)})`.grey
       uncommittedPendingBalance = error ? '' : `(${Big(uncommittedPendingBalance).toFixed(8)})`.grey
 
-      balancesTable.push([
+      let channelBalanceCell = `${totalChannelBalance} ${totalPendingChannelBalance}`
+      if (reserved) {
+        channelBalanceCell += ` ${totalReservedChannelBalance}`
+      }
+
+      const row = [
         symbol,
-        `${totalChannelBalance} ${totalPendingChannelBalance}`,
+        channelBalanceCell,
         `${uncommittedBalance} ${uncommittedPendingBalance}`
-      ])
+      ]
+
+      balancesTable.push(row)
     })
 
     logger.info('Wallet Balances'.bold.white)
@@ -109,9 +123,9 @@ async function balance (args, opts, logger) {
  * @function
  * @param {Object} args
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function newDepositAddress (args, opts, logger) {
   const { symbol } = args
@@ -136,10 +150,10 @@ async function newDepositAddress (args, opts, logger) {
  * @param {Object} args
  * @param {Object} args.symbol
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.market] market to commit funds to
+ * @param {string} [opts.rpcAddress] - broker rpc address
+ * @param {string} [opts.market] - market to commit funds to
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function commit (args, opts, logger) {
   const { symbol, amount } = args
@@ -162,10 +176,6 @@ async function commit (args, opts, logger) {
     }
 
     const totalUncommittedBalance = Big(uncommittedBalance)
-
-    if (totalUncommittedBalance.eq(0)) {
-      return logger.info('Your current uncommitted balance is 0, please add funds to your daemon')
-    }
 
     // We try to take the lowest total here between 2 Big numbers due to a
     // commit limit specified as `maxChannelBalance` in the currency configuration
@@ -193,10 +203,6 @@ async function commit (args, opts, logger) {
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    if (maxSupportedBalance.gt(uncommittedBalance)) {
-      throw new Error(`Amount specified is larger than your current uncommitted balance of ${uncommittedBalance} ${symbol}`)
-    }
-
     await client.walletService.commit({ balance: maxSupportedBalance.toString(), symbol, market })
 
     logger.info('Successfully committed balance to sparkswap Relayer!')
@@ -214,9 +220,9 @@ async function commit (args, opts, logger) {
  * @param {Object} args
  * @param {Object} args.symbol
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
+ * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function networkAddress (args, opts, logger) {
   const { symbol } = args
@@ -251,9 +257,9 @@ const NETWORK_STATUSES = Object.freeze({
  * than 0. Will return Not Available if balance is empty
  *
  * @function
- * @param {String} balance
- * @param {String} status
- * @return {String} balance - formatted with size and color
+ * @param {string} balance
+ * @param {string} status
+ * @returns {string} balance - formatted with size and color
  */
 function formatBalance (balance, status) {
   // If there were errors when receiving balances, the balance will come back
@@ -283,7 +289,7 @@ function formatBalance (balance, status) {
 
 /**
  * @constant
- * @type {Object<key, String>}
+ * @type {Object}
  * @default
  */
 const CAPACITY_STATUSES = Object.freeze({
@@ -298,17 +304,17 @@ const CAPACITY_STATUSES = Object.freeze({
  * @function
  * @param {Object} args
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.market] market name
+ * @param {string} [opts.rpcAddress] - broker rpc address
+ * @param {string} [opts.market] - market name
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function networkStatus (args, opts, logger) {
   const { market, rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({market})
+    const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({ market })
 
     const baseSymbol = baseSymbolCapacities.symbol.toUpperCase()
     const counterSymbol = counterSymbolCapacities.symbol.toUpperCase()
@@ -364,10 +370,10 @@ async function networkStatus (args, opts, logger) {
  * @param {Object} args
  * @param {Object} args.symbol
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.market] market name, i.e BTC/LTC
+ * @param {string} [opts.rpcAddress] - broker rpc address
+ * @param {string} [opts.market] - market name, i.e BTC/LTC
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function release (args, opts, logger) {
   const { market } = args
@@ -433,17 +439,17 @@ async function release (args, opts, logger) {
  *
  * @function
  * @param {Object} args
- * @param {String} args.symbol
- * @param {String} args.address
- * @param {String} args.amount
+ * @param {string} args.symbol
+ * @param {string} args.address
+ * @param {string} args.amount
  * @param {Object} opts
- * @param {String} [opts.rpcAddress] broker rpc address
- * @param {String} [opts.walletAddress] wallet address to move funds to
+ * @param {string} [opts.rpcAddress] - broker rpc address
+ * @param {string} [opts.walletAddress] - wallet address to move funds to
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function withdraw (args, opts, logger) {
-  const {symbol, address, amount} = args
+  const { symbol, address, amount } = args
   const { rpcAddress } = opts
 
   try {
@@ -467,10 +473,10 @@ async function withdraw (args, opts, logger) {
  *
  * @function
  * @param {Object} args
- * @param {String} args.symbol
+ * @param {string} args.symbol
  * @param {Object} opts
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function create (args, opts, logger) {
   const { symbol } = args
@@ -506,21 +512,60 @@ async function create (args, opts, logger) {
  *
  * @function
  * @param {Object} args
- * @param {String} args.symbol
+ * @param {string} args.symbol
  * @param {Object} opts
- * @param {String} [opts.rpcAddress=null]
+ * @param {string} [opts.rpcAddress=null]
  * @param {Logger} logger
- * @return {Void}
+ * @returns {void}
  */
 async function unlock (args, opts, logger) {
   const { symbol } = args
-  const { rpcAddress = null } = opts
+  const { rpcAddress } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
     const password = await askQuestion(`Enter the wallet password:`, { silent: true })
     await client.walletService.unlockWallet({ symbol, password })
     logger.info(`Successfully Unlocked ${symbol.toUpperCase()} Wallet!`.green)
+  } catch (e) {
+    logger.error(handleError(e))
+  }
+}
+
+/**
+ * Returns all on-chain history of a specific wallet
+ * @param {Object} args
+ * @param {string} args.symbol
+ * @param {Object} opts
+ * @param {string} opts.rpcAddress
+ * @param {Logger} logger
+ * @returns {void}
+ */
+async function history (args, opts, logger) {
+  const { symbol } = args
+  const { rpcAddress } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+    const { transactions = [] } = await client.walletService.walletHistory({ symbol })
+
+    if (!transactions.length) {
+      logger.info(`No wallet history available for ${symbol}`)
+      return
+    }
+
+    const transactionTable = new Table({
+      head: ['Type', 'Amount', 'Fees', 'Timestamp', 'Transaction', 'Height', 'Pending'],
+      style: { head: ['gray'] }
+    })
+
+    transactions.forEach(({ type, amount, fees, timestamp, transactionHash, blockHeight, pending }) => {
+      transactionTable.push([type, amount, fees, timestamp, transactionHash, blockHeight, pending])
+    })
+
+    logger.info('')
+    logger.info(transactionTable.toString())
+    logger.info('')
   } catch (e) {
     logger.error(handleError(e))
   }
@@ -538,6 +583,7 @@ module.exports = (program) => {
     // hook has been added in caporal. If the option is omitted, the subcommand will
     // not receive the variable in the `opts` object
     .option('--wallet-address [address]', 'used in sparkswap withdraw ONLY')
+    .option('--reserved', 'Display total reserved balance')
     .option('--force', 'Force close all channels. This options is only used in the sparkswap release command', null, false)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
@@ -621,6 +667,16 @@ module.exports = (program) => {
           args.symbol = symbol
 
           return unlock(args, opts, logger)
+        case SUPPORTED_COMMANDS.HISTORY:
+          symbol = symbol.toUpperCase()
+
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
+            throw new Error(`Provided symbol is not a valid currency for the broker`)
+          }
+
+          args.symbol = symbol
+
+          return history(args, opts, logger)
       }
     })
     .command(`wallet ${SUPPORTED_COMMANDS.CREATE}`, 'Create a wallet')
@@ -631,6 +687,7 @@ module.exports = (program) => {
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.BALANCE}`, 'Current daemon wallet balance')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
+    .option('--reserved', 'Display total reserved balance')
     .command(`wallet ${SUPPORTED_COMMANDS.NEW_DEPOSIT_ADDRESS}`, 'Generates a new wallet address for a daemon instance')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
@@ -644,13 +701,16 @@ module.exports = (program) => {
     .option('--wallet-address <wallet-address>', 'Address to send the coins to', null, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.RELEASE}`, 'Closes channels open on the specified market')
-    .option('--market <marketName>', MARKET_NAME_HELP_STRING, null, null, true)
+    .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--force', 'Force close all channels', null, false)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.NETWORK_ADDRESS}`, 'Payment Channel Network Public key for a given currency')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.NETWORK_STATUS}`, 'Payment Channel Network status for trading in different markets')
-    .option('--market [marketName]', MARKET_NAME_HELP_STRING, null, null, true)
+    .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
+    .command(`wallet ${SUPPORTED_COMMANDS.HISTORY}`, 'Transaction History of a wallet')
+    .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
 }

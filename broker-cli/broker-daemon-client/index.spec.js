@@ -25,6 +25,10 @@ describe('BrokerDaemonClient', () => {
   let generateAuthCredentialsStub
   let sslCredential
   let callCredential
+  let adminServiceInstance
+  let orderServiceInstance
+  let orderBookServiceInstance
+  let walletServiceInstance
 
   beforeEach(() => {
     address = '172.0.0.1:27492'
@@ -34,11 +38,19 @@ describe('BrokerDaemonClient', () => {
     callCredential = 'callcred'
 
     credentialStub = sinon.stub()
-    callerStub = sinon.stub()
-    adminStub = sinon.stub()
-    orderStub = sinon.stub()
-    orderbookStub = sinon.stub()
-    walletStub = sinon.stub()
+    callerStub = {
+      wrap: sinon.stub()
+    }
+
+    adminServiceInstance = { name: 'AdminService' }
+    orderServiceInstance = { name: 'OrderService' }
+    orderBookServiceInstance = { name: 'OrderBookService' }
+    walletServiceInstance = { name: 'WalletService' }
+
+    adminStub = sinon.stub().returns(adminServiceInstance)
+    orderStub = sinon.stub().returns(orderServiceInstance)
+    orderbookStub = sinon.stub().returns(orderBookServiceInstance)
+    walletStub = sinon.stub().returns(walletServiceInstance)
 
     protoStub = sinon.stub().returns({
       broker: {
@@ -64,7 +76,7 @@ describe('BrokerDaemonClient', () => {
     BrokerDaemonClient.__set__('loadProto', protoStub)
     BrokerDaemonClient.__set__('caller', callerStub)
     BrokerDaemonClient.__set__('readFileSync', readFileSyncStub)
-    BrokerDaemonClient.__set__('path', { join: joinStub })
+    BrokerDaemonClient.__set__('path', { join: joinStub, sep: '/' })
     BrokerDaemonClient.__set__('basicAuth', {
       generateBasicAuthCredentials: generateAuthCredentialsStub
     })
@@ -113,7 +125,6 @@ describe('BrokerDaemonClient', () => {
       homedir = '/home'
       osStub = { homedir: sinon.stub().returns(homedir) }
       joinStub = sinon.stub().returns(certPath)
-      BrokerDaemonClient.__set__('path', { join: joinStub, sep: '/' })
       BrokerDaemonClient.__set__('os', osStub)
     })
 
@@ -123,7 +134,8 @@ describe('BrokerDaemonClient', () => {
     })
 
     it('expands the filepath if it is pointing to home', () => {
-      joinStub = sinon.stub().returns(`${homedir}/.sparkswap/config.js`)
+      const newPath = `${homedir}/.sparkswap/config.js`
+      joinStub = sinon.stub().returns(newPath)
       BrokerDaemonClient.__set__('path', { join: joinStub, sep: '/' })
       loadConfigStub.returns({
         rpcAddress: address,
@@ -164,14 +176,43 @@ describe('BrokerDaemonClient', () => {
   })
 
   describe('services', () => {
+    let fakeInterceptor
+    let revert
+
     beforeEach(() => {
+      fakeInterceptor = sinon.stub()
+      revert = BrokerDaemonClient.__set__('grpcDeadlineInterceptor', fakeInterceptor)
       broker = new BrokerDaemonClient()
     })
 
-    it('creates an adminService', () => expect(callerStub).to.have.been.calledWith(broker.address, adminStub, credentialStub))
-    it('creates an orderService', () => expect(callerStub).to.have.been.calledWith(broker.address, orderStub, credentialStub))
-    it('creates an orderBookService', () => expect(callerStub).to.have.been.calledWith(broker.address, orderbookStub, credentialStub))
-    it('creates an walletService', () => expect(callerStub).to.have.been.calledWith(broker.address, walletStub, credentialStub))
+    afterEach(() => {
+      revert()
+    })
+
+    it('creates an adminService', () => {
+      expect(adminStub).to.have.been.calledWithExactly(broker.address, credentialStub)
+      expect(callerStub.wrap).to.have.been.calledWithExactly(adminServiceInstance, {}, { interceptors: [fakeInterceptor] })
+      expect(broker).to.have.property('adminService')
+    })
+
+    it('creates an orderService', () => {
+      expect(orderStub).to.have.been.calledWithExactly(broker.address, credentialStub)
+      expect(callerStub.wrap).to.have.been.calledWithExactly(orderServiceInstance, {}, { interceptors: [fakeInterceptor] })
+      expect(broker).to.have.property('orderService')
+    })
+
+    it('creates an orderBookService', () => {
+      const options = BrokerDaemonClient.__get__('GRPC_STREAM_OPTIONS')
+      expect(orderbookStub).to.have.been.calledWithExactly(broker.address, credentialStub, options)
+      expect(callerStub.wrap).to.have.been.calledWithExactly(orderBookServiceInstance, {}, { interceptors: [fakeInterceptor] })
+      expect(broker).to.have.property('orderBookService')
+    })
+
+    it('creates an walletService', () => {
+      expect(walletStub).to.have.been.calledWithExactly(broker.address, credentialStub)
+      expect(callerStub.wrap).to.have.been.calledWithExactly(walletServiceInstance, {}, { interceptors: [fakeInterceptor] })
+      expect(broker).to.have.property('walletService')
+    })
   })
 
   describe('address', () => {

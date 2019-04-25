@@ -1,5 +1,3 @@
-const { PublicError } = require('grpc-methods')
-
 /**
  * @constant
  * @type {Object}
@@ -15,13 +13,13 @@ const RELEASE_STATE = Object.freeze({
  *
  * @see {RELEASE_STATE}
  * @param {Engine} engine
- * @param {String} symbol - e.g. BTC or LTC
- * @param {Boolean} force
+ * @param {string} symbol - e.g. BTC or LTC
+ * @param {boolean} force
  * @param {Logger} logger
  * @returns {Object} res
- * @returns {String} res.symbol
- * @returns {String} res.status - RELEASED or FAILED
- * @returns {String} [res.error=undefined] - only present if status is FAILED
+ * @returns {string} res.symbol
+ * @returns {string} res.status - RELEASED or FAILED
+ * @returns {string} [res.error=undefined] - only present if status is FAILED
  */
 async function closeChannels (engine, symbol, force, logger) {
   try {
@@ -49,14 +47,15 @@ async function closeChannels (engine, symbol, force, logger) {
  *
  * @param {Object} request - request object
  * @param {Object} request.params
- * @param {String} request.params.market - Market name (e.g. BTC/LTC)
- * @param {Boolean} request.params.force - if channels should be force closed
+ * @param {string} request.params.market - Market name (e.g. BTC/LTC)
+ * @param {boolean} request.params.force - if channels should be force closed
  * @param {RelayerClient} request.relayer
  * @param {Logger} request.logger
  * @param {Engine} request.engines
  * @param {Map<Orderbook>} request.orderbooks
  * @param {Object} responses
- * @return {Object} responses.ReleaseChannelsResponse
+ * @param {Object} responses.ReleaseChannelsResponse
+ * @returns {ReleaseChannelsResponse}
  */
 async function releaseChannels ({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse }) {
   const { market, force } = params
@@ -64,7 +63,7 @@ async function releaseChannels ({ params, logger, engines, orderbooks, blockOrde
   const orderbook = orderbooks.get(market)
 
   if (!orderbook) {
-    throw new PublicError(`${market} is not being tracked as a market.`)
+    throw new Error(`${market} is not being tracked as a market.`)
   }
 
   const { cancelledOrders, failedToCancelOrders } = await blockOrderWorker.cancelActiveOrders(market)
@@ -77,8 +76,8 @@ async function releaseChannels ({ params, logger, engines, orderbooks, blockOrde
   const baseEngine = engines.get(baseSymbol)
   const counterEngine = engines.get(counterSymbol)
 
-  if (!baseEngine) throw new PublicError(`No engine available for ${baseSymbol}`)
-  if (!counterEngine) throw new PublicError(`No engine available for ${counterSymbol}`)
+  if (!baseEngine) throw new Error(`No engine available for ${baseSymbol}`)
+  if (!counterEngine) throw new Error(`No engine available for ${counterSymbol}`)
 
   // We want to try and close channels for both the base and counter engines
   // however if one of the engines fail to release channel, instead of failing

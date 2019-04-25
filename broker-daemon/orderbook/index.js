@@ -12,7 +12,8 @@ consoleLogger.debug = console.log.bind(console)
  * Maximum time, in milliseconds, between tries to get the
  * market events from the Relayer.
  * @constant
- * @type {Number}
+ * @type {number}
+ * @default
  */
 const MAX_RETRY_INTERVAL = 60000
 
@@ -22,11 +23,10 @@ const MAX_RETRY_INTERVAL = 60000
 class Orderbook {
   /**
    * Create a new orderbook for a given market
-   * @param  {String}        marketName Name of the market to track, e.g. `BTC/LTC`
-   * @param  {RelayerClient} relayer    Client to connect to the Relayer
-   * @param  {Sublevel}      store      Sublevel-compatible data store
+   * @param  {string}        marketName - Name of the market to track, e.g. `BTC/LTC`
+   * @param  {RelayerClient} relayer    - Client to connect to the Relayer
+   * @param  {Sublevel}      store      - Sublevel-compatible data store
    * @param  {Object}        logger
-   * @return {Orderbook}
    */
   constructor (marketName, relayer, store, logger = consoleLogger) {
     this.marketName = marketName
@@ -51,7 +51,7 @@ class Orderbook {
   /**
    * Initialize the orderbook by syncing its state to the Relayer and indexing
    * the orders.
-   * @return {Promise}
+   * @returns {void}
    */
   async initialize () {
     this.logger.info(`Initializing market ${this.marketName}...`)
@@ -68,8 +68,8 @@ class Orderbook {
   /**
    * Sync orderbook state with the Relayer and retry when it fails
    * @private
-   * @param  {Number} [retries=0] - number of times end events have been handled without success
-   * @return {Promise} Resolves when market is being watched (not necessarily when it is synced)
+   * @param {number} [retries=0] - number of times end events have been handled without success
+   * @returns {Promise} Resolves when market is being watched (not necessarily when it is synced)
    */
   async watchMarket (retries = 0) {
     this.logger.debug(`Watching market ${this.marketName}...`)
@@ -82,7 +82,7 @@ class Orderbook {
 
     /**
      * Handle sync events from the watcher by updating internal state
-     * @return {void}
+     * @returns {void}
      */
     const onWatcherSync = () => {
       this.synced = true
@@ -92,8 +92,8 @@ class Orderbook {
 
     /**
      * Handle end events from the watcher by retrying
-     * @param  {Error} error
-     * @return {void}
+     * @param {Error} error
+     * @returns {void}
      */
     const onWatcherEnd = (error) => {
       this.synced = false
@@ -115,8 +115,8 @@ class Orderbook {
 
     /**
      * Handle error events from the watcher by clearing our store and retrying
-     * @param  {Error} error
-     * @return {Promise<void>}
+     * @param {Error} error
+     * @returns {void}
      */
     const onWatcherError = async (error) => {
       this.synced = false
@@ -138,13 +138,13 @@ class Orderbook {
   /**
    * Gets all trades for a specific timestamp
    *
-   * @param  {String} since - ISO8601 datetime lowerbound
-   * @param  {Integer} limit - limit of records returned
-   * @return {Array<Object>} trades
+   * @param {string} since - ISO8601 datetime lowerbound
+   * @param {number} limit - limit of records returned
+   * @returns {Array<Object>} trades
    */
   async getTrades (since, limit) {
     this.assertSynced()
-    const params = {limit}
+    const params = { limit }
     if (since) {
       const sinceDate = new Date(since).toISOString()
       params.gte = nano.toString(nano.fromISOString(sinceDate))
@@ -155,13 +155,14 @@ class Orderbook {
 
   /**
    * Get orders in the orderbook for a given side up to a given limit. If no limit is provided, gets all orders
-   * @param {String} side Side of the orderbook to get orders for (i.e. `BID` or `ASK`)
-   * @param {String} limit int64 String of the the amount of orders to return.
-   * @return {Array<MarketEventOrder>} A promise that resolves MarketEventOrders for the limited records
+   * @param {Object} args
+   * @param {string} args.side - Side of the orderbook to get orders for (i.e. `BID` or `ASK`)
+   * @param {string} args.limit - int64 String of the the amount of orders to return.
+   * @returns {Array<MarketEventOrder>} A promise that resolves MarketEventOrders for the limited records
    */
   getOrders ({ side, limit }) {
     this.assertSynced()
-    this.logger.info('Retrieving records from orderbook', {side, limit})
+    this.logger.info('Retrieving records from orderbook', { side, limit })
 
     const params = {}
 
@@ -187,10 +188,11 @@ class Orderbook {
 
   /**
    * get the best price orders in the orderbook
-   * @param  {String} options.side  Side of the orderbook to get the best priced orders for (i.e. `BID` or `ASK`)
-   * @param  {String} options.depth int64 String of the amount, in base currency base units to ge the best prices up to
-   * @param  {String} options.quantumPrice Decimal String of the price that all orders should be better than
-   * @return {Promise<BestOrders>} A promise that resolves MarketEventOrders of the best priced orders
+   * @param {Object} args
+   * @param {string} args.side  - Side of the orderbook to get the best priced orders for (i.e. `BID` or `ASK`)
+   * @param {string} args.depth - int64 String of the amount, in base currency base units to ge the best prices up to
+   * @param {string} args.quantumPrice - Decimal String of the price that all orders should be better than
+   * @returns {Promise<BestOrders>} A promise that resolves MarketEventOrders of the best priced orders
    */
   getBestOrders ({ side, depth, quantumPrice }) {
     this.assertSynced()
@@ -242,9 +244,9 @@ class Orderbook {
 
   /**
    * get the average weighted price given the side and depth
-   * @param  {String} options.side  Side of the orderbook to get the best priced orders for (i.e. `BID` or `ASK`)
-   * @param  {String} options.depth int64 String of the amount, in base currency base units to ge the best prices up to
-   * @return {Integer} The weighted average price
+   * @param {string} side  - Side of the orderbook to get the best priced orders for (i.e. `BID` or `ASK`)
+   * @param {string} targetDepth - int64 String of the amount, in base currency base units to ge the best prices up to
+   * @returns {number} The weighted average price
    */
   async getAveragePrice (side, targetDepth) {
     const { orders, depth } = await this.getBestOrders({ side, depth: targetDepth })
@@ -281,7 +283,7 @@ class Orderbook {
   /**
    * Gets current orderbook events by timestamp
    *
-   * @param {String} timestamp - timestamp in nano-seconds
+   * @param {string} timestamp - timestamp in nano-seconds
    * @returns {Array<MarketEventOrder>}
    */
   async getOrderbookEventsByTimestamp (timestamp) {
@@ -297,7 +299,7 @@ class Orderbook {
   /**
    * Gets MarketEvents by timestamp
    *
-   * @param {String} timestamp - timestamp in nano-seconds
+   * @param {string} timestamp - timestamp in nano-seconds
    * @returns {Array<MarketEventOrder>}
    */
   async getMarketEventsByTimestamp (timestamp) {
@@ -313,7 +315,7 @@ class Orderbook {
   /**
    * Ensures that the orderbook is synced before accessing it
    * @private
-   * @return {void}
+   * @returns {void}
    * @throws {Error} If Orderbook is not synced to Relayer
    */
   assertSynced () {
@@ -344,8 +346,8 @@ class Orderbook {
    * Gets the last time this market was updated with data from the relayer
    * @private
    * @returns {Object} res
-   * @returns {String} [lastUpdated=0] - nanosecond timestamp
-   * @returns {String} [sequence=0] - event version for a given timestamp
+   * @returns {string} [lastUpdated=0] - nanosecond timestamp
+   * @returns {string} [sequence=0] - event version for a given timestamp
    */
   async lastUpdate () {
     this.logger.info(`Retrieving last update from store for ${this.marketName}`)

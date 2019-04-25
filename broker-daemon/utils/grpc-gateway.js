@@ -38,20 +38,30 @@ const supportedMethods = Object.freeze([
 const paramRegex = /{(\w+)}/g
 
 /**
+ * Wildcard method to indicate every method is available for the whitelist
+ * @type {string}
  * @constant
- * @type {String}
+ */
+const WILDCARD = '*'
+
+/**
+ * @constant
+ * @type {string}
  * @default
  */
 const GRPC_API_OPTION_ID = '.google.api.http'
 
 /**
  * generate middleware to proxy to gRPC defined by proto files
- * @param  {string[]} protoFiles Filenames of protobuf-file
- * @param  {string} grpcLocation HOST:PORT of gRPC server
- * @param  {ChannelCredentials}  gRPC credential context (default: grpc.credentials.createInsecure())
- * @return {Function}            Middleware
+ * @param  {Array<string>} protoFiles - Filenames of protobuf-file
+ * @param  {string} grpcLocation - HOST:PORT of gRPC server
+ * @param  {Object} options
+ * @param  {ChannelCredentials} options.credentials - credential context (default: grpc.credentials.createInsecure())
+ * @param  {boolean} [options.debug=true]
+ * @param  {Array} [options.whitelist=['*']] - Whitelist of methods to include. By default, includes all methods as a wildcard.
+ * @returns {Function} Middleware
  */
-const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.createInsecure(), debug = true) => {
+const middleware = (protoFiles, grpcLocation, { credentials = grpc.credentials.createInsecure(), debug = true, whitelist = [ WILDCARD ] } = {}) => {
   const router = express.Router()
   const clients = {}
   const protos = protoFiles.map(p => grpc.load(p))
@@ -70,7 +80,10 @@ const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.cre
         s.methods.forEach(m => {
           if (m.options[GRPC_API_OPTION_ID]) {
             supportedMethods.forEach(httpMethod => {
-              if (m.options[GRPC_API_OPTION_ID][httpMethod]) {
+              // We should limit methods to those included on the whitelist
+              const permitMethod = whitelist.includes(WILDCARD) || whitelist.includes(m.options[GRPC_API_OPTION_ID][httpMethod])
+
+              if (m.options[GRPC_API_OPTION_ID][httpMethod] && permitMethod) {
                 if (debug) {
                   console.log(httpMethod.toUpperCase().green, m.options[GRPC_API_OPTION_ID][httpMethod].blue)
                 }
@@ -81,7 +94,7 @@ const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.cre
 
                   if (debug) {
                     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
-                    console.log(`GATEWAY: ${(new Date()).toISOString().yellow} (${ip.blue}): /${pkg.replace(/\./g, '.'.white).blue}.${svc.blue}/${m.name.blue}(${params})`)
+                    console.log(`GATEWAY: ${(new Date()).toISOString().yellow} (${ip.blue}): /${pkg.replace(/\./g, '.'.white).blue}.${svc.blue}/${m.name.blue}(${JSON.stringify(params)})`)
                   }
 
                   try {
@@ -93,7 +106,7 @@ const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.cre
                      * gRPC request handler for expressjs
                      *
                      * @param {Error|null} err - exception if it thrown
-                     * @param {object} ans - request object from gRPC call
+                     * @param {Object} ans - request object from gRPC call
                      */
                     const requestHandler = (err, ans) => {
                       // TODO: PRIORITY:MEDIUM - improve error-handling
@@ -108,7 +121,7 @@ const middleware = (protoFiles, grpcLocation, credentials = grpc.credentials.cre
                     }
 
                     // gRPC call (e.g. broker.rpc.AdminService.HealthCheck)
-                    services[svc][implementationName]({}, meta, requestHandler)
+                    services[svc][implementationName](params, meta, requestHandler)
                   } catch (err) {
                     console.error(`${svc}.${m.name}: `.red, err.message.red)
                     console.trace()
@@ -145,9 +158,9 @@ const getPkg = (client, pkg, create = false) => {
 
 /**
  * Parse express request params & query into params for grpc client
- * @param  {Request} req Express request object
- * @param  {String} url  gRPC url field (ie "/v1/hi/{name}")
- * @return {Object}      params for gRPC client
+ * @param  {Object} req - Express request object
+ * @param  {string} url  - gRPC url field (ie "/v1/hi/{name}")
+ * @returns {Object}      params for gRPC client
  */
 const convertParams = (req, url) => {
   const gparams = getParamsList(url)
@@ -168,8 +181,7 @@ const convertParams = (req, url) => {
 
 /**
  * Convert gRPC URL expression into express
- * @param  {string} url gRPC URL expression
- * @return {string}     express URL expression
+ * @param {string} url - gRPC URL expression
  */
 const convertUrl = (url) => (
   // TODO: PRIORITY:LOW - use types to generate regex for numbers & strings in params
@@ -178,9 +190,9 @@ const convertUrl = (url) => (
 
 /**
  * Convert gRPC response to output, based on gRPC body field
- * @param  {Object} value   gRPC response object
- * @param  {string} bodyMap gRPC body field
- * @return {mixed}          mapped output for `res.send()`
+ * @param {Object} value - gRPC response object
+ * @param {string} bodyMap - gRPC body field
+ * @returns {Object} mapped output for `res.send()`
  */
 const convertBody = (value, bodyMap) => {
   bodyMap = bodyMap || '*'
@@ -193,8 +205,8 @@ const convertBody = (value, bodyMap) => {
 
 /**
  * Get a list of params from a gRPC URL
- * @param  {string} url gRPC URL
- * @return {string[]}   Array of params
+ * @param {string} url - gRPC URL
+ * @returns {Array<string>} Array of params
  */
 const getParamsList = (url) => {
   const out = []
@@ -210,8 +222,8 @@ const getParamsList = (url) => {
 
 /**
  * Convert headers into gRPC meta
- * @param  {object} headers Headers: {name: value}
- * @return {meta}           grpc meta object
+ * @param  {Object} headers - Headers: {name: value}
+ * @returns {meta}           grpc meta object
  */
 const convertHeaders = (headers) => {
   headers = headers || {}

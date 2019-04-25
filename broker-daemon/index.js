@@ -15,7 +15,7 @@ const CONFIG = require('./config')
  * Default host and port for the BrokerRPCServer to listen on
  *
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const DEFAULT_RPC_ADDRESS = '0.0.0.0:27492'
@@ -24,7 +24,7 @@ const DEFAULT_RPC_ADDRESS = '0.0.0.0:27492'
  * Default file path to store broker data
  *
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const DEFAULT_DATA_DIR = '~/.sparkswap/data'
@@ -33,7 +33,7 @@ const DEFAULT_DATA_DIR = '~/.sparkswap/data'
  * Default host and port for the InterchainRouter to listen on
  *
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const DEFAULT_INTERCHAIN_ROUTER_ADDRESS = '0.0.0.0:40369'
@@ -42,17 +42,19 @@ const DEFAULT_INTERCHAIN_ROUTER_ADDRESS = '0.0.0.0:40369'
  * Default host and port that the Relayer is set up on
  *
  * @constant
- * @type {Integer}
+ * @type {number}
  * @default
  */
 const DEFAULT_RELAYER_HOST = 'localhost:28492'
 
 /**
  * Create an instance of an engine from provided configuration
- * @param  {String} symbol         Symbol that this engine is responsible for
- * @param  {Object} engineConfig   Configuration object for this engine
- * @param  {Logger} options.logger Logger that this engine should use
- * @return {LndEngine}
+ * @param {string} symbol         - Symbol that this engine is responsible for
+ * @param {Object} engineConfig   - Configuration object for this engine
+ * @param {Object} options
+ * @param {Logger} options.logger - Logger that this engine should use
+ * @returns {LndEngine}
+ * @throws {Error} Unknown engine type
  */
 function createEngineFromConfig (symbol, engineConfig, { logger }) {
   if (engineConfig.type === 'LND') {
@@ -78,31 +80,45 @@ function createEngineFromConfig (symbol, engineConfig, { logger }) {
 class BrokerDaemon {
   /**
    * @param {Object} opts
-   * @param {String} opts.privKeyPath - Path to private key for broker's identity
-   * @param {String} opts.pubKeyPath - Path to public key for broker's identity
-   * @param {String} opts.rpcAddress - Host and port where the user-facing RPC server should listen
-   * @param {String} opts.interchainRouterAddress - Host and port where the interchain router should listen
-   * @param {String} opts.dataDir - Relative path to a directory where application data should be stored
+   * @param {string} opts.network - current blockchain network of the daemon
+   * @param {string} opts.privKeyPath - Path to private key for broker's identity
+   * @param {string} opts.pubKeyPath - Path to public key for broker's identity
+   * @param {string} opts.rpcAddress - Host and port where the user-facing RPC server should listen
+   * @param {string} opts.interchainRouterAddress - Host and port where the interchain router should listen
+   * @param {string} opts.dataDir - Relative path to a directory where application data should be stored
    * @param {Array}  opts.marketNames - List of market names (e.g. 'BTC/LTC') to support
    * @param {Object} opts.engines - Configuration for all the engines to instantiate
-   * @param {Boolean} [opts.disableAuth=false] - Disable SSL for the daemon
-   * @param {String} [opts.rpcUser] - RPC username, only used when auth is enabled
-   * @param {String} [opts.rpcPass] - RPC password, only used when auth is enabled
-   * @param {Object} opts.relayerOptions
-   * @param {String} opts.relayerOptions.relayerRpcHost - Host and port for the Relayer RPC
-   * @param {String} opts.relayerOptions.certPath - Absolute path to the root certificate for the relayer
-   * @return {BrokerDaemon}
+   * @param {boolean} [opts.disableAuth=false] - Disable SSL for the daemon
+   * @param {boolean} [opts.enableCors=false] - Enable CORS for the HTTP Proxy
+   * @param {string} [opts.rpcUser] - RPC username, only used when auth is enabled
+   * @param {string} [opts.rpcPass] - RPC password, only used when auth is enabled
+   * @param {Object} [opts.relayerOptions={}]
+   * @param {string} opts.relayerOptions.relayerRpcHost - Host and port for the Relayer RPC
+   * @param {string} opts.relayerOptions.certPath - Absolute path to the root certificate for the relayer
+   * @returns {BrokerDaemon}
    */
-  constructor ({ privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcHttpProxyAddress }) {
+  constructor ({ network, privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, enableCors = false, isCertSelfSigned, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcInternalProxyAddress, rpcHttpProxyAddress, rpcHttpProxyMethods }) {
+    // Set a global namespace for sparkswap that we can use for properties not
+    // related to application configuration
+    if (!global.sparkswap) {
+      global.sparkswap = {}
+    }
+
+    if (!network) throw new Error('Network is required to create a BrokerDaemon')
     if (!privIdKeyPath) throw new Error('Private Key path is required to create a BrokerDaemon')
     if (!pubIdKeyPath) throw new Error('Public Key path is required to create a BrokerDaemon')
 
+    // Set the network in the global sparkswap namespace
+    global.sparkswap.network = network
+
     const { relayerRpcHost, relayerCertPath } = relayerOptions
+
     this.idKeyPath = {
       privKeyPath: privIdKeyPath,
       pubKeyPath: pubIdKeyPath
     }
     this.rpcAddress = rpcAddress || DEFAULT_RPC_ADDRESS
+    this.rpcInternalProxyAddress = rpcInternalProxyAddress || `localhost:${this.rpcAddress.split(':')[1]}`
     this.rpcHttpProxyAddress = rpcHttpProxyAddress
     this.dataDir = dataDir || DEFAULT_DATA_DIR
     this.marketNames = marketNames || []
@@ -133,8 +149,9 @@ class BrokerDaemon {
     })
 
     this.rpcServer = new BrokerRPCServer({
-      rpcAddress: this.rpcAddress,
+      rpcAddress: this.rpcInternalProxyAddress,
       rpcHttpProxyAddress: this.rpcHttpProxyAddress,
+      rpcHttpProxyMethods,
       logger: this.logger,
       engines: this.engines,
       relayer: this.relayer,
@@ -143,6 +160,8 @@ class BrokerDaemon {
       privKeyPath: privRpcKeyPath,
       pubKeyPath: pubRpcKeyPath,
       disableAuth,
+      enableCors,
+      isCertSelfSigned,
       rpcUser,
       rpcPass
     })
@@ -161,24 +180,20 @@ class BrokerDaemon {
    * - Validates engine configuration
    * - Sets up the user-facing RPC Server
    * - Sets up the Interchain Router
-   * @return {Promise}
    */
   async initialize () {
     try {
+      // Starts the validation of all engines on the broker. We do not await this
+      // function because we want the validations to run in the background as it
+      // can take time for the engines to be ready
+      const enginesAreValidated = this.validateEngines()
+
       // Since these are potentially long-running operations, we run them in parallel to speed
       // up BrokerDaemon startup time.
       await Promise.all([
         this.initializeMarkets(this.marketNames),
-        (async () => {
-          this.logger.info(`Initializing BlockOrderWorker`)
-          await this.blockOrderWorker.initialize()
-          this.logger.info('BlockOrderWorker initialized')
-        })()
+        this.initializeBlockOrder(enginesAreValidated)
       ])
-
-      // This will run in the background. It is implemented with exponential backoff so
-      // the validation will be retried on the engine until successful or until final failure.
-      this.validateEngines()
 
       this.rpcServer.listen(this.rpcAddress)
       this.logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
@@ -194,10 +209,21 @@ class BrokerDaemon {
   }
 
   /**
+   * Initializes all block orders for the engine.
+   * @param {Promise} enginesAreValidated - a promise that resolves when engines are validated
+   * @returns {void}
+   */
+  async initializeBlockOrder (enginesAreValidated) {
+    this.logger.info(`Initializing BlockOrderWorker`)
+    await this.blockOrderWorker.initialize(enginesAreValidated)
+    this.logger.info('BlockOrderWorker initialized')
+  }
+
+  /**
    * Listens to the assigned markets
    *
-   * @param {Array<String>} markets
-   * @returns {Promise<void>} promise that resolves when markets are caught up to the remote
+   * @param {Array<string>} markets
+   * @returns {void} promise that resolves when markets are caught up to the remote
    * @throws {Error} If markets include a currency with no currency configuration
    */
   async initializeMarkets (markets) {
@@ -211,8 +237,8 @@ class BrokerDaemon {
   /**
    * Creates and initializes an orderbook for every market
    *
-   * @param {String} marketName
-   * @returns {Promise<void>} promise that resolves when market is caught up to the remote
+   * @param {string} marketName
+   * @returns {void} promise that resolves when market is caught up to the remote
    */
   async initializeMarket (marketName) {
     const symbols = marketName.split('/')
@@ -235,13 +261,12 @@ class BrokerDaemon {
 
   /**
    * Validates engines
-   * We do not await this function because we want the validations to run in the background.
-   * It can take time for the engines to be ready, so we use exponential backoff to retry validation
-   * for a period of time, until it is either successful or there is actually something wrong.
    * @returns {void}
    */
   validateEngines () {
-    this.engines.forEach((engine, _) => engine.validateEngine())
+    return Promise.all(
+      Array.from(this.engines).map(([ _, engine ]) => engine.validateEngine())
+    )
   }
 }
 

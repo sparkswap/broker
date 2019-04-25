@@ -1,0 +1,17 @@
+##########################################
+# Sparkswap Broker Daemon Regtest
+# https://sparkswap.com
+##########################################
+
+version: '2.4'
+
+services:
+  bitcoind:
+    environment:
+      - CONNECT_HOST=${BITCOIND_CONNECT_HOST}
+      - CONNECT_PORT=18666
+
+  litecoind:
+    environment:
+      - CONNECT_HOST=${LITECOIND_CONNECT_HOST}
+      - CONNECT_PORT=19666

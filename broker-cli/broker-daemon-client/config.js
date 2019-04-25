@@ -11,14 +11,14 @@ const DEFAULT_CONFIG = require('../default-config.js')
 
 /**
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const MISSING_FILE_MESSAGE = 'Cannot find module'
 
 /**
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const USER_CONFIG_FILEPATH = '.sparkswap/config.js'
@@ -30,7 +30,7 @@ const USER_CONFIG_FILEPATH = '.sparkswap/config.js'
  * We attempt to load the file and set default configuration values. We will also
  * warn the user if we have failed to parse their user config file.
  *
- * @return {Object} config
+ * @returns {Object} config
  */
 function loadConfig () {
   try {

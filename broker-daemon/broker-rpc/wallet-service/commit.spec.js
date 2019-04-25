@@ -1,6 +1,5 @@
 const path = require('path')
 const { expect, rewire, sinon } = require('test/test-helper')
-const { PublicError } = require('grpc-methods')
 const { Big } = require('../../utils')
 
 const commit = rewire(path.resolve(__dirname, 'commit'))
@@ -12,25 +11,29 @@ describe('commit', () => {
   let logger
   let btcEngine
   let ltcEngine
-  let paymentNetworkAddress
   let res
   let createChannelRelayerStub
-  let convertBalanceStub
   let createChannelStub
   let getAddressStub
   let relayerAddress
   let engines
   let getMaxOutboundChannelStub
-  let getMaxInboundChannelStub
   let orderbooks
+  let inboundPaymentNetworkAddress
+  let outboundPaymentNetworkAddress
+  let getUncommittedBalanceStub
+  let relayerInverseAddress
 
   beforeEach(() => {
     EmptyResponse = sinon.stub()
-    paymentNetworkAddress = 'asdf12345@localhost'
+    outboundPaymentNetworkAddress = 'asdf12345@localhost'
+    inboundPaymentNetworkAddress = 'hgfd56775@localhost'
     relayerAddress = 'qwerty@localhost'
-    getAddressStub = sinon.stub().resolves({ address: paymentNetworkAddress })
+    relayerInverseAddress = 'lol@localhost'
+    getAddressStub = sinon.stub()
+    getAddressStub.withArgs({ symbol: 'BTC' }).resolves({ address: relayerAddress })
+    getAddressStub.withArgs({ symbol: 'LTC' }).resolves({ address: relayerInverseAddress })
     createChannelRelayerStub = sinon.stub().resolves({})
-    convertBalanceStub = sinon.stub().returns('100')
     createChannelStub = sinon.stub()
     orderbooks = new Map([['BTC/LTC', {}]])
     logger = {
@@ -39,21 +42,24 @@ describe('commit', () => {
       debug: sinon.stub()
     }
     getMaxOutboundChannelStub = sinon.stub().resolves({})
-    getMaxInboundChannelStub = sinon.stub().resolves({})
-
+    getUncommittedBalanceStub = sinon.stub().resolves('200000000')
     btcEngine = {
       createChannel: createChannelStub,
       getMaxChannel: getMaxOutboundChannelStub,
       symbol: 'BTC',
+      feeEstimate: '20000',
       quantumsPerCommon: '100000000',
-      maxChannelBalance: '16777215'
+      maxChannelBalance: '16777215',
+      getPaymentChannelNetworkAddress: sinon.stub().resolves(outboundPaymentNetworkAddress),
+      getUncommittedBalance: getUncommittedBalanceStub
     }
     ltcEngine = {
-      getPaymentChannelNetworkAddress: sinon.stub().resolves(relayerAddress),
-      getMaxChannel: getMaxInboundChannelStub,
+      getPaymentChannelNetworkAddress: sinon.stub().resolves(inboundPaymentNetworkAddress),
       symbol: 'LTC',
+      feeEstimate: '20000',
       quantumsPerCommon: '100000000',
-      maxChannelBalance: '1006632900'
+      maxChannelBalance: '1006632900',
+      connectUser: sinon.stub()
     }
     engines = new Map([
       ['BTC', btcEngine],
@@ -73,15 +79,13 @@ describe('commit', () => {
         createChannel: createChannelRelayerStub
       }
     }
-
-    commit.__set__('convertBalance', convertBalanceStub)
   })
 
   it('balance under minimum amount throws an error for an incorrect balance', () => {
     params.balance = '0.00000100'
     return expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-    ).to.be.rejectedWith(PublicError, 'Minimum balance of')
+    ).to.be.rejectedWith(Error, 'Minimum balance of')
   })
 
   it('balance over allowed maximum value throws an error for an incorrect balance', () => {
@@ -89,16 +93,7 @@ describe('commit', () => {
     params.balance = maxBalance + 1
     return expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-    ).to.be.rejectedWith(PublicError, 'Maximum balance')
-  })
-
-  it('throws an error if the inbound channel exceeds the maximum value', () => {
-    ltcEngine.maxChannelBalance = btcEngine.maxChannelBalance
-
-    params.balance = btcEngine.maxChannelBalance - 1
-    return expect(
-      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-    ).to.be.rejectedWith(PublicError, 'Maximum balance')
+    ).to.be.rejectedWith(Error, 'Maximum balance')
   })
 
   it('throws an error if creating a channel fails', () => {
@@ -106,11 +101,20 @@ describe('commit', () => {
 
     expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-    ).to.be.rejectedWith(PublicError, 'Funding error')
+    ).to.be.rejectedWith(Error, 'Funding error')
+  })
+
+  it('throws an error if requesting an inbound channel fails', () => {
+    createChannelRelayerStub.rejects(new Error('fake relayer error'))
+
+    expect(
+      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+    ).to.be.rejectedWith(Error, 'Error requesting inbound channel')
   })
 
   describe('committing a balance to the relayer', () => {
     let fakeAuth
+
     beforeEach(async () => {
       fakeAuth = 'fake auth'
       relayer.identity.authorize.returns(fakeAuth)
@@ -118,32 +122,44 @@ describe('commit', () => {
     })
 
     it('receives a payment channel network address from the relayer', () => {
-      expect(getAddressStub).to.have.been.calledWith({symbol: params.symbol})
+      expect(getAddressStub).to.have.been.calledWith({ symbol: params.symbol })
     })
 
     it('creates a channel through an btc engine with base units', () => {
       const baseUnitsBalance = Big(params.balance).times(btcEngine.quantumsPerCommon).toString()
-      expect(btcEngine.createChannel).to.have.been.calledWith(paymentNetworkAddress, baseUnitsBalance)
+      expect(btcEngine.createChannel).to.have.been.calledWith(relayerAddress, baseUnitsBalance)
     })
 
-    it('retrieves the address from an inverse engine', () => {
+    it('retrieves the address from the outbound engine', () => {
       expect(ltcEngine.getPaymentChannelNetworkAddress).to.have.been.called()
     })
 
-    it('converts the balance to the currency of the channel to open on the relayer', () => {
-      expect(convertBalanceStub).to.have.been.calledWith('10000000', 'BTC', 'LTC')
+    it('retrieves the address from an inbound engine', () => {
+      expect(ltcEngine.getPaymentChannelNetworkAddress).to.have.been.called()
     })
 
     it('authorizes a request to the relayer', () => {
       expect(relayer.identity.authorize).to.have.been.calledOnce()
     })
 
+    it('connects to the relayer through its inverse engine', () => {
+      expect(ltcEngine.connectUser).to.have.been.calledWith(relayerInverseAddress)
+    })
+
     it('makes a request to the relayer to create a channel', () => {
+      const baseUnitsBalance = Big(params.balance).times(btcEngine.quantumsPerCommon).toString()
+
       expect(createChannelRelayerStub).to.have.been.calledOnce()
       expect(createChannelRelayerStub).to.have.been.calledWith({
-        address: relayerAddress,
-        balance: '100',
-        symbol: 'LTC'
+        outbound: {
+          balance: baseUnitsBalance,
+          symbol: 'BTC',
+          address: outboundPaymentNetworkAddress
+        },
+        inbound: {
+          symbol: 'LTC',
+          address: inboundPaymentNetworkAddress
+        }
       }, fakeAuth)
     })
 
@@ -157,8 +173,8 @@ describe('commit', () => {
   })
 
   describe('invalid market', () => {
-    it('throws an error if engine does not exist for symbol', () => {
-      const badParams = {symbol: 'BTC', market: 'BTC/BAD'}
+    it('throws an error if market is not being tracked', () => {
+      const badParams = { symbol: 'BTC', market: 'BTC/BAD' }
       const errorMessage = `${badParams.market} is not being tracked as a market.`
       return expect(commit({ params: badParams, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
     })
@@ -166,8 +182,9 @@ describe('commit', () => {
 
   describe('invalid engine types', () => {
     it('throws an error if engine does not exist for symbol', () => {
-      const badParams = {symbol: 'BAD', market: 'BTC/LTC'}
+      const badParams = { symbol: 'BAD', market: 'BTC/LTC' }
       const errorMessage = `No engine is configured for symbol: ${badParams.symbol}`
+      getAddressStub.withArgs({ symbol: 'BAD' }).resolves({ address: relayerAddress })
       return expect(commit({ params: badParams, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
     })
 
@@ -175,33 +192,32 @@ describe('commit', () => {
       const badEngines = new Map([['BTC', btcEngine]])
       return expect(
         commit({ params, relayer, logger, engines: badEngines, orderbooks }, { EmptyResponse })
-      ).to.be.rejectedWith(PublicError, 'No engine is configured for symbol')
+      ).to.be.rejectedWith(Error, 'No engine is configured for symbol')
     })
   })
 
   describe('checking channel balances', () => {
-    it('throws an error if there are already open inbound and outbound channels with the desired amount', () => {
-      getMaxOutboundChannelStub.resolves({maxBalance: '10000001'})
-      getMaxInboundChannelStub.resolves({maxBalance: '300'})
+    it('does not throw if there are already open inbound and outbound channel', () => {
+      getMaxOutboundChannelStub.resolves({ maxBalance: '10000001' })
+
       return expect(
         commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-      ).to.be.rejectedWith(PublicError, `You already have a channel open with ${params.balance} or greater.`)
+      ).to.not.be.rejected()
     })
 
-    it('throws an error if the outbound channel does not have the desired amount', () => {
-      getMaxOutboundChannelStub.resolves({maxBalance: '1000'})
-      getMaxInboundChannelStub.resolves({maxBalance: '300'})
-      return expect(
-        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-      ).to.be.rejectedWith(PublicError, 'You have another outbound channel open with a balance lower than desired, release that channel and try again.')
+    it('opens an outbound channel if the outbound channel does not exist', async () => {
+      getMaxOutboundChannelStub.resolves({})
+
+      await commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+
+      expect(btcEngine.createChannel).to.have.been.calledOnce()
     })
 
-    it('throws an error if the inbound channel does not have the desired amount', () => {
-      getMaxOutboundChannelStub.resolves({maxBalance: '100000001'})
-      getMaxInboundChannelStub.resolves({maxBalance: '10'})
+    it('throws an error if the outbound channel does not have the desired amount excluding the fee estimate', () => {
+      getMaxOutboundChannelStub.resolves({ maxBalance: '1000' })
       return expect(
         commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-      ).to.be.rejectedWith(PublicError, 'You have another inbound channel open with a balance lower than desired, release that channel and try again.')
+      ).to.be.rejectedWith(Error, 'You have an existing outbound channel with a balance lower than desired, release that channel and try again.')
     })
   })
 })

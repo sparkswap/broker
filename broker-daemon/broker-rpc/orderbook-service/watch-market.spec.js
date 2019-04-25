@@ -100,6 +100,6 @@ describe('watchMarket', () => {
     expect(serialize).to.have.been.calledOnce()
     expect(sendStub).to.have.been.calledOnce()
     expect(WatchMarketResponse).to.have.been.calledOnce()
-    expect(WatchMarketResponse).to.have.been.calledWith({marketEvent: fakeSerialized})
+    expect(WatchMarketResponse).to.have.been.calledWith({ marketEvent: fakeSerialized })
   })
 })

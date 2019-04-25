@@ -27,7 +27,8 @@ describe('get-balances', () => {
         uncommittedBalance: '0.0000000000000001',
         totalChannelBalance: '0.0000000000000001',
         totalPendingChannelBalance: '0.0000000000000001',
-        uncommittedPendingBalance: '0.0000000000000001'
+        uncommittedPendingBalance: '0.0000000000000001',
+        totalReservedChannelBalance: '0.0000000000000001'
       }
       engineStub = sinon.stub()
       engines = new Map([['BTC', engineStub]])
@@ -89,6 +90,8 @@ describe('get-balances', () => {
     let uncommittedPendingBalance
     let uncommittedPendingBalanceStub
     let totalPendingBalanceStub
+    let totalReservedChannelBalance
+    let totalReservedChannelBalanceStub
 
     beforeEach(() => {
       symbol = 'BTC'
@@ -96,16 +99,19 @@ describe('get-balances', () => {
       totalChannelBalance = 10000
       totalPendingChannelBalance = 1000
       uncommittedPendingBalance = 5000
+      totalReservedChannelBalance = 1000
 
       uncommittedBalanceStub = sinon.stub().resolves(uncommittedBalance)
       totalChannelBalanceStub = sinon.stub().resolves(totalChannelBalance)
       totalPendingBalanceStub = sinon.stub().resolves(totalPendingChannelBalance)
       uncommittedPendingBalanceStub = sinon.stub().resolves(uncommittedPendingBalance)
+      totalReservedChannelBalanceStub = sinon.stub().resolves(totalReservedChannelBalance)
       engineStub = {
         getUncommittedBalance: uncommittedBalanceStub,
         getTotalChannelBalance: totalChannelBalanceStub,
         getTotalPendingChannelBalance: totalPendingBalanceStub,
         getUncommittedPendingBalance: uncommittedPendingBalanceStub,
+        getTotalReservedChannelBalance: totalReservedChannelBalanceStub,
         quantumsPerCommon: '100000000'
       }
 
@@ -122,13 +128,29 @@ describe('get-balances', () => {
       expect(totalChannelBalanceStub).to.have.been.calledOnce()
     })
 
+    it('gets the total pending channel balance of an engine', async () => {
+      await getEngineBalances(symbol, engineStub, logger)
+      expect(totalPendingBalanceStub).to.have.been.calledOnce()
+    })
+
+    it('gets the total uncommitted pending balance of an engine', async () => {
+      await getEngineBalances(symbol, engineStub, logger)
+      expect(uncommittedPendingBalanceStub).to.have.been.calledOnce()
+    })
+
+    it('gets the total reserved channel balance of an engine', async () => {
+      await getEngineBalances(symbol, engineStub, logger)
+      expect(totalReservedChannelBalanceStub).to.have.been.calledOnce()
+    })
+
     it('returns balances for an engine', async () => {
       const res = await getEngineBalances(symbol, engineStub, logger)
       expect(res).to.eql({
         uncommittedBalance: '0.0100000000000000',
         totalChannelBalance: '0.0001000000000000',
         totalPendingChannelBalance: '0.0000100000000000',
-        uncommittedPendingBalance: '0.0000500000000000'
+        uncommittedPendingBalance: '0.0000500000000000',
+        totalReservedChannelBalance: '0.0000100000000000'
       })
     })
   })

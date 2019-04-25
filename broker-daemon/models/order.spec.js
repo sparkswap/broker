@@ -25,7 +25,7 @@ describe('Order', () => {
   })
 
   describe('::fromStorage', () => {
-    it('defines a static method for creating orderss from storage', () => {
+    it('defines a static method for creating orders from storage', () => {
       expect(Order).itself.to.respondTo('fromStorage')
     })
 
@@ -464,6 +464,20 @@ describe('Order', () => {
         expect(order.value).to.include(`"swapHash":"${filledParams.swapHash}"`)
         expect(order.value).to.include(`"fillAmount":"${filledParams.fillAmount}"`)
         expect(order.value).to.include(`"takerAddress":"${filledParams.takerAddress}"`)
+      })
+    })
+
+    describe('serialize', () => {
+      it('serializes the order for grpc transfer', () => {
+        const serializedOrder = order.serialize()
+
+        expect(serializedOrder).to.have.property('blockOrderId', order.blockOrderId)
+        expect(serializedOrder).to.have.property('orderId', order.orderId)
+        expect(serializedOrder).to.have.property('baseSymbol', order.baseSymbol)
+        expect(serializedOrder).to.have.property('counterSymbol', order.counterSymbol)
+        expect(serializedOrder).to.have.property('side', order.side)
+        expect(serializedOrder).to.have.property('amount', '0.0001000000000000')
+        expect(serializedOrder).to.have.property('price', '10.0000000000000000')
       })
     })
   })

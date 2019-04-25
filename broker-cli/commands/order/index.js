@@ -15,12 +15,16 @@ const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../../util
 const SUPPORTED_COMMANDS = Object.freeze({
   STATUS: 'status',
   CANCEL: 'cancel',
-  SUMMARY: 'summary'
+  SUMMARY: 'summary',
+  CANCEL_ALL: 'cancel-all',
+  TRADE_HISTORY: 'trade-history'
 })
 
 const status = require('./status')
 const cancel = require('./cancel')
 const summary = require('./summary')
+const cancelAll = require('./cancel-all')
+const tradeHistory = require('./trade-history')
 
 module.exports = (program) => {
   program
@@ -28,11 +32,11 @@ module.exports = (program) => {
     .help(`Available Commands: ${Object.values(SUPPORTED_COMMANDS).join(', ')}`)
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
-    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
-
+      const { market } = opts
       let blockOrderId
 
       switch (command) {
@@ -50,20 +54,31 @@ module.exports = (program) => {
           return cancel(args, opts, logger)
 
         case SUPPORTED_COMMANDS.SUMMARY:
-          const { market } = opts
           opts.market = validations.isMarketName(market)
           return summary(args, opts, logger)
+
+        case SUPPORTED_COMMANDS.CANCEL_ALL:
+          opts.market = validations.isMarketName(market)
+          return cancelAll(args, opts, logger)
+
+        case SUPPORTED_COMMANDS.TRADE_HISTORY:
+          return tradeHistory(args, opts, logger)
       }
     })
     .command(`order ${SUPPORTED_COMMANDS.SUMMARY}`, 'View your orders')
+    .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
-    .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
     .command(`order ${SUPPORTED_COMMANDS.STATUS}`, 'Get the status of a block order')
     .argument('<blockOrderId>', 'Block order to get status of', validations.isBlockOrderId)
+    .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
-    .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
     .command(`order ${SUPPORTED_COMMANDS.CANCEL}`, 'Cancel a block order')
-    .argument('<blockOrderId>', 'Block Order to cancel.', validations.isBlockOrderId)
+    .argument('<blockOrderId>', 'Block Order to cancel.', validations.isBlockOrderId, null, true)
+    .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
-    .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
+    .command(`order ${SUPPORTED_COMMANDS.CANCEL_ALL}`, 'Cancel all block orders on market')
+    .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
+    .command(`order ${SUPPORTED_COMMANDS.TRADE_HISTORY}`, 'Get information about completed and processing trades')
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
 }

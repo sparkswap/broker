@@ -7,16 +7,50 @@ const Identity = require('./identity')
 const MarketWatcher = require('./market-watcher')
 
 const { loadProto } = require('../utils')
+const { grpcDeadlineInterceptor } = require('../../broker-cli/utils')
 
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
 
 /**
+ * Path for the Proto files for the Relayer
+ * @type {string}
  * @constant
- * @type {String}
  * @default
  */
 const RELAYER_PROTO_PATH = './proto/relayer.proto'
+
+/**
+ * @constant
+ * @type {string}
+ * @default
+ */
+const PRODUCTION = process.env.NODE_ENV === 'production'
+
+/**
+ * gRPC service options for any streaming calls on the relayer. This configuration
+ * provides "keep-alive" functionality so that stream calls will not be prematurely
+ * cancelled, leaving the broker in an offline/weird state where communication
+ * is dead, but the broker hasn't been notified
+ *
+ * NOTE: This object will be mutated by gRPC (do not use Object.freeze)
+ *
+ * @constant
+ * @type {Object}
+ * @default
+ */
+const GRPC_STREAM_OPTIONS = {
+  // Set to 30 seconds, keep-alive time is an arbitrary number, but needs to be
+  // less than default tcp timeout of AWS/ELB which is 1 minute
+  'grpc.keepalive_time_ms': 30000,
+  // Set to true. We want to send keep-alive pings even if the stream is not in use
+  'grpc.keepalive_permit_without_calls': 1,
+  //  Set to 30 seconds, Minimum time between sending successive ping frames
+  // without receiving any data frame
+  'grpc.http2.min_time_between_pings_ms': 30000,
+  // Set to infinity, this means the server will continually send keep-alive pings
+  'grpc.http2.max_pings_without_data': 0
+}
 
 /**
  * Interface for daemon to interact with a SparkSwap Relayer
@@ -31,33 +65,41 @@ class RelayerClient {
    */
 
   /**
-   * @param {KeyPath} idKeyPath            Path to public and private key for the broker's identity
+   * @param {KeyPath} idKeyPath            - Path to public and private key for the broker's identity
    * @param {Object}  relayerOpts
-   * @param {String}  relayerOpts.host     Hostname and port of the Relayer RPC server
-   * @param {String}  relayerOpts.certPath Absolute path to the root certificate for the Relayer
+   * @param {string}  relayerOpts.host     - Hostname and port of the Relayer RPC server
+   * @param {string}  relayerOpts.certPath - Absolute path to the root certificate for the Relayer
    * @param {Logger}  logger
    */
   constructor ({ privKeyPath, pubKeyPath }, { certPath, host = 'localhost:28492' }, logger = consoleLogger) {
     this.logger = logger
     this.address = host
     this.proto = loadProto(path.resolve(RELAYER_PROTO_PATH))
-
     this.identity = Identity.load(privKeyPath, pubKeyPath)
-    let channelCredentials
-    // TODO figure out a way for this check to not be in the application code
-    if (process.env.NETWORK === 'mainnet') {
-      channelCredentials = credentials.createSsl()
-    } else {
+
+    let channelCredentials = credentials.createSsl()
+
+    if (!PRODUCTION) {
+      logger.info('Using local certs for relayer client', { production: PRODUCTION })
       channelCredentials = credentials.createSsl(readFileSync(certPath))
     }
 
     this.credentials = channelCredentials
 
-    this.makerService = caller(this.address, this.proto.MakerService, this.credentials)
-    this.takerService = caller(this.address, this.proto.TakerService, this.credentials)
-    this.orderBookService = caller(this.address, this.proto.OrderBookService, this.credentials)
-    this.paymentChannelNetworkService = caller(this.address, this.proto.PaymentChannelNetworkService, this.credentials)
-    this.adminService = caller(this.address, this.proto.AdminService, this.credentials)
+    const makerServiceClient = new this.proto.MakerService(this.address, this.credentials, GRPC_STREAM_OPTIONS)
+    this.makerService = caller.wrap(makerServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+
+    const takerServiceClient = new this.proto.TakerService(this.address, this.credentials, GRPC_STREAM_OPTIONS)
+    this.takerService = caller.wrap(takerServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+
+    const orderBookServiceClient = new this.proto.OrderBookService(this.address, this.credentials, GRPC_STREAM_OPTIONS)
+    this.orderBookService = caller.wrap(orderBookServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+
+    const paymentChannelNetworkServiceClient = new this.proto.PaymentChannelNetworkService(this.address, this.credentials)
+    this.paymentChannelNetworkService = caller.wrap(paymentChannelNetworkServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+
+    const adminServiceClient = new this.proto.AdminService(this.address, this.credentials)
+    this.adminService = caller.wrap(adminServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
   }
 
   /**
@@ -65,10 +107,10 @@ class RelayerClient {
    *
    * @param {LevelUP} store
    * @param {Object} params
-   * @param {String} params.baseSymbol
-   * @param {String} params.counterSymbol
-   * @param {String} params.lastUpdated - nanosecond timestamp
-   * @param {String} params.sequence
+   * @param {string} params.baseSymbol
+   * @param {string} params.counterSymbol
+   * @param {string} params.lastUpdated - nanosecond timestamp
+   * @param {string} params.sequence
    * @returns {EventEmitter} An event emitter that emits `sync` when the market is up to date and `end` when the stream ends (by error or otherwise)
    */
   watchMarket (store, { baseSymbol, counterSymbol, lastUpdated, sequence }) {

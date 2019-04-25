@@ -60,7 +60,10 @@ describe('InterchainRouter', () => {
     })
 
     it('creates a grpc server', () => {
+      const serverOptions = InterchainRouter.__get__('GRPC_SERVER_OPTIONS')
+
       expect(grpc.Server).to.have.been.calledOnce()
+      expect(grpc.Server).to.have.been.calledWithExactly(serverOptions)
       expect(grpc.Server).to.have.been.calledWithNew()
       expect(router.server).to.be.instanceOf(grpc.Server)
     })

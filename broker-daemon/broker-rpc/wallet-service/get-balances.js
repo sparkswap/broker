@@ -2,7 +2,7 @@ const { Big } = require('../../utils')
 
 /**
  * @constant
- * @type {object}
+ * @type {Object}
  * @default
  */
 const BALANCE_PRECISION = 16
@@ -11,36 +11,40 @@ const BALANCE_PRECISION = 16
  * Grabs all balances from a specific engine (total and pending). If a particular
  * engine is unavailable an empty response will be returned
  *
- * @param {Array<symbol, engine>} SparkSwap Payment Channel Network Engine
+ * @param {string} symbol
+ * @param {Engine} engine - SparkSwap Payment Channel Network Engine
  * @param {Logger} logger
- * @return {Object} res
- * @return {String} res.uncommittedBalance
- * @return {String} res.uncommittedPendingBalance
- * @return {String} res.totalChannelBalance
- * @return {String} res.totalPendingChannelBalance
+ * @returns {Object} res
+ * @returns {string} res.uncommittedBalance
+ * @returns {string} res.uncommittedPendingBalance
+ * @returns {string} res.totalChannelBalance
+ * @returns {string} res.totalPendingChannelBalance
  */
 async function getEngineBalances (symbol, engine, logger) {
   const { quantumsPerCommon } = engine
 
-  let [uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance] = await Promise.all([
+  let [uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance, totalReservedChannelBalance] = await Promise.all([
     engine.getUncommittedBalance(),
     engine.getTotalChannelBalance(),
     engine.getTotalPendingChannelBalance(),
-    engine.getUncommittedPendingBalance()
+    engine.getUncommittedPendingBalance(),
+    engine.getTotalReservedChannelBalance()
   ])
 
-  logger.debug(`Received balances from ${symbol} engine`, { uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance })
+  logger.debug(`Received balances from ${symbol} engine`, { uncommittedBalance, totalChannelBalance, totalPendingChannelBalance, uncommittedPendingBalance, totalReservedChannelBalance })
 
   totalChannelBalance = Big(totalChannelBalance).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
   totalPendingChannelBalance = Big(totalPendingChannelBalance).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
   uncommittedBalance = Big(uncommittedBalance).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
   uncommittedPendingBalance = Big(uncommittedPendingBalance).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
+  totalReservedChannelBalance = Big(totalReservedChannelBalance).div(quantumsPerCommon).toFixed(BALANCE_PRECISION)
 
   return {
     uncommittedBalance,
     totalChannelBalance,
     totalPendingChannelBalance,
-    uncommittedPendingBalance
+    uncommittedPendingBalance,
+    totalReservedChannelBalance
   }
 }
 
@@ -52,8 +56,8 @@ async function getEngineBalances (symbol, engine, logger) {
  * @param {Map} request.engines
  * @param {Logger} request.logger
  * @param {Object} responses
- * @param {function} responses.GetBalanceResponse
- * @return {GetBalanceResponse}
+ * @param {Function} responses.GetBalanceResponse
+ * @returns {GetBalanceResponse}
  */
 async function getBalances ({ logger, engines }, { GetBalancesResponse }) {
   logger.info(`Checking wallet balances for ${engines.size} engines`)

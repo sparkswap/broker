@@ -6,18 +6,27 @@
   "markets": "BTC/LTC",
   "//": "WARNING: Only disable broker SSL during development",
   "disableAuth": false,
+  "enableCors": false,
   "supportedEngineTypes": ["LND"],
+  "registerUrls": {
+    "mainnet": "https://sparkswap.com/register/",
+    "testnet": "https://sparkswap.com/register-sandbox/",
+    "regtest": "https://sparkswap.com/register-sandbox/"
+  },
   "relayer": {
     "rpcHost": "host.docker.internal:28492",
-    "certPath": "/secure/relayer-root.pem"
+    "certPath": "/secure/relayer-root-regtest-local.pem"
   },
   "rpc": {
     "address": "0.0.0.0:27492",
+    "proxyAddress": "localhost:27492",
     "httpProxyAddress": "0.0.0.0:27592",
+    "httpProxyMethods": "*",
     "user": "sparkswap",
     "pass": "sparkswap",
     "pubKeyPath": "/secure/broker-rpc-tls.cert",
-    "privKeyPath": "/secure/broker-rpc-tls.key"
+    "privKeyPath": "/secure/broker-rpc-tls.key",
+    "selfSignedCert": true
   },
   "currencies": [
     {

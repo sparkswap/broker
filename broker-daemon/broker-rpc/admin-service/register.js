@@ -1,10 +1,4 @@
-/**
- * Sparkswap url for registering a user
- * @constant
- * @default
- * @type {String}
- */
-const REGISTER_URL = 'https://sparkswap.com/register/'
+const { registerUrls } = require('../../config')
 
 /**
  * Register the publicKey with the Relayer
@@ -13,8 +7,9 @@ const REGISTER_URL = 'https://sparkswap.com/register/'
  * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
  * @param {Object} request.logger
  * @param {Object} responses
- * @param {function} responses.RegisterResponse - constructor for RegisterResponse messages
- * @return {RegisterResponse}
+ * @param {Function} responses.RegisterResponse - constructor for RegisterResponse messages
+ * @returns {RegisterResponse}
+ * @throws {Error} Unable to find registration url
  */
 async function register ({ relayer, logger }, { RegisterResponse }) {
   const publicKey = relayer.identity.pubKeyBase64
@@ -22,8 +17,20 @@ async function register ({ relayer, logger }, { RegisterResponse }) {
   // Currently we don't do anything with this entityId but we will need it in the future
   const { entityId } = await relayer.adminService.register({ publicKey })
 
-  logger.info('Successfully registered public key with relayer', { entityId })
-  const url = `${REGISTER_URL}${entityId}`
+  logger.info('Successfully registered Broker with relayer', { entityId })
+
+  if (!global.sparkswap || !global.sparkswap.network) {
+    throw new Error('Configuration error: Could not find network for broker')
+  }
+
+  const registerUrl = registerUrls[global.sparkswap.network]
+
+  if (!registerUrl) {
+    throw new Error(`Could not find registration url for network ${global.sparkswap.network}, please check broker configuration`)
+  }
+
+  const url = `${registerUrl}${entityId}`
+
   return new RegisterResponse({ entityId, url })
 }
 

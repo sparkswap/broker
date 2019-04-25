@@ -1,25 +1,19 @@
 {
   "name": "broker-cli",
-  "version": "0.4.2-beta",
+  "version": "0.6.2-beta",
   "description": "Broker CLI utility to interact with the Sparkswap Broker Daemon",
   "main": "./bin/sparkswap",
   "scripts": {
-    "format": "standard --fix",
-    "pretest": "npm run format; exit 0",
-    "test": "NODE_PATH=. mocha './{,!(node_modules)/**/}*.spec.js'",
+    "format": "npm run lint -- --fix",
+    "lint": "eslint ./ --ext .js --max-warnings=0",
+    "test": "npm run format && NODE_PATH=. mocha './{,!(node_modules)/**/}*.spec.js'",
     "coverage": "nyc npm test",
-    "ci-test": "npm run format && npm test",
+    "ci-test": "npm run lint && npm test",
     "postinstall": "sh scripts/postinstall.sh",
     "install-config": "sh scripts/install-config.sh"
   },
   "bin": {
     "sparkswap": "./bin/sparkswap"
-  },
-  "standard": {
-    "env": [
-      "mocha",
-      "chai"
-    ]
   },
   "repository": {
     "type": "git",
@@ -38,7 +32,7 @@
     "colors": "1.2.4",
     "compare-versions": "3.1.0",
     "grpc": "1.11.3",
-    "grpc-caller": "0.5.0",
+    "grpc-caller": "0.11.0",
     "prettyjson": "1.2.1",
     "validator": "10.2.0",
     "window-size": "1.1.0",
@@ -48,13 +42,19 @@
     "chai": "4.1.2",
     "chai-as-promised": "7.1.1",
     "dirty-chai": "2.0.1",
+    "eslint": "5.14.0",
+    "eslint-config-standard": "12.0.0",
+    "eslint-plugin-import": "2.16.0",
+    "eslint-plugin-jsdoc": "4.1.0",
+    "eslint-plugin-node": "8.0.1",
+    "eslint-plugin-promise": "4.0.1",
+    "eslint-plugin-standard": "4.0.0",
     "mocha": "5.1.1",
     "mock-require": "3.0.2",
     "nyc": "11.7.3",
     "rewire": "4.0.1",
     "sinon": "7.2.3",
     "sinon-chai": "3.3.0",
-    "standard": "11.0.1",
     "timekeeper": "2.1.2",
     "timeout-as-promise": "1.0.0"
   },

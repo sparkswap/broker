@@ -1,17 +1,15 @@
-const { PublicError } = require('grpc-methods')
-
 /**
  * Creates a new wallet for a specific engine
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Logger} request.logger
- * @param {Object<String>} request.params
- * @param {String} request.params.symbol - currency symbol of the wallet e.g. `BTC`
- * @param {String} request.params.password - password for the newly created wallet
+ * @param {Object<string>} request.params
+ * @param {string} request.params.symbol - currency symbol of the wallet e.g. `BTC`
+ * @param {string} request.params.password - password for the newly created wallet
  * @param {Map<Engine>} request.engines
  * @param {Object} responses
  * @param {Function} responses.CreateWalletResponse
- * @return {CreateWalletResponse}
+ * @returns {CreateWalletResponse}
  */
 async function createWallet ({ logger, params, engines }, { CreateWalletResponse }) {
   const { symbol, password } = params
@@ -19,17 +17,10 @@ async function createWallet ({ logger, params, engines }, { CreateWalletResponse
 
   if (!engine) {
     logger.error(`Could not find engine: ${symbol}`)
-    throw new PublicError(`Unable to create wallet for engine: ${symbol}`)
+    throw new Error(`Unable to create wallet for engine: ${symbol}`)
   }
 
   const recoverySeed = await engine.createWallet(password)
-
-  // We need to re-validate the node after wallet creation, however, this might
-  // cause the daemon to have multiple validation processes running at the same time.
-  //
-  // Additionally, we do not await the validation of an engine as it will be retried
-  // on its own.
-  engine.validateEngine()
 
   return new CreateWalletResponse({ recoverySeed })
 }

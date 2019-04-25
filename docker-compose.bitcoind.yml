@@ -3,9 +3,6 @@
 # sparkswap Broker-CLI and Broker-Daemon
 # https://sparkswap.com
 #
-# The broker and engines currently default to TestNet. To adjust settings, please
-# look at the associated `.env` files
-#
 # Troubleshooting GRPC:
 # - GRPC_VERBOSITY=INFO
 # - GRPC_TRACE=all
@@ -24,7 +21,7 @@ services:
       - ZMQPUBRAWTX=tcp://bitcoind:28334
 
   bitcoind:
-    image: sparkswap/bitcoind:0.3.5-beta
+    image: sparkswap/bitcoind:0.5.2-beta
     volumes:
       - shared:/shared
       - bitcoin:/data

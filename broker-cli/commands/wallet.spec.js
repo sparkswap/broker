@@ -80,6 +80,7 @@ describe('cli wallet', () => {
     let daemonStub
     let walletBalanceStub
     let rpcAddress
+    let reserved
     let symbol
     let args
     let opts
@@ -89,6 +90,7 @@ describe('cli wallet', () => {
     let btcBalance
     let tableStub
     let tablePushStub
+    let reverts = []
 
     const balance = program.__get__('balance')
 
@@ -96,7 +98,8 @@ describe('cli wallet', () => {
       symbol = 'BTC'
       args = { symbol }
       rpcAddress = 'test:1337'
-      opts = { rpcAddress }
+      reserved = false
+      opts = { rpcAddress, reserved }
       logger = { info: sinon.stub(), error: sinon.stub() }
       btcBalance = {
         symbol,
@@ -104,7 +107,8 @@ describe('cli wallet', () => {
         uncommittedBalance: '0.0001000000000000',
         totalChannelBalance: '0.0000200000000000',
         totalPendingChannelBalance: '0.0000100000000000',
-        uncommittedPendingBalance: '0.0000300000000000'
+        uncommittedPendingBalance: '0.0000300000000000',
+        totalReservedChannelBalance: '0.0000905000000000'
       }
       ltcBalance = {
         symbol: 'LTC',
@@ -112,7 +116,8 @@ describe('cli wallet', () => {
         uncommittedBalance: '0.0000020000000000',
         totalChannelBalance: '0.0000020000000000',
         totalPendingChannelBalance: '0.0000050000000000',
-        uncommittedPendingBalance: '0.0000010000000000'
+        uncommittedPendingBalance: '0.0000010000000000',
+        totalReservedChannelBalance: '0.0000000000000000'
       }
       balances = [btcBalance, ltcBalance]
 
@@ -123,8 +128,12 @@ describe('cli wallet', () => {
       daemonStub = sinon.stub()
       daemonStub.prototype.walletService = { getBalances: walletBalanceStub }
 
-      program.__set__('BrokerDaemonClient', daemonStub)
-      program.__set__('Table', tableStub)
+      reverts.push(program.__set__('BrokerDaemonClient', daemonStub))
+      reverts.push(program.__set__('Table', tableStub))
+    })
+
+    afterEach(() => {
+      reverts.forEach(r => r())
     })
 
     it('calls broker daemon for a wallet balance', async () => {
@@ -150,6 +159,36 @@ describe('cli wallet', () => {
     it('adds a correct balance for LTC', async () => {
       await balance(args, opts, logger)
       const expectedResult = ['LTC', '0.0000020000000000', '0.0000020000000000']
+      const result = tablePushStub.args[1][0]
+
+      // Since the text in the result contains colors (non-TTY) we have to use
+      // an includes matcher instead of importing the color lib for testing.
+      result.forEach((r, i) => {
+        expect(r).to.include(expectedResult[i])
+      })
+    })
+
+    it('adds correct reserved channel balance for BTC', async () => {
+      reserved = true
+      opts = { rpcAddress, reserved }
+      await balance(args, opts, logger)
+      const expectedResult = ['BTC', '0.0000200000000000', '0.000100000000000', '0.0000905000000000']
+
+      const result = tablePushStub.args[0][0]
+
+      // Since the text in the result contains colors (non-TTY) we have to use
+      // an includes matcher instead of importing the color lib for testing.
+      result.forEach((r, i) => {
+        expect(r).to.include(expectedResult[i])
+      })
+    })
+
+    it('adds correct reserved channel balance for LTC', async () => {
+      reserved = true
+      opts = { rpcAddress, reserved }
+      await balance(args, opts, logger)
+      const expectedResult = ['LTC', '0.0000020000000000', '0.0000020000000000', '0.0000000000000000']
+
       const result = tablePushStub.args[1][0]
 
       // Since the text in the result contains colors (non-TTY) we have to use
@@ -189,7 +228,8 @@ describe('cli wallet', () => {
           uncommittedBalance: '',
           totalChannelBalance: '',
           totalPendingChannelBalance: '',
-          uncommittedPendingBalance: ''
+          uncommittedPendingBalance: '',
+          totalReservedChannelBalance: ''
         }
         balances = [btcBalance, emptyLtcBalance]
 
@@ -226,6 +266,7 @@ describe('cli wallet', () => {
     let baseSymbolCapacities
     let counterSymbolCapacities
     let NETWORK_STATUSES
+    let reverts = []
 
     const networkStatus = program.__get__('networkStatus')
     const formatBalance = program.__get__('formatBalance')
@@ -262,7 +303,7 @@ describe('cli wallet', () => {
         outstandingSendCapacity: '0.000001'
       }
 
-      getTradingCapacitiesStub = sinon.stub().resolves({baseSymbolCapacities, counterSymbolCapacities})
+      getTradingCapacitiesStub = sinon.stub().resolves({ baseSymbolCapacities, counterSymbolCapacities })
 
       tableStub = sinon.stub()
       tablePushStub = sinon.stub()
@@ -270,13 +311,18 @@ describe('cli wallet', () => {
       daemonStub = sinon.stub()
       daemonStub.prototype.walletService = { getTradingCapacities: getTradingCapacitiesStub }
 
-      program.__set__('BrokerDaemonClient', daemonStub)
-      program.__set__('Table', tableStub)
+      reverts.push(program.__set__('BrokerDaemonClient', daemonStub))
+      reverts.push(program.__set__('Table', tableStub))
+
       NETWORK_STATUSES = program.__get__('NETWORK_STATUSES')
     })
 
     beforeEach(async () => {
       await networkStatus({}, opts, logger)
+    })
+
+    afterEach(() => {
+      reverts.forEach(r => r())
     })
 
     it('calls broker daemon for the network status', () => {
@@ -439,7 +485,7 @@ describe('cli wallet', () => {
       ]
       walletBalanceStub = sinon.stub().resolves({ balances })
       commitStub = sinon.stub()
-      askQuestionStub = sinon.stub().returns('Y')
+      askQuestionStub = sinon.stub().resolves('Y')
       opts = { rpcAddress, market }
       logger = {
         info: sinon.stub(),
@@ -555,14 +601,22 @@ describe('cli wallet', () => {
       const status = 'FAILED'
       const symbol = 'BTC'
       const error = 'Engine is locked'
-      const channel = {
+      const base = {
         symbol,
         status,
         error: ''
       }
-      releaseStub.resolves({ base: channel, counter: channel })
+      const counter = {
+        symbol,
+        status,
+        error
+      }
+
+      releaseStub.resolves({ base, counter })
       await release(args, opts, logger)
-      expect(logger.info).to.have.been.calledWith(sinon.match(symbol, status, error))
+      expect(logger.info).to.have.been.calledWith(sinon.match(symbol))
+      expect(logger.info).to.have.been.calledWith(sinon.match(status))
+      expect(logger.info).to.have.been.calledWith(sinon.match(error))
     })
 
     it('displays an informative message to user on errors if channels can be force released', async () => {
@@ -628,7 +682,7 @@ describe('cli wallet', () => {
       args = { symbol, amount, address }
       opts = { rpcAddress }
       txid = '1234'
-      withdrawStub = sinon.stub().resolves({txid: '1234'})
+      withdrawStub = sinon.stub().resolves({ txid: '1234' })
       askQuestionStub = sinon.stub().returns('Y')
       logger = { info: sinon.stub(), error: sinon.stub() }
 
@@ -643,7 +697,7 @@ describe('cli wallet', () => {
 
     it('calls the daemon to withdraw channels in the given market', async () => {
       await withdraw(args, opts, logger)
-      expect(withdrawStub).to.have.been.calledWith({amount, symbol, address})
+      expect(withdrawStub).to.have.been.calledWith({ amount, symbol, address })
     })
 
     it('asks the user if they are ok to withdraw channels', async () => {
@@ -776,6 +830,75 @@ describe('cli wallet', () => {
 
     it('calls unlock wallet', () => {
       expect(unlockWalletStub).to.have.been.calledWith(sinon.match({ symbol, password }))
+    })
+  })
+
+  describe('history', () => {
+    let args
+    let opts
+    let logger
+    let daemonStub
+    let symbol
+    let walletServiceStub
+    let transactions
+    let revert
+
+    const history = program.__get__('history')
+
+    beforeEach(() => {
+      transactions = [{
+        type: 'mytype',
+        amount: '10000',
+        fees: '0.23442',
+        timestamp: '1555369297619',
+        transactionHash: 'transactionshash',
+        blockHeight: '1337',
+        pending: false
+      }]
+      walletServiceStub = {
+        walletService: {
+          walletHistory: sinon.stub().resolves({ transactions })
+        }
+      }
+      daemonStub = sinon.stub().returns(walletServiceStub)
+      symbol = 'BTC'
+      args = {
+        symbol
+      }
+      opts = {}
+      logger = {
+        info: sinon.stub(),
+        error: sinon.stub()
+      }
+
+      revert = program.__set__('BrokerDaemonClient', daemonStub)
+    })
+
+    beforeEach(async () => {
+      await history(args, opts, logger)
+    })
+
+    afterEach(() => {
+      revert()
+    })
+
+    it('create a broker daemon client', () => {
+      expect(daemonStub).to.have.been.calledOnce()
+    })
+
+    it('makes a call to walletHistory', () => {
+      expect(walletServiceStub.walletService.walletHistory).to.have.been.calledWith({ symbol })
+    })
+
+    it('prints a table of transactions', () => {
+      const table = logger.info.args[1][0]
+      expect(table).to.include(transactions[0].type)
+      expect(table).to.include(transactions[0].amount)
+      expect(table).to.include(transactions[0].fees)
+      expect(table).to.include(transactions[0].timestamp)
+      expect(table).to.include(transactions[0].transactionHash)
+      expect(table).to.include(transactions[0].blockHeight)
+      expect(table).to.include(transactions[0].pending)
     })
   })
 })

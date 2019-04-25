@@ -1,11 +1,9 @@
 const getRecords = require('./get-records')
 const logger = require('./logger')
 const loadProto = require('./load-proto')
-const grpcDeadline = require('./grpc-deadline')
 const Big = require('./big')
 const migrateStore = require('./migrate-store')
 const SublevelIndex = require('./sublevel-index')
-const convertBalance = require('./convert-balance')
 const nowInSeconds = require('./now-in-seconds')
 const createBasicAuth = require('./create-basic-auth')
 const nanoToDatetime = require('./nano-to-datetime')
@@ -18,16 +16,15 @@ const delay = require('./delay')
 const eachRecord = require('./each-record')
 const Checksum = require('./checksum')
 const payInvoice = require('./pay-invoice')
+const retry = require('./retry')
 
 module.exports = {
   getRecords,
   logger,
   loadProto,
-  grpcDeadline,
   Big,
   migrateStore,
   SublevelIndex,
-  convertBalance,
   nowInSeconds,
   createBasicAuth,
   nanoToDatetime,
@@ -39,5 +36,6 @@ module.exports = {
   delay,
   eachRecord,
   Checksum,
-  payInvoice
+  payInvoice,
+  retry
 }

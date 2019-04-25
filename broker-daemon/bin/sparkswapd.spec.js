@@ -7,8 +7,10 @@ const config = rewire(path.resolve(__dirname, '..', 'config.json'))
 describe('sparkswapd', () => {
   let BrokerDaemon
   let argv
+  let network
 
   beforeEach(() => {
+    network = 'regtest'
     BrokerDaemon = sinon.stub()
     BrokerDaemon.prototype.initialize = sinon.stub()
 
@@ -16,7 +18,8 @@ describe('sparkswapd', () => {
 
     argv = [
       'node',
-      './broker-daemon/bin/sparkswapd'
+      './broker-daemon/bin/sparkswapd',
+      `--network=${network}`
     ]
   })
 
@@ -43,12 +46,17 @@ describe('sparkswapd', () => {
       idPrivKeyPath: privIdKeyPath,
       markets,
       disableAuth,
+      enableCors,
       rpc: {
         address: rpcAddress,
         user: rpcUser,
         pass: rpcPass,
         pubKeyPath: pubRpcKeyPath,
-        privKeyPath: privRpcKeyPath
+        privKeyPath: privRpcKeyPath,
+        proxyAddress: rpcInternalProxyAddress,
+        httpProxyAddress: rpcHttpProxyAddress,
+        httpProxyMethods: rpcHttpProxyMethods,
+        selfSignedCert: isCertSelfSigned
       },
       relayer: {
         rpcHost: relayerRpcHost,
@@ -58,14 +66,20 @@ describe('sparkswapd', () => {
 
     const brokerOptions = {
       dataDir,
+      network,
       interchainRouterAddress,
       pubIdKeyPath,
       privIdKeyPath,
       marketNames: [markets],
       disableAuth,
+      enableCors,
+      isCertSelfSigned,
       rpcAddress,
       rpcUser,
       rpcPass,
+      rpcInternalProxyAddress,
+      rpcHttpProxyAddress,
+      rpcHttpProxyMethods: [rpcHttpProxyMethods],
       pubRpcKeyPath,
       privRpcKeyPath,
       relayerOptions: {
@@ -112,6 +126,18 @@ describe('sparkswapd', () => {
       sparkswapd(argv)
 
       expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ dataDir }))
+    })
+
+    it('provides a network', () => {
+      const newNetwork = 'mainnet'
+      // remove last object which should be the duplicate `--network` option
+      argv.pop()
+      argv.push('--network')
+      argv.push(newNetwork)
+
+      sparkswapd(argv)
+
+      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ network: newNetwork }))
     })
 
     it('provides the markets', () => {
@@ -166,6 +192,56 @@ describe('sparkswapd', () => {
       sparkswapd(argv)
 
       expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ rpcAddress }))
+    })
+
+    it('provides an internal rpc proxy address', () => {
+      const rpcProxyAddress = 'my-fake-domain:9876'
+      argv.push('--rpc.proxy-address')
+      argv.push(rpcProxyAddress)
+
+      sparkswapd(argv)
+
+      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ rpcInternalProxyAddress: rpcProxyAddress }))
+    })
+
+    it('provides an rpc http proxy address', () => {
+      const rpcHttpProxyAddress = '0.0.0.0:9877'
+
+      argv.push('--rpc.http-proxy-address')
+      argv.push(rpcHttpProxyAddress)
+
+      sparkswapd(argv)
+
+      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ rpcHttpProxyAddress }))
+    })
+
+    it('provides a list of rpc http proxy methods', () => {
+      const rpcHttpProxyMethods = '/v1/admin/healthcheck,/v1/admin/id'
+
+      argv.push('--rpc.http-proxy-methods')
+      argv.push(rpcHttpProxyMethods)
+
+      sparkswapd(argv)
+
+      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ rpcHttpProxyMethods: ['/v1/admin/healthcheck', '/v1/admin/id'] }))
+    })
+
+    it('provides whether to enable CORS', () => {
+      argv.push('--rpc.http-proxy-cors')
+      argv.push('true')
+
+      sparkswapd(argv)
+
+      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ enableCors: true }))
+    })
+
+    it('provides whether to the cert is self signed', () => {
+      argv.push('--rpc.self-signed-cert')
+      argv.push('true')
+
+      sparkswapd(argv)
+
+      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ isCertSelfSigned: true }))
     })
   })
 

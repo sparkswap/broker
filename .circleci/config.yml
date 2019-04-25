@@ -14,17 +14,20 @@ jobs:
     steps:
       - checkout
 
+      # Make sure we are on atleast v6 npm
+      - run: npm i -g npm@6
+
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v2-dependencies-{{ checksum "package.json" }}
+          - v3-dependencies-{{ checksum "package.json" }}
 
       - run: npm install
 
       - save_cache:
           paths:
             - node_modules
-          key: v2-dependencies-{{ checksum "package.json" }}
+          key: v3-dependencies-{{ checksum "package.json" }}
 
       # This checks if the broker proto files are valid during our CI run
       - run: npm run broker-proto
@@ -36,17 +39,21 @@ jobs:
     working_directory: ~/broker
     steps:
       - checkout
+
+      # Make sure we are on atleast v6 npm
+      - run: npm i -g npm@6
+
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v2-dependencies-{{ checksum "package.json" }}
+          - v3-dependencies-{{ checksum "package.json" }}
 
       - run: npm install
 
       - save_cache:
           paths:
             - node_modules
-          key: v2-dependencies-{{ checksum "package.json" }}
+          key: v3-dependencies-{{ checksum "package.json" }}
 
       - run: npm run dist-cli
 

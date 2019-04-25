@@ -801,6 +801,34 @@ describe('OrderStateMachine', () => {
     })
   })
 
+  describe('#shouldRetry', () => {
+    let fakeOrder
+    let osm
+
+    beforeEach(() => {
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
+      const { RELAYER_UNAVAILABLE } = OrderStateMachine.__get__('ORDER_ERROR_CODES')
+      fakeOrder = { error: { message: RELAYER_UNAVAILABLE } }
+      osm.order = fakeOrder
+    })
+
+    it('returns true if the osm error is a relayer error', async () => {
+      expect(osm.shouldRetry()).to.be.true()
+    })
+
+    it('returns false if there are no errors associated with the fill', async () => {
+      osm.order.error = undefined
+
+      expect(osm.shouldRetry()).to.be.false()
+    })
+
+    it('returns false if the error code does not match the relayer error code', async () => {
+      osm.order.error = { error: { code: 'NOT_RELAYER_ERROR' } }
+
+      expect(osm.shouldRetry()).to.be.false()
+    })
+  })
+
   describe('#triggerState', () => {
     let key
     let state
@@ -984,6 +1012,39 @@ describe('OrderStateMachine', () => {
       expect(Order.fromObject).to.have.been.calledOnce()
       expect(Order.fromObject).to.have.been.calledWith(key, sinon.match({ my: 'object' }))
       expect(osm.order).to.be.equal(myObject)
+    })
+  })
+
+  describe('::serialize', () => {
+    let orderObject
+
+    beforeEach(() => {
+      orderObject = {
+        order: {
+          serialize: sinon.stub().returns({})
+        },
+        state: 'COMPLETED',
+        dates: {
+          'created': '2019-04-19T22:35:12.049Z',
+          'placed': '2019-04-19T22:35:12.054Z',
+          'executing': '2019-04-19T22:35:44.941Z',
+          'completed': '2019-04-19T22:35:45.780Z'
+        }
+      }
+    })
+
+    it('serializes the order', async () => {
+      await OrderStateMachine.serialize(orderObject)
+
+      expect(orderObject.order.serialize).to.have.been.called()
+    })
+
+    it('returns the serialized order with state and dates', async () => {
+      const serializedOrder = await OrderStateMachine.serialize(orderObject)
+
+      expect(serializedOrder).to.have.property('orderStatus', orderObject.state.toUpperCase())
+      expect(serializedOrder).to.have.property('dates', orderObject.dates)
+      expect(serializedOrder).to.have.property('error', undefined)
     })
   })
 })

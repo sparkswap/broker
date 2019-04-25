@@ -2,10 +2,9 @@
 
 ##########################################################
 # Generates and sets environment variables for broker
-# 
+#
 # Options:
-# -n=, --network=[network] 'm' for MainNet, 't' for TestNet (removes prompt)
-# -i=, --public-ip=[ip address] Your public IP Address (removes prompt)
+# -n=, --network=[network] 'm' for MainNet, 'r' for RegTest hosted by Sparkswap (removes prompt)
 #
 ##########################################################
 RED='\033[0;31m'
@@ -13,16 +12,11 @@ NC='\033[0m'
 
 # parse options
 NETWORK=""
-IP_ADDRESS=""
 for i in "$@"
 do
 case $i in
     -n=*|--network=*)
     NETWORK="${i#*=}"
-
-    ;;
-    -i=*|--public-ip=*)
-    IP_ADDRESS="${i#*=}"
 
     ;;
     *)
@@ -42,34 +36,17 @@ fi
 if [ "$NETWORK" == "" ]; then
   echo "Enter the network:"
   echo "m - MainNet"
-  echo "t - TestNet"
+  echo "r - RegTest (Hosted by Sparkswap)"
   read NETWORK
 fi
 
 if [ $NETWORK = 'm' ]; then
   cp .env-mainnet-sample .env
-elif [ $NETWORK = 't' ]; then
-  cp .env-testnet-sample .env
+elif [ $NETWORK = 'r' ]; then
+  cp .env-regtest-sample .env
 else
   echo "$NETWORK is not a valid option for network"
   exit 1
-fi
-
-# Set the external btc/ltc addresses in the .env file based on user public IP address
-if [ "$IP_ADDRESS" == "" ]; then
-  echo "Enter your public IP address:"
-  read IP_ADDRESS
-fi
-
-OS=`uname`
-if [ "$OS" = 'Darwin' ]; then
-  # for MacOS
-  sed -i '' -e "s/^EXTERNAL_BTC_ADDRESS.*/EXTERNAL_BTC_ADDRESS=$IP_ADDRESS/" .env
-  sed -i '' -e "s/^EXTERNAL_LTC_ADDRESS.*/EXTERNAL_LTC_ADDRESS=$IP_ADDRESS/" .env
-else
-  # for Linux and Windows
-  sed -i'' -e "s/^EXTERNAL_BTC_ADDRESS.*/EXTERNAL_BTC_ADDRESS=$IP_ADDRESS/" .env
-  sed -i'' -e "s/^EXTERNAL_LTC_ADDRESS.*/EXTERNAL_LTC_ADDRESS=$IP_ADDRESS/" .env
 fi
 
 array=(BTC_RPC_USER

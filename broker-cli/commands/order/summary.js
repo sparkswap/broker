@@ -6,18 +6,17 @@ const size = require('window-size')
 
 /**
  * Prints table of the users orders
- * @param {String} market
- * @param {Array.<{blockOrderId, side, amount, price, timeInForce, status>}}
-
- * @returns {Void}
+ * @param {string} market
+ * @param {Array<Order>} orders
+ * @returns {void}
  */
 function createUI (market, orders) {
   const windowWidth = size.get().width
   const unitWidth = Math.floor(windowWidth / 16)
 
   const orderTable = new Table({
-    head: ['Order ID', 'Side', 'Amount', 'Limit Price', 'Time', 'Status'],
-    colWidths: [5 * unitWidth, unitWidth, 3 * unitWidth, 3 * unitWidth, unitWidth, 2 * unitWidth],
+    head: ['Order ID', 'Status', 'Side', 'Amount', 'Limit Price', 'Time', 'Created At'],
+    colWidths: [2 * unitWidth, unitWidth, unitWidth, 3 * unitWidth, 3 * unitWidth, unitWidth, 3 * unitWidth],
     style: { head: ['gray'] }
   })
 
@@ -30,7 +29,8 @@ function createUI (market, orders) {
   orders.forEach((order) => {
     const price = order.isMarketOrder ? 'MARKET' : order.limitPrice
     const side = order.side === ORDER_TYPES.BID ? order.side.green : order.side.red
-    orderTable.push([order.blockOrderId, side, order.amount, price, order.timeInForce, order.status])
+    const date = new Date(order.datetime).toISOString()
+    orderTable.push([order.blockOrderId, order.status, side, order.amount, price, order.timeInForce, date])
   })
 
   ui.push(orderTable.toString())
@@ -44,8 +44,8 @@ function createUI (market, orders) {
  *
  * @param {Object} args
  * @param {Object} opts
- * @param {String} opts.market
- * @param {String} [rpcaddress] opts.rpcaddress
+ * @param {string} opts.market
+ * @param {string} opts.rpcaddress
  * @param {Logger} logger
  */
 async function summary (args, opts, logger) {

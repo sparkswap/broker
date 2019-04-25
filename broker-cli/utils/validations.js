@@ -1,16 +1,38 @@
 const { isInt, isAlpha, isURL, isDecimal: validatorIsDecimal, matches } = require('validator')
 const { Big } = require('./big')
+require('colors')
+
+class ValidationError extends Error {
+  constructor (...args) {
+    super(...args)
+    this.message = this.message.red
+  }
+}
+
 /**
  * Largest int64 is our maximum value for amounts
- * @type {String}
+ * @constant
+ * @type {string}
+ * @default
  */
 const MAX_VALUE = '9223372036854775807'
 
 /**
+ * @constant
+ * @type {Object}
+ * @default
+ */
+const BLOCKCHAIN_NETWORKS = Object.freeze([
+  'mainnet',
+  'testnet',
+  'regtest'
+])
+
+/**
  * Checks if the specified string is a valid decimal format
  *
- * @param {String} str
- * @returns {String} validated decimal
+ * @param {string} str
+ * @returns {string} validated decimal
  * @throws {Error} returns an error if decimal is not a valid format
  */
 function isDecimal (str) {
@@ -18,13 +40,13 @@ function isDecimal (str) {
     return str
   }
 
-  throw new Error('Invalid decimal format')
+  throw new ValidationError('Invalid decimal format')
 }
 
 /**
  * Checks the provided marketName's length
  *
- * @param {String} marketName
+ * @param {string} marketName
  * @returns {Bool} returns true if specified market name is valid
  */
 function validMarketNameLength (marketName) {
@@ -34,8 +56,8 @@ function validMarketNameLength (marketName) {
 /**
  * Provides type and length checking for a market name
  *
- * @param {String} str - potential market name
- * @returns {String} validated market name
+ * @param {string} str - potential market name
+ * @returns {string} validated market name
  * @throws {Error} returns an error if marketname is not valid
  */
 function isMarketName (str) {
@@ -51,16 +73,16 @@ function isMarketName (str) {
       return str.toUpperCase()
     }
 
-    throw new Error()
+    throw new Error('[empty error to trigger the catch]')
   } catch (e) {
-    throw new Error('Market Name format is incorrect')
+    throw new ValidationError(`Market Name should be specified with '--market <marketName>', where <marketName> is the base and counter symbols separated by a '/' e.g. 'BTC/LTC'`)
   }
 }
 
 /**
  * Checks the provided list of marketnames lengths
  *
- * @param {String} marketNames comma separated
+ * @param {string} marketNames - comma separated
  * @returns {Bool} returns true if all market names are valid
  */
 function validMarketNames (marketNames) {
@@ -70,8 +92,8 @@ function validMarketNames (marketNames) {
 /**
  * Checks the provided list of marketnames lengths
  *
- * @param {String} marketNames comma separated
- * @returns {String} returns string if all market names are valid
+ * @param {string} marketNames - comma separated
+ * @returns {string} returns string if all market names are valid
  * @throws {Error} returns an error if not all marketnames are valid
  */
 function areValidMarketNames (marketNames) {
@@ -80,15 +102,15 @@ function areValidMarketNames (marketNames) {
       return marketNames
     }
   } catch (e) {
-    throw new Error('One or more market names is invalid')
+    throw new ValidationError('One or more market names is invalid')
   }
 }
 
 /**
  * Checks if a specified string is a valid host.
  *
- * @param {String} str - host address
- * @returns {String}
+ * @param {string} str - host address
+ * @returns {string}
  * @throws {Error} returns an error if the given string is invalid for an host
  */
 function isHost (str) {
@@ -103,7 +125,7 @@ function isHost (str) {
     return str
   }
 
-  throw new Error('Invalid address')
+  throw new ValidationError('Invalid address')
 }
 
 /**
@@ -119,14 +141,14 @@ function isFormattedPath (str) {
     return str
   }
 
-  throw new Error('Path format is incorrect')
+  throw new ValidationError('Path format is incorrect')
 }
 
 /**
  * Checks if a specified string is a valid block order id.
  *
- * @param  {String}  str - block order id
- * @return {String}     block order id
+ * @param  {string}  str - block order id
+ * @returns {string}     block order id
  * @throws {Error} If string contains more than the allowed characters
  */
 function isBlockOrderId (str) {
@@ -134,14 +156,14 @@ function isBlockOrderId (str) {
     return str
   }
 
-  throw new Error('Block order IDs only contain upper and lower case letters, numbers, dashes (-) and underscores (_).')
+  throw new ValidationError('Block order IDs only contain upper and lower case letters, numbers, dashes (-) and underscores (_).')
 }
 
 /**
  * Checks if a specified string is a valid date.
  *
- * @param  {String}  str - date
- * @return {String}  str - date
+ * @param  {string}  str - date
+ * @returns {string}  str - date
  * @throws {Error} If string cannot be parsed into a date
  */
 function isDate (str) {
@@ -151,14 +173,14 @@ function isDate (str) {
     }
   }
 
-  throw new Error('Given datetime is not in a valid date format')
+  throw new ValidationError('Given datetime is not in a valid date format')
 }
 
 /**
  * Checks if a specified string is a limit
  *
- * @param  {String}  str - limit
- * @return {String}  str - limit
+ * @param  {string}  str - limit
+ * @returns {string}  str - limit
  * @throws {Error} If string is not a valid integer
  */
 function isPositiveInteger (str) {
@@ -166,7 +188,22 @@ function isPositiveInteger (str) {
     return str
   }
 
-  throw new Error('Not a valid integer value')
+  throw new ValidationError('Not a valid integer value')
+}
+
+/**
+ * Checks if the given network is a valid blockchain network
+ * for the broker
+ * @param {string} network - blockchain network
+ * @returns {string}
+ * @throws {Error} Invalid network
+ */
+function isBlockchainNetwork (network) {
+  if (BLOCKCHAIN_NETWORKS.includes(network)) {
+    return network
+  }
+
+  throw new ValidationError(`Invalid blockchain network: ${network}`)
 }
 
 module.exports = {
@@ -177,5 +214,6 @@ module.exports = {
   areValidMarketNames,
   isBlockOrderId,
   isDate,
-  isPositiveInteger
+  isPositiveInteger,
+  isBlockchainNetwork
 }

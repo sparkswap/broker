@@ -253,6 +253,8 @@ describe('BlockOrder', () => {
     let timestamp
     let Order
     let Fill
+    let OrderStateMachine
+    let FillStateMachine
 
     let reverts = []
 
@@ -290,16 +292,44 @@ describe('BlockOrder', () => {
         fromStorage: sinon.stub(),
         rangeForBlockOrder: sinon.stub()
       }
+      OrderStateMachine = {
+        serialize: sinon.stub(),
+        STATES: {
+          NONE: 'none',
+          CREATED: 'created',
+          PLACED: 'placed',
+          CANCELLED: 'cancelled',
+          EXECUTING: 'executing',
+          COMPLETED: 'completed',
+          REJECTED: 'rejected'
+        }
+      }
+
+      FillStateMachine = {
+        serialize: sinon.stub(),
+        STATES: {
+          NONE: 'none',
+          CREATED: 'created',
+          FILLED: 'filled',
+          EXECUTED: 'executed',
+          CANCELLED: 'cancelled',
+          REJECTED: 'rejected'
+        }
+      }
+
       BlockOrder.__set__('Order', Order)
 
       Fill = {
         fromObject: sinon.stub(),
         rangeForBlockOrder: sinon.stub()
       }
+
       BlockOrder.__set__('Fill', Fill)
 
       reverts.push(BlockOrder.__set__('CONFIG', CONFIG))
       reverts.push(BlockOrder.__set__('nanoToDatetime', nanoToDatetimeStub))
+      reverts.push(BlockOrder.__set__('OrderStateMachine', OrderStateMachine))
+      reverts.push(BlockOrder.__set__('FillStateMachine', FillStateMachine))
 
       blockOrder = new BlockOrder(params)
     })
@@ -414,51 +444,11 @@ describe('BlockOrder', () => {
 
         it('serializes all of the orders', () => {
           blockOrder.orders = [ osm ]
+          OrderStateMachine.serialize.returns([ osm ])
 
           const serialized = blockOrder.serialize()
 
           expect(serialized.orders).to.have.lengthOf(1)
-        })
-
-        it('serializes the order id', () => {
-          blockOrder.orders = [ osm ]
-
-          const serialized = blockOrder.serialize()
-
-          expect(serialized.orders[0]).to.have.property('orderId', 'mykey')
-        })
-
-        it('serializes the amount into common units', () => {
-          blockOrder.orders = [ osm ]
-
-          const serialized = blockOrder.serialize()
-
-          expect(serialized.orders[0]).to.have.property('amount', '0.0000100000000000')
-        })
-
-        it('converts the price', () => {
-          blockOrder.orders = [ osm ]
-
-          const serialized = blockOrder.serialize()
-
-          expect(serialized.orders[0]).to.have.property('price')
-          expect(serialized.orders[0].price).to.be.eql('10.0000000000000000')
-        })
-
-        it('serializes the state of the order', () => {
-          blockOrder.orders = [ osm ]
-
-          const serialized = blockOrder.serialize()
-
-          expect(serialized.orders[0]).to.have.property('orderStatus', 'CREATED')
-        })
-
-        it('returns an undefined value for orderError for a successful order', () => {
-          blockOrder.orders = [ osm ]
-
-          const serialized = blockOrder.serialize()
-
-          expect(serialized.orders[0]).to.have.property('orderError', undefined)
         })
       })
 
@@ -496,59 +486,11 @@ describe('BlockOrder', () => {
 
         it('serializes all of the fills', () => {
           blockOrder.fills = [ fsm ]
+          FillStateMachine.serialize.returns([ fsm ])
 
           const serialized = blockOrder.serialize()
 
           expect(serialized.fills).to.have.lengthOf(1)
-        })
-
-        it('serializes the fill id', () => {
-          blockOrder.fills = [ fsm ]
-
-          const serialized = blockOrder.serialize()
-
-          expect(serialized.fills[0]).to.have.property('fillId', 'mykey')
-        })
-
-        it('serializes the order id', () => {
-          blockOrder.fills = [ fsm ]
-
-          const serialized = blockOrder.serialize()
-
-          expect(serialized.fills[0]).to.have.property('orderId', 'otherkey')
-        })
-
-        it('serializes the amount', () => {
-          blockOrder.fills = [ fsm ]
-
-          const serialized = blockOrder.serialize()
-
-          expect(serialized.fills[0]).to.have.property('amount', '0.0000090000000000')
-        })
-
-        it('converts the price', () => {
-          blockOrder.fills = [ fsm ]
-
-          const serialized = blockOrder.serialize()
-
-          expect(serialized.fills[0]).to.have.property('price')
-          expect(serialized.fills[0].price).to.be.eql('10.0000000000000000')
-        })
-
-        it('serializes the state of the fill', () => {
-          blockOrder.fills = [ fsm ]
-
-          const serialized = blockOrder.serialize()
-
-          expect(serialized.fills[0]).to.have.property('fillStatus', 'CREATED')
-        })
-
-        it('returns an undefined value for fillError for a successful order', () => {
-          blockOrder.fills = [ fsm ]
-
-          const serialized = blockOrder.serialize()
-
-          expect(serialized.fills[0]).to.have.property('fillError', undefined)
         })
       })
     })

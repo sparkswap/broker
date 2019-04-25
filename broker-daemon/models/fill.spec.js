@@ -5,6 +5,7 @@ const Fill = rewire(path.resolve(__dirname, 'fill'))
 
 describe('Fill', () => {
   let Order
+  let CONFIG
 
   beforeEach(() => {
     Order = {
@@ -14,6 +15,24 @@ describe('Fill', () => {
       }
     }
 
+    CONFIG = {
+      currencies: [
+        {
+          symbol: 'BTC',
+          quantumsPerCommon: '100000000'
+        },
+        {
+          symbol: 'XYZ',
+          quantumsPerCommon: '10000'
+        },
+        {
+          symbol: 'LTC',
+          quantumsPerCommon: '100000000'
+        }
+      ]
+    }
+
+    Fill.__set__('CONFIG', CONFIG)
     Fill.__set__('Order', Order)
   })
 
@@ -412,6 +431,20 @@ describe('Fill', () => {
         fill.setExecuteParams(executeParams)
 
         expect(fill.value).to.include(`"makerAddress":"${executeParams.makerAddress}"`)
+      })
+    })
+
+    describe('serialize', () => {
+      it('returns a serialized version of the fill', () => {
+        const serializedFill = fill.serialize()
+
+        expect(serializedFill).to.have.property('blockOrderId', fill.blockOrderId)
+        expect(serializedFill).to.have.property('fillId', fill.fillId)
+        expect(serializedFill).to.have.property('amount', '0.0000900000000000')
+        expect(serializedFill).to.have.property('baseSymbol', fill.order.baseSymbol)
+        expect(serializedFill).to.have.property('counterSymbol', fill.order.counterSymbol)
+        expect(serializedFill).to.have.property('side', fill.order.side)
+        expect(serializedFill).to.have.property('price', '10.0000000000000000')
       })
     })
   })

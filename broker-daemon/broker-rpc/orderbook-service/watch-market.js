@@ -1,23 +1,31 @@
 const createLiveStream = require('level-live-stream')
 const { MarketEventOrder } = require('../../models')
+
+/**
+ * Promise that never resolves to keep open the watchMarket stream
+ * so our gRPC calls do not return early
+ * @constant
+ * @type {Promise}
+ * @default
+ */
 const neverResolve = new Promise(() => {})
+
 /**
  * Creates a stream with the exchange that watches for market events
  *
  * @function
  * @param {GrpcServerStreamingMethod~request} request - request object
  * @param {Object} request.params - Request parameters from the client
- * @param {function} request.send - Send a chunk of data to the client
- * @param {function} request.onCancel - Handle cancelled streams
- * @param {function} request.onError - Handle errored streams
+ * @param {Function} request.send - Send a chunk of data to the client
+ * @param {Function} request.onCancel - Handle cancelled streams
+ * @param {Function} request.onError - Handle errored streams
  * @param {Object} request.logger - logger for messages about the method
  * @param {Object} request.orderbooks - initialized orderbooks
  * @param {RelayerClient} request.relayer - grpc Client for interacting with the relayer
  * @param {Object} responses
- * @param {function} responses.WatchMarketResponse - constructor for WatchMarketResponse messages
- * @return {void}
+ * @param {Function} responses.WatchMarketResponse - constructor for WatchMarketResponse messages
+ * @returns {void}
  */
-
 async function watchMarket ({ params, send, onCancel, onError, logger, orderbooks }, { WatchMarketResponse }) {
   // TODO: Some validation on here. Maybe the client can call out for valid markets
   // from the relayer so we dont event make a request if it is invalid
@@ -32,10 +40,10 @@ async function watchMarket ({ params, send, onCancel, onError, logger, orderbook
 
   /**
    * Send market events to clients when records are added/deleted in the orderbook data store
-   * @param  {Object}  opts       Database operation from LevelDb
-   * @param  {String}  opts.key   Key of the database object
-   * @param  {String}  opts.value Value of the database object
-   * @return {void}
+   * @param  {Object}  opts       - Database operation from LevelDb
+   * @param  {string}  opts.key   - Key of the database object
+   * @param  {string}  opts.value - Value of the database object
+   * @returns {void}
    */
   const onData = (opts) => {
     if (opts.type === 'put') {

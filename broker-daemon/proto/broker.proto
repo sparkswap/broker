@@ -69,9 +69,16 @@ enum Side {
   ASK = 1;
 }
 
-/**
- * Statuses of an engine
- */
+
+// Statuses of the relayer
+enum RelayerStatuses {
+  // Relayer is available
+  RELAYER_OK = 0;
+  // Relayer is not available
+  RELAYER_UNAVAILABLE = 1;
+}
+
+// Statuses of an engine
 enum EngineStatuses {
   // Default state of the engine
   UNKNOWN = 0;
@@ -90,23 +97,31 @@ enum EngineStatuses {
 }
 
 /**
- * Statuses of the relayer
+ * EngineStatus provides the status of an engine for a currency.
  */
-enum RelayerStatuses {
-  // Relayer is available
-  OK = 0;
-  // Relayer is not available
-  UNAVAILABLE = 1;
+message EngineStatus {
+  // The common symbol that the engine is responsible for, e.g. `BTC` or `LTC`
+  string symbol = 1;
+  // The status of the engine
+  EngineStatuses status = 2;
+}
+
+// Statuses of an orderbook
+enum OrderbookStatuses {
+  // Orderbook is synced
+  ORDERBOOK_OK = 0;
+  // Orderbook is not synced
+  ORDERBOOK_NOT_SYNCED = 1;
 }
 
 /**
- * Statuses of an orderbook
+ * OrderbookStatus provides the status of an orderbook for a market.
  */
-enum OrderbookStatuses {
-  // Orderbook is synced
-  OK = 0;
-  // Orderbook is not synced
-  NOT_SYNCED = 1;
+message OrderbookStatus {
+  // The market for the orderbook, e.g. `BTC/LTC`
+  string market = 1;
+  // The status of the market
+  OrderbookStatuses status = 2;
 }
 
 /**
@@ -119,26 +134,6 @@ message HealthCheckResponse {
   RelayerStatuses relayer_status = 2;
   // The status of every orderbook available on the BrokerDaemon.
   repeated OrderbookStatus orderbook_status = 3;
-
-  /**
-   * EngineStatus provides the status of an engine for a currency.
-   */
-  message EngineStatus {
-    // The common symbol that the engine is responsible for, e.g. `BTC` or `LTC`
-    string symbol = 1;
-    // The status of the engine
-    EngineStatuses status = 2;
-  }
-
-  /**
-   * OrderbookStatus provides the status of an orderbook for a market.
-   */
-  message OrderbookStatus {
-    // The market for the orderbook, e.g. `BTC/LTC`
-    string market = 1;
-    // The status of the market
-    OrderbookStatuses status = 2;
-  }
 }
 
 /**
@@ -265,8 +260,9 @@ service AdminService {
   }
 
   /**
-   * Register takes the publicKey of users identity returns the entityId of the entity
-   * created by the Relayer and the url for the user to complete registration
+   * Register provides the Broker's identity (via Public Key) to the Relayer
+   * and returns the Relayer-assigned entityId for the Broker as well as
+   * the URL to use to complete user registration.
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
@@ -292,7 +288,7 @@ service AdminService {
    * ```shell
    * ┌─────────────────────────────────────────────────────────────────────────────────────────┐
    * │                                                                                         │
-   * │          Successfully registered public key with the Ϟ Sparkswap Relayer!               │
+   * │          Successfully registered Broker with the Ϟ Sparkswap Relayer!                   │
    * │                                                                                         │
    * │ Go to https://sparkswap.com/register/BAfwIYxkUqHJ3pLLh60AAQj3 to complete registration. │
    * │                                                                                         │
@@ -354,16 +350,32 @@ message Order {
     CREATED = 0;
     // The order has been placed and communicated to other marker participants.
     PLACED = 1;
-    // The order has been filled by another market participant.
-    FILLED = 2;
-    // The swap has been executed on the Payment Channel Networks
-    EXECUTED = 3;
+    // The swap is being executed on the Payment Channel Networks
+    EXECUTING = 3;
     // The swap preimage has been returned to the Relayer.
     COMPLETED = 4;
     // The order has encountered a failure.
     REJECTED = 5;
     // The order has been cancelled by the user.
     CANCELLED = 6;
+  }
+
+  /**
+   * Date that the order has reached each status.
+   */
+  message OrderStateDates {
+    // The date the order has been created on the Relayer.
+    string created = 1;
+    // The date the order has been placed and communicated to other marker participants.
+    string placed = 2;
+    // The date the swap is being executed on the Payment Channel Networks
+    string executing = 3;
+    // The date the swap preimage has been returned to the Relayer.
+    string completed = 4;
+    // The date the order has encountered a failure.
+    string rejected = 5;
+    // The date the order has been cancelled by the user.
+    string cancelled = 6;
   }
 
   // Unique ID assigned by the Relayer for this order.
@@ -375,7 +387,21 @@ message Order {
   // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the SparkSwap Relayer have prices.
   string price = 4;
   // Any error messages related to the status of a REJECTED or FAILED order
-  string order_error = 6;
+  string error = 6;
+  // The unique ID for the block order assigned by the Broker that this order belongs to.
+  string block_order_id = 7;
+  // The base currency for the order
+  string base_symbol = 8;
+  // The counter currency for the order
+  string counter_symbol = 9;
+  // The side of the market that the order is taking.
+  string side = 10;
+  // Dates that the order has reached each status
+  OrderStateDates dates = 11;
+  // Amount of the order filled, expressed in a decimal string of common units for a currency (e.g. bitcoins for BTC).
+  // This can be any amount greater than zero and less than or equal to the amount in the order. This will be an empty
+  // string if the order has not been filled.
+  string fill_amount = 12;
 }
 
 /**
@@ -393,14 +419,31 @@ message Fill {
     FILLED = 1;
     // The swap has been executed on the Payment Channel Networks.
     EXECUTED = 2;
-    // The preimage has been returned to the Relayer by the Maker.
-    COMPLETED = 3;
     // The fill has encountered a failure.
     REJECTED = 4;
+    // The fill has been cancelled.
+    CANCELLED = 5;
   }
+
+  /**
+   * Date that the fill has reached each status.
+   */
+  message FillStateDates {
+    // The date the fill has been created on the Relayer.
+    string created = 1;
+    // The date the fill has been accepted as the fill for the given order.
+    string filled = 2;
+    // The date the fill has encountered a failure.
+    string executed = 3;
+    // The date the fill has encountered a failure.
+    string rejected = 5;
+    // The date the fill has been cancelled.
+    string cancelled = 6;
+  }
+
   // The Relayer-assigned unique ID of the order that this fill is for.
   string order_id = 1;
-  // The Relayer-assignded unique ID for this fill.
+  // The Relayer-assigned unique ID for this fill.
   string fill_id = 2;
   // Status of the fill on the Relayer.
   FillStatus fill_status = 3;
@@ -409,7 +452,17 @@ message Fill {
   // Price at which the order was placed, expressed as a decimal string ratio between the common units of the currencies (e.g. litecoins to bitcoins, not litoshis to satoshis). All orders on the SparkSwap Relayer have prices.
   string price = 5;
   // Any error messages related to the status of a REJECTED or FAILED fill
-  string fill_error = 6;
+  string error = 6;
+  // The unique ID for the block order assigned by the Broker that this fill belongs to.
+  string block_order_id = 7;
+  // The base currency for the fill
+  string base_symbol = 8;
+  // The counter currency for the fill
+  string counter_symbol = 9;
+  // The side of the market that the order is taking.
+  string side = 10;
+  // Dates that the fill has reached each status
+  FillStateDates dates = 11;
 }
 
 /**
@@ -509,6 +562,24 @@ message CancelBlockOrderRequest {
 }
 
 /**
+ * Request to cancel all active block orders on the given market
+ */
+message CancelAllBlockOrdersRequest {
+  // Market for which to cancel block orders, expressed as a string separating two common symbols with a '/', e.g. `'BTC/LTC'`
+  string market = 1;
+}
+
+/**
+ * Response from cancelling all active orders on a market
+ */
+message CancelAllBlockOrdersResponse {
+  // Block order ids of block orders that were successfully cancelled
+  repeated string cancelled_orders = 1;
+  // Block order ids of block orders that were not successfully cancelled
+  repeated string failed_to_cancel_orders = 2;
+}
+
+/**
  * All block orders in a given market.
  */
 message GetBlockOrdersResponse {
@@ -522,6 +593,16 @@ message GetBlockOrdersResponse {
 message GetBlockOrdersRequest {
   // Market for which to retrieve block orders, expressed as a string separating two common symbols with a '/', e.g. `'BTC/LTC'`
   string market = 1;
+}
+
+/**
+ * Gets all completed trades for a user.
+ */
+message GetTradeHistoryResponse {
+  // A list of completed and execting orders
+  repeated Order orders = 1;
+  // A list of accepted and executed fills
+  repeated Fill fills = 2;
 }
 
 /**
@@ -696,6 +777,37 @@ service OrderService {
     };
   }
   /**
+   * CancelAllBlockOrders cancels all active block orders on a market.
+   *
+   * ```javascript
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * orderService.cancelAllBlockOrders({ market: 'BTC/LTC' }, { deadline }, (err) => {
+   *   if (err) return console.error(err)
+   * })
+   * ```
+   *
+   * ```shell
+   * > sparkswap order cancel-all --market btc/ltc
+   * ```
+   *
+   * ```javascript
+   * { "cancelledOrders": [
+   *     "XH3CBeemcGrVBKpc",
+   *     "XH3CA12_5Ynujq8m",
+   *     "XH3B-6hZjRstgjsz",
+   *   ],
+   *  "failedToCancelOrders": [
+   *     "XH3CBODrC7PU3JY7"
+   *   ]
+   * }
+   * ```
+   *
+   * ```shell
+   * Successfully cancelled 4 orders on BTC/LTC market.
+   * ```
+   */
+  rpc CancelAllBlockOrders (CancelAllBlockOrdersRequest) returns (CancelAllBlockOrdersResponse);
+  /**
    * GetBlockOrders returns information on all of the block orders placed in a single market, like `BTC/LTC`.
    * It does not include complete information, such as the underlying orders and fills on the SparkSwap Relayer, or the amount of the order that has been filled. For that, use [GetBlockOrder](#getblockorder).
    *
@@ -715,33 +827,45 @@ service OrderService {
    *
    * ```javascript
    * [
-   *   {
-   *     "status": "",
-   *     "market": "BTC/LTC",
-   *     "side": "BID",
-   *     "amount": "0.0001",
-   *     "isMarketOrder": true,
-   *     "timeInForce": "GTC"
-   *   },
-   *   {
-   *     "status": "",
-   *     "market": "BTC/LTC",
-   *     "side": "BID",
-   *     "amount": "0.0001",
-   *     "limitPrice": "1.1",
-   *     "timeInForce": "GTC"
-   *   }
+       {
+          price_restriction: 'limitPrice',
+          blockOrderId: 'XLEdhQqW_vQfJ1xW',
+          market: 'BTC/LTC',
+          side: 'BID',
+          amount: '0.0001000000000000',
+          isMarketOrder: false,
+          limitPrice: '60.0000000000000000',
+          timeInForce: 'GTC',
+          status: 'ACTIVE',
+          timestamp: '1555111302274449400',
+          datetime: '2019-04-12T23:21:42.2744494Z'
+        },
+        {
+          price_restriction: 'isMarketOrder',
+          blockOrderId: 'XLEeQPNXsyJ3_MsV',
+          market: 'BTC/LTC',
+          side: 'BID',
+          amount: '0.0001000000000000',
+          isMarketOrder: true,
+          limitPrice: '',
+          timeInForce: 'GTC',
+          status: 'ACTIVE',
+          timestamp: '1555111488621020800',
+          datetime: '2019-04-12T23:24:48.6210208Z'
+        }
    * ]
    * ```
    *
    * ```shell
-   * ┌─────────────────────────────────────────────┬───────┬──────────────────┬──────────────────┬──────┬──────────┐
-   * │ Order ID                                    │ Side  │ Amount           │ Limit Price      │ Time │ Status   │
-   * ├─────────────────────────────────────────────┼───────┼──────────────────┼──────────────────┼──────┼──────────┤
-   * │ o2tSlSibkCsw6zi4-mpVuMogeLaz_GZuGqJlhWVs    │ BID   │ 0.0001000000000… │ 1.1000000000000… │ GTC  │ ACTIVE   │
-   * ├─────────────────────────────────────────────┼───────┼──────────────────┼──────────────────┼──────┼──────────┤
-   * │ vQPeeYWTlpTPreJxE3My_mpTBiYwYPnTkd6aU2XX    │ BID   │ 0.0001000000000… │ MARKET           │ GTC  │ ACTIVE   │
-   * └─────────────────────────────────────────────┴───────┴──────────────────┴──────────────────┴──────┴──────────┘
+   * Orders: BTC/LTC
+   *
+   * ┌────────────────────┬──────────┬──────────┬───────────────┬────────────────┬──────────┬──────────────────────────┐
+   * │ Order ID           │ Status   │ Side     │ Amount        │ Limit Price    │ Time     │ Created At               │
+   * ├────────────────────┼──────────┼──────────┼───────────────┼────────────────┼──────────┼──────────────────────────┤
+   * │ XLEdhQqW_vQfJ1xW   │ ACTIVE   │ BID      │ 0.00010000000 │ 60.00000000000 │ GTC      │ 2019-04-12T23:21:42.274Z │
+   * ├────────────────────┼──────────┼──────────┼───────────────┼────────────────┼──────────┼──────────────────────────┤
+   * │ XLEeQPNXsyJ3_MsV   │ ACTIVE   │ BID      │ 0.00010000000 │ 60.00000000000 │ GTC      │ 2019-04-12T23:24:48.621Z │
+   * └────────────────────┴──────────┴──────────┴───────────────┴────────────────┴──────────┴──────────────────────────┘
    * ```
    */
   rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse) {
@@ -749,6 +873,120 @@ service OrderService {
       get: "/v1/orders"
     };
   }
+  /**
+   * GetTradeHistory returns all completed and executing orders and all accepted and executed fills.
+   *
+   * ```javascript
+   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
+   * const blockOrder = orderService.getTradeHistory({}, { deadline }, (err, res) => {
+   *   if (err) return console.error(err)
+   *   console.log(res)
+   * })
+   * ```
+   *
+   * ```shell
+   * > sparkswap order trade-history
+   * ```
+   *
+   * > The above command will retrieve the trades on the Broker and will print:
+   *
+   * ```javascript
+   * {
+   *   "orders": [
+   *     {
+   *       "orderId": "GZnWxbVT6hK_2KM-r_hbSXp0",
+   *       "orderStatus": "COMPLETED",
+   *       "amount": "0.0040000000000000",
+   *       "price": "0.0040000000000000",
+   *       "error": "",
+   *       "blockOrderId": "XLoVOEJdJgO8JWAB",
+   *       "baseSymbol": "BTC",
+   *       "counterSymbol": "LTC",
+   *       "side": "ASK",
+   *       "dates": {
+   *         "created": "2019-04-19T18:36:40.809Z",
+   *         "placed": "2019-04-19T18:36:40.816Z",
+   *         "executing": "2019-04-19T18:36:52.556Z",
+   *         "completed": "2019-04-19T18:36:53.357Z",
+   *         "rejected": "",
+   *         "cancelled": ""
+   *       },
+   *       "fillAmount": "0.0010000000000000"
+   *     }
+   *   ],
+   *   "fills": [
+   *     {
+   *       "orderId": "PBt5GmSgJte9agAfDCj28j_7",
+   *       "fillId": "YQRN_XXJysf_toi73wZTTnQW",
+   *       "fillStatus": "EXECUTED",
+   *       "amount": "0.0030000000000000",
+   *       "price": "0.0030000000000000",
+   *       "error": "",
+   *       "blockOrderId": "XLoRm8Df_0Wa-A57",
+   *       "baseSymbol": "BTC",
+   *       "counterSymbol": "LTC",
+   *       "side": "BID",
+   *       "dates": {
+   *         "created": "2019-04-19T18:21:15.751Z",
+   *         "filled": "2019-04-19T18:21:15.820Z",
+   *         "executed": "2019-04-19T18:21:16.824Z",
+   *         "rejected": "",
+   *         "cancelled": ""
+   *       }
+   *     }
+   *   ]
+   * }
+   * ```
+   *
+   * ```shell
+   * {
+   *   "orders": [
+   *     {
+   *       "orderId": "GZnWxbVT6hK_2KM-r_hbSXp0",
+   *       "orderStatus": "COMPLETED",
+   *       "amount": "0.0040000000000000",
+   *       "price": "0.0040000000000000",
+   *       "error": "",
+   *       "blockOrderId": "XLoVOEJdJgO8JWAB",
+   *       "baseSymbol": "BTC",
+   *       "counterSymbol": "LTC",
+   *       "side": "ASK",
+   *       "dates": {
+   *         "created": "2019-04-19T18:36:40.809Z",
+   *         "placed": "2019-04-19T18:36:40.816Z",
+   *         "executing": "2019-04-19T18:36:52.556Z",
+   *         "completed": "2019-04-19T18:36:53.357Z",
+   *         "rejected": "",
+   *         "cancelled": ""
+   *       },
+   *       "fillAmount": "0.0010000000000000"
+   *     }
+   *   ],
+   *   "fills": [
+   *     {
+   *       "orderId": "PBt5GmSgJte9agAfDCj28j_7",
+   *       "fillId": "YQRN_XXJysf_toi73wZTTnQW",
+   *       "fillStatus": "EXECUTED",
+   *       "amount": "0.0030000000000000",
+   *       "price": "0.0030000000000000",
+   *       "error": "",
+   *       "blockOrderId": "XLoRm8Df_0Wa-A57",
+   *       "baseSymbol": "BTC",
+   *       "counterSymbol": "LTC",
+   *       "side": "BID",
+   *       "dates": {
+   *         "created": "2019-04-19T18:21:15.751Z",
+   *         "filled": "2019-04-19T18:21:15.820Z",
+   *         "executed": "2019-04-19T18:21:16.824Z",
+   *         "rejected": "",
+   *         "cancelled": ""
+   *       }
+   *     }
+   *   ]
+   * }
+   * ```
+   */
+  rpc GetTradeHistory (google.protobuf.Empty) returns (GetTradeHistoryResponse);
 }
 
 /**
@@ -1266,6 +1504,8 @@ message Balance {
   string total_pending_channel_balance = 4;
   // Balance in the listed currency that is currently in pending closing channels and unconfirmed wallet balance. This is currently in common units (e.g. 0.5 BTC)
   string uncommitted_pending_balance = 5;
+  // Total balance across all channels that are reserved (reasons may include fees reserved on the underlying network). This is currently in common units (e.g. 0.5 BTC)
+  string total_reserved_channel_balance = 6;
   // Error message if balances are not available
   string error = 10;
 }
@@ -1436,6 +1676,46 @@ message UnlockWalletRequest {
 }
 
 /**
+ * Get the wallet summary of a given currency
+ */
+message WalletHistoryRequest {
+  // Currency of the wallet
+  Symbol symbol = 1;
+}
+
+/**
+ * WalletHistory response that contains transaction history for a specific wallet
+ */
+message WalletHistoryResponse {
+  enum TransactionType {
+    CHANNEL_CLOSE = 1;
+    CHANNEL_OPEN = 2;
+    DEPOSIT = 3;
+    WITHDRAW = 4;
+    UNKNOWN = 10;
+  }
+
+  message Transaction {
+    // Type of transaction
+    TransactionType type = 1;
+    // The amount of the transaction (string float value)
+    string amount = 2;
+    // The transaction hash of a transaction
+    string transaction_hash = 3;
+    // Block height of the transaction
+    int64 block_height = 4;
+    // unix timestamp
+    int64 timestamp = 5;
+    // The amount of fees from the transaction (string float value)
+    string fees = 6;
+    // Specifies if the transaction is still pending a block confirmation
+    bool pending = 7;
+  }
+
+  repeated Transaction transactions = 1;
+}
+
+/**
  * The WalletService is for interacting with the wallets managed by the Broker on behalf of the user.
  *
  * It is used primarily during set up (e.g. making deposits) of a Broker.
@@ -1478,9 +1758,10 @@ service WalletService {
   /**
    * GetBalances retrieves the balance in all currency in wallets managed by Payment Channel Network nodes for this Broker.
    *
-   * Balances are divided into `uncommittedBalance`, i.e. everything not in a channel, `totalChannelBalance` (i.e. everything in channels opened by the Payment Channel Network nodes),
-   * `totalPendingChannelBalance`, i.e. funds in channels that have finished the funding workflow and are waiting for confirmations for the funding txn, and
-   * `uncommittedPendingBalance`, i.e funds in channels that are pending closure or unconfirmed unspent outputs under control of the wallet.
+   * Balances are divided into `uncommittedBalance` (i.e. everything not in a channel), `totalChannelBalance` (i.e. everything in channels opened by the Payment Channel Network nodes),
+   * `totalPendingChannelBalance` (i.e. funds in channels that have finished the funding workflow and are waiting for confirmations for the funding txn), `uncommittedPendingBalance`
+   * (i.e funds in channels that are pending closure or unconfirmed unspent outputs under control of the wallet), and `totalReservedChannelBalance` (i.e. funds in a channel that aren't
+   * available for the channel initiator to send).`
    *
    * NOTE: If an engine is unavailable, the balances for the particular engine will be empty `''`
    *
@@ -1505,14 +1786,16 @@ service WalletService {
    *     "uncommittedBalance": "10.0000000000000000",
    *     "totalChannelBalance": "0.1670000000000000",
    *     "totalPendingChannelBalance": "0.0001000000000000",
-   *     "uncommittedPendingBalance": "0"
+   *     "uncommittedPendingBalance": "0",
+   *     "totalReservedChannelBalance": "0.0000905000000000"
    *   },
    *   {
    *     "symbol": "LTC",
    *     "uncommittedBalance": "10.0000000000000000",
    *     "totalChannelBalance": "0.1670000000000000",
    *     "totalPendingChannelBalance": "0.0002000000000000",
-   *     "uncommittedPendingBalance": "0"
+   *     "uncommittedPendingBalance": "0",
+   *     "totalReservedChannelBalance": "0.0000905000000000"
    *   }
    * ]
    * ```
@@ -1526,6 +1809,19 @@ service WalletService {
    * ├──────────┼──────────────────────────────────┼──────────────────────────────────┤
    * │ LTC      │ 0.0000000000000000 (0.00000000)  │ 10.0000000000000000 (0.00000000) │
    * └──────────┴──────────────────────────────────┴──────────────────────────────────┘
+   * ```
+   * ```shell
+   * > sparkswap wallet balance --reserved
+   * ```
+   * Passing the optional `--reserved` flag will print
+   * ```shell
+   * ┌─────┬──────────────────────────────────────────────────────┬──────────────────────────────────┐
+   * │     │ Committed (Pending) [Reserved]                       │ Uncommitted (Pending)            │
+   * ├─────┼──────────────────────────────────────────────────────┼──────────────────────────────────┤
+   * │ BTC │ 0.1676816500000000 (0.00000000) [0.0000905000000000] │ 0.8321399800000000 (0.00000000)  │
+   * ├─────┼──────────────────────────────────────────────────────┼──────────────────────────────────┤
+   * │ LTC │ 0.0000000000000000 (0.00000000) [0.0000000000000000] │ 10.0000000000000000 (0.00000000) │
+   * └─────┴──────────────────────────────────────────────────────┴──────────────────────────────────┘
    * ```
    */
   rpc GetBalances (google.protobuf.Empty) returns (GetBalancesResponse) {
@@ -1809,6 +2105,58 @@ service WalletService {
     option (.google.api.http) = {
       post: "/v1/wallet/unlock"
       body: "*"
+    };
+  }
+
+  /**
+   * WalletHistory returns all transactions for a specific wallet
+   *
+   * ```javascript
+   * await walletService.walletHistory({ symbol: 'BTC' })
+   * ```
+   *
+   * ```shell
+   * > sparkswap wallet history BTC
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * { transactions:
+   *    [ { type: 'DEPOSIT',
+   *        amount: '2.00000000',
+   *        transactionHash: '1063267467518d78ab56e439a6ec5d6b72eb2eca3ae5093d466beab3832e2dab',
+   *        blockHeight: '122',
+   *        timestamp: '1555479381',
+   *        fees: '0.00000000',
+   *        pending: false },
+   *      { type: 'CHANNEL_OPEN',
+   *        amount: '-0.16786002',
+   *        transactionHash: 'c56d35e6b4fa661b52704d3516dc9c12b43e39c8c6e94996760ef4014a1c1669',
+   *        blockHeight: '124',
+   *        timestamp: '1555479401',
+   *        fees: '0.00008787',
+   *        pending: false },
+   *     ...
+   *   ]
+   * }
+   * ```
+   *
+   * ```shell
+   *  ┌───────────────┬─────────────┬────────────┬────────────┬──────────────────────────────────────────────────────────────────┬────────┬─────────┐
+   *  │ Type          │ Amount      │ Fees       │ Timestamp  │ Transaction                                                      │ Height │ Pending │
+   *  ├───────────────┼─────────────┼────────────┼────────────┼──────────────────────────────────────────────────────────────────┼────────┼─────────┤
+   *  │ DEPOSIT       │ 2.00000000  │ 0.00000000 │ 1555479381 │ 1063267467518d78ab56e439a6ec5d6b72eb2eca3ae5093d466beab3832e2dab │ 122    │ false   │
+   *  ├───────────────┼─────────────┼────────────┼────────────┼──────────────────────────────────────────────────────────────────┼────────┼─────────┤
+   *  │ CHANNEL_OPEN  │ -0.16786002 │ 0.00008787 │ 1555479401 │ c56d35e6b4fa661b52704d3516dc9c12b43e39c8c6e94996760ef4014a1c1669 │ 124    │ false   │
+   *  ├───────────────┼─────────────┼────────────┼────────────┼──────────────────────────────────────────────────────────────────┼────────┼─────────┤
+   *  │ CHANNEL_CLOSE │ 0.16768165  │ 0.00009050 │ 1555479471 │ 1960481be7a01df5c1b28e1fd24083fa7afe30dbff47c12c7fe30b448df11092 │ 131    │ false   │
+   *  └───────────────┴─────────────┴────────────┴────────────┴──────────────────────────────────────────────────────────────────┴────────┴─────────┘
+   * ```
+  */
+  rpc WalletHistory (WalletHistoryRequest) returns (WalletHistoryResponse) {
+    option (.google.api.http) = {
+      get: "/v1/wallet/summary/{symbol}"
     };
   }
 }

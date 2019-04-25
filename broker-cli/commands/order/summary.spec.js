@@ -40,13 +40,14 @@ describe('summary', () => {
       isMarketOrder: false,
       timeInForce: 'GTC',
       blockOrderId: 'asdfasdf',
-      status: 'FAILED'
+      status: 'FAILED',
+      datetime: '2019-04-12T23:21:42.2744494Z'
     }
-    getBlockOrdersStub = sinon.stub().resolves({blockOrders: [order]})
+    getBlockOrdersStub = sinon.stub().resolves({ blockOrders: [order] })
 
     brokerStub = sinon.stub()
     brokerStub.prototype.orderService = { getBlockOrders: getBlockOrdersStub }
-    instanceTableStub = {push: sinon.stub()}
+    instanceTableStub = { push: sinon.stub() }
     tableStub = sinon.stub().returns(instanceTableStub)
     revert = program.__set__('BrokerDaemonClient', brokerStub)
     revertTable = program.__set__('Table', tableStub)
@@ -64,14 +65,14 @@ describe('summary', () => {
 
   it('makes a request to the broker', async () => {
     await summary(args, opts, logger)
-    expect(getBlockOrdersStub).to.have.been.calledWith({market})
+    expect(getBlockOrdersStub).to.have.been.calledWith({ market })
   })
 
   it('adds orders to the table', async () => {
     await summary(args, opts, logger)
 
     expect(instanceTableStub.push).to.have.been.called()
-    expect(instanceTableStub.push).to.have.been.calledWith([order.blockOrderId, order.side.green, order.amount, order.limitPrice, order.timeInForce, order.status])
+    expect(instanceTableStub.push).to.have.been.calledWith([order.blockOrderId, order.status, order.side.green, order.amount, order.limitPrice, order.timeInForce, '2019-04-12T23:21:42.274Z'])
   })
 
   it('uses MARKET as price if there is no price', async () => {
@@ -82,12 +83,13 @@ describe('summary', () => {
       isMarketOrder: true,
       timeInForce: 'GTC',
       blockOrderId: 'asdfasdf',
-      status: 'FAILED'
+      status: 'FAILED',
+      datetime: '2019-04-12T23:21:42.2744494Z'
     }
-    brokerStub.prototype.orderService = { getBlockOrders: sinon.stub().resolves({blockOrders: [order]}) }
+    brokerStub.prototype.orderService = { getBlockOrders: sinon.stub().resolves({ blockOrders: [order] }) }
     await summary(args, opts, logger)
 
     expect(instanceTableStub.push).to.have.been.called()
-    expect(instanceTableStub.push).to.have.been.calledWith([order.blockOrderId, order.side.green, order.amount, 'MARKET', order.timeInForce, order.status])
+    expect(instanceTableStub.push).to.have.been.calledWith([order.blockOrderId, order.status, order.side.green, order.amount, 'MARKET', order.timeInForce, '2019-04-12T23:21:42.274Z'])
   })
 })

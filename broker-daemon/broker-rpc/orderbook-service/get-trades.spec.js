@@ -45,7 +45,7 @@ describe('getTrades', () => {
     filledTradeInfoStub = sinon.stub().returns(tradeInfo)
     placedTradeInfoStub = sinon.stub().returns({})
 
-    trades = [{eventType: 'FILLED', tradeInfo: filledTradeInfoStub}, {eventType: 'PLACED', tradeInfo: placedTradeInfoStub}]
+    trades = [{ eventType: 'FILLED', tradeInfo: filledTradeInfoStub }, { eventType: 'PLACED', tradeInfo: placedTradeInfoStub }]
     orderbookStub = { getTrades: sinon.stub().resolves(trades) }
     orderbooks = new Map([['BTC/LTC', orderbookStub]])
     GetTradesResponse = sinon.stub()

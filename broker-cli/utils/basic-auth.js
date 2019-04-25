@@ -2,14 +2,14 @@ const grpc = require('grpc')
 
 /**
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const BASIC_AUTH_PREFIX = 'Basic'
 
 /**
  * @constant
- * @type {String}
+ * @type {string}
  * @default
  */
 const BASIC_AUTH_DELIMITER = ':'
@@ -20,9 +20,9 @@ const BASIC_AUTH_DELIMITER = ':'
  * Example Result: `Basic
  *
  * @private
- * @param {String} username
- * @param {String} password
- * @return {String} res - Basic Authentication string (RFC 7235)
+ * @param {string} username
+ * @param {string} password
+ * @returns {string} res - Basic Authentication string (RFC 7235)
  */
 function credentialsToBasicAuth (username, password) {
   const encodedCredentials = Buffer.from(`${username}${BASIC_AUTH_DELIMITER}${password}`).toString('base64')
@@ -32,9 +32,9 @@ function credentialsToBasicAuth (username, password) {
 /**
  * Generates Basic Authentication call credentials
  *
- * @param {String} username
- * @param {String} password
- * @return {grpc.credentials}
+ * @param {string} username
+ * @param {string} password
+ * @returns {Object} grpc credentials
  */
 function generateBasicAuthCredentials (username, password) {
   return grpc.credentials.createFromMetadataGenerator((_, callback) => {

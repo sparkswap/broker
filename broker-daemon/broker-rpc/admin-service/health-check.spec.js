@@ -13,7 +13,8 @@ describe('health-check', () => {
     let relayerStub
     let loggerStub
     let relayerStatusStub
-    let statusOK
+    let orderbookStatusOK
+    let relayerStatusOK
     let result
     let engineStub
     let engines
@@ -40,8 +41,9 @@ describe('health-check', () => {
         debug: sinon.stub()
       }
       HealthCheckResponse = sinon.stub()
-      statusOK = healthCheck.__get__('STATUS_CODES').OK
-      relayerStatusStub = sinon.stub().returns(statusOK)
+      orderbookStatusOK = healthCheck.__get__('ORDERBOOK_STATUS_CODES').ORDERBOOK_OK
+      relayerStatusOK = healthCheck.__get__('RELAYER_STATUS_CODES').RELAYER_OK
+      relayerStatusStub = sinon.stub().returns(relayerStatusOK)
 
       reverts.push(healthCheck.__set__('getRelayerStatus', relayerStatusStub))
     })
@@ -65,12 +67,12 @@ describe('health-check', () => {
       expect(HealthCheckResponse).to.have.been.calledWith(sinon.match(
         {
           engineStatus: [
-            { symbol: 'BTC', status: statusOK },
-            { symbol: 'LTC', status: statusOK }
+            { symbol: 'BTC', status: 'OK' },
+            { symbol: 'LTC', status: 'OK' }
           ],
-          relayerStatus: statusOK,
+          relayerStatus: relayerStatusOK,
           orderbookStatus: [
-            { market: 'BTC/LTC', status: statusOK }
+            { market: 'BTC/LTC', status: orderbookStatusOK }
           ]
         }))
     })
@@ -95,17 +97,17 @@ describe('health-check', () => {
       getRelayerStatus = healthCheck.__get__('getRelayerStatus')
     })
 
-    it('returns an OK if relayer#healtCheck is successful', async () => {
-      const { OK } = healthCheck.__get__('STATUS_CODES')
+    it('returns an OK if relayer#healthCheck is successful', async () => {
+      const { RELAYER_OK } = healthCheck.__get__('RELAYER_STATUS_CODES')
       const res = await getRelayerStatus(relayerStub, { logger })
-      expect(res).to.eql(OK)
+      expect(res).to.eql(RELAYER_OK)
     })
 
     it('returns an UNAVAILABLE status code if the call to relayer fails', async () => {
-      const { UNAVAILABLE } = healthCheck.__get__('STATUS_CODES')
+      const { RELAYER_UNAVAILABLE } = healthCheck.__get__('RELAYER_STATUS_CODES')
       healthCheckStub.throws()
       const res = await getRelayerStatus(relayerStub, { logger })
-      expect(res).to.eql(UNAVAILABLE)
+      expect(res).to.eql(RELAYER_UNAVAILABLE)
     })
   })
 })
