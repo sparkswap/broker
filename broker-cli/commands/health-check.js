@@ -61,7 +61,7 @@ async function healthCheck (args, opts, logger) {
   const { rpcAddress } = opts
 
   try {
-    const client = await new BrokerDaemonClient(rpcAddress)
+    const client = new BrokerDaemonClient(rpcAddress)
 
     const {
       engineStatus = [],

@@ -72,10 +72,10 @@ enum Side {
 
 // Statuses of the relayer
 enum RelayerStatuses {
-  // Relayer is available
-  RELAYER_OK = 0;
   // Relayer is not available
-  RELAYER_UNAVAILABLE = 1;
+  RELAYER_UNAVAILABLE = 0;
+  // Relayer is available
+  RELAYER_OK = 1;
 }
 
 // Statuses of an engine
@@ -108,10 +108,10 @@ message EngineStatus {
 
 // Statuses of an orderbook
 enum OrderbookStatuses {
-  // Orderbook is synced
-  ORDERBOOK_OK = 0;
   // Orderbook is not synced
-  ORDERBOOK_NOT_SYNCED = 1;
+  ORDERBOOK_NOT_SYNCED = 0;
+  // Orderbook is synced
+  ORDERBOOK_OK = 1;
 }
 
 /**
