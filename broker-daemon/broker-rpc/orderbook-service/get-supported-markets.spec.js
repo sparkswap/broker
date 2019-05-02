@@ -28,6 +28,11 @@ describe('getSupportedMarkets', () => {
     }
   })
 
+  it('throws an error if the relayer is unresponsive', () => {
+    relayer.adminService.getMarkets.rejects()
+    return expect(getSupportedMarkets({ logger, engines, relayer, orderbooks }, { GetSupportedMarketsResponse })).to.eventually.be.rejectedWith('Failed to get markets')
+  })
+
   it('gets the balances from a particular engine', async () => {
     await getSupportedMarkets({ logger, engines, relayer, orderbooks }, { GetSupportedMarketsResponse })
     expect(relayer.adminService.getMarkets).to.have.been.calledOnce()
