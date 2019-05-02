@@ -98,16 +98,14 @@ describe('health-check', () => {
     })
 
     it('returns an OK if relayer#healthCheck is successful', async () => {
-      const { RELAYER_OK } = healthCheck.__get__('RELAYER_STATUS_CODES')
       const res = await getRelayerStatus(relayerStub, { logger })
-      expect(res).to.eql(RELAYER_OK)
+      expect(res).to.eql('RELAYER_OK')
     })
 
     it('returns an UNAVAILABLE status code if the call to relayer fails', async () => {
-      const { RELAYER_UNAVAILABLE } = healthCheck.__get__('RELAYER_STATUS_CODES')
       healthCheckStub.throws()
       const res = await getRelayerStatus(relayerStub, { logger })
-      expect(res).to.eql(RELAYER_UNAVAILABLE)
+      expect(res).to.eql('RELAYER_UNAVAILABLE')
     })
   })
 })
