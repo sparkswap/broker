@@ -12,10 +12,17 @@
  * @returns {GetSupportedMarketsResponse}
  */
 async function getSupportedMarkets ({ params, relayer, logger, engines, orderbooks }, { GetSupportedMarketsResponse }) {
-  const { markets } = await relayer.adminService.getMarkets({})
+  try {
+    var { markets } = await relayer.adminService.getMarkets({})
+  } catch (e) {
+    throw new Error('Failed to get markets from relayer')
+  }
 
   const supportedMarkets = markets.reduce((acc, market) => {
-    if (!orderbooks.get(market)) return acc
+    if (!orderbooks.get(market)) {
+      return acc
+    }
+
     const [base, counter] = market.split('/')
     const marketInfo = {
       id: market,
@@ -27,6 +34,7 @@ async function getSupportedMarkets ({ params, relayer, logger, engines, orderboo
     acc.push(marketInfo)
     return acc
   }, [])
+
   return new GetSupportedMarketsResponse({ supportedMarkets })
 }
 
