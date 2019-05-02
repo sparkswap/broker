@@ -1,202 +1,131 @@
 const path = require('path')
-const { expect, rewire, sinon } = require('test/test-helper')
+const { expect, rewire, sinon, timekeeper } = require('test/test-helper')
 
-describe('CachedCall')
-describe('checksum', () => {
-  const Checksum = rewire(path.resolve(__dirname, 'checksum'))
+const CachedCall = rewire(path.resolve(__dirname, 'cached-call'))
 
-  describe('sha256', () => {
-    let createHash
-    let hash
-    let hashed
-    let start
-    let end
-    let sha256
+describe('CachedCall', () => {
+  let fakePromise
+  let promiseFn
+  let ttl
+  let timestamp
+  let cachedCall
 
-    beforeEach(() => {
-      hash = {
-        update: sinon.stub(),
-        digest: sinon.stub()
-      }
-      hash.update.returns(hash)
-      createHash = sinon.stub().returns(hash)
+  beforeEach(() => {
+    timestamp = 1556830560529
+    timekeeper.freeze(new Date(timestamp))
+    fakePromise = 'a-fake-promise'
+    promiseFn = sinon.stub().returns(fakePromise)
+    ttl = 0
+    cachedCall = new CachedCall(promiseFn, ttl)
+  })
 
-      Checksum.__set__('createHash', createHash)
+  afterEach(() => {
+    timekeeper.reset()
+  })
 
-      sha256 = Checksum.__get__('sha256')
-      start = 'hello'
-      end = 'goodbye'
-
-      hash.digest.returns(end)
-      hashed = sha256(start)
+  describe('constructor', () => {
+    it('assigns a promise function', () => {
+      expect(cachedCall).to.have.property('promiseFn', promiseFn)
     })
 
-    it('creates a sha256 hash', () => {
-      expect(createHash).to.have.been.calledOnce()
-      expect(createHash).to.have.been.calledWith('sha256')
+    it('assigns a last call time', () => {
+      expect(cachedCall).to.have.property('lastCallTime', 0)
     })
 
-    it('updates the hash with the supplied data', () => {
-      expect(hash.update).to.have.been.calledOnce()
-      expect(hash.update).to.have.been.calledWith(start)
+    it('assigns a last call promise', () => {
+      expect(cachedCall).to.have.property('lastCallPromise', undefined)
     })
 
-    it('returns a digest of the hash', () => {
-      expect(hash.digest).to.have.been.calledOnce()
-      expect(hashed).to.be.eql(end)
+    it('assigns a time to live', () => {
+      expect(cachedCall).to.have.property('ttl', ttl)
+    })
+
+    it('assigns a default ttl', () => {
+      const timeToLive = CachedCall.__get__('TIME_TO_LIVE')
+      cachedCall = new CachedCall(promiseFn)
+      expect(cachedCall).to.have.property('ttl', timeToLive)
     })
   })
 
-  describe('xor', () => {
-    let bufA
-    let bufB
-    let xorBuf
-    let xor
+  describe('#tryCall', () => {
+    let lastCallPromise
+    let originalLastCallPromise
 
     beforeEach(() => {
-      xor = Checksum.__get__('xor')
-
-      bufA = Buffer.from([0x0, 0x1, 0x2])
-      bufB = Buffer.from([0x1, 0x2, 0x3, 0x4])
-      xorBuf = xor(bufA, bufB)
-    })
-
-    it('returns a buffer of the length of the larger buffer', () => {
-      expect(xorBuf.length).to.be.eql(4)
-    })
-
-    it('xors each byte of each buffer', () => {
-      expect(xorBuf[0]).to.be.eql(1)
-      expect(xorBuf[1]).to.be.eql(3)
-      expect(xorBuf[2]).to.be.eql(1)
-      expect(xorBuf[3]).to.be.eql(4)
-    })
-  })
-
-  describe('Checksum', () => {
-    let sha256Stub
-    let shaReset
-    let xorStub
-    let xorReset
-    let xored
-    let chk
-
-    beforeEach(() => {
-      sha256Stub = sinon.stub()
-
-      shaReset = Checksum.__set__('sha256', sha256Stub)
-
-      xored = Buffer.from('hello world')
-      xorStub = sinon.stub().returns(xored)
-
-      xorReset = Checksum.__set__('xor', xorStub)
-
-      chk = new Checksum()
+      lastCallPromise = 'a-cached-promise'
+      originalLastCallPromise = cachedCall.lastCallPromise
+      cachedCall.lastCallPromise = lastCallPromise
     })
 
     afterEach(() => {
-      shaReset()
-      xorReset()
+      cachedCall.lastCallPromise = originalLastCallPromise
     })
 
-    describe('create', () => {
-      it('returns an object', () => {
-        expect(chk).to.be.an('object')
-      })
+    it('returns the cached promise of last call if it is still valid', () => {
+      const isCachedStub = sinon.stub().returns(true)
+      const originalIsCached = cachedCall.isCached
+      cachedCall.isCached = isCachedStub
 
-      it('initializes the sum', () => {
-        expect(chk).to.have.property('sum')
-        expect(chk.sum).to.be.instanceOf(Buffer)
-        expect(chk.sum).to.have.length(32)
-      })
+      const res = cachedCall.tryCall()
+      cachedCall.isCached = originalIsCached
 
-      it('provides a match function', () => {
-        expect(chk).to.have.property('matches')
-        expect(chk.matches).to.be.a('function')
-      })
-
-      it('provides a process function', () => {
-        expect(chk).to.have.property('process')
-        expect(chk.process).to.be.a('function')
-      })
+      expect(res).to.be.eql(lastCallPromise)
+      expect(promiseFn).to.not.have.been.called()
     })
 
-    describe('process', () => {
-      let processed
-      let added
-      let addedHashed
+    it('calls the promise function if there is not a valid cache', () => {
+      const isCachedStub = sinon.stub().returns(false)
+      const originalIsCached = cachedCall.isCached
+      cachedCall.isCached = isCachedStub
 
-      beforeEach(() => {
-        added = 'shalala'
-        addedHashed = 'spartacus'
-        sha256Stub.withArgs(added).returns(addedHashed)
-        processed = chk.process(added)
-      })
+      const res = cachedCall.tryCall()
+      cachedCall.isCached = originalIsCached
 
-      it('returns the checksum object', () => {
-        expect(processed).to.be.equal(chk)
-      })
-
-      it('updates the checksum', () => {
-        expect(sha256Stub).to.have.been.calledOnce()
-        expect(sha256Stub).to.have.been.calledWith(added)
-        expect(xorStub).to.have.been.calledOnce()
-        expect(xorStub).to.have.been.calledWith(Buffer.alloc(32), addedHashed)
-        expect(chk.sum).to.be.eql(xored)
-      })
+      expect(res).to.be.eql(fakePromise)
+      expect(promiseFn).to.have.been.calledOnce()
     })
 
-    describe('matches', () => {
-      beforeEach(() => {
-        chk.sum = Buffer.from('4b26bc25cbb8fa69920f06e228155cf560621d4797f625d66b293d258bfa6fd8', 'hex')
-      })
+    it('updates the last call time when calling the promise function', () => {
+      const isCachedStub = sinon.stub().returns(false)
+      const originalIsCached = cachedCall.isCached
+      cachedCall.isCached = isCachedStub
 
-      it('throws if provided a non-buffer', () => {
-        expect(() => chk.matches('glarp')).to.throw()
-      })
+      expect(cachedCall.lastCallTime).to.be.eql(0)
+      cachedCall.tryCall()
+      cachedCall.isCached = originalIsCached
 
-      it('throws if provided a buffer of the wrong length', () => {
-        expect(() => chk.matches(Buffer.alloc(0))).to.throw()
-      })
-
-      it('matches sums that match', () => {
-        expect(chk.matches(Buffer.from('4b26bc25cbb8fa69920f06e228155cf560621d4797f625d66b293d258bfa6fd8', 'hex'))).to.be.true()
-      })
-
-      it('does not match sums that do not match', () => {
-        expect(chk.matches(Buffer.from('92bcd48480eb4640b9888855c875310599db0bf07141b4d27666171d2458c438', 'hex'))).to.be.false()
-      })
+      expect(cachedCall.lastCallTime).to.be.eql(timestamp)
     })
   })
-})
 
-describe('checksum e2e', () => {
-  const Checksum = require('./checksum')
-  let mysum
+  describe('#isCached', () => {
+    let originalLastCallTime
+    let originalTtl
 
-  beforeEach(() => {
-    mysum = new Checksum()
-  })
+    beforeEach(() => {
+      originalLastCallTime = cachedCall.lastCallTime
+      originalTtl = cachedCall.ttl
+    })
 
-  it('matches a zero checksum', () => {
-    expect(mysum.matches(Buffer.alloc(32))).to.be.true()
-  })
+    afterEach(() => {
+      cachedCall.lastCallTime = originalLastCallTime
+      cachedCall.ttl = originalTtl
+    })
 
-  it('does not match when processing another item', () => {
-    expect(mysum.process('hello').matches(Buffer.alloc(32))).to.be.false()
-  })
+    it('returns true if the last call is live', () => {
+      cachedCall.lastCallTime = Date.now() - 1000
+      cachedCall.ttl = 2000
 
-  it('matches when processing the same item twice', () => {
-    expect(mysum.process('hello').process('hello').matches(Buffer.alloc(32))).to.be.true()
-  })
+      const res = cachedCall.isCached()
+      expect(res).to.be.eql(true)
+    })
 
-  it('matches two separate checksums', () => {
-    expect(mysum.process('hello').matches((new Checksum()).process('hello').sum)).to.be.true()
-  })
+    it('returns false if the last call is not live', () => {
+      cachedCall.lastCallTime = Date.now() - 5000
+      cachedCall.ttl = 2000
 
-  it('matches when processing multiple items', () => {
-    expect(mysum.process('hello').process('goodbye').matches((new Checksum()).process('hello').sum)).to.be.false()
-    expect(mysum.matches((new Checksum()).process('hello').process('goodbye').sum)).to.be.true()
-    expect(mysum.process('hello').matches((new Checksum()).process('goodbye').sum)).to.be.true()
+      const res = cachedCall.isCached()
+      expect(res).to.be.eql(false)
+    })
   })
 })
