@@ -9,13 +9,15 @@ const {
   SublevelIndex,
   generateId,
   retry,
-  logger
+  logger,
+  CachedCall
 } = require('../utils')
 
 /**
  * Number of attempts to retry a block order when connection with relayer goes down
  * @constant
  * @type {number}
+ * @default
  */
 const RETRY_ATTEMPTS = 30
 
@@ -23,6 +25,7 @@ const RETRY_ATTEMPTS = 30
  * Interval, in ms, between retries of re-placing a block order when relayer goes down
  * @constant
  * @type {number}
+ * @default
  */
 const DELAY = 10000
 
@@ -892,13 +895,12 @@ class BlockOrderWorker extends EventEmitter {
    * @private
    * @returns {Promise<boolean>}
    */
-  async relayerIsAvailable () {
-    try {
-      await this.relayer.adminService.healthCheck({})
-      return true
-    } catch (e) {
-      return false
+  relayerIsAvailable () {
+    if (!this.cachedCall) {
+      this.cachedCall = new CachedCall(() => this.relayer.adminService.healthCheck({}))
     }
+
+    return this.cachedCall.tryCall()
   }
 }
 
