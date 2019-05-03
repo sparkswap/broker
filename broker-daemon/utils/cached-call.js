@@ -1,6 +1,6 @@
 /**
- * Default time for the cached call to live. Calls made after this time will
- * make another call to the promise function.
+ * Default time, in milliseconds, for the cached call to live. Calls
+ * made after this time will make another call to the promise function.
  * @constant
  * @type {number}
  * @default
