@@ -14,6 +14,7 @@ const walletCommand = require('./wallet')
 const identityCommand = require('./identity')
 const healthCheckCommand = require('./health-check')
 const registerCommand = require('./register')
+const orderbookStatsCommand = require('./orderbook-stats')
 
 module.exports = {
   buyCommand,
@@ -24,5 +25,6 @@ module.exports = {
   walletCommand,
   identityCommand,
   healthCheckCommand,
-  registerCommand
+  registerCommand,
+  orderbookStatsCommand
 }
