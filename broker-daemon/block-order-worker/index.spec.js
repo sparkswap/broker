@@ -2559,4 +2559,55 @@ describe('BlockOrderWorker', () => {
       expect(FillStateMachine.serialize).to.not.have.been.calledWith(rejectedFill)
     })
   })
+
+  describe('#relayerIsAvailable', () => {
+    let cachedCallStub
+    let revertCachedCall
+    let tryCallStub
+    let tryCallResult
+    let healthCheckStub
+    let worker
+
+    beforeEach(() => {
+      tryCallResult = 'my-result'
+      tryCallStub = sinon.stub().resolves(tryCallResult)
+      cachedCallStub = sinon.stub()
+      cachedCallStub.prototype.tryCall = tryCallStub
+      revertCachedCall = BlockOrderWorker.__set__('CachedCall', cachedCallStub)
+      healthCheckStub = sinon.stub()
+      relayer = {
+        adminService: {
+          healthCheck: healthCheckStub
+        }
+      }
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+    })
+
+    afterEach(() => {
+      revertCachedCall()
+    })
+
+    it('creates a new CachedCall object if one has not already been instantiated', async () => {
+      await worker.relayerIsAvailable()
+      expect(cachedCallStub).to.have.been.calledOnce()
+      expect(cachedCallStub).to.have.been.calledWithNew()
+      expect(cachedCallStub).to.have.been.calledWith(sinon.match.func)
+    })
+
+    it('passes in healthCheck to CachedCall', async () => {
+      await worker.relayerIsAvailable()
+
+      const healthCheck = cachedCallStub.args[0][0]
+      await healthCheck()
+
+      expect(healthCheckStub).to.have.been.calledOnce()
+      expect(healthCheckStub).to.have.been.calledWith({})
+    })
+
+    it('returns the call to tryCall to check if relayer is available', async () => {
+      const res = await worker.relayerIsAvailable()
+      expect(tryCallStub).to.have.been.calledOnce()
+      expect(res).to.be.eql(tryCallResult)
+    })
+  })
 })
