@@ -29,11 +29,12 @@ describe('CachedCall', () => {
     })
 
     it('assigns a last call time', () => {
-      expect(cachedCall).to.have.property('lastCallTime', 0)
+      const initialLastCallTime = CachedCall.__get__('INITIAL_LAST_CALL_TIME')
+      expect(cachedCall).to.have.property('lastCallTime', initialLastCallTime)
     })
 
     it('assigns a last call promise', () => {
-      expect(cachedCall).to.have.property('lastCallPromise', undefined)
+      expect(cachedCall).to.have.property('lastCallPromise', null)
     })
 
     it('assigns a time to live', () => {
@@ -41,7 +42,7 @@ describe('CachedCall', () => {
     })
 
     it('assigns a default ttl', () => {
-      const timeToLive = CachedCall.__get__('TIME_TO_LIVE')
+      const timeToLive = CachedCall.__get__('CACHE_TTL')
       cachedCall = new CachedCall(promiseFn)
       expect(cachedCall).to.have.property('ttl', timeToLive)
     })

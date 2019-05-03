@@ -5,7 +5,15 @@
  * @type {number}
  * @default
  */
-const TIME_TO_LIVE = 5000
+const CACHE_TTL = 5000
+
+/**
+ * Initial value for time of last call.
+ * @constant
+ * @type {number}
+ * @default
+ */
+const INITIAL_LAST_CALL_TIME = 0
 
 /**
  * @class Create a wrapper for a call to a function that returns a promise.
@@ -17,11 +25,13 @@ class CachedCall {
    * Create a new CachedCall instance.
    * @param {Function} promiseFn - function that returns a promise
    * @param {number} ttl - milliseconds for previous calls to remain valid
+   * @returns {CachedCall}
    */
-  constructor (promiseFn, ttl = TIME_TO_LIVE) {
+  constructor (promiseFn, ttl = CACHE_TTL) {
     this.promiseFn = promiseFn
-    this.lastCallTime = 0
-    this.lastCallPromise = undefined
+    this.lastCallTime = INITIAL_LAST_CALL_TIME
+    // Promise returned from the call to `promiseFn`
+    this.lastCallPromise = null
     this.ttl = ttl
   }
 
