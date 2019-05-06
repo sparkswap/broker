@@ -44,6 +44,7 @@ const SUPPORTED_COMMANDS = Object.freeze({
   WITHDRAW: 'withdraw',
   CREATE: 'create',
   UNLOCK: 'unlock',
+  CHANGE_PASSWORD: 'change-password',
   HISTORY: 'history'
 })
 
@@ -571,6 +572,34 @@ async function history (args, opts, logger) {
   }
 }
 
+/**
+ * Change a wallet password
+ *
+ * ex: `sparkswap wallet change-password <symbol>`
+ *
+ * @function
+ * @param {Object} args
+ * @param {string} args.symbol
+ * @param {Object} opts
+ * @param {string} [opts.rpcAddress=null]
+ * @param {Logger} logger
+ * @returns {void}
+ */
+async function changePassword (args, opts, logger) {
+  const { symbol } = args
+  const { rpcAddress } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+    const currentPassword = await askQuestion(`Enter your current wallet password:`, { silent: true })
+    const newPassword = await askQuestion(`Enter your new wallet password:`, { silent: true })
+    await client.walletService.changeWalletPassword({ symbol, currentPassword, newPassword })
+    logger.info(`Successfully Unlocked ${symbol.toUpperCase()} Wallet!`.green)
+  } catch (e) {
+    logger.error(handleError(e))
+  }
+}
+
 module.exports = (program) => {
   program
     .command('wallet', 'Commands to handle a wallet instance')
@@ -667,6 +696,16 @@ module.exports = (program) => {
           args.symbol = symbol
 
           return unlock(args, opts, logger)
+        case SUPPORTED_COMMANDS.CHANGE_PASSWORD:
+          symbol = symbol.toUpperCase()
+
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
+            throw new Error(`Provided symbol is not a valid currency for the broker`)
+          }
+
+          args.symbol = symbol
+
+          return changePassword(args, opts, logger)
         case SUPPORTED_COMMANDS.HISTORY:
           symbol = symbol.toUpperCase()
 
@@ -683,6 +722,9 @@ module.exports = (program) => {
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.UNLOCK}`, 'Unlock a wallet')
+    .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
+    .command(`wallet ${SUPPORTED_COMMANDS.CHANGE_PASSWORD}`, 'Change an engines wallet password')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.BALANCE}`, 'Current daemon wallet balance')
