@@ -591,10 +591,16 @@ async function changePassword (args, opts, logger) {
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const currentPassword = await askQuestion(`Enter your current wallet password:`, { silent: true })
-    const newPassword = await askQuestion(`Enter your new wallet password:`, { silent: true })
+    const currentPassword = await askQuestion(`Please enter your current wallet password:`, { silent: true })
+    const newPassword = await askQuestion(`Please enter a new password:`, { silent: true })
+    const confirmNewPass = await askQuestion(`Please confirm your new password:`, { silent: true })
+
+    if (newPassword !== confirmNewPass) {
+      return logger.error('Error: Passwords did not match, please try again'.red)
+    }
+
     await client.walletService.changeWalletPassword({ symbol, currentPassword, newPassword })
-    logger.info(`Successfully Unlocked ${symbol.toUpperCase()} Wallet!`.green)
+    logger.info(`Successfully changed your ${symbol.toUpperCase()} wallet password! Your wallet is now unlocked.`.green)
   } catch (e) {
     logger.error(handleError(e))
   }
@@ -724,7 +730,7 @@ module.exports = (program) => {
     .command(`wallet ${SUPPORTED_COMMANDS.UNLOCK}`, 'Unlock a wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
-    .command(`wallet ${SUPPORTED_COMMANDS.CHANGE_PASSWORD}`, 'Change an engines wallet password')
+    .command(`wallet ${SUPPORTED_COMMANDS.CHANGE_PASSWORD}`, 'Change a specific engine\'s wallet password')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.BALANCE}`, 'Current daemon wallet balance')

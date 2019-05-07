@@ -833,6 +833,79 @@ describe('cli wallet', () => {
     })
   })
 
+  describe('change-password', () => {
+    let args
+    let opts
+    let logger
+    let daemonStub
+    let errorStub
+    let askQuestionStub
+    let symbol
+    let infoStub
+    let changeWalletStub
+
+    const changePassword = program.__get__('changePassword')
+    const currentPassword = 'my-password'
+    const newPassword = 'new-password'
+
+    beforeEach(() => {
+      changeWalletStub = sinon.stub()
+      errorStub = sinon.stub()
+      infoStub = sinon.stub()
+      askQuestionStub = sinon.stub()
+      askQuestionStub.onFirstCall().resolves(currentPassword)
+      askQuestionStub.onSecondCall().resolves(newPassword)
+      askQuestionStub.onThirdCall().resolves(newPassword)
+      daemonStub = sinon.stub().returns({
+        walletService: {
+          changeWalletPassword: changeWalletStub
+        }
+      })
+      symbol = 'BTC'
+      args = {
+        symbol
+      }
+      opts = {}
+      logger = {
+        info: infoStub,
+        error: errorStub
+      }
+
+      program.__set__('BrokerDaemonClient', daemonStub)
+      program.__set__('askQuestion', askQuestionStub)
+    })
+
+    beforeEach(async () => {
+      await changePassword(args, opts, logger)
+    })
+
+    it('create a broker daemon client', () => {
+      expect(daemonStub).to.have.been.calledOnce()
+    })
+
+    it('asks the user for their current password', () => {
+      expect(askQuestionStub).to.have.been.calledWith(sinon.match('enter your current wallet password'), sinon.match({ silent: true }))
+    })
+
+    it('asks the user for their new password', () => {
+      expect(askQuestionStub).to.have.been.calledWith(sinon.match('enter a new password'), sinon.match({ silent: true }))
+    })
+
+    it('asks the user to confirm their new password', () => {
+      expect(askQuestionStub).to.have.been.calledWith(sinon.match('confirm your new password'), sinon.match({ silent: true }))
+    })
+
+    it('makes a call to change wallet password on the broker', () => {
+      expect(changeWalletStub).to.have.been.calledWith(sinon.match({ symbol, currentPassword, newPassword }))
+    })
+
+    it('logs an error if confirmation for new password does not match new password', async () => {
+      askQuestionStub.onCall(5).resolves('bad-password')
+      await changePassword(args, opts, logger)
+      expect(errorStub).to.have.been.calledWith(sinon.match('Error: Passwords did not match'))
+    })
+  })
+
   describe('history', () => {
     let args
     let opts
