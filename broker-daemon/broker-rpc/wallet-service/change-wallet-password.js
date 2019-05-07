@@ -24,7 +24,7 @@ async function changeWalletPassword ({ logger, params, engines }, { EmptyRespons
 
   if (!engine) {
     logger.error(`Could not find engine: ${symbol}`)
-    throw new Error(`Unable to unlock wallet. No engine available for ${symbol}`)
+    throw new Error(`Unable to change wallet password. No engine available for ${symbol}`)
   }
 
   if (!engine.isLocked) {

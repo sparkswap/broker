@@ -37,7 +37,7 @@ describe('change-wallet-password', () => {
 
   it('errors if engine could not be found', () => {
     params.symbol = 'LTC'
-    return expect(changeWalletPassword({ logger, params, engines }, { EmptyResponse })).to.eventually.be.rejectedWith('Unable to unlock wallet')
+    return expect(changeWalletPassword({ logger, params, engines }, { EmptyResponse })).to.eventually.be.rejectedWith('Unable to change wallet password')
   })
 
   it('logs an error if engine could not be found', async () => {
