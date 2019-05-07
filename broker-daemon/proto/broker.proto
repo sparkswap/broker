@@ -1716,7 +1716,7 @@ message WalletHistoryResponse {
 }
 
 /**
- * Request to unlock a wallet for a specific currency
+ * Request to change a wallet password for a specific currency
  */
 message ChangeWalletPasswordRequest {
   // Currency of wallet
@@ -2173,18 +2173,17 @@ service WalletService {
   }
 
   /**
-   * UnlockWallet sends an unlock rpc command to the engine to allow funds to be used
-   * in the event that the broker has been taken offline -> online
+   * ChangeWalletPassword sends a change password rpc command to the engine which changes
+   * the wallet password for a specific currency and unlocks the engines on completion
    *
-   * This RPC will be required after every application restart, if each engine's wallet has been
-   * created. If you need to create a wallet for daemon, please refer to `CreateWallet`
+   * This RPC can only be used if the specified engine's wallet is locked.
    *
    * ```javascript
-   * await walletService.unlockWallet({ symbol: 'BTC', password: 'your-secure-password')
+   * await walletService.changeWalletPassword({ symbol: 'BTC', currentPassword: 'your-current-password', newPassword: 'your-new-secure-password')
    * ```
    *
    * ```shell
-   * > sparkswap wallet unlock BTC
+   * > sparkswap wallet change-password BTC
    * ```
    *
    * > The above command will print:
@@ -2194,7 +2193,7 @@ service WalletService {
    * ```
    *
    * ```shell
-   * Successfully Unlocked BTC Wallet!
+   * Successfully changed your BTC wallet password! Your wallet is now unlocked.
    * ```
    */
   rpc ChangeWalletPassword (ChangeWalletPasswordRequest) returns (google.protobuf.Empty) {
