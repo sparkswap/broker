@@ -26,6 +26,7 @@ describe('WalletService', () => {
   let walletHistory
   let auth
   let blockOrderWorker
+  let changeWalletPassword
 
   before(() => {
     responseStub = sinon.stub()
@@ -62,6 +63,7 @@ describe('WalletService', () => {
     withdrawFunds = sinon.stub()
     createWallet = sinon.stub()
     unlockWallet = sinon.stub()
+    changeWalletPassword = sinon.stub()
     walletHistory = sinon.stub()
     balanceSpy = sinon.spy()
     commitSpy = sinon.spy()
@@ -81,6 +83,7 @@ describe('WalletService', () => {
     WalletService.__set__('withdrawFunds', withdrawFunds)
     WalletService.__set__('createWallet', createWallet)
     WalletService.__set__('unlockWallet', unlockWallet)
+    WalletService.__set__('changeWalletPassword', changeWalletPassword)
     WalletService.__set__('walletHistory', walletHistory)
 
     wallet = new WalletService(protoPath, { logger, engines, relayer, orderbooks, auth, blockOrderWorker })
@@ -188,6 +191,17 @@ describe('WalletService', () => {
 
       expect(unaryMethodStub).to.have.been.calledWith(
         unlockWallet,
+        expectedMessageId,
+        { logger, engines, auth },
+        { EmptyResponse: responseStub }
+      )
+    })
+
+    it('creates a unary method for changeWalletPassword', () => {
+      const expectedMessageId = '[WalletService:changeWalletPassword]'
+
+      expect(unaryMethodStub).to.have.been.calledWith(
+        changeWalletPassword,
         expectedMessageId,
         { logger, engines, auth },
         { EmptyResponse: responseStub }
