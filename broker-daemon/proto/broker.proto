@@ -28,7 +28,7 @@
  *
  * ```javascript
  * // This documentation makes use of the grpc and @grpc/proto-loader libraries on npm.
- * // The remainder of the docs assumes that you've included this setup step.
+ * // The remainder of the docs assume that you've included this setup step.
  * const grpc = require('grpc')
  * const protoLoader = require('@grpc/proto-loader')
  *
