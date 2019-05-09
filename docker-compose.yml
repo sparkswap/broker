@@ -25,6 +25,7 @@ services:
       # Persistent certs/keys for broker
       - '${SECURE_PATH}:/secure'
     environment:
+      - DEBUG=info
       - NODE_ENV=production
       - DATA_DIR=${DATA_DIR:-}
       - NETWORK=${NETWORK}

@@ -21,6 +21,7 @@ services:
       - './broker-cli/scripts:/home/app/broker-cli/scripts'
       - './broker-cli/utils:/home/app/broker-cli/utils'
     environment:
+      - DEBUG=debug
       - NODE_ENV=development
     # We use this to be able to have "hot reloading" with our application
     entrypoint: bash -c 'npm run start-sparkswapd-watch'
