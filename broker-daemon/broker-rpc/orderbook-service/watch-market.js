@@ -46,7 +46,7 @@ async function watchMarket ({ params, send, onCancel, onError, logger, orderbook
    * @returns {void}
    */
   const onData = (opts) => {
-    if (opts.type === 'put') {
+    if (opts && !opts.sync && (opts.type == null || opts.type === 'put')) {
       params = {
         marketEvent: MarketEventOrder.fromStorage(opts.key, opts.value).serialize()
       }
