@@ -487,11 +487,11 @@ async function create (args, opts, logger) {
     const client = new BrokerDaemonClient(rpcAddress)
 
     const password = await askQuestion(`Please enter a password:`, { silent: true })
-    const confirmPass = await askQuestion(`Please confirm password:`, { silent: true })
-
-    if (password !== confirmPass) {
-      return logger.error('Error: Passwords did not match, please try again'.red)
-    }
+    // const confirmPass = await askQuestion(`Please confirm password:`, { silent: true })
+    //
+    // if (password !== confirmPass) {
+    //   return logger.error('Error: Passwords did not match, please try again'.red)
+    // }
 
     const { recoverySeed } = await client.walletService.createWallet({ symbol, password })
 
