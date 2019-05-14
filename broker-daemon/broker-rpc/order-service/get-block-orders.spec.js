@@ -1,5 +1,9 @@
 const path = require('path')
-const { expect, rewire, sinon } = require('test/test-helper')
+const {
+  expect,
+  rewire,
+  sinon
+} = require('test/test-helper')
 
 const getBlockOrders = rewire(path.resolve(__dirname, 'get-block-orders'))
 
@@ -9,9 +13,20 @@ describe('getBlockOrders', () => {
   let blockOrder
   let anotherBlockOrder
   let params
+  let logger
 
   beforeEach(() => {
-    params = { market: 'BTC/LTC' }
+    params = {
+      market: 'BTC/LTC',
+      options: {
+        limit: 0,
+        active: false,
+        cancelled: false,
+        completed: false,
+        failed: false
+      }
+    }
+    logger = { info: sinon.stub() }
     GetBlockOrdersResponse = sinon.stub()
 
     blockOrder = {
@@ -28,14 +43,14 @@ describe('getBlockOrders', () => {
   it('throws a non-public error if another error is encountered', () => {
     blockOrderWorker.getBlockOrders.rejects()
 
-    return expect(getBlockOrders({ params, blockOrderWorker }, { GetBlockOrdersResponse })).to.eventually.be.rejectedWith(Error)
+    return expect(getBlockOrders({ params, logger, blockOrderWorker }, { GetBlockOrdersResponse })).to.eventually.be.rejectedWith(Error)
   })
 
   it('retrieves all block orders for the specified market', async () => {
-    await getBlockOrders({ params, blockOrderWorker }, { GetBlockOrdersResponse })
+    await getBlockOrders({ params, logger, blockOrderWorker }, { GetBlockOrdersResponse })
 
     expect(blockOrderWorker.getBlockOrders).to.have.been.calledOnce()
-    expect(blockOrderWorker.getBlockOrders).to.have.been.calledWith('BTC/LTC')
+    expect(blockOrderWorker.getBlockOrders).to.have.been.calledWith('BTC/LTC', params.options)
   })
 
   it('serializes the block orders and returns an object with the orders', async () => {
@@ -43,7 +58,7 @@ describe('getBlockOrders', () => {
     const secondSerialized = { another: 'object' }
     blockOrder.serializeSummary.returns(firstSerialized)
     anotherBlockOrder.serializeSummary.returns(secondSerialized)
-    const response = await getBlockOrders({ params, blockOrderWorker }, { GetBlockOrdersResponse })
+    const response = await getBlockOrders({ params, logger, blockOrderWorker }, { GetBlockOrdersResponse })
 
     expect(blockOrder.serializeSummary).to.have.been.calledOnce()
     expect(anotherBlockOrder.serializeSummary).to.have.been.calledOnce()

@@ -13,26 +13,18 @@ async function getBlockOrders ({ params, logger, blockOrderWorker }, { GetBlockO
   let { options } = params
 
   // If no options are passed, then we'll make sure to default the options arg to
-  // an empty object to avoid destructuring issues
+  // an empty object to accessor issues
   if (!options) {
     options = {}
   }
 
-  const {
-    limit,
-    active,
-    cancelled,
-    completed,
-    failed
-  } = options
-
-  // We re-construct our query options to get rid of undefined values
+  // We re-construct our query options to get rid of values that we dont know about
   const queryOptions = {
-    limit,
-    active,
-    cancelled,
-    completed,
-    failed
+    limit: options.limit,
+    active: options.active,
+    cancelled: options.cancelled,
+    completed: options.completed,
+    failed: options.failed
   }
 
   try {
