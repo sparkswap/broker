@@ -6,6 +6,7 @@ const Big = require('./big')
 const handleError = require('./error-handler')
 const basicAuth = require('./basic-auth')
 const grpcDeadlineInterceptor = require('./grpc-deadline-interceptor')
+const grpcDeadline = require('./grpc-deadline')
 
 module.exports = {
   ENUMS,
@@ -15,5 +16,6 @@ module.exports = {
   Big,
   handleError,
   basicAuth,
-  grpcDeadlineInterceptor
+  grpcDeadlineInterceptor,
+  grpcDeadline
 }

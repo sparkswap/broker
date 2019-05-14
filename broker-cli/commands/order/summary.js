@@ -1,8 +1,15 @@
-const BrokerDaemonClient = require('../../broker-daemon-client')
 const Table = require('cli-table2')
-const { ENUMS: { ORDER_TYPES }, handleError } = require('../../utils')
-require('colors')
 const size = require('window-size')
+require('colors')
+
+const {
+  ENUMS: {
+    ORDER_TYPES
+  },
+  handleError,
+  grpcDeadline
+} = require('../../utils')
+const BrokerDaemonClient = require('../../broker-daemon-client')
 
 /**
  * Prints table of the users orders
@@ -49,11 +56,36 @@ function createUI (market, orders) {
  * @param {Logger} logger
  */
 async function summary (args, opts, logger) {
-  const { market, rpcAddress } = opts
-  const request = { market }
+  const { market } = args
+
+  const {
+    limit,
+    active,
+    cancelled,
+    completed,
+    failed,
+    rpcAddress
+  } = opts
+
+  const request = {
+    market,
+    options: {
+      limit,
+      active,
+      cancelled,
+      completed,
+      failed
+    }
+  }
+
   try {
     const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)
-    const orders = await brokerDaemonClient.orderService.getBlockOrders(request)
+
+    console.log(request)
+
+    // We extend the gRPC deadline of this call because there's a possibility to return
+    // a lot of records from the endpoint
+    const orders = await brokerDaemonClient.orderService.getBlockOrders(request, { deadline: grpcDeadline(30) })
     createUI(market, orders.blockOrders)
   } catch (e) {
     logger.error(handleError(e))

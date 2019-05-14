@@ -10,10 +10,36 @@
  * @returns {GetBlockOrdersResponse}
  */
 async function getBlockOrders ({ params, logger, blockOrderWorker }, { GetBlockOrdersResponse }) {
+  let { options } = params
+
+  // If no options are passed, then we'll make sure to default the options arg to
+  // an empty object to avoid destructuring issues
+  if (!options) {
+    options = {}
+  }
+
+  const {
+    limit,
+    active,
+    cancelled,
+    completed,
+    failed
+  } = options
+
+  // We re-construct our query options to get rid of undefined values
+  const queryOptions = {
+    limit,
+    active,
+    cancelled,
+    completed,
+    failed
+  }
+
   try {
-    logger.info(new Date())
-    const orders = await blockOrderWorker.getBlockOrders(params.market)
-    logger.info(new Date())
+    logger.info('Getting all block orders', { startTime: new Date(), queryOptions })
+    const orders = await blockOrderWorker.getBlockOrders(params.market, queryOptions)
+    logger.info('Finished getting block orders', { endTime: new Date() })
+
     const blockOrders = orders.map(order => order.serializeSummary())
     logger.info(`Block order length: ${blockOrders.length}`)
 

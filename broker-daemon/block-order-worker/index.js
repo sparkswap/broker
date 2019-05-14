@@ -425,14 +425,46 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Get existing block orders
+   *
    * @param {string} market - to filter by
+   * @param {Object} options - options for the query
+   * @param {number} options.limit - options for the query
+   * @param {boolean} options.accepted - filter for active records
+   * @param {boolean} options.cancelled - filter for cancelled records
+   * @param {boolean} options.completed - filter for completed records
+   * @param {boolean} options.failed - filter for failed records
    * @returns {Array<BlockOrder>}
    */
-  async getBlockOrders (market) {
-    this.logger.info(`Getting all block orders for market: ${market}`)
+  async getBlockOrders (market, options = {}) {
+    this.logger.info(`Getting all block orders for market: ${market}`, { options })
+
     const allRecords = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder))
     const recordsForMarket = allRecords.filter((record) => record.marketName === market)
-    return recordsForMarket
+
+    let result = []
+    const statusFilters = []
+
+    if (options.active) statusFilters.push(BlockOrder.STATUSES.ACTIVE)
+    if (options.cancelled) statusFilters.push(BlockOrder.STATUSES.CANCELLED)
+    if (options.completed) statusFilters.push(BlockOrder.STATUSES.COMPLETED)
+    if (options.failed) statusFilters.push(BlockOrder.STATUSES.FAILED)
+
+    // Once we have all the records for a market, we will start to filter them out into
+    // a single result
+    result.push(...recordsForMarket.filter((r) => {
+      if (statusFilters.length) {
+        return statusFilters.includes(r.status)
+      }
+
+      // If there are no filters then we just return all the records into the result
+      return true
+    }))
+
+    if (options.limit) {
+      result = result.slice(0, options.limit)
+    }
+
+    return result
   }
 
   /**
