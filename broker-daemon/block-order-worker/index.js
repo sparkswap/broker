@@ -441,7 +441,8 @@ class BlockOrderWorker extends EventEmitter {
     const allRecords = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder))
     const recordsForMarket = allRecords.filter((record) => record.marketName === market)
 
-    let result = []
+    // Set our filter types to be used when we filter the records for a particular
+    // market
     const statusFilters = []
 
     if (options.active) statusFilters.push(BlockOrder.STATUSES.ACTIVE)
@@ -449,17 +450,14 @@ class BlockOrderWorker extends EventEmitter {
     if (options.completed) statusFilters.push(BlockOrder.STATUSES.COMPLETED)
     if (options.failed) statusFilters.push(BlockOrder.STATUSES.FAILED)
 
-    // Once we have all the records for a market, we will start to filter them out into
-    // a single result
-    result.push(...recordsForMarket.filter((r) => {
-      if (statusFilters.length) {
-        return statusFilters.includes(r.status)
-      }
-
+    let result = recordsForMarket.filter((r) => {
+      if (statusFilters.length) return statusFilters.includes(r.status)
       // If there are no filters then we just return all the records into the result
       return true
-    }))
+    })
 
+    // If the limit is set and does not equal zero, then we modify the result to
+    // only return a certain amount of records
     if (options.limit) {
       result = result.slice(0, options.limit)
     }
