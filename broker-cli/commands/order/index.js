@@ -71,8 +71,8 @@ module.exports = (program) => {
           return cancel(args, opts, logger)
 
         case SUPPORTED_COMMANDS.SUMMARY:
-          args.market = validations.isMarketName(market)
           opts = {
+            market: validations.isMarketName(market),
             limit,
             active,
             cancelled,

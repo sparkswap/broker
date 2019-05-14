@@ -64,9 +64,8 @@ function createUI (market, orders) {
  * @param {Logger} logger
  */
 async function summary (args, opts, logger) {
-  const { market } = args
-
   const {
+    market,
     limit,
     active,
     cancelled,

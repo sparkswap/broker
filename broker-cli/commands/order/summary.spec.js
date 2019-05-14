@@ -29,8 +29,9 @@ describe('summary', () => {
   beforeEach(() => {
     rpcAddress = undefined
     market = 'BTC/LTC'
-    args = { market }
+    args = {}
     opts = {
+      market,
       limit: undefined,
       active: false,
       cancelled: false,
@@ -73,6 +74,7 @@ describe('summary', () => {
   it('makes a request to the broker', async () => {
     const expectedOptions = Object.assign({}, opts)
     delete expectedOptions.rpcAddress
+    delete expectedOptions.market
     await summary(args, opts, logger)
     expect(getBlockOrdersStub).to.have.been.calledWith(sinon.match({ market, options: expectedOptions }), sinon.match.object)
   })
