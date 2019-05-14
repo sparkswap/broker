@@ -12,6 +12,14 @@ const {
 const BrokerDaemonClient = require('../../broker-daemon-client')
 
 /**
+ * Custom deadline for order summary at 30 seconds
+ * @constant
+ * @type {number}
+ * @default
+ */
+const ORDER_SUMMARY_RPC_DEADLINE = 30
+
+/**
  * Prints table of the users orders
  * @param {string} market
  * @param {Array<Order>} orders
@@ -81,11 +89,9 @@ async function summary (args, opts, logger) {
   try {
     const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)
 
-    console.log(request)
-
     // We extend the gRPC deadline of this call because there's a possibility to return
-    // a lot of records from the endpoint
-    const orders = await brokerDaemonClient.orderService.getBlockOrders(request, { deadline: grpcDeadline(30) })
+    // a lot of records from the endpoint.
+    const orders = await brokerDaemonClient.orderService.getBlockOrders(request, { deadline: grpcDeadline(ORDER_SUMMARY_RPC_DEADLINE) })
     createUI(market, orders.blockOrders)
   } catch (e) {
     logger.error(handleError(e))
