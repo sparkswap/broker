@@ -428,8 +428,8 @@ class BlockOrderWorker extends EventEmitter {
    *
    * @param {string} market - to filter by
    * @param {Object} options - options for the query
-   * @param {number} options.limit - options for the query
-   * @param {boolean} options.accepted - filter for active records
+   * @param {number} options.limit - number of records to return
+   * @param {boolean} options.active - filter for active records
    * @param {boolean} options.cancelled - filter for cancelled records
    * @param {boolean} options.completed - filter for completed records
    * @param {boolean} options.failed - filter for failed records
@@ -438,7 +438,21 @@ class BlockOrderWorker extends EventEmitter {
   async getBlockOrders (market, options = {}) {
     this.logger.info(`Getting all block orders for market: ${market}`, { options })
 
-    const allRecords = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder))
+    // We set the limit to -1 which is a value for "no limit" in LevelDB
+    let limit = -1
+
+    // If the limit is set and does not equal zero, then we modify the query to
+    // only return a certain amount of records
+    if (options.limit) {
+      limit = options.limit
+    }
+
+    const queryOptions = {
+      reverse: true,
+      limit
+    }
+
+    const allRecords = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder), queryOptions)
     const recordsForMarket = allRecords.filter((record) => record.marketName === market)
 
     // Set our filter types to be used when we filter the records for a particular
@@ -452,15 +466,9 @@ class BlockOrderWorker extends EventEmitter {
 
     let result = recordsForMarket.filter((r) => {
       if (statusFilters.length) return statusFilters.includes(r.status)
-      // If there are no filters then we just return all the records into the result
+      // If there are no filters then we include all records in the result
       return true
     })
-
-    // If the limit is set and does not equal zero, then we modify the result to
-    // only return a certain amount of records
-    if (options.limit) {
-      result = result.slice(0, options.limit)
-    }
 
     return result
   }

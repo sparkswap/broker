@@ -2461,7 +2461,7 @@ describe('BlockOrderWorker', () => {
       await worker.getBlockOrders(market)
 
       expect(getRecords).to.have.been.calledOnce()
-      expect(getRecords).to.have.been.calledWith(store, BlockOrder.fromStorage.bind(BlockOrder))
+      expect(getRecords).to.have.been.calledWith(store, BlockOrder.fromStorage.bind(BlockOrder), { limit: -1, reverse: true })
     })
 
     it('filters the block orders by market', async () => {
@@ -2470,8 +2470,8 @@ describe('BlockOrderWorker', () => {
     })
 
     it('limits the records returned', async () => {
-      const res = await worker.getBlockOrders(market, { limit: 2 })
-      expect(res.length).to.eql(2)
+      await worker.getBlockOrders(market, { limit: 2 })
+      expect(getRecords).to.have.been.calledWith(store, BlockOrder.fromStorage.bind(BlockOrder), { limit: 2, reverse: true })
     })
 
     it('filters block orders by active status', async () => {

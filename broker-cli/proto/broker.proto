@@ -589,13 +589,11 @@ message GetBlockOrdersResponse {
 
 /**
  * Request to retrieve all block orders in a given market.
- * This rpc returns a max record count of 1000 due to transport limits of grpc. Please
- * see `options`
  */
 message GetBlockOrdersRequest {
   message GetBlockOrderOptions {
-    // Limit for the amount of records that are returned. Records will be returned in
-    // ascending order
+    // Limit for the amount of records that are returned. Records will be returned by date in
+    // descending order (newest records first)
     int32 limit = 1;
     // Only return active orders
     bool active = 2;
