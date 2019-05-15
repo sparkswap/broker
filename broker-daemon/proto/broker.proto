@@ -27,16 +27,21 @@
  * > Setting up to use the examples:
  *
  * ```javascript
- * // This documentation makes use of the grpc and grpc-caller libraries on npm.
- * // The remainder of the docs assumes this setup step.
+ * // This documentation makes use of the grpc and @grpc/proto-loader libraries on npm.
+ * // The remainder of the docs assume that you've included this setup step.
  * const grpc = require('grpc')
+ * const protoLoader = require('@grpc/proto-loader')
+ *
  * const PROTO_OPTIONS = {
- *   convertFieldsToCamelCase: true,
- *   binaryAsBase64: true,
- *   longsAsStrings: true,
- *   enumsAsStrings: true
+ *   longs: String,
+ *   enums: String,
+ *   defaults: true,
+ *   oneofs: true,
+ *   bytes: String
  * }
- * const brokerProto = grpc.load('/path/to/broker.proto', 'proto', PROTO_OPTIONS)
+ *
+ * const packageDefinition = protoLoader.loadSync('/path/to/broker.proto', PROTO_OPTIONS)
+ * const brokerProto = grpc.loadPackageDefinition(packageDefinition)
  * ```
  *
  * ```shell
@@ -156,7 +161,7 @@ message RegisterResponse {
  *
  * ```javascript
  * const address = 'localhost:27492'
- * const adminService = new brokerProto.AdminService(address, grpc.credentials.createInsecure())
+ * const adminService = new brokerProto.rpc.AdminService(address, grpc.credentials.createInsecure())
  * ```
  */
 service AdminService {
@@ -632,7 +637,7 @@ message GetTradeHistoryResponse {
  *
  * ```javascript
  * const address = 'localhost:27492'
- * const orderService = new brokerProto.OrderService(address, grpc.credentials.createInsecure())
+ * const orderService = new brokerProto.rpc.OrderService(address, grpc.credentials.createInsecure())
  * ```
  */
 service OrderService {
@@ -1222,7 +1227,7 @@ message GetTradesResponse {
  *
  * ```javascript
  * const address = 'localhost:27492'
- * const orderBookService = new brokerProto.OrderBookService(address, grpc.credentials.createInsecure())
+ * const orderBookService = new brokerProto.rpc.OrderBookService(address, grpc.credentials.createInsecure())
  * ```
  */
 service OrderBookService {
@@ -1766,7 +1771,7 @@ message ChangeWalletPasswordRequest {
  *
  * ```javascript
  * const address = 'localhost:27492'
- * const walletService = new brokerProto.WalletService(address, grpc.credentials.createInsecure())
+ * const walletService = new brokerProto.rpc.WalletService(address, grpc.credentials.createInsecure())
  * ```
  */
 service WalletService {
