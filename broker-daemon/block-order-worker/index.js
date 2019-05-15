@@ -819,7 +819,7 @@ class BlockOrderWorker extends EventEmitter {
       }
 
       if (ownOrderIds.includes(order.orderId)) {
-        throw new Error(`Cannot fill own order ${order.orderId}`)
+        throw new Error(`Cannot fill own order ${order.orderId}. Current BlockOrderId: ${blockOrder.id}, Own Order BlockOrderId: ${order.blockOrderId}`)
       }
 
       // Take the smaller of the remaining desired depth or the base amount of the order
