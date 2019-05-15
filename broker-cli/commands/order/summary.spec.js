@@ -30,7 +30,15 @@ describe('summary', () => {
     rpcAddress = undefined
     market = 'BTC/LTC'
     args = {}
-    opts = { market, rpcAddress }
+    opts = {
+      market,
+      limit: undefined,
+      active: false,
+      cancelled: false,
+      completed: false,
+      failed: false,
+      rpcAddress
+    }
     infoSpy = sinon.spy()
     errorSpy = sinon.spy()
     order = {
@@ -64,8 +72,11 @@ describe('summary', () => {
   })
 
   it('makes a request to the broker', async () => {
+    const expectedOptions = Object.assign({}, opts)
+    delete expectedOptions.rpcAddress
+    delete expectedOptions.market
     await summary(args, opts, logger)
-    expect(getBlockOrdersStub).to.have.been.calledWith({ market })
+    expect(getBlockOrdersStub).to.have.been.calledWith(sinon.match({ market, options: expectedOptions }), sinon.match.object)
   })
 
   it('adds orders to the table', async () => {

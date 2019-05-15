@@ -591,8 +591,25 @@ message GetBlockOrdersResponse {
  * Request to retrieve all block orders in a given market.
  */
 message GetBlockOrdersRequest {
+  message GetBlockOrderOptions {
+    // Limit for the amount of records that are returned. Records will be returned by date in
+    // descending order (newest records first)
+    int32 limit = 1;
+    // Only return active orders
+    bool active = 2;
+    // Only return cancelled orders
+    bool cancelled = 3;
+    // Only return completed orders
+    bool completed = 4;
+    // Only return failed orders
+    bool failed = 5;
+  }
+
   // Market for which to retrieve block orders, expressed as a string separating two common symbols with a '/', e.g. `'BTC/LTC'`
   string market = 1;
+
+  // Query options for GetBlockOrdersRequest
+  GetBlockOrderOptions options = 2;
 }
 
 /**
@@ -813,7 +830,7 @@ service OrderService {
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
-   * orderService.getBlockOrders({ market: 'BTC/LTC' }, { deadline }, (err, { blockOrders }) => {
+   * orderService.getBlockOrders({ market: 'BTC/LTC', options: {} }, { deadline }, (err, { blockOrders }) => {
    *   if (err) return console.error(err)
    *   console.log(blockOrders)
    * })
@@ -867,6 +884,21 @@ service OrderService {
    * │ XLEeQPNXsyJ3_MsV   │ ACTIVE   │ BID      │ 0.00010000000 │ 60.00000000000 │ GTC      │ 2019-04-12T23:24:48.621Z │
    * └────────────────────┴──────────┴──────────┴───────────────┴────────────────┴──────────┴──────────────────────────┘
    * ```
+   *
+   * Additionally, you can specify options to return a subset of records using the following:
+   *
+   * Only return the first 20 records
+   * ```
+   * sparkswap order summary --market btc/ltc --limit 20
+   * ```
+   *
+   * Only return the first 20 active records
+   * ```
+   * sparkswap order summary --market btc/ltc --limit 20 --active
+   * ```
+   *
+   * For all available options, use the command `sparkswap order summary -h`
+   *
    */
   rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse) {
     option (.google.api.http) = {

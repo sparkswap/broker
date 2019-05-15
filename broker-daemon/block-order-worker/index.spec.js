@@ -1,6 +1,10 @@
 const path = require('path')
 const { Big } = require('../utils')
-const { expect, rewire, sinon } = require('test/test-helper')
+const {
+  expect,
+  rewire,
+  sinon
+} = require('test/test-helper')
 
 const BlockOrderWorker = rewire(path.resolve(__dirname))
 
@@ -2412,14 +2416,40 @@ describe('BlockOrderWorker', () => {
     let market
     let worker
     let getRecords
-    let firstBlockOrder
-    let secondBlockOrder
+    let activeBlockOrder
+    let activeBlockOrder2
+    let cancelledBlockOrder
+    let completedBlockOrder
+    let failedBlockOrder
+    let blockOrders
 
     beforeEach(() => {
       market = 'BTC/LTC'
-      firstBlockOrder = { marketName: 'BTC/LTC' }
-      secondBlockOrder = { marketName: 'ABC/XYZ' }
-      getRecords = sinon.stub().resolves([firstBlockOrder, secondBlockOrder])
+      activeBlockOrder2 = { marketName: 'ABC/XYZ' }
+      activeBlockOrder = {
+        marketName: 'BTC/LTC',
+        status: BlockOrder.STATUSES.ACTIVE
+      }
+      cancelledBlockOrder = {
+        marketName: 'BTC/LTC',
+        status: BlockOrder.STATUSES.CANCELLED
+      }
+      completedBlockOrder = {
+        marketName: 'BTC/LTC',
+        status: BlockOrder.STATUSES.COMPLETED
+      }
+      failedBlockOrder = {
+        marketName: 'BTC/LTC',
+        status: BlockOrder.STATUSES.FAILED
+      }
+      blockOrders = [
+        activeBlockOrder,
+        activeBlockOrder2,
+        cancelledBlockOrder,
+        completedBlockOrder,
+        failedBlockOrder
+      ]
+      getRecords = sinon.stub().resolves(blockOrders)
       BlockOrderWorker.__set__('getRecords', getRecords)
       BlockOrder.fromStorage = {
         bind: sinon.stub()
@@ -2431,13 +2461,37 @@ describe('BlockOrderWorker', () => {
       await worker.getBlockOrders(market)
 
       expect(getRecords).to.have.been.calledOnce()
-      expect(getRecords).to.have.been.calledWith(store, BlockOrder.fromStorage.bind(BlockOrder))
+      expect(getRecords).to.have.been.calledWith(store, BlockOrder.fromStorage.bind(BlockOrder), { limit: -1, reverse: true })
     })
 
     it('filters the block orders by market', async () => {
       const res = await worker.getBlockOrders(market)
+      expect(res).to.not.include(activeBlockOrder2)
+    })
 
-      expect(res).to.eql([firstBlockOrder])
+    it('limits the records returned', async () => {
+      await worker.getBlockOrders(market, { limit: 2 })
+      expect(getRecords).to.have.been.calledWith(store, BlockOrder.fromStorage.bind(BlockOrder), { limit: 2, reverse: true })
+    })
+
+    it('filters block orders by active status', async () => {
+      const res = await worker.getBlockOrders(market, { active: true })
+      expect(res).to.eql([activeBlockOrder])
+    })
+
+    it('filters block orders by cancelled status', async () => {
+      const res = await worker.getBlockOrders(market, { cancelled: true })
+      expect(res).to.eql([cancelledBlockOrder])
+    })
+
+    it('filters block orders by completed status', async () => {
+      const res = await worker.getBlockOrders(market, { completed: true })
+      expect(res).to.eql([completedBlockOrder])
+    })
+
+    it('filters block orders by failed status', async () => {
+      const res = await worker.getBlockOrders(market, { failed: true })
+      expect(res).to.eql([failedBlockOrder])
     })
   })
 
