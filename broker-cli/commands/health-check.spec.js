@@ -12,7 +12,6 @@ describe('healthCheck', () => {
   let args
   let opts
   let logger
-  let revert
   let infoSpy
   let errorSpy
   let healthCheckStub
@@ -20,17 +19,23 @@ describe('healthCheck', () => {
   let rpcAddress
   let instanceTableStub
   let tableStub
-  let revertTable
+  let jsonStub
+  let healthCheckResponse
+  let reverts
 
   const healthCheck = program.__get__('healthCheck')
 
   beforeEach(() => {
+    reverts = []
+    jsonStub = {
+      stringify: sinon.stub()
+    }
     rpcAddress = undefined
     args = {}
     opts = { rpcAddress }
     infoSpy = sinon.spy()
     errorSpy = sinon.spy()
-    healthCheckStub = sinon.stub().returns({
+    healthCheckResponse = {
       engineStatus: [
         { symbol: 'BTC', status: 'VALIDATED' },
         { symbol: 'LTC', status: 'NOT_SYNCED' }
@@ -40,15 +45,17 @@ describe('healthCheck', () => {
         { market: 'BTC/LTC', status: 'ORDERBOOK_OK' },
         { market: 'ABC/XYZ', status: 'ORDERBOOK_NOT_SYNCED' }
       ]
-    })
+    }
+    healthCheckStub = sinon.stub().returns(healthCheckResponse)
     instanceTableStub = { push: sinon.stub() }
     tableStub = sinon.stub().returns(instanceTableStub)
-    revertTable = program.__set__('Table', tableStub)
 
     brokerStub = sinon.stub()
     brokerStub.prototype.adminService = { healthCheck: healthCheckStub }
 
-    revert = program.__set__('BrokerDaemonClient', brokerStub)
+    reverts.push(program.__set__('Table', tableStub))
+    reverts.push(program.__set__('BrokerDaemonClient', brokerStub))
+    reverts.push(program.__set__('JSON', jsonStub))
 
     logger = {
       info: infoSpy,
@@ -57,13 +64,19 @@ describe('healthCheck', () => {
   })
 
   afterEach(() => {
-    revert()
-    revertTable()
+    reverts.forEach(r => r())
   })
 
   it('makes a request to the broker', async () => {
     await healthCheck(args, opts, logger)
     expect(healthCheckStub).to.have.been.called()
+  })
+
+  it('returns json if the user specifies a json flag', async () => {
+    opts.json = true
+    await healthCheck(args, opts, logger)
+    expect(instanceTableStub.push).to.not.have.been.called()
+    expect(jsonStub.stringify).to.have.been.calledWith(healthCheckResponse)
   })
 
   it('adds engine statuses to the healthcheck table', async () => {

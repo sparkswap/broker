@@ -58,16 +58,25 @@ const ENGINE_STATUS_CODES = Object.freeze({
  */
 
 async function healthCheck (args, opts, logger) {
-  const { rpcAddress } = opts
+  const {
+    rpcAddress,
+    json
+  } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
+
+    const res = await client.adminService.healthCheck({})
+
+    if (json) {
+      return console.log(JSON.stringify(res))
+    }
 
     const {
       engineStatus = [],
       orderbookStatus: orderbookStatuses = [],
       relayerStatus = STATUS_CODES.UNKNOWN
-    } = await client.adminService.healthCheck({})
+    } = res
 
     const healthcheckTable = new Table({
       head: ['Component', 'Status'],
@@ -114,5 +123,6 @@ module.exports = (program) => {
   program
     .command('healthcheck', 'Checks the connection between Broker and the Exchange')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
+    .option('--json', 'Export result as json', program.BOOL, false)
     .action(healthCheck)
 }
