@@ -624,7 +624,7 @@ module.exports = (program) => {
     .option('--wallet-address [address]', 'used in sparkswap withdraw ONLY')
     .option('--reserved', 'Display total reserved balance')
     .option('--force', 'Force close all channels. This options is only used in the sparkswap release command', null, false)
-    .option('--json [json]', 'export result of command as json', null, false)
+    .option('--json', 'Export result as json', program.BOOL, false)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
       const { market } = opts
@@ -765,6 +765,6 @@ module.exports = (program) => {
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.HISTORY}`, 'Transaction History of a wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
-    .option('--json [json]', 'export result of command as json')
+    .option('--json', 'Export result as json')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
 }

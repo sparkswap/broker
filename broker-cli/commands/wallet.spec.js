@@ -914,11 +914,16 @@ describe('cli wallet', () => {
     let symbol
     let walletServiceStub
     let transactions
-    let revert
+    let jsonStub
+    let reverts
 
     const history = program.__get__('history')
 
     beforeEach(() => {
+      reverts = []
+      jsonStub = {
+        stringify: sinon.stub()
+      }
       transactions = [{
         type: 'mytype',
         amount: '10000',
@@ -944,7 +949,7 @@ describe('cli wallet', () => {
         error: sinon.stub()
       }
 
-      revert = program.__set__('BrokerDaemonClient', daemonStub)
+      reverts.push(program.__set__('BrokerDaemonClient', daemonStub))
     })
 
     beforeEach(async () => {
@@ -952,7 +957,7 @@ describe('cli wallet', () => {
     })
 
     afterEach(() => {
-      revert()
+      reverts.forEach(r => r())
     })
 
     it('create a broker daemon client', () => {
@@ -972,6 +977,13 @@ describe('cli wallet', () => {
       expect(table).to.include(transactions[0].transactionHash)
       expect(table).to.include(transactions[0].blockHeight)
       expect(table).to.include(transactions[0].pending)
+    })
+
+    it('exports transactions as json if option is specified', async () => {
+      reverts.push(program.__set__('JSON', jsonStub))
+      opts.json = true
+      await history(args, opts, logger)
+      expect(jsonStub.stringify).to.have.been.calledWith(transactions)
     })
   })
 })

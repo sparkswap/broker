@@ -38,7 +38,7 @@ module.exports = (program) => {
     .option('--cancelled', 'Only return cancelled records from summary', program.BOOL)
     .option('--completed', 'Only return completed records from summary', program.BOOL)
     .option('--failed', 'Only return failed records from summary', program.BOOL)
-    .option('--json', 'Export command result as json', program.BOOL)
+    .option('--json', 'Export result as json', program.BOOL, false)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .action(async (args, opts, logger) => {
       const {
@@ -102,6 +102,6 @@ module.exports = (program) => {
     .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .command(`order ${SUPPORTED_COMMANDS.TRADE_HISTORY}`, 'Get information about completed and processing trades')
-    .option('--json [json]', 'Export command result as json')
+    .option('--json', 'Export result as json')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
 }
