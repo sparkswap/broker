@@ -1725,11 +1725,11 @@ message WalletHistoryRequest {
  */
 message WalletHistoryResponse {
   enum TransactionType {
+    UNKNOWN = 0;
     CHANNEL_CLOSE = 1;
     CHANNEL_OPEN = 2;
     DEPOSIT = 3;
     WITHDRAW = 4;
-    UNKNOWN = 10;
   }
 
   message Transaction {

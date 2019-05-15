@@ -62,3 +62,6 @@ typings/
 
 # Mac
 .DS_Store
+
+# Temp proto folder used for validating our proto files
+./proto-temp
