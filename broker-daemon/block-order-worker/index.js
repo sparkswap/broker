@@ -310,28 +310,33 @@ class BlockOrderWorker extends EventEmitter {
    * @returns {Object} contains activeOutboundAmount and activeInboundAmount of orders/fills
    */
   async calculateActiveFunds (marketName, side) {
-    const blockOrders = await this.getBlockOrders(marketName)
-    const blockOrdersForSide = blockOrders.filter(blockOrder => blockOrder.side === side)
+    const blockOrders = await this.getBlockOrders(marketName, { side })
 
-    const fullBlockOrders = await Promise.all(
-      blockOrdersForSide.map(async (bo) => {
-        await Promise.all([
-          bo.populateOrders(this.ordersStore),
-          bo.populateFills(this.fillsStore)
-        ])
-        return bo
-      })
-    )
-
-    let activeOutboundAmount = Big(0)
-    let activeInboundAmount = Big(0)
-
-    for (let blockOrder of fullBlockOrders) {
-      activeOutboundAmount = activeOutboundAmount.plus(blockOrder.activeOutboundAmount())
-      activeInboundAmount = activeInboundAmount.plus(blockOrder.activeInboundAmount())
+    // If we have no block orders that are available for our particular side, then
+    // we assume no active orders are available and can simply return 0
+    if (!blockOrders.length) {
+      return { activeOutboundAmount: Big(0), activeInboundAmount: Big(0) }
     }
 
-    return { activeOutboundAmount, activeInboundAmount }
+    // We grab the firstId and lastId to create a blockorder range so that we can
+    // grab all fills and orders to calculate active funds
+    const firstId = blockOrders[blockOrders.length - 1].id
+    const lastId = blockOrders[0].id
+
+    const orders = await BlockOrder.getOrdersForRange(this.ordersStore, firstId, lastId)
+    const fills = await BlockOrder.getFillsForRange(this.fillsStore, firstId, lastId)
+
+    const { inbound: orderInbound, outbound: orderOutbound } = await BlockOrder.activeAmountsForOrders(orders)
+    const { inbound: fillInbound, outbound: fillOutbound } = await BlockOrder.activeAmountsForFills(fills)
+
+    this.logger.debug('Calculating active funds', {
+      orderInbound: orderInbound.toString(),
+      orderOutbound: orderOutbound.toString(),
+      fillInbound: fillInbound.toString(),
+      fillOutbound: fillOutbound.toString()
+    })
+
+    return { activeOutboundAmount: orderOutbound.plus(fillOutbound), activeInboundAmount: orderInbound.plus(fillInbound) }
   }
 
   /**
@@ -438,6 +443,7 @@ class BlockOrderWorker extends EventEmitter {
    * @param {string} market - to filter by
    * @param {Object} options - options for the query
    * @param {number} options.limit - number of records to return
+   * @param {string} options.side - limit record to a particular side of market
    * @param {boolean} options.active - filter for active records
    * @param {boolean} options.cancelled - filter for cancelled records
    * @param {boolean} options.completed - filter for completed records
@@ -462,7 +468,11 @@ class BlockOrderWorker extends EventEmitter {
     }
 
     const allRecords = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder), queryOptions)
-    const recordsForMarket = allRecords.filter((record) => record.marketName === market)
+    let filteredRecords = allRecords.filter((record) => record.marketName === market)
+
+    if (options.side) {
+      filteredRecords = filteredRecords.filter((r) => r.side === options.side)
+    }
 
     // Set our filter types to be used when we filter the records for a particular
     // market
@@ -473,7 +483,7 @@ class BlockOrderWorker extends EventEmitter {
     if (options.completed) statusFilters.push(BlockOrder.STATUSES.COMPLETED)
     if (options.failed) statusFilters.push(BlockOrder.STATUSES.FAILED)
 
-    let result = recordsForMarket.filter((r) => {
+    const result = filteredRecords.filter((r) => {
       if (statusFilters.length) return statusFilters.includes(r.status)
       // If there are no filters then we include all records in the result
       return true

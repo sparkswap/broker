@@ -994,4 +994,197 @@ describe('BlockOrder', () => {
       })
     })
   })
+
+  describe('::getOrdersForRange', () => {
+    let orders
+    let getRecords
+    let orderStub
+    let storeStub
+    let parse
+
+    const reverts = []
+
+    beforeEach(() => {
+      orders = [
+        { id: 1234 },
+        { id: 1337 }
+      ]
+      getRecords = sinon.stub().resolves(orders)
+      orderStub = {
+        rangeForIds: sinon.stub(),
+        fromObject: sinon.stub()
+      }
+      storeStub = sinon.stub()
+      parse = sinon.stub().returns({})
+
+      reverts.push(BlockOrder.__set__('getRecords', getRecords))
+      reverts.push(BlockOrder.__set__('Order', orderStub))
+      reverts.push(BlockOrder.__set__('JSON', { parse }))
+    })
+
+    afterEach(() => {
+      reverts.forEach(r => r())
+    })
+
+    it('gets records for a specific store', async () => {
+      await BlockOrder.getOrdersForRange(storeStub, orders[0].id, orders[1].id)
+      expect(getRecords).to.have.been.calledWith(storeStub, sinon.match.func, sinon.match.any)
+    })
+
+    it('inflates an order', async () => {
+      await BlockOrder.getOrdersForRange(storeStub, orders[0].id, orders[1].id)
+      const recordFilter = getRecords.args[0][1]
+      const value = '{}'
+      const key = 'key'
+      recordFilter(key, value)
+      expect(parse).to.have.been.calledWith(value)
+      expect(orderStub.fromObject).to.have.been.calledWith(key, sinon.match.any)
+    })
+
+    it('gets records for a particular range', async () => {
+      await BlockOrder.getOrdersForRange(storeStub, orders[0].id, orders[1].id)
+      expect(orderStub.rangeForIds).to.have.been.calledWith(orders[0].id, orders[1].id)
+    })
+  })
+
+  describe('::getFillsForRange', () => {
+    let fills
+    let getRecords
+    let fillStub
+    let storeStub
+    let parse
+
+    const reverts = []
+
+    beforeEach(() => {
+      fills = [
+        { id: 1234 },
+        { id: 1337 }
+      ]
+      getRecords = sinon.stub().resolves(fills)
+      fillStub = {
+        rangeForIds: sinon.stub(),
+        fromObject: sinon.stub()
+      }
+      storeStub = sinon.stub()
+      parse = sinon.stub().returns({})
+
+      reverts.push(BlockOrder.__set__('getRecords', getRecords))
+      reverts.push(BlockOrder.__set__('Fill', fillStub))
+      reverts.push(BlockOrder.__set__('JSON', { parse }))
+    })
+
+    afterEach(() => {
+      reverts.forEach(r => r())
+    })
+
+    it('gets records for a specific store', async () => {
+      await BlockOrder.getFillsForRange(storeStub, fills[0].id, fills[1].id)
+      expect(getRecords).to.have.been.calledWith(storeStub, sinon.match.func, sinon.match.any)
+    })
+
+    it('inflates a fill', async () => {
+      await BlockOrder.getFillsForRange(storeStub, fills[0].id, fills[1].id)
+      const recordFilter = getRecords.args[0][1]
+      const value = '{}'
+      const key = 'key'
+      recordFilter(key, value)
+      expect(parse).to.have.been.calledWith(value)
+      expect(fillStub.fromObject).to.have.been.calledWith(key, sinon.match.any)
+    })
+
+    it('gets records for a particular range', async () => {
+      await BlockOrder.getFillsForRange(storeStub, fills[0].id, fills[1].id)
+      expect(fillStub.rangeForIds).to.have.been.calledWith(fills[0].id, fills[1].id)
+    })
+  })
+
+  describe('::activeAmountsForOrders', () => {
+    const OrderStateMachine = BlockOrder.__get__('OrderStateMachine')
+    const { CREATED, PLACED, EXECUTING } = OrderStateMachine.STATES
+
+    it('only returns amounts for records in an active state', async () => {
+      const orders = [{ state: 'BAD_STATE' }]
+      const res = await BlockOrder.activeAmountsForOrders(orders)
+      expect(res.inbound.toString()).to.be.eql('0')
+      expect(res.outbound.toString()).to.be.eql('0')
+    })
+
+    it('returns amounts for created orders', async () => {
+      const orders = [{
+        state: CREATED,
+        order: {
+          inboundAmount: 100,
+          outboundAmount: 2000
+        }
+      }]
+      const res = await BlockOrder.activeAmountsForOrders(orders)
+      expect(res.inbound.toString()).to.be.eql('100')
+      expect(res.outbound.toString()).to.be.eql('2000')
+    })
+
+    it('returns amounts for placed orders', async () => {
+      const orders = [{
+        state: PLACED,
+        order: {
+          inboundAmount: 1000,
+          outboundAmount: 300
+        }
+      }]
+      const res = await BlockOrder.activeAmountsForOrders(orders)
+      expect(res.inbound.toString()).to.be.eql('1000')
+      expect(res.outbound.toString()).to.be.eql('300')
+    })
+
+    it('returns amounts for executing orders', async () => {
+      const orders = [{
+        state: EXECUTING,
+        order: {
+          inboundFillAmount: 10000,
+          outboundFillAmount: 50
+        }
+      }]
+      const res = await BlockOrder.activeAmountsForOrders(orders)
+      expect(res.inbound.toString()).to.be.eql('10000')
+      expect(res.outbound.toString()).to.be.eql('50')
+    })
+  })
+
+  describe('::activeAmountsForFills', () => {
+    const FillStateMachine = BlockOrder.__get__('FillStateMachine')
+    const { CREATED, FILLED } = FillStateMachine.STATES
+
+    it('only returns amounts for records in an active state', async () => {
+      const fills = [{ fill: { state: 'BAD_STATE' } }]
+      const res = await BlockOrder.activeAmountsForFills(fills)
+      expect(res.inbound.toString()).to.be.eql('0')
+      expect(res.outbound.toString()).to.be.eql('0')
+    })
+
+    it('returns amounts for created fills', async () => {
+      const fills = [{
+        fill: {
+          state: CREATED,
+          inboundAmount: 100,
+          outboundAmount: 2000
+        }
+      }]
+      const res = await BlockOrder.activeAmountsForFills(fills)
+      expect(res.inbound.toString()).to.be.eql('100')
+      expect(res.outbound.toString()).to.be.eql('2000')
+    })
+
+    it('returns amounts for a filled fill', async () => {
+      const fills = [{
+        fill: {
+          state: FILLED,
+          inboundAmount: 1000,
+          outboundAmount: 300
+        }
+      }]
+      const res = await BlockOrder.activeAmountsForFills(fills)
+      expect(res.inbound.toString()).to.be.eql('1000')
+      expect(res.outbound.toString()).to.be.eql('300')
+    })
+  })
 })

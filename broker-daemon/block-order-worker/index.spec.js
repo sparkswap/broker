@@ -1424,79 +1424,80 @@ describe('BlockOrderWorker', () => {
     let anotherBidStub
     let blockOrders
     let blockOrdersStub
+    let ordersStoreStub
+    let fillsStoreStub
+    let blockOrderStub
+    let ordersStub
+    let fillsStub
 
     beforeEach(() => {
+      ordersStub = sinon.stub()
+      fillsStub = sinon.stub()
       marketName = 'BTC/LTC'
       side = 'BID'
       askStub = {
-        side: 'ASK',
-        populateOrders: sinon.stub().resolves(),
-        populateFills: sinon.stub().resolves(),
-        activeOutboundAmount: sinon.stub().returns(Big('1000')),
-        activeInboundAmount: sinon.stub().returns(Big('1000'))
+        id: 1,
+        side: 'ASK'
       }
       bidStub = {
-        side: 'BID',
-        populateOrders: sinon.stub().resolves(),
-        populateFills: sinon.stub().resolves(),
-        activeOutboundAmount: sinon.stub().returns(Big('3000')),
-        activeInboundAmount: sinon.stub().returns(Big('4000'))
-
+        id: 2,
+        side: 'BID'
       }
       anotherBidStub = {
-        side: 'BID',
-        populateOrders: sinon.stub().resolves(),
-        populateFills: sinon.stub().resolves(),
-        activeOutboundAmount: sinon.stub().returns(Big('5000')),
-        activeInboundAmount: sinon.stub().returns(Big('5000'))
+        id: 3,
+        side: 'BID'
       }
-      blockOrders = [askStub, bidStub, anotherBidStub]
+      blockOrders = [anotherBidStub, bidStub, askStub]
       blockOrdersStub = sinon.stub().resolves(blockOrders)
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       worker.getBlockOrders = blockOrdersStub
+      worker.ordersStore = ordersStoreStub
+      worker.fillsStore = fillsStoreStub
+
+      blockOrderStub = {
+        getOrdersForRange: sinon.stub().resolves(ordersStub),
+        getFillsForRange: sinon.stub().resolves(fillsStub),
+        activeAmountsForOrders: sinon.stub().resolves({ inbound: Big(1234), outbound: Big(1234) }),
+        activeAmountsForFills: sinon.stub().resolves({ inbound: Big(103), outbound: Big(0) })
+      }
+
+      BlockOrderWorker.__set__('BlockOrder', blockOrderStub)
     })
 
-    it('gets blockOrders for the market', async () => {
+    it('gets blockOrders for the market and side', async () => {
       await worker.calculateActiveFunds(marketName, side)
 
       expect(blockOrdersStub).to.have.been.calledOnce()
-      expect(blockOrdersStub).to.have.been.calledWith(marketName)
+      expect(blockOrdersStub).to.have.been.calledWith(marketName, { side })
     })
 
-    it('filters the blockOrders by side', async () => {
+    it('grabs orders for a range of blockorders', async () => {
       await worker.calculateActiveFunds(marketName, side)
-
-      expect(bidStub.populateOrders).to.have.been.calledOnce()
-      expect(bidStub.populateFills).to.have.been.calledOnce()
-      expect(anotherBidStub.populateOrders).to.have.been.calledOnce()
-      expect(anotherBidStub.populateFills).to.have.been.calledOnce()
-      expect(askStub.populateOrders).to.not.have.been.called()
-      expect(askStub.populateFills).to.not.have.been.called()
+      expect(blockOrderStub.getOrdersForRange).to.have.been.calledWith(ordersStoreStub, 1, 3)
     })
 
-    it('populates orders and fills on the blockOrder', async () => {
+    it('grabs fills for a range of blockorders', async () => {
       await worker.calculateActiveFunds(marketName, side)
-
-      expect(bidStub.populateOrders).to.have.been.calledOnce()
-      expect(bidStub.populateFills).to.have.been.calledOnce()
-      expect(anotherBidStub.populateOrders).to.have.been.calledOnce()
-      expect(anotherBidStub.populateFills).to.have.been.calledOnce()
+      expect(blockOrderStub.getFillsForRange).to.have.been.calledWith(fillsStoreStub, 1, 3)
     })
 
-    it('gets the active inbound and outbound amounts each blockOrder', async () => {
+    it('gets the active amount for orders', async () => {
       await worker.calculateActiveFunds(marketName, side)
+      expect(blockOrderStub.activeAmountsForOrders).to.have.been.calledWith(ordersStub)
+    })
 
-      expect(bidStub.activeOutboundAmount).to.have.been.calledOnce()
-      expect(bidStub.activeInboundAmount).to.have.been.calledOnce()
-      expect(anotherBidStub.activeOutboundAmount).to.have.been.calledOnce()
-      expect(anotherBidStub.activeInboundAmount).to.have.been.calledOnce()
+    it('gets the active amount for fills', async () => {
+      await worker.calculateActiveFunds(marketName, side)
+      expect(blockOrderStub.activeAmountsForFills).to.have.been.calledWith(fillsStub)
     })
 
     it('returns the active inbound and outbound amounts', async () => {
       const res = await worker.calculateActiveFunds(marketName, side)
 
-      expect(res.activeOutboundAmount).to.eql(Big('8000'))
-      expect(res.activeInboundAmount).to.eql(Big('9000'))
+      expect(res.activeOutboundAmount).to.be.instanceOf(Big)
+      expect(res.activeInboundAmount).to.be.instanceOf(Big)
+      expect(res.activeOutboundAmount.toString()).to.eql('1234')
+      expect(res.activeInboundAmount.toString()).to.eql('1337')
     })
   })
 
@@ -2428,19 +2429,23 @@ describe('BlockOrderWorker', () => {
       activeBlockOrder2 = { marketName: 'ABC/XYZ' }
       activeBlockOrder = {
         marketName: 'BTC/LTC',
-        status: BlockOrder.STATUSES.ACTIVE
+        status: BlockOrder.STATUSES.ACTIVE,
+        side: 'ASK'
       }
       cancelledBlockOrder = {
         marketName: 'BTC/LTC',
-        status: BlockOrder.STATUSES.CANCELLED
+        status: BlockOrder.STATUSES.CANCELLED,
+        side: 'ASK'
       }
       completedBlockOrder = {
         marketName: 'BTC/LTC',
-        status: BlockOrder.STATUSES.COMPLETED
+        status: BlockOrder.STATUSES.COMPLETED,
+        side: 'BID'
       }
       failedBlockOrder = {
         marketName: 'BTC/LTC',
-        status: BlockOrder.STATUSES.FAILED
+        status: BlockOrder.STATUSES.FAILED,
+        side: 'BID'
       }
       blockOrders = [
         activeBlockOrder,
@@ -2472,6 +2477,11 @@ describe('BlockOrderWorker', () => {
     it('limits the records returned', async () => {
       await worker.getBlockOrders(market, { limit: 2 })
       expect(getRecords).to.have.been.calledWith(store, BlockOrder.fromStorage.bind(BlockOrder), { limit: 2, reverse: true })
+    })
+
+    it('filters block orders by side', async () => {
+      const res = await worker.getBlockOrders(market, { side: 'ASK' })
+      expect(res).to.eql([activeBlockOrder, cancelledBlockOrder])
     })
 
     it('filters block orders by active status', async () => {

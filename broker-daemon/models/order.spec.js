@@ -157,6 +157,18 @@ describe('Order', () => {
     })
   })
 
+  describe('::rangeForIds', () => {
+    it('creates a range for block orders', () => {
+      const firstId = 'first'
+      const secondId = 'second'
+
+      expect(Order.rangeForIds(firstId, secondId)).to.be.eql({
+        gte: 'first:' + '\x00',
+        lte: 'second:' + '\uffff'
+      })
+    })
+  })
+
   describe('new', () => {
     it('creates an order', () => {
       const blockOrderId = 'blockid'

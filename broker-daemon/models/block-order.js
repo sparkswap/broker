@@ -476,6 +476,100 @@ class BlockOrder {
 
     return BlockOrder.fromStorage(blockOrderId, value)
   }
+
+  /**
+   * Grabs all orders for a range of block orders
+   * @param {sublevel} store
+   * @param {string} first
+   * @param {string} last
+   * @returns {void}
+   */
+  static async getOrdersForRange (store, first, last) {
+    return getRecords(
+      store,
+      (key, value) => {
+        const { order, state, error, dates } = JSON.parse(value)
+        return { order: Order.fromObject(key, order), state, error, dates }
+      },
+      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
+      // its prefix range.
+      Order.rangeForIds(first, last)
+    )
+  }
+
+  static async getFillsForRange (store, first, last) {
+    return getRecords(
+      store,
+      (key, value) => {
+        const { fill, state, error, dates } = JSON.parse(value)
+        return { fill: Fill.fromObject(key, fill), state, error, dates }
+      },
+      // limit the fills we retrieve to those that belong to this blockOrder, i.e. those that are in
+      // its prefix range.
+      Fill.rangeForIds(first, last)
+    )
+  }
+
+  /**
+   * @param {Array<Order>} orders
+   * @returns {Object} res
+   * @returns {Big} res.inbound
+   * @returns {Big} res.outbound
+   */
+  static async activeAmountsForOrders (orders) {
+    const {
+      CREATED,
+      PLACED,
+      EXECUTING
+    } = OrderStateMachine.STATES
+    const response = {
+      inbound: Big(0),
+      outbound: Big(0)
+    }
+    return orders.reduce((acc, { order, state }) => {
+      // If the order is not active, then we can simply return and continue to the
+      // next iteration
+      if (![CREATED, PLACED, EXECUTING].includes(state)) {
+        return acc
+      }
+
+      if (state === OrderStateMachine.STATES.EXECUTING) {
+        acc.inbound = acc.inbound.plus(order.inboundFillAmount)
+        acc.outbound = acc.outbound.plus(order.outboundFillAmount)
+        return acc
+      } else {
+        acc.inbound = acc.inbound.plus(order.inboundAmount)
+        acc.outbound = acc.outbound.plus(order.outboundAmount)
+        return acc
+      }
+    }, response)
+  }
+
+  /**
+   * @param {Array<Fill>} fills
+   * @returns {Object} res
+   * @returns {Big} res.inbound
+   * @returns {Big} res.outbound
+   */
+  static async activeAmountsForFills (fills) {
+    const {
+      CREATED,
+      FILLED
+    } = FillStateMachine.STATES
+    const response = {
+      inbound: Big(0),
+      outbound: Big(0)
+    }
+    return fills.reduce((acc, { fill }) => {
+      if (![CREATED, FILLED].includes(fill.state)) {
+        return acc
+      }
+
+      acc.inbound = acc.inbound.plus(fill.inboundAmount)
+      acc.outbound = acc.outbound.plus(fill.outboundAmount)
+      return acc
+    }, response)
+  }
 }
 
 BlockOrder.TIME_RESTRICTIONS = Object.freeze({
