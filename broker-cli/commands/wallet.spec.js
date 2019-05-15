@@ -914,11 +914,14 @@ describe('cli wallet', () => {
     let symbol
     let walletServiceStub
     let transactions
-    let revert
+    let reverts
+    let tablePushStub
+    let tableStub
 
     const history = program.__get__('history')
 
     beforeEach(() => {
+      reverts = []
       transactions = [{
         type: 'mytype',
         amount: '10000',
@@ -928,6 +931,9 @@ describe('cli wallet', () => {
         blockHeight: '1337',
         pending: false
       }]
+      tablePushStub = sinon.stub()
+      tableStub = sinon.stub()
+      tableStub.prototype.push = tablePushStub
       walletServiceStub = {
         walletService: {
           walletHistory: sinon.stub().resolves({ transactions })
@@ -944,27 +950,27 @@ describe('cli wallet', () => {
         error: sinon.stub()
       }
 
-      revert = program.__set__('BrokerDaemonClient', daemonStub)
-    })
-
-    beforeEach(async () => {
-      await history(args, opts, logger)
+      reverts.push(program.__set__('BrokerDaemonClient', daemonStub))
+      reverts.push(program.__set__('Table', tableStub))
     })
 
     afterEach(() => {
-      revert()
+      reverts.forEach(r => r())
     })
 
-    it('create a broker daemon client', () => {
+    it('create a broker daemon client', async () => {
+      await history(args, opts, logger)
       expect(daemonStub).to.have.been.calledOnce()
     })
 
-    it('makes a call to walletHistory', () => {
+    it('makes a call to walletHistory', async () => {
+      await history(args, opts, logger)
       expect(walletServiceStub.walletService.walletHistory).to.have.been.calledWith({ symbol })
     })
 
-    it('prints a table of transactions', () => {
-      const table = logger.info.args[1][0]
+    it('prints a table of transactions', async () => {
+      await history(args, opts, logger)
+      const table = tablePushStub.args[0][0]
       expect(table).to.include(transactions[0].type)
       expect(table).to.include(transactions[0].amount)
       expect(table).to.include(transactions[0].fees)
@@ -972,6 +978,17 @@ describe('cli wallet', () => {
       expect(table).to.include(transactions[0].transactionHash)
       expect(table).to.include(transactions[0].blockHeight)
       expect(table).to.include(transactions[0].pending)
+    })
+
+    it('exports transactions as json if option is specified', async () => {
+      const jsonStub = { stringify: sinon.stub() }
+      reverts.push(program.__set__('JSON', jsonStub))
+      opts.json = true
+
+      await history(args, opts, logger)
+
+      expect(jsonStub.stringify).to.have.been.calledWith(transactions)
+      expect(tablePushStub).to.not.have.been.called()
     })
   })
 })

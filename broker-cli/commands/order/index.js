@@ -38,21 +38,13 @@ module.exports = (program) => {
     .option('--cancelled', 'Only return cancelled records from summary', program.BOOL)
     .option('--completed', 'Only return completed records from summary', program.BOOL)
     .option('--failed', 'Only return failed records from summary', program.BOOL)
+    .option('--json', 'Export result as json', program.BOOL, false)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .action(async (args, opts, logger) => {
       const {
         command,
         subArguments
       } = args
-
-      const {
-        market,
-        limit,
-        active,
-        cancelled,
-        completed,
-        failed
-      } = opts
 
       let blockOrderId
 
@@ -72,17 +64,18 @@ module.exports = (program) => {
 
         case SUPPORTED_COMMANDS.SUMMARY:
           opts = {
-            market: validations.isMarketName(market),
-            limit,
-            active,
-            cancelled,
-            completed,
-            failed
+            market: validations.isMarketName(opts.market),
+            limit: opts.limit,
+            active: opts.active,
+            cancelled: opts.cancelled,
+            completed: opts.completed,
+            failed: opts.failed,
+            json: opts.json
           }
           return summary(args, opts, logger)
 
         case SUPPORTED_COMMANDS.CANCEL_ALL:
-          opts.market = validations.isMarketName(market)
+          opts.market = validations.isMarketName(opts.market)
           return cancelAll(args, opts, logger)
 
         case SUPPORTED_COMMANDS.TRADE_HISTORY:
@@ -109,5 +102,6 @@ module.exports = (program) => {
     .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .command(`order ${SUPPORTED_COMMANDS.TRADE_HISTORY}`, 'Get information about completed and processing trades')
-    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
+    .option('--json', 'Export result as json')
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
 }

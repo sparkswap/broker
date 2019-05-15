@@ -23,7 +23,7 @@ const ORDER_SUMMARY_RPC_DEADLINE = 30
  * Prints table of the users orders
  * @param {string} market
  * @param {Array<Order>} orders
- * @returns {void}
+ * @returns {string} ui for summary
  */
 function createUI (market, orders) {
   const windowWidth = size.get().width
@@ -49,7 +49,7 @@ function createUI (market, orders) {
   })
 
   ui.push(orderTable.toString())
-  console.log(ui.join('\n') + '\n')
+  return ui.join('\n') + '\n'
 }
 
 /**
@@ -62,6 +62,7 @@ function createUI (market, orders) {
  * @param {string} opts.market
  * @param {string} opts.rpcaddress
  * @param {Logger} logger
+ * @returns {void}
  */
 async function summary (args, opts, logger) {
   const {
@@ -71,6 +72,7 @@ async function summary (args, opts, logger) {
     cancelled,
     completed,
     failed,
+    json,
     rpcAddress
   } = opts
 
@@ -91,7 +93,13 @@ async function summary (args, opts, logger) {
     // We extend the gRPC deadline of this call because there's a possibility to return
     // a lot of records from the endpoint.
     const orders = await brokerDaemonClient.orderService.getBlockOrders(request, { deadline: grpcDeadline(ORDER_SUMMARY_RPC_DEADLINE) })
-    createUI(market, orders.blockOrders)
+
+    if (json) {
+      return logger.info(JSON.stringify(orders.blockOrders, null, 2))
+    }
+
+    const summary = createUI(market, orders.blockOrders)
+    logger.info(summary)
   } catch (e) {
     logger.error(handleError(e))
   }
