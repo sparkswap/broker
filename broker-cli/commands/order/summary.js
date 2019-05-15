@@ -23,7 +23,7 @@ const ORDER_SUMMARY_RPC_DEADLINE = 30
  * Prints table of the users orders
  * @param {string} market
  * @param {Array<Order>} orders
- * @returns {void}
+ * @returns {string} ui for summary
  */
 function createUI (market, orders) {
   const windowWidth = size.get().width
@@ -49,7 +49,7 @@ function createUI (market, orders) {
   })
 
   ui.push(orderTable.toString())
-  console.log(ui.join('\n') + '\n')
+  return ui.join('\n') + '\n'
 }
 
 /**
@@ -98,7 +98,8 @@ async function summary (args, opts, logger) {
       return logger.info(JSON.stringify(orders.blockOrders, null, 2))
     }
 
-    createUI(market, orders.blockOrders)
+    const summary = createUI(market, orders.blockOrders)
+    logger.info(summary)
   } catch (e) {
     logger.error(handleError(e))
   }
