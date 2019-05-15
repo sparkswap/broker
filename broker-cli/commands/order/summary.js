@@ -62,6 +62,7 @@ function createUI (market, orders) {
  * @param {string} opts.market
  * @param {string} opts.rpcaddress
  * @param {Logger} logger
+ * @returns {void}
  */
 async function summary (args, opts, logger) {
   const {
