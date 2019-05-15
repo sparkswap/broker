@@ -292,13 +292,13 @@ class BlockOrderWorker extends EventEmitter {
 
     // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
     if (!outboundBalanceIsSufficient) {
-      throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channel to create order`)
+      throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channel to create order. Outbound Amount: ${outboundAmount} Active Outbound Amount: ${activeOutboundAmount}`)
     }
 
     const inboundBalanceIsSufficient = await inboundEngine.isBalanceSufficient(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false })
     // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
     if (!inboundBalanceIsSufficient) {
-      throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order`)
+      throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order. Inbound Amount: ${inboundAmount} Active Inbound Amount: ${activeInboundAmount}`)
     }
   }
 
@@ -819,7 +819,7 @@ class BlockOrderWorker extends EventEmitter {
       }
 
       if (ownOrderIds.includes(order.orderId)) {
-        throw new Error(`Cannot fill own order ${order.orderId}`)
+        throw new Error(`Cannot fill own order ${order.orderId}. Current BlockOrderId: ${blockOrder.id}, Own Order BlockOrderId: ${order.blockOrderId}`)
       }
 
       // Take the smaller of the remaining desired depth or the base amount of the order
