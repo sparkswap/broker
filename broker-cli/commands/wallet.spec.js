@@ -968,7 +968,7 @@ describe('cli wallet', () => {
       expect(walletServiceStub.walletService.walletHistory).to.have.been.calledWith({ symbol })
     })
 
-    it.only('prints a table of transactions', async () => {
+    it('prints a table of transactions', async () => {
       await history(args, opts, logger)
       const table = tablePushStub.args[0][0]
       expect(table).to.include(transactions[0].type)
