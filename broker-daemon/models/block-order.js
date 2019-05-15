@@ -343,7 +343,7 @@ class BlockOrder {
       },
       // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
       // its prefix range.
-      Order.rangeForBlockOrder(this.id)
+      Order.rangeForBlockOrder(this.id, this.id)
     )
     this.orders = orders
   }
@@ -362,7 +362,7 @@ class BlockOrder {
       },
       // limit the fills we retrieve to those that belong to this blockOrder, i.e. those that are in
       // its prefix range.
-      Fill.rangeForBlockOrder(this.id)
+      Fill.rangeForBlockOrder(this.id, this.id)
     )
     this.fills = fills
   }

@@ -471,7 +471,7 @@ describe('BlockOrderWorker', () => {
       await worker.getOrderStateMachines(blockOrder)
 
       expect(Order.rangeForBlockOrder).to.have.been.calledOnce()
-      expect(Order.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id)
+      expect(Order.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id, blockOrder.id)
       expect(getRecords).to.have.been.calledOnce()
       expect(getRecords).to.have.been.calledWith(ordersStore, sinon.match.func, fakeRange)
     })
@@ -525,7 +525,7 @@ describe('BlockOrderWorker', () => {
       await worker.getFillStateMachines(blockOrder)
 
       expect(Fill.rangeForBlockOrder).to.have.been.calledOnce()
-      expect(Fill.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id)
+      expect(Fill.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id, blockOrder.id)
       expect(getRecords).to.have.been.calledOnce()
       expect(getRecords).to.have.been.calledWith(fillsStore, sinon.match.func, fakeRange)
     })

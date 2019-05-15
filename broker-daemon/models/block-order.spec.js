@@ -909,7 +909,7 @@ describe('BlockOrder', () => {
         await blockOrder.populateOrders(ordersStore)
 
         expect(Order.rangeForBlockOrder).to.have.been.calledOnce()
-        expect(Order.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id)
+        expect(Order.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id, blockOrder.id)
         expect(getRecords).to.have.been.calledOnce()
         expect(getRecords).to.have.been.calledWith(ordersStore, sinon.match.func, fakeRange)
         expect(blockOrder).to.have.property('orders', orders)
@@ -965,7 +965,7 @@ describe('BlockOrder', () => {
         await blockOrder.populateFills(fillsStore)
 
         expect(Fill.rangeForBlockOrder).to.have.been.calledOnce()
-        expect(Fill.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id)
+        expect(Fill.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id, blockOrder.id)
         expect(getRecords).to.have.been.calledOnce()
         expect(getRecords).to.have.been.calledWith(fillsStore, sinon.match.func, fakeRange)
         expect(blockOrder).to.have.property('fills', fills)
