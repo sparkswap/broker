@@ -71,6 +71,7 @@ async function summary (args, opts, logger) {
     cancelled,
     completed,
     failed,
+    json,
     rpcAddress
   } = opts
 
@@ -91,6 +92,11 @@ async function summary (args, opts, logger) {
     // We extend the gRPC deadline of this call because there's a possibility to return
     // a lot of records from the endpoint.
     const orders = await brokerDaemonClient.orderService.getBlockOrders(request, { deadline: grpcDeadline(ORDER_SUMMARY_RPC_DEADLINE) })
+
+    if (json) {
+      return logger.info(JSON.stringify(orders.blockOrders, null, 2))
+    }
+
     createUI(market, orders.blockOrders)
   } catch (e) {
     logger.error(handleError(e))
