@@ -331,7 +331,7 @@ async function networkStatus (args, opts, logger) {
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({ market }, { deadline: grpcDeadline(NETWORK_STATUS_GRPC_DEADLINE) })
+    const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({ market }, null, { deadline: grpcDeadline(NETWORK_STATUS_GRPC_DEADLINE) })
 
     const baseSymbol = baseSymbolCapacities.symbol.toUpperCase()
     const counterSymbol = counterSymbolCapacities.symbol.toUpperCase()
