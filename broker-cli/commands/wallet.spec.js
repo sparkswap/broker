@@ -332,7 +332,7 @@ describe('cli wallet', () => {
     it('calls broker daemon for the network status', () => {
       expect(daemonStub).to.have.been.calledWith(rpcAddress)
       expect(getTradingCapacitiesStub).to.have.been.calledOnce()
-      expect(getTradingCapacitiesStub).to.have.been.calledWith(market, { deadline })
+      expect(getTradingCapacitiesStub).to.have.been.calledWith({ market }, { deadline })
     })
 
     it('adds available header', () => {
