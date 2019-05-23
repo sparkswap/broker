@@ -38,7 +38,7 @@ const SUPPORTED_SYMBOLS = Object.freeze(
  * before the client will disconnect
  *
  * @constant
- * @type {string}
+ * @type {number}
  * @default
  */
 const NETWORK_STATUS_GRPC_DEADLINE = 30
