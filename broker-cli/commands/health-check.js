@@ -69,7 +69,7 @@ async function healthCheck (args, opts, logger) {
     const res = await client.adminService.healthCheck({})
 
     if (json) {
-      return console.log(JSON.stringify(res))
+      return logger.info(JSON.stringify(res, null, 2))
     }
 
     const {
