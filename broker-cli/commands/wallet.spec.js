@@ -267,15 +267,18 @@ describe('cli wallet', () => {
     let counterSymbolCapacities
     let NETWORK_STATUSES
     let reverts = []
+    let grpcDeadlineStub
 
     const networkStatus = program.__get__('networkStatus')
     const formatBalance = program.__get__('formatBalance')
+    const deadline = 1234
 
     beforeEach(() => {
       market = 'BTC/LTC'
       rpcAddress = 'test:1337'
       opts = { rpcAddress, market }
       logger = { info: sinon.stub(), error: sinon.stub() }
+      grpcDeadlineStub = sinon.stub().returns(deadline)
       baseSymbolCapacities = {
         symbol: 'BTC',
         activeReceiveCapacity: '0.00001',
@@ -313,6 +316,7 @@ describe('cli wallet', () => {
 
       reverts.push(program.__set__('BrokerDaemonClient', daemonStub))
       reverts.push(program.__set__('Table', tableStub))
+      reverts.push(program.__set__('grpcDeadline', grpcDeadlineStub))
 
       NETWORK_STATUSES = program.__get__('NETWORK_STATUSES')
     })
@@ -328,6 +332,7 @@ describe('cli wallet', () => {
     it('calls broker daemon for the network status', () => {
       expect(daemonStub).to.have.been.calledWith(rpcAddress)
       expect(getTradingCapacitiesStub).to.have.been.calledOnce()
+      expect(getTradingCapacitiesStub).to.have.been.calledWith({ market }, null, { deadline })
     })
 
     it('adds available header', () => {

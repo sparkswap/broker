@@ -23,10 +23,14 @@ describe('summary', () => {
   let instanceTableStub
   let jsonStub
   let reverts
+  let deadline
+  let grpcDeadlineStub
 
   const summary = program.__get__('summary')
 
   beforeEach(() => {
+    deadline = 30
+    grpcDeadlineStub = sinon.stub().returns(deadline)
     reverts = []
     jsonStub = {
       stringify: sinon.stub()
@@ -64,6 +68,7 @@ describe('summary', () => {
     reverts.push(program.__set__('BrokerDaemonClient', brokerStub))
     reverts.push(program.__set__('Table', tableStub))
     reverts.push(program.__set__('JSON', jsonStub))
+    reverts.push(program.__set__('grpcDeadline', grpcDeadlineStub))
 
     logger = {
       info: infoSpy,
@@ -80,7 +85,7 @@ describe('summary', () => {
     delete expectedOptions.rpcAddress
     delete expectedOptions.market
     await summary(args, opts, logger)
-    expect(getBlockOrdersStub).to.have.been.calledWith(sinon.match({ market, options: expectedOptions }), sinon.match.object)
+    expect(getBlockOrdersStub).to.have.been.calledWith(sinon.match({ market, options: expectedOptions }), null, { deadline })
   })
 
   it('adds orders to the table', async () => {

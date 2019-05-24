@@ -311,13 +311,22 @@ class BlockOrderWorker extends EventEmitter {
    */
   async calculateActiveFunds (marketName, side) {
     const blockOrders = await this.getBlockOrders(marketName)
-
     const blockOrdersForSide = blockOrders.filter(blockOrder => blockOrder.side === side)
+
+    const fullBlockOrders = await Promise.all(
+      blockOrdersForSide.map(async (bo) => {
+        await Promise.all([
+          bo.populateOrders(this.ordersStore),
+          bo.populateFills(this.fillsStore)
+        ])
+        return bo
+      })
+    )
+
     let activeOutboundAmount = Big(0)
     let activeInboundAmount = Big(0)
-    for (let blockOrder of blockOrdersForSide) {
-      await blockOrder.populateOrders(this.ordersStore)
-      await blockOrder.populateFills(this.fillsStore)
+
+    for (let blockOrder of fullBlockOrders) {
       activeOutboundAmount = activeOutboundAmount.plus(blockOrder.activeOutboundAmount())
       activeInboundAmount = activeInboundAmount.plus(blockOrder.activeInboundAmount())
     }

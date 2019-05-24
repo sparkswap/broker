@@ -7,7 +7,13 @@ const Table = require('cli-table2')
 require('colors')
 
 const BrokerDaemonClient = require('../broker-daemon-client')
-const { validations, askQuestion, Big, handleError } = require('../utils')
+const {
+  validations,
+  askQuestion,
+  Big,
+  handleError,
+  grpcDeadline
+} = require('../utils')
 const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../utils/strings')
 const { currencies: currencyConfig } = require('../config')
 
@@ -26,6 +32,16 @@ const ACCEPTED_ANSWERS = Object.freeze(['y', 'yes'])
 const SUPPORTED_SYMBOLS = Object.freeze(
   Object.values(currencyConfig).map(currency => currency.symbol)
 )
+
+/**
+ * Custom gRPC client deadline for `wallet network-status` that allows 30 seconds
+ * before the client will disconnect
+ *
+ * @constant
+ * @type {number}
+ * @default
+ */
+const NETWORK_STATUS_GRPC_DEADLINE = 30
 
 /**
  * Supported commands for `sparkswap wallet`
@@ -315,7 +331,7 @@ async function networkStatus (args, opts, logger) {
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({ market })
+    const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({ market }, null, { deadline: grpcDeadline(NETWORK_STATUS_GRPC_DEADLINE) })
 
     const baseSymbol = baseSymbolCapacities.symbol.toUpperCase()
     const counterSymbol = counterSymbolCapacities.symbol.toUpperCase()
