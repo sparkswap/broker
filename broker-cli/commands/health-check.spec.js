@@ -74,9 +74,12 @@ describe('healthCheck', () => {
 
   it('returns json if the user specifies a json flag', async () => {
     opts.json = true
+    const result = 'result'
+    jsonStub.stringify.returns(result)
     await healthCheck(args, opts, logger)
     expect(instanceTableStub.push).to.not.have.been.called()
     expect(jsonStub.stringify).to.have.been.calledWith(healthCheckResponse)
+    expect(logger.info).to.have.been.calledWith(result)
   })
 
   it('adds engine statuses to the healthcheck table', async () => {
