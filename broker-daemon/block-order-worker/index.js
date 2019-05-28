@@ -566,19 +566,30 @@ class BlockOrderWorker extends EventEmitter {
    * @returns {void}
    */
   async workLimitBlockOrder (blockOrder, targetDepth) {
-    if (blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.GTC) {
-      throw new Error('Only Good-til-cancelled limit orders are currently supported.')
+    if (blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.GTC || blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.PO) {
+      throw new Error('Only Good-til-cancelled and Post Only limit orders are currently supported.')
     }
 
     const orderbook = this.orderbooks.get(blockOrder.marketName)
 
-    // fill as many orders at our price or better
+    // get available orders for the requested depth and price
     const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString(), quantumPrice: blockOrder.quantumPrice })
-    await this._fillOrders(blockOrder, orders, targetDepth.toString())
 
-    if (targetDepth.gt(availableDepth)) {
-      // place an order for the remaining depth that we could not fill
-      this._placeOrders(blockOrder, targetDepth.minus(availableDepth).toString())
+    if (blockOrder.timeInForce === BlockOrder.TIME_RESTRICTIONS.GTC) {
+      await this._fillOrders(blockOrder, orders, targetDepth.toString())
+
+      if (targetDepth.gt(availableDepth)) {
+        // place an order for the remaining depth that we could not fill
+        this._placeOrders(blockOrder, targetDepth.minus(availableDepth).toString())
+      }
+    } else {
+      // Post Only orders are maker only, so if any depth exists for our given
+      // price, we move the order to a cancelled state
+      if (Big(availableDepth).gt(0)) {
+        return this.cancelBlockOrder(blockOrder.id)
+      }
+
+      this._placeOrders(blockOrder, targetDepth.toString())
     }
   }
 
