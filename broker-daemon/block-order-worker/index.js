@@ -566,7 +566,7 @@ class BlockOrderWorker extends EventEmitter {
    * @returns {void}
    */
   async workLimitBlockOrder (blockOrder, targetDepth) {
-    if (blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.GTC || blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.PO) {
+    if ((blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.GTC) && (blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.PO)) {
       throw new Error('Only Good-til-cancelled and Post Only limit orders are currently supported.')
     }
 
@@ -583,9 +583,18 @@ class BlockOrderWorker extends EventEmitter {
         this._placeOrders(blockOrder, targetDepth.minus(availableDepth).toString())
       }
     } else {
-      // Post Only orders are maker only, so if any depth exists for our given
+      const bestOrder = orders[0]
+      let wouldTakeLiquidity
+
+      if (blockOrder.isBid) {
+        wouldTakeLiquidity = Big(bestOrder.quantumPrice).lte(blockOrder.quantumPrice)
+      } else {
+        wouldTakeLiquidity = Big(bestOrder.quantumPrice).gte(blockOrder.quantumPrice)
+      }
+
+      // Post Only orders are maker only, so if any orders exist at a marketable
       // price, we move the order to a cancelled state
-      if (Big(availableDepth).gt(0)) {
+      if (wouldTakeLiquidity) {
         return this.cancelBlockOrder(blockOrder.id)
       }
 
