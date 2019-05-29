@@ -1527,11 +1527,7 @@ describe('BlockOrderWorker', () => {
       OrderStateMachine.create.resolves(order)
 
       orders = [
-        {
-          orderId: '1',
-          baseAmount: '90000000000',
-          quantumPrice: '900.00000000000000000'
-        }
+        { orderId: '1', baseAmount: '90000000000' }
       ]
 
       orderbooks.get('BTC/LTC').getBestOrders.resolves({
@@ -1594,7 +1590,6 @@ describe('BlockOrderWorker', () => {
         })
 
         it('cancels a buy order if the order would take any liquidity', async () => {
-          blockOrder.isBid = true
           await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
 
           expect(worker.cancelBlockOrder).to.have.been.calledOnce()
@@ -1604,19 +1599,17 @@ describe('BlockOrderWorker', () => {
         it('cancels a sell order if the order would take any liquidity', async () => {
           blockOrder.side = 'ASK'
           blockOrder.inverseSide = 'BID'
-          blockOrder.isBid = false
 
           orders = [
             {
               orderId: '1',
-              baseAmount: '110000000000',
-              quantumPrice: '1100.00000000000000000'
+              baseAmount: '100000000000'
             }
           ]
 
           orderbooks.get('BTC/LTC').getBestOrders.resolves({
             orders,
-            depth: '110000000000'
+            depth: '100000000000'
           })
 
           await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
@@ -1626,19 +1619,9 @@ describe('BlockOrderWorker', () => {
         })
 
         it('places a buy order if the order would not take any liquidity', async () => {
-          blockOrder.isBid = true
-
-          orders = [
-            {
-              orderId: '1',
-              baseAmount: '110000000000',
-              quantumPrice: '1100.00000000000000000'
-            }
-          ]
-
           orderbooks.get('BTC/LTC').getBestOrders.resolves({
-            orders,
-            depth: '110000000000'
+            orders: [],
+            depth: '0'
           })
 
           await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
@@ -1651,7 +1634,11 @@ describe('BlockOrderWorker', () => {
         it('places a sell order if the order would not take any liquidity', async () => {
           blockOrder.side = 'ASK'
           blockOrder.inverseSide = 'BID'
-          blockOrder.isBid = false
+
+          orderbooks.get('BTC/LTC').getBestOrders.resolves({
+            orders: [],
+            depth: '0'
+          })
 
           await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
 

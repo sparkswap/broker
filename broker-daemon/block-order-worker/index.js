@@ -577,28 +577,20 @@ class BlockOrderWorker extends EventEmitter {
 
     if (blockOrder.timeInForce === BlockOrder.TIME_RESTRICTIONS.GTC) {
       await this._fillOrders(blockOrder, orders, targetDepth.toString())
-
-      if (targetDepth.gt(availableDepth)) {
-        // place an order for the remaining depth that we could not fill
-        this._placeOrders(blockOrder, targetDepth.minus(availableDepth).toString())
-      }
-    } else {
-      const bestOrder = orders[0]
-      let wouldTakeLiquidity
-
-      if (blockOrder.isBid) {
-        wouldTakeLiquidity = Big(bestOrder.quantumPrice).lte(blockOrder.quantumPrice)
-      } else {
-        wouldTakeLiquidity = Big(bestOrder.quantumPrice).gte(blockOrder.quantumPrice)
-      }
-
+    } else if (blockOrder.timeInForce === BlockOrder.TIME_RESTRICTIONS.PO) {
       // Post Only orders are maker only, so if any orders exist at a marketable
       // price, we move the order to a cancelled state
-      if (wouldTakeLiquidity) {
+      if (Big(availableDepth).gt(0)) {
+        this.logger.info('Place Only block order would take liquidity. Moving to cancelled state.', { id: blockOrder.id })
         return this.cancelBlockOrder(blockOrder.id)
       }
+    } else {
+      throw new Error('')
+    }
 
-      this._placeOrders(blockOrder, targetDepth.toString())
+    if (targetDepth.gt(availableDepth)) {
+      // place an order for the remaining depth that we could not fill
+      this._placeOrders(blockOrder, targetDepth.minus(availableDepth).toString())
     }
   }
 
