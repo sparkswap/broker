@@ -429,7 +429,7 @@ class Fill {
    * @param {string} endId - id of the block order to end the range
    * @returns {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
    */
-  static rangeForBlockOrder (startId, endId) {
+  static rangeForBlockOrderIds (startId, endId) {
     return {
       gte: `${startId}${DELIMITER}${LOWER_BOUND}`,
       lte: `${endId}${DELIMITER}${UPPER_BOUND}`

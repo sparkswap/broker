@@ -290,7 +290,7 @@ describe('BlockOrder', () => {
       Order = {
         fromObject: sinon.stub(),
         fromStorage: sinon.stub(),
-        rangeForBlockOrder: sinon.stub()
+        rangeForBlockOrderIds: sinon.stub()
       }
       OrderStateMachine = {
         serialize: sinon.stub(),
@@ -321,7 +321,7 @@ describe('BlockOrder', () => {
 
       Fill = {
         fromObject: sinon.stub(),
-        rangeForBlockOrder: sinon.stub()
+        rangeForBlockOrderIds: sinon.stub()
       }
 
       BlockOrder.__set__('Fill', Fill)
@@ -904,12 +904,12 @@ describe('BlockOrder', () => {
 
       it('retrieves all open orders associated with the block order', async () => {
         const fakeRange = 'myrange'
-        Order.rangeForBlockOrder.returns(fakeRange)
+        Order.rangeForBlockOrderIds.returns(fakeRange)
 
         await blockOrder.populateOrders(ordersStore)
 
-        expect(Order.rangeForBlockOrder).to.have.been.calledOnce()
-        expect(Order.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id, blockOrder.id)
+        expect(Order.rangeForBlockOrderIds).to.have.been.calledOnce()
+        expect(Order.rangeForBlockOrderIds).to.have.been.calledWith(blockOrder.id, blockOrder.id)
         expect(getRecords).to.have.been.calledOnce()
         expect(getRecords).to.have.been.calledWith(ordersStore, sinon.match.func, fakeRange)
         expect(blockOrder).to.have.property('orders', orders)
@@ -960,12 +960,12 @@ describe('BlockOrder', () => {
 
       it('retrieves all fills associated with a block order', async () => {
         const fakeRange = 'myrange'
-        Fill.rangeForBlockOrder.returns(fakeRange)
+        Fill.rangeForBlockOrderIds.returns(fakeRange)
 
         await blockOrder.populateFills(fillsStore)
 
-        expect(Fill.rangeForBlockOrder).to.have.been.calledOnce()
-        expect(Fill.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id, blockOrder.id)
+        expect(Fill.rangeForBlockOrderIds).to.have.been.calledOnce()
+        expect(Fill.rangeForBlockOrderIds).to.have.been.calledWith(blockOrder.id, blockOrder.id)
         expect(getRecords).to.have.been.calledOnce()
         expect(getRecords).to.have.been.calledWith(fillsStore, sinon.match.func, fakeRange)
         expect(blockOrder).to.have.property('fills', fills)

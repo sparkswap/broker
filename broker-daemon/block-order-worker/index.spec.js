@@ -49,13 +49,13 @@ describe('BlockOrderWorker', () => {
     Order = {
       fromObject: sinon.stub(),
       fromStorage: sinon.stub(),
-      rangeForBlockOrder: sinon.stub()
+      rangeForBlockOrderIds: sinon.stub()
     }
     BlockOrderWorker.__set__('Order', Order)
 
     Fill = {
       fromObject: sinon.stub(),
-      rangeForBlockOrder: sinon.stub()
+      rangeForBlockOrderIds: sinon.stub()
     }
     BlockOrderWorker.__set__('Fill', Fill)
 
@@ -466,12 +466,12 @@ describe('BlockOrderWorker', () => {
 
     it('retrieves all open orders associated with the block order', async () => {
       const fakeRange = 'myrange'
-      Order.rangeForBlockOrder.returns(fakeRange)
+      Order.rangeForBlockOrderIds.returns(fakeRange)
 
       await worker.getOrderStateMachines(blockOrder)
 
-      expect(Order.rangeForBlockOrder).to.have.been.calledOnce()
-      expect(Order.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id, blockOrder.id)
+      expect(Order.rangeForBlockOrderIds).to.have.been.calledOnce()
+      expect(Order.rangeForBlockOrderIds).to.have.been.calledWith(blockOrder.id, blockOrder.id)
       expect(getRecords).to.have.been.calledOnce()
       expect(getRecords).to.have.been.calledWith(ordersStore, sinon.match.func, fakeRange)
     })
@@ -520,12 +520,12 @@ describe('BlockOrderWorker', () => {
 
     it('retrieves all open fills associated with the block order', async () => {
       const fakeRange = 'myrange'
-      Fill.rangeForBlockOrder.returns(fakeRange)
+      Fill.rangeForBlockOrderIds.returns(fakeRange)
 
       await worker.getFillStateMachines(blockOrder)
 
-      expect(Fill.rangeForBlockOrder).to.have.been.calledOnce()
-      expect(Fill.rangeForBlockOrder).to.have.been.calledWith(blockOrder.id, blockOrder.id)
+      expect(Fill.rangeForBlockOrderIds).to.have.been.calledOnce()
+      expect(Fill.rangeForBlockOrderIds).to.have.been.calledWith(blockOrder.id, blockOrder.id)
       expect(getRecords).to.have.been.calledOnce()
       expect(getRecords).to.have.been.calledWith(fillsStore, sinon.match.func, fakeRange)
     })

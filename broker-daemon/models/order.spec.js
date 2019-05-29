@@ -146,12 +146,12 @@ describe('Order', () => {
     })
   })
 
-  describe('::rangeForBlockOrder', () => {
+  describe('::rangeForBlockOrderIds', () => {
     it('creates a range for block orders', () => {
       const startId = 'startid'
       const endId = 'endid'
 
-      expect(Order.rangeForBlockOrder(startId, endId)).to.be.eql({
+      expect(Order.rangeForBlockOrderIds(startId, endId)).to.be.eql({
         gte: 'startid:' + '\x00',
         lte: 'endid:' + '\uffff'
       })
