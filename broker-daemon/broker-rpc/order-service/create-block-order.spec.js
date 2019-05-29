@@ -13,7 +13,8 @@ describe('createBlockOrder', () => {
   beforeEach(() => {
     CreateBlockOrderResponse = sinon.stub()
     TimeInForce = {
-      GTC: 1
+      GTC: 1,
+      PO: 3
     }
     blockOrderWorker = {
       createBlockOrder: sinon.stub().resolves('fakeId')
@@ -39,12 +40,12 @@ describe('createBlockOrder', () => {
     revert()
   })
 
-  it('throws if trying to use a time in force other than GTC', () => {
+  it('throws if trying to use a time in force other than GTC or PO', () => {
     const params = {
       limitPrice: '1000.678',
       timeInForce: 'FOK'
     }
-    return expect(createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })).to.be.rejectedWith('Only Good-til-cancelled orders are currently supported')
+    return expect(createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })).to.be.rejectedWith('Only Good-til-cancelled and Post Only limit orders are currently supported.')
   })
 
   it('creates a block order on the BlockOrderWorker', async () => {

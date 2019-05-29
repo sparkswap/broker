@@ -19,16 +19,16 @@ async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrde
     timeInForce
   } = params
 
-  if (TimeInForce[timeInForce] !== TimeInForce.GTC) {
-    throw new Error('Only Good-til-cancelled orders are currently supported')
+  if ((TimeInForce[timeInForce] !== TimeInForce.GTC) && (TimeInForce[timeInForce] !== TimeInForce.PO)) {
+    throw new Error('Only Good-til-cancelled and Post Only limit orders are currently supported.')
   }
 
   const blockOrderId = await blockOrderWorker.createBlockOrder({
     marketName: market,
-    side: side,
-    amount: amount,
+    side,
+    amount,
     price: isMarketOrder ? null : limitPrice,
-    timeInForce: 'GTC'
+    timeInForce
   })
 
   return new CreateBlockOrderResponse({ blockOrderId })
