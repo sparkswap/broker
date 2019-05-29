@@ -425,13 +425,14 @@ class Fill {
    * Create a set of options that can be passed to a LevelUP `createReadStream` call
    * that limits the set to fills that belong to the given blockOrderId.
    * This works because all fills are prefixed with their blockOrderId and the Delimiter.
-   * @param {string} blockOrderId - id of the block order to create a range for
+   * @param {string} startId - of of the block order to start the range
+   * @param {string} endId - id of the block order to end the range
    * @returns {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
    */
-  static rangeForBlockOrder (blockOrderId) {
+  static rangeForBlockOrderIds (startId, endId) {
     return {
-      gte: `${blockOrderId}${DELIMITER}${LOWER_BOUND}`,
-      lte: `${blockOrderId}${DELIMITER}${UPPER_BOUND}`
+      gte: `${startId}${DELIMITER}${LOWER_BOUND}`,
+      lte: `${endId}${DELIMITER}${UPPER_BOUND}`
     }
   }
 
