@@ -1,5 +1,9 @@
 const path = require('path')
-const { expect, rewire } = require('test/test-helper')
+const {
+  expect,
+  rewire,
+  sinon
+} = require('test/test-helper')
 
 const Fill = rewire(path.resolve(__dirname, 'fill'))
 
@@ -182,18 +186,6 @@ describe('Fill', () => {
       expect(Fill.rangeForBlockOrderIds(startId, endId)).to.be.eql({
         gte: 'startid:' + '\x00',
         lte: 'endid:' + '\uffff'
-      })
-    })
-  })
-
-  describe('::rangeForIds', () => {
-    it('creates a range for block orders', () => {
-      const firstId = 'first'
-      const secondId = 'second'
-
-      expect(Fill.rangeForIds(firstId, secondId)).to.be.eql({
-        gte: 'first:' + '\x00',
-        lte: 'second:' + '\uffff'
       })
     })
   })
@@ -459,6 +451,59 @@ describe('Fill', () => {
         expect(serializedFill).to.have.property('side', fill.order.side)
         expect(serializedFill).to.have.property('price', '10.0000000000000000')
       })
+    })
+  })
+
+  describe('::getFillsForRange', () => {
+    let fills
+    let getRecords
+    let storeStub
+    let parse
+    let rangeStub
+    let fromObjectStub
+
+    const reverts = []
+
+    beforeEach(() => {
+      rangeStub = sinon.stub()
+      fromObjectStub = sinon.stub()
+      fills = [
+        { id: 1234 },
+        { id: 1337 }
+      ]
+      getRecords = sinon.stub().resolves(fills)
+      storeStub = sinon.stub()
+      parse = sinon.stub().returns({})
+
+      reverts.push(Fill.__set__('getRecords', getRecords))
+      reverts.push(Fill.__set__('JSON', { parse }))
+
+      Fill.rangeForBlockOrderIds = rangeStub
+      Fill.fromObject = fromObjectStub
+    })
+
+    afterEach(() => {
+      reverts.forEach(r => r())
+    })
+
+    it('gets records for a specific store', async () => {
+      await Fill.getFillsForRange(storeStub, fills[0].id, fills[1].id)
+      expect(getRecords).to.have.been.calledWith(storeStub, sinon.match.func, sinon.match.any)
+    })
+
+    it('inflates a fill', async () => {
+      await Fill.getFillsForRange(storeStub, fills[0].id, fills[1].id)
+      const recordFilter = getRecords.args[0][1]
+      const value = '{}'
+      const key = 'key'
+      recordFilter(key, value)
+      expect(parse).to.have.been.calledWith(value)
+      expect(fromObjectStub).to.have.been.called(key, sinon.match.any)
+    })
+
+    it('gets records for a particular range', async () => {
+      await Fill.getFillsForRange(storeStub, fills[0].id, fills[1].id)
+      expect(rangeStub).to.have.been.calledWith(fills[0].id, fills[1].id)
     })
   })
 })

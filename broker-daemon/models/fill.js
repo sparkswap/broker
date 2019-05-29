@@ -1,5 +1,8 @@
 const Order = require('./order')
-const { Big } = require('../utils')
+const {
+  Big,
+  getRecords
+} = require('../utils')
 const CONFIG = require('../config')
 
 /**
@@ -437,17 +440,23 @@ class Fill {
   }
 
   /**
-   * Create a set of options that can be passed to a Level `createReadStream` call
-   * that limits the set to fills that belong to a given range of blockOrderIds.
-   * @param {string} firstId - blockOrderId of the start of our block order range
-   * @param {string} lastId - blockOrderId of the end of our block order range
-   * @returns {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
+   * Grabs all orders for a range of block orders
+   * @param {sublevel} store
+   * @param {string} first
+   * @param {string} last
+   * @returns {void}
    */
-  static rangeForIds (firstId, lastId) {
-    return {
-      gte: `${firstId}${DELIMITER}${LOWER_BOUND}`,
-      lte: `${lastId}${DELIMITER}${UPPER_BOUND}`
-    }
+  static async getFillsForRange (store, first, last) {
+    return getRecords(
+      store,
+      (key, value) => {
+        const { fill, state, error, dates } = JSON.parse(value)
+        return { fill: Fill.fromObject(key, fill), state, error, dates }
+      },
+      // limit the fills we retrieve to those that belong to this blockOrder, i.e. those that are in
+      // its prefix range.
+      Fill.rangeForBlockOrderIds(first, last)
+    )
   }
 }
 

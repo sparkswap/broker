@@ -478,39 +478,6 @@ class BlockOrder {
   }
 
   /**
-   * Grabs all orders for a range of block orders
-   * @param {sublevel} store
-   * @param {string} first
-   * @param {string} last
-   * @returns {void}
-   */
-  static async getOrdersForRange (store, first, last) {
-    return getRecords(
-      store,
-      (key, value) => {
-        const { order, state, error, dates } = JSON.parse(value)
-        return { order: Order.fromObject(key, order), state, error, dates }
-      },
-      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
-      // its prefix range.
-      Order.rangeForIds(first, last)
-    )
-  }
-
-  static async getFillsForRange (store, first, last) {
-    return getRecords(
-      store,
-      (key, value) => {
-        const { fill, state, error, dates } = JSON.parse(value)
-        return { fill: Fill.fromObject(key, fill), state, error, dates }
-      },
-      // limit the fills we retrieve to those that belong to this blockOrder, i.e. those that are in
-      // its prefix range.
-      Fill.rangeForIds(first, last)
-    )
-  }
-
-  /**
    * @param {Array<Order>} orders
    * @returns {Object} res
    * @returns {Big} res.inbound

@@ -1,6 +1,11 @@
-const { expect } = require('test/test-helper')
+const path = require('path')
+const {
+  rewire,
+  expect,
+  sinon
+} = require('test/test-helper')
 
-const Order = require('./order')
+const Order = rewire(path.resolve(__dirname, 'order'))
 
 describe('Order', () => {
   describe('::SIDES', () => {
@@ -154,18 +159,6 @@ describe('Order', () => {
       expect(Order.rangeForBlockOrderIds(startId, endId)).to.be.eql({
         gte: 'startid:' + '\x00',
         lte: 'endid:' + '\uffff'
-      })
-    })
-  })
-
-  describe('::rangeForIds', () => {
-    it('creates a range for block orders', () => {
-      const firstId = 'first'
-      const secondId = 'second'
-
-      expect(Order.rangeForIds(firstId, secondId)).to.be.eql({
-        gte: 'first:' + '\x00',
-        lte: 'second:' + '\uffff'
       })
     })
   })
@@ -492,6 +485,59 @@ describe('Order', () => {
         expect(serializedOrder).to.have.property('amount', '0.0001000000000000')
         expect(serializedOrder).to.have.property('price', '10.0000000000000000')
       })
+    })
+  })
+
+  describe('::getOrdersForRange', () => {
+    let orders
+    let getRecords
+    let storeStub
+    let parse
+    let rangeStub
+    let fromObjectStub
+
+    const reverts = []
+
+    beforeEach(() => {
+      orders = [
+        { id: 1234 },
+        { id: 1337 }
+      ]
+      getRecords = sinon.stub().resolves(orders)
+      rangeStub = sinon.stub()
+      fromObjectStub = sinon.stub()
+      storeStub = sinon.stub()
+      parse = sinon.stub().returns({})
+
+      reverts.push(Order.__set__('getRecords', getRecords))
+      reverts.push(Order.__set__('JSON', { parse }))
+
+      Order.fromObject = fromObjectStub
+      Order.rangeForBlockOrderIds = rangeStub
+    })
+
+    afterEach(() => {
+      reverts.forEach(r => r())
+    })
+
+    it('gets records for a specific store', async () => {
+      await Order.getOrdersForRange(storeStub, orders[0].id, orders[1].id)
+      expect(getRecords).to.have.been.calledWith(storeStub, sinon.match.func, sinon.match.any)
+    })
+
+    it('inflates an order', async () => {
+      await Order.getOrdersForRange(storeStub, orders[0].id, orders[1].id)
+      const recordFilter = getRecords.args[0][1]
+      const value = '{}'
+      const key = 'key'
+      recordFilter(key, value)
+      expect(parse).to.have.been.calledWith(value)
+      expect(fromObjectStub).to.have.been.calledWith(key, sinon.match.any)
+    })
+
+    it('gets records for a particular range', async () => {
+      await Order.getOrdersForRange(storeStub, orders[0].id, orders[1].id)
+      expect(rangeStub).to.have.been.calledWith(orders[0].id, orders[1].id)
     })
   })
 })
