@@ -27,16 +27,21 @@
  * > Setting up to use the examples:
  *
  * ```javascript
- * // This documentation makes use of the grpc and grpc-caller libraries on npm.
- * // The remainder of the docs assumes this setup step.
+ * // This documentation makes use of the grpc and @grpc/proto-loader libraries on npm.
+ * // The remainder of the docs assume that you've included this setup step.
  * const grpc = require('grpc')
+ * const protoLoader = require('@grpc/proto-loader')
+ *
  * const PROTO_OPTIONS = {
- *   convertFieldsToCamelCase: true,
- *   binaryAsBase64: true,
- *   longsAsStrings: true,
- *   enumsAsStrings: true
+ *   longs: String,
+ *   enums: String,
+ *   defaults: true,
+ *   oneofs: true,
+ *   bytes: String
  * }
- * const brokerProto = grpc.load('/path/to/broker.proto', 'proto', PROTO_OPTIONS)
+ *
+ * const packageDefinition = protoLoader.loadSync('/path/to/broker.proto', PROTO_OPTIONS)
+ * const brokerProto = grpc.loadPackageDefinition(packageDefinition)
  * ```
  *
  * ```shell
@@ -156,7 +161,7 @@ message RegisterResponse {
  *
  * ```javascript
  * const address = 'localhost:27492'
- * const adminService = new brokerProto.AdminService(address, grpc.credentials.createInsecure())
+ * const adminService = new brokerProto.rpc.AdminService(address, grpc.credentials.createInsecure())
  * ```
  */
 service AdminService {
@@ -591,8 +596,25 @@ message GetBlockOrdersResponse {
  * Request to retrieve all block orders in a given market.
  */
 message GetBlockOrdersRequest {
+  message GetBlockOrderOptions {
+    // Limit for the amount of records that are returned. Records will be returned by date in
+    // descending order (newest records first)
+    int32 limit = 1;
+    // Only return active orders
+    bool active = 2;
+    // Only return cancelled orders
+    bool cancelled = 3;
+    // Only return completed orders
+    bool completed = 4;
+    // Only return failed orders
+    bool failed = 5;
+  }
+
   // Market for which to retrieve block orders, expressed as a string separating two common symbols with a '/', e.g. `'BTC/LTC'`
   string market = 1;
+
+  // Query options for GetBlockOrdersRequest
+  GetBlockOrderOptions options = 2;
 }
 
 /**
@@ -615,7 +637,7 @@ message GetTradeHistoryResponse {
  *
  * ```javascript
  * const address = 'localhost:27492'
- * const orderService = new brokerProto.OrderService(address, grpc.credentials.createInsecure())
+ * const orderService = new brokerProto.rpc.OrderService(address, grpc.credentials.createInsecure())
  * ```
  */
 service OrderService {
@@ -813,7 +835,7 @@ service OrderService {
    *
    * ```javascript
    * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
-   * orderService.getBlockOrders({ market: 'BTC/LTC' }, { deadline }, (err, { blockOrders }) => {
+   * orderService.getBlockOrders({ market: 'BTC/LTC', options: {} }, { deadline }, (err, { blockOrders }) => {
    *   if (err) return console.error(err)
    *   console.log(blockOrders)
    * })
@@ -867,6 +889,21 @@ service OrderService {
    * │ XLEeQPNXsyJ3_MsV   │ ACTIVE   │ BID      │ 0.00010000000 │ 60.00000000000 │ GTC      │ 2019-04-12T23:24:48.621Z │
    * └────────────────────┴──────────┴──────────┴───────────────┴────────────────┴──────────┴──────────────────────────┘
    * ```
+   *
+   * Additionally, you can specify options to return a subset of records using the following:
+   *
+   * Only return the first 20 records
+   * ```
+   * sparkswap order summary --market btc/ltc --limit 20
+   * ```
+   *
+   * Only return the first 20 active records
+   * ```
+   * sparkswap order summary --market btc/ltc --limit 20 --active
+   * ```
+   *
+   * For all available options, use the command `sparkswap order summary -h`
+   *
    */
   rpc GetBlockOrders (GetBlockOrdersRequest) returns (GetBlockOrdersResponse) {
     option (.google.api.http) = {
@@ -1190,7 +1227,7 @@ message GetTradesResponse {
  *
  * ```javascript
  * const address = 'localhost:27492'
- * const orderBookService = new brokerProto.OrderBookService(address, grpc.credentials.createInsecure())
+ * const orderBookService = new brokerProto.rpc.OrderBookService(address, grpc.credentials.createInsecure())
  * ```
  */
 service OrderBookService {
@@ -1688,11 +1725,11 @@ message WalletHistoryRequest {
  */
 message WalletHistoryResponse {
   enum TransactionType {
+    UNKNOWN = 0;
     CHANNEL_CLOSE = 1;
     CHANNEL_OPEN = 2;
     DEPOSIT = 3;
     WITHDRAW = 4;
-    UNKNOWN = 10;
   }
 
   message Transaction {
@@ -1734,7 +1771,7 @@ message ChangeWalletPasswordRequest {
  *
  * ```javascript
  * const address = 'localhost:27492'
- * const walletService = new brokerProto.WalletService(address, grpc.credentials.createInsecure())
+ * const walletService = new brokerProto.rpc.WalletService(address, grpc.credentials.createInsecure())
  * ```
  */
 service WalletService {

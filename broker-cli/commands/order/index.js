@@ -32,11 +32,20 @@ module.exports = (program) => {
     .help(`Available Commands: ${Object.values(SUPPORTED_COMMANDS).join(', ')}`)
     .argument('<command>', '', Object.values(SUPPORTED_COMMANDS), null, true)
     .argument('[sub-arguments...]')
-    .option('--market [marketName]', MARKET_NAME_HELP_STRING, validations.isMarketName)
+    .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
+    .option('--limit [limit]', 'Limit of records returned from summary', program.INT)
+    .option('--active', 'Only return active records from summary', program.BOOL)
+    .option('--cancelled', 'Only return cancelled records from summary', program.BOOL)
+    .option('--completed', 'Only return completed records from summary', program.BOOL)
+    .option('--failed', 'Only return failed records from summary', program.BOOL)
+    .option('--json', 'Export result as json', program.BOOL, false)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .action(async (args, opts, logger) => {
-      const { command, subArguments } = args
-      const { market } = opts
+      const {
+        command,
+        subArguments
+      } = args
+
       let blockOrderId
 
       switch (command) {
@@ -54,11 +63,19 @@ module.exports = (program) => {
           return cancel(args, opts, logger)
 
         case SUPPORTED_COMMANDS.SUMMARY:
-          opts.market = validations.isMarketName(market)
+          opts = {
+            market: validations.isMarketName(opts.market),
+            limit: opts.limit,
+            active: opts.active,
+            cancelled: opts.cancelled,
+            completed: opts.completed,
+            failed: opts.failed,
+            json: opts.json
+          }
           return summary(args, opts, logger)
 
         case SUPPORTED_COMMANDS.CANCEL_ALL:
-          opts.market = validations.isMarketName(market)
+          opts.market = validations.isMarketName(opts.market)
           return cancelAll(args, opts, logger)
 
         case SUPPORTED_COMMANDS.TRADE_HISTORY:
@@ -67,6 +84,11 @@ module.exports = (program) => {
     })
     .command(`order ${SUPPORTED_COMMANDS.SUMMARY}`, 'View your orders')
     .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
+    .option('--limit [limit]', 'Limit of records returned from summary', program.INT)
+    .option('--active [active]', 'Only return active records from summary', program.BOOL)
+    .option('--cancelled [cancelled]', 'Only return cancelled records from summary', program.BOOL)
+    .option('--completed [completed]', 'Only return completed records from summary', program.BOOL)
+    .option('--failed [failed]', 'Only return failed records from summary', program.BOOL)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .command(`order ${SUPPORTED_COMMANDS.STATUS}`, 'Get the status of a block order')
     .argument('<blockOrderId>', 'Block order to get status of', validations.isBlockOrderId)
@@ -80,5 +102,6 @@ module.exports = (program) => {
     .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .command(`order ${SUPPORTED_COMMANDS.TRADE_HISTORY}`, 'Get information about completed and processing trades')
-    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
+    .option('--json', 'Export result as json')
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
 }

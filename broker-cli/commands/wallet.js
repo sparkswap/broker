@@ -7,7 +7,13 @@ const Table = require('cli-table2')
 require('colors')
 
 const BrokerDaemonClient = require('../broker-daemon-client')
-const { validations, askQuestion, Big, handleError } = require('../utils')
+const {
+  validations,
+  askQuestion,
+  Big,
+  handleError,
+  grpcDeadline
+} = require('../utils')
 const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../utils/strings')
 const { currencies: currencyConfig } = require('../config')
 
@@ -26,6 +32,16 @@ const ACCEPTED_ANSWERS = Object.freeze(['y', 'yes'])
 const SUPPORTED_SYMBOLS = Object.freeze(
   Object.values(currencyConfig).map(currency => currency.symbol)
 )
+
+/**
+ * Custom gRPC client deadline for `wallet network-status` that allows 30 seconds
+ * before the client will disconnect
+ *
+ * @constant
+ * @type {number}
+ * @default
+ */
+const NETWORK_STATUS_GRPC_DEADLINE = 30
 
 /**
  * Supported commands for `sparkswap wallet`
@@ -315,7 +331,7 @@ async function networkStatus (args, opts, logger) {
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
-    const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({ market })
+    const { baseSymbolCapacities, counterSymbolCapacities } = await client.walletService.getTradingCapacities({ market }, null, { deadline: grpcDeadline(NETWORK_STATUS_GRPC_DEADLINE) })
 
     const baseSymbol = baseSymbolCapacities.symbol.toUpperCase()
     const counterSymbol = counterSymbolCapacities.symbol.toUpperCase()
@@ -544,7 +560,7 @@ async function unlock (args, opts, logger) {
  */
 async function history (args, opts, logger) {
   const { symbol } = args
-  const { rpcAddress } = opts
+  const { rpcAddress, json } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
@@ -559,6 +575,10 @@ async function history (args, opts, logger) {
       head: ['Type', 'Amount', 'Fees', 'Timestamp', 'Transaction', 'Height', 'Pending'],
       style: { head: ['gray'] }
     })
+
+    if (json) {
+      return logger.info(JSON.stringify(transactions, null, 2))
+    }
 
     transactions.forEach(({ type, amount, fees, timestamp, transactionHash, blockHeight, pending }) => {
       transactionTable.push([type, amount, fees, timestamp, transactionHash, blockHeight, pending])
@@ -620,6 +640,7 @@ module.exports = (program) => {
     .option('--wallet-address [address]', 'used in sparkswap withdraw ONLY')
     .option('--reserved', 'Display total reserved balance')
     .option('--force', 'Force close all channels. This options is only used in the sparkswap release command', null, false)
+    .option('--json', 'Export result as json', program.BOOL, false)
     .action(async (args, opts, logger) => {
       const { command, subArguments } = args
       const { market } = opts
@@ -760,5 +781,6 @@ module.exports = (program) => {
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.HISTORY}`, 'Transaction History of a wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
+    .option('--json', 'Export result as json')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
 }

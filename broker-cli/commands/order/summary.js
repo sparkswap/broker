@@ -1,14 +1,29 @@
-const BrokerDaemonClient = require('../../broker-daemon-client')
 const Table = require('cli-table2')
-const { ENUMS: { ORDER_TYPES }, handleError } = require('../../utils')
-require('colors')
 const size = require('window-size')
+require('colors')
+
+const {
+  ENUMS: {
+    ORDER_TYPES
+  },
+  handleError,
+  grpcDeadline
+} = require('../../utils')
+const BrokerDaemonClient = require('../../broker-daemon-client')
+
+/**
+ * Custom deadline for order summary at 30 seconds
+ * @constant
+ * @type {number}
+ * @default
+ */
+const ORDER_SUMMARY_RPC_DEADLINE = 30
 
 /**
  * Prints table of the users orders
  * @param {string} market
  * @param {Array<Order>} orders
- * @returns {void}
+ * @returns {string} ui for summary
  */
 function createUI (market, orders) {
   const windowWidth = size.get().width
@@ -34,7 +49,7 @@ function createUI (market, orders) {
   })
 
   ui.push(orderTable.toString())
-  console.log(ui.join('\n') + '\n')
+  return ui.join('\n') + '\n'
 }
 
 /**
@@ -47,14 +62,44 @@ function createUI (market, orders) {
  * @param {string} opts.market
  * @param {string} opts.rpcaddress
  * @param {Logger} logger
+ * @returns {void}
  */
 async function summary (args, opts, logger) {
-  const { market, rpcAddress } = opts
-  const request = { market }
+  const {
+    market,
+    limit,
+    active,
+    cancelled,
+    completed,
+    failed,
+    json,
+    rpcAddress
+  } = opts
+
+  const request = {
+    market,
+    options: {
+      limit,
+      active,
+      cancelled,
+      completed,
+      failed
+    }
+  }
+
   try {
     const brokerDaemonClient = new BrokerDaemonClient(rpcAddress)
-    const orders = await brokerDaemonClient.orderService.getBlockOrders(request)
-    createUI(market, orders.blockOrders)
+
+    // We extend the gRPC deadline of this call because there's a possibility to return
+    // a lot of records from the endpoint.
+    const orders = await brokerDaemonClient.orderService.getBlockOrders(request, null, { deadline: grpcDeadline(ORDER_SUMMARY_RPC_DEADLINE) })
+
+    if (json) {
+      return logger.info(JSON.stringify(orders.blockOrders, null, 2))
+    }
+
+    const summary = createUI(market, orders.blockOrders)
+    logger.info(summary)
   } catch (e) {
     logger.error(handleError(e))
   }

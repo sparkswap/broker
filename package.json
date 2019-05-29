@@ -1,6 +1,6 @@
 {
   "name": "broker",
-  "version": "0.7.0-beta",
+  "version": "0.7.1-beta",
   "description": "Broker software to interact with the Sparkswap Relayer.",
   "main": "src/index.js",
   "config": {
@@ -24,6 +24,7 @@
     "start-sparkswapd-watch": "pm2-docker pm2.json --watch",
     "validate-config": "eslint ~/.sparkswap/config.js --ext .js --max-warnings=0 --no-ignore -c ./.eslintrc",
     "broker-proto": "pbjs -t proto3 broker.proto -p ./broker-daemon/proto -o /dev/null && cp -r ./broker-daemon/proto/ ./broker-cli/proto/",
+    "validate-proto": "mkdir ./proto-tmp && protoc --proto_path=./broker-daemon/proto --proto_path=./broker-daemon/proto/google/api ./broker-daemon/proto/broker.proto --js_out ./proto-tmp && rm -rf ./proto-tmp",
     "check-for-cycles": "madge --circular broker-daemon/",
     "check-unused": "node ./scripts/check-unused.js",
     "env-setup": "bash ./scripts/env-setup.sh"

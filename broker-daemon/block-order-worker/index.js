@@ -292,13 +292,13 @@ class BlockOrderWorker extends EventEmitter {
 
     // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
     if (!outboundBalanceIsSufficient) {
-      throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channel to create order`)
+      throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channel to create order. Outbound Amount: ${outboundAmount} Active Outbound Amount: ${activeOutboundAmount}`)
     }
 
     const inboundBalanceIsSufficient = await inboundEngine.isBalanceSufficient(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false })
     // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
     if (!inboundBalanceIsSufficient) {
-      throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order`)
+      throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order. Inbound Amount: ${inboundAmount} Active Inbound Amount: ${activeInboundAmount}`)
     }
   }
 
@@ -311,13 +311,22 @@ class BlockOrderWorker extends EventEmitter {
    */
   async calculateActiveFunds (marketName, side) {
     const blockOrders = await this.getBlockOrders(marketName)
-
     const blockOrdersForSide = blockOrders.filter(blockOrder => blockOrder.side === side)
+
+    const fullBlockOrders = await Promise.all(
+      blockOrdersForSide.map(async (bo) => {
+        await Promise.all([
+          bo.populateOrders(this.ordersStore),
+          bo.populateFills(this.fillsStore)
+        ])
+        return bo
+      })
+    )
+
     let activeOutboundAmount = Big(0)
     let activeInboundAmount = Big(0)
-    for (let blockOrder of blockOrdersForSide) {
-      await blockOrder.populateOrders(this.ordersStore)
-      await blockOrder.populateFills(this.fillsStore)
+
+    for (let blockOrder of fullBlockOrders) {
       activeOutboundAmount = activeOutboundAmount.plus(blockOrder.activeOutboundAmount())
       activeInboundAmount = activeInboundAmount.plus(blockOrder.activeInboundAmount())
     }
@@ -425,14 +434,52 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Get existing block orders
+   *
    * @param {string} market - to filter by
+   * @param {Object} options - options for the query
+   * @param {number} options.limit - number of records to return
+   * @param {boolean} options.active - filter for active records
+   * @param {boolean} options.cancelled - filter for cancelled records
+   * @param {boolean} options.completed - filter for completed records
+   * @param {boolean} options.failed - filter for failed records
    * @returns {Array<BlockOrder>}
    */
-  async getBlockOrders (market) {
-    this.logger.info(`Getting all block orders for market: ${market}`)
-    const allRecords = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder))
+  async getBlockOrders (market, options = {}) {
+    this.logger.info(`Getting all block orders for market: ${market}`, { options })
+
+    // We set the limit to -1 which is a value for "no limit" in LevelDB
+    let limit = -1
+
+    // If the limit is set and does not equal zero, then we modify the query to
+    // only return a certain amount of records
+    if (options.limit) {
+      limit = options.limit
+    }
+
+    const queryOptions = {
+      reverse: true,
+      limit
+    }
+
+    const allRecords = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder), queryOptions)
     const recordsForMarket = allRecords.filter((record) => record.marketName === market)
-    return recordsForMarket
+
+    // Set our filter types to be used when we filter the records for a particular
+    // market
+    const statusFilters = []
+
+    if (options.active) statusFilters.push(BlockOrder.STATUSES.ACTIVE)
+    if (options.cancelled) statusFilters.push(BlockOrder.STATUSES.CANCELLED)
+    if (options.completed) statusFilters.push(BlockOrder.STATUSES.COMPLETED)
+    if (options.failed) statusFilters.push(BlockOrder.STATUSES.FAILED)
+
+    let result = recordsForMarket.filter((r) => {
+      if (statusFilters.length) return statusFilters.includes(r.status)
+      // If there are no filters then we include all records in the result
+      return true
+    })
+
+    return result
   }
 
   /**
@@ -781,7 +828,7 @@ class BlockOrderWorker extends EventEmitter {
       }
 
       if (ownOrderIds.includes(order.orderId)) {
-        throw new Error(`Cannot fill own order ${order.orderId}`)
+        throw new Error(`Cannot fill own order ${order.orderId}. Current BlockOrderId: ${blockOrder.id}, Own Order BlockOrderId: ${order.blockOrderId}`)
       }
 
       // Take the smaller of the remaining desired depth or the base amount of the order
