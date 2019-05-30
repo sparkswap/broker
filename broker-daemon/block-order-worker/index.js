@@ -154,7 +154,7 @@ class BlockOrderWorker extends EventEmitter {
       },
       // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
       // its prefix range.
-      Order.rangeForBlockOrder(blockOrder.id)
+      Order.rangeForBlockOrderIds(blockOrder.id, blockOrder.id)
     )
     return osms
   }
@@ -183,7 +183,7 @@ class BlockOrderWorker extends EventEmitter {
       },
       // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
       // its prefix range.
-      Fill.rangeForBlockOrder(blockOrder.id)
+      Fill.rangeForBlockOrderIds(blockOrder.id, blockOrder.id)
     )
 
     return fsms
