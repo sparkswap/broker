@@ -317,8 +317,8 @@ class BlockOrderWorker extends EventEmitter {
     //
     // TODO: Allow calculateActiveFunds to use market by indexes on orders/fills
     if (side) {
-      orders = orders.filter(o => o.side === side)
-      fills = fills.filter(f => f.order.side === side)
+      orders = orders.filter(o => o.order && o.order.side === side)
+      fills = fills.filter(f => f.order && f.order.side === side)
     }
 
     const { inbound: orderInbound, outbound: orderOutbound } = await BlockOrder.activeAmountsForOrders(orders)
@@ -463,11 +463,6 @@ class BlockOrderWorker extends EventEmitter {
     }
 
     const allRecords = await getRecords(this.store, BlockOrder.fromStorage.bind(BlockOrder), queryOptions)
-    let filteredRecords = allRecords.filter((record) => record.marketName === market)
-
-    if (options.side) {
-      filteredRecords = filteredRecords.filter(r => r.side === options.side)
-    }
 
     // Set our filter types to be used when we filter the records for a particular
     // market
@@ -478,7 +473,7 @@ class BlockOrderWorker extends EventEmitter {
     if (options.completed) statusFilters.push(BlockOrder.STATUSES.COMPLETED)
     if (options.failed) statusFilters.push(BlockOrder.STATUSES.FAILED)
 
-    const result = filteredRecords.filter((r) => {
+    const result = allRecords.filter((r) => {
       if (statusFilters.length) return statusFilters.includes(r.status)
       // If there are no filters then we include all records in the result
       return true

@@ -1481,7 +1481,7 @@ describe('BlockOrderWorker', () => {
     })
 
     it('sorts orders/fills by side if a market side is specified', async () => {
-      orders = [{ side: 'BID' }]
+      orders = [{ order: { side: 'BID' } }]
       fills = [{ order: { side: 'ASK' } }]
       orderStub.getAllOrders.resolves(orders)
       fillStub.getAllFills.resolves(fills)
