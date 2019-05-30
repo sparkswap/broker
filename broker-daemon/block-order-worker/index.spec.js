@@ -1537,9 +1537,7 @@ describe('BlockOrderWorker', () => {
     })
 
     it('throws if the order is neither GTC nor PO', async () => {
-      blockOrder = {
-        timeInForce: 'NA'
-      }
+      blockOrder.timeInForce = 'NA'
 
       return expect(worker.workLimitBlockOrder(blockOrder, Big('100000000000'))).to.eventually.be.rejectedWith('Only Good-til-cancelled and Post Only limit orders are currently supported.')
     })

@@ -566,10 +566,6 @@ class BlockOrderWorker extends EventEmitter {
    * @returns {void}
    */
   async workLimitBlockOrder (blockOrder, targetDepth) {
-    if ((blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.GTC) && (blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.PO)) {
-      throw new Error('Only Good-til-cancelled and Post Only limit orders are currently supported.')
-    }
-
     const orderbook = this.orderbooks.get(blockOrder.marketName)
 
     // get available orders for the requested depth and price
@@ -585,7 +581,7 @@ class BlockOrderWorker extends EventEmitter {
         return this.cancelBlockOrder(blockOrder.id)
       }
     } else {
-      throw new Error(`Unknown time restriction: ${blockOrder.timeInForce}`)
+      throw new Error(`Only Good-til-cancelled and Post Only limit orders are currently supported. Unsupported time restriction: ${blockOrder.timeInForce}`)
     }
 
     if (targetDepth.gt(availableDepth)) {
