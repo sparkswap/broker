@@ -428,7 +428,7 @@ class Fill {
    * Create a set of options that can be passed to a LevelUP `createReadStream` call
    * that limits the set to fills that belong to the given blockOrderId.
    * This works because all fills are prefixed with their blockOrderId and the Delimiter.
-   * @param {string} startId - of of the block order to start the range
+   * @param {string} startId - id of the block order to start the range
    * @param {string} endId - id of the block order to end the range
    * @returns {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
    */
@@ -442,20 +442,16 @@ class Fill {
   /**
    * Grabs all orders for a range of block orders
    * @param {sublevel} store
-   * @param {string} first
-   * @param {string} last
    * @returns {void}
    */
-  static async getFillsForRange (store, first, last) {
+  static async getAllFills (store) {
     return getRecords(
       store,
       (key, value) => {
         const { fill, state, error, dates } = JSON.parse(value)
         return { fill: Fill.fromObject(key, fill), state, error, dates }
       },
-      // limit the fills we retrieve to those that belong to this blockOrder, i.e. those that are in
-      // its prefix range.
-      Fill.rangeForBlockOrderIds(first, last)
+      null
     )
   }
 }

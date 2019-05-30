@@ -464,7 +464,7 @@ class Order {
    * Create a set of options that can be passed to a LevelUP `createReadStream` call
    * that limits the set to orders that belong to the given blockOrderid.
    * This works because all orders are prefixed with their blockOrderId and the Delimiter.
-   * @param {string} startId - of of the block order to start the range
+   * @param {string} startId - id of the block order to start the range
    * @param {string} endId - id of the block order to end the range
    * @returns {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
    */
@@ -478,20 +478,16 @@ class Order {
   /**
    * Grabs all orders for a range of block orders
    * @param {sublevel} store
-   * @param {string} first
-   * @param {string} last
    * @returns {void}
    */
-  static async getOrdersForRange (store, first, last) {
+  static async getAllOrders (store) {
     return getRecords(
       store,
       (key, value) => {
         const { order, state, error, dates } = JSON.parse(value)
         return { order: Order.fromObject(key, order), state, error, dates }
       },
-      // limit the orders we retrieve to those that belong to this blockOrder, i.e. those that are in
-      // its prefix range.
-      Order.rangeForBlockOrderIds(first, last)
+      null
     )
   }
 }

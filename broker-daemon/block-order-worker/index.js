@@ -310,21 +310,8 @@ class BlockOrderWorker extends EventEmitter {
    * @returns {Object} contains activeOutboundAmount and activeInboundAmount of orders/fills
    */
   async calculateActiveFunds (marketName, side) {
-    const blockOrders = await this.getBlockOrders(marketName, { side })
-
-    // If we have no block orders that are available for our particular side, then
-    // we assume no active orders are available and can simply return 0
-    if (!blockOrders.length) {
-      return { activeOutboundAmount: Big(0), activeInboundAmount: Big(0) }
-    }
-
-    // We grab the firstId and lastId to create a blockorder range so that we can
-    // grab all fills and orders to calculate active funds
-    const firstId = blockOrders[blockOrders.length - 1].id
-    const lastId = blockOrders[0].id
-
-    const orders = await BlockOrder.getOrdersForRange(this.ordersStore, firstId, lastId)
-    const fills = await BlockOrder.getFillsForRange(this.fillsStore, firstId, lastId)
+    const orders = await Order.getAllOrders(this.ordersStore)
+    const fills = await Fill.getAllFills(this.fillsStore)
 
     const { inbound: orderInbound, outbound: orderOutbound } = await BlockOrder.activeAmountsForOrders(orders)
     const { inbound: fillInbound, outbound: fillOutbound } = await BlockOrder.activeAmountsForFills(fills)

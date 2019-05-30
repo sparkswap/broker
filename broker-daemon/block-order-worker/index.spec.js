@@ -1429,10 +1429,18 @@ describe('BlockOrderWorker', () => {
     let blockOrderStub
     let ordersStub
     let fillsStub
+    let fillStub
+    let orderStub
 
     beforeEach(() => {
       ordersStub = sinon.stub()
       fillsStub = sinon.stub()
+      fillStub = {
+        getAllFills: sinon.stub().resolves(fillsStub)
+      }
+      orderStub = {
+        getAllOrders: sinon.stub().resolves(ordersStub)
+      }
       marketName = 'BTC/LTC'
       side = 'BID'
       askStub = {
@@ -1449,34 +1457,28 @@ describe('BlockOrderWorker', () => {
       }
       blockOrders = [anotherBidStub, bidStub, askStub]
       blockOrdersStub = sinon.stub().resolves(blockOrders)
+
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       worker.getBlockOrders = blockOrdersStub
       worker.ordersStore = ordersStoreStub
       worker.fillsStore = fillsStoreStub
 
       blockOrderStub = {
-        getOrdersForRange: sinon.stub().resolves(ordersStub),
-        getFillsForRange: sinon.stub().resolves(fillsStub),
         activeAmountsForOrders: sinon.stub().resolves({ inbound: Big(1234), outbound: Big(1234) }),
         activeAmountsForFills: sinon.stub().resolves({ inbound: Big(103), outbound: Big(0) })
       }
 
       BlockOrderWorker.__set__('BlockOrder', blockOrderStub)
+      BlockOrderWorker.__set__('Fill', fillStub)
+      BlockOrderWorker.__set__('Order', orderStub)
     })
 
-    it('gets blockOrders for the market and side', async () => {
-      await worker.calculateActiveFunds(marketName, side)
-
-      expect(blockOrdersStub).to.have.been.calledOnce()
-      expect(blockOrdersStub).to.have.been.calledWith(marketName, { side })
-    })
-
-    it('grabs orders for a range of blockorders', async () => {
+    it('grabs all orders', async () => {
       await worker.calculateActiveFunds(marketName, side)
       expect(blockOrderStub.getOrdersForRange).to.have.been.calledWith(ordersStoreStub, 1, 3)
     })
 
-    it('grabs fills for a range of blockorders', async () => {
+    it('grabs all fills', async () => {
       await worker.calculateActiveFunds(marketName, side)
       expect(blockOrderStub.getFillsForRange).to.have.been.calledWith(fillsStoreStub, 1, 3)
     })
