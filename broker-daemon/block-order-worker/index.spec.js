@@ -2472,11 +2472,6 @@ describe('BlockOrderWorker', () => {
       expect(getRecords).to.have.been.calledWith(store, BlockOrder.fromStorage.bind(BlockOrder), { limit: 2, reverse: true })
     })
 
-    it('filters block orders by side', async () => {
-      const res = await worker.getBlockOrders(market, { side: 'ASK' })
-      expect(res).to.eql([activeBlockOrder, cancelledBlockOrder])
-    })
-
     it('filters block orders by active status', async () => {
       const res = await worker.getBlockOrders(market, { active: true })
       expect(res).to.eql([activeBlockOrder])
