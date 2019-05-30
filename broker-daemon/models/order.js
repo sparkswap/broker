@@ -461,7 +461,7 @@ class Order {
    * Create a set of options that can be passed to a LevelUP `createReadStream` call
    * that limits the set to orders that belong to the given blockOrderid.
    * This works because all orders are prefixed with their blockOrderId and the Delimiter.
-   * @param {string} startId - of of the block order to start the range
+   * @param {string} startId - id of the block order to start the range
    * @param {string} endId - id of the block order to end the range
    * @returns {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
    */
