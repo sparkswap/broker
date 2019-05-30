@@ -585,7 +585,7 @@ class BlockOrderWorker extends EventEmitter {
         return this.cancelBlockOrder(blockOrder.id)
       }
     } else {
-      throw new Error('')
+      throw new Error(`Unknown time restriction: ${blockOrder.timeInForce}`)
     }
 
     if (targetDepth.gt(availableDepth)) {
