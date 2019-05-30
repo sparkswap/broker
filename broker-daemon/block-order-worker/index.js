@@ -438,7 +438,6 @@ class BlockOrderWorker extends EventEmitter {
    * @param {string} market - to filter by
    * @param {Object} options - options for the query
    * @param {number} options.limit - number of records to return
-   * @param {string} options.side - limit record to a particular side of market
    * @param {boolean} options.active - filter for active records
    * @param {boolean} options.cancelled - filter for cancelled records
    * @param {boolean} options.completed - filter for completed records
@@ -474,7 +473,7 @@ class BlockOrderWorker extends EventEmitter {
     if (options.completed) statusFilters.push(BlockOrder.STATUSES.COMPLETED)
     if (options.failed) statusFilters.push(BlockOrder.STATUSES.FAILED)
 
-    const result = recordsForMarket.filter((r) => {
+    let result = recordsForMarket.filter((r) => {
       if (statusFilters.length) return statusFilters.includes(r.status)
       // If there are no filters then we include all records in the result
       return true
