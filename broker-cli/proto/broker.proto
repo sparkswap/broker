@@ -310,9 +310,9 @@ service AdminService {
 enum TimeInForce {
   GTC = 0; // Good-til-cancelled, an order that remains in force until cancelled by the user
   // FOK is not supported
-  FOK = 1; // Fill-or-kill, an order that can be completely filled or will not be executed
+  // FOK = 1; // Fill-or-kill, an order that can be completely filled or will not be executed
   // IOC is not supported
-  IOC = 2; // Immediate-or-cancel, an order that will have as much filled immediately as possible with the remainder cancelled
+  // IOC = 2; // Immediate-or-cancel, an order that will have as much filled immediately as possible with the remainder cancelled
   PO = 3; // Post Only, an order that will be rejected if any part of the order would match and execute immediately
 }
 
