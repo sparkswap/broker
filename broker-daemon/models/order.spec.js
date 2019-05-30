@@ -488,12 +488,11 @@ describe('Order', () => {
     })
   })
 
-  describe('::getOrdersForRange', () => {
+  describe('::getAllOrders', () => {
     let orders
     let getRecords
     let storeStub
     let parse
-    let rangeStub
     let fromObjectStub
 
     const reverts = []
@@ -504,7 +503,6 @@ describe('Order', () => {
         { id: 1337 }
       ]
       getRecords = sinon.stub().resolves(orders)
-      rangeStub = sinon.stub()
       fromObjectStub = sinon.stub()
       storeStub = sinon.stub()
       parse = sinon.stub().returns({})
@@ -513,7 +511,6 @@ describe('Order', () => {
       reverts.push(Order.__set__('JSON', { parse }))
 
       Order.fromObject = fromObjectStub
-      Order.rangeForBlockOrderIds = rangeStub
     })
 
     afterEach(() => {
@@ -521,23 +518,18 @@ describe('Order', () => {
     })
 
     it('gets records for a specific store', async () => {
-      await Order.getOrdersForRange(storeStub, orders[0].id, orders[1].id)
-      expect(getRecords).to.have.been.calledWith(storeStub, sinon.match.func, sinon.match.any)
+      await Order.getAllOrders(storeStub)
+      expect(getRecords).to.have.been.calledWith(storeStub, sinon.match.func)
     })
 
     it('inflates an order', async () => {
-      await Order.getOrdersForRange(storeStub, orders[0].id, orders[1].id)
+      await Order.getAllOrders(storeStub)
       const recordFilter = getRecords.args[0][1]
       const value = '{}'
       const key = 'key'
       recordFilter(key, value)
       expect(parse).to.have.been.calledWith(value)
       expect(fromObjectStub).to.have.been.calledWith(key, sinon.match.any)
-    })
-
-    it('gets records for a particular range', async () => {
-      await Order.getOrdersForRange(storeStub, orders[0].id, orders[1].id)
-      expect(rangeStub).to.have.been.calledWith(orders[0].id, orders[1].id)
     })
   })
 })

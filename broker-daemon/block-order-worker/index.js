@@ -241,8 +241,8 @@ class BlockOrderWorker extends EventEmitter {
    * @throws {Error} If there are insufficient outbound or inbound funds
    */
   async checkFundsAreSufficient (blockOrder) {
-    const { marketName, side, outboundSymbol, inboundSymbol } = blockOrder
-    const { activeOutboundAmount, activeInboundAmount } = await this.calculateActiveFunds(marketName, side)
+    const { outboundSymbol, inboundSymbol } = blockOrder
+    const { activeOutboundAmount, activeInboundAmount } = await this.calculateActiveFunds()
 
     const outboundEngine = this.engines.get(outboundSymbol)
     const inboundEngine = this.engines.get(inboundSymbol)
@@ -305,13 +305,21 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Adds up active/committed funds in inbound and outbound orders/fills
    *
-   * @param {string} marketName  - Name of the market to creat the block order in (e.g. BTC/LTC)
-   * @param {string} side        - Side of the market to take (e.g. BID or ASK)
+   * @param {string} side
    * @returns {Object} contains activeOutboundAmount and activeInboundAmount of orders/fills
    */
-  async calculateActiveFunds (marketName, side) {
-    const orders = await Order.getAllOrders(this.ordersStore)
-    const fills = await Fill.getAllFills(this.fillsStore)
+  async calculateActiveFunds (side) {
+    let orders = await Order.getAllOrders(this.ordersStore)
+    let fills = await Fill.getAllFills(this.fillsStore)
+
+    // Filter out records for a particular side if it exists. This is needed to be able
+    // to calculate inbound/amount amounts for the network status tab.
+    //
+    // TODO: Allow calculateActiveFunds to use market by indexes on orders/fills
+    if (side) {
+      orders = orders.filter(o => o.side === side)
+      fills = fills.filter(f => f.order.side === side)
+    }
 
     const { inbound: orderInbound, outbound: orderOutbound } = await BlockOrder.activeAmountsForOrders(orders)
     const { inbound: fillInbound, outbound: fillOutbound } = await BlockOrder.activeAmountsForFills(fills)
@@ -458,7 +466,7 @@ class BlockOrderWorker extends EventEmitter {
     let filteredRecords = allRecords.filter((record) => record.marketName === market)
 
     if (options.side) {
-      filteredRecords = filteredRecords.filter((r) => r.side === options.side)
+      filteredRecords = filteredRecords.filter(r => r.side === options.side)
     }
 
     // Set our filter types to be used when we filter the records for a particular

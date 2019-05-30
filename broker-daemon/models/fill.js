@@ -450,8 +450,7 @@ class Fill {
       (key, value) => {
         const { fill, state, error, dates } = JSON.parse(value)
         return { fill: Fill.fromObject(key, fill), state, error, dates }
-      },
-      null
+      }
     )
   }
 }

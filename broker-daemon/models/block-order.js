@@ -292,44 +292,6 @@ class BlockOrder {
   }
 
   /**
-   * Calculates the active outbound amount
-   * @returns {Big}
-   */
-  activeOutboundAmount () {
-    const activeOrderAmount = this.activeOrders.reduce((acc, { order, state }) => {
-      if (state === OrderStateMachine.STATES.EXECUTING) {
-        return acc.plus(order.outboundFillAmount)
-      } else {
-        return acc.plus(order.outboundAmount)
-      }
-    }, Big(0))
-    const activeFillAmount = this.activeFills.reduce((acc, { fill }) => {
-      return acc.plus(fill.outboundAmount)
-    }, Big(0))
-
-    return activeOrderAmount.plus(activeFillAmount)
-  }
-
-  /**
-   * Calculates the active inbound amount
-   * @returns {Big}
-   */
-  activeInboundAmount () {
-    const activeOrderAmount = this.activeOrders.reduce((acc, { order, state }) => {
-      if (state === OrderStateMachine.STATES.EXECUTING) {
-        return acc.plus(order.inboundFillAmount)
-      } else {
-        return acc.plus(order.inboundAmount)
-      }
-    }, Big(0))
-    const activeFillAmount = this.activeFills.reduce((acc, { fill }) => {
-      return acc.plus(fill.inboundAmount)
-    }, Big(0))
-
-    return activeOrderAmount.plus(activeFillAmount)
-  }
-
-  /**
    * Populates orders on a block order
    * @param {sublevel} store
    * @returns {void}
@@ -494,8 +456,7 @@ class BlockOrder {
       outbound: Big(0)
     }
     return orders.reduce((acc, { order, state }) => {
-      // If the order is not active, then we can simply return and continue to the
-      // next iteration
+      // If the order is not in an active state , then we can simply skip it
       if (![CREATED, PLACED, EXECUTING].includes(state)) {
         return acc
       }
@@ -528,6 +489,7 @@ class BlockOrder {
       outbound: Big(0)
     }
     return fills.reduce((acc, { fill }) => {
+      // If the order is not in an active state , then we can simply skip it
       if (![CREATED, FILLED].includes(fill.state)) {
         return acc
       }

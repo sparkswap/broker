@@ -126,8 +126,8 @@ async function getTradingCapacities ({ params, engines, orderbooks, blockOrderWo
     { activeOutboundAmount: committedCounterSendCapacity, activeInboundAmount: committedBaseReceiveCapacity },
     { activeOutboundAmount: committedBaseSendCapacity, activeInboundAmount: committedCounterReceiveCapacity }
   ] = await Promise.all([
-    blockOrderWorker.calculateActiveFunds(market, SIDES.BID),
-    blockOrderWorker.calculateActiveFunds(market, SIDES.ASK)
+    blockOrderWorker.calculateActiveFunds(SIDES.BID),
+    blockOrderWorker.calculateActiveFunds(SIDES.ASK)
   ])
 
   // Capacities will always be returned for each side of the market, however if

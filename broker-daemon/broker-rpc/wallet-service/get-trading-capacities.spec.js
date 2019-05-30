@@ -40,8 +40,8 @@ describe('get-trading-capacities', () => {
       committedBaseReceiveCapacity = '0.00002'
       committedCounterSendCapacity = '0.00003'
       committedCounterReceiveCapacity = '0.00004'
-      blockOrderWorker.calculateActiveFunds.withArgs(params.market, 'BID').resolves({ activeInboundAmount: committedBaseReceiveCapacity, activeOutboundAmount: committedCounterSendCapacity })
-      blockOrderWorker.calculateActiveFunds.withArgs(params.market, 'ASK').resolves({ activeInboundAmount: committedCounterReceiveCapacity, activeOutboundAmount: committedBaseSendCapacity })
+      blockOrderWorker.calculateActiveFunds.withArgs('BID').resolves({ activeInboundAmount: committedBaseReceiveCapacity, activeOutboundAmount: committedCounterSendCapacity })
+      blockOrderWorker.calculateActiveFunds.withArgs('ASK').resolves({ activeInboundAmount: committedCounterReceiveCapacity, activeOutboundAmount: committedBaseSendCapacity })
 
       revert = getTradingCapacities.__set__('getCapacities', getCapacitiesStub)
     })
@@ -75,8 +75,8 @@ describe('get-trading-capacities', () => {
       await getTradingCapacities({ params, logger, engines, orderbooks, blockOrderWorker }, { GetTradingCapacitiesResponse })
 
       expect(blockOrderWorker.calculateActiveFunds).to.have.been.calledTwice()
-      expect(blockOrderWorker.calculateActiveFunds).to.have.been.calledWith(params.market, 'BID')
-      expect(blockOrderWorker.calculateActiveFunds).to.have.been.calledWith(params.market, 'ASK')
+      expect(blockOrderWorker.calculateActiveFunds).to.have.been.calledWith('BID')
+      expect(blockOrderWorker.calculateActiveFunds).to.have.been.calledWith('ASK')
     })
 
     it('gets the balances from a particular engine', async () => {

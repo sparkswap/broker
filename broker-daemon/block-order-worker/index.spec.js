@@ -1417,51 +1417,29 @@ describe('BlockOrderWorker', () => {
 
   describe('#calculateActiveFunds', () => {
     let worker
-    let marketName
-    let side
-    let askStub
-    let bidStub
-    let anotherBidStub
-    let blockOrders
-    let blockOrdersStub
     let ordersStoreStub
     let fillsStoreStub
-    let blockOrderStub
-    let ordersStub
-    let fillsStub
-    let fillStub
     let orderStub
+    let fillStub
+    let blockOrderStub
+    let orders
+    let fills
 
     beforeEach(() => {
-      ordersStub = sinon.stub()
-      fillsStub = sinon.stub()
-      fillStub = {
-        getAllFills: sinon.stub().resolves(fillsStub)
-      }
-      orderStub = {
-        getAllOrders: sinon.stub().resolves(ordersStub)
-      }
-      marketName = 'BTC/LTC'
-      side = 'BID'
-      askStub = {
-        id: 1,
-        side: 'ASK'
-      }
-      bidStub = {
-        id: 2,
-        side: 'BID'
-      }
-      anotherBidStub = {
-        id: 3,
-        side: 'BID'
-      }
-      blockOrders = [anotherBidStub, bidStub, askStub]
-      blockOrdersStub = sinon.stub().resolves(blockOrders)
-
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
-      worker.getBlockOrders = blockOrdersStub
       worker.ordersStore = ordersStoreStub
       worker.fillsStore = fillsStoreStub
+
+      orders = sinon.stub()
+      fills = sinon.stub()
+
+      orderStub = {
+        getAllOrders: sinon.stub().resolves(orders)
+      }
+
+      fillStub = {
+        getAllFills: sinon.stub().resolves(fills)
+      }
 
       blockOrderStub = {
         activeAmountsForOrders: sinon.stub().resolves({ inbound: Big(1234), outbound: Big(1234) }),
@@ -1474,32 +1452,45 @@ describe('BlockOrderWorker', () => {
     })
 
     it('grabs all orders', async () => {
-      await worker.calculateActiveFunds(marketName, side)
-      expect(blockOrderStub.getOrdersForRange).to.have.been.calledWith(ordersStoreStub, 1, 3)
+      await worker.calculateActiveFunds()
+      expect(orderStub.getAllOrders).to.have.been.calledWith(ordersStoreStub)
     })
 
     it('grabs all fills', async () => {
-      await worker.calculateActiveFunds(marketName, side)
-      expect(blockOrderStub.getFillsForRange).to.have.been.calledWith(fillsStoreStub, 1, 3)
+      await worker.calculateActiveFunds()
+      expect(fillStub.getAllFills).to.have.been.calledWith(fillsStoreStub)
     })
 
     it('gets the active amount for orders', async () => {
-      await worker.calculateActiveFunds(marketName, side)
-      expect(blockOrderStub.activeAmountsForOrders).to.have.been.calledWith(ordersStub)
+      await worker.calculateActiveFunds()
+      expect(blockOrderStub.activeAmountsForOrders).to.have.been.calledWith(orders)
     })
 
     it('gets the active amount for fills', async () => {
-      await worker.calculateActiveFunds(marketName, side)
-      expect(blockOrderStub.activeAmountsForFills).to.have.been.calledWith(fillsStub)
+      await worker.calculateActiveFunds()
+      expect(blockOrderStub.activeAmountsForFills).to.have.been.calledWith(fills)
     })
 
     it('returns the active inbound and outbound amounts', async () => {
-      const res = await worker.calculateActiveFunds(marketName, side)
+      const res = await worker.calculateActiveFunds()
 
       expect(res.activeOutboundAmount).to.be.instanceOf(Big)
       expect(res.activeInboundAmount).to.be.instanceOf(Big)
       expect(res.activeOutboundAmount.toString()).to.eql('1234')
       expect(res.activeInboundAmount.toString()).to.eql('1337')
+    })
+
+    it('sorts orders/fills by side if a market side is specified', async () => {
+      orders = [{ side: 'BID' }]
+      fills = [{ order: { side: 'ASK' } }]
+      orderStub.getAllOrders.resolves(orders)
+      fillStub.getAllFills.resolves(fills)
+
+      await worker.calculateActiveFunds('BID')
+
+      expect(blockOrderStub.activeAmountsForOrders).to.have.been.calledWith(orders)
+      expect(blockOrderStub.activeAmountsForFills).to.not.have.been.calledWith(fills)
+      expect(blockOrderStub.activeAmountsForFills).to.have.been.calledWith([])
     })
   })
 

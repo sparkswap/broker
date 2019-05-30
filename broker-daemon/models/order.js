@@ -486,8 +486,7 @@ class Order {
       (key, value) => {
         const { order, state, error, dates } = JSON.parse(value)
         return { order: Order.fromObject(key, order), state, error, dates }
-      },
-      null
+      }
     )
   }
 }
