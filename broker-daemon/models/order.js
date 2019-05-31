@@ -476,9 +476,9 @@ class Order {
   }
 
   /**
-   * Grabs all orders for a range of block orders
+   * Grabs all orders
    * @param {sublevel} store
-   * @returns {void}
+   * @returns {Array<Object>} array of order representation (includes order model)
    */
   static async getAllOrders (store) {
     return getRecords(

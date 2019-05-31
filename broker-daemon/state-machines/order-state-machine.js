@@ -509,4 +509,7 @@ OrderStateMachine.INDETERMINATE_STATES = Object.freeze({
   EXECUTING: 'executing'
 })
 
+// Alias for created/placed/executing states
+OrderStateMachine.ACTIVE_STATES = OrderStateMachine.INDETERMINATE_STATES
+
 module.exports = OrderStateMachine

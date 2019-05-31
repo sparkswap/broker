@@ -440,9 +440,9 @@ class Fill {
   }
 
   /**
-   * Grabs all orders for a range of block orders
+   * Grabs all fills
    * @param {sublevel} store
-   * @returns {void}
+   * @returns {Array<Object>} array of fill representations (includes fill model)
    */
   static async getAllFills (store) {
     return getRecords(

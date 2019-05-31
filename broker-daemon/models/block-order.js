@@ -438,67 +438,6 @@ class BlockOrder {
 
     return BlockOrder.fromStorage(blockOrderId, value)
   }
-
-  /**
-   * @param {Array<Order>} orders
-   * @returns {Object} res
-   * @returns {Big} res.inbound
-   * @returns {Big} res.outbound
-   */
-  static async activeAmountsForOrders (orders) {
-    const {
-      CREATED,
-      PLACED,
-      EXECUTING
-    } = OrderStateMachine.STATES
-    const response = {
-      inbound: Big(0),
-      outbound: Big(0)
-    }
-    return orders.reduce((acc, { order, state }) => {
-      // If the order is not in an active state , then we can simply skip it
-      if (![CREATED, PLACED, EXECUTING].includes(state)) {
-        return acc
-      }
-
-      if (state === OrderStateMachine.STATES.EXECUTING) {
-        acc.inbound = acc.inbound.plus(order.inboundFillAmount)
-        acc.outbound = acc.outbound.plus(order.outboundFillAmount)
-        return acc
-      } else {
-        acc.inbound = acc.inbound.plus(order.inboundAmount)
-        acc.outbound = acc.outbound.plus(order.outboundAmount)
-        return acc
-      }
-    }, response)
-  }
-
-  /**
-   * @param {Array<Fill>} fills
-   * @returns {Object} res
-   * @returns {Big} res.inbound
-   * @returns {Big} res.outbound
-   */
-  static async activeAmountsForFills (fills) {
-    const {
-      CREATED,
-      FILLED
-    } = FillStateMachine.STATES
-    const response = {
-      inbound: Big(0),
-      outbound: Big(0)
-    }
-    return fills.reduce((acc, { fill }) => {
-      // If the order is not in an active state , then we can simply skip it
-      if (![CREATED, FILLED].includes(fill.state)) {
-        return acc
-      }
-
-      acc.inbound = acc.inbound.plus(fill.inboundAmount)
-      acc.outbound = acc.outbound.plus(fill.outboundAmount)
-      return acc
-    }, response)
-  }
 }
 
 BlockOrder.TIME_RESTRICTIONS = Object.freeze({

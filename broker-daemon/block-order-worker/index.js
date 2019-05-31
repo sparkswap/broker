@@ -303,17 +303,74 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
+   * Calculates active amounts for a given collection of orders
+   * @param {Array<Order>} orders
+   * @returns {Object} res
+   * @returns {Big} res.inbound
+   * @returns {Big} res.outbound
+   */
+  async activeAmountsForOrders (orders) {
+    const response = {
+      inbound: Big(0),
+      outbound: Big(0)
+    }
+    return orders.reduce((acc, { order, state }) => {
+      // If the order is not in an active state , then we can simply skip it
+      if (!Object.values(OrderStateMachine.ACTIVE_STATES).includes(state)) {
+        return acc
+      }
+
+      if (state === OrderStateMachine.STATES.EXECUTING) {
+        acc.inbound = acc.inbound.plus(order.inboundFillAmount)
+        acc.outbound = acc.outbound.plus(order.outboundFillAmount)
+        return acc
+      } else {
+        acc.inbound = acc.inbound.plus(order.inboundAmount)
+        acc.outbound = acc.outbound.plus(order.outboundAmount)
+        return acc
+      }
+    }, response)
+  }
+
+  /**
+   * Calculates active amounts for a given collection of fills
+   * @param {Array<Fill>} fills
+   * @returns {Object} res
+   * @returns {Big} res.inbound
+   * @returns {Big} res.outbound
+   */
+  async activeAmountsForFills (fills) {
+    const response = {
+      inbound: Big(0),
+      outbound: Big(0)
+    }
+    return fills.reduce((acc, { fill, state }) => {
+      // If the fill is not in an active state , then we can simply skip it
+      if (!Object.values(FillStateMachine.ACTIVE_STATES).includes(state)) {
+        return acc
+      }
+
+      acc.inbound = acc.inbound.plus(fill.inboundAmount)
+      acc.outbound = acc.outbound.plus(fill.outboundAmount)
+      return acc
+    }, response)
+  }
+
+  /**
    * Adds up active/committed funds in inbound and outbound orders/fills
    *
+   * @todo Change return value from Big to String
    * @param {string} side
-   * @returns {Object} contains activeOutboundAmount and activeInboundAmount of orders/fills
+   * @returns {Object} res
+   * @returns {Big} activeOutboundAmount
+   * @returns {Big} activeInboundAmount
    */
   async calculateActiveFunds (side) {
     let orders = await Order.getAllOrders(this.ordersStore)
     let fills = await Fill.getAllFills(this.fillsStore)
 
     // Filter out records for a particular side if it exists. This is needed to be able
-    // to calculate inbound/amount amounts for the network status tab.
+    // to calculate inbound/outbound amounts for the network status tab.
     //
     // TODO: Allow calculateActiveFunds to use market by indexes on orders/fills
     if (side) {
@@ -321,8 +378,8 @@ class BlockOrderWorker extends EventEmitter {
       fills = fills.filter(f => f.order && f.order.side === side)
     }
 
-    const { inbound: orderInbound, outbound: orderOutbound } = await BlockOrder.activeAmountsForOrders(orders)
-    const { inbound: fillInbound, outbound: fillOutbound } = await BlockOrder.activeAmountsForFills(fills)
+    const { inbound: orderInbound, outbound: orderOutbound } = await this.activeAmountsForOrders(orders)
+    const { inbound: fillInbound, outbound: fillOutbound } = await this.activeAmountsForFills(fills)
 
     this.logger.debug('Calculating active funds', {
       orderInbound: orderInbound.toString(),
