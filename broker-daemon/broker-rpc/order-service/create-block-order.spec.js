@@ -13,7 +13,7 @@ describe('createBlockOrder', () => {
   beforeEach(() => {
     CreateBlockOrderResponse = sinon.stub()
     TimeInForce = {
-      GTC: 1,
+      GTC: 0,
       PO: 3
     }
     blockOrderWorker = {
