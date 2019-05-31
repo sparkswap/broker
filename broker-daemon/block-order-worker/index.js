@@ -572,6 +572,8 @@ class BlockOrderWorker extends EventEmitter {
     const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString(), quantumPrice: blockOrder.quantumPrice })
 
     if (blockOrder.timeInForce === BlockOrder.TIME_RESTRICTIONS.GTC) {
+      // Good-til-Cancelled orders will take any available liquidity that is at
+      // a marketable price, then place an outstanding limit order for the remaining quantity
       await this._fillOrders(blockOrder, orders, targetDepth.toString())
     } else if (blockOrder.timeInForce === BlockOrder.TIME_RESTRICTIONS.PO) {
       // Post Only orders are maker only, so if any orders exist at a marketable
