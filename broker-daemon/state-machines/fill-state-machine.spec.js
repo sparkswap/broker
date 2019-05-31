@@ -47,6 +47,18 @@ describe('FillStateMachine', () => {
     })
   })
 
+  it('defines states', () => {
+    expect(FillStateMachine).to.have.property('STATES')
+  })
+
+  it('defines indeterminate states', () => {
+    expect(FillStateMachine).to.have.property('INDETERMINATE_STATES')
+  })
+
+  it('defines active states', () => {
+    expect(FillStateMachine).to.have.property('ACTIVE_STATES')
+  })
+
   describe('new', () => {
     it('exposes the store', () => {
       const fsm = new FillStateMachine({ store, logger, relayer, engines })

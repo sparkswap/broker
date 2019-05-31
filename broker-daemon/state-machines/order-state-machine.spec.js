@@ -44,6 +44,18 @@ describe('OrderStateMachine', () => {
     ])
   })
 
+  it('defines states', () => {
+    expect(OrderStateMachine).to.have.property('STATES')
+  })
+
+  it('defines indeterminate states', () => {
+    expect(OrderStateMachine).to.have.property('INDETERMINATE_STATES')
+  })
+
+  it('defines active states', () => {
+    expect(OrderStateMachine).to.have.property('ACTIVE_STATES')
+  })
+
   describe('new', () => {
     it('exposes the store', () => {
       const osm = new OrderStateMachine({ store, logger, relayer, engines })
