@@ -479,7 +479,8 @@ class BlockOrder {
 }
 
 BlockOrder.TIME_RESTRICTIONS = Object.freeze({
-  GTC: 'GTC'
+  GTC: 'GTC',
+  PO: 'PO'
 })
 
 BlockOrder.SIDES = Object.freeze({

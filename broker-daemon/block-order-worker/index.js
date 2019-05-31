@@ -566,15 +566,25 @@ class BlockOrderWorker extends EventEmitter {
    * @returns {void}
    */
   async workLimitBlockOrder (blockOrder, targetDepth) {
-    if (blockOrder.timeInForce !== BlockOrder.TIME_RESTRICTIONS.GTC) {
-      throw new Error('Only Good-til-cancelled limit orders are currently supported.')
-    }
-
     const orderbook = this.orderbooks.get(blockOrder.marketName)
 
-    // fill as many orders at our price or better
+    // get available orders for the requested depth and price
     const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString(), quantumPrice: blockOrder.quantumPrice })
-    await this._fillOrders(blockOrder, orders, targetDepth.toString())
+
+    if (blockOrder.timeInForce === BlockOrder.TIME_RESTRICTIONS.GTC) {
+      // Good-til-Cancelled orders will take any available liquidity that is at
+      // a marketable price, then place an outstanding limit order for the remaining quantity
+      await this._fillOrders(blockOrder, orders, targetDepth.toString())
+    } else if (blockOrder.timeInForce === BlockOrder.TIME_RESTRICTIONS.PO) {
+      // Post Only orders are maker only, so if any orders exist at a marketable
+      // price, we move the order to a cancelled state
+      if (Big(availableDepth).gt(0)) {
+        this.logger.info('Place Only block order would take liquidity. Moving to cancelled state.', { id: blockOrder.id })
+        return this.cancelBlockOrder(blockOrder.id)
+      }
+    } else {
+      throw new Error(`Only Good-til-cancelled and Post Only limit orders are currently supported. Unsupported time restriction: ${blockOrder.timeInForce}`)
+    }
 
     if (targetDepth.gt(availableDepth)) {
       // place an order for the remaining depth that we could not fill

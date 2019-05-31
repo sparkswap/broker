@@ -41,7 +41,8 @@ describe('BlockOrderWorker', () => {
       FAILED: 'FAILED'
     }
     BlockOrder.TIME_RESTRICTIONS = {
-      GTC: 'GTC'
+      GTC: 'GTC',
+      PO: 'PO'
     }
     BlockOrder.fromStore = sinon.stub()
     BlockOrderWorker.__set__('BlockOrder', BlockOrder)
@@ -1535,6 +1536,12 @@ describe('BlockOrderWorker', () => {
       })
     })
 
+    it('throws if the order is neither GTC nor PO', async () => {
+      blockOrder.timeInForce = 'NA'
+
+      return expect(worker.workLimitBlockOrder(blockOrder, Big('100000000000'))).to.eventually.be.rejectedWith('Only Good-til-cancelled and Post Only limit orders are currently supported.')
+    })
+
     it('gets the best orders from the orderbook', async () => {
       await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
 
@@ -1542,34 +1549,102 @@ describe('BlockOrderWorker', () => {
       expect(orderbooks.get('BTC/LTC').getBestOrders).to.have.been.calledWith(sinon.match({ side: 'ASK', depth: '100000000000', quantumPrice: '1000.00000000000000000' }))
     })
 
-    it('fills as many orders as possible at the given price or better', async () => {
-      await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
+    context('GTC Order', () => {
+      it('fills as many orders as possible at the given price or better', async () => {
+        await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
 
-      expect(worker._fillOrders).to.have.been.calledOnce()
-      expect(worker._fillOrders.args[0][0]).to.be.eql(blockOrder)
-      expect(worker._fillOrders.args[0][1]).to.be.eql(orders)
-      expect(worker._fillOrders.args[0][2]).to.be.eql('100000000000')
-    })
-
-    it('places an order for the remaining amount', async () => {
-      await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
-
-      expect(worker._placeOrders).to.have.been.calledOnce()
-      expect(worker._placeOrders.args[0][0]).to.be.eql(blockOrder)
-      expect(worker._placeOrders.args[0][1]).to.be.eql('10000000000')
-    })
-
-    it('does not place an order if it can be filled with fills only', async () => {
-      orders.push({ orderId: '1', baseAmount: '10000000000' })
-      orderbooks.get('BTC/LTC').getBestOrders.resolves({
-        orders,
-        depth: '190000000000'
+        expect(worker._fillOrders).to.have.been.calledOnce()
+        expect(worker._fillOrders.args[0][0]).to.be.eql(blockOrder)
+        expect(worker._fillOrders.args[0][1]).to.be.eql(orders)
+        expect(worker._fillOrders.args[0][2]).to.be.eql('100000000000')
       })
 
-      await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
+      it('places an order for the remaining amount', async () => {
+        await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
 
-      expect(worker._fillOrders.args[0][1]).to.have.lengthOf(2)
-      expect(worker._placeOrders).to.not.have.been.called()
+        expect(worker._placeOrders).to.have.been.calledOnce()
+        expect(worker._placeOrders.args[0][0]).to.be.eql(blockOrder)
+        expect(worker._placeOrders.args[0][1]).to.be.eql('10000000000')
+      })
+
+      it('does not place an order if it can be filled with fills only', async () => {
+        orders.push({ orderId: '1', baseAmount: '10000000000' })
+        orderbooks.get('BTC/LTC').getBestOrders.resolves({
+          orders,
+          depth: '190000000000'
+        })
+
+        await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
+
+        expect(worker._fillOrders.args[0][1]).to.have.lengthOf(2)
+        expect(worker._placeOrders).to.not.have.been.called()
+      })
+
+      context('Post Only Order', () => {
+        beforeEach(() => {
+          blockOrder.timeInForce = 'PO'
+
+          worker.cancelBlockOrder = sinon.stub()
+        })
+
+        it('cancels a buy order if the order would take any liquidity', async () => {
+          await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
+
+          expect(worker.cancelBlockOrder).to.have.been.calledOnce()
+          expect(worker.cancelBlockOrder).to.have.been.calledWith(blockOrder.id)
+        })
+
+        it('cancels a sell order if the order would take any liquidity', async () => {
+          blockOrder.side = 'ASK'
+          blockOrder.inverseSide = 'BID'
+
+          orders = [
+            {
+              orderId: '1',
+              baseAmount: '100000000000'
+            }
+          ]
+
+          orderbooks.get('BTC/LTC').getBestOrders.resolves({
+            orders,
+            depth: '100000000000'
+          })
+
+          await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
+
+          expect(worker.cancelBlockOrder).to.have.been.calledOnce()
+          expect(worker.cancelBlockOrder).to.have.been.calledWith(blockOrder.id)
+        })
+
+        it('places a buy order if the order would not take any liquidity', async () => {
+          orderbooks.get('BTC/LTC').getBestOrders.resolves({
+            orders: [],
+            depth: '0'
+          })
+
+          await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
+
+          expect(worker._placeOrders).to.have.been.calledOnce()
+          expect(worker._placeOrders.args[0][0]).to.be.eql(blockOrder)
+          expect(worker._placeOrders.args[0][1]).to.be.eql('100000000000')
+        })
+
+        it('places a sell order if the order would not take any liquidity', async () => {
+          blockOrder.side = 'ASK'
+          blockOrder.inverseSide = 'BID'
+
+          orderbooks.get('BTC/LTC').getBestOrders.resolves({
+            orders: [],
+            depth: '0'
+          })
+
+          await worker.workLimitBlockOrder(blockOrder, Big('100000000000'))
+
+          expect(worker._placeOrders).to.have.been.calledOnce()
+          expect(worker._placeOrders.args[0][0]).to.be.eql(blockOrder)
+          expect(worker._placeOrders.args[0][1]).to.be.eql('100000000000')
+        })
+      })
     })
     // NOTE: other testing is TODO until workBlockOrder supports more sophisticated order handling
   })
