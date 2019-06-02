@@ -1,5 +1,9 @@
 const path = require('path')
-const { expect, rewire } = require('test/test-helper')
+const {
+  expect,
+  rewire,
+  sinon
+} = require('test/test-helper')
 
 const Fill = rewire(path.resolve(__dirname, 'fill'))
 
@@ -447,6 +451,51 @@ describe('Fill', () => {
         expect(serializedFill).to.have.property('side', fill.order.side)
         expect(serializedFill).to.have.property('price', '10.0000000000000000')
       })
+    })
+  })
+
+  describe('::getAllFills', () => {
+    let fills
+    let getRecords
+    let storeStub
+    let parse
+    let fromObjectStub
+
+    const reverts = []
+
+    beforeEach(() => {
+      fromObjectStub = sinon.stub()
+      fills = [
+        { id: 1234 },
+        { id: 1337 }
+      ]
+      getRecords = sinon.stub().resolves(fills)
+      storeStub = sinon.stub()
+      parse = sinon.stub().returns({})
+
+      reverts.push(Fill.__set__('getRecords', getRecords))
+      reverts.push(Fill.__set__('JSON', { parse }))
+
+      Fill.fromObject = fromObjectStub
+    })
+
+    afterEach(() => {
+      reverts.forEach(r => r())
+    })
+
+    it('gets records for a specific store', async () => {
+      await Fill.getAllFills(storeStub)
+      expect(getRecords).to.have.been.calledWith(storeStub, sinon.match.func)
+    })
+
+    it('inflates a fill', async () => {
+      await Fill.getAllFills(storeStub)
+      const recordFilter = getRecords.args[0][1]
+      const value = '{}'
+      const key = 'key'
+      recordFilter(key, value)
+      expect(parse).to.have.been.calledWith(value)
+      expect(fromObjectStub).to.have.been.called(key, sinon.match.any)
     })
   })
 })

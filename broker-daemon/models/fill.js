@@ -1,5 +1,8 @@
 const Order = require('./order')
-const { Big } = require('../utils')
+const {
+  Big,
+  getRecords
+} = require('../utils')
 const CONFIG = require('../config')
 
 /**
@@ -121,6 +124,14 @@ class Fill {
       price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
       amount: Big(this.fillAmount).div(baseAmountFactor).toFixed(16)
     }
+  }
+
+  /**
+   * returns the market of a fill
+   * @returns {string} market
+   */
+  get market () {
+    return `${this.baseSymbol}/${this.counterSymbol}`
   }
 
   /**
@@ -434,6 +445,21 @@ class Fill {
       gte: `${startId}${DELIMITER}${LOWER_BOUND}`,
       lte: `${endId}${DELIMITER}${UPPER_BOUND}`
     }
+  }
+
+  /**
+   * Grabs all fills
+   * @param {sublevel} store
+   * @returns {Array<Object>} array of fill representations (includes fill model)
+   */
+  static async getAllFills (store) {
+    return getRecords(
+      store,
+      (key, value) => {
+        const { fill, state, error, dates } = JSON.parse(value)
+        return { fill: Fill.fromObject(key, fill), state, error, dates }
+      }
+    )
   }
 }
 

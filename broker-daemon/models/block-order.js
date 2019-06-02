@@ -292,44 +292,6 @@ class BlockOrder {
   }
 
   /**
-   * Calculates the active outbound amount
-   * @returns {Big}
-   */
-  activeOutboundAmount () {
-    const activeOrderAmount = this.activeOrders.reduce((acc, { order, state }) => {
-      if (state === OrderStateMachine.STATES.EXECUTING) {
-        return acc.plus(order.outboundFillAmount)
-      } else {
-        return acc.plus(order.outboundAmount)
-      }
-    }, Big(0))
-    const activeFillAmount = this.activeFills.reduce((acc, { fill }) => {
-      return acc.plus(fill.outboundAmount)
-    }, Big(0))
-
-    return activeOrderAmount.plus(activeFillAmount)
-  }
-
-  /**
-   * Calculates the active inbound amount
-   * @returns {Big}
-   */
-  activeInboundAmount () {
-    const activeOrderAmount = this.activeOrders.reduce((acc, { order, state }) => {
-      if (state === OrderStateMachine.STATES.EXECUTING) {
-        return acc.plus(order.inboundFillAmount)
-      } else {
-        return acc.plus(order.inboundAmount)
-      }
-    }, Big(0))
-    const activeFillAmount = this.activeFills.reduce((acc, { fill }) => {
-      return acc.plus(fill.inboundAmount)
-    }, Big(0))
-
-    return activeOrderAmount.plus(activeFillAmount)
-  }
-
-  /**
    * Populates orders on a block order
    * @param {sublevel} store
    * @returns {void}

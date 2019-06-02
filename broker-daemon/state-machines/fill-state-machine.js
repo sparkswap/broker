@@ -476,4 +476,7 @@ FillStateMachine.INDETERMINATE_STATES = Object.freeze({
   FILLED: 'filled'
 })
 
+// Alias for created/filled states
+FillStateMachine.ACTIVE_STATES = FillStateMachine.INDETERMINATE_STATES
+
 module.exports = FillStateMachine

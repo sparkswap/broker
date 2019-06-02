@@ -1,4 +1,7 @@
-const { Big } = require('../utils')
+const {
+  Big,
+  getRecords
+} = require('../utils')
 const CONFIG = require('../config')
 /**
  * Delimiter for the block order id and order when storing orders
@@ -116,6 +119,14 @@ class Order {
       price: counterCommonAmount.div(baseCommonAmount).toFixed(16),
       fillAmount: fillCommonAmount
     }
+  }
+
+  /**
+   * returns the market of an order
+   * @returns {string} market
+   */
+  get market () {
+    return `${this.baseSymbol}/${this.counterSymbol}`
   }
 
   /**
@@ -470,6 +481,21 @@ class Order {
       gte: `${startId}${DELIMITER}${LOWER_BOUND}`,
       lte: `${endId}${DELIMITER}${UPPER_BOUND}`
     }
+  }
+
+  /**
+   * Grabs all orders
+   * @param {sublevel} store
+   * @returns {Array<Object>} array of order representation (includes order model)
+   */
+  static async getAllOrders (store) {
+    return getRecords(
+      store,
+      (key, value) => {
+        const { order, state, error, dates } = JSON.parse(value)
+        return { order: Order.fromObject(key, order), state, error, dates }
+      }
+    )
   }
 }
 

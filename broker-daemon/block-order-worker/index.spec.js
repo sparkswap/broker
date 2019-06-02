@@ -7,6 +7,10 @@ const {
 } = require('test/test-helper')
 
 const BlockOrderWorker = rewire(path.resolve(__dirname))
+const {
+  FillStateMachine: FSM,
+  OrderStateMachine: OSM
+} = require('../state-machines')
 
 describe('BlockOrderWorker', () => {
   let generateId
@@ -62,34 +66,15 @@ describe('BlockOrderWorker', () => {
 
     OrderStateMachine = sinon.stub()
     OrderStateMachine.create = sinon.stub()
-    OrderStateMachine.STATES = {
-      NONE: 'none',
-      CREATED: 'created',
-      PLACED: 'placed',
-      EXECUTING: 'executing',
-      CANCELLED: 'cancelled',
-      COMPLETED: 'completed'
-    }
-
-    OrderStateMachine.INDETERMINATE_STATES = {
-      CREATED: 'created',
-      PLACED: 'placed',
-      EXECUTING: 'executing'
-    }
+    OrderStateMachine.STATES = OSM.STATES
+    OrderStateMachine.INDETERMINATE_STATES = OSM.INDETERMINATE_STATES
+    OrderStateMachine.ACTIVE_STATES = OSM.ACTIVE_STATES
 
     FillStateMachine = sinon.stub()
     FillStateMachine.create = sinon.stub()
-    FillStateMachine.STATES = {
-      NONE: 'none',
-      CREATED: 'created',
-      FILLED: 'filled',
-      EXECUTED: 'executed'
-    }
-
-    FillStateMachine.INDETERMINATE_STATES = {
-      CREATED: 'created',
-      FILLED: 'filled'
-    }
+    FillStateMachine.STATES = FSM.STATES
+    FillStateMachine.INDETERMINATE_STATES = FSM.INDETERMINATE_STATES
+    FillStateMachine.ACTIVE_STATES = FSM.ACTIVE_STATES
 
     BlockOrderWorker.__set__('OrderStateMachine', OrderStateMachine)
     BlockOrderWorker.__set__('FillStateMachine', FillStateMachine)
@@ -795,6 +780,7 @@ describe('BlockOrderWorker', () => {
     it('calculates the outstanding outbound and inbound funds', async () => {
       await worker.checkFundsAreSufficient(blockOrderStub)
       expect(worker.calculateActiveFunds).to.have.been.calledOnce()
+      expect(worker.calculateActiveFunds).to.have.been.calledWith(blockOrderStub.marketName, blockOrderStub.side)
     })
 
     it('gets the addresses to the relayer to check engine balances', async () => {
@@ -1418,86 +1404,96 @@ describe('BlockOrderWorker', () => {
 
   describe('#calculateActiveFunds', () => {
     let worker
-    let marketName
+    let ordersStoreStub
+    let fillsStoreStub
+    let orderStub
+    let fillStub
+    let orders
+    let fills
+    let activeAmountFillStub
+    let activeAmountOrderStub
+    let market
     let side
-    let askStub
-    let bidStub
-    let anotherBidStub
-    let blockOrders
-    let blockOrdersStub
 
     beforeEach(() => {
-      marketName = 'BTC/LTC'
+      market = 'BTC/LTC'
       side = 'BID'
-      askStub = {
-        side: 'ASK',
-        populateOrders: sinon.stub().resolves(),
-        populateFills: sinon.stub().resolves(),
-        activeOutboundAmount: sinon.stub().returns(Big('1000')),
-        activeInboundAmount: sinon.stub().returns(Big('1000'))
-      }
-      bidStub = {
-        side: 'BID',
-        populateOrders: sinon.stub().resolves(),
-        populateFills: sinon.stub().resolves(),
-        activeOutboundAmount: sinon.stub().returns(Big('3000')),
-        activeInboundAmount: sinon.stub().returns(Big('4000'))
-
-      }
-      anotherBidStub = {
-        side: 'BID',
-        populateOrders: sinon.stub().resolves(),
-        populateFills: sinon.stub().resolves(),
-        activeOutboundAmount: sinon.stub().returns(Big('5000')),
-        activeInboundAmount: sinon.stub().returns(Big('5000'))
-      }
-      blockOrders = [askStub, bidStub, anotherBidStub]
-      blockOrdersStub = sinon.stub().resolves(blockOrders)
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
-      worker.getBlockOrders = blockOrdersStub
+      worker.ordersStore = ordersStoreStub
+      worker.fillsStore = fillsStoreStub
+
+      activeAmountOrderStub = sinon.stub().resolves({ inbound: Big(1234), outbound: Big(1234) })
+      worker.activeAmountsForOrders = activeAmountOrderStub
+
+      activeAmountFillStub = sinon.stub().resolves({ inbound: Big(103), outbound: Big(0) })
+      worker.activeAmountsForFills = activeAmountFillStub
+
+      orders = [{ order: { market: 'BTC/LTC', side: 'BID' } }]
+      fills = [{ fill: { market: 'BTC/LTC', side: 'ASK' } }]
+
+      orderStub = {
+        getAllOrders: sinon.stub().resolves(orders)
+      }
+
+      fillStub = {
+        getAllFills: sinon.stub().resolves(fills)
+      }
+
+      BlockOrderWorker.__set__('Fill', fillStub)
+      BlockOrderWorker.__set__('Order', orderStub)
     })
 
-    it('gets blockOrders for the market', async () => {
-      await worker.calculateActiveFunds(marketName, side)
-
-      expect(blockOrdersStub).to.have.been.calledOnce()
-      expect(blockOrdersStub).to.have.been.calledWith(marketName)
+    it('grabs all orders', async () => {
+      await worker.calculateActiveFunds(market, side)
+      expect(orderStub.getAllOrders).to.have.been.calledWith(ordersStoreStub)
     })
 
-    it('filters the blockOrders by side', async () => {
-      await worker.calculateActiveFunds(marketName, side)
-
-      expect(bidStub.populateOrders).to.have.been.calledOnce()
-      expect(bidStub.populateFills).to.have.been.calledOnce()
-      expect(anotherBidStub.populateOrders).to.have.been.calledOnce()
-      expect(anotherBidStub.populateFills).to.have.been.calledOnce()
-      expect(askStub.populateOrders).to.not.have.been.called()
-      expect(askStub.populateFills).to.not.have.been.called()
+    it('grabs all fills', async () => {
+      await worker.calculateActiveFunds(market, side)
+      expect(fillStub.getAllFills).to.have.been.calledWith(fillsStoreStub)
     })
 
-    it('populates orders and fills on the blockOrder', async () => {
-      await worker.calculateActiveFunds(marketName, side)
-
-      expect(bidStub.populateOrders).to.have.been.calledOnce()
-      expect(bidStub.populateFills).to.have.been.calledOnce()
-      expect(anotherBidStub.populateOrders).to.have.been.calledOnce()
-      expect(anotherBidStub.populateFills).to.have.been.calledOnce()
+    it('gets the active amount for orders', async () => {
+      await worker.calculateActiveFunds(market, side)
+      expect(activeAmountOrderStub).to.have.been.calledWith(orders)
     })
 
-    it('gets the active inbound and outbound amounts each blockOrder', async () => {
-      await worker.calculateActiveFunds(marketName, side)
-
-      expect(bidStub.activeOutboundAmount).to.have.been.calledOnce()
-      expect(bidStub.activeInboundAmount).to.have.been.calledOnce()
-      expect(anotherBidStub.activeOutboundAmount).to.have.been.calledOnce()
-      expect(anotherBidStub.activeInboundAmount).to.have.been.calledOnce()
+    it('gets the active amount for fills', async () => {
+      await worker.calculateActiveFunds(market, 'ASK')
+      expect(activeAmountFillStub).to.have.been.calledWith(fills)
     })
 
     it('returns the active inbound and outbound amounts', async () => {
-      const res = await worker.calculateActiveFunds(marketName, side)
+      const res = await worker.calculateActiveFunds(market, side)
 
-      expect(res.activeOutboundAmount).to.eql(Big('8000'))
-      expect(res.activeInboundAmount).to.eql(Big('9000'))
+      expect(res.activeOutboundAmount).to.be.instanceOf(Big)
+      expect(res.activeInboundAmount).to.be.instanceOf(Big)
+      expect(res.activeOutboundAmount.toString()).to.eql('1234')
+      expect(res.activeInboundAmount.toString()).to.eql('1337')
+    })
+
+    it('filters orders/fills by side', async () => {
+      orderStub.getAllOrders.resolves(orders)
+      fillStub.getAllFills.resolves(fills)
+
+      await worker.calculateActiveFunds(market, side)
+
+      expect(activeAmountOrderStub).to.have.been.calledWith(orders)
+      expect(activeAmountFillStub).to.not.have.been.calledWith(fills)
+      expect(activeAmountFillStub).to.have.been.calledWith([])
+    })
+
+    it('filters orders/fills by market', async () => {
+      orders = [{ order: { market: 'BTC/LTC', side: 'BID' } }]
+      fills = [{ fill: { market: 'BAD/MKT', side: 'ASK' } }]
+      orderStub.getAllOrders.resolves(orders)
+      fillStub.getAllFills.resolves(fills)
+
+      await worker.calculateActiveFunds(market, side)
+
+      expect(activeAmountOrderStub).to.have.been.calledWith(orders)
+      expect(activeAmountFillStub).to.not.have.been.calledWith(fills)
+      expect(activeAmountFillStub).to.have.been.calledWith([])
     })
   })
 
@@ -2503,19 +2499,23 @@ describe('BlockOrderWorker', () => {
       activeBlockOrder2 = { marketName: 'ABC/XYZ' }
       activeBlockOrder = {
         marketName: 'BTC/LTC',
-        status: BlockOrder.STATUSES.ACTIVE
+        status: BlockOrder.STATUSES.ACTIVE,
+        side: 'ASK'
       }
       cancelledBlockOrder = {
         marketName: 'BTC/LTC',
-        status: BlockOrder.STATUSES.CANCELLED
+        status: BlockOrder.STATUSES.CANCELLED,
+        side: 'ASK'
       }
       completedBlockOrder = {
         marketName: 'BTC/LTC',
-        status: BlockOrder.STATUSES.COMPLETED
+        status: BlockOrder.STATUSES.COMPLETED,
+        side: 'BID'
       }
       failedBlockOrder = {
         marketName: 'BTC/LTC',
-        status: BlockOrder.STATUSES.FAILED
+        status: BlockOrder.STATUSES.FAILED,
+        side: 'BID'
       }
       blockOrders = [
         activeBlockOrder,
@@ -2737,6 +2737,107 @@ describe('BlockOrderWorker', () => {
       const res = await worker.relayerIsAvailable()
       expect(tryCallStub).to.have.been.calledOnce()
       expect(res).to.be.eql(tryCallResult)
+    })
+  })
+
+  describe('::activeAmountsForOrders', () => {
+    let worker
+
+    const OrderStateMachine = BlockOrderWorker.__get__('OrderStateMachine')
+    const { CREATED, PLACED, EXECUTING } = OrderStateMachine.STATES
+
+    beforeEach(() => {
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+    })
+
+    it('only returns amounts for records in an active state', async () => {
+      const orders = [{ state: 'BAD_STATE' }]
+      const res = await worker.activeAmountsForOrders(orders)
+      expect(res.inbound.toString()).to.be.eql('0')
+      expect(res.outbound.toString()).to.be.eql('0')
+    })
+
+    it('returns amounts for created orders', async () => {
+      const orders = [{
+        state: CREATED,
+        order: {
+          inboundAmount: 100,
+          outboundAmount: 2000
+        }
+      }]
+      const res = await worker.activeAmountsForOrders(orders)
+      expect(res.inbound.toString()).to.be.eql('100')
+      expect(res.outbound.toString()).to.be.eql('2000')
+    })
+
+    it('returns amounts for placed orders', async () => {
+      const orders = [{
+        state: PLACED,
+        order: {
+          inboundAmount: 1000,
+          outboundAmount: 300
+        }
+      }]
+      const res = await worker.activeAmountsForOrders(orders)
+      expect(res.inbound.toString()).to.be.eql('1000')
+      expect(res.outbound.toString()).to.be.eql('300')
+    })
+
+    it('returns amounts for executing orders', async () => {
+      const orders = [{
+        state: EXECUTING,
+        order: {
+          inboundFillAmount: 10000,
+          outboundFillAmount: 50
+        }
+      }]
+      const res = await worker.activeAmountsForOrders(orders)
+      expect(res.inbound.toString()).to.be.eql('10000')
+      expect(res.outbound.toString()).to.be.eql('50')
+    })
+  })
+
+  describe('::activeAmountsForFills', () => {
+    let worker
+
+    const FillStateMachine = BlockOrderWorker.__get__('FillStateMachine')
+    const { CREATED, FILLED } = FillStateMachine.STATES
+
+    beforeEach(() => {
+      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
+    })
+
+    it('only returns amounts for records in an active state', async () => {
+      const fills = [{ fill: {}, state: 'BAD_STATE' }]
+      const res = await worker.activeAmountsForFills(fills)
+      expect(res.inbound.toString()).to.be.eql('0')
+      expect(res.outbound.toString()).to.be.eql('0')
+    })
+
+    it('returns amounts for created fills', async () => {
+      const fills = [{
+        state: CREATED,
+        fill: {
+          inboundAmount: 100,
+          outboundAmount: 2000
+        }
+      }]
+      const res = await worker.activeAmountsForFills(fills)
+      expect(res.inbound.toString()).to.be.eql('100')
+      expect(res.outbound.toString()).to.be.eql('2000')
+    })
+
+    it('returns amounts for a filled fill', async () => {
+      const fills = [{
+        state: FILLED,
+        fill: {
+          inboundAmount: 1000,
+          outboundAmount: 300
+        }
+      }]
+      const res = await worker.activeAmountsForFills(fills)
+      expect(res.inbound.toString()).to.be.eql('1000')
+      expect(res.outbound.toString()).to.be.eql('300')
     })
   })
 })

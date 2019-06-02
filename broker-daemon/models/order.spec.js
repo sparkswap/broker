@@ -1,6 +1,11 @@
-const { expect } = require('test/test-helper')
+const path = require('path')
+const {
+  rewire,
+  expect,
+  sinon
+} = require('test/test-helper')
 
-const Order = require('./order')
+const Order = rewire(path.resolve(__dirname, 'order'))
 
 describe('Order', () => {
   describe('::SIDES', () => {
@@ -480,6 +485,51 @@ describe('Order', () => {
         expect(serializedOrder).to.have.property('amount', '0.0001000000000000')
         expect(serializedOrder).to.have.property('price', '10.0000000000000000')
       })
+    })
+  })
+
+  describe('::getAllOrders', () => {
+    let orders
+    let getRecords
+    let storeStub
+    let parse
+    let fromObjectStub
+
+    const reverts = []
+
+    beforeEach(() => {
+      orders = [
+        { id: 1234 },
+        { id: 1337 }
+      ]
+      getRecords = sinon.stub().resolves(orders)
+      fromObjectStub = sinon.stub()
+      storeStub = sinon.stub()
+      parse = sinon.stub().returns({})
+
+      reverts.push(Order.__set__('getRecords', getRecords))
+      reverts.push(Order.__set__('JSON', { parse }))
+
+      Order.fromObject = fromObjectStub
+    })
+
+    afterEach(() => {
+      reverts.forEach(r => r())
+    })
+
+    it('gets records for a specific store', async () => {
+      await Order.getAllOrders(storeStub)
+      expect(getRecords).to.have.been.calledWith(storeStub, sinon.match.func)
+    })
+
+    it('inflates an order', async () => {
+      await Order.getAllOrders(storeStub)
+      const recordFilter = getRecords.args[0][1]
+      const value = '{}'
+      const key = 'key'
+      recordFilter(key, value)
+      expect(parse).to.have.been.calledWith(value)
+      expect(fromObjectStub).to.have.been.calledWith(key, sinon.match.any)
     })
   })
 })

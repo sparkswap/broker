@@ -303,35 +303,95 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
+   * Calculates active amounts for a given collection of orders
+   * @param {Array<Order>} orders
+   * @returns {Object} res
+   * @returns {Big} res.inbound
+   * @returns {Big} res.outbound
+   */
+  async activeAmountsForOrders (orders) {
+    const response = {
+      inbound: Big(0),
+      outbound: Big(0)
+    }
+    return orders.reduce((acc, { order, state }) => {
+      // If the order is not in an active state , then we can simply skip it
+      if (!Object.values(OrderStateMachine.ACTIVE_STATES).includes(state)) {
+        return acc
+      }
+
+      if (state === OrderStateMachine.STATES.EXECUTING) {
+        acc.inbound = acc.inbound.plus(order.inboundFillAmount)
+        acc.outbound = acc.outbound.plus(order.outboundFillAmount)
+        return acc
+      } else {
+        acc.inbound = acc.inbound.plus(order.inboundAmount)
+        acc.outbound = acc.outbound.plus(order.outboundAmount)
+        return acc
+      }
+    }, response)
+  }
+
+  /**
+   * Calculates active amounts for a given collection of fills
+   * @param {Array<Fill>} fills
+   * @returns {Object} res
+   * @returns {Big} res.inbound
+   * @returns {Big} res.outbound
+   */
+  async activeAmountsForFills (fills) {
+    const response = {
+      inbound: Big(0),
+      outbound: Big(0)
+    }
+    return fills.reduce((acc, { fill, state }) => {
+      // If the fill is not in an active state , then we can simply skip it
+      if (!Object.values(FillStateMachine.ACTIVE_STATES).includes(state)) {
+        return acc
+      }
+
+      acc.inbound = acc.inbound.plus(fill.inboundAmount)
+      acc.outbound = acc.outbound.plus(fill.outboundAmount)
+      return acc
+    }, response)
+  }
+
+  /**
    * Adds up active/committed funds in inbound and outbound orders/fills
    *
-   * @param {string} marketName  - Name of the market to creat the block order in (e.g. BTC/LTC)
-   * @param {string} side        - Side of the market to take (e.g. BID or ASK)
-   * @returns {Object} contains activeOutboundAmount and activeInboundAmount of orders/fills
+   * @todo Change return value from Big to String
+   * @param {string} market
+   * @param {string} side
+   * @returns {Object} res
+   * @returns {Big} activeOutboundAmount
+   * @returns {Big} activeInboundAmount
    */
-  async calculateActiveFunds (marketName, side) {
-    const blockOrders = await this.getBlockOrders(marketName)
-    const blockOrdersForSide = blockOrders.filter(blockOrder => blockOrder.side === side)
+  async calculateActiveFunds (market, side) {
+    const orders = await Order.getAllOrders(this.ordersStore)
+    const fills = await Fill.getAllFills(this.fillsStore)
 
-    const fullBlockOrders = await Promise.all(
-      blockOrdersForSide.map(async (bo) => {
-        await Promise.all([
-          bo.populateOrders(this.ordersStore),
-          bo.populateFills(this.fillsStore)
-        ])
-        return bo
-      })
-    )
+    // Filter out records for a particular market and side
+    // TODO: add indexes on orders/fills for market
+    // TODO: add index for side of market on order/fills
+    const filteredOrders = orders.filter((o) => {
+      return o.order && o.order.market === market && o.order.side === side
+    })
 
-    let activeOutboundAmount = Big(0)
-    let activeInboundAmount = Big(0)
+    const filteredFills = fills.filter((f) => {
+      return f.fill && f.fill.market === market && f.fill.side === side
+    })
 
-    for (let blockOrder of fullBlockOrders) {
-      activeOutboundAmount = activeOutboundAmount.plus(blockOrder.activeOutboundAmount())
-      activeInboundAmount = activeInboundAmount.plus(blockOrder.activeInboundAmount())
-    }
+    const { inbound: orderInbound, outbound: orderOutbound } = await this.activeAmountsForOrders(filteredOrders)
+    const { inbound: fillInbound, outbound: fillOutbound } = await this.activeAmountsForFills(filteredFills)
 
-    return { activeOutboundAmount, activeInboundAmount }
+    this.logger.debug('Calculating active funds', {
+      orderInbound: orderInbound.toString(),
+      orderOutbound: orderOutbound.toString(),
+      fillInbound: fillInbound.toString(),
+      fillOutbound: fillOutbound.toString()
+    })
+
+    return { activeOutboundAmount: orderOutbound.plus(fillOutbound), activeInboundAmount: orderInbound.plus(fillInbound) }
   }
 
   /**
