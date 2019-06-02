@@ -241,8 +241,8 @@ class BlockOrderWorker extends EventEmitter {
    * @throws {Error} If there are insufficient outbound or inbound funds
    */
   async checkFundsAreSufficient (blockOrder) {
-    const { outboundSymbol, inboundSymbol } = blockOrder
-    const { activeOutboundAmount, activeInboundAmount } = await this.calculateActiveFunds()
+    const { marketName, side, outboundSymbol, inboundSymbol } = blockOrder
+    const { activeOutboundAmount, activeInboundAmount } = await this.calculateActiveFunds(marketName, side)
 
     const outboundEngine = this.engines.get(outboundSymbol)
     const inboundEngine = this.engines.get(inboundSymbol)
@@ -360,26 +360,29 @@ class BlockOrderWorker extends EventEmitter {
    * Adds up active/committed funds in inbound and outbound orders/fills
    *
    * @todo Change return value from Big to String
+   * @param {string} market
    * @param {string} side
    * @returns {Object} res
    * @returns {Big} activeOutboundAmount
    * @returns {Big} activeInboundAmount
    */
-  async calculateActiveFunds (side) {
-    let orders = await Order.getAllOrders(this.ordersStore)
-    let fills = await Fill.getAllFills(this.fillsStore)
+  async calculateActiveFunds (market, side) {
+    const orders = await Order.getAllOrders(this.ordersStore)
+    const fills = await Fill.getAllFills(this.fillsStore)
 
-    // Filter out records for a particular side if it exists. This is needed to be able
-    // to calculate inbound/outbound amounts for the network status tab.
-    //
-    // TODO: Allow calculateActiveFunds to use market by indexes on orders/fills
-    if (side) {
-      orders = orders.filter(o => o.order && o.order.side === side)
-      fills = fills.filter(f => f.order && f.order.side === side)
-    }
+    // Filter out records for a particular market and side
+    // TODO: add indexes on orders/fills for market
+    // TODO: add index for side of market on order/fills
+    const filteredOrders = orders.filter((o) => {
+      return o.order && o.order.market === market && o.order.side === side
+    })
 
-    const { inbound: orderInbound, outbound: orderOutbound } = await this.activeAmountsForOrders(orders)
-    const { inbound: fillInbound, outbound: fillOutbound } = await this.activeAmountsForFills(fills)
+    const filteredFills = fills.filter((f) => {
+      return f.fill && f.fill.market === market && f.fill.side === side
+    })
+
+    const { inbound: orderInbound, outbound: orderOutbound } = await this.activeAmountsForOrders(filteredOrders)
+    const { inbound: fillInbound, outbound: fillOutbound } = await this.activeAmountsForFills(filteredFills)
 
     this.logger.debug('Calculating active funds', {
       orderInbound: orderInbound.toString(),

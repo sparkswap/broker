@@ -122,6 +122,14 @@ class Order {
   }
 
   /**
+   * returns the market of an order
+   * @returns {string} market
+   */
+  get market () {
+    return `${this.baseSymbol}/${this.counterSymbol}`
+  }
+
+  /**
    * Alias for .fillAmount that pairs better with `counterFillAmount`
    * @returns {string} 64-bit integer represented as a string
    */

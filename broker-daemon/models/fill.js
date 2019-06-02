@@ -127,6 +127,14 @@ class Fill {
   }
 
   /**
+   * returns the market of a fill
+   * @returns {string} market
+   */
+  get market () {
+    return `${this.baseSymbol}/${this.counterSymbol}`
+  }
+
+  /**
    * Params required to create an order on the relayer
    * @returns {Object} Object of parameters the relayer expects
    */
