@@ -56,7 +56,7 @@ module.exports = (program) => {
     .argument('<amount>', 'Amount of counter currency to sell', validations.isDecimal)
     .argument('[price]', 'Worst price that this order should be executed at. (If omitted, the market price will be used)', validations.isDecimal)
     .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
-    .option('--time-in-force [time-in-force]', 'Time in force policy for this order', Object.keys(TIME_IN_FORCE), 'GTC')
+    .option('--time-in-force [time-in-force]', `Time in force policy for this order. Available Options: ${Object.values(TIME_IN_FORCE).join(', ')}`, Object.values(TIME_IN_FORCE), TIME_IN_FORCE.GTC)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .action(sell)
 }
