@@ -20,9 +20,10 @@
  */
 const TIME_IN_FORCE = Object.freeze({
   PO: 'PO',
-  FOK: 'FOK',
-  IOC: 'IOC',
   GTC: 'GTC'
+  // FOK and IOC are not supported on the broker yet.
+  // FOK: 'FOK',
+  // IOC: 'IOC',
 })
 
 /**

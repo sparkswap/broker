@@ -1,8 +1,18 @@
 const BrokerDaemonClient = require('../broker-daemon-client')
-const { ENUMS, validations, handleError } = require('../utils')
-const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../utils/strings')
+const {
+  ENUMS,
+  validations,
+  handleError
+} = require('../utils')
+const {
+  RPC_ADDRESS_HELP_STRING,
+  MARKET_NAME_HELP_STRING
+} = require('../utils/strings')
 
-const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
+const {
+  ORDER_TYPES,
+  TIME_IN_FORCE
+} = ENUMS
 
 /**
  * sparkswap buy
