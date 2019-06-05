@@ -64,7 +64,7 @@
     "level": "3.0.1",
     "level-live-stream": "1.4.12",
     "level-sublevel": "6.6.1",
-    "lnd-engine": "github:sparkswap/lnd-engine#v0.5.3-beta",
+    "lnd-engine": "github:sparkswap/lnd-engine#v0.5.4-beta-rc1",
     "nano-seconds": "1.2.2",
     "pm2": "3.5.1",
     "protocol-buffers-schema": "3.3.2",
