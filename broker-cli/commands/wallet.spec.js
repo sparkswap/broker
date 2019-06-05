@@ -7,7 +7,7 @@ const {
 
 const program = rewire(path.resolve(__dirname, 'wallet'))
 
-describe.only('cli wallet', () => {
+describe('cli wallet', () => {
   describe('newDepositAddress', () => {
     let args
     let opts
