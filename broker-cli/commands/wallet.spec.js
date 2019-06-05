@@ -5,11 +5,9 @@ const {
   expect
 } = require('test/test-helper')
 
-const { Big } = require('../utils')
-
 const program = rewire(path.resolve(__dirname, 'wallet'))
 
-describe('cli wallet', () => {
+describe.only('cli wallet', () => {
   describe('newDepositAddress', () => {
     let args
     let opts
@@ -482,7 +480,7 @@ describe('cli wallet', () => {
       errorStub = sinon.stub()
       symbol = 'BTC'
       market = 'BTC/LTC'
-      amount = null
+      amount = '0.1'
       args = { symbol, amount }
       rpcAddress = 'test:1337'
       balances = [
@@ -514,8 +512,7 @@ describe('cli wallet', () => {
 
     it('calls the daemon to commit a balance to the relayer', async () => {
       await commit(args, opts, logger)
-      const { uncommittedBalance } = balances[0]
-      expect(commitStub).to.have.been.calledWith({ balance: Big(uncommittedBalance).toString(), symbol, market })
+      expect(commitStub).to.have.been.calledWith({ balance: amount, symbol, market })
     })
 
     it('asks the user if they are ok to commit to a balance', async () => {
@@ -544,13 +541,6 @@ describe('cli wallet', () => {
       await commit(args, opts, logger)
 
       expect(errorStub).to.have.been.calledWith(sinon.match(expectedError))
-    })
-
-    it('defaults a specified amount to uncommitted balance', async () => {
-      const { uncommittedBalance } = balances[0]
-      args.amount = '1234'
-      await commit(args, opts, logger)
-      expect(commitStub).to.have.been.calledWith(sinon.match({ balance: Big(uncommittedBalance).toString() }))
     })
   })
 
