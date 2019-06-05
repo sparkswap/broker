@@ -227,12 +227,31 @@ describe('commit', () => {
     })
 
     it('throws an error if the size of the last channel if it is below the minimum', () => {
-      params.balance = '0.16777216'
+      params.balance = '0.16877215'
       getTotalBalanceForAddressStub.resolves('0')
 
       return expect(
         commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
       ).to.be.rejectedWith('Committed balance would result in an uneconomic channel.')
+    })
+
+    it('does not throw if the size of the last channel is zero', () => {
+      params.balance = '0.16777215'
+      getTotalBalanceForAddressStub.resolves('0')
+
+      return expect(
+        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+      ).to.not.be.rejected()
+    })
+
+    it('reduces the number of channels if the size of the last channel is smaller than the fee', async () => {
+      params.balance = '0.16777216'
+      getTotalBalanceForAddressStub.resolves('0')
+
+      await commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+
+      expect(btcEngine.createChannel).to.have.been.calledOnce()
+      expect(btcEngine.createChannel).to.have.been.calledWith(relayerAddress, '16777215')
     })
 
     it('throws an error if the unspent balance is insufficient to cover the channels requested', async () => {

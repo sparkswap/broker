@@ -82,13 +82,19 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
   } else {
     // Increase the balance of the final channel if it would be uneconomic
     const lastChannelBalance = balanceToCommit.mod(engine.maxChannelBalance)
-    if (lastChannelBalance.lt(MINIMUM_FUNDING_AMOUNT.times(engine.quantumsPerCommon))) {
+    if (lastChannelBalance.gt(0) && lastChannelBalance.lt(MINIMUM_FUNDING_AMOUNT.times(engine.quantumsPerCommon))) {
       logger.error('Minimum channel balance would have resulted in an uneconomic channel.', { balanceToCommit, lastChannelBalance })
-      const lowCommitAmount = balanceToCommit.minus(lastChannelBalance)
-      const highCommitAmount = lowCommitAmount.plus(MINIMUM_FUNDING_AMOUNT.times(engine.quantumsPerCommon))
-      throw new Error('Committed balance would result in an uneconomic channel. ' +
-        `Commit either ${lowCommitAmount.div(engine.quantumsPerCommon).toString()} ` +
-        `or ${highCommitAmount.div(engine.quantumsPerCommon).toString()}`)
+
+      if (lastChannelBalance.lte(engine.feeEstimate)) {
+        balanceToCommit = balanceToCommit.minus(lastChannelBalance)
+        logger.info('Ignoring tiny additional requested channel', { lastChannelBalance, balanceToCommit })
+      } else {
+        const lowCommitAmount = balanceToCommit.minus(lastChannelBalance)
+        const highCommitAmount = lowCommitAmount.plus(MINIMUM_FUNDING_AMOUNT.times(engine.quantumsPerCommon))
+        throw new Error('Committed balance would result in an uneconomic channel. ' +
+          `Commit either ${lowCommitAmount.div(engine.quantumsPerCommon).toString()} ${symbol}` +
+          `or ${highCommitAmount.div(engine.quantumsPerCommon).toString()} ${symbol}.`)
+      }
     }
 
     // round up to find the number of channels needed to open.
