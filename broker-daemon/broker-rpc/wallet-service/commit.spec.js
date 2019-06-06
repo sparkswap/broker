@@ -21,7 +21,6 @@ describe('commit', () => {
   let orderbooks
   let inboundPaymentNetworkAddress
   let outboundPaymentNetworkAddress
-  let getConfirmedBalanceStub
   let relayerInverseAddress
 
   beforeEach(() => {
@@ -42,7 +41,6 @@ describe('commit', () => {
       debug: sinon.stub()
     }
     getTotalBalanceForAddressStub = sinon.stub().resolves('0')
-    getConfirmedBalanceStub = sinon.stub().resolves('10000000000')
     btcEngine = {
       createChannels: createChannelsStub,
       getTotalBalanceForAddress: getTotalBalanceForAddressStub,
@@ -50,8 +48,7 @@ describe('commit', () => {
       feeEstimate: '20000',
       quantumsPerCommon: '100000000',
       maxChannelBalance: '16777215',
-      getPaymentChannelNetworkAddress: sinon.stub().resolves(outboundPaymentNetworkAddress),
-      getConfirmedBalance: getConfirmedBalanceStub
+      getPaymentChannelNetworkAddress: sinon.stub().resolves(outboundPaymentNetworkAddress)
     }
     ltcEngine = {
       getPaymentChannelNetworkAddress: sinon.stub().resolves(inboundPaymentNetworkAddress),
@@ -84,15 +81,32 @@ describe('commit', () => {
   it('throws an error if creating a channel fails', () => {
     createChannelsStub.rejects(new Error('channels cannot be created before the wallet is fully synced'))
 
-    expect(
+    return expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
     ).to.be.rejectedWith(Error, 'Funding error')
+  })
+
+  it('does not throw if we encounter a channel too small error and we already have balance', () => {
+    createChannelsStub.rejects(new Error('Funding amount 0.1 BTC too small for minimum channel balance of 0.00002 BTC.'))
+    getTotalBalanceForAddressStub.resolves('100000')
+
+    return expect(
+      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+    ).to.not.be.rejected()
+  })
+
+  it('throws if we encounter a channel too small error and we do not have balance', () => {
+    createChannelsStub.rejects(new Error('Funding amount 0.1 BTC too small for minimum channel balance of 0.00002 BTC.'))
+
+    return expect(
+      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+    ).to.be.rejectedWith('Funding error: Funding amount 0.1 BTC too small for minimum channel balance of 0.00002 BTC')
   })
 
   it('throws an error if requesting an inbound channel fails', () => {
     createChannelRelayerStub.rejects(new Error('fake relayer error'))
 
-    expect(
+    return expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
     ).to.be.rejectedWith(Error, 'Error requesting inbound channel')
   })

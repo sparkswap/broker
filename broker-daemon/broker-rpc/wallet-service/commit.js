@@ -68,7 +68,12 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
       await engine.createChannels(relayerAddress, balanceToCommit.toString())
     } catch (e) {
       logger.error('Received error when creating outbound channel', { error: e.stack })
-      throw new Error(`Funding error: ${e.message}`)
+
+      if (e && e.message && e.message.includes('too small') && Big(currentBalance).gt('0')) {
+        logger.debug('Suppressing error from not creating channels since it is likely we are re-committing a previous amount', { balanceToCommit: balanceToCommit.toString(), balance })
+      } else {
+        throw new Error(`Funding error: ${e.message}`)
+      }
     }
   }
 
