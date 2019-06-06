@@ -1,14 +1,6 @@
 const { Big } = require('../../utils')
 
 /**
- * Minimum funding amount in common units (e.g. 0.123 BTC)
- * @constant
- * @type {Big}
- * @default
- */
-const MINIMUM_FUNDING_AMOUNT = Big(0.00400000)
-
-/**
  * Grabs public lightning network information from relayer and opens a channel
  *
  * @param {Object} request - request object
@@ -47,26 +39,17 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
 
   const balance = Big(balanceCommon).times(engine.quantumsPerCommon).toString()
 
-  // We use common units for these calculation so that we can provide
-  // friendly errors to the user.
-  // TODO: Get correct fee amount from engine
-  if (MINIMUM_FUNDING_AMOUNT.gt(balanceCommon)) {
-    throw new Error(`Minimum balance of ${MINIMUM_FUNDING_AMOUNT} needed to commit to the relayer`)
-  }
-
   // Collect all remote information
   const [
     { address: relayerAddress },
     { address: relayerInverseAddress },
     outboundPaymentChannelNetworkAddress,
-    inboundPaymentChannelNetworkAddress,
-    unspentBalance
+    inboundPaymentChannelNetworkAddress
   ] = await Promise.all([
     relayer.paymentChannelNetworkService.getAddress({ symbol }),
     relayer.paymentChannelNetworkService.getAddress({ symbol: inverseSymbol }),
     engine.getPaymentChannelNetworkAddress(),
-    inverseEngine.getPaymentChannelNetworkAddress(),
-    engine.getConfirmedBalance()
+    inverseEngine.getPaymentChannelNetworkAddress()
   ])
 
   logger.info(`Attempting to create channel with ${relayerAddress} on ${symbol} with ${balanceCommon}`, {
@@ -80,46 +63,12 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
   if (balanceToCommit.lte(0)) {
     logger.debug('Channels with sufficient balance already exist', { balance: currentBalance })
   } else {
-    // Increase the balance of the final channel if it would be uneconomic
-    const lastChannelBalance = balanceToCommit.mod(engine.maxChannelBalance)
-    if (lastChannelBalance.gt(0) && lastChannelBalance.lt(MINIMUM_FUNDING_AMOUNT.times(engine.quantumsPerCommon))) {
-      logger.error('Minimum channel balance would have resulted in an uneconomic channel.', { balanceToCommit, lastChannelBalance })
-
-      if (lastChannelBalance.lte(engine.feeEstimate)) {
-        balanceToCommit = balanceToCommit.minus(lastChannelBalance)
-        logger.info('Ignoring tiny additional requested channel', { lastChannelBalance, balanceToCommit })
-      } else {
-        const lowCommitAmount = balanceToCommit.minus(lastChannelBalance)
-        const highCommitAmount = lowCommitAmount.plus(MINIMUM_FUNDING_AMOUNT.times(engine.quantumsPerCommon))
-        throw new Error('Committed balance would result in an uneconomic channel. ' +
-          `Commit either ${lowCommitAmount.div(engine.quantumsPerCommon).toString()} ${symbol}` +
-          `or ${highCommitAmount.div(engine.quantumsPerCommon).toString()} ${symbol}.`)
-      }
-    }
-
-    // round up to find the number of channels needed to open.
-    // @see: https://mikemcl.github.io/big.js/#round
-    const channelsToOpen = balanceToCommit.div(engine.maxChannelBalance).round(0, 3)
-
-    // ensure we have enough balance to support opening all the channels before opening any
-    if (Big(unspentBalance).lt(balanceToCommit.plus(Big(engine.feeEstimate).times(channelsToOpen)))) {
-      logger.error('Insufficient confirmed balance to open all channels.', { channelsToOpen, balanceToCommit, unspentBalance, symbol })
-      throw new Error(`Insufficient balance (${Big(unspentBalance).div(engine.quantumsPerCommon)} ${symbol}) to ` +
-        `commit amount: ${balanceToCommit.div(engine.quantumsPerCommon).toString()} ${symbol} (plus fees)`)
-    }
-
-    for (var i = 0; i < channelsToOpen; i++) {
-      // Open max size channels until the last channel
-      let channelAmount = balanceToCommit.gt(engine.maxChannelBalance) ? engine.maxChannelBalance : balanceToCommit.toString()
-      balanceToCommit = balanceToCommit.minus(channelAmount)
-
-      try {
-        logger.info(`Opening outbound channel`, { relayerAddress, symbol, channelAmount, channelNum: i + 1 })
-        await engine.createChannel(relayerAddress, channelAmount)
-      } catch (e) {
-        logger.error('Received error when creating outbound channel', { error: e.stack })
-        throw new Error(`Funding error: ${e.message}`)
-      }
+    try {
+      logger.info(`Opening outbound channels`, { relayerAddress, symbol, balanceToCommit: balanceToCommit.toString() })
+      await engine.createChannels(relayerAddress, balanceToCommit.toString())
+    } catch (e) {
+      logger.error('Received error when creating outbound channel', { error: e.stack })
+      throw new Error(`Funding error: ${e.message}`)
     }
   }
 
