@@ -1,12 +1,17 @@
 const { Big } = require('../../utils')
 
 /**
- * Minimum funding amount in common units (e.g. 0.123 BTC)
+ * Relevant fragment of the message generated on LND Engine when our
+ * request to create channels would result in no channels being created
+ * because the amount is too small (LND Engine avoids opening tiny channels
+ * as they are uneconomic.)
+ *
+ * @see https://github.com/sparkswap/lnd-engine/pull/217
+ * @see https://github.com/sparkswap/lnd-engine/blob/v0.5.4-beta-rc2/src/engine-actions/create-channels.js#L67
+ * @type {string}
  * @constant
- * @type {Big}
- * @default
  */
-const MINIMUM_FUNDING_AMOUNT = Big(0.00400000)
+const SMALL_CHAN_ERR = 'too small'
 
 /**
  * Grabs public lightning network information from relayer and opens a channel
@@ -29,8 +34,6 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     throw new Error(`${market} is not being tracked as a market.`)
   }
 
-  const { address } = await relayer.paymentChannelNetworkService.getAddress({ symbol })
-
   const [ baseSymbol, counterSymbol ] = market.split('/')
   const inverseSymbol = (symbol === baseSymbol) ? counterSymbol : baseSymbol
 
@@ -47,53 +50,51 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     throw new Error(`No engine is configured for symbol: ${inverseSymbol}`)
   }
 
-  const maxChannelBalance = Big(engine.maxChannelBalance)
   const balance = Big(balanceCommon).times(engine.quantumsPerCommon).toString()
 
-  logger.info(`Attempting to create channel with ${address} on ${symbol} with ${balanceCommon}`, {
+  // Collect all remote information
+  const [
+    { address: relayerAddress },
+    { address: relayerInverseAddress },
+    outboundPaymentChannelNetworkAddress,
+    inboundPaymentChannelNetworkAddress
+  ] = await Promise.all([
+    relayer.paymentChannelNetworkService.getAddress({ symbol }),
+    relayer.paymentChannelNetworkService.getAddress({ symbol: inverseSymbol }),
+    engine.getPaymentChannelNetworkAddress(),
+    inverseEngine.getPaymentChannelNetworkAddress()
+  ])
+
+  logger.info(`Attempting to create channel with ${relayerAddress} on ${symbol} with ${balanceCommon}`, {
     balanceCommon,
     balance
   })
 
-  // We use common units for these calculation so that we can provide
-  // friendly errors to the user.
-  // TODO: Get correct fee amount from engine
-  if (MINIMUM_FUNDING_AMOUNT.gt(balanceCommon)) {
-    throw new Error(`Minimum balance of ${MINIMUM_FUNDING_AMOUNT} needed to commit to the relayer`)
-  } else if (maxChannelBalance.lt(balance)) {
-    const maxChannelBalanceCommon = Big(maxChannelBalance).div(engine.quantumsPerCommon).toString()
-    logger.error(`Balance from the client exceeds maximum balance allowed (${maxChannelBalance.toString()}).`, { balance })
-    throw new Error(`Maximum balance of ${maxChannelBalanceCommon} ${symbol} exceeded for ` +
-      `committing of ${balanceCommon} ${symbol} to the Relayer. Please try again.`)
-  }
+  const currentBalance = await engine.getTotalBalanceForAddress(relayerAddress)
+  let balanceToCommit = Big(balance).minus(currentBalance)
 
-  // Get the max balance for outbound channel to see if there are already channels with the balance open. If this is the
-  // case we do not need to go to the trouble of opening a new channel
-  const { maxBalance: maxOutboundBalance } = await engine.getMaxChannel()
-
-  // If maxOutboundBalance exists, we need to check if the balance is greater or less than the balance of the channel
-  // we are trying to open. If maxOutboundBalance does not exist, it means there are no channels open and we can safely
-  // attempt to create channels with the balance
-  if (maxOutboundBalance) {
-    const insufficientOutboundBalance = maxOutboundBalance && Big(maxOutboundBalance).plus(engine.feeEstimate).lt(balance)
-
-    if (insufficientOutboundBalance) {
-      logger.error('Existing outbound channel of insufficient size', { desiredBalance: balance, feeEstimate: engine.feeEstimate, existingBalance: maxOutboundBalance })
-      throw new Error('You have an existing outbound channel with a balance lower than desired, release that channel and try again.')
-    }
-  }
-
-  if (!maxOutboundBalance) {
-    logger.debug('Creating outbound channel', { address, balance })
-
+  if (balanceToCommit.lte(0)) {
+    logger.debug('Channels with sufficient balance already exist', { balance: currentBalance })
+  } else {
     try {
-      await engine.createChannel(address, balance)
+      logger.info(`Opening outbound channels`, {
+        relayerAddress,
+        symbol,
+        balanceToCommit: balanceToCommit.toString()
+      })
+      await engine.createChannels(relayerAddress, balanceToCommit.toString())
     } catch (e) {
       logger.error('Received error when creating outbound channel', { error: e.stack })
-      throw new Error(`Funding error: ${e.message}`)
+
+      if (e.message && e.message.includes(SMALL_CHAN_ERR) && Big(currentBalance).gt(0)) {
+        logger.debug('Suppressing error from not creating channels since it is likely we are re-committing a previous amount', {
+          balanceToCommit: balanceToCommit.toString(),
+          balance
+        })
+      } else {
+        throw new Error(`Funding error: ${e.message}`)
+      }
     }
-  } else {
-    logger.debug('Outbound channel already exists', { balance: maxOutboundBalance })
   }
 
   logger.debug(`Connecting to the relayer with inverse engine: ${inverseSymbol}`)
@@ -102,14 +103,9 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
   // we ask the relayer to open a channel to us. This is to ensure that the relayer
   // knows about the engine and wont fail when creating a channel with us. Additionally,
   // this action allows our node to not have a public IP and ports opened
-  const { address: inverseAddress } = await relayer.paymentChannelNetworkService.getAddress({ symbol: inverseSymbol })
+  await inverseEngine.connectUser(relayerInverseAddress)
 
-  await inverseEngine.connectUser(inverseAddress)
-
-  logger.debug('Creating inbound channel', { balance, symbol, inverseSymbol })
-
-  const outboundPaymentChannelNetworkAddress = await engine.getPaymentChannelNetworkAddress()
-  const inboundPaymentChannelNetworkAddress = await inverseEngine.getPaymentChannelNetworkAddress()
+  logger.debug('Creating inbound channels', { balance, symbol, inverseSymbol })
 
   try {
     const authorization = relayer.identity.authorize()
@@ -126,7 +122,7 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     }, authorization)
   } catch (e) {
     // TODO: Close channel that was open if relayer call has failed
-    throw new Error(`Error requesting inbound channel from Relayer: ${e.message}`)
+    throw new Error(`Error requesting inbound channels from Relayer: ${e.message}`)
   }
 
   return new EmptyResponse({})

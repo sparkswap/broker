@@ -186,43 +186,23 @@ async function commit (args, opts, logger) {
 
     const { balances } = await client.walletService.getBalances({})
 
-    const { uncommittedBalance, error } = balances.find(({ symbol: s }) => s === symbol)
+    const { uncommittedBalance, totalChannelBalance, error } = balances.find(({ symbol: s }) => s === symbol)
 
     if (error) {
       throw new Error(`Error fetching current balances from ${symbol} engine`)
     }
 
-    const totalUncommittedBalance = Big(uncommittedBalance)
+    logger.info(`Your current uncommitted wallet balance is: ${uncommittedBalance} ${symbol}`)
+    logger.info(`Your current committed wallet balance is ${totalChannelBalance} ${symbol}`)
 
-    // We try to take the lowest total here between 2 Big numbers due to a
-    // commit limit specified as `maxChannelBalance` in the currency configuration
-    let maxSupportedBalance = totalUncommittedBalance
-
-    const maxChannelBalance = Big(currentCurrencyConfig.maxChannelBalance)
-
-    if (totalUncommittedBalance.gt(maxChannelBalance)) {
-      maxSupportedBalance = maxChannelBalance
-    }
-
-    // The logic here only runs if an amount is specified in the commit command
-    if (amount) {
-      const specifiedAmount = Big(amount)
-
-      if (specifiedAmount.lt(maxChannelBalance)) {
-        maxSupportedBalance = specifiedAmount
-      }
-    }
-
-    logger.info(`For your knowledge, the Maximum supported balance at this time is: ${maxSupportedBalance.toString()} ${symbol}`)
-    logger.info(`Your current uncommitted wallet balance is: ${uncommittedBalance.toString()} ${symbol}`)
-
-    const answer = await askQuestion(`Are you OK committing ${maxSupportedBalance.toString()} ${symbol} to sparkswap? (Y/N)`)
+    const answer = await askQuestion(`Are you OK committing a total of ${amount} ${symbol} to Sparkswap? (Y/N)`)
 
     if (!ACCEPTED_ANSWERS.includes(answer.toLowerCase())) return
 
-    await client.walletService.commit({ balance: maxSupportedBalance.toString(), symbol, market })
+    await client.walletService.commit({ balance: amount, symbol, market })
 
-    logger.info('Successfully committed balance to sparkswap Relayer!')
+    logger.info(`Successfully committed ${amount} ${symbol} to the Sparkswap Relayer!`)
+    logger.info('Check `sparkswap wallet network-status --market btc/ltc` for more information.')
   } catch (e) {
     logger.error(handleError(e))
   }
@@ -666,7 +646,11 @@ module.exports = (program) => {
           symbol = symbol.toUpperCase()
 
           if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
-            throw new Error(`Provided symbol is not a valid currency for the exchange`)
+            throw new Error(`Provided symbol is not a valid currency.`)
+          }
+
+          if (amount === '') {
+            throw new Error(`You must provide an amount of ${symbol} to commit.`)
           }
 
           args.symbol = symbol
@@ -696,6 +680,10 @@ module.exports = (program) => {
 
           if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
             throw new Error(`Provided symbol is not a valid currency for the broker`)
+          }
+
+          if (amount === '') {
+            throw new Error(`You must provide an amount of ${symbol} to withdraw.`)
           }
 
           args.symbol = symbol
@@ -762,7 +750,7 @@ module.exports = (program) => {
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.COMMIT}`, 'Commit balance to sparkswap relayer')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
-    .argument('[amount]', 'Amount of currency to commit to the relayer')
+    .argument('<amount>', 'Amount of currency to commit to the relayer')
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.WITHDRAW}`, 'Withdraws specified amount of coin from wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)

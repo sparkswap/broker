@@ -13,15 +13,14 @@ describe('commit', () => {
   let ltcEngine
   let res
   let createChannelRelayerStub
-  let createChannelStub
+  let createChannelsStub
   let getAddressStub
   let relayerAddress
   let engines
-  let getMaxOutboundChannelStub
+  let getTotalBalanceForAddressStub
   let orderbooks
   let inboundPaymentNetworkAddress
   let outboundPaymentNetworkAddress
-  let getUncommittedBalanceStub
   let relayerInverseAddress
 
   beforeEach(() => {
@@ -34,24 +33,22 @@ describe('commit', () => {
     getAddressStub.withArgs({ symbol: 'BTC' }).resolves({ address: relayerAddress })
     getAddressStub.withArgs({ symbol: 'LTC' }).resolves({ address: relayerInverseAddress })
     createChannelRelayerStub = sinon.stub().resolves({})
-    createChannelStub = sinon.stub()
+    createChannelsStub = sinon.stub()
     orderbooks = new Map([['BTC/LTC', {}]])
     logger = {
       info: sinon.stub(),
       error: sinon.stub(),
       debug: sinon.stub()
     }
-    getMaxOutboundChannelStub = sinon.stub().resolves({})
-    getUncommittedBalanceStub = sinon.stub().resolves('200000000')
+    getTotalBalanceForAddressStub = sinon.stub().resolves('0')
     btcEngine = {
-      createChannel: createChannelStub,
-      getMaxChannel: getMaxOutboundChannelStub,
+      createChannels: createChannelsStub,
+      getTotalBalanceForAddress: getTotalBalanceForAddressStub,
       symbol: 'BTC',
       feeEstimate: '20000',
       quantumsPerCommon: '100000000',
       maxChannelBalance: '16777215',
-      getPaymentChannelNetworkAddress: sinon.stub().resolves(outboundPaymentNetworkAddress),
-      getUncommittedBalance: getUncommittedBalanceStub
+      getPaymentChannelNetworkAddress: sinon.stub().resolves(outboundPaymentNetworkAddress)
     }
     ltcEngine = {
       getPaymentChannelNetworkAddress: sinon.stub().resolves(inboundPaymentNetworkAddress),
@@ -81,33 +78,35 @@ describe('commit', () => {
     }
   })
 
-  it('balance under minimum amount throws an error for an incorrect balance', () => {
-    params.balance = '0.00000100'
-    return expect(
-      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-    ).to.be.rejectedWith(Error, 'Minimum balance of')
-  })
-
-  it('balance over allowed maximum value throws an error for an incorrect balance', () => {
-    const maxBalance = btcEngine.maxChannelBalance
-    params.balance = maxBalance + 1
-    return expect(
-      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-    ).to.be.rejectedWith(Error, 'Maximum balance')
-  })
-
   it('throws an error if creating a channel fails', () => {
-    createChannelStub.rejects(new Error('channels cannot be created before the wallet is fully synced'))
+    createChannelsStub.rejects(new Error('channels cannot be created before the wallet is fully synced'))
 
-    expect(
+    return expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
     ).to.be.rejectedWith(Error, 'Funding error')
+  })
+
+  it('does not throw if we encounter a channel too small error and we already have balance', () => {
+    createChannelsStub.rejects(new Error('Funding amount 0.1 BTC too small for minimum channel balance of 0.00002 BTC.'))
+    getTotalBalanceForAddressStub.resolves('100000')
+
+    return expect(
+      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+    ).to.not.be.rejected()
+  })
+
+  it('throws if we encounter a channel too small error and we do not have balance', () => {
+    createChannelsStub.rejects(new Error('Funding amount 0.1 BTC too small for minimum channel balance of 0.00002 BTC.'))
+
+    return expect(
+      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+    ).to.be.rejectedWith('Funding error: Funding amount 0.1 BTC too small for minimum channel balance of 0.00002 BTC')
   })
 
   it('throws an error if requesting an inbound channel fails', () => {
     createChannelRelayerStub.rejects(new Error('fake relayer error'))
 
-    expect(
+    return expect(
       commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
     ).to.be.rejectedWith(Error, 'Error requesting inbound channel')
   })
@@ -127,7 +126,7 @@ describe('commit', () => {
 
     it('creates a channel through an btc engine with base units', () => {
       const baseUnitsBalance = Big(params.balance).times(btcEngine.quantumsPerCommon).toString()
-      expect(btcEngine.createChannel).to.have.been.calledWith(relayerAddress, baseUnitsBalance)
+      expect(btcEngine.createChannels).to.have.been.calledWith(relayerAddress, baseUnitsBalance)
     })
 
     it('retrieves the address from the outbound engine', () => {
@@ -198,26 +197,29 @@ describe('commit', () => {
 
   describe('checking channel balances', () => {
     it('does not throw if there are already open inbound and outbound channel', () => {
-      getMaxOutboundChannelStub.resolves({ maxBalance: '10000001' })
+      getTotalBalanceForAddressStub.resolves('10000001')
 
       return expect(
         commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
       ).to.not.be.rejected()
     })
 
-    it('opens an outbound channel if the outbound channel does not exist', async () => {
-      getMaxOutboundChannelStub.resolves({})
+    it('opens outbound channels if no outbound channels exist', async () => {
+      getTotalBalanceForAddressStub.resolves('0')
 
       await commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
 
-      expect(btcEngine.createChannel).to.have.been.calledOnce()
+      expect(btcEngine.createChannels).to.have.been.calledOnce()
+      expect(btcEngine.createChannels).to.have.been.calledWith(relayerAddress, '10000000')
     })
 
-    it('throws an error if the outbound channel does not have the desired amount excluding the fee estimate', () => {
-      getMaxOutboundChannelStub.resolves({ maxBalance: '1000' })
-      return expect(
-        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
-      ).to.be.rejectedWith(Error, 'You have an existing outbound channel with a balance lower than desired, release that channel and try again.')
+    it('opens outbound channels if the existing channels are not large enough', async () => {
+      getTotalBalanceForAddressStub.resolves('5000000')
+
+      await commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+
+      expect(btcEngine.createChannels).to.have.been.calledOnce()
+      expect(btcEngine.createChannels).to.have.been.calledWith(relayerAddress, '5000000')
     })
   })
 })
