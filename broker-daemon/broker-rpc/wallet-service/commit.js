@@ -1,6 +1,19 @@
 const { Big } = require('../../utils')
 
 /**
+ * Relevant fragment of the message generated on LND Engine when our
+ * request to create channels would result in no channels being created
+ * because the amount is too small (LND Engine avoids opening tiny channels
+ * as they are uneconomic.)
+ *
+ * @see https://github.com/sparkswap/lnd-engine/pull/217
+ * @see https://github.com/sparkswap/lnd-engine/blob/v0.5.4-beta-rc2/src/engine-actions/create-channels.js#L67
+ * @type {string}
+ * @constant
+ */
+const SMALL_CHAN_ERR = 'too small'
+
+/**
  * Grabs public lightning network information from relayer and opens a channel
  *
  * @param {Object} request - request object
@@ -64,13 +77,20 @@ async function commit ({ params, relayer, logger, engines, orderbooks }, { Empty
     logger.debug('Channels with sufficient balance already exist', { balance: currentBalance })
   } else {
     try {
-      logger.info(`Opening outbound channels`, { relayerAddress, symbol, balanceToCommit: balanceToCommit.toString() })
+      logger.info(`Opening outbound channels`, {
+        relayerAddress,
+        symbol,
+        balanceToCommit: balanceToCommit.toString()
+      })
       await engine.createChannels(relayerAddress, balanceToCommit.toString())
     } catch (e) {
       logger.error('Received error when creating outbound channel', { error: e.stack })
 
-      if (e && e.message && e.message.includes('too small') && Big(currentBalance).gt('0')) {
-        logger.debug('Suppressing error from not creating channels since it is likely we are re-committing a previous amount', { balanceToCommit: balanceToCommit.toString(), balance })
+      if (e.message && e.message.includes(SMALL_CHAN_ERR) && Big(currentBalance).gt(0)) {
+        logger.debug('Suppressing error from not creating channels since it is likely we are re-committing a previous amount', {
+          balanceToCommit: balanceToCommit.toString(),
+          balance
+        })
       } else {
         throw new Error(`Funding error: ${e.message}`)
       }
