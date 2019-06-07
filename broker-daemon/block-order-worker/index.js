@@ -391,6 +391,7 @@ class BlockOrderWorker extends EventEmitter {
       orders,
       fills
     ] = await Promise.all([
+      // TODO: add indexes for active states
       // TODO: add indexes on orders/fills for market
       // TODO: add index for side of market on order/fills
       Order.getAllOrders(this.ordersStore),
