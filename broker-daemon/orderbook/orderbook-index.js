@@ -1,10 +1,10 @@
 const { MarketEvent, MarketEventOrder } = require('../models')
-const { migrateStore } = require('../utils')
+const { SubsetStore } = require('../utils')
 
 /**
  * @class Index of active orders based on events received from the Relayer
  */
-class OrderbookIndex {
+class OrderbookIndex extends SubsetStore {
   /**
    * Create a new index from a base store and a store of Market Events
    * @param {sublevel} store      - Base store to sublevel from
@@ -12,19 +12,8 @@ class OrderbookIndex {
    * @param {string} marketName   - Name of the market to index
    */
   constructor (store, eventStore, marketName) {
-    this.store = store.sublevel('orderbook')
-    this.eventStore = eventStore
+    super(store.sublevel('orderbook'), eventStore)
     this.marketName = marketName
-  }
-
-  /**
-   * Rebuild the index and add hooks for new events
-   * @returns {void} resolves when the index is rebuilt and ready for new events
-   */
-  async ensureIndex () {
-    await this._clearIndex()
-    await this._rebuildIndex()
-    this._addIndexHook()
   }
 
   /**
@@ -42,44 +31,6 @@ class OrderbookIndex {
     }
 
     return { key: order.key, type: 'del', prefix: this.store }
-  }
-
-  /**
-   * Clear the existing index
-   * @returns {Promise} resolves when the index is cleared
-   */
-  _clearIndex () {
-    // remove any previously applied hooks
-    if (this._removeHook) {
-      this._removeHook()
-    }
-    return migrateStore(this.store, this.store, (key) => { return { type: 'del', key } })
-  }
-
-  /**
-   * Rebuild the index from events
-   * @returns {Promise} resolves when the index is rebuilt
-   */
-  _rebuildIndex () {
-    return migrateStore(this.eventStore, this.store, this._addToIndexOperation.bind(this))
-  }
-
-  /**
-   * Create a hook for new events added to the store to modify the orderbook
-   * @returns {void}
-   */
-  _addIndexHook () {
-    const indexHook = (dbOperation, add) => {
-      if (dbOperation.type !== 'put') {
-        return
-      }
-
-      add(this._addToIndexOperation(dbOperation.key, dbOperation.value))
-    }
-
-    // `.pre` adds a hook for before a `put` in the eventStore, and returns
-    // a function to remove that same hook.
-    this._removeHook = this.eventStore.pre(indexHook)
   }
 }
 
