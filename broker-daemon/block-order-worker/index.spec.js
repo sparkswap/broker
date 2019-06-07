@@ -1422,10 +1422,10 @@ describe('BlockOrderWorker', () => {
       worker.ordersStore = ordersStoreStub
       worker.fillsStore = fillsStoreStub
 
-      activeAmountOrderStub = sinon.stub().resolves({ inbound: Big(1234), outbound: Big(1234) })
+      activeAmountOrderStub = sinon.stub().returns({ inbound: Big(1234), outbound: Big(1234) })
       worker.activeAmountsForOrders = activeAmountOrderStub
 
-      activeAmountFillStub = sinon.stub().resolves({ inbound: Big(103), outbound: Big(0) })
+      activeAmountFillStub = sinon.stub().returns({ inbound: Big(103), outbound: Big(0) })
       worker.activeAmountsForFills = activeAmountFillStub
 
       orders = [{ order: { market: 'BTC/LTC', side: 'BID' } }]

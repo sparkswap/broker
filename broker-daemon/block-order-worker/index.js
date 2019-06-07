@@ -259,7 +259,6 @@ class BlockOrderWorker extends EventEmitter {
       this.relayer.paymentChannelNetworkService.getAddress({ symbol: inboundSymbol })
     ])
 
-    let counterAmount
     let outboundAmount
     let inboundAmount
     // If the blockOrder is a market order we will not have a counterAmount and therefore will not be
@@ -268,14 +267,15 @@ class BlockOrderWorker extends EventEmitter {
       const orderbook = this.orderbooks.get(blockOrder.marketName)
 
       if (!orderbook) {
-        throw new Error(`${blockOrder.marketName} is not being tracked as a market. Configure sparkswapd to track ${blockOrder.marketName} using the MARKETS environment variable.`)
+        throw new Error(`${blockOrder.marketName} is not being tracked as a market. ` +
+          `Configure sparkswapd to track ${blockOrder.marketName} using the MARKETS environment variable.`)
       }
       // averagePrice is the weighted average price of the best orders. This is in common units.
       const averagePrice = await orderbook.getAveragePrice(blockOrder.inverseSide, blockOrder.baseAmount)
       // The counterAmount is calculated by multiplying the price of the order (in our case we have an approximation
       // based on the weighted average of the depth of our order) by the amount of the order. This gets us the common counter amount.
       // We then multiply this by the quantums per common amount for the counter currency to get the counterAmount in units of the counter currency.
-      counterAmount = averagePrice.times(blockOrder.amount).times(blockOrder.counterCurrencyConfig.quantumsPerCommon).round(0).toString()
+      let counterAmount = averagePrice.times(blockOrder.amount).times(blockOrder.counterCurrencyConfig.quantumsPerCommon).round(0).toString()
       if (blockOrder.isBid) {
         outboundAmount = counterAmount
         inboundAmount = blockOrder.baseAmount
@@ -288,17 +288,23 @@ class BlockOrderWorker extends EventEmitter {
       inboundAmount = blockOrder.inboundAmount
     }
 
-    const outboundBalanceIsSufficient = await outboundEngine.isBalanceSufficient(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount))
+    const [
+      outboundBalanceIsSufficient,
+      inboundBalanceIsSufficient
+    ] = await Promise.all([
+      outboundEngine.isBalanceSufficient(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount)),
+      inboundEngine.isBalanceSufficient(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false })
+    ])
 
     // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
     if (!outboundBalanceIsSufficient) {
-      throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channel to create order. Outbound Amount: ${outboundAmount} Active Outbound Amount: ${activeOutboundAmount}`)
+      throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channel to create order. ` +
+        `Requested Outbound Amount: ${outboundAmount}, Active Outbound Amount: ${activeOutboundAmount}`)
     }
-
-    const inboundBalanceIsSufficient = await inboundEngine.isBalanceSufficient(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false })
     // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
     if (!inboundBalanceIsSufficient) {
-      throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order. Inbound Amount: ${inboundAmount} Active Inbound Amount: ${activeInboundAmount}`)
+      throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order. ` +
+        `Requested Inbound Amount: ${inboundAmount}, Active Inbound Amount: ${activeInboundAmount}`)
     }
   }
 
@@ -309,7 +315,7 @@ class BlockOrderWorker extends EventEmitter {
    * @returns {Big} res.inbound
    * @returns {Big} res.outbound
    */
-  async activeAmountsForOrders (orders) {
+  activeAmountsForOrders (orders) {
     const response = {
       inbound: Big(0),
       outbound: Big(0)
@@ -339,7 +345,7 @@ class BlockOrderWorker extends EventEmitter {
    * @returns {Big} res.inbound
    * @returns {Big} res.outbound
    */
-  async activeAmountsForFills (fills) {
+  activeAmountsForFills (fills) {
     const response = {
       inbound: Big(0),
       outbound: Big(0)
@@ -367,8 +373,13 @@ class BlockOrderWorker extends EventEmitter {
    * @returns {Big} activeInboundAmount
    */
   async calculateActiveFunds (market, side) {
-    const orders = await Order.getAllOrders(this.ordersStore)
-    const fills = await Fill.getAllFills(this.fillsStore)
+    const [
+      orders,
+      fills
+    ] = await Promise.all([
+      Order.getAllOrders(this.ordersStore),
+      Fill.getAllFills(this.fillsStore)
+    ])
 
     // Filter out records for a particular market and side
     // TODO: add indexes on orders/fills for market
@@ -381,8 +392,14 @@ class BlockOrderWorker extends EventEmitter {
       return f.fill && f.fill.market === market && f.fill.side === side
     })
 
-    const { inbound: orderInbound, outbound: orderOutbound } = await this.activeAmountsForOrders(filteredOrders)
-    const { inbound: fillInbound, outbound: fillOutbound } = await this.activeAmountsForFills(filteredFills)
+    const {
+      inbound: orderInbound,
+      outbound: orderOutbound
+    } = this.activeAmountsForOrders(filteredOrders)
+    const {
+      inbound: fillInbound,
+      outbound: fillOutbound
+    } = this.activeAmountsForFills(filteredFills)
 
     this.logger.debug('Calculating active funds', {
       orderInbound: orderInbound.toString(),
@@ -391,7 +408,10 @@ class BlockOrderWorker extends EventEmitter {
       fillOutbound: fillOutbound.toString()
     })
 
-    return { activeOutboundAmount: orderOutbound.plus(fillOutbound), activeInboundAmount: orderInbound.plus(fillInbound) }
+    return {
+      activeOutboundAmount: orderOutbound.plus(fillOutbound),
+      activeInboundAmount: orderInbound.plus(fillInbound)
+    }
   }
 
   /**
