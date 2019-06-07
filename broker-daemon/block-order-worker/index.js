@@ -311,16 +311,23 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Calculates active amounts for a given collection of orders
    * @param {Array<Order>} orders
+   * @param {string} market - Market to consider
+   * @param {string} side - Side of orders to consider
    * @returns {Object} res
    * @returns {Big} res.inbound
    * @returns {Big} res.outbound
    */
-  activeAmountsForOrders (orders) {
+  activeAmountsForOrders (orders, market, side) {
     const response = {
       inbound: Big(0),
       outbound: Big(0)
     }
     return orders.reduce((acc, { order, state }) => {
+      // If the order is not in the right market or for the right side, we can skip it.
+      if (!order || order.market !== market || order.side !== side) {
+        return acc
+      }
+
       // If the order is not in an active state , then we can simply skip it
       if (!Object.values(OrderStateMachine.ACTIVE_STATES).includes(state)) {
         return acc
@@ -341,16 +348,23 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Calculates active amounts for a given collection of fills
    * @param {Array<Fill>} fills
+   * @param {string} market - Market to consider
+   * @param {string} side - Side of fills to consider
    * @returns {Object} res
    * @returns {Big} res.inbound
    * @returns {Big} res.outbound
    */
-  activeAmountsForFills (fills) {
+  activeAmountsForFills (fills, market, side) {
     const response = {
       inbound: Big(0),
       outbound: Big(0)
     }
     return fills.reduce((acc, { fill, state }) => {
+      // If the fill is not in the right market or for the right side, we can skip it.
+      if (!fill || fill.market !== market || fill.side !== side) {
+        return acc
+      }
+
       // If the fill is not in an active state , then we can simply skip it
       if (!Object.values(FillStateMachine.ACTIVE_STATES).includes(state)) {
         return acc
@@ -377,29 +391,20 @@ class BlockOrderWorker extends EventEmitter {
       orders,
       fills
     ] = await Promise.all([
+      // TODO: add indexes on orders/fills for market
+      // TODO: add index for side of market on order/fills
       Order.getAllOrders(this.ordersStore),
       Fill.getAllFills(this.fillsStore)
     ])
 
-    // Filter out records for a particular market and side
-    // TODO: add indexes on orders/fills for market
-    // TODO: add index for side of market on order/fills
-    const filteredOrders = orders.filter((o) => {
-      return o.order && o.order.market === market && o.order.side === side
-    })
-
-    const filteredFills = fills.filter((f) => {
-      return f.fill && f.fill.market === market && f.fill.side === side
-    })
-
     const {
       inbound: orderInbound,
       outbound: orderOutbound
-    } = this.activeAmountsForOrders(filteredOrders)
+    } = this.activeAmountsForOrders(orders, market, side)
     const {
       inbound: fillInbound,
       outbound: fillOutbound
-    } = this.activeAmountsForFills(filteredFills)
+    } = this.activeAmountsForFills(fills, market, side)
 
     this.logger.debug('Calculating active funds', {
       orderInbound: orderInbound.toString(),
