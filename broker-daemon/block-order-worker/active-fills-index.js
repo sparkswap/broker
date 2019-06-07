@@ -22,7 +22,7 @@ class ActiveFillsIndex extends SubsetStore {
   _addToIndexOperation (key, value) {
     const { state } = JSON.parse(value)
 
-    if (Object.values(FillStateMachine.ACTIVE_STATES.includes(state))) {
+    if (Object.values(FillStateMachine.ACTIVE_STATES).includes(state)) {
       return { key, value, type: 'put', prefix: this.store }
     }
 

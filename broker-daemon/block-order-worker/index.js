@@ -94,8 +94,12 @@ class BlockOrderWorker extends EventEmitter {
    * @returns {void}
    */
   async initialize (enginesAreValidated) {
-    await this.ordersByHash.ensureIndex()
-    await this.ordersByOrderId.ensureIndex()
+    await Promise.all([
+      this.activeOrders.ensureIndex(),
+      this.activeFills.ensureIndex(),
+      this.ordersByHash.ensureIndex(),
+      this.ordersByOrderId.ensureIndex()
+    ])
     // We do not await the settlement of indeterminate orders to allow indexes
     // which can be a long process, to be awaited on start, but prevents locking
     // the event loop if our engines are not validated.
@@ -247,11 +251,11 @@ class BlockOrderWorker extends EventEmitter {
    * @throws {Error} If there are insufficient outbound or inbound funds
    */
   async checkFundsAreSufficient (blockOrder) {
-    const { marketName, side, outboundSymbol, inboundSymbol } = blockOrder
+    const { marketName, outboundSymbol, inboundSymbol } = blockOrder
     const {
       outbound: activeOutboundAmount,
       inbound: activeInboundAmount
-    } = await this.calculateActiveFunds(marketName, side)
+    } = await this.calculateActiveFunds(marketName, inboundSymbol, outboundSymbol)
 
     const outboundEngine = this.engines.get(outboundSymbol)
     const inboundEngine = this.engines.get(inboundSymbol)
@@ -322,34 +326,39 @@ class BlockOrderWorker extends EventEmitter {
    *
    * @todo Change return value from Big to String
    * @param {string} market
-   * @param {string} side
+   * @param {string} inboundSymbol
+   * @param {string} outboundSymbol
    * @returns {Object} res
    * @returns {Big} activeOutboundAmount
    * @returns {Big} activeInboundAmount
    */
-  async calculateActiveFunds (market, side) {
+  async calculateActiveFunds (market, inboundSymbol, outboundSymbol) {
     const [
       activeOrders,
       activeFills
     ] = await Promise.all([
       // TODO: add indexes on orders/fills for market
-      // TODO: add index for side of market on order/fills
-      getRecords(this.activeOrders.store),
-      getRecords(this.activeFills.store)
+      getRecords(this.activeOrders.store, Order.fromStorage.bind(Order)),
+      getRecords(this.activeFills.store, Fill.fromStorage.bind(Fill))
     ])
     const records = [ ...activeOrders, ...activeFills ]
 
     let inbound = Big(0)
     let outbound = Big(0)
 
-    records.forEach(({ record, state }) => {
-      // If the record is not in the right market or for the right side, we can skip it.
-      if (!record || record.market !== market || record.side !== side) {
+    records.forEach((record) => {
+      // If the record is not in the right market we can skip it.
+      if (record.market !== market) {
         return
       }
 
-      inbound = inbound.plus(record.inboundAmount)
-      outbound = outbound.plus(record.outboundAmount)
+      if (record.inboundSymbol === inboundSymbol) {
+        inbound = inbound.plus(record.inboundAmount)
+      }
+
+      if (record.outboundSymbol === outboundSymbol) {
+        outbound = outbound.plus(record.outboundAmount)
+      }
     })
 
     this.logger.debug('Calculated active funds', {
