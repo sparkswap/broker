@@ -20,6 +20,8 @@ describe('BlockOrderWorker', () => {
   let OrderStateMachine
   let FillStateMachine
   let SublevelIndex
+  let ActiveFillsIndex
+  let ActiveOrdersIndex
   let loggerErrorStub
 
   let orderbooks
@@ -60,6 +62,7 @@ describe('BlockOrderWorker', () => {
 
     Fill = {
       fromObject: sinon.stub(),
+      fromStorage: sinon.stub(),
       rangeForBlockOrderIds: sinon.stub()
     }
     BlockOrderWorker.__set__('Fill', Fill)
@@ -81,6 +84,11 @@ describe('BlockOrderWorker', () => {
 
     SublevelIndex = sinon.stub()
     BlockOrderWorker.__set__('SublevelIndex', SublevelIndex)
+
+    ActiveFillsIndex = sinon.stub()
+    ActiveOrdersIndex = sinon.stub()
+    BlockOrderWorker.__set__('ActiveFillsIndex', ActiveFillsIndex)
+    BlockOrderWorker.__set__('ActiveOrdersIndex', ActiveOrdersIndex)
 
     orderbooks = new Map([['BTC/LTC', {
       getBestOrders: sinon.stub(),
@@ -162,24 +170,36 @@ describe('BlockOrderWorker', () => {
       expect(worker).to.have.property('engines', engines)
     })
 
-    it('creates indices for the orders store', async () => {
+    it('creates an index for active orders', () => {
+      expect(ActiveOrdersIndex).to.have.been.calledOnce()
+      expect(ActiveOrdersIndex).to.have.been.calledWithNew()
+      expect(ActiveOrdersIndex).to.have.been.calledWith(secondLevel)
+    })
+
+    it('creates an index for active fills', () => {
+      expect(ActiveFillsIndex).to.have.been.calledOnce()
+      expect(ActiveFillsIndex).to.have.been.calledWithNew()
+      expect(ActiveFillsIndex).to.have.been.calledWith(secondLevel)
+    })
+
+    it('creates indices for the orders store', () => {
       expect(SublevelIndex).to.have.been.calledTwice()
       expect(SublevelIndex).to.have.been.calledWithNew()
     })
 
-    it('creates an index for the orders store by hash', async () => {
+    it('creates an index for the orders store by hash', () => {
       expect(SublevelIndex).to.have.been.calledWith(secondLevel, 'ordersByHash')
       expect(worker).to.have.property('ordersByHash')
       expect(worker.ordersByHash).to.be.instanceOf(SublevelIndex)
     })
 
-    it('creates an index for the orders store by hash', async () => {
+    it('creates an index for the orders store by hash', () => {
       expect(SublevelIndex).to.have.been.calledWith(secondLevel, 'ordersByOrderId')
       expect(worker).to.have.property('ordersByOrderId')
       expect(worker.ordersByOrderId).to.be.instanceOf(SublevelIndex)
     })
 
-    it('indexes the orders store by swap hash', async () => {
+    it('indexes the orders store by swap hash', () => {
       const getValue = SublevelIndex.args[0][2]
 
       const fakeKey = 'mykey'
@@ -196,7 +216,7 @@ describe('BlockOrderWorker', () => {
       expect(indexValue).to.be.equal(fakeOrder.swapHash)
     })
 
-    it('indexes the orders that have a swap hash', async () => {
+    it('indexes the orders that have a swap hash', () => {
       const filter = SublevelIndex.args[0][3]
 
       const fakeKey = 'mykey'
@@ -213,7 +233,7 @@ describe('BlockOrderWorker', () => {
       expect(filtered).to.be.equal(true)
     })
 
-    it('does not index the orders that do not have a swap hash', async () => {
+    it('does not index the orders that do not have a swap hash', () => {
       const filter = SublevelIndex.args[0][3]
 
       const fakeKey = 'mykey'
@@ -230,7 +250,7 @@ describe('BlockOrderWorker', () => {
       expect(filtered).to.be.equal(false)
     })
 
-    it('indexes the orders store by order id', async () => {
+    it('indexes the orders store by order id', () => {
       const getValue = SublevelIndex.args[1][2]
 
       const fakeKey = 'mykey'
@@ -247,7 +267,7 @@ describe('BlockOrderWorker', () => {
       expect(indexValue).to.be.equal(fakeOrder.orderId)
     })
 
-    it('indexes the orders that have a orderId', async () => {
+    it('indexes the orders that have a orderId', () => {
       const filter = SublevelIndex.args[1][3]
 
       const fakeKey = 'mykey'
@@ -264,7 +284,7 @@ describe('BlockOrderWorker', () => {
       expect(filtered).to.be.equal(true)
     })
 
-    it('does not index the orders that do not have an orderId', async () => {
+    it('does not index the orders that do not have an orderId', () => {
       const filter = SublevelIndex.args[1][3]
 
       const fakeKey = 'mykey'
@@ -291,7 +311,21 @@ describe('BlockOrderWorker', () => {
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       worker.ordersByHash = { ensureIndex: sinon.stub().resolves() }
       worker.ordersByOrderId = { ensureIndex: sinon.stub().resolves() }
+      worker.activeOrders = { ensureIndex: sinon.stub().resolves() }
+      worker.activeFills = { ensureIndex: sinon.stub().resolves() }
       worker.settleIndeterminateOrdersFills = sinon.stub().resolves()
+    })
+
+    it('rebuilds the active orders index', async () => {
+      await worker.initialize(engineValidPromise)
+
+      expect(worker.activeOrders.ensureIndex).to.have.been.calledOnce()
+    })
+
+    it('rebuilds the active fills index', async () => {
+      await worker.initialize(engineValidPromise)
+
+      expect(worker.activeFills.ensureIndex).to.have.been.calledOnce()
     })
 
     it('rebuilds the ordersByHash index', async () => {
@@ -729,8 +763,8 @@ describe('BlockOrderWorker', () => {
       inboundAmount = '1000000000'
       outboundSymbol = 'LTC'
       inboundSymbol = 'BTC'
-      activeInboundAmount = Big('1000')
-      activeOutboundAmount = Big('3000')
+      activeInboundAmount = '1000'
+      activeOutboundAmount = '3000'
       orderbook = {
         getAveragePrice: sinon.stub()
       }
@@ -770,7 +804,10 @@ describe('BlockOrderWorker', () => {
       revert = BlockOrderWorker.__set__('BlockOrder', BlockOrder)
 
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
-      worker.calculateActiveFunds = sinon.stub().resolves({ activeInboundAmount, activeOutboundAmount })
+      worker.calculateActiveFunds = sinon.stub().resolves({
+        inbound: activeInboundAmount,
+        outbound: activeOutboundAmount
+      })
     })
 
     afterEach(() => {
@@ -780,7 +817,8 @@ describe('BlockOrderWorker', () => {
     it('calculates the outstanding outbound and inbound funds', async () => {
       await worker.checkFundsAreSufficient(blockOrderStub)
       expect(worker.calculateActiveFunds).to.have.been.calledOnce()
-      expect(worker.calculateActiveFunds).to.have.been.calledWith(blockOrderStub.marketName, blockOrderStub.side)
+      expect(worker.calculateActiveFunds).to.have.been.calledWith(
+        blockOrderStub.marketName, blockOrderStub.inboundSymbol, blockOrderStub.outboundSymbol)
     })
 
     it('gets the addresses to the relayer to check engine balances', async () => {
@@ -1404,74 +1442,122 @@ describe('BlockOrderWorker', () => {
 
   describe('#calculateActiveFunds', () => {
     let worker
-    let ordersStoreStub
-    let fillsStoreStub
-    let orderStub
-    let fillStub
+    let activeOrdersStoreStub
+    let activeFillsStoreStub
     let orders
     let fills
-    let activeAmountFillStub
-    let activeAmountOrderStub
     let market
-    let side
+    let inboundSymbol
+    let outboundSymbol
+    let getRecords
+    let fillFromStorage
+    let orderFromStorage
 
     beforeEach(() => {
       market = 'BTC/LTC'
-      side = 'BID'
+      inboundSymbol = 'BTC'
+      outboundSymbol = 'LTC'
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
-      worker.ordersStore = ordersStoreStub
-      worker.fillsStore = fillsStoreStub
-
-      activeAmountOrderStub = sinon.stub().returns({ inbound: Big(1234), outbound: Big(1234) })
-      worker.activeAmountsForOrders = activeAmountOrderStub
-
-      activeAmountFillStub = sinon.stub().returns({ inbound: Big(103), outbound: Big(0) })
-      worker.activeAmountsForFills = activeAmountFillStub
-
-      orders = [{ order: { market: 'BTC/LTC', side: 'BID' } }]
-      fills = [{ fill: { market: 'BTC/LTC', side: 'ASK' } }]
-
-      orderStub = {
-        getAllOrders: sinon.stub().resolves(orders)
+      activeOrdersStoreStub = sinon.stub()
+      activeFillsStoreStub = sinon.stub()
+      worker.activeOrders = {
+        store: activeOrdersStoreStub
+      }
+      worker.activeFills = {
+        store: activeFillsStoreStub
       }
 
-      fillStub = {
-        getAllFills: sinon.stub().resolves(fills)
-      }
+      orders = [
+        {
+          market: 'BTC/LTC',
+          inboundSymbol: 'BTC',
+          outboundSymbol: 'LTC',
+          inboundAmount: '100',
+          outboundAmount: '500'
+        },
+        {
+          market: 'BTC/LTC',
+          inboundSymbol: 'LTC',
+          outboundSymbol: 'BTC',
+          inboundAmount: '1000',
+          outboundAmount: '5000'
+        },
+        {
+          market: 'BAD/MKT',
+          inboundSymbol: 'LTC',
+          outboundSymbol: 'BTC',
+          inboundAmount: '1000',
+          outboundAmount: '5000'
+        }
+      ]
+      fills = [
+        {
+          market: 'BTC/LTC',
+          inboundSymbol: 'LTC',
+          outboundSymbol: 'BTC',
+          inboundAmount: '300',
+          outboundAmount: '70'
+        },
+        {
+          market: 'BTC/LTC',
+          inboundSymbol: 'BTC',
+          outboundSymbol: 'LTC',
+          inboundAmount: '3000',
+          outboundAmount: '700'
+        },
+        {
+          market: 'BAD/MKT',
+          inboundSymbol: 'BTC',
+          outboundSymbol: 'LTC',
+          inboundAmount: '3000',
+          outboundAmount: '700'
+        }
+      ]
 
-      BlockOrderWorker.__set__('Fill', fillStub)
-      BlockOrderWorker.__set__('Order', orderStub)
+      getRecords = sinon.stub()
+      getRecords.withArgs(activeOrdersStoreStub).resolves(orders)
+      getRecords.withArgs(activeFillsStoreStub).resolves(fills)
+
+      BlockOrderWorker.__set__('getRecords', getRecords)
+
+      orderFromStorage = sinon.stub()
+      fillFromStorage = sinon.stub()
+
+      Fill.fromStorage.bind = sinon.stub().returns(fillFromStorage)
+      Order.fromStorage.bind = sinon.stub().returns(orderFromStorage)
     })
 
-    it('grabs all orders', async () => {
-      await worker.calculateActiveFunds(market, side)
-      expect(orderStub.getAllOrders).to.have.been.calledWith(ordersStoreStub)
+    it('grabs all active orders', async () => {
+      await worker.calculateActiveFunds(market, inboundSymbol, outboundSymbol)
+      expect(getRecords).to.have.been.calledWith(activeOrdersStoreStub, orderFromStorage)
     })
 
-    it('grabs all fills', async () => {
-      await worker.calculateActiveFunds(market, side)
-      expect(fillStub.getAllFills).to.have.been.calledWith(fillsStoreStub)
+    it('grabs all active fills', async () => {
+      await worker.calculateActiveFunds(market, inboundSymbol, outboundSymbol)
+      expect(getRecords).to.have.been.calledWith(activeFillsStoreStub, fillFromStorage)
     })
 
-    it('gets the active amounts for bids', async () => {
-      await worker.calculateActiveFunds(market, side)
-      expect(activeAmountOrderStub).to.have.been.calledWith(orders)
-      expect(activeAmountFillStub).to.have.been.calledWith(fills)
+    context('inbound BTC', () => {
+      it('returns the active inbound and outbound amounts', async () => {
+        const res = await worker.calculateActiveFunds(market, inboundSymbol, outboundSymbol)
+
+        expect(res.outbound).to.eql('1200')
+        expect(res.inbound).to.eql('3100')
+      })
     })
 
-    it('gets the active amounts for asks', async () => {
-      await worker.calculateActiveFunds(market, 'ASK')
-      expect(activeAmountOrderStub).to.have.been.calledWith(orders)
-      expect(activeAmountFillStub).to.have.been.calledWith(fills)
-    })
+    context('inbound LTC', () => {
+      beforeEach(() => {
+        inboundSymbol = 'LTC'
+        outboundSymbol = 'BTC'
+      })
 
-    it('returns the active inbound and outbound amounts', async () => {
-      const res = await worker.calculateActiveFunds(market, side)
+      it('returns the active inbound and outbound amounts', async () => {
+        const res = await worker.calculateActiveFunds(market, inboundSymbol, outboundSymbol)
 
-      expect(res.activeOutboundAmount).to.be.instanceOf(Big)
-      expect(res.activeInboundAmount).to.be.instanceOf(Big)
-      expect(res.activeOutboundAmount.toString()).to.eql('1234')
-      expect(res.activeInboundAmount.toString()).to.eql('1337')
+        expect(res.outbound).to.eql('5070')
+        expect(res.inbound).to.eql('1300')
+      })
     })
   })
 
@@ -2715,201 +2801,6 @@ describe('BlockOrderWorker', () => {
       const res = await worker.relayerIsAvailable()
       expect(tryCallStub).to.have.been.calledOnce()
       expect(res).to.be.eql(tryCallResult)
-    })
-  })
-
-  describe('::activeAmountsForOrders', () => {
-    let worker
-    let side
-    let market
-
-    const OrderStateMachine = BlockOrderWorker.__get__('OrderStateMachine')
-    const { CREATED, PLACED, EXECUTING } = OrderStateMachine.STATES
-
-    beforeEach(() => {
-      side = 'BID'
-      market = 'BTC/LTC'
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
-    })
-
-    it('only returns amounts for records in the right market', () => {
-      const orders = [{
-        state: CREATED,
-        order: {
-          inboundAmount: 100,
-          outboundAmount: 2000,
-          side,
-          market: 'BAD/MKT'
-        }
-      }]
-
-      const res = worker.activeAmountsForOrders(orders, market, side)
-      expect(res.inbound.toString()).to.be.eql('0')
-      expect(res.outbound.toString()).to.be.eql('0')
-    })
-
-    it('only returns amounts for records on the right side', () => {
-      const orders = [{
-        state: CREATED,
-        order: {
-          inboundAmount: 100,
-          outboundAmount: 2000,
-          side: 'ASK',
-          market
-        }
-      }]
-
-      const res = worker.activeAmountsForOrders(orders, market, side)
-      expect(res.inbound.toString()).to.be.eql('0')
-      expect(res.outbound.toString()).to.be.eql('0')
-    })
-
-    it('only returns amounts for records in an active state', async () => {
-      const orders = [{
-        state: 'BAD_STATE',
-        order: {
-          side,
-          market
-        }
-      }]
-      const res = await worker.activeAmountsForOrders(orders, market, side)
-      expect(res.inbound.toString()).to.be.eql('0')
-      expect(res.outbound.toString()).to.be.eql('0')
-    })
-
-    it('returns amounts for created orders', () => {
-      const orders = [{
-        state: CREATED,
-        order: {
-          side,
-          market,
-          inboundAmount: 100,
-          outboundAmount: 2000
-        }
-      }]
-      const res = worker.activeAmountsForOrders(orders, market, side)
-      expect(res.inbound.toString()).to.be.eql('100')
-      expect(res.outbound.toString()).to.be.eql('2000')
-    })
-
-    it('returns amounts for placed orders', () => {
-      const orders = [{
-        state: PLACED,
-        order: {
-          side,
-          market,
-          inboundAmount: 1000,
-          outboundAmount: 300
-        }
-      }]
-      const res = worker.activeAmountsForOrders(orders, market, side)
-      expect(res.inbound.toString()).to.be.eql('1000')
-      expect(res.outbound.toString()).to.be.eql('300')
-    })
-
-    it('returns amounts for executing orders', () => {
-      const orders = [{
-        state: EXECUTING,
-        order: {
-          side,
-          market,
-          inboundFillAmount: 10000,
-          outboundFillAmount: 50
-        }
-      }]
-      const res = worker.activeAmountsForOrders(orders, market, side)
-      expect(res.inbound.toString()).to.be.eql('10000')
-      expect(res.outbound.toString()).to.be.eql('50')
-    })
-  })
-
-  describe('::activeAmountsForFills', () => {
-    let worker
-    let market
-    let side
-
-    const FillStateMachine = BlockOrderWorker.__get__('FillStateMachine')
-    const { CREATED, FILLED } = FillStateMachine.STATES
-
-    beforeEach(() => {
-      worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
-      market = 'BTC/LTC'
-      side = 'BID'
-    })
-
-    it('only returns amounts for records in the right market', () => {
-      const fills = [{
-        state: CREATED,
-        fill: {
-          inboundAmount: 100,
-          outboundAmount: 2000,
-          side,
-          market: 'BAD/MKT'
-        }
-      }]
-
-      const res = worker.activeAmountsForFills(fills, market, side)
-      expect(res.inbound.toString()).to.be.eql('0')
-      expect(res.outbound.toString()).to.be.eql('0')
-    })
-
-    it('only returns amounts for records on the right side', () => {
-      const fills = [{
-        state: CREATED,
-        fill: {
-          inboundAmount: 100,
-          outboundAmount: 2000,
-          side: 'ASK',
-          market
-        }
-      }]
-
-      const res = worker.activeAmountsForFills(fills, market, side)
-      expect(res.inbound.toString()).to.be.eql('0')
-      expect(res.outbound.toString()).to.be.eql('0')
-    })
-
-    it('only returns amounts for records in an active state', () => {
-      const fills = [{
-        fill: {
-          market,
-          side
-        },
-        state: 'BAD_STATE'
-      }]
-      const res = worker.activeAmountsForFills(fills, market, side)
-      expect(res.inbound.toString()).to.be.eql('0')
-      expect(res.outbound.toString()).to.be.eql('0')
-    })
-
-    it('returns amounts for created fills', () => {
-      const fills = [{
-        state: CREATED,
-        fill: {
-          market,
-          side,
-          inboundAmount: 100,
-          outboundAmount: 2000
-        }
-      }]
-      const res = worker.activeAmountsForFills(fills, market, side)
-      expect(res.inbound.toString()).to.be.eql('100')
-      expect(res.outbound.toString()).to.be.eql('2000')
-    })
-
-    it('returns amounts for a filled fill', () => {
-      const fills = [{
-        state: FILLED,
-        fill: {
-          market,
-          side,
-          inboundAmount: 1000,
-          outboundAmount: 300
-        }
-      }]
-      const res = worker.activeAmountsForFills(fills, market, side)
-      expect(res.inbound.toString()).to.be.eql('1000')
-      expect(res.outbound.toString()).to.be.eql('300')
     })
   })
 })

@@ -329,8 +329,8 @@ class BlockOrderWorker extends EventEmitter {
    * @param {string} inboundSymbol
    * @param {string} outboundSymbol
    * @returns {Object} res
-   * @returns {Big} activeOutboundAmount
-   * @returns {Big} activeInboundAmount
+   * @returns {string} inbound - int64 string of active inbound amount
+   * @returns {string} outbound - int64 string of active outbound amount
    */
   async calculateActiveFunds (market, inboundSymbol, outboundSymbol) {
     const [
@@ -361,9 +361,12 @@ class BlockOrderWorker extends EventEmitter {
       }
     })
 
+    inbound = inbound.toString()
+    outbound = outbound.toString()
+
     this.logger.debug('Calculated active funds', {
-      inbound: inbound.toString(),
-      outbound: outbound.toString()
+      inbound: inbound,
+      outbound: outbound
     })
 
     return {
