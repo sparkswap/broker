@@ -1,7 +1,8 @@
 const migrateStore = require('./migrate-store')
+const logger = require('./logger')
 
 /**
- * @class Subset of another sublevel store based on criteria
+ * @class Subset of another sublevel store
  */
 class SubsetStore {
   /**
@@ -16,53 +17,63 @@ class SubsetStore {
 
   /**
    * Rebuild the index and add hooks for new events
+   * @public
    * @returns {void} resolves when the index is rebuilt and ready for new events
    */
   async ensureIndex () {
-    await this._clearIndex()
-    await this._rebuildIndex()
-    this._addIndexHook()
+    logger.debug(`Rebuilding ${this.constructor.name} index...`)
+    await this.clearIndex()
+    await this.rebuildIndex()
+    this.addIndexHook()
+    logger.debug(`${this.constructor.name} index rebuilt.`)
   }
 
   /**
    * Create an object that can be passed to Sublevel to create or remove a record
    * In this abstract class, all records will be added to the subset. It should be overwritten by implementers.
+   * @private
    * @param {string} key   - Key of the record to create an index op for
    * @param {string} value - Value of the record being added to the events store to create an index op for
    * @returns {Object} object for create/delete for use with sublevel
    */
-  _addToIndexOperation (key, value) {
+  addToIndexOperation (key, value) {
+    logger.warn(`SubsetStore#addToIndexOperation was called with its default function. ` +
+      `This is almost certainly not intended behavior. Override #addToIndexOperation in ` +
+      `the sub-class ${this.constructor.name} to only include certain records in the subset.`)
     return { key, value, type: 'put', prefix: this.store }
   }
 
   /**
    * Clear the existing index
+   * @private
    * @returns {Promise} resolves when the index is cleared
    */
-  _clearIndex () {
+  clearIndex () {
     // remove any previously applied hooks
-    if (this._removeHook) {
-      this._removeHook()
+    if (this.removeHook) {
+      this.removeHook()
     }
     return migrateStore(this.store, this.store, (key) => { return { type: 'del', key } })
   }
 
   /**
    * Rebuild the index from events
+   * @private
    * @returns {Promise} resolves when the index is rebuilt
    */
-  _rebuildIndex () {
-    return migrateStore(this.sourceStore, this.store, this._addToIndexOperation.bind(this))
+  rebuildIndex () {
+    return migrateStore(this.sourceStore, this.store, this.addToIndexOperation.bind(this))
   }
 
   /**
    * Create a hook for new events added to the store to modify the orderbook
+   * @private
    * @returns {void}
    */
-  _addIndexHook () {
+  addIndexHook () {
     const indexHook = (dbOperation, add) => {
       if (dbOperation.type === 'put') {
-        add(this._addToIndexOperation(dbOperation.key, dbOperation.value))
+        add(this.addToIndexOperation(dbOperation.key, dbOperation.value))
       } else if (dbOperation.type === 'del') {
         add({ key: dbOperation.key, type: 'del', prefix: this.store })
       }
@@ -70,7 +81,7 @@ class SubsetStore {
 
     // `.pre` adds a hook for before a `put` in the sourceStore, and returns
     // a function to remove that same hook.
-    this._removeHook = this.sourceStore.pre(indexHook)
+    this.removeHook = this.sourceStore.pre(indexHook)
   }
 }
 
