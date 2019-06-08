@@ -169,18 +169,44 @@ class Order {
   }
 
   /**
-   * Get the symbol of the currency we will receive inbound
-   * @returns {string} Currency symbol
+   * Get the amount (as an integer in its currency's smallest units) that we will receive inbound for this order
+   * @returns {string} 64-bit integer represented as a string
    */
   get inboundAmount () {
+    if (this.fillAmount) {
+      return this.inboundFillAmount
+    }
+
+    return this.inboundTotalAmount
+  }
+
+  /**
+   * Get the amount (as an integer in its currency's smallest units) that we will send outbound for this order
+   * @returns {string} 64-bit integer represented as a string
+   */
+  get outboundAmount () {
+    if (this.fillAmount) {
+      return this.outboundFillAmount
+    }
+
+    return this.outboundTotalAmount
+  }
+
+  /**
+   * Get the amount (as an integer in its currency's smallest units) that we will receive inbound for this order
+   * if the entirety of the order is filled.
+   * @returns {string} 64-bit integer represented as a string
+   */
+  get inboundTotalAmount () {
     return this.side === Order.SIDES.BID ? this.baseAmount : this.counterAmount
   }
 
   /**
-   * Get the symbol of the currency we will send outbound
-   * @returns {string} Currency symbol
+   * Get the amount (as an integer in its currency's smallest units) that we will send outbound for this order
+   * if the entirety of the order is filled.
+   * @returns {string} 64-bit integer represented as a string
    */
-  get outboundAmount () {
+  get outboundTotalAmount () {
     return this.side === Order.SIDES.BID ? this.counterAmount : this.baseAmount
   }
 

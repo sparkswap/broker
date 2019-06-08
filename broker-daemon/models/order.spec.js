@@ -275,32 +275,52 @@ describe('Order', () => {
         expect(order).to.have.property('outboundSymbol', params.counterSymbol)
       })
 
-      it('defines an inbound amount getter', () => {
-        expect(order).to.have.property('inboundAmount', params.baseAmount)
+      it('defines an inbound total amount getter', () => {
+        expect(order).to.have.property('inboundTotalAmount', params.baseAmount)
       })
 
-      it('defines an outbound amount getter', () => {
-        expect(order).to.have.property('outboundAmount', params.counterAmount)
+      it('defines an outbound total amount getter', () => {
+        expect(order).to.have.property('outboundTotalAmount', params.counterAmount)
       })
 
-      it('defines an inbound fill amount getter', () => {
-        expect(order).to.have.property('inboundFillAmount', '9000')
+      context('order has been filled', () => {
+        it('defines an inbound fill amount getter', () => {
+          expect(order).to.have.property('inboundFillAmount', '9000')
+        })
+
+        it('defines an outbound fill amount getter', () => {
+          expect(order).to.have.property('outboundFillAmount', '90000')
+        })
+
+        it('defines an inbound amount getter', () => {
+          expect(order).to.have.property('inboundAmount', '9000')
+        })
+
+        it('defines an outbound fill amount getter', () => {
+          expect(order).to.have.property('outboundAmount', '90000')
+        })
       })
 
-      it('throws if trying to use the inbound fill amount without a fill amount', () => {
-        order.fillAmount = null
+      context('order has not been filled', () => {
+        beforeEach(() => {
+          order.fillAmount = null
+        })
 
-        expect(() => order.inboundFillAmount).to.throw()
-      })
+        it('throws if trying to use the inbound fill amount without a fill amount', () => {
+          expect(() => order.inboundFillAmount).to.throw()
+        })
 
-      it('defines an outbound fill amount getter', () => {
-        expect(order).to.have.property('outboundFillAmount', '90000')
-      })
+        it('throws if trying to use the outbound fill amount without a fill amount', () => {
+          expect(() => order.outboundFillAmount).to.throw()
+        })
 
-      it('throws if trying to use the outbound fill amount without a fill amount', () => {
-        order.fillAmount = null
+        it('defines an inbound amount getter', () => {
+          expect(order).to.have.property('inboundAmount', params.baseAmount)
+        })
 
-        expect(() => order.outboundFillAmount).to.throw()
+        it('defines an outbound amount getter', () => {
+          expect(order).to.have.property('outboundAmount', params.counterAmount)
+        })
       })
     })
 
