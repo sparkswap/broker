@@ -22,7 +22,7 @@ class OrderbookIndex extends SubsetStore {
    * @param {string} value - Value of the record being added to the events store to create an index op for
    * @returns {Object} object for create/delete for use with sublevel
    */
-  _addToIndexOperation (key, value) {
+  addToIndexOperation (key, value) {
     const event = MarketEvent.fromStorage(key, value)
     const order = MarketEventOrder.fromEvent(event, this.marketName)
 
