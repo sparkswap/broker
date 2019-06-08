@@ -818,7 +818,12 @@ describe('BlockOrderWorker', () => {
       await worker.checkFundsAreSufficient(blockOrderStub)
       expect(worker.calculateActiveFunds).to.have.been.calledOnce()
       expect(worker.calculateActiveFunds).to.have.been.calledWith(
-        blockOrderStub.marketName, blockOrderStub.inboundSymbol, blockOrderStub.outboundSymbol)
+        blockOrderStub.marketName,
+        {
+          inboundSymbol: blockOrderStub.inboundSymbol,
+          outboundSymbol: blockOrderStub.outboundSymbol
+        }
+      )
     })
 
     it('gets the addresses to the relayer to check engine balances', async () => {
@@ -1528,18 +1533,18 @@ describe('BlockOrderWorker', () => {
     })
 
     it('grabs all active orders', async () => {
-      await worker.calculateActiveFunds(market, inboundSymbol, outboundSymbol)
+      await worker.calculateActiveFunds(market, { inboundSymbol, outboundSymbol })
       expect(getRecords).to.have.been.calledWith(activeOrdersStoreStub, orderFromStorage)
     })
 
     it('grabs all active fills', async () => {
-      await worker.calculateActiveFunds(market, inboundSymbol, outboundSymbol)
+      await worker.calculateActiveFunds(market, { inboundSymbol, outboundSymbol })
       expect(getRecords).to.have.been.calledWith(activeFillsStoreStub, fillFromStorage)
     })
 
     context('inbound BTC', () => {
       it('returns the active inbound and outbound amounts', async () => {
-        const res = await worker.calculateActiveFunds(market, inboundSymbol, outboundSymbol)
+        const res = await worker.calculateActiveFunds(market, { inboundSymbol, outboundSymbol })
 
         expect(res.outbound).to.eql('1200')
         expect(res.inbound).to.eql('3100')
@@ -1553,7 +1558,7 @@ describe('BlockOrderWorker', () => {
       })
 
       it('returns the active inbound and outbound amounts', async () => {
-        const res = await worker.calculateActiveFunds(market, inboundSymbol, outboundSymbol)
+        const res = await worker.calculateActiveFunds(market, { inboundSymbol, outboundSymbol })
 
         expect(res.outbound).to.eql('5070')
         expect(res.inbound).to.eql('1300')

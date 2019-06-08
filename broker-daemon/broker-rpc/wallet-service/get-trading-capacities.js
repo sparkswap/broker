@@ -3,16 +3,6 @@ const { Big } = require('../../utils')
 
 /**
  * @constant
- * @type {Object<key, string>}
- * @default
- */
-const SIDES = Object.freeze({
-  BID: 'BID',
-  ASK: 'ASK'
-})
-
-/**
- * @constant
  * @type {Object}
  * @default
  */
@@ -123,11 +113,11 @@ async function getTradingCapacities ({ params, engines, orderbooks, blockOrderWo
   logger.debug(`Calculating active funds for ${market}`)
 
   const [
-    { activeOutboundAmount: committedCounterSendCapacity, activeInboundAmount: committedBaseReceiveCapacity },
-    { activeOutboundAmount: committedBaseSendCapacity, activeInboundAmount: committedCounterReceiveCapacity }
+    { outbound: committedCounterSendCapacity, inbound: committedBaseReceiveCapacity },
+    { outbound: committedBaseSendCapacity, inbound: committedCounterReceiveCapacity }
   ] = await Promise.all([
-    blockOrderWorker.calculateActiveFunds(market, SIDES.BID),
-    blockOrderWorker.calculateActiveFunds(market, SIDES.ASK)
+    blockOrderWorker.calculateActiveFunds(market, { outboundSymbol: counterSymbol, inboundSymbol: baseSymbol }),
+    blockOrderWorker.calculateActiveFunds(market, { outboundSymbol: baseSymbol, inboundSymbol: counterSymbol })
   ])
 
   // Capacities will always be returned for each side of the market, however if

@@ -40,8 +40,20 @@ describe('get-trading-capacities', () => {
       committedBaseReceiveCapacity = '0.00002'
       committedCounterSendCapacity = '0.00003'
       committedCounterReceiveCapacity = '0.00004'
-      blockOrderWorker.calculateActiveFunds.withArgs(params.market, 'BID').resolves({ activeInboundAmount: committedBaseReceiveCapacity, activeOutboundAmount: committedCounterSendCapacity })
-      blockOrderWorker.calculateActiveFunds.withArgs(params.market, 'ASK').resolves({ activeInboundAmount: committedCounterReceiveCapacity, activeOutboundAmount: committedBaseSendCapacity })
+      blockOrderWorker.calculateActiveFunds.withArgs(params.market, {
+        inboundSymbol: 'BTC',
+        outboundSymbol: 'LTC'
+      }).resolves({
+        inbound: committedBaseReceiveCapacity,
+        outbound: committedCounterSendCapacity
+      })
+      blockOrderWorker.calculateActiveFunds.withArgs(params.market, {
+        inboundSymbol: 'LTC',
+        outboundSymbol: 'BTC'
+      }).resolves({
+        inbound: committedCounterReceiveCapacity,
+        outbound: committedBaseSendCapacity
+      })
 
       revert = getTradingCapacities.__set__('getCapacities', getCapacitiesStub)
     })
@@ -75,8 +87,14 @@ describe('get-trading-capacities', () => {
       await getTradingCapacities({ params, logger, engines, orderbooks, blockOrderWorker }, { GetTradingCapacitiesResponse })
 
       expect(blockOrderWorker.calculateActiveFunds).to.have.been.calledTwice()
-      expect(blockOrderWorker.calculateActiveFunds).to.have.been.calledWith(params.market, 'BID')
-      expect(blockOrderWorker.calculateActiveFunds).to.have.been.calledWith(params.market, 'ASK')
+      expect(blockOrderWorker.calculateActiveFunds).to.have.been.calledWith(params.market, {
+        inboundSymbol: 'BTC',
+        outboundSymbol: 'LTC'
+      })
+      expect(blockOrderWorker.calculateActiveFunds).to.have.been.calledWith(params.market, {
+        inboundSymbol: 'LTC',
+        outboundSymbol: 'BTC'
+      })
     })
 
     it('gets the balances from a particular engine', async () => {

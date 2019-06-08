@@ -255,7 +255,7 @@ class BlockOrderWorker extends EventEmitter {
     const {
       outbound: activeOutboundAmount,
       inbound: activeInboundAmount
-    } = await this.calculateActiveFunds(marketName, inboundSymbol, outboundSymbol)
+    } = await this.calculateActiveFunds(marketName, { inboundSymbol, outboundSymbol })
 
     const outboundEngine = this.engines.get(outboundSymbol)
     const inboundEngine = this.engines.get(inboundSymbol)
@@ -326,13 +326,14 @@ class BlockOrderWorker extends EventEmitter {
    *
    * @todo Change return value from Big to String
    * @param {string} market
-   * @param {string} inboundSymbol
-   * @param {string} outboundSymbol
+   * @param {Object} symbols
+   * @param {string} symbols.inboundSymbol
+   * @param {string} symbols.outboundSymbol
    * @returns {Object} res
-   * @returns {string} inbound - int64 string of active inbound amount
-   * @returns {string} outbound - int64 string of active outbound amount
+   * @returns {string} res.inbound - int64 string of active inbound amount
+   * @returns {string} res.outbound - int64 string of active outbound amount
    */
-  async calculateActiveFunds (market, inboundSymbol, outboundSymbol) {
+  async calculateActiveFunds (market, { inboundSymbol, outboundSymbol }) {
     const [
       activeOrders,
       activeFills
