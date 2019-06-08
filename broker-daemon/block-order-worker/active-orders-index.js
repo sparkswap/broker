@@ -15,6 +15,7 @@ class ActiveOrdersIndex extends SubsetStore {
 
   /**
    * Create an object that can be passed to Sublevel to create or remove a record
+   * @private
    * @param {string} key   - Key of the record to create an index op for
    * @param {string} value - Value of the record being added to the events store to create an index op for
    * @returns {Object} object for create/delete for use with sublevel
