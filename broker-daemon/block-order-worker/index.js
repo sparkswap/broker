@@ -63,7 +63,7 @@ class BlockOrderWorker extends EventEmitter {
     const filterOrdersWithOrderId = (key, value) => !!Order.fromStorage(key, value).orderId
     const getOrderIdFromOrder = (key, value) => Order.fromStorage(key, value).orderId
 
-    // create a subset of active orders and fills
+    // create a subset of only the *active* orders and fills
     this.activeOrders = new ActiveOrdersIndex(this.ordersStore)
     this.activeFills = new ActiveFillsIndex(this.fillsStore)
 
