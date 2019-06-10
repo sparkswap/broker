@@ -1,6 +1,8 @@
 const EventEmitter = require('events')
 const { promisify } = require('util')
 
+const ActiveOrdersIndex = require('./active-orders-index')
+const ActiveFillsIndex = require('./active-fills-index')
 const { BlockOrder, Order, Fill } = require('../models')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 const {
@@ -61,6 +63,10 @@ class BlockOrderWorker extends EventEmitter {
     const filterOrdersWithOrderId = (key, value) => !!Order.fromStorage(key, value).orderId
     const getOrderIdFromOrder = (key, value) => Order.fromStorage(key, value).orderId
 
+    // create a subset of only the *active* orders and fills
+    this.activeOrders = new ActiveOrdersIndex(this.ordersStore)
+    this.activeFills = new ActiveFillsIndex(this.fillsStore)
+
     // create an index for the ordersStore so that orders can be retrieved by their swapHash
     this.ordersByHash = new SublevelIndex(
       this.ordersStore,
@@ -88,8 +94,12 @@ class BlockOrderWorker extends EventEmitter {
    * @returns {void}
    */
   async initialize (enginesAreValidated) {
-    await this.ordersByHash.ensureIndex()
-    await this.ordersByOrderId.ensureIndex()
+    await Promise.all([
+      this.activeOrders.ensureIndex(),
+      this.activeFills.ensureIndex(),
+      this.ordersByHash.ensureIndex(),
+      this.ordersByOrderId.ensureIndex()
+    ])
     // We do not await the settlement of indeterminate orders to allow indexes
     // which can be a long process, to be awaited on start, but prevents locking
     // the event loop if our engines are not validated.
@@ -241,8 +251,11 @@ class BlockOrderWorker extends EventEmitter {
    * @throws {Error} If there are insufficient outbound or inbound funds
    */
   async checkFundsAreSufficient (blockOrder) {
-    const { marketName, side, outboundSymbol, inboundSymbol } = blockOrder
-    const { activeOutboundAmount, activeInboundAmount } = await this.calculateActiveFunds(marketName, side)
+    const { marketName, outboundSymbol, inboundSymbol } = blockOrder
+    const {
+      outbound: activeOutboundAmount,
+      inbound: activeInboundAmount
+    } = await this.calculateActiveFunds(marketName, { inboundSymbol, outboundSymbol })
 
     const outboundEngine = this.engines.get(outboundSymbol)
     const inboundEngine = this.engines.get(inboundSymbol)
@@ -259,7 +272,6 @@ class BlockOrderWorker extends EventEmitter {
       this.relayer.paymentChannelNetworkService.getAddress({ symbol: inboundSymbol })
     ])
 
-    let counterAmount
     let outboundAmount
     let inboundAmount
     // If the blockOrder is a market order we will not have a counterAmount and therefore will not be
@@ -268,14 +280,15 @@ class BlockOrderWorker extends EventEmitter {
       const orderbook = this.orderbooks.get(blockOrder.marketName)
 
       if (!orderbook) {
-        throw new Error(`${blockOrder.marketName} is not being tracked as a market. Configure sparkswapd to track ${blockOrder.marketName} using the MARKETS environment variable.`)
+        throw new Error(`${blockOrder.marketName} is not being tracked as a market. ` +
+          `Configure sparkswapd to track ${blockOrder.marketName} using the MARKETS environment variable.`)
       }
       // averagePrice is the weighted average price of the best orders. This is in common units.
       const averagePrice = await orderbook.getAveragePrice(blockOrder.inverseSide, blockOrder.baseAmount)
       // The counterAmount is calculated by multiplying the price of the order (in our case we have an approximation
       // based on the weighted average of the depth of our order) by the amount of the order. This gets us the common counter amount.
       // We then multiply this by the quantums per common amount for the counter currency to get the counterAmount in units of the counter currency.
-      counterAmount = averagePrice.times(blockOrder.amount).times(blockOrder.counterCurrencyConfig.quantumsPerCommon).round(0).toString()
+      let counterAmount = averagePrice.times(blockOrder.amount).times(blockOrder.counterCurrencyConfig.quantumsPerCommon).round(0).toString()
       if (blockOrder.isBid) {
         outboundAmount = counterAmount
         inboundAmount = blockOrder.baseAmount
@@ -288,72 +301,24 @@ class BlockOrderWorker extends EventEmitter {
       inboundAmount = blockOrder.inboundAmount
     }
 
-    const outboundBalanceIsSufficient = await outboundEngine.isBalanceSufficient(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount))
+    const [
+      outboundBalanceIsSufficient,
+      inboundBalanceIsSufficient
+    ] = await Promise.all([
+      outboundEngine.isBalanceSufficient(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount)),
+      inboundEngine.isBalanceSufficient(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false })
+    ])
 
     // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
     if (!outboundBalanceIsSufficient) {
-      throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channel to create order. Outbound Amount: ${outboundAmount} Active Outbound Amount: ${activeOutboundAmount}`)
+      throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channel to create order. ` +
+        `Requested Outbound Amount: ${outboundAmount}, Active Outbound Amount: ${activeOutboundAmount}`)
     }
-
-    const inboundBalanceIsSufficient = await inboundEngine.isBalanceSufficient(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false })
     // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
     if (!inboundBalanceIsSufficient) {
-      throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order. Inbound Amount: ${inboundAmount} Active Inbound Amount: ${activeInboundAmount}`)
+      throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order. ` +
+        `Requested Inbound Amount: ${inboundAmount}, Active Inbound Amount: ${activeInboundAmount}`)
     }
-  }
-
-  /**
-   * Calculates active amounts for a given collection of orders
-   * @param {Array<Order>} orders
-   * @returns {Object} res
-   * @returns {Big} res.inbound
-   * @returns {Big} res.outbound
-   */
-  async activeAmountsForOrders (orders) {
-    const response = {
-      inbound: Big(0),
-      outbound: Big(0)
-    }
-    return orders.reduce((acc, { order, state }) => {
-      // If the order is not in an active state , then we can simply skip it
-      if (!Object.values(OrderStateMachine.ACTIVE_STATES).includes(state)) {
-        return acc
-      }
-
-      if (state === OrderStateMachine.STATES.EXECUTING) {
-        acc.inbound = acc.inbound.plus(order.inboundFillAmount)
-        acc.outbound = acc.outbound.plus(order.outboundFillAmount)
-        return acc
-      } else {
-        acc.inbound = acc.inbound.plus(order.inboundAmount)
-        acc.outbound = acc.outbound.plus(order.outboundAmount)
-        return acc
-      }
-    }, response)
-  }
-
-  /**
-   * Calculates active amounts for a given collection of fills
-   * @param {Array<Fill>} fills
-   * @returns {Object} res
-   * @returns {Big} res.inbound
-   * @returns {Big} res.outbound
-   */
-  async activeAmountsForFills (fills) {
-    const response = {
-      inbound: Big(0),
-      outbound: Big(0)
-    }
-    return fills.reduce((acc, { fill, state }) => {
-      // If the fill is not in an active state , then we can simply skip it
-      if (!Object.values(FillStateMachine.ACTIVE_STATES).includes(state)) {
-        return acc
-      }
-
-      acc.inbound = acc.inbound.plus(fill.inboundAmount)
-      acc.outbound = acc.outbound.plus(fill.outboundAmount)
-      return acc
-    }, response)
   }
 
   /**
@@ -361,37 +326,54 @@ class BlockOrderWorker extends EventEmitter {
    *
    * @todo Change return value from Big to String
    * @param {string} market
-   * @param {string} side
+   * @param {Object} symbols
+   * @param {string} symbols.inboundSymbol
+   * @param {string} symbols.outboundSymbol
    * @returns {Object} res
-   * @returns {Big} activeOutboundAmount
-   * @returns {Big} activeInboundAmount
+   * @returns {string} res.inbound - int64 string of active inbound amount
+   * @returns {string} res.outbound - int64 string of active outbound amount
    */
-  async calculateActiveFunds (market, side) {
-    const orders = await Order.getAllOrders(this.ordersStore)
-    const fills = await Fill.getAllFills(this.fillsStore)
+  async calculateActiveFunds (market, { inboundSymbol, outboundSymbol }) {
+    const [
+      activeOrders,
+      activeFills
+    ] = await Promise.all([
+      // TODO: add indexes on orders/fills for market
+      getRecords(this.activeOrders.store, Order.fromStorage.bind(Order)),
+      getRecords(this.activeFills.store, Fill.fromStorage.bind(Fill))
+    ])
+    const records = [ ...activeOrders, ...activeFills ]
 
-    // Filter out records for a particular market and side
-    // TODO: add indexes on orders/fills for market
-    // TODO: add index for side of market on order/fills
-    const filteredOrders = orders.filter((o) => {
-      return o.order && o.order.market === market && o.order.side === side
+    let inbound = Big(0)
+    let outbound = Big(0)
+
+    records.forEach((record) => {
+      // If the record is not in the right market we can skip it.
+      if (record.market !== market) {
+        return
+      }
+
+      if (record.inboundSymbol === inboundSymbol) {
+        inbound = inbound.plus(record.inboundAmount)
+      }
+
+      if (record.outboundSymbol === outboundSymbol) {
+        outbound = outbound.plus(record.outboundAmount)
+      }
     })
 
-    const filteredFills = fills.filter((f) => {
-      return f.fill && f.fill.market === market && f.fill.side === side
+    inbound = inbound.toString()
+    outbound = outbound.toString()
+
+    this.logger.debug('Calculated active funds', {
+      inbound: inbound,
+      outbound: outbound
     })
 
-    const { inbound: orderInbound, outbound: orderOutbound } = await this.activeAmountsForOrders(filteredOrders)
-    const { inbound: fillInbound, outbound: fillOutbound } = await this.activeAmountsForFills(filteredFills)
-
-    this.logger.debug('Calculating active funds', {
-      orderInbound: orderInbound.toString(),
-      orderOutbound: orderOutbound.toString(),
-      fillInbound: fillInbound.toString(),
-      fillOutbound: fillOutbound.toString()
-    })
-
-    return { activeOutboundAmount: orderOutbound.plus(fillOutbound), activeInboundAmount: orderInbound.plus(fillInbound) }
+    return {
+      inbound,
+      outbound
+    }
   }
 
   /**

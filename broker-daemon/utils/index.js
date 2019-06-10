@@ -18,6 +18,7 @@ const Checksum = require('./checksum')
 const payInvoice = require('./pay-invoice')
 const retry = require('./retry')
 const CachedCall = require('./cached-call')
+const SubsetStore = require('./subset-store')
 
 module.exports = {
   getRecords,
@@ -39,5 +40,6 @@ module.exports = {
   Checksum,
   payInvoice,
   retry,
-  CachedCall
+  CachedCall,
+  SubsetStore
 }
