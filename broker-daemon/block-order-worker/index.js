@@ -639,7 +639,7 @@ class BlockOrderWorker extends EventEmitter {
       // Post Only orders are maker only, so if any orders exist at a marketable
       // price, we move the order to a cancelled state
       if (Big(availableDepth).gt(0)) {
-        this.logger.info('Place Only block order would take liquidity. Moving to cancelled state.', { id: blockOrder.id })
+        this.logger.info('Place Only block order would take liquidity. Moving to cancelled state.', { id: blockOrder.id, quantumPrice: blockOrder.quantumPrice, side: blockOrder.inverseSide })
         return this.cancelBlockOrder(blockOrder.id)
       }
     } else {
