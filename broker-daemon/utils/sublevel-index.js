@@ -206,7 +206,7 @@ class Index {
     this.store.get(baseKey, async (err, value) => {
       if (err) {
         // TODO: error handling on index removal
-        return logger.error(`Error while removing ${baseKey} from ${this.name} index`, err)
+        return logger.error(`Error trying to get key when removing ${baseKey} from ${this.name} index`, { err: err.toString() })
       }
 
       try {
@@ -218,7 +218,7 @@ class Index {
         this._finishDeletion(baseKey)
       } catch (e) {
         // TODO: error handling on index removal
-        return logger.error(`Error while removing ${baseKey} from ${this.name} index`, e)
+        return logger.error(`Error while removing ${baseKey} from ${this.name} index`, { err: e.toString() })
       }
     })
   }
