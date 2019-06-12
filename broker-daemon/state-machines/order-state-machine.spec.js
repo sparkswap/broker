@@ -458,6 +458,25 @@ describe('OrderStateMachine', () => {
       }), fakeAuth)
     })
 
+    it('rejects on error when relayer is unavailable', async () => {
+      osm.reject = sinon.stub()
+      const error = new Error()
+      error.details = 'Relayer unavailable'
+      error.code = OrderStateMachine.__get__('grpc').status.UNAVAILABLE
+      placeOrderStreamStub.on.withArgs('error').callsArgWithAsync(1, error)
+
+      await osm.place()
+
+      await delay(10)
+
+      expect(osm.reject).to.have.been.calledOnce()
+      expect(osm.reject.args[0][0]).to.be.instanceOf(Error)
+      expect(osm.reject.args[0][0]).to.have.property('message',
+        OrderStateMachine.__get__('ORDER_ERROR_CODES').RELAYER_UNAVAILABLE)
+      expect(logger.error).to.have.been.calledWith(
+        'Relayer is unavailable when trying to place order')
+    })
+
     it('rejects on error from the relayer place order hook', async () => {
       osm.reject = sinon.stub()
       placeOrderStreamStub.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
@@ -469,6 +488,8 @@ describe('OrderStateMachine', () => {
       expect(osm.reject).to.have.been.calledOnce()
       expect(osm.reject.args[0][0]).to.be.instanceOf(Error)
       expect(osm.reject.args[0][0]).to.have.property('message', 'fake error')
+      expect(logger.error).to.have.been.calledWith(
+        'Received error when trying to place order')
     })
 
     it('rejects when the relayer stream closes early', async () => {
