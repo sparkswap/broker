@@ -310,11 +310,19 @@ const OrderStateMachine = StateMachine.factory({
       }
 
       const errHandler = (e) => {
-        this.logger.error('Received error when trying to place order:', { error: e, code: e.code })
         // We handle unavailable error codes separately to add a friendly error to
         // the order that can be viewed in it's order status
-        const relayerError = e.code === grpc.status.UNAVAILABLE ? new Error(ORDER_ERROR_CODES.RELAYER_UNAVAILABLE) : e
-        this.reject(relayerError)
+        const errorObject = {
+          details: e.details || e.message,
+          code: e.code
+        }
+        if (e.code === grpc.status.UNAVAILABLE) {
+          this.logger.error('Relayer is unavailable when trying to place order', errorObject)
+          this.reject(new Error(ORDER_ERROR_CODES.RELAYER_UNAVAILABLE))
+        } else {
+          this.logger.error('Received error when trying to place order', errorObject)
+          this.reject(e)
+        }
         finish()
       }
       const endHandler = () => {
