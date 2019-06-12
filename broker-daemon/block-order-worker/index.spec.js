@@ -755,8 +755,8 @@ describe('BlockOrderWorker', () => {
     let isMarketOrder
 
     beforeEach(() => {
-      ltcEngine = { isBalanceSufficient: sinon.stub() }
-      btcEngine = { isBalanceSufficient: sinon.stub() }
+      ltcEngine = { getTotalBalanceForAddress: sinon.stub(), getMaxChannelForAddress: sinon.stub() }
+      btcEngine = { getTotalBalanceForAddress: sinon.stub(), getMaxChannelForAddress: sinon.stub() }
       inboundAddress = 'bolt:tttasdf'
       outboundAddress = 'bolt:asdf1234'
       outboundAmount = '2000000000'
@@ -774,10 +774,13 @@ describe('BlockOrderWorker', () => {
       relayer.paymentChannelNetworkService.getAddress.withArgs({ symbol: outboundSymbol }).resolves({ address: outboundAddress })
       relayer.paymentChannelNetworkService.getAddress.withArgs({ symbol: inboundSymbol }).resolves({ address: inboundAddress })
 
-      ltcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount)).resolves(true)
-      btcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
-      ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
-      btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount)).resolves(true)
+      const totalInboundAmount = (parseInt(inboundAmount, 10) + parseInt(activeInboundAmount, 10)).toString()
+      const totalOutboundAmount = (parseInt(outboundAmount, 10) + parseInt(activeOutboundAmount, 10)).toString()
+      ltcEngine.getTotalBalanceForAddress.withArgs(outboundAddress).resolves(totalOutboundAmount)
+      btcEngine.getTotalBalanceForAddress.withArgs(inboundAddress).resolves(totalInboundAmount)
+      ltcEngine.getMaxChannelForAddress.withArgs(outboundAddress).resolves({ maxBalance: totalOutboundAmount })
+      btcEngine.getMaxChannelForAddress.withArgs(inboundAddress).resolves({ maxBalance: totalInboundAmount })
+
       isMarketOrder = false
       engines = new Map([ ['BTC', btcEngine], ['LTC', ltcEngine] ])
       blockOrderStub = {
@@ -845,30 +848,28 @@ describe('BlockOrderWorker', () => {
 
     context('blockOrder is a limitOrder', async () => {
       context('blockOrder is a bid', async () => {
-        it('checks if the outbound balance in the engine is sufficient', async () => {
-          await worker.checkFundsAreSufficient(blockOrderStub)
-
-          expect(ltcEngine.isBalanceSufficient).to.have.been.calledOnce()
-          expect(ltcEngine.isBalanceSufficient).to.have.been.calledWith(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount))
+        it('checks if the inbound/outbound balances in the engine are sufficient', async () => {
+          expect(await worker.checkFundsAreSufficient(blockOrderStub)).to.be.eql(undefined)
         })
 
-        it('checks if the inbound balance in the engine is sufficient', async () => {
-          await worker.checkFundsAreSufficient(blockOrderStub)
-
-          expect(btcEngine.isBalanceSufficient).to.have.been.calledOnce()
-          expect(btcEngine.isBalanceSufficient).to.have.been.calledWith(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false })
+        it('throws if the outbound balance is greater than the amount they have in a single outbound channel', () => {
+          ltcEngine.getMaxChannelForAddress.withArgs(outboundAddress).resolves({ maxBalance: '10' })
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in a single outbound LTC channel to create order')
         })
 
-        it('throws if the outbound balance is greater than the amount they have in the outbound channel', () => {
-          ltcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount)).resolves(false)
-
-          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in outbound LTC channel to create order')
+        it('throws if the inbound balance is greater than the amount the relayer has in a single inbound channel', () => {
+          btcEngine.getMaxChannelForAddress.withArgs(inboundAddress).resolves({ maxBalance: '10' })
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in a single inbound BTC channel to create order')
         })
 
-        it('throws the inbound balance is greater than the amount the relayer has in the inbound channel', () => {
-          btcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false }).resolves(false)
+        it('throws if the outbound balance is greater than the amount they have in all outbound channels', () => {
+          ltcEngine.getTotalBalanceForAddress.withArgs(outboundAddress).resolves('10')
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in outbound LTC channels to create order')
+        })
 
-          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in inbound BTC channel to create order')
+        it('throws if the inbound balance is greater than the amount the relayer has in all inbound channels', () => {
+          btcEngine.getTotalBalanceForAddress.withArgs(inboundAddress).resolves('10')
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in inbound BTC channels to create order')
         })
       })
 
@@ -880,40 +881,31 @@ describe('BlockOrderWorker', () => {
           blockOrderStub.inboundSymbol = 'LTC'
           outboundAddress = 'bolt:tttasdf'
           inboundAddress = 'bolt:asdf1234'
+          btcEngine.getTotalBalanceForAddress.withArgs(outboundAddress).resolves('1000003000')
         })
 
-        it('checks if the outbound balance in the engine is sufficient', async () => {
-          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
-          btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(blockOrderStub.outboundAmount).plus(activeOutboundAmount)).resolves(true)
-
-          await worker.checkFundsAreSufficient(blockOrderStub)
-
-          expect(btcEngine.isBalanceSufficient).to.have.been.calledOnce()
-          expect(btcEngine.isBalanceSufficient).to.have.been.calledWith(outboundAddress, Big(blockOrderStub.outboundAmount).plus(activeOutboundAmount))
+        it('checks if the balances are sufficient', async () => {
+          expect(await worker.checkFundsAreSufficient(blockOrderStub)).to.be.eql(undefined)
         })
 
-        it('checks if the inbound balance in the engine is sufficient', async () => {
-          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
-          btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(blockOrderStub.outboundAmount).plus(activeOutboundAmount)).resolves(true)
-
-          await worker.checkFundsAreSufficient(blockOrderStub)
-
-          expect(ltcEngine.isBalanceSufficient).to.have.been.calledOnce()
-          expect(ltcEngine.isBalanceSufficient).to.have.been.calledWith(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), { outbound: false })
+        it('throws if the inboundAmount is greater than the amount they have in a single inbound channel', () => {
+          ltcEngine.getMaxChannelForAddress.withArgs(inboundAddress).resolves({ maxBalance: '10' })
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in a single inbound LTC channel to create order')
         })
 
-        it('throws if the inboundAmount is greater than the amount they have in the inbound channel', () => {
-          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), { outbound: false }).resolves(false)
-          btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(blockOrderStub.outboundAmount).plus(activeOutboundAmount)).resolves(true)
-
-          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in inbound LTC channel to create order')
+        it('throws if the outbound is greater than the amount the relayer has in a single outbound channels', () => {
+          btcEngine.getMaxChannelForAddress.withArgs(outboundAddress).resolves({ maxBalance: '10' })
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in a single outbound BTC channel to create order')
         })
 
-        it('throws if the outbound is greater than the amount the relayer has in the outbound channel', () => {
-          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.inboundAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
-          btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(blockOrderStub.outboundAmount).plus(activeOutboundAmount)).resolves(false)
+        it('throws if the inboundAmount is greater than the amount they have in all inbound channels', () => {
+          ltcEngine.getTotalBalanceForAddress.withArgs(inboundAddress).resolves('10')
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in inbound LTC channels to create order')
+        })
 
-          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in outbound BTC channel to create order')
+        it('throws if the outbound is greater than the amount the relayer has in all outbound channels', () => {
+          btcEngine.getTotalBalanceForAddress.withArgs(outboundAddress).resolves('10')
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in outbound BTC channels to create order')
         })
       })
     })
@@ -929,8 +921,6 @@ describe('BlockOrderWorker', () => {
       context('blockOrder is a bid', async () => {
         beforeEach(() => {
           blockOrderStub.inverseSide = 'ASK'
-          ltcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(4000).plus(activeOutboundAmount)).resolves(true)
-          btcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
         })
 
         it('throws if the market is not in the orderbook', () => {
@@ -945,30 +935,28 @@ describe('BlockOrderWorker', () => {
           expect(orderbook.getAveragePrice).to.have.been.calledWith('ASK', blockOrderStub.baseAmount)
         })
 
-        it('checks if the outbound balance in the engine is sufficient', async () => {
-          await worker.checkFundsAreSufficient(blockOrderStub)
-
-          expect(ltcEngine.isBalanceSufficient).to.have.been.calledOnce()
-          expect(ltcEngine.isBalanceSufficient).to.have.been.calledWith(outboundAddress, Big(4000).plus(activeOutboundAmount))
+        it('checks if the balances in the engine are sufficient', async () => {
+          expect(await worker.checkFundsAreSufficient(blockOrderStub)).to.be.eql(undefined)
         })
 
-        it('checks if the inbound balance in the engine is sufficient', async () => {
-          await worker.checkFundsAreSufficient(blockOrderStub)
-
-          expect(btcEngine.isBalanceSufficient).to.have.been.calledOnce()
-          expect(btcEngine.isBalanceSufficient).to.have.been.calledWith(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), { outbound: false })
+        it('throws if the outbound balance is greater than the amount they have in a single outbound channel', () => {
+          ltcEngine.getMaxChannelForAddress.withArgs(outboundAddress).resolves({ maxBalance: '10' })
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in a single outbound LTC channel to create order')
         })
 
-        it('throws if the outbound balance is greater than the amount they have in the outbound channel', () => {
-          ltcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(4000).plus(activeOutboundAmount)).resolves(false)
-
-          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in outbound LTC channel to create order')
+        it('throws the inbound balance is greater than the amount the relayer has in a single inbound channel', () => {
+          btcEngine.getMaxChannelForAddress.withArgs(inboundAddress).resolves({ maxBalance: '10' })
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in a single inbound BTC channel to create order')
         })
 
-        it('throws the inbound balance is greater than the amount the relayer has in the inbound channel', () => {
-          btcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), { outbound: false }).resolves(false)
+        it('throws if the outbound balance is greater than the amount they have in all outbound channels', () => {
+          ltcEngine.getTotalBalanceForAddress.withArgs(outboundAddress).resolves('10')
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in outbound LTC channels to create order')
+        })
 
-          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in inbound BTC channel to create order')
+        it('throws the inbound balance is greater than the amount the relayer has in all inbound channels', () => {
+          btcEngine.getTotalBalanceForAddress.withArgs(inboundAddress).resolves('10')
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in inbound BTC channels to create order')
         })
       })
 
@@ -981,8 +969,6 @@ describe('BlockOrderWorker', () => {
           blockOrderStub.inboundSymbol = 'LTC'
           outboundAddress = 'bolt:tttasdf'
           inboundAddress = 'bolt:asdf1234'
-          btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(4000).plus(activeOutboundAmount)).resolves(true)
-          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
         })
 
         it('gets the averagePrice of orders given the side and the depth', async () => {
@@ -991,32 +977,28 @@ describe('BlockOrderWorker', () => {
           expect(orderbook.getAveragePrice).to.have.been.calledWith('BID', blockOrderStub.baseAmount)
         })
 
-        it('checks if the outbound balance in the engine is sufficient', async () => {
-          await worker.checkFundsAreSufficient(blockOrderStub)
-
-          expect(btcEngine.isBalanceSufficient).to.have.been.calledOnce()
-          expect(btcEngine.isBalanceSufficient).to.have.been.calledWith(outboundAddress, Big(4000).plus(activeOutboundAmount))
+        it('checks if the inbound/outbound balances in the engine are sufficient', async () => {
+          expect(await worker.checkFundsAreSufficient(blockOrderStub)).to.be.eql(undefined)
         })
 
-        it('checks if the inbound balance in the engine is sufficient', async () => {
-          await worker.checkFundsAreSufficient(blockOrderStub)
-
-          expect(ltcEngine.isBalanceSufficient).to.have.been.calledOnce()
-          expect(ltcEngine.isBalanceSufficient).to.have.been.calledWith(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), { outbound: false })
+        it('throws if the inboundAmount is greater than the amount they have in a single inbound channel', () => {
+          ltcEngine.getMaxChannelForAddress.withArgs(inboundAddress).resolves({ maxBalance: '10' })
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in a single inbound LTC channel to create order')
         })
 
-        it('throws if the inboundAmount is greater than the amount they have in the inbound channel', () => {
-          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), { outbound: false }).resolves(false)
-          btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(4000).plus(activeOutboundAmount)).resolves(true)
-
-          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in inbound LTC channel to create order')
+        it('throws if the outbound is greater than the amount the relayer has in a single outbound channel', () => {
+          btcEngine.getMaxChannelForAddress.withArgs(outboundAddress).resolves({ maxBalance: '10' })
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in a single outbound BTC channel to create order')
         })
 
-        it('throws if the outbound is greater than the amount the relayer has in the outbound channel', () => {
-          ltcEngine.isBalanceSufficient.withArgs(inboundAddress, Big(blockOrderStub.baseAmount).plus(activeInboundAmount), { outbound: false }).resolves(true)
-          btcEngine.isBalanceSufficient.withArgs(outboundAddress, Big(4000).plus(activeOutboundAmount)).resolves(false)
+        it('throws if the inboundAmount is greater than the amount they have in all inbound channels', () => {
+          ltcEngine.getTotalBalanceForAddress.withArgs(inboundAddress).resolves('10')
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in inbound LTC channels to create order')
+        })
 
-          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in outbound BTC channel to create order')
+        it('throws if the outbound is greater than the amount the relayer has in all outbound channels', () => {
+          btcEngine.getTotalBalanceForAddress.withArgs(outboundAddress).resolves('10')
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in outbound BTC channels to create order')
         })
       })
     })

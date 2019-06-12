@@ -301,23 +301,39 @@ class BlockOrderWorker extends EventEmitter {
       inboundAmount = blockOrder.inboundAmount
     }
 
+    const totalOutboundAmount = Big(outboundAmount).plus(activeOutboundAmount)
+    const totalInboundAmount = Big(inboundAmount).plus(activeInboundAmount)
+
     const [
-      outboundBalanceIsSufficient,
-      inboundBalanceIsSufficient
+      totalOutboundCapacity,
+      totalInboundCapacity,
+      maxOutboundCapacityObject,
+      maxInboundCapacityObject
     ] = await Promise.all([
-      outboundEngine.isBalanceSufficient(outboundAddress, Big(outboundAmount).plus(activeOutboundAmount)),
-      inboundEngine.isBalanceSufficient(inboundAddress, Big(inboundAmount).plus(activeInboundAmount), { outbound: false })
+      outboundEngine.getTotalBalanceForAddress(outboundAddress),
+      inboundEngine.getTotalBalanceForAddress(inboundAddress, { outbound: false }),
+      outboundEngine.getMaxChannelForAddress(outboundAddress),
+      inboundEngine.getMaxChannelForAddress(inboundAddress, { outbound: false })
     ])
 
-    // If the user tries to place an order for more than they hold in the counter engine channel, throw an error
-    if (!outboundBalanceIsSufficient) {
-      throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channel to create order. ` +
-        `Requested Outbound Amount: ${outboundAmount}, Active Outbound Amount: ${activeOutboundAmount}`)
+    const maxOutboundCapacity = maxOutboundCapacityObject.maxBalance
+    const maxInboundCapacity = maxInboundCapacityObject.maxBalance
+
+    if (totalOutboundAmount.gt(totalOutboundCapacity)) {
+      throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channels to create order. ` +
+        `Total Outbound Amount: ${totalOutboundAmount}, Total Outbound Capacity: ${totalOutboundCapacity}`)
     }
-    // If the user tries to place an order and the relayer does not have the funds to complete in the base channel, throw an error
-    if (!inboundBalanceIsSufficient) {
-      throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channel to create order. ` +
-        `Requested Inbound Amount: ${inboundAmount}, Active Inbound Amount: ${activeInboundAmount}`)
+    if (totalInboundAmount.gt(totalInboundCapacity)) {
+      throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channels to create order. ` +
+        `Total Inbound Amount: ${totalInboundAmount}, Total Inbound Capacity: ${totalInboundCapacity}`)
+    }
+    if (Big(outboundAmount).gt(maxOutboundCapacity)) {
+      throw new Error(`Insufficient funds in a single outbound ${blockOrder.outboundSymbol} channel to create order. ` +
+        `Requested Outbound Amount: ${outboundAmount}, Max Outbound Capacity: ${maxOutboundCapacity}`)
+    }
+    if (Big(inboundAmount).gt(maxInboundCapacity)) {
+      throw new Error(`Insufficient funds in a single inbound ${blockOrder.inboundSymbol} channel to create order. ` +
+        `Requested Inbound Amount: ${inboundAmount}, Max Inbound Capacity: ${maxInboundCapacity}`)
     }
   }
 
