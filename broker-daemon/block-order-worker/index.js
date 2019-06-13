@@ -12,7 +12,8 @@ const {
   generateId,
   retry,
   logger,
-  CachedCall
+  CachedCall,
+  minBig
 } = require('../utils')
 
 /**
@@ -747,13 +748,21 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
-   * Place orders for a block order for a given amount, breaking them up based on the maximum order size
+   * Place orders for a block order for a given amount, breaking them up based
+   * on the maximum payment size and the maximum available channel.
+   *
    * @param  {BlockOrder} blockOrder - Block Order to place orders on behalf of
-   * @param  {string}     baseAmount - Int64 amount, in the base currency's base units, to place orders for
+   * @param  {string}     baseAmount - Int64 amount, in the base currency's base
+   *                                   units, to place orders for
    * @returns {void}
    */
-  _placeOrders (blockOrder, baseAmount) {
-    const { baseSymbol, counterSymbol, quantumPrice } = blockOrder
+  async _placeOrders (blockOrder, baseAmount) {
+    const {
+      baseSymbol,
+      counterSymbol,
+      outboundSymbol,
+      quantumPrice
+    } = blockOrder
     const baseEngine = this.engines.get(baseSymbol)
     const counterEngine = this.engines.get(counterSymbol)
 
@@ -764,30 +773,69 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`No engine available for ${counterSymbol}`)
     }
 
+    // Max payment size is a hard-coded limitation per engine
     const baseMaxPayment = baseEngine.maxPaymentSize
     const counterMaxPayment = counterEngine.maxPaymentSize
 
-    // our max payment size settings have an implied price. We need to compare that to our actual price
-    // to see which max payment size we're going to run up against.
-    const maxPaymentSizeImpliedPrice = Big(counterMaxPayment).div(baseMaxPayment)
+    // Max channel, our other constraint, is based on the channel with the
+    // largest capacity to the Relayer.
+    const [
+      baseRelayerAddress,
+      counterRelayerAddress
+    ] = await Promise.all([
+      this.relayer.paymentChannelNetworkService.getAddress({
+        symbol: baseSymbol
+      }),
+      this.relayer.paymentChannelNetworkService.getAddress({
+        symbol: counterSymbol
+      })
+    ])
+
+    const [
+      baseMaxChannel,
+      counterMaxChannel
+    ] = await Promise.all([
+      baseEngine.getMaxChannelForAddress(
+        baseRelayerAddress,
+        { outbound: outboundSymbol === baseSymbol }
+      ),
+      counterEngine.getMaxChannelForAddress(
+        counterRelayerAddress,
+        { outbound: outboundSymbol === counterSymbol }
+      )
+    ])
+
+    // Find the lower limit considering the largest available channel and the
+    // max payment size
+    const baseMaxAmount = minBig(baseMaxPayment, baseMaxChannel)
+    const counterMaxAmount = minBig(counterMaxPayment, counterMaxChannel)
+
+    // our max payment size settings have an implied price.
+    // We need to compare that to our actual price to see which max payment size
+    // we're going to run up against.
+    const impliedPrice = Big(counterMaxAmount).div(baseMaxAmount)
     let maxBaseAmountPerOrder
 
     // quantum price is the counter/base (both in quantum units)
-    if (Big(quantumPrice).gte(maxPaymentSizeImpliedPrice)) {
-      // counter for the block order is larger than base (relative to their max payment sizes)
-      maxBaseAmountPerOrder = Big(counterMaxPayment).div(quantumPrice).round(0)
+    if (Big(quantumPrice).gte(impliedPrice)) {
+      // counter for the block order is larger than base
+      // (relative to the max channels or payment size)
+      maxBaseAmountPerOrder = Big(counterMaxAmount).div(quantumPrice).round(0)
     } else {
-      // base for the block order is larger than counter (relative to their max payment sizes)
-      maxBaseAmountPerOrder = Big(baseMaxPayment)
+      // base for the block order is larger than counter
+      // (relative to the max channels or payment size)
+      maxBaseAmountPerOrder = Big(baseMaxAmount)
     }
 
     let baseAmountRemaining = Big(baseAmount)
     let orderCount = 1
 
-    // split our larger block order into individual placed orders that are each under
-    // the max payment size
+    // split our larger block order into individual placed orders that are each
+    // under the max payment size
     while (baseAmountRemaining.gt(0)) {
-      this.logger.info(`Placing order #${orderCount++} for BlockOrder`, { blockOrderId: blockOrder.id })
+      this.logger.info(`Placing order #${orderCount++} for BlockOrder`, {
+        blockOrderId: blockOrder.id
+      })
 
       let orderBaseAmount = baseAmountRemaining
 
@@ -795,6 +843,8 @@ class BlockOrderWorker extends EventEmitter {
         orderBaseAmount = maxBaseAmountPerOrder
       }
 
+      // _placeOrder is async, but we don't await since we want to place orders
+      // in parallel.
       this._placeOrder(blockOrder, orderBaseAmount.toString())
 
       baseAmountRemaining = baseAmountRemaining.minus(orderBaseAmount)
@@ -889,7 +939,7 @@ class BlockOrderWorker extends EventEmitter {
       // track our current depth so we know what to fill on the next order
       currentDepth = currentDepth.plus(fillAmount)
 
-      const fsm = FillStateMachine.create(
+      const fsm   = FillStateMachine.create(
         {
           relayer,
           engines,

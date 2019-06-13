@@ -2410,8 +2410,38 @@ describe('BlockOrderWorker', () => {
   describe('#_placeOrders', () => {
     let worker
     let blockOrder
+    let maxLtcChannel
+    let maxBtcChannel
+    let getAddress
+    let btcAddress
+    let ltcAddress
 
     beforeEach(() => {
+      btcAddress = 'fake btc'
+      ltcAddress = 'fake ltc'
+
+      getAddress = sinon.stub()
+      getAddress.withArgs({ symbol: 'BTC' }).resolves(btcAddress)
+      getAddress.withArgs({ symbol: 'LTC' }).resolves(ltcAddress)
+
+      relayer.paymentChannelNetworkService = {
+        getAddress
+      }
+
+      maxLtcChannel = Big(engineLtc.maxPaymentSize).plus(100).toString()
+      engineLtc.getMaxChannelForAddress = sinon.stub().resolves('0')
+      engineLtc.getMaxChannelForAddress.withArgs(
+        ltcAddress,
+        { outbound: false }
+      ).resolves(maxLtcChannel)
+
+      maxBtcChannel = Big(engineBtc.maxPaymentSize).plus(100).toString()
+      engineBtc.getMaxChannelForAddress = sinon.stub().resolves('0')
+      engineBtc.getMaxChannelForAddress.withArgs(
+        btcAddress,
+        { outbound: true }
+      ).resolves(maxBtcChannel)
+
       worker = new BlockOrderWorker({ orderbooks, store, logger, relayer, engines })
       worker._placeOrder = sinon.stub()
 
@@ -2419,6 +2449,7 @@ describe('BlockOrderWorker', () => {
         id: 'fakeId',
         baseSymbol: 'BTC',
         counterSymbol: 'LTC',
+        outboundSymbol: 'BTC',
         quantumPrice: '1000'
       }
     })
@@ -2426,35 +2457,67 @@ describe('BlockOrderWorker', () => {
     it('throws if one of the engines is missing', () => {
       blockOrder.counterSymbol = 'XYZ'
 
-      return expect(() => worker._placeOrders(blockOrder, '100')).to.throw('No engine available')
+      return expect(worker._placeOrders(blockOrder, '100')).to.eventually.be.rejectedWith('No engine available')
     })
 
-    it('creates a single order order if the order size is below the max', () => {
-      worker._placeOrders(blockOrder, '100')
+    it('creates a single order order if the order size is below the max payment and max channel', async () => {
+      await worker._placeOrders(blockOrder, '100')
 
       expect(worker._placeOrder).to.have.been.calledOnce()
       expect(worker._placeOrder).to.have.been.calledWith(blockOrder, '100')
     })
 
-    it('creates multiple orders if the base size is above the max', () => {
+    it('creates multiple orders if the base size is above the max payment', async () => {
       blockOrder.quantumPrice = '1'
 
-      worker._placeOrders(blockOrder, Big(engineBtc.maxPaymentSize).plus(10).toString())
+      await worker._placeOrders(blockOrder, Big(engineBtc.maxPaymentSize).plus(10).toString())
 
       expect(worker._placeOrder).to.have.been.calledTwice()
       expect(worker._placeOrder.firstCall).to.have.been.calledWith(blockOrder, engineBtc.maxPaymentSize)
       expect(worker._placeOrder.secondCall).to.have.been.calledWith(blockOrder, '10')
     })
 
-    it('creates multiple orders if the counter size is above the max', () => {
+    it('creates multiple orders if the counter size is above the max payment', async () => {
       blockOrder.quantumPrice = '100'
       const maxAmount = Big(engineLtc.maxPaymentSize).div(100).round(0).toString()
 
-      worker._placeOrders(blockOrder, Big(engineBtc.maxPaymentSize).minus(10).toString())
+      await worker._placeOrders(blockOrder, Big(engineBtc.maxPaymentSize).minus(10).toString())
 
       expect(worker._placeOrder).to.have.been.calledTwice()
       expect(worker._placeOrder.firstCall).to.have.been.calledWith(blockOrder, maxAmount)
       expect(worker._placeOrder.secondCall).to.have.been.calledWith(blockOrder, '1677712')
+    })
+
+    it('creates mutliple orders if the base size is above the max channel', async () => {
+      blockOrder.quantumPrice = '1'
+
+      maxBtcChannel = '10000'
+      engineBtc.getMaxChannelForAddress.withArgs(
+        btcAddress,
+        { outbound: true }
+      ).resolves(maxBtcChannel)
+
+      await worker._placeOrders(blockOrder, Big(maxBtcChannel).plus(10).toString())
+
+      expect(worker._placeOrder).to.have.been.calledTwice()
+      expect(worker._placeOrder.firstCall).to.have.been.calledWith(blockOrder, maxBtcChannel)
+      expect(worker._placeOrder.secondCall).to.have.been.calledWith(blockOrder, '10')
+    })
+
+    it('creates multiple orders if the counter size is about the max channel', async () => {
+      blockOrder.quantumPrice = '100'
+
+      maxLtcChannel = '10000'
+      engineLtc.getMaxChannelForAddress.withArgs(
+        ltcAddress,
+        { outbound: false }
+      ).resolves(maxLtcChannel)
+
+      await worker._placeOrders(blockOrder, 101)
+
+      expect(worker._placeOrder).to.have.been.calledTwice()
+      expect(worker._placeOrder.firstCall).to.have.been.calledWith(blockOrder, '100')
+      expect(worker._placeOrder.secondCall).to.have.been.calledWith(blockOrder, '1')
     })
   })
 
