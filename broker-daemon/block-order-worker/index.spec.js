@@ -1954,6 +1954,11 @@ describe('BlockOrderWorker', () => {
   })
 
   describe('#_fillOrders', () => {
+    let btcAddress
+    let ltcAddress
+    let getAddress
+    let maxLtcChannel
+    let maxBtcChannel
     let worker
     let blockOrder
     let fill
@@ -1965,6 +1970,31 @@ describe('BlockOrderWorker', () => {
     let ordersByOrderId
 
     beforeEach(() => {
+      btcAddress = 'fake btc'
+      ltcAddress = 'fake ltc'
+
+      getAddress = sinon.stub()
+      getAddress.withArgs({ symbol: 'BTC' }).resolves(btcAddress)
+      getAddress.withArgs({ symbol: 'LTC' }).resolves(ltcAddress)
+
+      relayer.paymentChannelNetworkService = {
+        getAddress
+      }
+
+      maxLtcChannel = Big(engineLtc.maxPaymentSize).plus(100).toString()
+      engineLtc.getMaxChannelForAddress = sinon.stub().resolves('0')
+      engineLtc.getMaxChannelForAddress.withArgs(
+        ltcAddress,
+        { outbound: true }
+      ).resolves(maxLtcChannel)
+
+      maxBtcChannel = Big(engineBtc.maxPaymentSize).plus(100).toString()
+      engineBtc.getMaxChannelForAddress = sinon.stub().resolves('0')
+      engineBtc.getMaxChannelForAddress.withArgs(
+        btcAddress,
+        { outbound: false }
+      ).resolves(maxBtcChannel)
+
       onceStub = sinon.stub()
       removeAllListenersStub = sinon.stub()
       getRecords = sinon.stub()
@@ -1981,6 +2011,8 @@ describe('BlockOrderWorker', () => {
         marketName: 'BTC/LTC',
         baseSymbol: 'BTC',
         counterSymbol: 'LTC',
+        inboundSymbol: 'BTC',
+        outboundSymbol: 'LTC',
         side: 'BID',
         inverseSide: 'ASK',
         amount: Big('0.000000100'),
@@ -1995,15 +2027,15 @@ describe('BlockOrderWorker', () => {
       }
       FillStateMachine.create.resolves(fill)
       orders = [
-        { orderId: '1', baseAmount: '90' },
-        { orderId: '2', baseAmount: '100' }
+        { orderId: '1', baseAmount: '90', quantumPrice: '100' },
+        { orderId: '2', baseAmount: '100', quantumPrice: '100' }
       ]
       targetDepth = '100'
     })
 
     it('throws if one of the engines is missing', () => {
       blockOrder.marketName = 'BTC/XYZ'
-      blockOrder.counterSymbol = 'XYZ'
+      blockOrder.outboundSymbol = 'XYZ'
 
       return expect(worker._fillOrders(blockOrder, orders, targetDepth)).to.eventually.be.rejectedWith('No engine available')
     })
@@ -2048,11 +2080,59 @@ describe('BlockOrderWorker', () => {
     })
 
     it('stops filling early if it fills the target depth', async () => {
-      orders.push({ orderId: '3', baseAmount: '100' })
+      orders.push({ orderId: '3', baseAmount: '100', quantumPrice: '100' })
 
       await worker._fillOrders(blockOrder, orders, targetDepth)
 
       expect(FillStateMachine.create).to.have.been.calledTwice()
+    })
+
+    it('fills orders partially if we hit our max channel on the base', async () => {
+      maxBtcChannel = '50'
+      engineBtc.getMaxChannelForAddress.withArgs(
+        btcAddress,
+        { outbound: false }
+      ).resolves(maxBtcChannel)
+
+      await worker._fillOrders(blockOrder, orders, targetDepth)
+
+      expect(FillStateMachine.create).to.have.been.calledTwice()
+      expect(FillStateMachine.create.args[0][3]).to.be.eql({ fillAmount: '50' })
+      expect(FillStateMachine.create.args[1][3]).to.be.eql({ fillAmount: '50' })
+    })
+
+    it('fills orders partially if we hit our max payment on the base', async () => {
+      engineBtc.maxPaymentSize = '50'
+
+      await worker._fillOrders(blockOrder, orders, targetDepth)
+
+      expect(FillStateMachine.create).to.have.been.calledTwice()
+      expect(FillStateMachine.create.args[0][3]).to.be.eql({ fillAmount: '50' })
+      expect(FillStateMachine.create.args[1][3]).to.be.eql({ fillAmount: '50' })
+    })
+
+    it('fills orders partially if we hit our max channel on the counter', async () => {
+      maxLtcChannel = '5000'
+      engineLtc.getMaxChannelForAddress.withArgs(
+        ltcAddress,
+        { outbound: true }
+      ).resolves(maxLtcChannel)
+
+      await worker._fillOrders(blockOrder, orders, targetDepth)
+
+      expect(FillStateMachine.create).to.have.been.calledTwice()
+      expect(FillStateMachine.create.args[0][3]).to.be.eql({ fillAmount: '50' })
+      expect(FillStateMachine.create.args[1][3]).to.be.eql({ fillAmount: '50' })
+    })
+
+    it('fills an order partially if we hit our max payment on the counter', async () => {
+      engineLtc.maxPaymentSize = '5000'
+
+      await worker._fillOrders(blockOrder, orders, targetDepth)
+
+      expect(FillStateMachine.create).to.have.been.calledTwice()
+      expect(FillStateMachine.create.args[0][3]).to.be.eql({ fillAmount: '50' })
+      expect(FillStateMachine.create.args[1][3]).to.be.eql({ fillAmount: '50' })
     })
 
     it('provides the fill store the FillStateMachine', async () => {

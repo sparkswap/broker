@@ -927,14 +927,22 @@ class BlockOrderWorker extends EventEmitter {
     const { relayer, engines, logger } = this
     const store = this.fillsStore
 
-    const { baseSymbol, counterSymbol } = blockOrder
-    if (!engines.has(baseSymbol)) {
-      throw new Error(`No engine available for ${baseSymbol}`)
-    }
+    const {
+      baseSymbol,
+      counterSymbol,
+      inboundSymbol,
+      outboundSymbol
+    } = blockOrder
 
-    if (!engines.has(counterSymbol)) {
-      throw new Error(`No engine available for ${counterSymbol}`)
-    }
+    const {
+      inbound: inboundMaxAmount,
+      outbound: outboundMaxAmount
+    } = await this.getMaxTx({ inboundSymbol, outboundSymbol })
+
+    const baseMaxAmount = inboundSymbol === baseSymbol
+      ? inboundMaxAmount : outboundMaxAmount
+    const counterMaxAmount = inboundSymbol === counterSymbol
+      ? inboundMaxAmount : outboundMaxAmount
 
     // These are the orders from the orders store where the orders being passed are actually market event orders
     const ordersFromStore = await Promise.all(orders.map((order) => {
@@ -959,8 +967,14 @@ class BlockOrderWorker extends EventEmitter {
         throw new Error(`Cannot fill own order ${order.orderId}. Current BlockOrderId: ${blockOrder.id}, Own Order BlockOrderId: ${order.blockOrderId}`)
       }
 
-      // Take the smaller of the remaining desired depth or the base amount of the order
-      const fillAmount = depthRemaining.gt(order.baseAmount) ? order.baseAmount : depthRemaining.toString()
+      // using the current order's price, find which of our max tx amounts
+      // will limit this transaction (base or counter)
+      const maxTxAmount = minBig(baseMaxAmount,
+        Big(counterMaxAmount).div(order.quantumPrice))
+
+      // Take the smaller of the remaining desired depth, the base amount of the
+      // order, or our maximum amount of a single transaction
+      const fillAmount = minBig(order.baseAmount, depthRemaining, maxTxAmount)
 
       // track our current depth so we know what to fill on the next order
       currentDepth = currentDepth.plus(fillAmount)
