@@ -2135,6 +2135,16 @@ describe('BlockOrderWorker', () => {
       expect(FillStateMachine.create.args[1][3]).to.be.eql({ fillAmount: '50' })
     })
 
+    it('rejects if there is not channel balance remaining', () => {
+      engineLtc.getMaxChannelForAddress.withArgs(
+        ltcAddress,
+        { outbound: true }
+      ).resolves('0')
+
+      return expect(worker._fillOrders(blockOrder, orders, targetDepth)).to
+        .eventually.be.rejectedWith('Trying to fill order with an amount of 0')
+    })
+
     it('provides the fill store the FillStateMachine', async () => {
       await worker._fillOrders(blockOrder, orders, targetDepth)
 
@@ -2631,6 +2641,11 @@ describe('BlockOrderWorker', () => {
         }
       }
       OrderStateMachine.create.resolves(order)
+    })
+
+    it('rejects if the amount is 0', () => {
+      expect(worker._placeOrder(blockOrder, '0')).to.eventually.be.rejectedWith(
+        'Cannot create an order with an amount of 0')
     })
 
     it('creates an OrderStateMachine', async () => {

@@ -692,7 +692,7 @@ class BlockOrderWorker extends EventEmitter {
 
     if (targetDepth.gt(availableDepth)) {
       // place an order for the remaining depth that we could not fill
-      this._placeOrders(blockOrder, targetDepth.minus(availableDepth).toString())
+      return this._placeOrders(blockOrder, targetDepth.minus(availableDepth).toString())
     }
   }
 
@@ -853,6 +853,8 @@ class BlockOrderWorker extends EventEmitter {
       maxBaseAmountPerOrder = Big(baseMaxAmount)
     }
 
+    const orderPromises = []
+
     let baseAmountRemaining = Big(baseAmount)
     let orderCount = 1
 
@@ -871,10 +873,13 @@ class BlockOrderWorker extends EventEmitter {
 
       // _placeOrder is async, but we don't await since we want to place orders
       // in parallel.
-      this._placeOrder(blockOrder, orderBaseAmount.toString())
+      orderPromises.push(this._placeOrder(blockOrder,
+        orderBaseAmount.toString()))
 
       baseAmountRemaining = baseAmountRemaining.minus(orderBaseAmount)
     }
+
+    return Promise.all(orderPromises)
   }
 
   /**
@@ -892,7 +897,16 @@ class BlockOrderWorker extends EventEmitter {
     const { relayer, engines, logger } = this
     const store = this.ordersStore
 
-    this.logger.info('Creating order for BlockOrder', { baseAmount, side, blockOrderId: blockOrder.id })
+    this.logger.info('Creating order for BlockOrder', {
+      baseAmount,
+      side,
+      blockOrderId: blockOrder.id
+    })
+
+    if (Big(baseAmount).lte(0)) {
+      throw new Error('Cannot create an order with an amount of 0 ' +
+        `(block order: ${blockOrder.id})`)
+    }
 
     const osm = await OrderStateMachine.create(
       {
@@ -907,7 +921,10 @@ class BlockOrderWorker extends EventEmitter {
 
     this.applyOsmListeners(osm, blockOrder)
 
-    this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: osm.order.orderId })
+    this.logger.info('Created order for BlockOrder', {
+      blockOrderId: blockOrder.id,
+      orderId: osm.order.orderId
+    })
   }
 
   /**
@@ -975,6 +992,11 @@ class BlockOrderWorker extends EventEmitter {
       // Take the smaller of the remaining desired depth, the base amount of the
       // order, or our maximum amount of a single transaction
       const fillAmount = minBig(order.baseAmount, depthRemaining, maxTxAmount)
+
+      if (Big(fillAmount).lte(0)) {
+        throw new Error('Trying to fill order with an amount of 0 ' +
+          `(order: ${order.orderId}, block order: ${blockOrder.id})`)
+      }
 
       // track our current depth so we know what to fill on the next order
       currentDepth = currentDepth.plus(fillAmount)
