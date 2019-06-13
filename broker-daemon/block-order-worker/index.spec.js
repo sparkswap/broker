@@ -2450,12 +2450,13 @@ describe('BlockOrderWorker', () => {
         baseSymbol: 'BTC',
         counterSymbol: 'LTC',
         outboundSymbol: 'BTC',
+        inboundSymbol: 'LTC',
         quantumPrice: '1000'
       }
     })
 
     it('throws if one of the engines is missing', () => {
-      blockOrder.counterSymbol = 'XYZ'
+      blockOrder.inboundSymbol = 'XYZ'
 
       return expect(worker._placeOrders(blockOrder, '100')).to.eventually.be.rejectedWith('No engine available')
     })

@@ -378,6 +378,67 @@ class BlockOrderWorker extends EventEmitter {
   }
 
   /**
+   * Get the maximum transaction size possible given our current channel
+   * capacity and maximum payment size in our payment channel networks.
+   * @param {Object} symbols
+   * @param {string} symbols.inboundSymbol - Symbol for the transaction going
+   *                                         inbound
+   * @param {string} symbols.outboundSymbol - Symbol for the transaction going
+   *                                          outbound
+   * @returns {Object} maximum inbound and outbound transaction sizes
+   */
+  async getMaxTx ({ inboundSymbol, outboundSymbol }) {
+    const inboundEngine = this.engines.get(inboundSymbol)
+    const outboundEngine = this.engines.get(outboundSymbol)
+
+    if (!inboundEngine) {
+      throw new Error(`No engine available for ${inboundSymbol}`)
+    }
+    if (!outboundEngine) {
+      throw new Error(`No engine available for ${outboundSymbol}`)
+    }
+
+    // Max payment size is a hard-coded limitation per engine
+    const inboundMaxPayment = inboundEngine.maxPaymentSize
+    const outboundMaxPayment = outboundEngine.maxPaymentSize
+
+    // Max channel, our other constraint, is inboundd on the channel with the
+    // largest capacity to the Relayer.
+    const [
+      inboundRelayerAddress,
+      outboundRelayerAddress
+    ] = await Promise.all([
+      this.relayer.paymentChannelNetworkService.getAddress({
+        symbol: inboundSymbol
+      }),
+      this.relayer.paymentChannelNetworkService.getAddress({
+        symbol: outboundSymbol
+      })
+    ])
+
+    const [
+      inboundMaxChannel,
+      outboundMaxChannel
+    ] = await Promise.all([
+      inboundEngine.getMaxChannelForAddress(
+        inboundRelayerAddress,
+        { outbound: false }
+      ),
+      outboundEngine.getMaxChannelForAddress(
+        outboundRelayerAddress,
+        { outbound: true }
+      )
+    ])
+
+    // Find the lower limit considering the largest available channel and the
+    // max payment size
+    return {
+      inbound: minBig(inboundMaxPayment, inboundMaxChannel),
+      outbound: minBig(outboundMaxPayment, outboundMaxChannel)
+    }
+  }
+
+  /**
    * Get an existing block order
    * @param {string} blockOrderId - ID of the block order
    * @returns {BlockOrder}
@@ -761,54 +822,19 @@ class BlockOrderWorker extends EventEmitter {
       baseSymbol,
       counterSymbol,
       outboundSymbol,
+      inboundSymbol,
       quantumPrice
     } = blockOrder
-    const baseEngine = this.engines.get(baseSymbol)
-    const counterEngine = this.engines.get(counterSymbol)
 
-    if (!baseEngine) {
-      throw new Error(`No engine available for ${baseSymbol}`)
-    }
-    if (!counterEngine) {
-      throw new Error(`No engine available for ${counterSymbol}`)
-    }
+    const {
+      inbound: inboundMaxAmount,
+      outbound: outboundMaxAmount
+    } = await this.getMaxTx({ inboundSymbol, outboundSymbol })
 
-    // Max payment size is a hard-coded limitation per engine
-    const baseMaxPayment = baseEngine.maxPaymentSize
-    const counterMaxPayment = counterEngine.maxPaymentSize
-
-    // Max channel, our other constraint, is based on the channel with the
-    // largest capacity to the Relayer.
-    const [
-      baseRelayerAddress,
-      counterRelayerAddress
-    ] = await Promise.all([
-      this.relayer.paymentChannelNetworkService.getAddress({
-        symbol: baseSymbol
-      }),
-      this.relayer.paymentChannelNetworkService.getAddress({
-        symbol: counterSymbol
-      })
-    ])
-
-    const [
-      baseMaxChannel,
-      counterMaxChannel
-    ] = await Promise.all([
-      baseEngine.getMaxChannelForAddress(
-        baseRelayerAddress,
-        { outbound: outboundSymbol === baseSymbol }
-      ),
-      counterEngine.getMaxChannelForAddress(
-        counterRelayerAddress,
-        { outbound: outboundSymbol === counterSymbol }
-      )
-    ])
-
-    // Find the lower limit considering the largest available channel and the
-    // max payment size
-    const baseMaxAmount = minBig(baseMaxPayment, baseMaxChannel)
-    const counterMaxAmount = minBig(counterMaxPayment, counterMaxChannel)
+    const baseMaxAmount = inboundSymbol === baseSymbol
+      ? inboundMaxAmount : outboundMaxAmount
+    const counterMaxAmount = inboundSymbol === counterSymbol
+      ? inboundMaxAmount : outboundMaxAmount
 
     // our max payment size settings have an implied price.
     // We need to compare that to our actual price to see which max payment size
@@ -939,7 +965,7 @@ class BlockOrderWorker extends EventEmitter {
       // track our current depth so we know what to fill on the next order
       currentDepth = currentDepth.plus(fillAmount)
 
-      const fsm   = FillStateMachine.create(
+      const fsm = FillStateMachine.create(
         {
           relayer,
           engines,
