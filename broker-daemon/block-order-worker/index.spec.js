@@ -774,8 +774,8 @@ describe('BlockOrderWorker', () => {
       relayer.paymentChannelNetworkService.getAddress.withArgs({ symbol: outboundSymbol }).resolves({ address: outboundAddress })
       relayer.paymentChannelNetworkService.getAddress.withArgs({ symbol: inboundSymbol }).resolves({ address: inboundAddress })
 
-      const totalInboundAmount = (parseInt(inboundAmount, 10) + parseInt(activeInboundAmount, 10)).toString()
-      const totalOutboundAmount = (parseInt(outboundAmount, 10) + parseInt(activeOutboundAmount, 10)).toString()
+      const totalInboundAmount = Big(inboundAmount).plus(activeInboundAmount).toString()
+      const totalOutboundAmount = Big(outboundAmount).plus(activeOutboundAmount).toString()
       ltcEngine.getTotalBalanceForAddress.withArgs(outboundAddress).resolves(totalOutboundAmount)
       btcEngine.getTotalBalanceForAddress.withArgs(inboundAddress).resolves(totalInboundAmount)
       ltcEngine.getMaxChannelForAddress.withArgs(outboundAddress).resolves({ maxBalance: totalOutboundAmount })
@@ -870,6 +870,12 @@ describe('BlockOrderWorker', () => {
         it('throws if the inbound balance is greater than the amount the relayer has in all inbound channels', () => {
           btcEngine.getTotalBalanceForAddress.withArgs(inboundAddress).resolves('10')
           return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in inbound BTC channels to create order')
+        })
+
+        it('throws if the balance is greater than the size of the order but less than the total commitment required', () => {
+          const totalBalance = Big(outboundAmount).plus(activeOutboundAmount).minus(10)
+          ltcEngine.getTotalBalanceForAddress.withArgs(outboundAddress).resolves(totalBalance.toString())
+          return expect(worker.checkFundsAreSufficient(blockOrderStub)).to.be.rejectedWith('Insufficient funds in outbound LTC channels to create order')
         })
       })
 

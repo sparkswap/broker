@@ -307,17 +307,14 @@ class BlockOrderWorker extends EventEmitter {
     const [
       totalOutboundCapacity,
       totalInboundCapacity,
-      maxOutboundCapacityObject,
-      maxInboundCapacityObject
+      { maxBalance: maxOutboundCapacity },
+      { maxBalance: maxInboundCapacity }
     ] = await Promise.all([
       outboundEngine.getTotalBalanceForAddress(outboundAddress),
       inboundEngine.getTotalBalanceForAddress(inboundAddress, { outbound: false }),
       outboundEngine.getMaxChannelForAddress(outboundAddress),
       inboundEngine.getMaxChannelForAddress(inboundAddress, { outbound: false })
     ])
-
-    const maxOutboundCapacity = maxOutboundCapacityObject.maxBalance
-    const maxInboundCapacity = maxInboundCapacityObject.maxBalance
 
     if (totalOutboundAmount.gt(totalOutboundCapacity)) {
       throw new Error(`Insufficient funds in outbound ${blockOrder.outboundSymbol} channels to create order. ` +
