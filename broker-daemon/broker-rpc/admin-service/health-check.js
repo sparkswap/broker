@@ -109,11 +109,9 @@ async function healthCheck ({ params, relayer, logger, engines, orderbooks, stor
   }
 
   if (includeRecordCounts) {
-    const recordCounts = await getRecordCounts(store)
+    message.recordCounts = await getRecordCounts(store)
 
     logger.debug('Received record counts from the data store')
-
-    message.recordCounts = recordCounts
   }
 
   return new HealthCheckResponse(message)
