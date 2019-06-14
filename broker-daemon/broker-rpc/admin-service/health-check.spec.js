@@ -61,6 +61,8 @@ describe('health-check', () => {
       relayerStatusOK = healthCheck.__get__('RELAYER_STATUS_CODES').RELAYER_OK
       relayerStatusStub = sinon.stub().returns(relayerStatusOK)
 
+      // simulate looping over every record in the store, using the stub's
+      // _numRecords as an indicator of how many records are in our fake store.
       eachRecordStub = sinon.stub().callsFake(({ _numRecords }, cb) => {
         return new Promise(async (resolve, reject) => {
           for (let i = 0; i < _numRecords; i++) {
