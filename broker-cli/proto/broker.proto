@@ -141,7 +141,11 @@ message RecordCount {
   int32 count = 3;
 }
 
+/**
+ * HealthCheckRequest is a request about the status and health of a BrokerDaemon.
+ */
 message HealthCheckRequest {
+  // Whether to calculate and include the number of records in the stores of the BrokerDaemon.
   bool include_record_counts = 1;
 }
 
@@ -155,6 +159,7 @@ message HealthCheckResponse {
   RelayerStatuses relayer_status = 2;
   // The status of every orderbook available on the BrokerDaemon.
   repeated OrderbookStatus orderbook_status = 3;
+  // The number of records in every store on the BrokerDaemon. Omitted unless `include_record_counts` is `true`.
   repeated RecordCount record_counts = 4;
 }
 
