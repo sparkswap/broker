@@ -20,6 +20,7 @@ describe('AdminService', () => {
   let relayer
   let engines
   let orderbooks
+  let store
   let auth
 
   let server
@@ -47,6 +48,7 @@ describe('AdminService', () => {
     relayer = sinon.stub()
     engines = new Map()
     orderbooks = new Map()
+    store = { fake: 'sublevel' }
 
     GrpcMethod = sinon.stub()
     fakeRegistered = sinon.stub()
@@ -65,7 +67,7 @@ describe('AdminService', () => {
   })
 
   beforeEach(() => {
-    server = new AdminService(protoPath, { logger, relayer, engines, orderbooks, auth })
+    server = new AdminService(protoPath, { logger, relayer, engines, orderbooks, store, auth })
   })
 
   it('assigns a proto path', () => {
@@ -146,6 +148,10 @@ describe('AdminService', () => {
 
       it('passes in the orderbooks', () => {
         expect(callArgs[2]).to.have.property('orderbooks', orderbooks)
+      })
+
+      it('passes in the store', () => {
+        expect(callArgs[2]).to.have.property('store', store)
       })
 
       it('passes in auth', () => {

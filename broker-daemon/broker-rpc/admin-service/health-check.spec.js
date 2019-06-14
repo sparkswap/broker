@@ -17,10 +17,13 @@ describe('health-check', () => {
     let relayerStatusOK
     let result
     let engineStub
+    let store
     let engines
     let reverts = []
     let orderbooks
     let orderbookStub
+    let eachRecordStub
+    let params
 
     beforeEach(() => {
       relayerStub = sinon.stub()
@@ -36,6 +39,19 @@ describe('health-check', () => {
         synced: true
       }
       orderbooks.set('BTC/LTC', orderbookStub)
+
+      store = {
+        sublevels: {
+          sublevel: {
+            sublevels: {},
+            _numRecords: 3
+          }
+        },
+        _numRecords: 7
+      }
+
+      params = {}
+
       loggerStub = {
         info: sinon.stub(),
         debug: sinon.stub()
@@ -45,11 +61,31 @@ describe('health-check', () => {
       relayerStatusOK = healthCheck.__get__('RELAYER_STATUS_CODES').RELAYER_OK
       relayerStatusStub = sinon.stub().returns(relayerStatusOK)
 
+      eachRecordStub = sinon.stub().callsFake(({ _numRecords }, cb) => {
+        return new Promise(async (resolve, reject) => {
+          for (let i = 0; i < _numRecords; i++) {
+            await cb()
+          }
+
+          resolve()
+        })
+      })
+
       reverts.push(healthCheck.__set__('getRelayerStatus', relayerStatusStub))
+      reverts.push(healthCheck.__set__('eachRecord', eachRecordStub))
     })
 
     beforeEach(async () => {
-      result = await healthCheck({ relayer: relayerStub, logger: loggerStub, engines, orderbooks }, { HealthCheckResponse })
+      result = await healthCheck(
+        {
+          params,
+          relayer: relayerStub,
+          logger: loggerStub,
+          engines,
+          orderbooks
+        },
+        { HealthCheckResponse }
+      )
     })
 
     afterEach(() => {
@@ -75,6 +111,37 @@ describe('health-check', () => {
             { market: 'BTC/LTC', status: orderbookStatusOK }
           ]
         }))
+    })
+
+    it('includes record counts if the flag is passed', async () => {
+      await healthCheck(
+        {
+          params: { includeRecordCounts: true },
+          relayer: relayerStub,
+          logger: loggerStub,
+          engines,
+          orderbooks,
+          store
+        },
+        { HealthCheckResponse }
+      )
+
+      expect(HealthCheckResponse).to.have.been.calledWith(sinon.match(
+        {
+          recordCounts: [
+            {
+              name: 'store',
+              parentName: '',
+              count: 7
+            },
+            {
+              name: 'sublevel',
+              parentName: 'store',
+              count: 3
+            }
+          ]
+        }
+      ))
     })
   })
 

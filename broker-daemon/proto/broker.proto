@@ -74,7 +74,6 @@ enum Side {
   ASK = 1;
 }
 
-
 // Statuses of the relayer
 enum RelayerStatuses {
   // Relayer is not available
@@ -130,6 +129,23 @@ message OrderbookStatus {
 }
 
 /**
+ * RecordCount is the number of records in a store on the Broker,
+ * along with its name the name of its parent store.
+ */
+message RecordCount {
+  // The name of the store
+  string name = 1;
+  // The name of the parent store of this store
+  string parent_name = 2;
+  // The number of records in this store
+  int32 count = 3;
+}
+
+message HealthCheckRequest {
+  bool include_record_counts = 1;
+}
+
+/**
  * HealthCheckResponse provides information on the health of a BrokerDaemon.
  */
 message HealthCheckResponse {
@@ -139,6 +155,7 @@ message HealthCheckResponse {
   RelayerStatuses relayer_status = 2;
   // The status of every orderbook available on the BrokerDaemon.
   repeated OrderbookStatus orderbook_status = 3;
+  repeated RecordCount record_counts = 4;
 }
 
 /**
@@ -222,7 +239,7 @@ service AdminService {
    * └───────────────────┴───────────────────┘
    * ```
    */
-  rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse) {
+  rpc HealthCheck (HealthCheckRequest) returns (HealthCheckResponse) {
     option (.google.api.http) = {
       get: "/v1/admin/healthcheck"
     };

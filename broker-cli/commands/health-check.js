@@ -60,13 +60,16 @@ const ENGINE_STATUS_CODES = Object.freeze({
 async function healthCheck (args, opts, logger) {
   const {
     rpcAddress,
+    count,
     json
   } = opts
 
   try {
     const client = new BrokerDaemonClient(rpcAddress)
 
-    const res = await client.adminService.healthCheck({})
+    const res = await client.adminService.healthCheck({
+      includeRecordCounts: count
+    })
 
     if (json) {
       return logger.info(JSON.stringify(res, null, 2))
@@ -122,6 +125,7 @@ async function healthCheck (args, opts, logger) {
 module.exports = (program) => {
   program
     .command('healthcheck', 'Checks the connection between Broker and the Exchange')
+    .option('--count', 'Count the number of records in the Broker', program.BOOL, false)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .option('--json', 'Export result as json', program.BOOL, false)
     .action(healthCheck)
