@@ -38,10 +38,21 @@ async function getRelayerStatus (relayer, { logger }) {
   }
 }
 
+/**
+ * Get the number of records in a store and its children
+ * @param   {Sublevel} store    - Store to get record count from
+ * @param   {string} name       - Name of this store
+ * @param   {string} parentName - Name of the parent of this store
+ * @param   {Array}  stores     - Array to include this store's record count in
+ * @returns {Array}               All stores and their record counts including
+ *                                `store` and its sublevels.
+ */
 async function getRecordCounts (store, name = 'store', parentName = '', stores = []) {
   let count = 0
   await eachRecord(store, () => { count++ })
 
+  // We use a flat structure to make it simpler to send over the wire despite the fact
+  // that it is actually nested.
   stores.push({
     parentName,
     name,
