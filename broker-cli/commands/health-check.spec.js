@@ -72,6 +72,12 @@ describe('healthCheck', () => {
     expect(healthCheckStub).to.have.been.called()
   })
 
+  it('adds the record count if the flag is passed', async () => {
+    opts.count = true
+    await healthCheck(args, opts, logger)
+    expect(healthCheckStub).to.have.been.calledWith({ includeRecordCounts: true })
+  })
+
   it('returns json if the user specifies a json flag', async () => {
     opts.json = true
     const result = 'result'

@@ -157,6 +157,7 @@ class BrokerDaemon {
       relayer: this.relayer,
       orderbooks: this.orderbooks,
       blockOrderWorker: this.blockOrderWorker,
+      store: this.store,
       privKeyPath: privRpcKeyPath,
       pubKeyPath: pubRpcKeyPath,
       disableAuth,

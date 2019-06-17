@@ -17,6 +17,8 @@ describe('BrokerRPCServer', () => {
   let pathResolve
   let protoPath
   let engines
+  let orderbooks
+  let store
   let httpServer
   let grpcGateway
   let router
@@ -69,6 +71,10 @@ describe('BrokerRPCServer', () => {
     BrokerRPCServer.__set__('createHttpServer', httpServer)
 
     engines = new Map()
+
+    orderbooks = new Map()
+
+    store = { fake: 'sublevel' }
 
     protoPath = 'mypath'
     pathResolve = sinon.stub().returns(protoPath)
@@ -185,10 +191,10 @@ describe('BrokerRPCServer', () => {
       const logger = 'mylogger'
       const relayer = 'myrelayer'
 
-      const server = new BrokerRPCServer({ logger, relayer, engines })
+      const server = new BrokerRPCServer({ logger, relayer, engines, orderbooks, store })
 
       expect(AdminService).to.have.been.calledOnce()
-      expect(AdminService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer, engines }))
+      expect(AdminService).to.have.been.calledWith(protoPath, sinon.match({ logger, relayer, engines, orderbooks, store }))
       expect(AdminService).to.have.been.calledWithNew()
       expect(server).to.have.property('adminService')
       expect(server.adminService).to.be.equal(adminService)

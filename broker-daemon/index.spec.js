@@ -248,6 +248,10 @@ describe('broker daemon', () => {
         expect(rpcServer).to.have.been.calledWith(sinon.match({ blockOrderWorker: brokerDaemon.blockOrderWorker }))
       })
 
+      it('sets the store', () => {
+        expect(rpcServer).to.have.been.calledWith(sinon.match({ store: brokerDaemon.store }))
+      })
+
       it('sets the private key path', () => {
         expect(rpcServer).to.have.been.calledWith(sinon.match({ privKeyPath: privRpcKeyPath }))
       })

@@ -1,3 +1,5 @@
+const { eachRecord } = require('../../utils')
+
 /**
  * @constant
  * @type {Object}
@@ -37,17 +39,52 @@ async function getRelayerStatus (relayer, { logger }) {
 }
 
 /**
+ * Get the number of records in a store and its children
+ * @param   {Sublevel} store    - Store to get record count from
+ * @param   {string} name       - Name of this store
+ * @param   {string} parentName - Name of the parent of this store
+ * @param   {Array}  stores     - Array to include this store's record count in
+ * @returns {Array}               All stores and their record counts including
+ *                                `store` and its sublevels.
+ */
+async function getRecordCounts (store, name = 'store', parentName = '', stores = []) {
+  let count = 0
+  await eachRecord(store, () => { count++ })
+
+  // We use a flat structure to make it simpler to send over the wire despite the fact
+  // that it is actually nested.
+  stores.push({
+    parentName,
+    name,
+    count
+  })
+
+  const sublevels = Object.entries(store.sublevels)
+
+  await Promise.all(sublevels.map(([ subName, store ]) => {
+    return getRecordCounts(store, subName, name, stores)
+  }))
+
+  return stores
+}
+
+/**
  * Check the health of all the system components
  *
  * @param {GrpcUnaryMethod~request} request - request object
+ * @param {Object} request.params
  * @param {RelayerClient} request.relayer - gRPC Client for interacting with the Relayer
  * @param {Object} request.logger
  * @param {Map<string, Engine>} request.engines - all available Payment Channel Network engines in the Broker
+ * @param {Map<string, Orderbook>} request.orderbooks
+ * @param {Sublevel} request.store
  * @param {Object} responses
  * @param {Function} responses.HealthCheckResponse - constructor for HealthCheckResponse messages
  * @returns {HealthCheckResponse}
  */
-async function healthCheck ({ relayer, logger, engines, orderbooks }, { HealthCheckResponse }) {
+async function healthCheck ({ params, relayer, logger, engines, orderbooks, store }, { HealthCheckResponse }) {
+  const { includeRecordCounts = false } = params
+
   const engineStatus = Array.from(engines).map(([ symbol, engine ]) => {
     return { symbol, status: engine.status }
   })
@@ -65,7 +102,19 @@ async function healthCheck ({ relayer, logger, engines, orderbooks }, { HealthCh
 
   logger.debug(`Received status from orderbooks`, { orderbookStatus })
 
-  return new HealthCheckResponse({ engineStatus, relayerStatus, orderbookStatus })
+  const message = {
+    engineStatus,
+    relayerStatus,
+    orderbookStatus
+  }
+
+  if (includeRecordCounts) {
+    message.recordCounts = await getRecordCounts(store)
+
+    logger.debug('Received record counts from the data store')
+  }
+
+  return new HealthCheckResponse(message)
 }
 
 module.exports = healthCheck
