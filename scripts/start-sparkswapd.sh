@@ -14,6 +14,8 @@ set -u
 # Here, we manually map host.docker.internal to the host IP in /etc/hosts
 HOST_DOMAIN="host.docker.internal"
 ping -c1 $HOST_DOMAIN > /dev/null 2>&1
+# We map host.docker.internal only if the container cannot ping the address
+# This is typically the case only for Linux
 if [ $? -ne 0 ]; then
   HOST_IP=$(ip route | awk 'NR==1 {print $3}')
   echo -e "$HOST_IP\t$HOST_DOMAIN" >> /etc/hosts
