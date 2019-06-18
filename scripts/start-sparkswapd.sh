@@ -7,7 +7,19 @@
 #            as `/secure` is a volume inside of the container
 ################################################
 
-set -eu
+set -u
+
+# Using host.docker.internal to access the host IP does not work for Linux
+# This is a known issue with Docker: https://github.com/docker/for-linux/issues/264
+# Here, we manually map host.docker.internal to the host IP in /etc/hosts
+HOST_DOMAIN="host.docker.internal"
+ping -c1 $HOST_DOMAIN > /dev/null 2>&1
+# We map host.docker.internal only if the container cannot ping the address
+# This is typically the case only for Linux
+if [ $? -ne 0 ]; then
+  HOST_IP=$(ip route | awk 'NR==1 {print $3}')
+  echo -e "$HOST_IP\t$HOST_DOMAIN" >> /etc/hosts
+fi
 
 # We set value defaults here to mimic the behaivor of docker-compose in-case
 # this script is called outside of docker-compose
