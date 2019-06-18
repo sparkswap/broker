@@ -9,11 +9,12 @@
 
 set -u
 
+# Using host.docker.internal to access the host IP does not work for Linux
+# This is a known issue with Docker: https://github.com/docker/for-linux/issues/264
+# Here, we manually map host.docker.internal to the host IP in /etc/hosts
 HOST_DOMAIN="host.docker.internal"
-echo $HOST_DOMAIN
 ping -c1 $HOST_DOMAIN > /dev/null 2>&1
 if [ $? -ne 0 ]; then
-  echo "inside if"
   HOST_IP=$(ip route | awk 'NR==1 {print $3}')
   echo -e "$HOST_IP\t$HOST_DOMAIN" >> /etc/hosts
 fi
