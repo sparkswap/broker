@@ -7,7 +7,16 @@
 #            as `/secure` is a volume inside of the container
 ################################################
 
-set -eu
+set -u
+
+HOST_DOMAIN="host.docker.internal"
+echo $HOST_DOMAIN
+ping -c1 $HOST_DOMAIN > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+  echo "inside if"
+  HOST_IP=$(ip route | awk 'NR==1 {print $3}')
+  echo -e "$HOST_IP\t$HOST_DOMAIN" >> /etc/hosts
+fi
 
 # We set value defaults here to mimic the behaivor of docker-compose in-case
 # this script is called outside of docker-compose

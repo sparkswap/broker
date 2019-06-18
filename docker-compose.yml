@@ -25,6 +25,8 @@ services:
       # Persistent certs/keys for broker
       - '${SECURE_PATH}:/secure'
     environment:
+      # - GRPC_VERBOSITY=DEBUG
+      # - GRPC_TRACE=all
       - DEBUG=info
       - NODE_ENV=production
       - DATA_DIR=${DATA_DIR:-}

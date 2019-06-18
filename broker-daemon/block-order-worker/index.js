@@ -321,6 +321,10 @@ class BlockOrderWorker extends EventEmitter {
         `Total Outbound Amount: ${totalOutboundAmount}, Total Outbound Capacity: ${totalOutboundCapacity}`)
     }
     if (totalInboundAmount.gt(totalInboundCapacity)) {
+      console.log('inbound address', inboundAddress)
+      console.log('1', await inboundEngine.getChannels())
+      console.log('2', await inboundEngine.getChannelsForRemoteAddress(inboundAddress))
+      console.log('abcd', await inboundEngine.getTotalBalanceForAddress(inboundAddress, { outbound: true }))
       throw new Error(`Insufficient funds in inbound ${blockOrder.inboundSymbol} channels to create order. ` +
         `Total Inbound Amount: ${totalInboundAmount}, Total Inbound Capacity: ${totalInboundCapacity}`)
     }
