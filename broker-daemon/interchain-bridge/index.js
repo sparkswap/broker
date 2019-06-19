@@ -36,7 +36,6 @@ class InterchainBridge {
    * @param   {Payment} options.outboundPayment - Outbound Payment to send
    * @param   {Date}    options.timeout         - Time after which the payment
    *                                              should not be translated.
-   * @param   {string} options.maxTimeLock      - Maximum lock time for the outbound
    * @returns {void}                              Resolves on settlement of the
    *                                              inbound payment with the
    *                                              preimage. Rejects if
@@ -63,7 +62,6 @@ class InterchainBridge {
     // HTLC active, so we consider it unsafe to cancel upstream HTLC's
     // until we know for certain otherwise.
     this.safeToCancel = false
-    this.cancellingSwap = false
 
     // Set a timer to cancel our upstream HTLC if our timeout has expired
     this.cancelOnTimeout()
