@@ -3,7 +3,6 @@ const { logger } = require('../utils')
 /**
  * A description of a payment on a Payment Channel Network
  * @typedef {Object} Payment
- * @property {string} symbol      - Symbol of the chain of the payment
  * @property {string} amount      - Amount, in the smallest unit, of the payment
  * @property {string} maxTimeLock - Maximum time lock, in seconds, of the
  *                                  payment
@@ -12,14 +11,16 @@ const { logger } = require('../utils')
  */
 
 /**
- * Bridge for translating payments and preimages from
- * one chain / payment channel network to another.
+ * Milliseconds between retries of cancels in cases where our timeout has
+ * expired.
+ * @type {number}
+ */
+const RETRY_CANCEL = 10000
+
+/**
+ * Translate a single swap between chains via an Interchain Bridge
  */
 class InterchainBridge {
-  constructor ({ engines }) {
-    this.engines = engines
-  }
-
   /**
    * Watch for incoming payments on one chain, and translate them to another
    * chain, returning the resulting preimage back to the first chain.
@@ -28,9 +29,10 @@ class InterchainBridge {
    * @param   {string}  options.hash            - Base64-encoded SHA256 hash of
    *                                              the preimage locking the
    *                                              payment.
-   * @param   {string}  options.inboundSymbol   - Symbol of the chain from which
-   *                                              we expect payment. This should
-   *                                              already have been prepared.
+   * @param   {Engine}  options.inboundEngine   - Engine for the incoming payment
+   *                                              channel network
+   * @param   {Engine}  options.outboundEngine  - Engine for the outgoing payment
+   *                                              channel network
    * @param   {Payment} options.outboundPayment - Outbound Payment to send
    * @param   {Date}    options.timeout         - Time after which the payment
    *                                              should not be translated.
@@ -40,117 +42,95 @@ class InterchainBridge {
    *                                              preimage. Rejects if
    *                                              settlement fails at any point.
    */
-  async translate ({ hash, inboundSymbol, outboundPayment, timeout }) {
-    logger.debug(`Setting up translator for ${hash}`)
+  constructor ({ hash, inboundEngine, outboundEngine, outboundPayment, timeout }) {
+    logger.debug(`Setting up bridge for ${hash}`)
 
-    const bridge = this
+    this.hash = hash
+    this.inboundEngine = inboundEngine
+    this.outboundEngine = outboundEngine
+    this.timeout = timeout
+
     const {
-      symbol: outboundSymbol,
       amount: outboundAmount,
       address: outboundAddress,
       maxTimeLock
     } = outboundPayment
+    this.outboundAmount = outboundAmount
+    this.outboundAddress = outboundAddress
+    this.maxTimeLock = maxTimeLock
 
-    const outboundEngine = this.engines.get(outboundSymbol)
-    if (!outboundEngine) {
-      throw new Error(`No engine available for ${outboundSymbol} when` +
-        `translating ${hash}.`)
+    // Our initial state is to assume that there could be a downstream
+    // HTLC active, so we consider it unsafe to cancel upstream HTLC's
+    // until we know for certain otherwise.
+    this.safeToCancel = false
+    this.cancellingSwap = false
+
+    // Set a timer to cancel our upstream HTLC if our timeout has expired
+    this.cancelOnTimeout()
+  }
+
+  /**
+   * Cancel a swap when the timeout is expired and it is safe to do so.
+   * @returns {void}
+   */
+  async cancelOnTimeout () {
+    const {
+      timeout,
+      hash,
+      inboundEngine,
+      safeToCancel
+    } = this
+
+    const msToTimeout = new Date() - timeout
+
+    if (safeToCancel && msToTimeout <= 0) {
+      logger.error(`Timeout for ${hash} has expired, cancelling
+        upstream invoice`)
+
+      // `translate` should exit since `subscribeSwap` will
+      // throw an exception once our invoice is cancelled
+      await inboundEngine.cancelSwap(hash)
+    } else {
+      // reset our timer to try again
+      logger.debug(`Retrying cancel for ${hash}, timer not expired, or it is` +
+        'unsafe to cancel.')
+      setTimeout(() => {
+        this.cancelOnTimeout()
+      }, Math.max(msToTimeout, RETRY_CANCEL))
     }
+  }
 
-    const inboundEngine = this.engines.get(inboundSymbol)
-    if (!inboundEngine) {
-      throw new Error(`No engine available for ${inboundSymbol} when` +
-        `translating ${hash}.`)
-    }
+  /**
+   * Attempt to translate a swap between chains
+   * @returns {string} Preimage of the successful translation
+   */
+  async translate () {
+    const {
+      hash,
+      outboundEngine,
+      outboundAddress,
+      outboundAmount,
+      inboundEngine,
+      maxTimeLock
+    } = this
 
-    /**
-     * Settle a swap given a promise to retrieve a preimage
-     * @param {Promise} preimagePromise - Resolves with the preimage or a
-     *                                    permanent error.
-     * @param {number}  cancelTimerId   - Timer ID for the cancellation timeout
-     * @returns {Promise}                 Resolves with the preimage
-     */
-    async function settle (preimagePromise, cancelTimerId) {
-      let paymentPreimage
-      let permanentError
+    // If we don't know the current state of the downstream HTLC, it is not
+    // safe to cancel, even on a timeout.
+    this.safeToCancel = false
 
-      try {
-        const translateSwapResponse = await outboundEngine.translateSwap(
-          outboundAddress,
-          hash,
-          outboundAmount,
-          maxTimeLock
-        )
-        paymentPreimage = translateSwapResponse.paymentPreimage
-        permanentError = translateSwapResponse.permanentError
-      } catch (e) {
-        logger.error('Temporary Error encountered while translating swap: ' +
-          e.message, { error: e.stack, hash })
-
-        // A temporary error means we don't know the current state, so we need
-        // to restart the whole process
-
-        if (cancelTimerId) {
-          clearTimeout(cancelTimerId)
-        }
-
-        logger.debug(`Retrying swap translation for ${hash}`)
-        return bridge.translate({
-          hash,
-          inboundSymbol,
-          outboundPayment,
-          timeout,
-          maxTimeLock
-        })
-      }
-
-      if (permanentError) {
-        logger.error(permanentError)
-        logger.error('Downstream payment encountered an error, cancelling ' +
-          `upstream invoice for ${hash}`)
-        await inboundEngine.cancelSwap(hash)
-        throw new Error(permanentError)
-      }
-
-      logger.debug(`Successfully completed payment to ${outboundAddress} for ` +
-        `swap ${hash}`)
-
-      logger.debug(`Settling upstream payment for ${hash}`)
-      await inboundEngine.settleSwap(paymentPreimage)
-
-      return paymentPreimage
-    }
-
-    // We don't want to reject an incoming HTLC if we know that there is an active outgoing one. If the outgoing HTLC is in flight or completed,
+    // We don't want to reject an incoming HTLC if we know that there is an active
+    // outgoing one. If the outgoing HTLC is in flight or completed,
     // we should attempt to retrieve the associated preimage.
-    logger.debug(`Checking outbound HTLC status for swap ${hash}`, { outboundSymbol })
+    logger.debug(`Checking outbound HTLC status for swap ${hash}`)
     if (await outboundEngine.isPaymentPendingOrComplete(hash)) {
       logger.debug(`Payment in progress for swap ${hash}, waiting for resolution`)
 
-      return settle(outboundEngine.getPaymentPreimage(hash))
+      return this.settle(outboundEngine.getPaymentPreimage(hash))
     }
 
-    // Wait for expirations and cancel the upstream invoice unless we're already
-    // settling.
-    let currentlySettling = false
-
-    if (!timeout < new Date()) {
-      logger.error(`Timeout for ${hash} has already expired, cancelling
-        upstream invoice`)
-      await inboundEngine.cancelSwap(hash)
-      throw new Error(`Timeout for ${hash} has already expired.`)
-    }
-
-    const cancelTimerId = setTimeout(async () => {
-      if (!currentlySettling) {
-        logger.error(`Timeout for ${hash} has expired, cancelling
-          upstream invoice`)
-        await inboundEngine.cancelSwap(hash)
-
-        // The outer function should exit since `subscribeSwap` will
-        // throw an exception once our invoice is cancelled
-      }
-    }, timeout - new Date())
+    // While we are waiting for upstream HTLCs, it is safe for us to cancel
+    // since we know we have nothing open downstream.
+    this.safeToCancel = true
 
     // Subscribe to incoming payments that are accepted, but not yet settled.
     // Subscribing to a payment that is cancelled, doesn't exist, or is already
@@ -159,22 +139,67 @@ class InterchainBridge {
     // timeout.
     await inboundEngine.subscribeSwap(hash)
 
-    currentlySettling = true
-
     logger.debug(`Sending payment to ${outboundAddress} to translate ${hash}`, {
       maxTimeLock,
       outboundAmount
     })
 
-    return settle(
-      outboundEngine.translateSwap(
-        outboundAddress,
-        hash,
-        outboundAmount,
-        maxTimeLock
-      ),
-      cancelTimerId
-    )
+    return this.settle(outboundEngine.translateSwap(
+      outboundAddress,
+      hash,
+      outboundAmount,
+      maxTimeLock
+    ))
+  }
+
+  /**
+   * Settle a swap given a promise to retrieve a preimage
+   * @param {Promise} preimagePromise - Resolves with the preimage or a
+   *                                    permanent error.
+   * @returns {Promise}                 Resolves with the preimage
+   */
+  async settle (preimagePromise) {
+    const {
+      hash,
+      outboundAddress
+    } = this
+
+    // If we are in the process of translating downstream, it is not safe
+    // to cancel.
+    this.safeToCancel = false
+
+    let paymentPreimage
+    let permanentError
+
+    try {
+      const translateSwapResponse = await preimagePromise
+      paymentPreimage = translateSwapResponse.paymentPreimage
+      permanentError = translateSwapResponse.permanentError
+    } catch (e) {
+      logger.error('Temporary Error encountered while translating swap: ' +
+        e.message, { error: e.stack, hash })
+
+      // A temporary error means we don't know the current state, so we need
+      // to restart the whole process
+      logger.debug(`Retrying swap translation for ${hash}`)
+      return this.translate()
+    }
+
+    if (permanentError) {
+      logger.error(permanentError)
+      logger.error('Downstream payment encountered an error, cancelling ' +
+        `upstream invoice for ${hash}`)
+      await this.inboundEngine.cancelSwap(hash)
+      throw new Error(permanentError)
+    }
+
+    logger.debug(`Successfully completed payment to ${outboundAddress} for ` +
+      `swap ${hash}`)
+
+    logger.debug(`Settling upstream payment for ${hash}`)
+    await this.inboundEngine.settleSwap(paymentPreimage)
+
+    return paymentPreimage
   }
 }
 
