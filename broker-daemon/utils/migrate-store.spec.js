@@ -100,11 +100,10 @@ describe('migrateStore', () => {
   })
 
   it('flushes the batches on end', async () => {
-    await migrateStore(sourceStore, targetStore, createDbOperation, 1)
+    await migrateStore(sourceStore, targetStore, createDbOperation)
 
-    expect(targetStore.batch).to.have.been.calledTwice()
-    expect(targetStore.batch).to.have.been.calledWith(sinon.match.array.deepEquals(fakeOperations.slice(0, 2)))
-    expect(targetStore.batch).to.have.been.calledWith(sinon.match.array.deepEquals(fakeOperations.slice(2)))
+    expect(targetStore.batch).to.have.been.calledOnce()
+    expect(targetStore.batch).to.have.been.calledWith(sinon.match.array.deepEquals(fakeOperations))
   })
 
   it('skips empty db operations', async () => {

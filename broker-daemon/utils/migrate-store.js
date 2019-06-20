@@ -4,10 +4,9 @@
  * @param  {sublevel} sourceStore       - Sublevel that is the source of the data to pipe
  * @param  {sublevel} targetStore       - Sublevel that is the destination of the data
  * @param  {Function} createDbOperation - Function that returns a sublevel batch-compatible database operation to take on the target store
- * @param  {number}   batchSize         - Number of operations to batch before executing on the target database
  * @returns {Promise<void>}
  */
-async function migrateStore (sourceStore, targetStore, createDbOperation, batchSize = 20) {
+async function migrateStore (sourceStore, targetStore, createDbOperation) {
   return new Promise((resolve, reject) => {
     const stream = sourceStore.createReadStream()
     let batch = []
@@ -37,10 +36,6 @@ async function migrateStore (sourceStore, targetStore, createDbOperation, batchS
 
       if (op) {
         batch.push(op)
-      }
-
-      if (batch.length > batchSize) {
-        flush()
       }
     })
   })
