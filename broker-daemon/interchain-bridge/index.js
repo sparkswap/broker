@@ -4,11 +4,51 @@ const { logger } = require('../utils')
  * A description of a payment on a Payment Channel Network
  * @typedef {Object} Payment
  * @property {string} amount      - Amount, in the smallest unit, of the payment
- * @property {string} maxTimeLock - Maximum time lock, in seconds, of the
- *                                  payment
  * @property {string} address     - Payment Channel Network address of the node
  *                                  the payment is to.
  */
+
+/**
+ * The default amount of time, in seconds, that the Maker will use in forwarding this transaction.
+ * LND's default value announced on its channels is 24 hours (144 Bitcoin blocks)
+ *
+ * @todo Make this amount dynamic and determined with the price/amount or determined from the channel graph
+ * @type {Number}
+ * @constant
+ */
+const DEFAULT_MAKER_FWD_DELTA = 86400
+
+/**
+ * The default amount of time, in seconds, that the Relayer will use in forwarding this transaction.
+ * LND's default value announced on its channels is 24 hours (144 Bitcoin blocks)
+ *
+ * @todo Make this amount dynamic and published by the Relayer or determined from the channel graph
+ * @type {Number}
+ * @constant
+ */
+const DEFAULT_RELAYER_FWD_DELTA = 86400
+
+/**
+ * The default amoumt of time, in seconds, that the Taker (this node) expects to receive when settling a swap.
+ * BOLT-11 states it as 90 minutes (9 Bitcoin blocks), but LND's default is 144 blocks to align to the forwarding
+ * policy.
+ *
+ * @see {@link https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md}
+ * @todo Make this amount dynamic and set by the broker/user
+ * @type {Number}
+ * @constant
+ */
+const DEFAULT_MIN_FINAL_DELTA = 86400
+
+/**
+ * The amount of time, in seconds, that we'd like to buffer any output timelock by to account for block ticks during a swap
+ * This is especially problematic on regtest where we mine blocks every 10 seconds and is a known issue on mainnet.
+ *
+ * @see {@link https://github.com/lightningnetwork/lnd/issues/535}
+ * @type {Number}
+ * @constant
+ */
+const BLOCK_BUFFER = 1200
 
 /**
  * Milliseconds between retries of cancels in cases where our timeout has
@@ -33,15 +73,20 @@ class InterchainBridge {
    *                                              channel network
    * @param   {Engine}  options.outboundEngine  - Engine for the outgoing payment
    *                                              channel network
+   * @param   {Payment} options.inboundPayment  - Inbound Payment we're expecting
    * @param   {Payment} options.outboundPayment - Outbound Payment to send
    * @param   {Date}    options.timeout         - Time after which the payment
-   *                                              should not be translated.
-   * @returns {void}                              Resolves on settlement of the
-   *                                              inbound payment with the
-   *                                              preimage. Rejects if
-   *                                              settlement fails at any point.
+   *                                              should not be translated. This
+   *                                              is an absolute time.
    */
-  constructor ({ hash, inboundEngine, outboundEngine, outboundPayment, timeout }) {
+  constructor ({
+    hash,
+    inboundEngine,
+    outboundEngine,
+    inboundPayment,
+    outboundPayment,
+    timeout
+  }) {
     logger.debug(`Setting up bridge for ${hash}`)
 
     this.hash = hash
@@ -51,12 +96,16 @@ class InterchainBridge {
 
     const {
       amount: outboundAmount,
-      address: outboundAddress,
-      maxTimeLock
+      address: outboundAddress
     } = outboundPayment
     this.outboundAmount = outboundAmount
     this.outboundAddress = outboundAddress
-    this.maxTimeLock = maxTimeLock
+
+    const {
+      amount: inboundAmount
+    } = inboundPayment
+
+    this.inboundAmount = inboundAmount
 
     // Our initial state is to assume that there could be a downstream
     // HTLC active, so we consider it unsafe to cancel upstream HTLC's
@@ -64,6 +113,7 @@ class InterchainBridge {
     this.safeToCancel = false
 
     // Set a timer to cancel our upstream HTLC if our timeout has expired
+    // TODO: should we wait to set this until we have prepared?
     this.cancelOnTimeout()
   }
 
@@ -99,17 +149,64 @@ class InterchainBridge {
   }
 
   /**
+   * The minimum time lock on inbound HTLCs for us
+   * to accept them and be able to forward them on.
+   * @returns {number} Time delta in seconds
+   */
+  get inboundTimeLock () {
+    return this.minTimeLock + DEFAULT_MAKER_FWD_DELTA + BLOCK_BUFFER
+  }
+
+  /**
+   * Calculate the minimum time lock on extended HTLCs
+   * in order for them to be accepted.
+   * @todo Make this value dynamic to accept different routes
+   * and different forwarding policies / final cltv deltas
+   * @returns {number} Time delta in seconds
+   */
+  get outboundTimeLock () {
+    // This assumes a static route from this node, through the Relayer, to
+    // the receiving node.
+    return DEFAULT_RELAYER_FWD_DELTA + DEFAULT_MIN_FINAL_DELTA + BLOCK_BUFFER
+  }
+
+  /**
+   * Prepare for a swap by setting up a hold invoice
+   * on the inbound chain.
+   */
+  async prepare () {
+    const {
+      hash,
+      inboundAmount,
+      inboundEngine,
+      inboundTimeLock,
+      timeout
+    } = this
+
+    // TODO: update `prepareSwap` to take an expiration
+    // time (absolute) and a minimum time lock in seconds
+    // TODO: update `prepareSwap` to be idempotent
+    await inboundEngine.prepareSwap(
+      hash,
+      inboundAmount,
+      inboundTimeLock,
+      timeout
+    )
+  }
+
+  /**
    * Attempt to translate a swap between chains
-   * @returns {string} Preimage of the successful translation
+   * @returns {string} Resolves on settlement of the inbound payment with the
+   *                   preimage. Rejects if settlement fails at any point.
    */
   async translate () {
     const {
       hash,
+      inboundEngine,
       outboundEngine,
       outboundAddress,
       outboundAmount,
-      inboundEngine,
-      maxTimeLock
+      outboundTimeLock
     } = this
 
     // If we don't know the current state of the downstream HTLC, it is not
@@ -138,15 +235,17 @@ class InterchainBridge {
     await inboundEngine.subscribeSwap(hash)
 
     logger.debug(`Sending payment to ${outboundAddress} to translate ${hash}`, {
-      maxTimeLock,
+      outboundTimeLock,
       outboundAmount
     })
 
+    // TODO: fix `translateSwap` to take a max time lock
     return this.settle(outboundEngine.translateSwap(
       outboundAddress,
       hash,
       outboundAmount,
-      maxTimeLock
+      // outboundTimeLock is the maximum time lock of the payment in seconds
+      outboundTimeLock
     ))
   }
 
@@ -159,7 +258,8 @@ class InterchainBridge {
   async settle (preimagePromise) {
     const {
       hash,
-      outboundAddress
+      outboundAddress,
+      outboundAmount
     } = this
 
     // If we are in the process of translating downstream, it is not safe
@@ -192,7 +292,7 @@ class InterchainBridge {
     }
 
     logger.debug(`Successfully completed payment to ${outboundAddress} for ` +
-      `swap ${hash}`)
+      `swap ${hash}`, { outboundAmount })
 
     logger.debug(`Settling upstream payment for ${hash}`)
     await this.inboundEngine.settleSwap(paymentPreimage)
