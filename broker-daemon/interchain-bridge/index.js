@@ -51,13 +51,6 @@ const DEFAULT_MIN_FINAL_DELTA = 86400
 const BLOCK_BUFFER = 1200
 
 /**
- * Milliseconds between retries of cancels in cases where our timeout has
- * expired.
- * @type {number}
- */
-const RETRY_CANCEL = 10000
-
-/**
  * Translate a single swap between chains via an Interchain Bridge
  */
 class InterchainBridge {
@@ -107,45 +100,8 @@ class InterchainBridge {
 
     this.inboundAmount = inboundAmount
 
-    // Our initial state is to assume that there could be a downstream
-    // HTLC active, so we consider it unsafe to cancel upstream HTLC's
-    // until we know for certain otherwise.
-    this.safeToCancel = false
-
-    // Set a timer to cancel our upstream HTLC if our timeout has expired
-    // TODO: should we wait to set this until we have prepared?
-    this.cancelOnTimeout()
-  }
-
-  /**
-   * Cancel a swap when the timeout is expired and it is safe to do so.
-   * @returns {void}
-   */
-  async cancelOnTimeout () {
-    const {
-      timeout,
-      hash,
-      inboundEngine,
-      safeToCancel
-    } = this
-
-    const msToTimeout = new Date() - timeout
-
-    if (safeToCancel && msToTimeout <= 0) {
-      logger.error(`Timeout for ${hash} has expired, cancelling
-        upstream invoice`)
-
-      // `translate` should exit since `subscribeSwap` will
-      // throw an exception once our invoice is cancelled
-      await inboundEngine.cancelSwap(hash)
-    } else {
-      // reset our timer to try again
-      logger.debug(`Retrying cancel for ${hash}, timer not expired, or it is` +
-        'unsafe to cancel.')
-      setTimeout(() => {
-        this.cancelOnTimeout()
-      }, Math.max(msToTimeout, RETRY_CANCEL))
-    }
+    // If we haven't prepared yet, we should not translate swaps
+    this.prepared = false
   }
 
   /**
@@ -192,6 +148,8 @@ class InterchainBridge {
       inboundTimeLock,
       timeout
     )
+
+    this.prepared = true
   }
 
   /**
@@ -209,9 +167,27 @@ class InterchainBridge {
       outboundTimeLock
     } = this
 
+    // Make sure we have prepared (so that we have an upstream invoice)
+    // before trying to translate
+    if (!this.prepared) {
+      throw new Error(`The swap for ${hash} needs to be prepared before it ` +
+        'translated.')
+    }
+
     // If we don't know the current state of the downstream HTLC, it is not
     // safe to cancel, even on a timeout.
     this.safeToCancel = false
+
+    // Before checking on our downstream payment, let's check that we haven't
+    // already settled this swap upstream. We can bail early if we have.
+    logger.debug(`Checking inbound HTLC status for swap ${hash}`)
+    // TODO: implement this method
+    if (await inboundEngine.isSwapSettled(hash)) {
+      logger.debug(`Swap for ${hash} has already been settled`)
+
+      // TODO: implement this method
+      return inboundEngine.getSwapPreimage(hash)
+    }
 
     // We don't want to reject an incoming HTLC if we know that there is an active
     // outgoing one. If the outgoing HTLC is in flight or completed,
@@ -223,15 +199,7 @@ class InterchainBridge {
       return this.settle(outboundEngine.getPaymentPreimage(hash))
     }
 
-    // While we are waiting for upstream HTLCs, it is safe for us to cancel
-    // since we know we have nothing open downstream.
-    this.safeToCancel = true
-
     // Subscribe to incoming payments that are accepted, but not yet settled.
-    // Subscribing to a payment that is cancelled, doesn't exist, or is already
-    // settled will result in an error.
-    // Note that this will also error when we cancel the upstream invoice by
-    // timeout.
     await inboundEngine.subscribeSwap(hash)
 
     logger.debug(`Sending payment to ${outboundAddress} to translate ${hash}`, {
