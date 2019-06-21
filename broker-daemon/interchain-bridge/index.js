@@ -113,7 +113,7 @@ class InterchainBridge {
    * @returns {number} Time delta in seconds
    */
   get inboundTimeLock () {
-    return this.minTimeLock + DEFAULT_MAKER_FWD_DELTA + BLOCK_BUFFER
+    return this.outboundTimeLock + DEFAULT_MAKER_FWD_DELTA + BLOCK_BUFFER
   }
 
   /**
