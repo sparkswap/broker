@@ -105,9 +105,6 @@ class InterchainBridge {
     } = inboundPayment
 
     this.inboundAmount = inboundAmount
-
-    // If we haven't prepared yet, we should not translate swaps
-    this.prepared = false
   }
 
   /**
@@ -154,8 +151,6 @@ class InterchainBridge {
       inboundTimeLock,
       timeout
     )
-
-    this.prepared = true
   }
 
   /**
@@ -172,13 +167,6 @@ class InterchainBridge {
       outboundAmount,
       outboundTimeLock
     } = this
-
-    // Make sure we have prepared (so that we have an upstream invoice)
-    // before trying to translate
-    if (!this.prepared) {
-      throw new Error(`The swap for ${hash} needs to be prepared before it ` +
-        'translated.')
-    }
 
     // If we don't know the current state of the downstream HTLC, it is not
     // safe to cancel, even on a timeout.

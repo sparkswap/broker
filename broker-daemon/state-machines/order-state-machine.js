@@ -5,6 +5,8 @@ const grpc = require('grpc')
 const Order = require('../models/order')
 const { generateId, payInvoice } = require('../utils')
 
+const InterchainBridge = require('../interchain-bridge')
+
 const StateMachine = require('./state-machine')
 const {
   StateMachinePersistence,
@@ -32,6 +34,12 @@ const UNASSIGNED_PREFIX = 'NO_ASSIGNED_ID_'
 const ORDER_ERROR_CODES = Object.freeze({
   RELAYER_UNAVAILABLE: 'RELAYER_UNAVAILABLE'
 })
+
+/**
+ * Number of milliseconds for which a swap should be active.
+ * @type {number}
+ */
+const SWAP_TIMEOUT = 5000
 
 /**
  * @class Finite State Machine for managing order lifecycle
@@ -141,10 +149,16 @@ const OrderStateMachine = StateMachine.factory({
     { name: 'cancel', from: 'placed', to: 'cancelled' },
 
     /**
+     * fill transition: mark an order as filled
+     * @type {Object}
+     */
+    { name: 'fill', from: 'placed', to: 'filled' },
+
+    /**
      * execute transition: prepare the swap for execution, and tell the relayer
      * @type {Object}
      */
-    { name: 'execute', from: 'placed', to: 'executing' },
+    { name: 'execute', from: 'filled', to: 'executing' },
 
     /**
      * complete transition: monitor the payment channel network for settlement,
@@ -338,11 +352,7 @@ const OrderStateMachine = StateMachine.factory({
             this.logger.info(`Order ${orderId} was cancelled on the relayer, cancelling locally.`, { orderId })
             this.tryTo('cancel')
           } else {
-            this.logger.info(`Order ${this.order.orderId} is being filled`, { orderId })
-
-            const { swapHash, fillAmount, takerAddress } = fill
-            this.order.setFilledParams({ swapHash, fillAmount, takerAddress })
-            this.tryTo('execute')
+            this.tryTo('fill', fill)
           }
         } catch (e) {
           this.reject(e)
@@ -359,6 +369,66 @@ const OrderStateMachine = StateMachine.factory({
       this.logger.info(`Placed order ${orderId} on the relayer`, { orderId })
     },
 
+    onBeforeFill: function (lifecycle, fill) {
+      const { orderId } = this.order
+
+      this.logger.info(`Order ${orderId} is being filled`, { orderId })
+
+      const { swapHash, fillAmount, takerAddress } = fill
+      this.order.setFilledParams({ swapHash, fillAmount, takerAddress })
+    },
+
+    onAfterFill: function (lifecycle) {
+      // you can't start a transition while in another one,
+      // so we `nextTick` our way out of the current transition
+      // @see {@link https://github.com/jakesgordon/javascript-state-machine/issues/143}
+      process.nextTick(() => this.tryTo('execute'))
+    },
+
+    buildBridge: function () {
+      if (this.bridge) {
+        return this.bridge
+      }
+
+      const {
+        swapHash: hash,
+        inboundSymbol,
+        outboundSymbol,
+        inboundFillAmount: inboundAmount,
+        outboundFillAmount: outboundAmount,
+        takerAddress: outboundAddress
+      } = this.order
+
+      // We'll make the bridge active for 5 seconds
+      const timeout = new Date(this.dates.filled.getTime() + SWAP_TIMEOUT)
+
+      const inboundEngine = this.engines.get(inboundSymbol)
+      if (!inboundEngine) {
+        throw new Error(`No engine available for ${inboundSymbol}`)
+      }
+
+      const outboundEngine = this.engines.get(outboundSymbol)
+      if (!outboundEngine) {
+        throw new Error(`No engine available for ${outboundSymbol}`)
+      }
+
+      this.bridge = new InterchainBridge({
+        hash,
+        inboundEngine,
+        outboundEngine,
+        inboundPayment: {
+          amount: inboundAmount
+        },
+        outboundPayment: {
+          amount: outboundAmount,
+          address: outboundAddress
+        },
+        timeout
+      })
+
+      return this.bridge
+    },
+
     /**
      * Prepare for execution and notify the relayer when preparation is complete
      * This function gets called before the `execute` transition (triggered by a call to `execute`)
@@ -368,12 +438,10 @@ const OrderStateMachine = StateMachine.factory({
      * @returns {void} Promise that rejects if execution prep or notification fails
      */
     onBeforeExecute: async function (lifecycle) {
-      const { orderId, swapHash, symbol, amount } = this.order.paramsForPrepareSwap
-      const engine = this.engines.get(symbol)
-      if (!engine) {
-        throw new Error(`No engine available for ${symbol}`)
-      }
-      await engine.prepareSwap(orderId, swapHash, amount)
+      const { orderId } = this.order
+      const bridge = this.buildBridge()
+
+      await bridge.prepare()
 
       const authorization = this.relayer.identity.authorize()
       await this.relayer.makerService.executeOrder({ orderId }, authorization)
@@ -385,7 +453,29 @@ const OrderStateMachine = StateMachine.factory({
      * @returns {void}
      */
     onAfterExecute: function (lifecycle) {
-      this.triggerComplete()
+      // you can't start a transition while in another one,
+      // so we `nextTick` our way out of the current transition
+      // @see {@link https://github.com/jakesgordon/javascript-state-machine/issues/143}
+      process.nextTick(() => this.tryTo('complete'))
+    },
+
+    /**
+     * Monitor the Payment Channel Network for settlements, and return the preimage
+     * to the Relayer so we can reimbursed for our deposit.
+     * We perform the settlement monitoring and order completion in the same action
+     * since settlement monitoring can be repeated with no issue.
+     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @returns {Promise}
+     */
+    onBeforeComplete: async function (lifecycle) {
+      const bridge = this.buildBridge()
+
+      const swapPreimage = await bridge.translate()
+      this.order.setSettledParams({ swapPreimage })
+
+      const { orderId } = this.order
+      const authorization = this.relayer.identity.authorize()
+      return this.relayer.makerService.completeOrder({ orderId, swapPreimage }, authorization)
     },
 
     /**
@@ -403,51 +493,21 @@ const OrderStateMachine = StateMachine.factory({
      * @returns {void}
      */
     triggerState: function (lifecycle) {
-      if (this.state === 'executing') {
-        this.triggerComplete()
-      } else if (this.state === 'created' || this.state === 'placed') {
-        process.nextTick(() => this.tryTo('cancel'))
+      const nextState = {
+        [STATES.FILLED]: 'execute',
+        [STATES.EXECUTING]: 'complete',
+        [STATES.CREATED]: 'cancel',
+        [STATES.PLACED]: 'cancel'
       }
-    },
-    /**
-     * As soon as we are done with our part of execution, listen to the Payment Channel Network for settlements.
-     * This method should be called after the execution transition AND after a goto transition back to the
-     * execution state to enable re-hydrating state machines to continue to monitor the network. We do this rather
-     * than `onEnterState` to avoid moving to a new state prior to saving the current state (which happens in
-     * `onEnterState` as part of the persistence plugin.)
-     * @returns {void}
-     */
-    triggerComplete: function () {
+
+      if (nextState[this.state] == null) {
+        throw new Error(`Invalid state to trigger from: ${this.state}`)
+      }
+
       // you can't start a transition while in another one,
       // so we `nextTick` our way out of the current transition
       // @see {@link https://github.com/jakesgordon/javascript-state-machine/issues/143}
-      process.nextTick(() => this.tryTo('complete'))
-    },
-
-    /**
-     * Monitor the Payment Channel Network for settlements, and return the preimage
-     * to the Relayer so we can reimbursed for our deposit.
-     * We perform the settlement monitoring and order completion in the same action
-     * since settlement monitoring can be repeated with no issue.
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
-     * @returns {Promise}
-     */
-    onBeforeComplete: async function (lifecycle) {
-      const { swapHash, symbol } = this.order.paramsForGetPreimage
-      const engine = this.engines.get(symbol)
-      if (!engine) {
-        throw new Error(`No engine available for ${symbol}`)
-      }
-
-      // The action below is a potentially very long-running operation, since the settlement
-      // of the swap itself is highly variable.
-      // TODO: restart monitoring when coming back from an offline state.
-      const swapPreimage = await engine.getSettledSwapPreimage(swapHash)
-      this.order.setSettledParams({ swapPreimage })
-
-      const { orderId } = this.order.paramsForComplete
-      const authorization = this.relayer.identity.authorize()
-      return this.relayer.makerService.completeOrder({ orderId, swapPreimage }, authorization)
+      process.nextTick(() => this.tryTo(nextState[this.state]))
     },
 
     /**
@@ -501,21 +561,25 @@ OrderStateMachine.create = async function (initParams, ...createParams) {
   return osm
 }
 
-OrderStateMachine.STATES = Object.freeze({
+const STATES = Object.freeze({
   NONE: 'none',
   CREATED: 'created',
   PLACED: 'placed',
   CANCELLED: 'cancelled',
+  FILLED: 'filled',
   EXECUTING: 'executing',
   COMPLETED: 'completed',
   REJECTED: 'rejected'
 })
+OrderStateMachine.STATES = STATES
 
-OrderStateMachine.INDETERMINATE_STATES = Object.freeze({
+const INDETERMINATE_STATES = Object.freeze({
   CREATED: 'created',
   PLACED: 'placed',
+  FILLED: 'filled',
   EXECUTING: 'executing'
 })
+OrderStateMachine.INDETERMINATE_STATES = INDETERMINATE_STATES
 
 // Alias for created/placed/executing states
 OrderStateMachine.ACTIVE_STATES = OrderStateMachine.INDETERMINATE_STATES
