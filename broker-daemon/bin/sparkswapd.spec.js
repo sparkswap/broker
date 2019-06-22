@@ -41,7 +41,6 @@ describe('sparkswapd', () => {
 
     const {
       dataDir,
-      interchainRouterAddress,
       idPubKeyPath: pubIdKeyPath,
       idPrivKeyPath: privIdKeyPath,
       markets,
@@ -67,7 +66,6 @@ describe('sparkswapd', () => {
     const brokerOptions = {
       dataDir,
       network,
-      interchainRouterAddress,
       pubIdKeyPath,
       privIdKeyPath,
       marketNames: [markets],
@@ -105,17 +103,6 @@ describe('sparkswapd', () => {
       sparkswapd(argv)
 
       expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ }))
-    })
-
-    it('provides an interchain router address', () => {
-      const interchainRouterAddress = '0.0.0.0:9876'
-
-      argv.push('--interchain-router-address')
-      argv.push(interchainRouterAddress)
-
-      sparkswapd(argv)
-
-      expect(BrokerDaemon).to.have.been.calledWith(sinon.match({ interchainRouterAddress }))
     })
 
     it('provides an data dir', () => {

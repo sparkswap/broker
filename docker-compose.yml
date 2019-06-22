@@ -57,7 +57,6 @@ services:
       - EXTERNAL_PORT=10113
       - NETWORK=${NETWORK}
       - DEBUG=info
-      - EXTPREIMAGE_HOST=sparkswapd:40369
       - ZMQPUBRAWBLOCK=${BTC_ZMQPUBRAWBLOCK:-}
       - ZMQPUBRAWTX=${BTC_ZMQPUBRAWTX:-}
     volumes:
@@ -82,7 +81,6 @@ services:
       - EXTERNAL_PORT=10114
       - NETWORK=${NETWORK}
       - DEBUG=info
-      - EXTPREIMAGE_HOST=sparkswapd:40369
       - ZMQPUBRAWBLOCK=${LTC_ZMQPUBRAWBLOCK:-}
       - ZMQPUBRAWTX=${LTC_ZMQPUBRAWTX:-}
     volumes:
