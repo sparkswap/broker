@@ -152,6 +152,7 @@ async function getPreimage (
   // should attempt to retrieve the associated preimage.
   logger.debug(`Checking outbound HTLC status for swap ${hash}`)
   if (await outboundEngine.isPaymentPendingOrComplete(hash)) {
+    // TODO: return permanent errors when encountered
     return {
       paymentPreimage: await outboundEngine.getPaymentPreimage(hash)
     }
@@ -215,7 +216,10 @@ async function translateOnce (hash, inboundPayment, outboundPayment) {
     logger.error('Downstream payment encountered an error, cancelling ' +
       `upstream invoice for ${hash}`)
     await inboundPayment.engine.cancelSwap(hash)
-    throw new Error(permanentError)
+
+    const err = new Error(permanentError)
+    err.isPermanent = true
+    throw err
   }
 
   logger.debug(`Successfully retrieved preimage for swap ${hash}`)
@@ -242,10 +246,21 @@ async function translateOnce (hash, inboundPayment, outboundPayment) {
  */
 async function translateSwap (hash, inboundPayment, outboundPayment) {
   try {
-    return translateOnce(hash, inboundPayment, outboundPayment)
+    // we need to await this promise - if we return it, any thrown errors
+    // will be swallowed.
+    const preimage = await translateOnce(hash, inboundPayment, outboundPayment)
+    return preimage
   } catch (e) {
-    logger.error('Temporary Error encountered while translating swap: ' +
-      e.message, { error: e.stack, hash })
+    // A permanent error means we are safe to cancel translation and return
+    // the error to the call site.
+    if (e.isPermanent) {
+      logger.error('Permanent Error encountered while translating swap',
+        { error: e.stack, hash })
+      throw e
+    }
+
+    logger.error('Temporary Error encountered while translating swap',
+      { error: e.stack, hash })
 
     // A temporary error means we don't know the current state, so we need
     // to restart the whole process

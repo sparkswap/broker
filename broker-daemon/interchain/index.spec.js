@@ -1,0 +1,231 @@
+const path = require('path')
+const {
+  expect,
+  rewire,
+  sinon
+} = require('test/test-helper')
+
+const interchain = rewire(path.resolve(__dirname, 'index'))
+
+describe('interchain', () => {
+  let logger
+
+  beforeEach(() => {
+    logger = {
+      debug: sinon.stub(),
+      info: sinon.stub(),
+      error: sinon.stub()
+    }
+
+    interchain.__set__('logger', logger)
+  })
+
+  describe('#prepareSwap', () => {
+    let hash
+    let inboundEngine
+    let inboundAmount
+    let timeout
+    let prepareSwapStub
+
+    beforeEach(() => {
+      prepareSwapStub = sinon.stub().resolves()
+
+      hash = 'aofjoaisjdf=='
+      inboundEngine = {
+        prepareSwap: prepareSwapStub
+      }
+      timeout = new Date()
+    })
+
+    it('prepares a swap on the inbound engine', async () => {
+      await interchain.prepareSwap(
+        hash,
+        { engine: inboundEngine, amount: inboundAmount },
+        timeout
+      )
+
+      expect(prepareSwapStub).to.have.been.calledOnce()
+      expect(prepareSwapStub).to.have.been.calledWith(
+        hash,
+        inboundAmount,
+        261600,
+        timeout
+      )
+    })
+  })
+
+  describe('#translateSwap', () => {
+    let hash
+    let preimage
+    let inboundEngine
+    let outboundEngine
+    let outboundAmount
+    let outboundAddress
+    let inboundPayment
+    let outboundPayment
+    let cancelSwap
+    let settleSwap
+    let isPaymentPendingOrComplete
+    let getPaymentPreimage
+    let waitForSwapCommitment
+    let getSettledSwapPreimage
+    let translateSwap
+
+    beforeEach(() => {
+      hash = 'aofjoaisjdf=='
+      preimage = '1267800=='
+
+      outboundAmount = '10000'
+      outboundAddress = 'aoijsfdoajdf89'
+
+      isPaymentPendingOrComplete = sinon.stub().resolves(false)
+      getPaymentPreimage = sinon.stub().resolves(preimage)
+      translateSwap = sinon.stub().resolves({
+        paymentPreimage: preimage
+      })
+
+      outboundEngine = {
+        isPaymentPendingOrComplete,
+        getPaymentPreimage,
+        translateSwap
+      }
+
+      cancelSwap = sinon.stub().resolves()
+      settleSwap = sinon.stub().resolves()
+      waitForSwapCommitment = sinon.stub().resolves()
+      getSettledSwapPreimage = sinon.stub().resolves(preimage)
+
+      inboundEngine = {
+        cancelSwap,
+        settleSwap,
+        waitForSwapCommitment,
+        getSettledSwapPreimage
+      }
+
+      inboundPayment = { engine: inboundEngine }
+      outboundPayment = {
+        engine: outboundEngine,
+        address: outboundAddress,
+        amount: outboundAmount
+      }
+    })
+
+    it('translates the payment downstream', async () => {
+      await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+
+      expect(translateSwap).to.have.been.calledWith(
+        outboundAddress,
+        hash,
+        outboundAmount,
+        174000
+      )
+    })
+
+    it('settles the upstream payment', async () => {
+      const res = await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+
+      expect(settleSwap).to.have.been.calledWith(preimage)
+      expect(res).to.be.eql(preimage)
+    })
+
+    context('payment is in progress', () => {
+      beforeEach(() => {
+        isPaymentPendingOrComplete.resolves(true)
+      })
+
+      it('settles the upstream payment', async () => {
+        const res = await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+
+        expect(settleSwap).to.have.been.calledWith(preimage)
+        expect(res).to.be.eql(preimage)
+      })
+
+      it('retries on error', async () => {
+        getPaymentPreimage.onCall(0).rejects(new Error('fake error'))
+        getPaymentPreimage.onCall(1).resolves(preimage)
+
+        const res = await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+
+        expect(settleSwap).to.have.been.calledWith(preimage)
+        expect(res).to.be.eql(preimage)
+      })
+    })
+
+    context('swap is settled', () => {
+      beforeEach(() => {
+        const settledError = new Error('Invoice is already settled')
+        settledError.isSettled = true
+        waitForSwapCommitment.rejects(settledError)
+      })
+
+      it('settles the upstream payment', async () => {
+        const res = await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+
+        expect(settleSwap).to.have.been.calledWith(preimage)
+        expect(res).to.be.eql(preimage)
+      })
+
+      it('retries on error', async () => {
+        getPaymentPreimage.onCall(0).rejects(new Error('fake error'))
+        getPaymentPreimage.onCall(1).resolves(preimage)
+
+        const res = await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+
+        expect(settleSwap).to.have.been.calledWith(preimage)
+        expect(res).to.be.eql(preimage)
+      })
+    })
+
+    context('error while waiting for swap commitment', () => {
+      beforeEach(() => {
+        waitForSwapCommitment.onCall(0).rejects(new Error('fake error'))
+        waitForSwapCommitment.onCall(1).resolves()
+      })
+
+      it('settles the upstream payment', async () => {
+        const res = await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+
+        expect(settleSwap).to.have.been.calledWith(preimage)
+        expect(res).to.be.eql(preimage)
+      })
+    })
+
+    context('permanent error while sending payment', () => {
+      beforeEach(() => {
+        translateSwap.resolves({
+          permanentError: 'permanent error while translating'
+        })
+      })
+
+      it('cancels the upstream payment', async () => {
+        try {
+          await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+        } catch (e) {
+          expect(cancelSwap).to.have.been.calledWith(hash)
+        }
+      })
+
+      it('throws an error', () => {
+        return expect(
+          interchain.translateSwap(hash, inboundPayment, outboundPayment)
+        ).to.eventually.be.rejectedWith('permanent error while translating')
+      })
+    })
+
+    context('exception while sending payment', () => {
+      beforeEach(() => {
+        translateSwap.onCall(0).rejects(new Error('fake error'))
+        translateSwap.onCall(1).resolves({
+          paymentPreimage: preimage
+        })
+      })
+
+      it('settles the upstream payment', async () => {
+        const res = await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+
+        expect(settleSwap).to.have.been.calledWith(preimage)
+        expect(res).to.be.eql(preimage)
+      })
+    })
+  })
+})
