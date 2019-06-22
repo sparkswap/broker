@@ -167,8 +167,8 @@ async function getPreimage (
       logger.debug(`Swap for ${hash} has already been settled`)
 
       return {
-        // TODO: implement this method
-        paymentPreimage: await inboundEngine.getSwapPreimage(hash)
+        // TODO: update this method to be a simple request/response
+        paymentPreimage: await inboundEngine.getSettledSwapPreimage(hash)
       }
     }
 
@@ -180,6 +180,7 @@ async function getPreimage (
     outboundAmount
   })
 
+  // TODO: update this method to take a max time lock
   return outboundEngine.translateSwap(
     outboundAddress,
     hash,

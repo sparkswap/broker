@@ -643,8 +643,7 @@ describe('OrderStateMachine', () => {
     let outboundSymbol
     let outboundFillAmount
     let takerAddress
-    let InterchainBridge
-    let prepareStub
+    let prepareSwapStub
 
     beforeEach(async () => {
       executeOrderStub = sinon.stub().resolves()
@@ -674,11 +673,9 @@ describe('OrderStateMachine', () => {
         }
       }
 
-      InterchainBridge = sinon.stub()
-      prepareStub = sinon.stub().resolves()
-      InterchainBridge.prototype.prepare = prepareStub
+      prepareSwapStub = sinon.stub().resolves()
 
-      OrderStateMachine.__set__('InterchainBridge', InterchainBridge)
+      OrderStateMachine.__set__('prepareSwap', prepareSwapStub)
 
       osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.onEnterPlaced = sinon.stub()
@@ -692,30 +689,14 @@ describe('OrderStateMachine', () => {
       osm.dates.filled = new Date('2019-06-21T00:03:26.503Z')
     })
 
-    it('builds an Interchain Bridge', async () => {
+    it('prepares the swap', async () => {
       await osm.execute()
 
-      expect(InterchainBridge).to.have.been.calledOnce()
-      expect(InterchainBridge).to.have.been.calledWithNew()
-      expect(InterchainBridge).to.have.been.calledWith({
-        hash: swapHash,
-        inboundEngine: engines.get('LTC'),
-        outboundEngine: engines.get('BTC'),
-        inboundPayment: {
-          amount: inboundFillAmount
-        },
-        outboundPayment: {
-          amount: outboundFillAmount,
-          address: takerAddress
-        },
-        timeout: new Date('2019-06-21T00:03:31.503Z')
-      })
-    })
-
-    it('prepares the swap on the Bridge', async () => {
-      await osm.execute()
-
-      expect(prepareStub).to.have.been.calledOnce()
+      expect(prepareSwapStub).to.have.been.calledOnce()
+      expect(prepareSwapStub).to.have.been.calledWith(swapHash, {
+        engine: engines.get('LTC'),
+        amount: inboundFillAmount
+      }, new Date('2019-06-21T00:03:31.503Z'))
     })
 
     it('authorizes the request', async () => {
@@ -754,9 +735,7 @@ describe('OrderStateMachine', () => {
     let outboundSymbol
     let takerAddress
     let outboundFillAmount
-    let inboundFillAmount
-    let translateStub
-    let InterchainBridge
+    let translateSwapStub
 
     beforeEach(async () => {
       preimage = 'as90fdha9s8hf0a8sfhd=='
@@ -766,7 +745,6 @@ describe('OrderStateMachine', () => {
       inboundSymbol = 'LTC'
       outboundSymbol = 'BTC'
       outboundFillAmount = '10000'
-      inboundFillAmount = '100'
       takerAddress = '1233aosifdjasoidfj'
 
       setSettledParams = sinon.stub()
@@ -776,7 +754,6 @@ describe('OrderStateMachine', () => {
         swapHash,
         inboundSymbol,
         outboundSymbol,
-        inboundFillAmount,
         outboundFillAmount,
         takerAddress,
         setSettledParams
@@ -791,10 +768,8 @@ describe('OrderStateMachine', () => {
         }
       }
 
-      InterchainBridge = sinon.stub()
-      translateStub = sinon.stub().resolves(preimage)
-      InterchainBridge.prototype.translate = translateStub
-      OrderStateMachine.__set__('InterchainBridge', InterchainBridge)
+      translateSwapStub = sinon.stub().resolves(preimage)
+      OrderStateMachine.__set__('translateSwap', translateSwapStub)
 
       osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.order = fakeOrder
@@ -807,30 +782,15 @@ describe('OrderStateMachine', () => {
       osm.dates.filled = new Date('2019-06-21T00:03:26.503Z')
     })
 
-    it('builds an Interchain Bridge', async () => {
-      await osm.complete()
-
-      expect(InterchainBridge).to.have.been.calledOnce()
-      expect(InterchainBridge).to.have.been.calledWithNew()
-      expect(InterchainBridge).to.have.been.calledWith({
-        hash: swapHash,
-        inboundEngine: engines.get('LTC'),
-        outboundEngine: engines.get('BTC'),
-        inboundPayment: {
-          amount: inboundFillAmount
-        },
-        outboundPayment: {
-          amount: outboundFillAmount,
-          address: takerAddress
-        },
-        timeout: new Date('2019-06-21T00:03:31.503Z')
-      })
-    })
-
     it('translates cross-chain', async () => {
       await osm.complete()
 
-      expect(translateStub).to.have.been.calledOnce()
+      expect(translateSwapStub).to.have.been.calledOnce()
+      expect(translateSwapStub).to.have.been.calledWith(
+        swapHash,
+        sinon.match({ engine: engines.get('LTC') }),
+        { engine: engines.get('BTC'), amount: outboundFillAmount, address: takerAddress }
+      )
     })
 
     it('puts the preimage on the order', async () => {
