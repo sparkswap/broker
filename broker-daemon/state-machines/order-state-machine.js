@@ -5,7 +5,10 @@ const grpc = require('grpc')
 const Order = require('../models/order')
 const { generateId, payInvoice } = require('../utils')
 
-const InterchainBridge = require('../interchain-bridge')
+const {
+  prepare: prepareSwap,
+  translate: translateSwap
+} = require('../interchain')
 
 const StateMachine = require('./state-machine')
 const {
@@ -183,6 +186,42 @@ const OrderStateMachine = StateMachine.factory({
     return { store, logger, relayer, engines, order: {} }
   },
   methods: {
+    inboundPayment: function () {
+      const {
+        inboundSymbol,
+        inboundFillAmount
+      } = this.order
+
+      const inboundEngine = this.engines.get(inboundSymbol)
+      if (!inboundEngine) {
+        throw new Error(`No engine available for ${inboundSymbol}`)
+      }
+
+      return {
+        engine: inboundEngine,
+        amount: inboundFillAmount
+      }
+    },
+
+    outboundPayment: function () {
+      const {
+        outboundSymbol,
+        outboundFillAmount,
+        takerAddress
+      } = this.order
+
+      const outboundEngine = this.engines.get(outboundSymbol)
+      if (!outboundEngine) {
+        throw new Error(`No engine available for ${outboundSymbol}`)
+      }
+
+      return {
+        engine: outboundEngine,
+        amount: outboundFillAmount,
+        address: takerAddress
+      }
+    },
+
     /**
      * Create the order on the relayer during transition.
      * This function gets called before the `create` transition (triggered by a call to `create`)
@@ -385,50 +424,6 @@ const OrderStateMachine = StateMachine.factory({
       process.nextTick(() => this.tryTo('execute'))
     },
 
-    buildBridge: function () {
-      if (this.bridge) {
-        return this.bridge
-      }
-
-      const {
-        swapHash: hash,
-        inboundSymbol,
-        outboundSymbol,
-        inboundFillAmount: inboundAmount,
-        outboundFillAmount: outboundAmount,
-        takerAddress: outboundAddress
-      } = this.order
-
-      // We'll make the bridge active for 5 seconds
-      const timeout = new Date(this.dates.filled.getTime() + SWAP_TIMEOUT)
-
-      const inboundEngine = this.engines.get(inboundSymbol)
-      if (!inboundEngine) {
-        throw new Error(`No engine available for ${inboundSymbol}`)
-      }
-
-      const outboundEngine = this.engines.get(outboundSymbol)
-      if (!outboundEngine) {
-        throw new Error(`No engine available for ${outboundSymbol}`)
-      }
-
-      this.bridge = new InterchainBridge({
-        hash,
-        inboundEngine,
-        outboundEngine,
-        inboundPayment: {
-          amount: inboundAmount
-        },
-        outboundPayment: {
-          amount: outboundAmount,
-          address: outboundAddress
-        },
-        timeout
-      })
-
-      return this.bridge
-    },
-
     /**
      * Prepare for execution and notify the relayer when preparation is complete
      * This function gets called before the `execute` transition (triggered by a call to `execute`)
@@ -438,10 +433,11 @@ const OrderStateMachine = StateMachine.factory({
      * @returns {void} Promise that rejects if execution prep or notification fails
      */
     onBeforeExecute: async function (lifecycle) {
-      const { orderId } = this.order
-      const bridge = this.buildBridge()
+      const { orderId, swapHash } = this.order
+      const inboundPayment = this.inboundPayment()
+      const timeout = new Date(this.dates.filled.getTime() + SWAP_TIMEOUT)
 
-      await bridge.prepare()
+      await prepareSwap(swapHash, inboundPayment, timeout)
 
       const authorization = this.relayer.identity.authorize()
       await this.relayer.makerService.executeOrder({ orderId }, authorization)
@@ -468,9 +464,12 @@ const OrderStateMachine = StateMachine.factory({
      * @returns {Promise}
      */
     onBeforeComplete: async function (lifecycle) {
-      const bridge = this.buildBridge()
+      const { swapHash } = this.order
+      const inboundPayment = this.inboundPayment()
+      const outboundPayment = this.outboundPayment()
 
-      const swapPreimage = await bridge.translate()
+      const swapPreimage = await translateSwap(swapHash, inboundPayment, outboundPayment)
+
       this.order.setSettledParams({ swapPreimage })
 
       const { orderId } = this.order
