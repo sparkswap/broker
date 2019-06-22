@@ -97,7 +97,7 @@ const INBOUND_TIME_LOCK = OUTBOUND_TIME_LOCK + DEFAULT_MAKER_FWD_DELTA + BLOCK_B
  * @param {Date}    timeout               - Absolute time after which the
  *                                          payment should not be translated.
  */
-async function prepare (hash, { engine, amount }, timeout) {
+async function prepareSwap (hash, { engine, amount }, timeout) {
   // TODO: update `prepareSwap` to take an expiration
   // time (absolute) and a minimum time lock in seconds
   // TODO: update `prepareSwap` to be idempotent
@@ -240,7 +240,7 @@ async function translateOnce (hash, inboundPayment, outboundPayment) {
  *                                          retrieve the preimage.
  * @returns {string}                        Base64 encoded preimage for the swap
  */
-async function translate (hash, inboundPayment, outboundPayment) {
+async function translateSwap (hash, inboundPayment, outboundPayment) {
   try {
     return translateOnce(hash, inboundPayment, outboundPayment)
   } catch (e) {
@@ -250,11 +250,11 @@ async function translate (hash, inboundPayment, outboundPayment) {
     // A temporary error means we don't know the current state, so we need
     // to restart the whole process
     logger.debug(`Retrying swap translation for ${hash}`)
-    return translate(hash, inboundPayment, outboundPayment)
+    return translateSwap(hash, inboundPayment, outboundPayment)
   }
 }
 
 module.exports = {
-  prepare,
-  translate
+  prepareSwap,
+  translateSwap
 }

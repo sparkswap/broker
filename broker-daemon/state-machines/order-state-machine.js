@@ -6,8 +6,8 @@ const Order = require('../models/order')
 const { generateId, payInvoice } = require('../utils')
 
 const {
-  prepare: prepareSwap,
-  translate: translateSwap
+  prepareSwap,
+  translateSwap
 } = require('../interchain')
 
 const StateMachine = require('./state-machine')
