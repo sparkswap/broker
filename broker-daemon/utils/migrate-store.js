@@ -14,6 +14,11 @@ async function migrateStore (sourceStore, targetStore, createDbOperation, batchS
   return new Promise((resolve, reject) => {
     const stream = sourceStore.createReadStream()
 
+    // `previousBatch` allows us to batch save records in sequence and lock the operation
+    // to make sure we are not inserting records out of the order they are received.
+    //
+    // We set this value to automatically resolve on the first use. This value is then
+    // subsequently set when a batch needs to be processed
     let previousBatch = async () => {}
     let batch = []
 
@@ -31,9 +36,7 @@ async function migrateStore (sourceStore, targetStore, createDbOperation, batchS
 
       batch.push(op)
 
-      if (!(batch.length >= batchSize)) {
-        return
-      }
+      if (batch.length < batchSize) return
 
       await previousBatch()
 
