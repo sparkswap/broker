@@ -2,7 +2,7 @@ const { sinon, expect } = require('test/test-helper')
 
 const migrateStore = require('./migrate-store')
 
-describe('migrateStore', () => {
+describe.only('migrateStore', () => {
   let sourceStore
   let targetStore
   let createDbOperation
