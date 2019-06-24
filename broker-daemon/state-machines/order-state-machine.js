@@ -8,7 +8,7 @@ const { generateId, payInvoice } = require('../utils')
 const {
   prepareSwap,
   translateSwap
-} = require('../interchain')
+} = require('./interchain')
 
 const StateMachine = require('./state-machine')
 const {

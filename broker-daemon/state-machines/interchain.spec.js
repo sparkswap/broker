@@ -5,7 +5,7 @@ const {
   sinon
 } = require('test/test-helper')
 
-const interchain = rewire(path.resolve(__dirname, 'index'))
+const interchain = rewire(path.resolve(__dirname, 'interchain'))
 
 describe('interchain', () => {
   let logger
