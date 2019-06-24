@@ -9,6 +9,7 @@ const interchain = rewire(path.resolve(__dirname, 'interchain'))
 
 describe('interchain', () => {
   let logger
+  let delay
 
   beforeEach(() => {
     logger = {
@@ -17,7 +18,10 @@ describe('interchain', () => {
       error: sinon.stub()
     }
 
+    delay = sinon.stub().resolves()
+
     interchain.__set__('logger', logger)
+    interchain.__set__('delay', delay)
   })
 
   describe('#prepareSwap', () => {
@@ -225,6 +229,12 @@ describe('interchain', () => {
 
         expect(settleSwap).to.have.been.calledWith(preimage)
         expect(res).to.be.eql(preimage)
+      })
+
+      it('delays before settling', async () => {
+        await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+
+        expect(delay).to.have.been.calledOnce()
       })
     })
   })

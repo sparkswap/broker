@@ -1,4 +1,7 @@
-const { logger } = require('../utils')
+const {
+  logger,
+  delay
+} = require('../utils')
 
 class PermanentError extends Error {}
 
@@ -10,6 +13,16 @@ class PermanentError extends Error {}
  * @property {string} address     - Payment Channel Network address of the node
  *                                  the payment is to.
  */
+
+/**
+ * Numer of milliseconds between each attempt to resolve a translation across
+ * chains. This happens when we encounter a temporary error. We need to keep
+ * retrying so as to not end up in a non-atomic state, but if we retry too
+ * frequently we could continually flap. This delay ensures we stay atomic,
+ * but without needlessly looping over the same error.
+ * @type {number}
+ */
+const RETRY_DELAY = 30000
 
 /**
  * The default amount of time, in seconds, that the Maker will use in forwarding
@@ -266,6 +279,8 @@ async function translateSwap (hash, inboundPayment, outboundPayment) {
 
     // A temporary error means we don't know the current state, so we need
     // to restart the whole process
+    logger.debug(`Delaying swap retry for ${hash} for ${RETRY_DELAY}ms`)
+    await delay(RETRY_DELAY)
     logger.debug(`Retrying swap translation for ${hash}`)
     return translateSwap(hash, inboundPayment, outboundPayment)
   }
