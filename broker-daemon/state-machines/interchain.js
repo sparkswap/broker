@@ -158,7 +158,8 @@ async function getPreimage (
     }
   }
 
-  // Subscribe to incoming payments that are accepted, but not yet settled.
+  // wait for an incoming payment to this hash that is accepted,
+  // but not yet settled.
   try {
     // TODO: implement this method
     await inboundEngine.waitForSwapCommitment(hash)
