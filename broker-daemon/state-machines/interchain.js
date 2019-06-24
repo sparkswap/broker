@@ -1,5 +1,7 @@
 const { logger } = require('../utils')
 
+class PermanentError extends Error {}
+
 /**
  * A description of a payment on a Payment Channel Network
  * @typedef {Object} Payment
@@ -205,6 +207,7 @@ async function getPreimage (
  * @param {Payment} outboundPayment       - Outbound payment we will make to
  *                                          retrieve the preimage.
  * @returns {string}                        Base64 encoded preimage for the swap
+ * @throws {PermanentError} If a permanent error is encountered while translating
  */
 async function translateOnce (hash, inboundPayment, outboundPayment) {
   const {
@@ -218,9 +221,7 @@ async function translateOnce (hash, inboundPayment, outboundPayment) {
       `upstream invoice for ${hash}`)
     await inboundPayment.engine.cancelSwap(hash)
 
-    const err = new Error(permanentError)
-    err.isPermanent = true
-    throw err
+    throw new PermanentError(permanentError)
   }
 
   logger.debug(`Successfully retrieved preimage for swap ${hash}`)
@@ -254,7 +255,7 @@ async function translateSwap (hash, inboundPayment, outboundPayment) {
   } catch (e) {
     // A permanent error means we are safe to cancel translation and return
     // the error to the call site.
-    if (e.isPermanent) {
+    if (e instanceof PermanentError) {
       logger.error('Permanent Error encountered while translating swap',
         { error: e.stack, hash })
       throw e
