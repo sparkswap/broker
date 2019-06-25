@@ -1,116 +1,205 @@
-const { sinon, expect } = require('test/test-helper')
+const path = require('path')
+const {
+  sinon,
+  expect,
+  rewire
+} = require('test/test-helper')
 
-const migrateStore = require('./migrate-store')
+const migrateStore = rewire(path.resolve(__dirname, './migrate-store'))
 
 describe.only('migrateStore', () => {
   let sourceStore
   let targetStore
   let createDbOperation
-  let stream
-  let fakeRecords
-  let fakeOperations
+  let batchSize
+  let onStub
 
   beforeEach(() => {
-    stream = {
-      on: sinon.stub()
-    }
+    onStub = sinon.stub()
     sourceStore = {
-      createReadStream: sinon.stub().returns(stream)
+      createReadStream: sinon.stub().returns({ on: onStub })
     }
     targetStore = {
-      batch: sinon.stub().callsArgAsync(1)
+      batch: sinon.stub()
     }
-    fakeRecords = [
-      { key: '1', value: 'some value' },
-      { key: '2', value: 'another value' },
-      { key: '3', value: '3rd value' }
-    ]
-    fakeOperations = [
-      { type: 'put', key: 'a', value: '1' },
-      { type: 'put', key: 'b', value: '2' },
-      { type: 'put', key: 'c', value: '3' }
-    ]
-
-    stream.on.callsFake((evt, fn) => {
-      if (evt === 'error') return
-      const data = evt === 'data' ? fn : function () {}
-      const end = evt === 'end' ? fn : function () {}
-      const records = fakeRecords.slice()
-
-      const nextRecord = () => {
-        if (records.length) {
-          data(records.shift())
-          process.nextTick(nextRecord)
-        } else {
-          end()
-        }
-      }
-
-      process.nextTick(nextRecord)
-    })
     createDbOperation = sinon.stub()
-    fakeRecords.forEach(({ key, value }, i) => {
-      createDbOperation.withArgs(key, value).returns(fakeOperations[i])
-    })
+    batchSize = 1
   })
 
   it('returns a promise', () => {
-    expect(migrateStore(sourceStore, targetStore, createDbOperation)).to.be.a('promise')
+    expect(migrateStore(sourceStore, targetStore, createDbOperation, batchSize)).to.be.a('promise')
   })
 
-  it('creates a readstream from the store', () => {
-    migrateStore(sourceStore, targetStore, createDbOperation)
-
+  it('creates a read string from the source sublevel store', async () => {
+    migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+    expect(sourceStore.createReadStream).to.have.been.called()
     expect(sourceStore.createReadStream).to.have.been.calledOnce()
   })
 
-  it('sets an error handler', () => {
-    migrateStore(sourceStore, targetStore, createDbOperation)
-
-    expect(stream.on).to.have.been.calledWith('error', sinon.match.func)
+  context('on error', () => {
+    it('rejects the promise if there was a failure', () => {
+      const promise = migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      const error = onStub.args[0][1]
+      error()
+      return expect(promise).to.eventually.be.rejected()
+    })
   })
 
-  it('sets an end handler', () => {
-    migrateStore(sourceStore, targetStore, createDbOperation)
+  context('on end', () => {
+    let previousBatchStub
+    let revert
 
-    expect(stream.on).to.have.been.calledWith('end', sinon.match.func)
+    beforeEach(() => {
+      previousBatchStub = sinon.stub()
+      revert = migrateStore.__set__('previousBatch', previousBatchStub)
+    })
+
+    afterEach(() => {
+      revert()
+    })
+
+    it('runs the previous batch', () => {
+      migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      const end = onStub.args[1][1]
+      end()
+      expect(previousBatchStub).to.have.been.called()
+      expect(previousBatchStub).to.have.been.calledOnce()
+    })
+
+    it('resolves the promise', () => {
+      const promise = migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      const end = onStub.args[1][1]
+      end()
+      return expect(promise).to.not.have.eventually.been.rejected()
+    })
+
+    it('rejects the promise if an error occurred when processing the previous batch', async () => {
+      previousBatchStub.rejects()
+      const promise = migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      const end = onStub.args[1][1]
+      await end()
+      return expect(promise).to.have.eventually.been.rejected()
+    })
   })
 
-  it('sets an data handler', () => {
-    migrateStore(sourceStore, targetStore, createDbOperation)
+  context.only('on data', () => {
+    let previousBatchStub
+    let reverts
+    let params
+    let promisifyStub
+    let batchStub
+    let records
 
-    expect(stream.on).to.have.been.calledWith('data', sinon.match.func)
-  })
+    beforeEach(() => {
+      records = [
+        { key: '1234', value: '1234' }
+      ]
+      createDbOperation.returns(records[0])
+      previousBatchStub = sinon.stub()
+      batchStub = sinon.stub()
+      promisifyStub = sinon.stub().returns(batchStub)
+      params = {
+        key: '1',
+        value: 'crypto'
+      }
 
-  it('rejects on stream error', async () => {
-    stream.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
-    return expect(migrateStore(sourceStore, targetStore, createDbOperation)).to.eventually.be.rejectedWith(Error)
-  })
+      reverts = []
+      reverts.push(migrateStore.__set__('previousBatch', previousBatchStub))
+      reverts.push(migrateStore.__set__('promisify', promisifyStub))
+    })
 
-  it('rejects on batch error', async () => {
-    targetStore.batch.callsArgWithAsync(1, new Error('fake error'))
-    return expect(migrateStore(sourceStore, targetStore, createDbOperation)).to.eventually.be.rejectedWith(Error)
-  })
+    afterEach(() => {
+      reverts.forEach(r => r())
+    })
 
-  it('sends batches to the target store', async () => {
-    await migrateStore(sourceStore, targetStore, createDbOperation)
+    it('assigns previousBatch to an empty function if it is not defined', async () => {
+      const revert = migrateStore.__set__('previousBatch', undefined)
+      migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      let onData = onStub.args[2][1]
+      await onData(params)
+      revert()
+      reverts.push(migrateStore.__set__('previousBatch', previousBatchStub))
+      migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      onData = onStub.args[5][1]
+      await onData(params)
+      expect(previousBatchStub).to.have.been.calledOnce()
+    })
 
-    expect(targetStore.batch).to.have.been.calledOnce()
-    expect(targetStore.batch).to.have.been.calledWith(sinon.match.array.deepEquals(fakeOperations))
-  })
+    it('runs the KV through a db operation', async () => {
+      migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      const onData = onStub.args[2][1]
+      await onData(params)
+      expect(createDbOperation).to.have.been.calledWith(params.key, params.value)
+    })
 
-  it('flushes the batches on end', async () => {
-    await migrateStore(sourceStore, targetStore, createDbOperation)
+    it('returns if the db operation is null', async () => {
+      createDbOperation.returns(null)
+      migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      const onData = onStub.args[2][1]
+      await onData(params)
+      expect(previousBatchStub).to.not.have.been.called()
+    })
 
-    expect(targetStore.batch).to.have.been.calledOnce()
-    expect(targetStore.batch).to.have.been.calledWith(sinon.match.array.deepEquals(fakeOperations))
-  })
+    it('pushes the db operation onto the batch', async () => {
+      migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      const onData = onStub.args[2][1]
+      createDbOperation.returns(null)
+      await onData(params)
+      createDbOperation.returns(records[0])
+      await onData(params)
+      expect(batchStub.args[0][0].length).to.be.eql(1)
+    })
 
-  it('skips empty db operations', async () => {
-    fakeOperations.push(undefined)
+    it('returns if the batch size has not been hit', async () => {
+      migrateStore(sourceStore, targetStore, createDbOperation, 2)
+      const onData = onStub.args[2][1]
+      await onData(params)
+      expect(previousBatchStub).to.not.have.been.called()
+    })
 
-    await migrateStore(sourceStore, targetStore, createDbOperation)
+    context('batch is full', () => {
+      it('awaits the previous batch if the batch size is large', async () => {
+        migrateStore(sourceStore, targetStore, createDbOperation, 5)
+        const onData = onStub.args[2][1]
+        await onData(params)
+        expect(previousBatchStub).to.not.have.been.called()
+        await onData(params)
+        expect(previousBatchStub).to.not.have.been.called()
+        await onData(params)
+        expect(previousBatchStub).to.not.have.been.called()
+        await onData(params)
+        expect(previousBatchStub).to.not.have.been.called()
+        await onData(params)
+        expect(previousBatchStub).to.have.been.called()
+      })
 
-    expect(targetStore.batch).to.have.been.calledWith(sinon.match.array.deepEquals(fakeOperations.slice(0, fakeOperations.length - 1)))
+      it('reassigns previous batch to a new batch', async () => {
+        const newBatch = sinon.stub()
+        batchStub.returns(newBatch)
+        migrateStore(sourceStore, targetStore, createDbOperation, 1)
+        let onData = onStub.args[2][1]
+        await onData(params)
+        expect(previousBatchStub).to.have.been.called()
+        migrateStore(sourceStore, targetStore, createDbOperation, 1)
+        onData = onStub.args[5][1]
+        await onData(params)
+        expect(previousBatchStub).to.not.have.been.calledTwice()
+        expect(newBatch).to.have.been.called()
+      })
+
+      it('clears the batch', async () => {
+        migrateStore(sourceStore, targetStore, createDbOperation, 3)
+        const onData = onStub.args[2][1]
+        await onData(params)
+        await onData(params)
+        await onData(params)
+        expect(previousBatchStub).to.have.been.called()
+        expect(batchStub.args[0][0].length).to.eql(3)
+        await onData(params)
+        expect(previousBatchStub).to.have.been.calledOnce()
+        expect(previousBatchStub).to.not.have.been.calledTwice()
+        expect(batchStub).to.have.been.calledOnce()
+      })
+    })
   })
 })
