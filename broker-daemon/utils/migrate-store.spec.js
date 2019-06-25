@@ -58,12 +58,12 @@ describe('migrateStore', () => {
       revert()
     })
 
-    it('runs the previous batch', () => {
+    it('runs the previous batches', () => {
       migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
       const end = onStub.args[1][1]
       end()
       expect(previousBatchStub).to.have.been.called()
-      expect(previousBatchStub).to.have.been.calledOnce()
+      expect(previousBatchStub).to.have.been.calledTwice()
     })
 
     it('resolves the promise', () => {

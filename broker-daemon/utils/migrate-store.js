@@ -23,20 +23,38 @@ async function migrateStore (sourceStore, targetStore, createDbOperation, batchS
 
     let batch = []
 
+    async function flush () {
+      try {
+        await previousBatch()
+      } catch (e) {
+        return reject(e)
+      }
+
+      previousBatch = promisify(targetStore.batch)(batch)
+
+      // Clear the batch
+      batch = []
+    }
+
     stream.on('error', reject)
 
     stream.on('end', async () => {
       try {
+        // clear the batch
+        flush()
+
+        // If a partial batch exists, then we should flush the remaining records
         if (previousBatch) {
           await previousBatch()
         }
+
         return resolve()
       } catch (e) {
         return reject(e)
       }
     })
 
-    stream.on('data', async ({ key, value }) => {
+    stream.on('data', ({ key, value }) => {
       // The first time we start we should initialize the previousBatch variable
       if (!previousBatch) {
         previousBatch = async () => {}
@@ -50,16 +68,7 @@ async function migrateStore (sourceStore, targetStore, createDbOperation, batchS
 
       if (batch.length < batchSize) return
 
-      try {
-        await previousBatch()
-      } catch (e) {
-        return reject(e)
-      }
-
-      previousBatch = promisify(targetStore.batch)(batch)
-
-      // Clear the batch
-      batch = []
+      flush()
     })
   })
 }
