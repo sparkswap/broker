@@ -7,7 +7,7 @@ const {
 
 const migrateStore = rewire(path.resolve(__dirname, './migrate-store'))
 
-describe.only('migrateStore', () => {
+describe('migrateStore', () => {
   let sourceStore
   let targetStore
   let createDbOperation
@@ -82,7 +82,7 @@ describe.only('migrateStore', () => {
     })
   })
 
-  context.only('on data', () => {
+  context('on data', () => {
     let previousBatchStub
     let reverts
     let params
