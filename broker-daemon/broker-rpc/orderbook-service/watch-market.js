@@ -18,7 +18,6 @@ const neverResolve = new Promise(() => {})
  * @param {Object} request.params - Request parameters from the client
  * @param {Function} request.send - Send a chunk of data to the client
  * @param {Function} request.onCancel - Handle cancelled streams
- * @param {Function} request.onError - Handle errored streams
  * @param {Object} request.logger - logger for messages about the method
  * @param {Object} request.orderbooks - initialized orderbooks
  * @param {RelayerClient} request.relayer - grpc Client for interacting with the relayer
@@ -26,7 +25,7 @@ const neverResolve = new Promise(() => {})
  * @param {Function} responses.WatchMarketResponse - constructor for WatchMarketResponse messages
  * @returns {void}
  */
-async function watchMarket ({ params, send, onCancel, onError, logger, orderbooks }, { WatchMarketResponse }) {
+async function watchMarket ({ params, send, onCancel, logger, orderbooks }, { WatchMarketResponse }) {
   // TODO: Some validation on here. Maybe the client can call out for valid markets
   // from the relayer so we dont event make a request if it is invalid
   const { market } = params
@@ -74,7 +73,6 @@ async function watchMarket ({ params, send, onCancel, onError, logger, orderbook
   }
 
   onCancel(() => liveStream.removeListener('data', onData))
-  onError(() => liveStream.removeListener('data', onData))
 
   liveStream
     .on('data', onData)
