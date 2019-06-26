@@ -25,7 +25,7 @@ async function migrateStore (sourceStore, targetStore, createDbOperation, batchS
 
     async function flush () {
       try {
-        await previousBatch()
+        await previousBatch
       } catch (e) {
         return reject(e)
       }
@@ -44,9 +44,7 @@ async function migrateStore (sourceStore, targetStore, createDbOperation, batchS
         flush()
 
         // If a partial batch exists, then we should flush the remaining records
-        if (previousBatch) {
-          await previousBatch()
-        }
+        await previousBatch
 
         return resolve()
       } catch (e) {
