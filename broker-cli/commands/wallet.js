@@ -61,7 +61,8 @@ const SUPPORTED_COMMANDS = Object.freeze({
   CREATE: 'create',
   UNLOCK: 'unlock',
   CHANGE_PASSWORD: 'change-password',
-  HISTORY: 'history'
+  HISTORY: 'history',
+  RECOVER: 'recover'
 })
 
 /**
@@ -530,6 +531,42 @@ async function unlock (args, opts, logger) {
 }
 
 /**
+ * Recover a wallet from a provided mnemonic seed and password. backup file is optional
+ *
+ * ex: `sparkswap wallet recover <symbol>`
+ *
+ * @function
+ * @param {Object} args
+ * @param {string} args.symbol
+ * @param {Object} opts
+ * @param {Logger} logger
+ * @returns {void}
+ */
+async function recover (args, opts, logger) {
+  const { symbol } = args
+  const { rpcAddress = null } = opts
+
+  try {
+    const client = new BrokerDaemonClient(rpcAddress)
+
+    const password = await askQuestion(`Please enter your wallet password:`, { silent: true })
+    const seed = await askQuestion(`Please enter your 24 word recover seed, with each word separated by spaces`, { silent: true })
+    const backupPath = await askQuestion(`Enter the path to your backup file (optional)`)
+
+    const { recoverySeed } = await client.walletService.recoverWallet({ symbol, password, seed, backupPath })
+
+    logger.info('IMPORTANT: Please make a copy of the recovery seed below as you WILL NOT')
+    logger.info('be able to recover this information again. We recommend that you write')
+    logger.info('down all the secret words, and re-confirm the order they are written down')
+    logger.info('')
+    logger.info('')
+    logger.info(recoverySeed)
+  } catch (e) {
+    logger.error(handleError(e))
+  }
+}
+
+/**
  * Returns all on-chain history of a specific wallet
  * @param {Object} args
  * @param {string} args.symbol
@@ -711,6 +748,16 @@ module.exports = (program) => {
           args.symbol = symbol
 
           return unlock(args, opts, logger)
+        case SUPPORTED_COMMANDS.RECOVER:
+          symbol = symbol.toUpperCase()
+
+          if (!Object.values(SUPPORTED_SYMBOLS).includes(symbol)) {
+            throw new Error(`Provided symbol is not a valid currency for the broker`)
+          }
+
+          args.symbol = symbol
+
+          return recover(args, opts, logger)
         case SUPPORTED_COMMANDS.CHANGE_PASSWORD:
           symbol = symbol.toUpperCase()
 
@@ -737,6 +784,9 @@ module.exports = (program) => {
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.UNLOCK}`, 'Unlock a wallet')
+    .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
+    .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
+    .command(`wallet ${SUPPORTED_COMMANDS.RECOVER}`, 'Recover a wallet')
     .argument('<symbol>', `Supported currencies: ${SUPPORTED_SYMBOLS.join('/')}`)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING)
     .command(`wallet ${SUPPORTED_COMMANDS.CHANGE_PASSWORD}`, 'Change a specific engine\'s wallet password')

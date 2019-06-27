@@ -12,6 +12,7 @@ const createWallet = require('./create-wallet')
 const unlockWallet = require('./unlock-wallet')
 const walletHistory = require('./wallet-history')
 const changeWalletPassword = require('./change-wallet-password')
+const recoverWallet = require('./recover-wallet')
 
 /**
  * WalletService provides interactions with an engine's crypto wallet
@@ -64,7 +65,8 @@ class WalletService {
       createWallet: new GrpcUnaryMethod(createWallet, this.messageId('createWallet'), { logger, engines, auth }, { CreateWalletResponse }).register(),
       unlockWallet: new GrpcUnaryMethod(unlockWallet, this.messageId('unlockWallet'), { logger, engines, auth }, { EmptyResponse }).register(),
       changeWalletPassword: new GrpcUnaryMethod(changeWalletPassword, this.messageId('changeWalletPassword'), { logger, engines, auth }, { EmptyResponse }).register(),
-      walletHistory: new GrpcUnaryMethod(walletHistory, this.messageId('walletHistory'), { logger, engines, auth }, { WalletHistoryResponse }).register()
+      walletHistory: new GrpcUnaryMethod(walletHistory, this.messageId('walletHistory'), { logger, engines, auth }, { WalletHistoryResponse }).register(),
+      recoverWallet: new GrpcUnaryMethod(recoverWallet, this.messageId('recoverWallet'), { logger, engines, auth }, { EmptyResponse }).register()
     }
   }
 
