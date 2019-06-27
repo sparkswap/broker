@@ -7,7 +7,7 @@ const {
 
 const migrateStore = rewire(path.resolve(__dirname, './migrate-store'))
 
-describe.only('migrateStore', () => {
+describe('migrateStore', () => {
   let sourceStore
   let targetStore
   let createDbOperation
@@ -15,11 +15,15 @@ describe.only('migrateStore', () => {
   let onStub
   let pauseStub
   let resumeStub
+  let batchStub
+  let reverts
+  let promisifyStub
 
   beforeEach(() => {
     onStub = sinon.stub()
     pauseStub = sinon.stub()
     resumeStub = sinon.stub()
+    batchStub = sinon.stub()
     sourceStore = {
       createReadStream: sinon.stub().returns({
         on: onStub,
@@ -32,6 +36,14 @@ describe.only('migrateStore', () => {
     }
     createDbOperation = sinon.stub()
     batchSize = 1
+    promisifyStub = sinon.stub().withArgs(targetStore.batch).returns(batchStub)
+
+    reverts = []
+    reverts.push(migrateStore.__set__('promisify', promisifyStub))
+  })
+
+  afterEach(() => {
+    reverts.forEach(r => r())
   })
 
   it('returns a promise', () => {
@@ -44,6 +56,20 @@ describe.only('migrateStore', () => {
     expect(sourceStore.createReadStream).to.have.been.calledOnce()
   })
 
+  it('migrates records to a target store', async () => {
+    const record = { key: '1', value: '1234' }
+    const batchEntry = { type: 'del', key: record.key }
+    onStub.withArgs('data', sinon.match.any).yields(record)
+    createDbOperation.withArgs(record.key, record.value).returns(batchEntry)
+    batchStub.resolves()
+
+    migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+
+    expect(batchStub).to.have.been.calledWith([batchEntry])
+    expect(pauseStub).to.have.been.calledBefore(batchStub)
+    expect(batchStub).to.have.been.calledBefore(resumeStub)
+  })
+
   context('on error', () => {
     it('rejects the promise if there was a failure', () => {
       const promise = migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
@@ -54,18 +80,6 @@ describe.only('migrateStore', () => {
   })
 
   context('on end', () => {
-    let promisifyStub
-    let batchStub
-    let reverts
-
-    beforeEach(() => {
-      batchStub = sinon.stub()
-      promisifyStub = sinon.stub().returns(batchStub)
-
-      reverts = []
-      reverts.push(migrateStore.__set__('promisify', promisifyStub))
-    })
-
     it('processes a batch', async () => {
       migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
       const onEnd = onStub.args[1][1]
@@ -89,10 +103,7 @@ describe.only('migrateStore', () => {
   })
 
   context('on data', () => {
-    let reverts
     let params
-    let promisifyStub
-    let batchStub
     let records
 
     beforeEach(() => {
@@ -100,19 +111,10 @@ describe.only('migrateStore', () => {
         { key: '1234', value: '1234' }
       ]
       createDbOperation.returns(records[0])
-      batchStub = sinon.stub()
-      promisifyStub = sinon.stub().returns(batchStub)
       params = {
         key: '1',
         value: 'crypto'
       }
-
-      reverts = []
-      reverts.push(migrateStore.__set__('promisify', promisifyStub))
-    })
-
-    afterEach(() => {
-      reverts.forEach(r => r())
     })
 
     it('runs the KV through a db operation', async () => {
@@ -162,16 +164,14 @@ describe.only('migrateStore', () => {
     })
 
     context('batch is full', () => {
-      it('awaits the previous batch if the batch size is large', async () => {
-        migrateStore(sourceStore, targetStore, createDbOperation, 5)
+      it('processes the batch', async () => {
+        migrateStore(sourceStore, targetStore, createDbOperation, 3)
         const onData = onStub.args[0][1]
-        await onData(params)
-        expect(batchStub).to.not.have.been.called()
-        await onData(params)
-        expect(batchStub).to.not.have.been.called()
-        await onData(params)
-        expect(batchStub).to.not.have.been.called()
-        await onData(params)
+
+        for (let i = 0; i < 2; i++) {
+          await onData(params)
+        }
+
         expect(batchStub).to.not.have.been.called()
         await onData(params)
         expect(batchStub).to.have.been.called()
