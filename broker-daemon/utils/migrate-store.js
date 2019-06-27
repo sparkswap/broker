@@ -27,7 +27,9 @@ async function migrateStore (sourceStore, targetStore, createDbOperation, batchS
       if (batch.length < batchSize) return
 
       try {
+        stream.pause()
         await processBatch(batch)
+        stream.unpause()
       } catch (e) {
         return reject(e)
       }
