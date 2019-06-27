@@ -26,9 +26,11 @@ async function migrateStore (sourceStore, targetStore, createDbOperation, batchS
 
       if (batch.length < batchSize) return
 
-      stream.pause()
-
       try {
+        // Pause the stream so that we process and transfer records to the targetStore
+        // in the order that they were received
+        stream.pause()
+
         await processBatch(batch)
 
         // clear the batch

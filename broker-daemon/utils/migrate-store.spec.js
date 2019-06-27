@@ -13,11 +13,19 @@ describe.only('migrateStore', () => {
   let createDbOperation
   let batchSize
   let onStub
+  let pauseStub
+  let resumeStub
 
   beforeEach(() => {
     onStub = sinon.stub()
+    pauseStub = sinon.stub()
+    resumeStub = sinon.stub()
     sourceStore = {
-      createReadStream: sinon.stub().returns({ on: onStub })
+      createReadStream: sinon.stub().returns({
+        on: onStub,
+        pause: pauseStub,
+        resume: resumeStub
+      })
     }
     targetStore = {
       batch: sinon.stub()
@@ -39,55 +47,48 @@ describe.only('migrateStore', () => {
   context('on error', () => {
     it('rejects the promise if there was a failure', () => {
       const promise = migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      const error = onStub.args[0][1]
+      const error = onStub.args[2][1]
       error()
       return expect(promise).to.eventually.be.rejected()
     })
   })
 
-  context.only('on end', () => {
-    let previousBatchStub
-    let flushStub
+  context('on end', () => {
+    let promisifyStub
+    let batchStub
     let reverts
 
     beforeEach(() => {
-      previousBatchStub = sinon.stub()
-      flushStub = sinon.stub()
+      batchStub = sinon.stub()
+      promisifyStub = sinon.stub().returns(batchStub)
 
       reverts = []
-      reverts.push(migrateStore.__set__('previousBatch', previousBatchStub))
-      reverts.push(migrateStore.__set__('flush', flushStub))
+      reverts.push(migrateStore.__set__('promisify', promisifyStub))
     })
 
-    afterEach(() => {
-      reverts.forEach(r => r())
-    })
-
-    it('runs the previous batches', () => {
+    it('processes a batch', async () => {
       migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      const end = onStub.args[1][1]
-      end()
-      expect(flushStub).to.have.been.called()
+      const onEnd = onStub.args[1][1]
+      await onEnd()
+      expect(batchStub).to.have.been.calledWith([])
     })
 
     it('resolves the promise', () => {
-      const promise = migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      const end = onStub.args[1][1]
-      end()
-      return expect(promise).to.not.have.eventually.been.rejected()
+      migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      const onEnd = onStub.args[1][1]
+      return expect(onEnd()).to.eventually.be.fulfilled()
     })
 
-    it('rejects the promise if an error occurred when processing the previous batch', async () => {
-      previousBatchStub.rejects()
+    it('rejects if the batch fails to resolve', async () => {
+      batchStub.rejects()
       const promise = migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      const end = onStub.args[1][1]
-      await end()
-      return expect(promise).to.have.eventually.been.rejected()
+      const onEnd = onStub.args[1][1]
+      await onEnd()
+      return expect(promise).to.eventually.be.rejected()
     })
   })
 
   context('on data', () => {
-    let previousBatchStub
     let reverts
     let params
     let promisifyStub
@@ -99,7 +100,6 @@ describe.only('migrateStore', () => {
         { key: '1234', value: '1234' }
       ]
       createDbOperation.returns(records[0])
-      previousBatchStub = sinon.stub()
       batchStub = sinon.stub()
       promisifyStub = sinon.stub().returns(batchStub)
       params = {
@@ -108,7 +108,6 @@ describe.only('migrateStore', () => {
       }
 
       reverts = []
-      reverts.push(migrateStore.__set__('previousBatch', previousBatchStub))
       reverts.push(migrateStore.__set__('promisify', promisifyStub))
     })
 
@@ -118,7 +117,7 @@ describe.only('migrateStore', () => {
 
     it('runs the KV through a db operation', async () => {
       migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      const onData = onStub.args[2][1]
+      const onData = onStub.args[0][1]
       await onData(params)
       expect(createDbOperation).to.have.been.calledWith(params.key, params.value)
     })
@@ -126,14 +125,14 @@ describe.only('migrateStore', () => {
     it('returns if the db operation is null', async () => {
       createDbOperation.returns(null)
       migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      const onData = onStub.args[2][1]
+      const onData = onStub.args[0][1]
       await onData(params)
       expect(batchStub).to.not.have.been.called()
     })
 
     it('pushes the db operation onto the batch', async () => {
       migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      const onData = onStub.args[2][1]
+      const onData = onStub.args[0][1]
       createDbOperation.returns(null)
       await onData(params)
       createDbOperation.returns(records[0])
@@ -143,15 +142,29 @@ describe.only('migrateStore', () => {
 
     it('returns if the batch size has not been hit', async () => {
       migrateStore(sourceStore, targetStore, createDbOperation, 2)
-      const onData = onStub.args[2][1]
+      const onData = onStub.args[0][1]
       await onData(params)
       expect(batchStub).to.not.have.been.called()
+    })
+
+    it('pauses the stream before processing a batch', async () => {
+      migrateStore(sourceStore, targetStore, createDbOperation, 1)
+      const onData = onStub.args[0][1]
+      await onData(params)
+      expect(pauseStub).to.have.been.calledBefore(batchStub)
+    })
+
+    it('resumes the stream after processing the batch', async () => {
+      migrateStore(sourceStore, targetStore, createDbOperation, 1)
+      const onData = onStub.args[0][1]
+      await onData(params)
+      expect(batchStub).to.have.been.calledBefore(resumeStub)
     })
 
     context('batch is full', () => {
       it('awaits the previous batch if the batch size is large', async () => {
         migrateStore(sourceStore, targetStore, createDbOperation, 5)
-        const onData = onStub.args[2][1]
+        const onData = onStub.args[0][1]
         await onData(params)
         expect(batchStub).to.not.have.been.called()
         await onData(params)
@@ -164,21 +177,9 @@ describe.only('migrateStore', () => {
         expect(batchStub).to.have.been.called()
       })
 
-      it('reassigns previous batch to a new batch', async () => {
-        const newBatch = sinon.stub()
-        batchStub.resolves(newBatch)
-        migrateStore(sourceStore, targetStore, createDbOperation, 1)
-        let onData = onStub.args[2][1]
-        await onData(params)
-        migrateStore(sourceStore, targetStore, createDbOperation, 1)
-        onData = onStub.args[5][1]
-        await onData(params)
-        return expect(batchStub).should.be.fulfilled()
-      })
-
       it('clears the batch', async () => {
         migrateStore(sourceStore, targetStore, createDbOperation, 3)
-        const onData = onStub.args[2][1]
+        const onData = onStub.args[0][1]
         await onData(params)
         await onData(params)
         await onData(params)
