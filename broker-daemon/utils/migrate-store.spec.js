@@ -50,7 +50,7 @@ describe('migrateStore', () => {
     expect(migrateStore(sourceStore, targetStore, createDbOperation, batchSize)).to.be.a('promise')
   })
 
-  it('creates a read string from the source sublevel store', async () => {
+  it('creates a read stream from the source sublevel store', async () => {
     migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
     expect(sourceStore.createReadStream).to.have.been.called()
     expect(sourceStore.createReadStream).to.have.been.calledOnce()
@@ -71,38 +71,47 @@ describe('migrateStore', () => {
   })
 
   context('on error', () => {
+    const onErrorIndex = 2
+    const callbackIndex = 1
+
     it('rejects the promise if there was a failure', () => {
       const promise = migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      const error = onStub.args[2][1]
+      const error = onStub.args[onErrorIndex][callbackIndex]
       error()
       return expect(promise).to.eventually.be.rejected()
     })
   })
 
   context('on end', () => {
+    const onEndIndex = 1
+    const callbackIndex = 1
+
     it('processes a batch', async () => {
       migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      const onEnd = onStub.args[1][1]
+      const onEnd = onStub.args[onEndIndex][callbackIndex]
       await onEnd()
       expect(batchStub).to.have.been.calledWith([])
     })
 
     it('resolves the promise', () => {
       migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      const onEnd = onStub.args[1][1]
+      const onEnd = onStub.args[onEndIndex][callbackIndex]
       return expect(onEnd()).to.eventually.be.fulfilled()
     })
 
     it('rejects if the batch fails to resolve', async () => {
       batchStub.rejects()
       const promise = migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      const onEnd = onStub.args[1][1]
+      const onEnd = onStub.args[onEndIndex][callbackIndex]
       await onEnd()
       return expect(promise).to.eventually.be.rejected()
     })
   })
 
   context('on data', () => {
+    const onDateIndex = 0
+    const callbackIndex = 1
+
     let params
     let records
 
@@ -119,7 +128,7 @@ describe('migrateStore', () => {
 
     it('runs the KV through a db operation', async () => {
       migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      const onData = onStub.args[0][1]
+      const onData = onStub.args[onDateIndex][callbackIndex]
       await onData(params)
       expect(createDbOperation).to.have.been.calledWith(params.key, params.value)
     })
@@ -127,14 +136,14 @@ describe('migrateStore', () => {
     it('returns if the db operation is null', async () => {
       createDbOperation.returns(null)
       migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      const onData = onStub.args[0][1]
+      const onData = onStub.args[onDateIndex][callbackIndex]
       await onData(params)
       expect(batchStub).to.not.have.been.called()
     })
 
     it('pushes the db operation onto the batch', async () => {
       migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      const onData = onStub.args[0][1]
+      const onData = onStub.args[onDateIndex][callbackIndex]
       createDbOperation.returns(null)
       await onData(params)
       createDbOperation.returns(records[0])
@@ -144,21 +153,21 @@ describe('migrateStore', () => {
 
     it('returns if the batch size has not been hit', async () => {
       migrateStore(sourceStore, targetStore, createDbOperation, 2)
-      const onData = onStub.args[0][1]
+      const onData = onStub.args[onDateIndex][callbackIndex]
       await onData(params)
       expect(batchStub).to.not.have.been.called()
     })
 
     it('pauses the stream before processing a batch', async () => {
       migrateStore(sourceStore, targetStore, createDbOperation, 1)
-      const onData = onStub.args[0][1]
+      const onData = onStub.args[onDateIndex][callbackIndex]
       await onData(params)
       expect(pauseStub).to.have.been.calledBefore(batchStub)
     })
 
     it('resumes the stream after processing the batch', async () => {
       migrateStore(sourceStore, targetStore, createDbOperation, 1)
-      const onData = onStub.args[0][1]
+      const onData = onStub.args[onDateIndex][callbackIndex]
       await onData(params)
       expect(batchStub).to.have.been.calledBefore(resumeStub)
     })
@@ -166,7 +175,7 @@ describe('migrateStore', () => {
     context('batch is full', () => {
       it('processes the batch', async () => {
         migrateStore(sourceStore, targetStore, createDbOperation, 3)
-        const onData = onStub.args[0][1]
+        const onData = onStub.args[onDateIndex][callbackIndex]
 
         for (let i = 0; i < 2; i++) {
           await onData(params)
@@ -179,7 +188,7 @@ describe('migrateStore', () => {
 
       it('clears the batch', async () => {
         migrateStore(sourceStore, targetStore, createDbOperation, 3)
-        const onData = onStub.args[0][1]
+        const onData = onStub.args[onDateIndex][callbackIndex]
         await onData(params)
         await onData(params)
         await onData(params)
