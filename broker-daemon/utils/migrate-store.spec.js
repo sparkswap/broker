@@ -7,7 +7,7 @@ const {
 
 const migrateStore = rewire(path.resolve(__dirname, './migrate-store'))
 
-describe('migrateStore', () => {
+describe.only('migrateStore', () => {
   let sourceStore
   let targetStore
   let createDbOperation
@@ -51,23 +51,23 @@ describe('migrateStore', () => {
     let reverts
 
     beforeEach(() => {
-      previousBatchStub = sinon.stub().resolves()
-      flushStub = sinon.stub().returns('lol')
+      previousBatchStub = sinon.stub()
+      flushStub = sinon.stub()
 
       reverts = []
       reverts.push(migrateStore.__set__('previousBatch', previousBatchStub))
+      reverts.push(migrateStore.__set__('flush', flushStub))
     })
 
     afterEach(() => {
       reverts.forEach(r => r())
     })
 
-    it.only('runs the previous batches', () => {
+    it('runs the previous batches', () => {
       migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      reverts.push(migrateStore.__set__('flush', flushStub))
       const end = onStub.args[1][1]
       end()
-      return expect(previousBatchStub).to.be.called()
+      expect(flushStub).to.have.been.called()
     })
 
     it('resolves the promise', () => {
@@ -162,6 +162,18 @@ describe('migrateStore', () => {
         expect(batchStub).to.not.have.been.called()
         await onData(params)
         expect(batchStub).to.have.been.called()
+      })
+
+      it('reassigns previous batch to a new batch', async () => {
+        const newBatch = sinon.stub()
+        batchStub.resolves(newBatch)
+        migrateStore(sourceStore, targetStore, createDbOperation, 1)
+        let onData = onStub.args[2][1]
+        await onData(params)
+        migrateStore(sourceStore, targetStore, createDbOperation, 1)
+        onData = onStub.args[5][1]
+        await onData(params)
+        return expect(batchStub).should.be.fulfilled()
       })
 
       it('clears the batch', async () => {

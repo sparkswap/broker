@@ -1,12 +1,5 @@
 const { promisify } = require('util')
 
-// `previousBatch` allows us to batch save records in sequence and lock the operation
-// to make sure we are not inserting records out of the order they are received.
-//
-// We set this value to automatically resolve on the first use. This value is then
-// subsequently set when a batch needs to be processed
-let previousBatch
-
 /**
  * Pipe data from one sublevel store into another
  *
@@ -19,45 +12,12 @@ let previousBatch
  */
 async function migrateStore (sourceStore, targetStore, createDbOperation, batchSize = 2000) {
   return new Promise((resolve, reject) => {
-    const stream = sourceStore.createReadStream()
-
     let batch = []
 
-    async function flush () {
-      try {
-        await previousBatch
-      } catch (e) {
-        return reject(e)
-      }
+    const stream = sourceStore.createReadStream()
+    const processBatch = promisify(targetStore.batch)
 
-      previousBatch = promisify(targetStore.batch)(batch)
-
-      // Clear the batch
-      batch = []
-    }
-
-    stream.on('error', reject)
-
-    stream.on('end', async () => {
-      try {
-        // clear the batch
-        await flush()
-
-        // If a partial batch exists, then we should flush the remaining records
-        await previousBatch
-
-        return resolve()
-      } catch (e) {
-        return reject(e)
-      }
-    })
-
-    stream.on('data', ({ key, value }) => {
-      // The first time we start we should initialize the previousBatch variable
-      if (!previousBatch) {
-        previousBatch = async () => {}
-      }
-
+    stream.on('data', async ({ key, value }) => {
       const op = createDbOperation(key, value)
 
       if (!op) return
@@ -66,8 +26,26 @@ async function migrateStore (sourceStore, targetStore, createDbOperation, batchS
 
       if (batch.length < batchSize) return
 
-      flush()
+      try {
+        await processBatch(batch)
+      } catch (e) {
+        return reject(e)
+      }
+
+      // clear the batch
+      batch = []
     })
+
+    stream.on('end', async () => {
+      try {
+        await processBatch(batch)
+        return resolve()
+      } catch (e) {
+        return reject(e)
+      }
+    })
+
+    stream.on('error', reject)
   })
 }
 
