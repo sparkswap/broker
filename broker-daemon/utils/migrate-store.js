@@ -41,7 +41,7 @@ async function migrateStore (sourceStore, targetStore, createDbOperation, batchS
     stream.on('end', async () => {
       try {
         // clear the batch
-        flush()
+        await flush()
 
         // If a partial batch exists, then we should flush the remaining records
         await previousBatch

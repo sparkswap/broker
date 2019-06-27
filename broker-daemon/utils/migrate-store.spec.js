@@ -45,25 +45,29 @@ describe('migrateStore', () => {
     })
   })
 
-  context('on end', () => {
+  context.only('on end', () => {
     let previousBatchStub
-    let revert
+    let flushStub
+    let reverts
 
     beforeEach(() => {
-      previousBatchStub = sinon.stub()
-      revert = migrateStore.__set__('previousBatch', previousBatchStub)
+      previousBatchStub = sinon.stub().resolves()
+      flushStub = sinon.stub().returns('lol')
+
+      reverts = []
+      reverts.push(migrateStore.__set__('previousBatch', previousBatchStub))
     })
 
     afterEach(() => {
-      revert()
+      reverts.forEach(r => r())
     })
 
-    it('runs the previous batches', () => {
+    it.only('runs the previous batches', () => {
       migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      reverts.push(migrateStore.__set__('flush', flushStub))
       const end = onStub.args[1][1]
       end()
-      expect(previousBatchStub).to.have.been.called()
-      expect(previousBatchStub).to.have.been.calledTwice()
+      return expect(previousBatchStub).to.be.called()
     })
 
     it('resolves the promise', () => {
@@ -112,19 +116,6 @@ describe('migrateStore', () => {
       reverts.forEach(r => r())
     })
 
-    it('assigns previousBatch to an empty function if it is not defined', async () => {
-      const revert = migrateStore.__set__('previousBatch', undefined)
-      migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      let onData = onStub.args[2][1]
-      await onData(params)
-      revert()
-      reverts.push(migrateStore.__set__('previousBatch', previousBatchStub))
-      migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
-      onData = onStub.args[5][1]
-      await onData(params)
-      expect(previousBatchStub).to.have.been.calledOnce()
-    })
-
     it('runs the KV through a db operation', async () => {
       migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
       const onData = onStub.args[2][1]
@@ -137,7 +128,7 @@ describe('migrateStore', () => {
       migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
       const onData = onStub.args[2][1]
       await onData(params)
-      expect(previousBatchStub).to.not.have.been.called()
+      expect(batchStub).to.not.have.been.called()
     })
 
     it('pushes the db operation onto the batch', async () => {
@@ -154,7 +145,7 @@ describe('migrateStore', () => {
       migrateStore(sourceStore, targetStore, createDbOperation, 2)
       const onData = onStub.args[2][1]
       await onData(params)
-      expect(previousBatchStub).to.not.have.been.called()
+      expect(batchStub).to.not.have.been.called()
     })
 
     context('batch is full', () => {
@@ -162,29 +153,15 @@ describe('migrateStore', () => {
         migrateStore(sourceStore, targetStore, createDbOperation, 5)
         const onData = onStub.args[2][1]
         await onData(params)
-        expect(previousBatchStub).to.not.have.been.called()
+        expect(batchStub).to.not.have.been.called()
         await onData(params)
-        expect(previousBatchStub).to.not.have.been.called()
+        expect(batchStub).to.not.have.been.called()
         await onData(params)
-        expect(previousBatchStub).to.not.have.been.called()
+        expect(batchStub).to.not.have.been.called()
         await onData(params)
-        expect(previousBatchStub).to.not.have.been.called()
+        expect(batchStub).to.not.have.been.called()
         await onData(params)
-        expect(previousBatchStub).to.have.been.called()
-      })
-
-      it('reassigns previous batch to a new batch', async () => {
-        const newBatch = sinon.stub()
-        batchStub.returns(newBatch)
-        migrateStore(sourceStore, targetStore, createDbOperation, 1)
-        let onData = onStub.args[2][1]
-        await onData(params)
-        expect(previousBatchStub).to.have.been.called()
-        migrateStore(sourceStore, targetStore, createDbOperation, 1)
-        onData = onStub.args[5][1]
-        await onData(params)
-        expect(previousBatchStub).to.not.have.been.calledTwice()
-        expect(newBatch).to.have.been.called()
+        expect(batchStub).to.have.been.called()
       })
 
       it('clears the batch', async () => {
@@ -193,11 +170,8 @@ describe('migrateStore', () => {
         await onData(params)
         await onData(params)
         await onData(params)
-        expect(previousBatchStub).to.have.been.called()
         expect(batchStub.args[0][0].length).to.eql(3)
         await onData(params)
-        expect(previousBatchStub).to.have.been.calledOnce()
-        expect(previousBatchStub).to.not.have.been.calledTwice()
         expect(batchStub).to.have.been.calledOnce()
       })
     })
