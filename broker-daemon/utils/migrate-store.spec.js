@@ -1,117 +1,201 @@
-const { sinon, expect } = require('test/test-helper')
+const path = require('path')
+const {
+  sinon,
+  expect,
+  rewire
+} = require('test/test-helper')
 
-const migrateStore = require('./migrate-store')
+const migrateStore = rewire(path.resolve(__dirname, './migrate-store'))
 
 describe('migrateStore', () => {
   let sourceStore
   let targetStore
   let createDbOperation
-  let stream
-  let fakeRecords
-  let fakeOperations
+  let batchSize
+  let onStub
+  let pauseStub
+  let resumeStub
+  let batchStub
+  let reverts
+  let promisifyStub
 
   beforeEach(() => {
-    stream = {
-      on: sinon.stub()
-    }
+    onStub = sinon.stub()
+    pauseStub = sinon.stub()
+    resumeStub = sinon.stub()
+    batchStub = sinon.stub()
     sourceStore = {
-      createReadStream: sinon.stub().returns(stream)
+      createReadStream: sinon.stub().returns({
+        on: onStub,
+        pause: pauseStub,
+        resume: resumeStub
+      })
     }
     targetStore = {
-      batch: sinon.stub().callsArgAsync(1)
+      batch: sinon.stub()
     }
-    fakeRecords = [
-      { key: '1', value: 'some value' },
-      { key: '2', value: 'another value' },
-      { key: '3', value: '3rd value' }
-    ]
-    fakeOperations = [
-      { type: 'put', key: 'a', value: '1' },
-      { type: 'put', key: 'b', value: '2' },
-      { type: 'put', key: 'c', value: '3' }
-    ]
-
-    stream.on.callsFake((evt, fn) => {
-      if (evt === 'error') return
-      const data = evt === 'data' ? fn : function () {}
-      const end = evt === 'end' ? fn : function () {}
-      const records = fakeRecords.slice()
-
-      const nextRecord = () => {
-        if (records.length) {
-          data(records.shift())
-          process.nextTick(nextRecord)
-        } else {
-          end()
-        }
-      }
-
-      process.nextTick(nextRecord)
-    })
     createDbOperation = sinon.stub()
-    fakeRecords.forEach(({ key, value }, i) => {
-      createDbOperation.withArgs(key, value).returns(fakeOperations[i])
-    })
+    batchSize = 1
+    promisifyStub = sinon.stub().withArgs(targetStore.batch).returns(batchStub)
+
+    reverts = []
+    reverts.push(migrateStore.__set__('promisify', promisifyStub))
+  })
+
+  afterEach(() => {
+    reverts.forEach(r => r())
   })
 
   it('returns a promise', () => {
-    expect(migrateStore(sourceStore, targetStore, createDbOperation)).to.be.a('promise')
+    expect(migrateStore(sourceStore, targetStore, createDbOperation, batchSize)).to.be.a('promise')
   })
 
-  it('creates a readstream from the store', () => {
-    migrateStore(sourceStore, targetStore, createDbOperation)
-
+  it('creates a read stream from the source sublevel store', async () => {
+    migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+    expect(sourceStore.createReadStream).to.have.been.called()
     expect(sourceStore.createReadStream).to.have.been.calledOnce()
   })
 
-  it('sets an error handler', () => {
-    migrateStore(sourceStore, targetStore, createDbOperation)
+  it('migrates records to a target store', async () => {
+    const record = { key: '1', value: '1234' }
+    const batchEntry = { type: 'del', key: record.key }
+    onStub.withArgs('data', sinon.match.any).yields(record)
+    createDbOperation.withArgs(record.key, record.value).returns(batchEntry)
+    batchStub.resolves()
 
-    expect(stream.on).to.have.been.calledWith('error', sinon.match.func)
+    migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+
+    expect(batchStub).to.have.been.calledWith([batchEntry])
+    expect(pauseStub).to.have.been.calledBefore(batchStub)
+    expect(batchStub).to.have.been.calledBefore(resumeStub)
   })
 
-  it('sets an end handler', () => {
-    migrateStore(sourceStore, targetStore, createDbOperation)
+  context('on error', () => {
+    const onErrorIndex = 2
+    const callbackIndex = 1
 
-    expect(stream.on).to.have.been.calledWith('end', sinon.match.func)
+    it('rejects the promise if there was a failure', () => {
+      const promise = migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      const error = onStub.args[onErrorIndex][callbackIndex]
+      error()
+      return expect(promise).to.eventually.be.rejected()
+    })
   })
 
-  it('sets an data handler', () => {
-    migrateStore(sourceStore, targetStore, createDbOperation)
+  context('on end', () => {
+    const onEndIndex = 1
+    const callbackIndex = 1
 
-    expect(stream.on).to.have.been.calledWith('data', sinon.match.func)
+    it('processes a batch', async () => {
+      migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      const onEnd = onStub.args[onEndIndex][callbackIndex]
+      await onEnd()
+      expect(batchStub).to.have.been.calledWith([])
+    })
+
+    it('resolves the promise', () => {
+      migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      const onEnd = onStub.args[onEndIndex][callbackIndex]
+      return expect(onEnd()).to.eventually.be.fulfilled()
+    })
+
+    it('rejects if the batch fails to resolve', async () => {
+      batchStub.rejects()
+      const promise = migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      const onEnd = onStub.args[onEndIndex][callbackIndex]
+      await onEnd()
+      return expect(promise).to.eventually.be.rejected()
+    })
   })
 
-  it('rejects on stream error', async () => {
-    stream.on.withArgs('error').callsArgWithAsync(1, new Error('fake error'))
-    return expect(migrateStore(sourceStore, targetStore, createDbOperation)).to.eventually.be.rejectedWith(Error)
-  })
+  context('on data', () => {
+    const onDateIndex = 0
+    const callbackIndex = 1
 
-  it('rejects on batch error', async () => {
-    targetStore.batch.callsArgWithAsync(1, new Error('fake error'))
-    return expect(migrateStore(sourceStore, targetStore, createDbOperation)).to.eventually.be.rejectedWith(Error)
-  })
+    let params
+    let records
 
-  it('sends batches to the target store', async () => {
-    await migrateStore(sourceStore, targetStore, createDbOperation)
+    beforeEach(() => {
+      records = [
+        { key: '1234', value: '1234' }
+      ]
+      createDbOperation.returns(records[0])
+      params = {
+        key: '1',
+        value: 'crypto'
+      }
+    })
 
-    expect(targetStore.batch).to.have.been.calledOnce()
-    expect(targetStore.batch).to.have.been.calledWith(sinon.match.array.deepEquals(fakeOperations))
-  })
+    it('runs the KV through a db operation', async () => {
+      migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      const onData = onStub.args[onDateIndex][callbackIndex]
+      await onData(params)
+      expect(createDbOperation).to.have.been.calledWith(params.key, params.value)
+    })
 
-  it('flushes the batches on end', async () => {
-    await migrateStore(sourceStore, targetStore, createDbOperation, 1)
+    it('returns if the db operation is null', async () => {
+      createDbOperation.returns(null)
+      migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      const onData = onStub.args[onDateIndex][callbackIndex]
+      await onData(params)
+      expect(batchStub).to.not.have.been.called()
+    })
 
-    expect(targetStore.batch).to.have.been.calledTwice()
-    expect(targetStore.batch).to.have.been.calledWith(sinon.match.array.deepEquals(fakeOperations.slice(0, 2)))
-    expect(targetStore.batch).to.have.been.calledWith(sinon.match.array.deepEquals(fakeOperations.slice(2)))
-  })
+    it('pushes the db operation onto the batch', async () => {
+      migrateStore(sourceStore, targetStore, createDbOperation, batchSize)
+      const onData = onStub.args[onDateIndex][callbackIndex]
+      createDbOperation.returns(null)
+      await onData(params)
+      createDbOperation.returns(records[0])
+      await onData(params)
+      expect(batchStub.args[0][0].length).to.be.eql(1)
+    })
 
-  it('skips empty db operations', async () => {
-    fakeOperations.push(undefined)
+    it('returns if the batch size has not been hit', async () => {
+      migrateStore(sourceStore, targetStore, createDbOperation, 2)
+      const onData = onStub.args[onDateIndex][callbackIndex]
+      await onData(params)
+      expect(batchStub).to.not.have.been.called()
+    })
 
-    await migrateStore(sourceStore, targetStore, createDbOperation)
+    it('pauses the stream before processing a batch', async () => {
+      migrateStore(sourceStore, targetStore, createDbOperation, 1)
+      const onData = onStub.args[onDateIndex][callbackIndex]
+      await onData(params)
+      expect(pauseStub).to.have.been.calledBefore(batchStub)
+    })
 
-    expect(targetStore.batch).to.have.been.calledWith(sinon.match.array.deepEquals(fakeOperations.slice(0, fakeOperations.length - 1)))
+    it('resumes the stream after processing the batch', async () => {
+      migrateStore(sourceStore, targetStore, createDbOperation, 1)
+      const onData = onStub.args[onDateIndex][callbackIndex]
+      await onData(params)
+      expect(batchStub).to.have.been.calledBefore(resumeStub)
+    })
+
+    context('batch is full', () => {
+      it('processes the batch', async () => {
+        migrateStore(sourceStore, targetStore, createDbOperation, 3)
+        const onData = onStub.args[onDateIndex][callbackIndex]
+
+        for (let i = 0; i < 2; i++) {
+          await onData(params)
+        }
+
+        expect(batchStub).to.not.have.been.called()
+        await onData(params)
+        expect(batchStub).to.have.been.called()
+      })
+
+      it('clears the batch', async () => {
+        migrateStore(sourceStore, targetStore, createDbOperation, 3)
+        const onData = onStub.args[onDateIndex][callbackIndex]
+        await onData(params)
+        await onData(params)
+        await onData(params)
+        expect(batchStub.args[0][0].length).to.eql(3)
+        await onData(params)
+        expect(batchStub).to.have.been.calledOnce()
+      })
+    })
   })
 })
