@@ -96,7 +96,9 @@ describe('interchain', () => {
 
       cancelSwap = sinon.stub().resolves()
       settleSwap = sinon.stub().resolves()
-      waitForSwapCommitment = sinon.stub().resolves()
+      waitForSwapCommitment = sinon.stub().resolves({
+        creationDate: '1561597836'
+      })
       getSettledSwapPreimage = sinon.stub().resolves(preimage)
 
       inboundEngine = {
@@ -120,9 +122,9 @@ describe('interchain', () => {
       expect(translateSwap).to.have.been.calledWith(
         outboundAddress,
         hash,
-        outboundAmount,
-        174000
+        outboundAmount
       )
+      expect(translateSwap.args[0][3].toISOString()).to.be.eql('2019-06-29T01:30:36.000Z')
     })
 
     it('settles the upstream payment', async () => {

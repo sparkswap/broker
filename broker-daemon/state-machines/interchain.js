@@ -173,18 +173,25 @@ async function getPreimage (
     }
   }
 
+  let committedTime
+
   // wait for an incoming payment to this hash that is accepted,
   // but not yet settled.
   try {
-    // TODO: implement this method
-    await inboundEngine.waitForSwapCommitment(hash)
+    const invoice = await inboundEngine.waitForSwapCommitment(hash)
+
+    // We use the invoice Creation Date as a proxy for the time that
+    // the inbound contract was locked in. It will be a conservative
+    // estimate as it will certainly pre-date the actual commitment
+    // time.
+    // TODO: abstract this away in the LND Engine.
+    committedTime = new Date(invoice.creationDate * 1000)
   } catch (e) {
     // TODO: fix this error message
     if (e.isSettled) {
       logger.debug(`Swap for ${hash} has already been settled`)
 
       return {
-        // TODO: update this method to be a simple request/response
         paymentPreimage: await inboundEngine.getSettledSwapPreimage(hash)
       }
     }
@@ -192,17 +199,21 @@ async function getPreimage (
     throw e
   }
 
+  // add our static time lock to the time the inbound contract was locked
+  // in to arrive at the latest time that our outbound contract can be
+  // resolved while still considering our state "safe" and atomic.
+  const maxTime = new Date(committedTime.getTime() + (OUTBOUND_TIME_LOCK * 1000))
+
   logger.debug(`Sending payment to ${outboundAddress} to translate ${hash}`, {
-    outboundTimeLock: OUTBOUND_TIME_LOCK,
+    maxTime,
     outboundAmount
   })
 
-  // TODO: update this method to take a max time lock
   return outboundEngine.translateSwap(
     outboundAddress,
     hash,
     outboundAmount,
-    OUTBOUND_TIME_LOCK
+    maxTime
   )
 }
 
