@@ -30,6 +30,8 @@ async function recoverWallet ({ logger, params, engines }, { EmptyResponse }) {
     throw new Error(`Unable to create wallet for engine: ${symbol}`)
   }
 
+  console.log(params)
+
   let backup
 
   if (backupPath) {
@@ -37,12 +39,12 @@ async function recoverWallet ({ logger, params, engines }, { EmptyResponse }) {
   }
 
   let seedList
-
-  if (seed) {
-    seedList = seed.split(' ')
+  // Check the first element of seed. The default value for grpc will be `['']`
+  if (seed[0] !== '') {
+    seedList = seed
   }
 
-  await engine.restoreWallet(password, seedList, backup)
+  await engine.recoverWallet(password, seedList, backup)
 
   return new EmptyResponse({})
 }

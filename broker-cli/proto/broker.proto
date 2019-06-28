@@ -1795,7 +1795,7 @@ message RecoverWalletRequest {
   // Currency of wallet
   string symbol = 1;
   // Password from the existing wallet
-  string current_password = 2;
+  string password = 2;
   // 24 word mnemonic seed
   repeated string seed = 3;
   // The path of the backup file (path inside of the broker container)
