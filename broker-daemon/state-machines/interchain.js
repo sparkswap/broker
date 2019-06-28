@@ -3,6 +3,8 @@ const {
   delay
 } = require('../utils')
 
+const { ERRORS: ENGINE_ERRORS } = require('lnd-engine')
+
 class PermanentError extends Error {}
 
 /**
@@ -187,8 +189,7 @@ async function getPreimage (
     // TODO: abstract this away in the LND Engine.
     committedTime = new Date(invoice.creationDate * 1000)
   } catch (e) {
-    // TODO: fix this error message
-    if (e.isSettled) {
+    if (e instanceof ENGINE_ERRORS.SettledSwapError) {
       logger.debug(`Swap for ${hash} has already been settled`)
 
       return {

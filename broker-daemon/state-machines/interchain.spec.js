@@ -159,8 +159,8 @@ describe('interchain', () => {
 
     context('swap is settled', () => {
       beforeEach(() => {
-        const settledError = new Error('Invoice is already settled')
-        settledError.isSettled = true
+        let SettledSwapError = interchain.__get__('ENGINE_ERRORS').SettledSwapError
+        const settledError = new SettledSwapError('Invoice is already settled')
         waitForSwapCommitment.rejects(settledError)
       })
 
