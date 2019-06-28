@@ -1788,6 +1788,21 @@ message ChangeWalletPasswordRequest {
 }
 
 /**
+ * Request to recover a wallet
+ * NOTE: This can only be done on a fresh install of the broker
+ */
+message RecoverWalletRequest {
+  // Currency of wallet
+  string symbol = 1;
+  // Password from the existing wallet
+  string current_password = 2;
+  // 24 word mnemonic seed
+  repeated string seed = 3;
+  // The path of the backup file (path inside of the broker container)
+  string backup_path = 4;
+}
+
+/**
  * The WalletService is for interacting with the wallets managed by the Broker on behalf of the user.
  *
  * It is used primarily during set up (e.g. making deposits) of a Broker.
@@ -2259,6 +2274,35 @@ service WalletService {
   rpc ChangeWalletPassword (ChangeWalletPasswordRequest) returns (google.protobuf.Empty) {
     option (.google.api.http) = {
       post: "/v1/wallet/change-password"
+      body: "*"
+    };
+  }
+  /**
+   * RecoverWallet sends a request with your existing password/seed/backup file and restores
+   * an engine's wallet
+   *
+   * This RPC can only be used if the specified engine's wallet does not exist (new broker)
+   *
+   * ```javascript
+   * await walletService.recoverWallet({ symbol: 'BTC', password: 'your-password', seed: ['array', 'of', 'strings'], backupPath: '/backup/lnd-btc.backup')
+   * ```
+   *
+   * ```shell
+   * > sparkswap wallet recover BTC
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * {}
+   * ```
+   *
+   * ```shell
+   * ```
+   */
+  rpc RecoverWallet (RecoverWalletRequest) returns (google.protobuf.Empty) {
+    option (.google.api.http) = {
+      post: "/v1/wallet/recover"
       body: "*"
     };
   }
