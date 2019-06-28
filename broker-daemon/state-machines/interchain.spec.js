@@ -84,9 +84,7 @@ describe('interchain', () => {
 
       isPaymentPendingOrComplete = sinon.stub().resolves(false)
       getPaymentPreimage = sinon.stub().resolves(preimage)
-      translateSwap = sinon.stub().resolves({
-        paymentPreimage: preimage
-      })
+      translateSwap = sinon.stub().resolves(preimage)
 
       outboundEngine = {
         isPaymentPendingOrComplete,
@@ -96,9 +94,7 @@ describe('interchain', () => {
 
       cancelSwap = sinon.stub().resolves()
       settleSwap = sinon.stub().resolves()
-      waitForSwapCommitment = sinon.stub().resolves({
-        creationDate: '1561597836'
-      })
+      waitForSwapCommitment = sinon.stub().resolves(new Date('2019-06-27T01:10:36.000Z'))
       getSettledSwapPreimage = sinon.stub().resolves(preimage)
 
       inboundEngine = {
@@ -197,10 +193,11 @@ describe('interchain', () => {
     })
 
     context('permanent error while sending payment', () => {
+      let PermanentSwapError
+
       beforeEach(() => {
-        translateSwap.resolves({
-          permanentError: 'permanent error while translating'
-        })
+        PermanentSwapError = interchain.__get__('PermanentSwapError')
+        translateSwap.rejects(new PermanentSwapError('permanent error while translating'))
       })
 
       it('cancels the upstream payment', async () => {
@@ -221,9 +218,7 @@ describe('interchain', () => {
     context('exception while sending payment', () => {
       beforeEach(() => {
         translateSwap.onCall(0).rejects(new Error('fake error'))
-        translateSwap.onCall(1).resolves({
-          paymentPreimage: preimage
-        })
+        translateSwap.onCall(1).resolves(preimage)
       })
 
       it('settles the upstream payment', async () => {

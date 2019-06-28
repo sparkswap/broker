@@ -5,8 +5,6 @@ const {
 
 const { ERRORS: ENGINE_ERRORS } = require('lnd-engine')
 
-class PermanentError extends Error {}
-
 /**
  * A description of a payment on a Payment Channel Network
  * @typedef {Object} Payment
@@ -127,16 +125,6 @@ async function prepareSwap (hash, { engine, amount }, timeout) {
 }
 
 /**
- * The result of retrieving a preimage by paying a downstream payment locked
- * with the swap hash.
- * @typedef {Object} PaymentResult
- * @property {string} paymentPreimage - Base64 encoded preimage for the swap.
- * @property {string} paymentError    - Error message from a failed attempt to
- *                                      translate a swap via payment.
- *
- */
-
-/**
  * Get the preimage for a swap from one of its three potential sources:
  * - from an existing outbound payment
  * - from an existing settled inbound invoice
@@ -157,7 +145,8 @@ async function prepareSwap (hash, { engine, amount }, timeout) {
  * @param {number}  outboundPayment.address - Address to send the outbound
  *                                            payment to to retrieve the
  *                                            preimage.
- * @returns {PaymentResult}                   Result of retrieving the preimage.
+ * @returns {string}                          Base64 encoded preimage for the
+ *                                            swap.
  */
 async function getPreimage (
   hash,
@@ -170,9 +159,7 @@ async function getPreimage (
   logger.debug(`Checking outbound HTLC status for swap ${hash}`)
   if (await outboundEngine.isPaymentPendingOrComplete(hash)) {
     // TODO: return permanent errors when encountered
-    return {
-      paymentPreimage: await outboundEngine.getPaymentPreimage(hash)
-    }
+    return outboundEngine.getPaymentPreimage(hash)
   }
 
   let committedTime
@@ -180,21 +167,12 @@ async function getPreimage (
   // wait for an incoming payment to this hash that is accepted,
   // but not yet settled.
   try {
-    const invoice = await inboundEngine.waitForSwapCommitment(hash)
-
-    // We use the invoice Creation Date as a proxy for the time that
-    // the inbound contract was locked in. It will be a conservative
-    // estimate as it will certainly pre-date the actual commitment
-    // time.
-    // TODO: abstract this away in the LND Engine.
-    committedTime = new Date(invoice.creationDate * 1000)
+    committedTime = await inboundEngine.waitForSwapCommitment(hash)
   } catch (e) {
     if (e instanceof ENGINE_ERRORS.SettledSwapError) {
       logger.debug(`Swap for ${hash} has already been settled`)
 
-      return {
-        paymentPreimage: await inboundEngine.getSettledSwapPreimage(hash)
-      }
+      return inboundEngine.getSettledSwapPreimage(hash)
     }
 
     throw e
@@ -219,48 +197,11 @@ async function getPreimage (
 }
 
 /**
- * Try to translate a swap cross-chain by retrieving the preimage from the
+ * Translate a swap cross-chain by retrieving the preimage from the
  * downstream chain and returning it to the upstream chain, cancelling the
- * upstream when an unrecoverable error is encountered.
- *
- * @private
- * @param {string}  hash                  - Base64 string of the hash for the
- *                                          swap
- * @param {Payment} inboundPayment        - Expected inbound payment
- * @param {Engine}  inboundPayment.engine - Engine of the expected inbound
- *                                          payment
- * @param {Payment} outboundPayment       - Outbound payment we will make to
- *                                          retrieve the preimage.
- * @returns {string}                        Base64 encoded preimage for the swap
- * @throws {PermanentError} If a permanent error is encountered while translating
- */
-async function translateOnce (hash, inboundPayment, outboundPayment) {
-  const {
-    paymentPreimage,
-    permanentError
-  } = await getPreimage(hash, inboundPayment, outboundPayment)
-
-  if (permanentError) {
-    logger.error(permanentError)
-    logger.error('Downstream payment encountered an error, cancelling ' +
-      `upstream invoice for ${hash}`)
-    await inboundPayment.engine.cancelSwap(hash)
-
-    throw new PermanentError(permanentError)
-  }
-
-  logger.debug(`Successfully retrieved preimage for swap ${hash}`)
-
-  logger.debug(`Settling upstream payment for ${hash}`)
-  await inboundPayment.engine.settleSwap(paymentPreimage)
-  logger.debug(`Successfully settled upstream payment for ${hash}`)
-
-  return paymentPreimage
-}
-
-/**
- * Translate a swap cross-chain and return its preimage, accounting for
- * temporary errors that may leave us in a non-atomic state.
+ * upstream when an unrecoverable error is encountered. When any other
+ * error is encountered, it retries to protect us against being in a
+ * non-atomic state.
  *
  * @public
  *
@@ -270,19 +211,26 @@ async function translateOnce (hash, inboundPayment, outboundPayment) {
  * @param {Payment} outboundPayment       - Outbound payment we will make to
  *                                          retrieve the preimage.
  * @returns {string}                        Base64 encoded preimage for the swap
+ * @throws {Error} If a permanent error is encountered and the swap is cancelled
  */
 async function translateSwap (hash, inboundPayment, outboundPayment) {
   try {
-    // we need to await this promise - if we return it, any thrown errors
-    // will be swallowed.
-    const preimage = await translateOnce(hash, inboundPayment, outboundPayment)
-    return preimage
+    const paymentPreimage = await getPreimage(hash, inboundPayment, outboundPayment)
+    logger.debug(`Successfully retrieved preimage for swap ${hash}`)
+
+    logger.debug(`Settling upstream payment for ${hash}`)
+    await inboundPayment.engine.settleSwap(paymentPreimage)
+    logger.debug(`Successfully settled upstream payment for ${hash}`)
+
+    return paymentPreimage
   } catch (e) {
-    // A permanent error means we are safe to cancel translation and return
-    // the error to the call site.
-    if (e instanceof PermanentError) {
-      logger.error('Permanent Error encountered while translating swap',
-        { error: e.stack, hash })
+    if (e instanceof ENGINE_ERRORS.PermanentSwapError) {
+      logger.error('Permanent Error encountered while translating swap, ' +
+        'cancelling upstream invoice', { error: e.message, hash })
+
+      await inboundPayment.engine.cancelSwap(hash)
+
+      // once we've cancelled, we can re-throw
       throw e
     }
 
@@ -294,6 +242,7 @@ async function translateSwap (hash, inboundPayment, outboundPayment) {
     logger.debug(`Delaying swap retry for ${hash} for ${RETRY_DELAY}ms`)
     await delay(RETRY_DELAY)
     logger.debug(`Retrying swap translation for ${hash}`)
+
     return translateSwap(hash, inboundPayment, outboundPayment)
   }
 }
