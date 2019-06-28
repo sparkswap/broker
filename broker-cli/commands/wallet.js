@@ -553,14 +553,7 @@ async function recover (args, opts, logger) {
     const seed = await askQuestion(`Please enter your 24 word recover seed, with each word separated by spaces`, { silent: true })
     const backupPath = await askQuestion(`Enter the path to your backup file (optional)`)
 
-    const { recoverySeed } = await client.walletService.recoverWallet({ symbol, password, seed, backupPath })
-
-    logger.info('IMPORTANT: Please make a copy of the recovery seed below as you WILL NOT')
-    logger.info('be able to recover this information again. We recommend that you write')
-    logger.info('down all the secret words, and re-confirm the order they are written down')
-    logger.info('')
-    logger.info('')
-    logger.info(recoverySeed)
+    await client.walletService.recoverWallet({ symbol, password, seed, backupPath })
   } catch (e) {
     logger.error(handleError(e))
   }
