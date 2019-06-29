@@ -58,7 +58,7 @@ describe('interchain', () => {
     })
   })
 
-  describe('#translateSwap', () => {
+  describe('#forwardSwap', () => {
     let hash
     let preimage
     let inboundEngine
@@ -113,7 +113,7 @@ describe('interchain', () => {
     })
 
     it('translates the payment downstream', async () => {
-      await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+      await interchain.forwardSwap(hash, inboundPayment, outboundPayment)
 
       expect(translateSwap).to.have.been.calledWith(
         outboundAddress,
@@ -124,7 +124,7 @@ describe('interchain', () => {
     })
 
     it('settles the upstream payment', async () => {
-      const res = await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+      const res = await interchain.forwardSwap(hash, inboundPayment, outboundPayment)
 
       expect(settleSwap).to.have.been.calledWith(preimage)
       expect(res).to.be.eql(preimage)
@@ -136,7 +136,7 @@ describe('interchain', () => {
       })
 
       it('settles the upstream payment', async () => {
-        const res = await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+        const res = await interchain.forwardSwap(hash, inboundPayment, outboundPayment)
 
         expect(settleSwap).to.have.been.calledWith(preimage)
         expect(res).to.be.eql(preimage)
@@ -146,7 +146,7 @@ describe('interchain', () => {
         getPaymentPreimage.onCall(0).rejects(new Error('fake error'))
         getPaymentPreimage.onCall(1).resolves(preimage)
 
-        const res = await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+        const res = await interchain.forwardSwap(hash, inboundPayment, outboundPayment)
 
         expect(settleSwap).to.have.been.calledWith(preimage)
         expect(res).to.be.eql(preimage)
@@ -161,7 +161,7 @@ describe('interchain', () => {
       })
 
       it('settles the upstream payment', async () => {
-        const res = await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+        const res = await interchain.forwardSwap(hash, inboundPayment, outboundPayment)
 
         expect(settleSwap).to.have.been.calledWith(preimage)
         expect(res).to.be.eql(preimage)
@@ -171,7 +171,7 @@ describe('interchain', () => {
         getPaymentPreimage.onCall(0).rejects(new Error('fake error'))
         getPaymentPreimage.onCall(1).resolves(preimage)
 
-        const res = await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+        const res = await interchain.forwardSwap(hash, inboundPayment, outboundPayment)
 
         expect(settleSwap).to.have.been.calledWith(preimage)
         expect(res).to.be.eql(preimage)
@@ -185,7 +185,7 @@ describe('interchain', () => {
       })
 
       it('settles the upstream payment', async () => {
-        const res = await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+        const res = await interchain.forwardSwap(hash, inboundPayment, outboundPayment)
 
         expect(settleSwap).to.have.been.calledWith(preimage)
         expect(res).to.be.eql(preimage)
@@ -196,13 +196,13 @@ describe('interchain', () => {
       let PermanentSwapError
 
       beforeEach(() => {
-        PermanentSwapError = interchain.__get__('PermanentSwapError')
+        PermanentSwapError = interchain.__get__('ENGINE_ERRORS').PermanentSwapError
         translateSwap.rejects(new PermanentSwapError('permanent error while translating'))
       })
 
       it('cancels the upstream payment', async () => {
         try {
-          await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+          await interchain.forwardSwap(hash, inboundPayment, outboundPayment)
         } catch (e) {
           expect(cancelSwap).to.have.been.calledWith(hash)
         }
@@ -210,7 +210,7 @@ describe('interchain', () => {
 
       it('throws an error', () => {
         return expect(
-          interchain.translateSwap(hash, inboundPayment, outboundPayment)
+          interchain.forwardSwap(hash, inboundPayment, outboundPayment)
         ).to.eventually.be.rejectedWith('permanent error while translating')
       })
     })
@@ -222,14 +222,14 @@ describe('interchain', () => {
       })
 
       it('settles the upstream payment', async () => {
-        const res = await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+        const res = await interchain.forwardSwap(hash, inboundPayment, outboundPayment)
 
         expect(settleSwap).to.have.been.calledWith(preimage)
         expect(res).to.be.eql(preimage)
       })
 
       it('delays before settling', async () => {
-        await interchain.translateSwap(hash, inboundPayment, outboundPayment)
+        await interchain.forwardSwap(hash, inboundPayment, outboundPayment)
 
         expect(delay).to.have.been.calledOnce()
       })

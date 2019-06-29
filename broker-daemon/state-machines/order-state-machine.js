@@ -7,7 +7,7 @@ const { generateId, payInvoice } = require('../utils')
 
 const {
   prepareSwap,
-  translateSwap
+  forwardSwap
 } = require('./interchain')
 
 const StateMachine = require('./state-machine')
@@ -468,7 +468,7 @@ const OrderStateMachine = StateMachine.factory({
       const inboundPayment = this.inboundPayment()
       const outboundPayment = this.outboundPayment()
 
-      const swapPreimage = await translateSwap(swapHash, inboundPayment, outboundPayment)
+      const swapPreimage = await forwardSwap(swapHash, inboundPayment, outboundPayment)
 
       this.order.setSettledParams({ swapPreimage })
 

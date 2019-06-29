@@ -113,9 +113,6 @@ const INBOUND_TIME_LOCK = OUTBOUND_TIME_LOCK + DEFAULT_MAKER_FWD_DELTA + BLOCK_B
  *                                          payment should not be translated.
  */
 async function prepareSwap (hash, { engine, amount }, timeout) {
-  // TODO: update `prepareSwap` to take an expiration
-  // time (absolute) and a minimum time lock in seconds
-  // TODO: update `prepareSwap` to be idempotent
   await engine.prepareSwap(
     hash,
     amount,
@@ -125,10 +122,12 @@ async function prepareSwap (hash, { engine, amount }, timeout) {
 }
 
 /**
- * Get the preimage for a swap from one of its three potential sources:
+ * Translate a swap payment to the other chain in an idempotent fashion,
+ * i.e. by only paying the downstream invoice if it is not available any
+ * other way. This is done by retrieving the preimage:
  * - from an existing outbound payment
  * - from an existing settled inbound invoice
- * - from a new outbound payment
+ * - by making a new outbound payment
  *
  * @private
  *
@@ -148,7 +147,7 @@ async function prepareSwap (hash, { engine, amount }, timeout) {
  * @returns {string}                          Base64 encoded preimage for the
  *                                            swap.
  */
-async function getPreimage (
+async function translateIdempotent (
   hash,
   { engine: inboundEngine },
   { engine: outboundEngine, amount: outboundAmount, address: outboundAddress }
@@ -197,45 +196,40 @@ async function getPreimage (
 }
 
 /**
- * Handle errors encountered while translating swaps across chains.
+ * Cancel an upstream payment for a swap.
  *
  * @private
  *
- * @param   {Error} error                   - Error encountered to be handled
- * @param   {string}  hash                  - Base64 string of the hash for the
- *                                            swap
- * @param   {Payment} inboundPayment        - Expected inbound payment
- * @param   {Payment} outboundPayment       - Outbound payment we will make to
- *                                            retrieve the preimage.
- * @returns {string}                          Base64 encoded preimage for the swap
- * @throws  {Error} If a permanent error is encountered and the swap is cancelled
+ * @param   {Engine} engine
+ * @param   {string} hash     - Base64 string of the swap hash
+ * @param   {Error}  error    - Error that caused the cancel
+ * @returns {void}
  */
-async function handleSwapError (error, hash, inboundPayment, outboundPayment) {
-  if (error instanceof ENGINE_ERRORS.PermanentSwapError) {
-    logger.error('Permanent Error encountered while translating swap, ' +
-      'cancelling upstream invoice', { error: error.message, hash })
+async function cancelSwap (engine, hash, error) {
+  logger.error('Permanent Error encountered while translating swap, ' +
+    'cancelling upstream invoice', { error: error.message, hash })
 
-    await inboundPayment.engine.cancelSwap(hash)
-
-    // once we've cancelled, we can re-throw
-    throw error
-  }
-
-  logger.error('Temporary Error encountered while translating swap',
-    { error: error.stack, hash })
-
-  // A temporary error means we don't know the current state, so we need
-  // to restart the whole process
-  logger.debug(`Delaying swap retry for ${hash} for ${RETRY_DELAY}ms`)
-  await delay(RETRY_DELAY)
-  logger.debug(`Retrying swap translation for ${hash}`)
-
-  return translateSwap(hash, inboundPayment, outboundPayment)
+  return engine.cancelSwap(hash)
 }
 
 /**
- * Translate a swap cross-chain by retrieving the preimage from the
- * downstream chain and returning it to the upstream chain.
+ * Settle an upstream payment for a swap.
+ *
+ * @private
+ *
+ * @param   {Engine} engine
+ * @param   {string} hash     - Base64 string of the swap hash
+ * @param   {string} preimage - Base64 string of the swap preimage
+ * @returns {void}
+ */
+async function settleSwap (engine, hash, preimage) {
+  logger.debug(`Settling upstream payment for ${hash}`)
+  await engine.settleSwap(preimage)
+  logger.debug(`Successfully settled upstream payment for ${hash}`)
+}
+
+/**
+ * Retry forwarding a swap across chains.
  *
  * @private
  *
@@ -244,25 +238,26 @@ async function handleSwapError (error, hash, inboundPayment, outboundPayment) {
  * @param {Payment} inboundPayment        - Expected inbound payment
  * @param {Payment} outboundPayment       - Outbound payment we will make to
  *                                          retrieve the preimage.
+ * @param {Error}   error                 - Error that caused the retry
  * @returns {string}                        Base64 encoded preimage for the swap
  */
-async function translateOnce (hash, inboundPayment, outboundPayment) {
-  const paymentPreimage = await getPreimage(hash, inboundPayment, outboundPayment)
-  logger.debug(`Successfully retrieved preimage for swap ${hash}`)
+async function retryForward (hash, inboundPayment, outboundPayment, error) {
+  logger.error('Temporary Error encountered while translating swap',
+    { error: error.stack, hash })
 
-  logger.debug(`Settling upstream payment for ${hash}`)
-  await inboundPayment.engine.settleSwap(paymentPreimage)
-  logger.debug(`Successfully settled upstream payment for ${hash}`)
+  logger.debug(`Delaying swap retry for ${hash} for ${RETRY_DELAY}ms`)
+  await delay(RETRY_DELAY)
+  logger.debug(`Retrying swap translation for ${hash}`)
 
-  return paymentPreimage
+  return forwardSwap(hash, inboundPayment, outboundPayment)
 }
 
 /**
- * Translate a swap cross-chain by retrieving the preimage from the
- * downstream chain and returning it to the upstream chain, cancelling the
- * upstream when an unrecoverable error is encountered. When any other
- * error is encountered, it retries to protect us against being in a
- * non-atomic state.
+ * Forward a swap cross-chain by retrieving the preimage from the
+ * downstream chain (by paying an invoice to its hash) and returning it
+ * to the upstream chain, cancelling the upstream when an unrecoverable
+ * error is encountered. When any other error is encountered, it retries
+ * to protect us against being in a non-atomic state.
  *
  * @public
  *
@@ -274,18 +269,30 @@ async function translateOnce (hash, inboundPayment, outboundPayment) {
  * @returns {string}                        Base64 encoded preimage for the swap
  * @throws {Error} If a permanent error is encountered and the swap is cancelled
  */
-async function translateSwap (hash, inboundPayment, outboundPayment) {
+async function forwardSwap (hash, inboundPayment, outboundPayment) {
   try {
-    // if we don't await here, we can't catch asynchronous errors
-    const preimage = await translateOnce(hash, inboundPayment, outboundPayment)
-    return preimage
+    const paymentPreimage = await translateIdempotent(hash, inboundPayment, outboundPayment)
+    logger.debug(`Successfully retrieved preimage for swap ${hash}`)
+
+    // settle the upstream payment prior to returning the preimage
+    await settleSwap(inboundPayment.engine, hash, paymentPreimage)
+
+    return paymentPreimage
   } catch (e) {
-    const preimage = await handleSwapError(e, hash, inboundPayment, outboundPayment)
-    return preimage
+    if (e instanceof ENGINE_ERRORS.PermanentSwapError) {
+      await cancelSwap(inboundPayment.engine, hash, e)
+
+      // once we've cancelled, we can re-throw
+      throw e
+    }
+
+    // A temporary (non-permanent) error means we don't know the current state,
+    // so we need to restart the whole process
+    return retryForward(hash, inboundPayment, outboundPayment, e)
   }
 }
 
 module.exports = {
   prepareSwap,
-  translateSwap
+  forwardSwap
 }
