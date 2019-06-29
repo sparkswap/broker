@@ -8,14 +8,14 @@ const { ERRORS: ENGINE_ERRORS } = require('lnd-engine')
 /**
  * A description of a payment on a Payment Channel Network
  * @typedef {Object} Payment
- * @property {Engine} engine      - Engine for the interacting with the payment
+ * @property {Engine} engine      - Engine for interacting with the payment
  * @property {string} amount      - Amount, in the smallest unit, of the payment
  * @property {string} address     - Payment Channel Network address of the node
  *                                  the payment is to.
  */
 
 /**
- * Numer of milliseconds between each attempt to resolve a translation across
+ * Number of milliseconds between each attempt to resolve a translation across
  * chains. This happens when we encounter a temporary error. We need to keep
  * retrying so as to not end up in a non-atomic state, but if we retry too
  * frequently we could continually flap. This delay ensures we stay atomic,
@@ -49,7 +49,7 @@ const DEFAULT_MAKER_FWD_DELTA = 86400
 const DEFAULT_RELAYER_FWD_DELTA = 86400
 
 /**
- * The default amoumt of time, in seconds, that the Taker (this node) expects to
+ * The default amount of time, in seconds, that the Taker (this node) expects to
  * receive when settling a swap. BOLT-11 states it as 90 minutes (9 Bitcoin
  * blocks), but LND's default is 144 blocks to align to the forwarding policy.
  *
