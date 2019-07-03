@@ -512,7 +512,7 @@ class Order {
   /**
    * Grabs all orders
    * @param {sublevel} store
-   * @returns {Array<Object>} array of order representation (includes order model)
+   * @returns {Promise<Array<Object>>} array of order representation (includes order model)
    */
   static async getAllOrders (store) {
     return getRecords(

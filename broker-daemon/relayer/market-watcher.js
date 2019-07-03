@@ -92,7 +92,7 @@ class MarketWatcher extends EventEmitter {
    * Handle an inbound event from the Relayer
    * @private
    * @param  {Object} response - Response from the Relayer stream
-   * @returns {void}
+   * @returns {Promise<void>}
    */
   async handleResponse (response) {
     const { RESPONSE_TYPES } = this
@@ -121,6 +121,7 @@ class MarketWatcher extends EventEmitter {
     } else {
       this.logger.debug(`Unknown response type: ${response.type}`)
     }
+    return undefined
   }
 
   /**
@@ -136,7 +137,7 @@ class MarketWatcher extends EventEmitter {
   /**
    * Helper promise to await to ensure that any outstanding promises are complete before proceeding
    * @private
-   * @returns {void} Resolves when there are no in-progress promises
+   * @returns {Promise<void>} Resolves when there are no in-progress promises
    */
   async delayProcessing () {
     this.logger.debug(`Waiting for promises to resolve before acting on new response`)
@@ -144,6 +145,7 @@ class MarketWatcher extends EventEmitter {
     await Promise.all(promises)
     // clean up our finishBeforeProcessing by removing these resolved promises
     promises.forEach(promise => this.finishBeforeProcessing.delete(promise))
+    return undefined
   }
 
   /**
@@ -151,7 +153,7 @@ class MarketWatcher extends EventEmitter {
    * @private
    * @param {Object} response - Response from the Relayer
    * @param {Object} response.marketEvent - Market Event to be created
-   * @returns {void}
+   * @returns {Promise<void>}
    */
   async createMarketEvent ({ marketEvent }) {
     this.logger.debug('Creating a market event', marketEvent)
@@ -172,6 +174,7 @@ class MarketWatcher extends EventEmitter {
       this.logger.error('Saving market event failed, invalidating sync', { orderId })
       this.emit('error', e)
     }
+    return undefined
   }
 
   /**

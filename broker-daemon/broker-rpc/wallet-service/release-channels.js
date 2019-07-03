@@ -8,6 +8,12 @@ const RELEASE_STATE = Object.freeze({
   FAILED: 'FAILED'
 })
 
+/** @typedef {Object} CloseChannelsResponse
+ *  @property {string} symbol
+ *  @property {string} status - RELEASED or FAILED
+ *  @property {string} [error=undefined] - only present if status is FAILED
+ */
+
 /**
  * Close channels on a specific engine
  *
@@ -16,10 +22,7 @@ const RELEASE_STATE = Object.freeze({
  * @param {string} symbol - e.g. BTC or LTC
  * @param {boolean} force
  * @param {Logger} logger
- * @returns {Object} res
- * @returns {string} res.symbol
- * @returns {string} res.status - RELEASED or FAILED
- * @returns {string} [res.error=undefined] - only present if status is FAILED
+ * @returns {Promise<CloseChannelsResponse>}
  */
 async function closeChannels (engine, symbol, force, logger) {
   try {
@@ -55,7 +58,7 @@ async function closeChannels (engine, symbol, force, logger) {
  * @param {Map<Orderbook>} request.orderbooks
  * @param {Object} responses
  * @param {Object} responses.ReleaseChannelsResponse
- * @returns {ReleaseChannelsResponse}
+ * @returns {Promise<ReleaseChannelsResponse>}
  */
 async function releaseChannels ({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse }) {
   const { market, force } = params

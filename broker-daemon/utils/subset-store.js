@@ -18,7 +18,7 @@ class SubsetStore {
   /**
    * Rebuild the index and add hooks for new events
    * @public
-   * @returns {void} resolves when the index is rebuilt and ready for new events
+   * @returns {Promise<void>} resolves when the index is rebuilt and ready for new events
    */
   async ensureIndex () {
     logger.debug(`Rebuilding ${this.constructor.name} index...`)
@@ -26,6 +26,7 @@ class SubsetStore {
     await this.rebuildIndex()
     this.addIndexHook()
     logger.debug(`${this.constructor.name} index rebuilt.`)
+    return undefined
   }
 
   /**

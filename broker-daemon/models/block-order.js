@@ -294,7 +294,7 @@ class BlockOrder {
   /**
    * Populates orders on a block order
    * @param {sublevel} store
-   * @returns {void}
+   * @returns {Promise<void>}
    */
   async populateOrders (store) {
     const orders = await getRecords(
@@ -308,12 +308,13 @@ class BlockOrder {
       Order.rangeForBlockOrderIds(this.id, this.id)
     )
     this.orders = orders
+    return undefined
   }
 
   /**
    * Populates fills on a block order
    * @param {sublevel} store
-   * @returns {void}
+   * @returns {Promise<void>}
    */
   async populateFills (store) {
     const fills = await getRecords(
@@ -327,6 +328,7 @@ class BlockOrder {
       Fill.rangeForBlockOrderIds(this.id, this.id)
     )
     this.fills = fills
+    return undefined
   }
 
   /**
@@ -420,7 +422,7 @@ class BlockOrder {
    *
    * @param {sublevel} store - block order sublevel store
    * @param {string} blockOrderId
-   * @returns {BlockOrder} BlockOrder instance
+   * @returns {Promise<BlockOrder>} BlockOrder instance
    * @throws {Error} store is null
    * @throws {BlockOrderNotFoundError} block order could not be found
    */

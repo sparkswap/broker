@@ -7,7 +7,7 @@
  * @param {Object} request.logger
  * @param {Object} responses
  * @param {Function} responses.GetBlockOrdersResponse - constructor for GetBlockOrdersResponse messages
- * @returns {GetBlockOrdersResponse}
+ * @returns {Promise<GetBlockOrdersResponse>}
  */
 async function getBlockOrders ({ params, logger, blockOrderWorker }, { GetBlockOrdersResponse }) {
   let { options } = params

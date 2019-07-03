@@ -178,7 +178,7 @@ const FillStateMachine = StateMachine.factory({
      * @param {string} order.counterAmount - Amount of counter currency (in base units) on the order
      * @param {Object} fill
      * @param {string} fill.fillAmount     - Amount of base currency (in base units) of the order to fill
-     * @returns {void}
+     * @returns {Promise<void>}
      */
     onBeforeCreate: async function (lifecycle, blockOrderId, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
       this.fill = new Fill(blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount })
@@ -231,6 +231,7 @@ const FillStateMachine = StateMachine.factory({
       })
 
       this.logger.info(`Created fill ${this.fill.fillId} on the relayer`)
+      return undefined
     },
 
     /**
@@ -257,7 +258,7 @@ const FillStateMachine = StateMachine.factory({
      * if filling on the Relayer fails.
      *
      * @param {Object} lifecycle - Lifecycle object passed by javascript-state-machine
-     * @returns {void} promise that rejects if filling on the relayer fails
+     * @returns {Promise<void>} promise that rejects if filling on the relayer fails
      */
     onBeforeFillOrder: async function (lifecycle) {
       const {
@@ -314,6 +315,7 @@ const FillStateMachine = StateMachine.factory({
       }
 
       this.logger.info(`Filled order ${fillId} on the relayer`)
+      return undefined
     },
 
     /**
@@ -379,7 +381,7 @@ const FillStateMachine = StateMachine.factory({
      * Actual execution is done in `onBeforeFill` so that the transition can be cancelled if execution fails
      *
      * @param {Object} lifecycle - Lifecycle object passed by javascript-state-machine
-     * @returns {void}          Promise that rejects if execution fails
+     * @returns {Promise<void>}          Promise that rejects if execution fails
      */
     onBeforeExecute: async function (lifecycle) {
       const { makerAddress, swapHash, symbol, amount } = this.fill.paramsForSwap
@@ -389,6 +391,7 @@ const FillStateMachine = StateMachine.factory({
       }
 
       await engine.executeSwap(makerAddress, swapHash, amount)
+      return undefined
     },
 
     /**

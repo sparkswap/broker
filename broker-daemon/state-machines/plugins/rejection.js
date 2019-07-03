@@ -60,7 +60,7 @@ class StateMachineRejection extends StateMachinePlugin {
        * Wrapper for running the next transition with error handling
        * @param  {string} transitionName - Name of the transition to run
        * @param  {...Array} args - Arguments to the apply to the transition
-       * @returns {void}
+       * @returns {Promise<void>}
        */
       tryTo: async function (transitionName, ...args) {
         try {
@@ -72,6 +72,7 @@ class StateMachineRejection extends StateMachinePlugin {
         } catch (e) {
           this[plugin.rejectName](e)
         }
+        return undefined
       }
     }
   }

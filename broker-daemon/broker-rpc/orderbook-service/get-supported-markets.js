@@ -9,7 +9,7 @@
  * @param {Map<Orderbook>} request.orderbooks
  * @param {Object} responses
  * @param {Function} responses.GetSupportedMarketsResponse
- * @returns {GetSupportedMarketsResponse}
+ * @returns {Promise<GetSupportedMarketsResponse>}
  */
 async function getSupportedMarkets ({ params, relayer, logger, engines, orderbooks }, { GetSupportedMarketsResponse }) {
   try {

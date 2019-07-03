@@ -450,7 +450,7 @@ class Fill {
   /**
    * Grabs all fills
    * @param {sublevel} store
-   * @returns {Array<Object>} array of fill representations (includes fill model)
+   * @returns {Promise<Array<Object>>} array of fill representations (includes fill model)
    */
   static async getAllFills (store) {
     return getRecords(

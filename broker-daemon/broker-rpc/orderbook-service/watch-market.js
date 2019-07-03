@@ -23,7 +23,7 @@ const neverResolve = new Promise(() => {})
  * @param {RelayerClient} request.relayer - grpc Client for interacting with the relayer
  * @param {Object} responses
  * @param {Function} responses.WatchMarketResponse - constructor for WatchMarketResponse messages
- * @returns {void}
+ * @returns {Promise<void>}
  */
 async function watchMarket ({ params, send, onCancel, logger, orderbooks }, { WatchMarketResponse }) {
   // TODO: Some validation on here. Maybe the client can call out for valid markets
@@ -78,6 +78,7 @@ async function watchMarket ({ params, send, onCancel, logger, orderbooks }, { Wa
     .on('data', onData)
 
   await neverResolve
+  return undefined
 }
 
 module.exports = watchMarket

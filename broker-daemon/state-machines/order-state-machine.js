@@ -236,7 +236,7 @@ const OrderStateMachine = StateMachine.factory({
      * @param {string} opts.counterSymbol - Counter symbol (e.g. LTC)
      * @param {string} opts.baseAmount    - Amount of base currency (in base units) to be traded
      * @param {string} opts.counterAmount - Amount of counter currency (in base units) to be traded
-     * @returns {void}
+     * @returns {Promise<void>}
      */
 
     onBeforeCreate: async function (lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
@@ -275,6 +275,7 @@ const OrderStateMachine = StateMachine.factory({
       })
 
       this.logger.info(`Created order ${this.order.orderId} on the relayer`)
+      return undefined
     },
 
     /**
@@ -303,7 +304,7 @@ const OrderStateMachine = StateMachine.factory({
      * This is done based on the state and not the transition so that it gets actioned when being re-hydrated from storage
      * [is that the right thing to do?]
      * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
-     * @returns {void}
+     * @returns {Promise<void>}
      */
     onBeforePlace: async function (lifecycle) {
       const {
@@ -406,6 +407,7 @@ const OrderStateMachine = StateMachine.factory({
       call.on('data', dataHandler)
 
       this.logger.info(`Placed order ${orderId} on the relayer`, { orderId })
+      return undefined
     },
 
     onBeforeFill: function (lifecycle, fill) {
@@ -430,7 +432,7 @@ const OrderStateMachine = StateMachine.factory({
      * Action is taken in `onBeforeExecute` so that the transition will fail if this function rejects its promise
      *
      * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
-     * @returns {void} Promise that rejects if execution prep or notification fails
+     * @returns {Promise<void>} Promise that rejects if execution prep or notification fails
      */
     onBeforeExecute: async function (lifecycle) {
       const { orderId, swapHash } = this.order
@@ -441,6 +443,7 @@ const OrderStateMachine = StateMachine.factory({
 
       const authorization = this.relayer.identity.authorize()
       await this.relayer.makerService.executeOrder({ orderId }, authorization)
+      return undefined
     },
 
     /**

@@ -25,7 +25,7 @@ class MarketStats {
   /**
    * Gets the highest price for a collection of events
    * @param {Array<MarketEventOrder>} events
-   * @returns {Big}
+   * @returns {Promise<Big>}
    */
   async highestPrice (events = []) {
     return events.reduce((acc, event) => {
@@ -38,7 +38,7 @@ class MarketStats {
   /**
    * Gets the lowest price for a collection of events
    * @param {Array<MarketEventOrder>} events
-   * @returns {Big}
+   * @returns {Promise<Big>}
    */
   async lowestPrice (events = []) {
     return events.reduce((acc, event, idx) => {
@@ -54,7 +54,7 @@ class MarketStats {
   /**
    * Calculates the vwap (volume weighted average price) for a collection of events
    * @param {Array<MarketEventOrder>} events
-   * @returns {Big}
+   * @returns {Promise<Big>}
    */
   async vwap (events = []) {
     // VWAP Calculations - market events
@@ -86,7 +86,7 @@ class MarketStats {
   /**
    * Returns the best ask amount (lowest sell) from a collection of asks
    * @param {Array<MarketEventOrder>} asks
-   * @returns {Big}
+   * @returns {Promise<Big>}
    */
   async bestAskAmount (asks = []) {
     return asks.reduce((acc, ask, idx) => {
@@ -102,7 +102,7 @@ class MarketStats {
   /**
    * Returns the best bid amount (highest buy) from a collection of bids
    * @param {Array<MarketEventOrder>} bids
-   * @returns {Big}
+   * @returns {Promise<Big>}
    */
   async bestBidAmount (bids = []) {
     return bids.reduce((acc, bid) => {
@@ -115,7 +115,7 @@ class MarketStats {
   /**
    * Total volume traded of base currency for a collection of events
    * @param {Array<MarketEventOrder>} events
-   * @returns {Big}
+   * @returns {Promise<Big>}
    */
   async baseVolume (events = []) {
     return events.reduce((acc, event) => {
@@ -127,7 +127,7 @@ class MarketStats {
   /**
    * Total volume traded of counter currency for a collection of events
    * @param {Array<MarketEventOrder>} events
-   * @returns {Big}
+   * @returns {Promise<Big>}
    */
   async counterVolume (events = []) {
     return events.reduce((acc, event) => {
