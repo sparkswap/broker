@@ -190,19 +190,20 @@ class BrokerDaemon {
   /**
    * Initializes all block orders for the engine.
    * @param {Promise} enginesAreValidated - a promise that resolves when engines are validated
-   * @returns {void}
+   * @returns {Promise<void>}
    */
   async initializeBlockOrder (enginesAreValidated) {
     this.logger.info(`Initializing BlockOrderWorker`)
     await this.blockOrderWorker.initialize(enginesAreValidated)
     this.logger.info('BlockOrderWorker initialized')
+    return undefined
   }
 
   /**
    * Listens to the assigned markets
    *
    * @param {Array<string>} markets
-   * @returns {void} promise that resolves when markets are caught up to the remote
+   * @returns {Promise<void>} promise that resolves when markets are caught up to the remote
    * @throws {Error} If markets include a currency with no currency configuration
    */
   async initializeMarkets (markets) {
@@ -211,13 +212,14 @@ class BrokerDaemon {
       return this.initializeMarket(marketName)
     }))
     this.logger.info(`Caught up to ${markets.length} markets`)
+    return undefined
   }
 
   /**
    * Creates and initializes an orderbook for every market
    *
    * @param {string} marketName
-   * @returns {void} promise that resolves when market is caught up to the remote
+   * @returns {Promise<void>} promise that resolves when market is caught up to the remote
    */
   async initializeMarket (marketName) {
     const symbols = marketName.split('/')

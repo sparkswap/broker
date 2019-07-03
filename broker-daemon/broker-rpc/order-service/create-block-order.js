@@ -7,7 +7,7 @@
  * @param {Object} responses
  * @param {Function} responses.CreateBlockOrderResponse - constructor for CreateBlockOrderResponse messages
  * @param {Object} responses.TimeInForce - Time In Force enum
- * @returns {CreateBlockOrderResponse}
+ * @returns {Promise<CreateBlockOrderResponse>}
  */
 async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce }) {
   const {

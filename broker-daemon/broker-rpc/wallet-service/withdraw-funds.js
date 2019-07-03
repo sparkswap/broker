@@ -14,7 +14,7 @@ const { Big } = require('../../utils')
  * @param {Map<Symbol, Engine>} request.engines
  * @param {Object} responses
  * @param {Function} responses.WithdrawFundsResponse
- * @returns {WithdrawFundsResponse}
+ * @returns {Promise<WithdrawFundsResponse>}
  */
 async function withdrawFunds ({ params, relayer, logger, engines }, { WithdrawFundsResponse }) {
   const { symbol, amount, address } = params

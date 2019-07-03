@@ -148,7 +148,7 @@ class StateMachinePersistence extends StateMachinePlugin {
       /**
        * Save the current state of the state machine to the store
        * @param {string} key - Unique key that the host can be saved using
-       * @returns {void} Promise that resolves when the state is persisted
+       * @returns {Promise<void>} Promise that resolves when the state is persisted
        */
       persist: async function (key) {
         if (!key) {
@@ -167,6 +167,7 @@ class StateMachinePersistence extends StateMachinePlugin {
 
         // somehow spit an error if this fails?
         await promisify(this[plugin.storeName].put)(key, JSON.stringify(data))
+        return undefined
       }
     }
   }

@@ -7,6 +7,13 @@ const { Big } = require('../../utils')
  */
 const BALANCE_PRECISION = 16
 
+/** @typedef {Object} GetEngineBalancesResponse
+ *  @property {string} uncommiittedBalance
+ *  @property {string} uncommittedPendingBalance
+ *  @property {string} totalChannelBalance
+ *  @property {string} totalPendingChannelBalance
+ */
+
 /**
  * Grabs all balances from a specific engine (total and pending). If a particular
  * engine is unavailable an empty response will be returned
@@ -14,11 +21,7 @@ const BALANCE_PRECISION = 16
  * @param {string} symbol
  * @param {Engine} engine - SparkSwap Payment Channel Network Engine
  * @param {Logger} logger
- * @returns {Object} res
- * @returns {string} res.uncommittedBalance
- * @returns {string} res.uncommittedPendingBalance
- * @returns {string} res.totalChannelBalance
- * @returns {string} res.totalPendingChannelBalance
+ * @returns {Promise<GetEngineBalancesResponse>}
  */
 async function getEngineBalances (symbol, engine, logger) {
   const { quantumsPerCommon } = engine

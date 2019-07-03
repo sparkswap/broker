@@ -23,7 +23,7 @@ const SMALL_CHAN_ERR = 'too small'
  * @param {Engine} request.engines
  * @param {Object} responses
  * @param {Function} responses.EmptyResponse
- * @returns {EmptyResponse}
+ * @returns {Promise<EmptyResponse>}
  */
 async function commit ({ params, relayer, logger, engines, orderbooks }, { EmptyResponse }) {
   const { balance: balanceCommon, symbol, market } = params

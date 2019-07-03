@@ -11,6 +11,20 @@ const CAPACITY_STATE = Object.freeze({
   FAILED: 'FAILED'
 })
 
+/** @typedef {Object} GetCapacitiesResponse
+ * @property {string} symbol - currency symbol e.g. BTC
+ * @property {string} status - OK for success or FAILED if engine call fails
+ * @property {boolean} error - true if errors occurred during request for capacities
+ * @property {string} availableReceiveCapacity
+ * @property {string} availableSendCapacity
+ * @property {string} pendingSendCapacity
+ * @property {string} pendingReceiveCapacity
+ * @property {string} inactiveSendCapacity
+ * @property {string} inactiveReceiveCapacity
+ * @property {string} outstandingReceiveCapacity
+ * @property {string} outstandingSendCapacity
+ */
+
 /**
  * Grabs the total balance and total channel balance from a specified engine
  *
@@ -20,18 +34,7 @@ const CAPACITY_STATE = Object.freeze({
  * @param {string} outstandingReceiveCapacity - amount of outstanding receive capacity for the given currency
  * @param {Object} opts
  * @param {Logger} opts.logger
- * @returns {Object} res
- * @returns {string} res.symbol - currency symbol e.g. BTC
- * @returns {string} res.status - OK for success or FAILED if engine call fails
- * @returns {boolean} res.error - true if errors occurred during request for capacities
- * @returns {string} res.availableReceiveCapacity
- * @returns {string} res.availableSendCapacity
- * @returns {string} res.pendingSendCapacity
- * @returns {string} res.pendingReceiveCapacity
- * @returns {string} res.inactiveSendCapacity
- * @returns {string} res.inactiveReceiveCapacity
- * @returns {string} res.outstandingReceiveCapacity
- * @returns {string} res.outstandingSendCapacity
+ * @returns {Promise<GetCapacitiesResponse>}
  */
 async function getCapacities (engine, symbol, outstandingSendCapacity, outstandingReceiveCapacity, { logger }) {
   const { quantumsPerCommon } = currencies.find(({ symbol: configSymbol }) => configSymbol === symbol) || {}
@@ -89,7 +92,7 @@ async function getCapacities (engine, symbol, outstandingSendCapacity, outstandi
  * @param {Logger} request.logger
  * @param {Object} responses
  * @param {Function} responses.GetTradingCapacitiesResponse
- * @returns {GetTradingCapacitiesResponse}
+ * @returns {Promise<GetTradingCapacitiesResponse>}
  */
 async function getTradingCapacities ({ params, engines, orderbooks, blockOrderWorker, logger }, { GetTradingCapacitiesResponse }) {
   const { market } = params
