@@ -3,6 +3,8 @@ const through = require('through2')
 const migrateStore = require('./migrate-store')
 const logger = require('./logger')
 
+/** @typedef {import('level-sublevel')} Sublevel */
+
 /**
  * Return true for every call
  * Used to create a non-filtering filter
@@ -40,12 +42,11 @@ const UPPER_BOUND = '\uffff'
 class Index {
   /**
    * Create a new index for sublevel store
-   * @param  {sublevel} store                 - Sublevel of the base store
+   * @param  {Sublevel} store                 - Sublevel of the base store
    * @param  {string}   name                  - Name of the index
    * @param  {Function} getValue              - User-passed function that returns the indexed value
    * @param  {Function} [filter=returnTrue]   - Filter for items to not index
    * @param  {string}   [delimiter=DELIMITER] - Delimiter between the index value and the base key. It may appear in the base key, but cannot appear in the index value produced by `getValue`.
-   * @returns {Index}
    */
   constructor (store, name, getValue, filter = returnTrue, delimiter = DELIMITER) {
     this.store = store
@@ -93,7 +94,7 @@ class Index {
   /**
    * Create a read stream of the index, filtering out those keys marked for deletion and transforming index keys into base keys
    * @param {Object} opts - Sublevel readStream options
-   * @returns {Readable}    Readable stream
+   * @returns {ReadableStream}
    */
   createReadStream (opts) {
     const optionsToUpdate = Object.assign({}, opts)
@@ -105,6 +106,7 @@ class Index {
     const index = this
 
     return stream.pipe(through.obj(function ({ key, value }, encoding, callback) {
+      void encoding
       // skip objects that are marked for deletion
       if (index._isMarkedForDeletion(key)) {
         return callback()
@@ -206,7 +208,8 @@ class Index {
     this.store.get(baseKey, async (err, value) => {
       if (err) {
         // TODO: error handling on index removal
-        return logger.error(`Error trying to get key when removing ${baseKey} from ${this.name} index`, { err: err.toString() })
+        logger.error(`Error trying to get key when removing ${baseKey} from ${this.name} index`, { err: err.toString() })
+        return
       }
 
       try {
@@ -218,7 +221,7 @@ class Index {
         this._finishDeletion(baseKey)
       } catch (e) {
         // TODO: error handling on index removal
-        return logger.error(`Error while removing ${baseKey} from ${this.name} index`, { err: e.toString() })
+        logger.error(`Error while removing ${baseKey} from ${this.name} index`, { err: e.toString() })
       }
     })
   }

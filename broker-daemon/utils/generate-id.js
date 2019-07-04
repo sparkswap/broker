@@ -15,7 +15,7 @@ function generateId () {
 
   // prepend 32 bits of the timestamp in seconds so that IDs are ordered by creation date
   const timestamp = Math.floor(Date.now() / 1000)
-  id.writeUInt32BE(timestamp)
+  id.writeUInt32BE(timestamp, 0)
 
   // add 8 bytes of random data to make the ID unique
   const rand = crypto.randomBytes(8)

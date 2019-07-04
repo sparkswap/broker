@@ -16,7 +16,7 @@ const winston = require('winston')
 /**
  * List of properties whose contents should be filtered from logs.
  * @constant
- * @type {Array}
+ * @type {ReadonlyArray<string>}
  */
 const SENSITIVE_PROP_LIST = Object.freeze([
   'username',
@@ -41,6 +41,7 @@ function createLogger () {
     const updatedInfo = Object.assign({}, info)
 
     Object.entries(updatedInfo).forEach(([key, value]) => {
+      void value
       if (SENSITIVE_PROP_LIST.includes(key)) {
         updatedInfo[key] = SENSITIVE_REPLACEMENT
       }
@@ -55,10 +56,7 @@ function createLogger () {
       filterSensitive(),
       winston.format.timestamp(),
       winston.format.json()
-    ),
-    json: true,
-    humanReadableUnhandledException: true,
-    handleExceptions: true
+    )
   })
 
   logger.add(new winston.transports.Console({
@@ -74,6 +72,8 @@ function createLogger () {
 }
 
 const logger = createLogger()
+
+// @ts-ignore
 logger._createLogger = createLogger
 
 module.exports = logger

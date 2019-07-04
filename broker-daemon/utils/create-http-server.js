@@ -8,6 +8,8 @@ const grpc = require('grpc')
 const grpcGateway = require('./grpc-gateway')
 const corsMiddleware = require('./enable-cors')
 
+/** @typedef {import('..').Logger} Logger */
+
 /**
  * http 404 handler for our http (express) server
  *
@@ -28,10 +30,12 @@ function handle404 (logger, req, res) {
  * @param {Object} opts
  * @param {boolean} [opts.disableAuth=false]
  * @param {boolean} [opts.enableCors=false]
+ * @param {boolean} [opts.isCertSelfSigned=true]
  * @param {string} opts.privKeyPath
  * @param {string} opts.pubKeyPath
- * @param {string} opts.logger
- * @returns {ExpressApp}
+ * @param {Array<string>} opts.httpMethods
+ * @param {Logger} opts.logger
+ * @returns {Object}
  */
 function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableCors = false, isCertSelfSigned = true, privKeyPath, pubKeyPath, httpMethods, logger }) {
   const app = express()

@@ -9,8 +9,8 @@ class StateMachineAbstractPlugin {
   constructor () {} // eslint-disable-line
 
   /**
-   * A copy of StateMachine~plugin, which is not exposed
-   * @param  {StateMachine} instance       - State machine instance to be hooked
+   * A copy of StateMachinePlugin, which is not exposed
+   * @param  {Object}       instance       - State machine instance to be hooked
    * @param  {string}       event          - Name of the event (e.g. `persist`)
    * @param  {Array}        additionalArgs - Additional arguments to be applied to the hooked functions
    * @returns {void}
@@ -31,7 +31,7 @@ class StateMachineAbstractPlugin {
    * State machine plugins expose a `configure` method that gets called against the config object when building the factory
    * By default, we use it to apply our custom transitions
    * @see https://github.com/jakesgordon/javascript-state-machine/blob/master/src/config.js#L119
-   * @param {StateMachine~Config} config - State machine configuration object
+   * @param {Object} config - State machine configuration object
    * @returns {void}
    */
   configure (config) {
@@ -61,6 +61,7 @@ class StateMachineAbstractPlugin {
    * @returns {Array} Array of JSM-compatible transitions
    */
   get transitions () {
+    // @ts-ignore
     const plugin = this // eslint-disable-line
 
     return []
@@ -71,6 +72,7 @@ class StateMachineAbstractPlugin {
    * @returns {Object} Key value of lifecycle events and functions to be called during them
    */
   get observers () {
+    // @ts-ignore
     const plugin = this // eslint-disable-line
 
     return {}
@@ -81,6 +83,7 @@ class StateMachineAbstractPlugin {
    * @returns {Object} Object of all methods to be mixed in
    */
   get methods () {
+    // @ts-ignore
     const plugin = this // eslint-disable-line
 
     return {}
@@ -92,6 +95,7 @@ class StateMachineAbstractPlugin {
    * @returns {Object} Property definitions that can be used with `Object.defineProperties`
    */
   get properties () {
+    // @ts-ignore
     const plugin = this // eslint-disable-line
 
     return {}
@@ -103,6 +107,7 @@ class StateMachineAbstractPlugin {
    * @returns {Object} Object of all static methods to be mixed in
    */
   get staticMethods () {
+    // @ts-ignore
     const plugin = this // eslint-disable-line
 
     return {}

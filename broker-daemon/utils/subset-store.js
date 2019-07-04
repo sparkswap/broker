@@ -1,14 +1,16 @@
 const migrateStore = require('./migrate-store')
 const logger = require('./logger')
 
+/** @typedef {import('level-sublevel')} Sublevel */
+
 /**
  * @class Subset of another sublevel store
  */
 class SubsetStore {
   /**
    * Create a new subset from a target store and a source store
-   * @param {sublevel} targetStore - store to keep the subset in
-   * @param {sublevel} sourceStore - Store of records to create a subset of
+   * @param {Sublevel} targetStore - store to keep the subset in
+   * @param {Sublevel} sourceStore - Store of records to create a subset of
    */
   constructor (targetStore, sourceStore) {
     this.store = targetStore
