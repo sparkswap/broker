@@ -25,7 +25,6 @@ class CachedCall {
    * Create a new CachedCall instance.
    * @param {Function} promiseFn - function that returns a promise
    * @param {number} ttl - milliseconds for previous calls to remain valid
-   * @returns {CachedCall}
    */
   constructor (promiseFn, ttl = CACHE_TTL) {
     this.promiseFn = promiseFn

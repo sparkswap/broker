@@ -1,10 +1,12 @@
 const { promisify } = require('util')
 
+/** @typedef {import('level-sublevel')} Sublevel
+
 /**
  * Pipe data from one sublevel store into another
  *
- * @param  {sublevel} sourceStore       - Sublevel that is the source of the data to pipe
- * @param  {sublevel} targetStore       - Sublevel that is the destination of the data
+ * @param  {Sublevel} sourceStore       - Sublevel that is the source of the data to pipe
+ * @param  {Sublevel} targetStore       - Sublevel that is the destination of the data
  * @param  {Function} createDbOperation - Function that returns a sublevel batch-compatible database operation to take on the target store
  * @param  {number}   batchSize         - Number of operations to batch before executing on the target database
  * @returns {Promise<void>}

@@ -3,7 +3,7 @@
  * character that is URL safe and preserves lexicographic ordering as defined
  * by the ASCII character code.
  *
- * @type {string}
+ * @type {Object<string, string>}
  * @constant
  */
 const ENCODE_TABLE = {

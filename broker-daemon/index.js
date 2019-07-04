@@ -10,6 +10,9 @@ const BrokerRPCServer = require('./broker-rpc/broker-rpc-server')
 const { logger } = require('./utils')
 const CONFIG = require('./config')
 
+/** @typedef {import('lnd-engine')} Engine */
+/** @typedef {Object} Logger */
+
 /**
  * Default host and port for the BrokerRPCServer to listen on
  *

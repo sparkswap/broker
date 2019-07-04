@@ -11,7 +11,8 @@ class StateMachineRejection extends StateMachinePlugin {
    * @param {string} options.rejectName   - Property of the host state machine for the method to move to rejected state
    * @param {string} options.rejectedName - Name of rejected state
    */
-  constructor ({ errorName = 'error', rejectName = 'reject', rejectedName = 'rejected' } = {}) {
+  constructor ({ errorName = 'error', rejectName = 'reject', rejectedName = 'rejected' } =
+  { errorName: 'error', rejectName: 'reject', rejectedName: 'rejected' }) {
     super()
     this.errorName = errorName
     this.rejectName = rejectName
@@ -43,6 +44,7 @@ class StateMachineRejection extends StateMachinePlugin {
 
     return {
       [`onBefore${capitalizedRejectName}`]: function (lifecycle, err) {
+        void lifecycle
         this[plugin.errorName] = err
       }
     }

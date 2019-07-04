@@ -1,64 +1,64 @@
 const { promisify } = require('util')
 const StateMachinePlugin = require('./abstract')
 
+/* // JSDoc disabled due to Typescript errors
+ * @class A store compatible with the StateMachinePersistence plugin
+ * @name StateMachinePersistenceStore
+ *
+ * @method StateMachinePersistenceStore#put
+ * @param   {String}                                    key   Unique key under which to store the data
+ * @param   {String}                                    value String representing data to be stored
+ * @param   {StateMachinePersistenceStorePutCallback} callback
+ * @returns {void}
+ *
+ * Callback when Store#put is complete
+ * @callback StateMachinePersistenceStorePutCallback
+ * @param {Error} err Error encountered if any
+ *
+ * @method StateMachinePersistenceStore#get
+ * @param   {String}                                    key      Unique key under which the data is stored
+ * @param   {StateMachinePersistenceStoreGetCallback} callback
+ * @returns {void}
+ *
+ * Callback when Store#get is complete
+ * @callback StateMachinePersistenceStoreGetCallback
+ * @param {Error}  err   Error encountered if any
+ * @param {String} value Stored data
+ *
+ * @method StateMachinePersistenceStore#createReadStream
+ * @param   {Object}         options options for the read stream
+ * @returns {ReadableStream}         Readable stream of entries in the store
+ */
+
+/**
+ * Field accessor for saving and inflating state machines
+ * @typedef {Function} StateMachinePersistenceFieldAccessor
+ * @param {*}      val   Value to be set. Will be undefined if the accessor is being used as a getter.
+ * @param {String} key   Key being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
+ * @param {Object} value Object being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
+ */
+
+/**
+ * Unique key accessor for saving and inflating state machines
+ * @typedef {(Function|String)} StateMachinePersistenceKeyAccessor
+ *     If a string is passed, the accessor will act as an accessor on property specified by the string.
+ * @param {String}      key   Key being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
+ * @param {Object}      value Object being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
+ */
+
 /**
  * @class Store state machine data and state using a LevelUp compatible store
  */
 class StateMachinePersistence extends StateMachinePlugin {
   /**
-   * @class A store compatible with the StateMachinePersistence plugin
-   * @name StateMachinePersistence~Store
-   *
-   * @method StateMachinePersistence~Store#put
-   * @param   {String}                                    key   Unique key under which to store the data
-   * @param   {String}                                    value String representing data to be stored
-   * @param   {StateMachinePersistence~Store~putCallback} callback
-   * @returns {void}
-   *
-   * Callback when Store#put is complete
-   * @callback StateMachinePersistence~Store~putCallback
-   * @param {Error} err Error encountered if any
-   *
-   * @method StateMachinePersistence~Store#get
-   * @param   {String}                                    key      Unique key under which the data is stored
-   * @param   {StateMachinePersistence~Store~getCallback} callback
-   * @returns {void}
-   *
-   * Callback when Store#get is complete
-   * @callback StateMachinePersistence~Store~getCallback
-   * @param {Error}  err   Error encountered if any
-   * @param {String} value Stored data
-   *
-   * @method StateMachinePersistence~Store#createReadStream
-   * @param   {Object}         options options for the read stream
-   * @returns {ReadableStream}         Readable stream of entries in the store
-   */
-
-  /**
-   * Field accessor for saving and inflating state machines
-   * @typedef {Function} StateMachinePersistence~FieldAccessor
-   * @param {*}      val   Value to be set. Will be undefined if the accessor is being used as a getter.
-   * @param {String} key   Key being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
-   * @param {Object} value Object being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
-   */
-
-  /**
-   * Unique key accessor for saving and inflating state machines
-   * @typedef {(Function|String)} StateMachinePersistence~KeyAccessor
-   * If a string is passed, the accessor will act as an accessor on property specified by the string.
-   * @this {StateMachine}       State machine instance being inflated
-   * @param {String}      key   Key being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
-   * @param {Object}      value Object being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
-   */
-
-  /**
    * Set up the persistence plugin with user-defined attributes to save additional fields and avoid naming conflicts
    * @param {Object} options
-   * @param  {StateMachinePersistence~KeyAccessor}                   options.key              - Name of the property on the state machine instance with the unique key, or a function that derives the key from the instance
-   * @param  {Object<string, StateMachinePersistence~FieldAccessor>} options.additionalFields - List of additional properties on the instance to be persisted
-   * @param  {string}                                                options.storeName        - Name of the property on the state machine where the StateMachinePersistence~Store is located
+   * @param {StateMachinePersistenceKeyAccessor} options.key - Name of the property on the state machine instance with the unique key, or a function that derives the key from the instance
+   * @param {Object<string, StateMachinePersistenceFieldAccessor>} options.additionalFields - List of additional properties on the instance to be persisted
+   * @param {string} options.storeName - Name of the property on the state machine where the StateMachinePersistenceStore is located
    */
-  constructor ({ key = 'id', additionalFields = {}, storeName = 'store' } = {}) {
+  constructor ({ key = 'id', additionalFields = {}, storeName = 'store' } =
+  { key: 'id', additionalFields: {}, storeName: 'store' }) {
     super()
     this.key = key
     this.additionalFields = additionalFields
@@ -66,9 +66,9 @@ class StateMachinePersistence extends StateMachinePlugin {
   }
 
   /**
-   * Check that the instance has a valid StateMachinePersistence~Store
+   * Check that the instance has a valid StateMachinePersistenceStore
    * @param  {Object} instance - State machine instance being initialized
-   * @param  {StateMachinePersistence~Store} instance.store - Compatible store
+   * @param  {Object} instance.store - Compatible store
    * @returns {void}
    */
   init (instance) {
@@ -88,9 +88,8 @@ class StateMachinePersistence extends StateMachinePlugin {
       state: function (state) {
         if (state) {
           this.goto(state)
-        } else {
-          return this.state
         }
+        return this.state
       }
     }
 
@@ -126,6 +125,7 @@ class StateMachinePersistence extends StateMachinePlugin {
           let key
 
           if (typeof plugin.key === 'function') {
+            // @ts-ignore
             key = plugin.key.call(this)
           } else {
             key = this[plugin.key]
@@ -186,7 +186,7 @@ class StateMachinePersistence extends StateMachinePlugin {
        * @param  {Object} options
        * @param  {string} options.key   - Stored key
        * @param  {string} options.value - Plain object of the Order State Machine object
-       * @returns {OrderStateMachine}
+       * @returns {Object} - OrderStateMachine
        */
       fromStore: function (initParams, { key, value }) {
         const fields = plugin.persistedFields || {}
@@ -196,6 +196,7 @@ class StateMachinePersistence extends StateMachinePlugin {
 
         // set the key
         if (typeof plugin.key === 'function') {
+          // @ts-ignore
           plugin.key.call(instance, key, parsedValue)
         } else {
           instance[plugin.key] = key
@@ -215,7 +216,7 @@ class StateMachinePersistence extends StateMachinePlugin {
        * Retrieve a single state machine from a given store
        * @param {string}                        key                - Unique key for the state machine in the store
        * @param {...Object}                     initParams         - Other parameters to initialize the state machines with
-       * @returns {Promise<StateMachine>}                            Re-inflated state machine
+       * @returns {Promise<Object>}                            Re-inflated state machine
        */
       get: async function (key, initParams) {
         const store = initParams[plugin.storeName]

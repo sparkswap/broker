@@ -1,3 +1,6 @@
+
+/** @typedef {import('..').Engine} Engine */
+
 /**
  * Pay an invoice and create a refund payment request to have it paid back
  * @param  {Engine}  engine         - Payment Channel Network engine to use to pay the invoice
