@@ -292,8 +292,8 @@ async function forwardSwap (hash, inboundPayment, outboundPayment) {
         'or be retrying a cancelled swap.')
       // When an invoice is cancelled upstream, we are either in non-atomic state
       // (which we can do nothing about) or the swap itself has already been cancelled.
-      // We treat it as though it is cancelled, throwing a permanent error, since the
-      // non-atomic state is not actionable, and a temporary error will put us in an
+      // We treat it as though it is cancelled, throwing an error without retrying,
+      // since the non-atomic state is not actionable, and retrying will put us in an
       // infinite loop.
       throw e
     }
