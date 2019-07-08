@@ -229,12 +229,12 @@ async function settleSwap (engine, hash, preimage) {
  * @returns {string}                        Base64 encoded preimage for the swap
  */
 async function retryForward (hash, inboundPayment, outboundPayment, error) {
-  logger.error('Temporary Error encountered while translating swap',
+  logger.error('Temporary Error encountered while forwarding swap',
     { error: error.stack, hash })
 
-  logger.debug(`Delaying swap retry for ${hash} for ${RETRY_DELAY}ms`)
+  logger.debug(`Delaying swap forward retry for ${hash} for ${RETRY_DELAY}ms`)
   await delay(RETRY_DELAY)
-  logger.debug(`Retrying swap translation for ${hash}`)
+  logger.debug(`Retrying swap forward for ${hash}`)
 
   return forwardSwap(hash, inboundPayment, outboundPayment)
 }
