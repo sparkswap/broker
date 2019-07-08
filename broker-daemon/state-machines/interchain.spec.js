@@ -178,6 +178,27 @@ describe('interchain', () => {
       })
     })
 
+    context('swap is cancelled', () => {
+      beforeEach(() => {
+        let CanceledSwapError = interchain.__get__('ENGINE_ERRORS').CanceledSwapError
+        const cancelledError = new CanceledSwapError('Invoice is cancelled')
+        waitForSwapCommitment.rejects(cancelledError)
+      })
+
+      it('throws without settling or cancelling', async () => {
+        try {
+          await interchain.forwardSwap(hash, inboundPayment, outboundPayment)
+        } catch (e) {
+          expect(cancelSwap).to.not.have.been.called()
+          expect(settleSwap).to.not.have.been.called()
+          expect(e.message).to.be.eql('Invoice is cancelled')
+          return
+        }
+
+        throw new Error('forwardSwap completed when it was expected to throw')
+      })
+    })
+
     context('error while waiting for swap commitment', () => {
       beforeEach(() => {
         waitForSwapCommitment.onCall(0).rejects(new Error('fake error'))

@@ -286,6 +286,18 @@ async function forwardSwap (hash, inboundPayment, outboundPayment) {
       throw e
     }
 
+    if (e instanceof ENGINE_ERRORS.CanceledSwapError) {
+      logger.error(`Swap for ${hash} has been cancelled upstream. ` +
+        'We may be in a non-atomic state (if the downstream is still active), ' +
+        'or be retrying a cancelled swap.')
+      // When an invoice is cancelled upstream, we are either in non-atomic state
+      // (which we can do nothing about) or the swap itself has already been cancelled.
+      // We treat it as though it is cancelled, throwing a permanent error, since the
+      // non-atomic state is not actionable, and a temporary error will put us in an
+      // infinite loop.
+      throw e
+    }
+
     // A temporary (non-permanent) error means we don't know the current state,
     // so we need to restart the whole process
     return retryForward(hash, inboundPayment, outboundPayment, e)
