@@ -19,6 +19,10 @@ const {
   StateMachineDates
 } = require('./plugins')
 
+/** @typedef {import('..').Engine} Engine */
+/** @typedef {import('../relayer')} RelayerClient */
+/** @typedef {import('level-sublevel')} Sublevel */
+
 /**
  * If Orders are saved in the database before they are created on the remote, they lack an ID
  * This string indicates an order that does not have an assigned remote ID
@@ -61,69 +65,75 @@ const OrderStateMachine = StateMachine.factory({
     }),
     new StateMachineEvents(),
     new StateMachinePersistence({
+      storeName: 'this',
       /**
-       * @type {StateMachinePersistence~KeyAccessor}
        * @param {string}   key - Unique key for the stored state machine
        * @returns {string}     Unique key for the state machine
        */
       key: function (key) {
         // this only defines a getter - it will be set by the `order` setter
         if (!key) {
+          // @ts-ignore
           return this.order.key || `${UNASSIGNED_PREFIX}${generateId()}`
         }
+        return key
       },
       additionalFields: {
         /**
-         * @type {StateMachinePersistence~FieldAccessor}
          * @param {Object}   orderObject - Stored plain object description of the Order associated with the State machine
          * @param {string}   key         - Unique key for the order/state machine
          * @returns {Object}             Plain object description of the Order associated with the State machine
          */
         order: function (orderObject, key) {
           if (orderObject) {
+            // @ts-ignore
             this.order = Order.fromObject(key, orderObject)
           }
 
+          // @ts-ignore
           return this.order.valueObject
         },
         /**
-         * @type  {StateMachinePersistence~FieldAccessor}
          * @param {Array<string>}   history - Stored history of states for this state machine
          * @returns {Array<string>}         History of states for this state machine
          */
         history: function (history) {
           if (history) {
             this.clearHistory()
+            // @ts-ignore
             this.history = history
           }
 
+          // @ts-ignore
           return this.history
         },
         /**
-         * @type {StateMachinePersistence~FieldAccessor}
          * @param {Object}   dates - Stored plain object of dates for the states that have been entered on the State machine
          * @returns {Object} dates - Plain object of dates for the states that have been entered on the State machine
          */
         dates: function (dates) {
           if (dates) {
+            // @ts-ignore
             this.dates = dates
           }
 
           return this.dates
         },
         /**
-         * @type {StateMachinePersistence~FieldAccessor}
          * @param {string}   errorMessage - Stored error message for a state machine in an errored state
          * @returns {string}              Error message for a state machine in an errored state
          */
         error: function (errorMessage) {
           if (errorMessage) {
+            // @ts-ignore
             this.error = new Error(errorMessage)
           }
 
           if (this.error) {
+            // @ts-ignore
             return this.error.message
           }
+          return errorMessage
         }
       }
     })
@@ -176,7 +186,7 @@ const OrderStateMachine = StateMachine.factory({
    * So we pass it all the objects we'll need later.
    *
    * @param  {Object} options
-   * @param  {sublevel}            options.store       - Sublevel partition for storing this order in
+   * @param  {Sublevel}            options.store       - Sublevel partition for storing this order in
    * @param  {Object}              options.logger
    * @param  {RelayerClient}       options.relayer
    * @param  {Map<string, Engine>} options.engines     - Map of all available engines
@@ -240,21 +250,29 @@ const OrderStateMachine = StateMachine.factory({
      */
 
     onBeforeCreate: async function (lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
-      this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount })
-
-      const baseEngine = this.engines.get(this.order.baseSymbol)
+      void lifecycle
+      const baseEngine = this.engines.get(baseSymbol)
       if (!baseEngine) {
-        throw new Error(`No engine available for ${this.order.baseSymbol}`)
+        throw new Error(`No engine available for ${baseSymbol}`)
       }
 
-      const counterEngine = this.engines.get(this.order.counterSymbol)
+      const counterEngine = this.engines.get(counterSymbol)
       if (!counterEngine) {
-        throw new Error(`No engine available for ${this.order.counterSymbol}`)
+        throw new Error(`No engine available for ${counterSymbol}`)
       }
 
       // TODO: figure out a way to cache the maker address instead of making a request
-      this.order.makerBaseAddress = await baseEngine.getPaymentChannelNetworkAddress()
-      this.order.makerCounterAddress = await counterEngine.getPaymentChannelNetworkAddress()
+      const makerBaseAddress = await baseEngine.getPaymentChannelNetworkAddress()
+      const makerCounterAddress = await counterEngine.getPaymentChannelNetworkAddress()
+      this.order = new Order(blockOrderId, {
+        baseSymbol,
+        counterSymbol,
+        side,
+        baseAmount,
+        counterAmount,
+        makerBaseAddress,
+        makerCounterAddress
+      })
 
       const authorization = this.relayer.identity.authorize()
 
@@ -284,6 +302,7 @@ const OrderStateMachine = StateMachine.factory({
      * @returns {void}
      */
     onAfterCreate: function (lifecycle) {
+      void lifecycle
       this.logger.info(`Create transition completed, triggering place`)
 
       // you can't start a transition while in another one,
@@ -307,6 +326,7 @@ const OrderStateMachine = StateMachine.factory({
      * @returns {Promise<void>}
      */
     onBeforePlace: async function (lifecycle) {
+      void lifecycle
       const {
         feePaymentRequest,
         feeRequired,
@@ -343,6 +363,7 @@ const OrderStateMachine = StateMachine.factory({
       const [
         feeRefundPaymentRequest,
         depositRefundPaymentRequest
+      // @ts-ignore
       ] = await Promise.all([
         payFeeInvoice,
         payDepositInvoice
