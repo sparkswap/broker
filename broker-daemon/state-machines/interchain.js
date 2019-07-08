@@ -150,8 +150,6 @@ async function translateIdempotent (
 
   let committedTime
 
-  // wait for an incoming payment to this hash that is accepted,
-  // but not yet settled.
   try {
     committedTime = await inboundEngine.waitForSwapCommitment(hash)
   } catch (e) {
@@ -164,8 +162,8 @@ async function translateIdempotent (
     throw e
   }
 
-  // add our static time lock to the time the inbound contract was locked
-  // in to arrive at the latest time that our outbound contract can be
+  // add our static time lock to the time the inbound contract was accepted
+  // to arrive at the latest time that our outbound contract can be
   // resolved while still considering our state "safe" and atomic.
   const maxTime = new Date(committedTime.getTime() + (OUTBOUND_TIME_LOCK * 1000))
 
@@ -261,7 +259,6 @@ async function forwardSwap (hash, inboundPayment, outboundPayment) {
     const paymentPreimage = await translateIdempotent(hash, inboundPayment, outboundPayment)
     logger.debug(`Successfully retrieved preimage for swap ${hash}`)
 
-    // settle the upstream payment prior to returning the preimage
     await settleSwap(inboundPayment.engine, hash, paymentPreimage)
 
     return paymentPreimage
