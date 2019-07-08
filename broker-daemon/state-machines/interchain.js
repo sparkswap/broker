@@ -112,8 +112,8 @@ async function prepareSwap (hash, { engine, amount }, timeout) {
   await engine.prepareSwap(
     hash,
     amount,
-    INBOUND_TIME_LOCK,
-    timeout
+    timeout,
+    INBOUND_TIME_LOCK
   )
 }
 

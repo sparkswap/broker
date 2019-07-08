@@ -52,8 +52,8 @@ describe('interchain', () => {
       expect(prepareSwapStub).to.have.been.calledWith(
         hash,
         inboundAmount,
-        261600,
-        timeout
+        timeout,
+        261600
       )
     })
   })
