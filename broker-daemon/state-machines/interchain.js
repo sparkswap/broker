@@ -105,10 +105,6 @@ const INBOUND_TIME_LOCK = OUTBOUND_TIME_LOCK + DEFAULT_MAKER_FWD_DELTA + BLOCK_B
  * @param {string}  hash                  - Base64 string of the hash for the
  *                                          swap
  * @param {Payment} inboundPayment
- * @param {Engine}  inboundPayment.engine - Engine of the expected inbound
- *                                          payment
- * @param {number}  inboundPayment.amount - Amount, in the smallest unit, of the
- *                                          expected inbound payment.
  * @param {Date}    timeout               - Absolute time after which the
  *                                          payment should not be translated.
  */
@@ -134,16 +130,7 @@ async function prepareSwap (hash, { engine, amount }, timeout) {
  * @param {string}  hash                    - Base64 string of the hash for the
  *                                            swap
  * @param {Payment} inboundPayment
- * @param {Engine}  inboundPayment.engine   - Engine of the expected inbound
- *                                            payment
  * @param {Payment} outboundPayment
- * @param {Engine}  outboundPayment.engine  - Engine of the outbound
- *                                            payment
- * @param {number}  outboundPayment.amount  - Amount, in the smallest unit, of
- *                                            the outbound payment to be made.
- * @param {number}  outboundPayment.address - Address to send the outbound
- *                                            payment to to retrieve the
- *                                            preimage.
  * @returns {string}                          Base64 encoded preimage for the
  *                                            swap.
  */
