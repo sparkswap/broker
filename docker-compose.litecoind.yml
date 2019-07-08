@@ -21,7 +21,7 @@ services:
       - ZMQPUBRAWTX=tcp://litecoind:28334
 
   litecoind:
-    image: sparkswap/litecoind:0.6.0-beta-rc1
+    image: sparkswap/litecoind:0.6.0-beta-rc2
     volumes:
       - shared:/shared
       - litecoin:/data
