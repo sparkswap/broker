@@ -144,19 +144,6 @@ describe('MarketWatcher', () => {
       expect(watcher.removeAllListeners).to.have.been.calledOnce()
     })
 
-    it('tears down listeners after erroring a watch', () => {
-      expect(onStub).to.have.been.calledTwice()
-      expect(onStub).to.have.been.calledWith('error', sinon.match.func)
-      const onError = onStub.args[0][1]
-
-      onError()
-
-      expect(removeListenerStub).to.have.been.calledTwice()
-      expect(removeListenerStub).to.have.been.calledWith('end', onError)
-      expect(removeListenerStub).to.have.been.calledWith('error', onError)
-      expect(watcher.removeAllListeners).to.have.been.calledOnce()
-    })
-
     it('handles end events from the wather', () => {
       expect(watcher.on).to.have.been.calledWith('end', sinon.match.func)
 
@@ -166,18 +153,6 @@ describe('MarketWatcher', () => {
 
       expect(emitStub).to.have.been.calledOnce()
       expect(emitStub).to.have.been.calledWith('end')
-    })
-
-    it('handles error events from the watcher', () => {
-      expect(watcher.on).to.have.been.calledWith('error', sinon.match.func)
-
-      const onError = watcher.on.withArgs('error').args[0][1]
-      const fakeError = new Error('fake error')
-
-      onError(fakeError)
-
-      expect(emitStub).to.have.been.calledOnce()
-      expect(emitStub).to.have.been.calledWith('end', fakeError)
     })
 
     it('handles incoming data from the watcher', () => {
