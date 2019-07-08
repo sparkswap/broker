@@ -333,6 +333,7 @@ const FillStateMachine = StateMachine.factory({
      * @returns {void}
      */
     triggerExecute: function (lifecycle) {
+      void lifecycle
       const { fillId } = this.fill
       this.logger.info(`In filled state, attempting to listen for executions on fill ${fillId}`)
 
