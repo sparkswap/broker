@@ -56,14 +56,13 @@ function timeLockDeltaInSeconds (inboundEngine, timeLock, bestHeight) {
  * @param  {Object} request.params   - Parameters of the request
  * @param  {Function} request.send     - Send responses back to the client
  * @param  {Function} request.onCancel - Handle cancellations of the stream by the client
- * @param  {Function} request.onError  - Handle errors in the stream with the client
  * @param  {SublevelIndex} request.ordersByHash - Orders for which the broker is the maker, indexed by their swap hash
  * @param  {Map<Symbol, Engine>} request.engines - All available engines
  * @param  {Object} [request.logger=console]
  * @returns {Object} response
  * @returns {string} response.paymentPreimage
  */
-async function getPreimage ({ params, send, onCancel, onError, ordersByHash, engines, logger = console }) {
+async function getPreimage ({ params, send, onCancel, ordersByHash, engines, logger = console }) {
   const {
     paymentHash,
     symbol,
