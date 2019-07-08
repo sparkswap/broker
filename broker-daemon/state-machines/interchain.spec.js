@@ -69,8 +69,6 @@ describe('interchain', () => {
     let outboundPayment
     let cancelSwap
     let settleSwap
-    let isPaymentPendingOrComplete
-    let getPaymentPreimage
     let waitForSwapCommitment
     let getSettledSwapPreimage
     let translateSwap
@@ -81,14 +79,9 @@ describe('interchain', () => {
 
       outboundAmount = '10000'
       outboundAddress = 'aoijsfdoajdf89'
-
-      isPaymentPendingOrComplete = sinon.stub().resolves(false)
-      getPaymentPreimage = sinon.stub().resolves(preimage)
       translateSwap = sinon.stub().resolves(preimage)
 
       outboundEngine = {
-        isPaymentPendingOrComplete,
-        getPaymentPreimage,
         translateSwap
       }
 
@@ -130,29 +123,6 @@ describe('interchain', () => {
       expect(res).to.be.eql(preimage)
     })
 
-    context('payment is in progress', () => {
-      beforeEach(() => {
-        isPaymentPendingOrComplete.resolves(true)
-      })
-
-      it('settles the upstream payment', async () => {
-        const res = await interchain.forwardSwap(hash, inboundPayment, outboundPayment)
-
-        expect(settleSwap).to.have.been.calledWith(preimage)
-        expect(res).to.be.eql(preimage)
-      })
-
-      it('retries on error', async () => {
-        getPaymentPreimage.onCall(0).rejects(new Error('fake error'))
-        getPaymentPreimage.onCall(1).resolves(preimage)
-
-        const res = await interchain.forwardSwap(hash, inboundPayment, outboundPayment)
-
-        expect(settleSwap).to.have.been.calledWith(preimage)
-        expect(res).to.be.eql(preimage)
-      })
-    })
-
     context('swap is settled', () => {
       beforeEach(() => {
         let SettledSwapError = interchain.__get__('ENGINE_ERRORS').SettledSwapError
@@ -168,8 +138,8 @@ describe('interchain', () => {
       })
 
       it('retries on error', async () => {
-        getPaymentPreimage.onCall(0).rejects(new Error('fake error'))
-        getPaymentPreimage.onCall(1).resolves(preimage)
+        getSettledSwapPreimage.onCall(0).rejects(new Error('fake error'))
+        getSettledSwapPreimage.onCall(1).resolves(preimage)
 
         const res = await interchain.forwardSwap(hash, inboundPayment, outboundPayment)
 

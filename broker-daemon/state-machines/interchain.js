@@ -139,15 +139,6 @@ async function translateIdempotent (
   { engine: inboundEngine },
   { engine: outboundEngine, amount: outboundAmount, address: outboundAddress }
 ) {
-  // We don't want to reject an incoming HTLC if we know that there is an
-  // active outgoing one. If the outgoing HTLC is in flight or completed, we
-  // should attempt to retrieve the associated preimage.
-  logger.debug(`Checking outbound HTLC status for swap ${hash}`)
-  if (await outboundEngine.isPaymentPendingOrComplete(hash)) {
-    // TODO: return permanent errors when encountered
-    return outboundEngine.getPaymentPreimage(hash)
-  }
-
   let committedTime
 
   try {
