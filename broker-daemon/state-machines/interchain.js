@@ -266,7 +266,6 @@ async function forwardSwap (hash, inboundPayment, outboundPayment) {
     if (e instanceof ENGINE_ERRORS.PermanentSwapError) {
       await cancelSwap(inboundPayment.engine, hash, e)
 
-      // once we've cancelled, we can re-throw
       throw e
     }
 
