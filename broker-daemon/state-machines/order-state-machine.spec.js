@@ -735,7 +735,7 @@ describe('OrderStateMachine', () => {
     let outboundSymbol
     let takerAddress
     let outboundFillAmount
-    let translateSwapStub
+    let forwardSwapStub
 
     beforeEach(async () => {
       preimage = 'as90fdha9s8hf0a8sfhd=='
@@ -768,8 +768,8 @@ describe('OrderStateMachine', () => {
         }
       }
 
-      translateSwapStub = sinon.stub().resolves(preimage)
-      OrderStateMachine.__set__('translateSwap', translateSwapStub)
+      forwardSwapStub = sinon.stub().resolves(preimage)
+      OrderStateMachine.__set__('forwardSwap', forwardSwapStub)
 
       osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.order = fakeOrder
@@ -785,8 +785,8 @@ describe('OrderStateMachine', () => {
     it('translates cross-chain', async () => {
       await osm.complete()
 
-      expect(translateSwapStub).to.have.been.calledOnce()
-      expect(translateSwapStub).to.have.been.calledWith(
+      expect(forwardSwapStub).to.have.been.calledOnce()
+      expect(forwardSwapStub).to.have.been.calledWith(
         swapHash,
         sinon.match({ engine: engines.get('LTC') }),
         { engine: engines.get('BTC'), amount: outboundFillAmount, address: takerAddress }
