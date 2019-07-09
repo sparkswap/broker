@@ -550,8 +550,8 @@ async function recover (args, opts, logger) {
     const client = new BrokerDaemonClient(rpcAddress)
 
     const password = await askQuestion(`Please enter your wallet password:`, { silent: true })
-    const seed = await askQuestion(`Please enter your 24 word recover seed, with each word separated by spaces`, { silent: true })
-    const backupPath = await askQuestion(`Enter the path to your backup file (optional)`)
+    const seed = await askQuestion(`Please enter your 24 word recover seed, with each word separated by spaces`)
+    const backupPath = await askQuestion(`Enter the path to your backup file`)
 
     await client.walletService.recoverWallet({ symbol, password, seed, backupPath })
   } catch (e) {

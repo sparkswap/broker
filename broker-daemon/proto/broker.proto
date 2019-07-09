@@ -1798,7 +1798,7 @@ message RecoverWalletRequest {
   string password = 2;
   // 24 word mnemonic seed
   repeated string seed = 3;
-  // The path of the backup file (path inside of the broker container)
+  // The path of the backup file
   string backup_path = 4;
 }
 

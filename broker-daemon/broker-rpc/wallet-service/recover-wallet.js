@@ -27,24 +27,16 @@ async function recoverWallet ({ logger, params, engines }, { EmptyResponse }) {
 
   if (!engine) {
     logger.error(`Could not find engine: ${symbol}`)
-    throw new Error(`Unable to create wallet for engine: ${symbol}`)
+    throw new Error(`Unable to recover wallet for engine: ${symbol}`)
   }
 
-  console.log(params)
+  if (!password) throw new Error('Password is required to recover wallet')
+  if (!seed) throw new Error('Recovery seed is required to recover wallet')
+  if (!backupPath) throw new Error('Backup path is required to recover wallet')
 
-  let backup
+  const backup = fs.readFileSync(backupPath)
 
-  if (backupPath) {
-    backup = fs.readFileSync(backupPath)
-  }
-
-  let seedList
-  // Check the first element of seed. The default value for grpc will be `['']`
-  if (seed[0] !== '') {
-    seedList = seed
-  }
-
-  await engine.recoverWallet(password, seedList, backup)
+  await engine.recoverWallet(password, seed, backup)
 
   return new EmptyResponse({})
 }
