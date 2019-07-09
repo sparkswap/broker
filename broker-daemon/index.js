@@ -7,7 +7,6 @@ const RelayerClient = require('./relayer')
 const Orderbook = require('./orderbook')
 const BlockOrderWorker = require('./block-order-worker')
 const BrokerRPCServer = require('./broker-rpc/broker-rpc-server')
-const InterchainRouter = require('./interchain-router')
 const { logger } = require('./utils')
 const CONFIG = require('./config')
 
@@ -28,15 +27,6 @@ const DEFAULT_RPC_ADDRESS = '0.0.0.0:27492'
  * @default
  */
 const DEFAULT_DATA_DIR = '~/.sparkswap/data'
-
-/**
- * Default host and port for the InterchainRouter to listen on
- *
- * @constant
- * @type {string}
- * @default
- */
-const DEFAULT_INTERCHAIN_ROUTER_ADDRESS = '0.0.0.0:40369'
 
 /**
  * Default host and port that the Relayer is set up on
@@ -74,7 +64,7 @@ function createEngineFromConfig (symbol, engineConfig, { logger }) {
 
 /**
  * @class BrokerDaemon is a collection of services to allow a user to run a broker on the SparkSwap Network.
- * It exposes a user-facing RPC server, an interchain router, watches markets on the relayer, and works
+ * It exposes a user-facing RPC server, watches markets on the relayer, and works
  * block orders in the background.
  */
 class BrokerDaemon {
@@ -84,7 +74,6 @@ class BrokerDaemon {
    * @param {string} opts.privKeyPath - Path to private key for broker's identity
    * @param {string} opts.pubKeyPath - Path to public key for broker's identity
    * @param {string} opts.rpcAddress - Host and port where the user-facing RPC server should listen
-   * @param {string} opts.interchainRouterAddress - Host and port where the interchain router should listen
    * @param {string} opts.dataDir - Relative path to a directory where application data should be stored
    * @param {Array}  opts.marketNames - List of market names (e.g. 'BTC/LTC') to support
    * @param {Object} opts.engines - Configuration for all the engines to instantiate
@@ -97,7 +86,7 @@ class BrokerDaemon {
    * @param {string} opts.relayerOptions.certPath - Absolute path to the root certificate for the relayer
    * @returns {BrokerDaemon}
    */
-  constructor ({ network, privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, interchainRouterAddress, dataDir, marketNames, engines, disableAuth = false, enableCors = false, isCertSelfSigned, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcInternalProxyAddress, rpcHttpProxyAddress, rpcHttpProxyMethods }) {
+  constructor ({ network, privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, dataDir, marketNames, engines, disableAuth = false, enableCors = false, isCertSelfSigned, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcInternalProxyAddress, rpcHttpProxyAddress, rpcHttpProxyMethods }) {
     // Set a global namespace for sparkswap that we can use for properties not
     // related to application configuration
     if (!global.sparkswap) {
@@ -122,7 +111,6 @@ class BrokerDaemon {
     this.rpcHttpProxyAddress = rpcHttpProxyAddress
     this.dataDir = dataDir || DEFAULT_DATA_DIR
     this.marketNames = marketNames || []
-    this.interchainRouterAddress = interchainRouterAddress || DEFAULT_INTERCHAIN_ROUTER_ADDRESS
     this.disableAuth = disableAuth
     this.rpcUser = rpcUser
     this.rpcPass = rpcPass
@@ -166,12 +154,6 @@ class BrokerDaemon {
       rpcUser,
       rpcPass
     })
-
-    this.interchainRouter = new InterchainRouter({
-      ordersByHash: this.blockOrderWorker.ordersByHash,
-      logger: this.logger,
-      engines: this.engines
-    })
   }
 
   /**
@@ -180,7 +162,6 @@ class BrokerDaemon {
    * - Sets up the BlockOrderWorker (re-indexing the orders)
    * - Validates engine configuration
    * - Sets up the user-facing RPC Server
-   * - Sets up the Interchain Router
    */
   async initialize () {
     try {
@@ -198,9 +179,6 @@ class BrokerDaemon {
 
       this.rpcServer.listen(this.rpcAddress)
       this.logger.info(`BrokerDaemon RPC server started: gRPC Server listening on ${this.rpcAddress}`)
-
-      this.interchainRouter.listen(this.interchainRouterAddress)
-      this.logger.info(`Interchain Router server started: gRPC Server listening on ${this.interchainRouterAddress}`)
     } catch (e) {
       this.logger.error('BrokerDaemon failed to initialize', { error: e.stack })
       this.logger.error(e.toString(), e)

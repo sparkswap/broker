@@ -1,6 +1,5 @@
 {
   "dataDir": "/data",
-  "interchainRouterAddress": "0.0.0.0:40369",
   "idPubKeyPath": "/secure/broker-identity.public.pem",
   "idPrivKeyPath": "/secure/broker-identity.private.pem",
   "markets": "BTC/LTC",

@@ -6,7 +6,6 @@ const BrokerDaemon = rewire(path.resolve('broker-daemon', 'index'))
 describe('broker daemon', () => {
   let network
   let rpcServer
-  let interchainRouter
   let eventEmitter
   let level
   let sublevel
@@ -18,7 +17,6 @@ describe('broker daemon', () => {
   let logger
   let brokerDaemon
   let rpcListenStub
-  let interchainRouterListenSpy
   let CONFIG
   let engines
   let privRpcKeyPath
@@ -29,7 +27,6 @@ describe('broker daemon', () => {
   let rpcInternalProxyAddress
   let rpcHttpProxyAddress
   let rpcHttpProxyMethods
-  let interchainRouterAddress
   let dataDir
   let marketNames
   let disableAuth
@@ -50,9 +47,6 @@ describe('broker daemon', () => {
     rpcListenStub = sinon.stub()
     rpcServer = sinon.stub()
     rpcServer.prototype.listen = rpcListenStub
-    interchainRouterListenSpy = sinon.stub()
-    interchainRouter = sinon.stub()
-    interchainRouter.prototype.listen = interchainRouterListenSpy
     eventEmitter = sinon.stub()
     logger = {
       error: sinon.spy(),
@@ -98,7 +92,6 @@ describe('broker daemon', () => {
     BrokerDaemon.__set__('sublevel', sublevel)
     BrokerDaemon.__set__('events', eventEmitter)
     BrokerDaemon.__set__('BrokerRPCServer', rpcServer)
-    BrokerDaemon.__set__('InterchainRouter', interchainRouter)
     BrokerDaemon.__set__('logger', logger)
 
     network = 'mainnet'
@@ -110,7 +103,6 @@ describe('broker daemon', () => {
     rpcInternalProxyAddress = 'my-fake-domain:27492'
     rpcHttpProxyAddress = '0.0.0.0:28592'
     rpcHttpProxyMethods = [ '/v1/admin/healthcheck' ]
-    interchainRouterAddress = '0.0.0.0:40369'
     dataDir = '/datadir'
     marketNames = [ 'BTC/LTC' ]
     engines = {
@@ -147,7 +139,6 @@ describe('broker daemon', () => {
       rpcInternalProxyAddress,
       rpcHttpProxyAddress,
       rpcHttpProxyMethods,
-      interchainRouterAddress,
       dataDir,
       marketNames,
       engines,
@@ -278,31 +269,6 @@ describe('broker daemon', () => {
 
       it('sets the password', () => {
         expect(rpcServer).to.have.been.calledWith(sinon.match({ rpcPass }))
-      })
-    })
-
-    describe('InterchainRouter', () => {
-      it('creates an InterchainRouter', () => {
-        expect(interchainRouter).to.have.been.calledOnce()
-        expect(interchainRouter).to.have.been.calledWithNew()
-      })
-
-      it('provides the logger to the InterchainRouter', () => {
-        expect(interchainRouter).to.have.been.calledWith(sinon.match({ logger: logger }))
-      })
-
-      it('provides the engines to the InterchainRouter', () => {
-        expect(interchainRouter).to.have.been.calledWith(sinon.match({ engines: sinon.match.instanceOf(Map) }))
-        expect(interchainRouter.args[0][0].engines.values().next().value).to.be.an.instanceOf(LndEngine)
-      })
-
-      it('provides the ordersByHash to the InterchainRouter', () => {
-        expect(interchainRouter).to.have.been.calledWith(sinon.match({ ordersByHash: brokerDaemon.blockOrderWorker.ordersByHash }))
-      })
-
-      it('assigns the InterchainRouter', () => {
-        expect(brokerDaemon).to.have.property('interchainRouter')
-        expect(brokerDaemon.interchainRouter).to.be.instanceOf(interchainRouter)
       })
     })
 
@@ -496,11 +462,6 @@ describe('broker daemon', () => {
       expect(rpcListenStub).to.have.been.calledWith(rpcAddress)
     })
 
-    it('starts the interchain router', () => {
-      expect(interchainRouterListenSpy).to.have.been.calledOnce()
-      expect(interchainRouterListenSpy).to.have.been.calledWith(brokerDaemon.interchainRouterAddress)
-    })
-
     it('validates the engines', () => {
       expect(brokerDaemon.validateEngines).to.have.been.calledOnce()
     })
@@ -560,20 +521,6 @@ describe('broker daemon', () => {
     it('sets an RPC address from parameters', async () => {
       brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
       expect(brokerDaemon.rpcAddress).to.be.eql(rpcAddress)
-    })
-  })
-
-  describe('interchainRouterAddress', () => {
-    it('sets a default address if parameter is not set', async () => {
-      const defaultAddress = BrokerDaemon.__get__('DEFAULT_INTERCHAIN_ROUTER_ADDRESS')
-      brokerDaemonOptions.interchainRouterAddress = null
-      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
-      expect(brokerDaemon.interchainRouterAddress).to.be.eql(defaultAddress)
-    })
-
-    it('sets an RPC address from parameters', async () => {
-      brokerDaemon = new BrokerDaemon(brokerDaemonOptions)
-      expect(brokerDaemon.interchainRouterAddress).to.be.eql(interchainRouterAddress)
     })
   })
 
