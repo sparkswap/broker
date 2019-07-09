@@ -24,10 +24,10 @@ class StateMachineDates extends StateMachinePlugin {
 
     return {
       onEnterState: function (lifecycle) {
+        if (this.dates === undefined) {
+          this.dates = {}
+        }
         if (!plugin.skipTransitions.includes(lifecycle.transition)) {
-          if (this.dates === undefined) {
-            this.dates = {}
-          }
           // set the date the state was entered, for example, 'created'
           this.dates[this.state] = new Date()
         }

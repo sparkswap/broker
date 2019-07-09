@@ -1,5 +1,10 @@
 const path = require('path')
-const { expect, rewire, sinon, delay } = require('test/test-helper')
+const {
+  expect,
+  rewire,
+  sinon,
+  delay
+} = require('test/test-helper')
 
 const OrderStateMachine = rewire(path.resolve(__dirname, 'order-state-machine'))
 
@@ -517,29 +522,17 @@ describe('OrderStateMachine', () => {
       expect(osm.tryTo).to.have.been.calledWith('cancel')
     })
 
-    it('sets fill params on the order when it is filled', async () => {
-      const swapHash = 'asofijasfd'
-      const fillAmount = '1000'
-      osm.order.setFilledParams = sinon.stub()
-      placeOrderStreamStub.on.withArgs('data').callsArgWithAsync(1, { fill: { swapHash, fillAmount } })
-      osm.tryTo = sinon.stub()
-      await osm.place()
-      await delay(10)
-
-      expect(osm.order.setFilledParams).to.have.been.calledOnce()
-      expect(osm.order.setFilledParams).to.have.been.calledWith(sinon.match({ swapHash, fillAmount }))
-    })
-
-    it('executes the order after being filled', async () => {
+    it('fills the order after being filled', async () => {
+      const fill = { fake: 'fill' }
       osm.order.setFilledParams = sinon.stub()
       osm.tryTo = sinon.stub()
-      placeOrderStreamStub.on.withArgs('data').callsArgWithAsync(1, { fill: {} })
+      placeOrderStreamStub.on.withArgs('data').callsArgWithAsync(1, { fill })
 
       await osm.place()
       await delay(10)
 
       expect(osm.tryTo).to.have.been.calledOnce()
-      expect(osm.tryTo).to.have.been.calledWith('execute')
+      expect(osm.tryTo).to.have.been.calledWith('fill', fill)
     })
 
     it('tears down listeners on error', async () => {
@@ -599,28 +592,68 @@ describe('OrderStateMachine', () => {
     })
   })
 
+  describe('#fill', () => {
+    let fakeOrder
+    let osm
+    let orderId
+
+    beforeEach(async () => {
+      fakeOrder = {
+        orderId
+      }
+
+      osm = new OrderStateMachine({ store, logger, relayer, engines })
+      osm.order = fakeOrder
+
+      await osm.goto('placed')
+    })
+
+    it('sets fill params on the order when it is filled', async () => {
+      const swapHash = 'asofijasfd'
+      const fillAmount = '1000'
+      osm.order.setFilledParams = sinon.stub()
+      osm.tryTo = sinon.stub()
+      await osm.fill({ swapHash, fillAmount })
+      await delay(10)
+
+      expect(osm.order.setFilledParams).to.have.been.calledOnce()
+      expect(osm.order.setFilledParams).to.have.been.calledWith(sinon.match({ swapHash, fillAmount }))
+    })
+
+    it('executes the order after being filled', async () => {
+      osm.order.setFilledParams = sinon.stub()
+      osm.tryTo = sinon.stub()
+
+      await osm.fill({})
+      await delay(10)
+
+      expect(osm.tryTo).to.have.been.calledOnce()
+      expect(osm.tryTo).to.have.been.calledWith('execute')
+    })
+  })
+
   describe('#execute', () => {
     let fakeOrder
     let osm
     let executeOrderStub
-    let prepareSwapStub
     let orderId
     let swapHash
     let inboundSymbol
     let inboundFillAmount
     let outboundSymbol
     let outboundFillAmount
-    let engine
+    let takerAddress
+    let prepareSwapStub
 
     beforeEach(async () => {
       executeOrderStub = sinon.stub().resolves()
-      prepareSwapStub = sinon.stub().resolves()
       orderId = '1234'
       swapHash = '0q9wudf09asdf'
       inboundSymbol = 'LTC'
       inboundFillAmount = '10000'
       outboundSymbol = 'BTC'
       outboundFillAmount = '100'
+      takerAddress = 'asdofijasodfij'
 
       fakeOrder = {
         orderId,
@@ -629,14 +662,8 @@ describe('OrderStateMachine', () => {
         inboundSymbol,
         outboundSymbol,
         outboundFillAmount,
-        paramsForPrepareSwap: {
-          orderId,
-          swapHash,
-          symbol: inboundSymbol,
-          amount: inboundFillAmount
-        }
+        takerAddress
       }
-      engine = { prepareSwap: prepareSwapStub }
       relayer = {
         makerService: {
           executeOrder: executeOrderStub
@@ -646,21 +673,30 @@ describe('OrderStateMachine', () => {
         }
       }
 
-      let engines = new Map([ [inboundSymbol, engine] ])
+      prepareSwapStub = sinon.stub().resolves()
+
+      OrderStateMachine.__set__('prepareSwap', prepareSwapStub)
 
       osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.onEnterPlaced = sinon.stub()
       osm.order = fakeOrder
       osm.tryTo = sinon.stub()
 
-      await osm.goto('placed')
+      await osm.goto('filled')
+
+      // We need to set this property after the state transition,
+      // otherwise `dates` won't exist.
+      osm.dates.filled = new Date('2019-06-21T00:03:26.503Z')
     })
 
-    it('prepares the swap on the engine', async () => {
+    it('prepares the swap', async () => {
       await osm.execute()
 
       expect(prepareSwapStub).to.have.been.calledOnce()
-      expect(prepareSwapStub).to.have.been.calledWith(orderId, swapHash, inboundFillAmount)
+      expect(prepareSwapStub).to.have.been.calledWith(swapHash, {
+        engine: engines.get('LTC'),
+        amount: inboundFillAmount
+      }, new Date('2019-06-21T00:03:31.503Z'))
     })
 
     it('authorizes the request', async () => {
@@ -691,21 +727,25 @@ describe('OrderStateMachine', () => {
     let fakeOrder
     let osm
     let completeOrderStub
-    let getSettledSwapPreimageStub
     let setSettledParams
     let preimage
     let orderId
     let swapHash
     let inboundSymbol
-    let engine
+    let outboundSymbol
+    let takerAddress
+    let outboundFillAmount
+    let forwardSwapStub
 
     beforeEach(async () => {
       preimage = 'as90fdha9s8hf0a8sfhd=='
       completeOrderStub = sinon.stub().resolves({})
-      getSettledSwapPreimageStub = sinon.stub().resolves(preimage)
       orderId = '1234'
       swapHash = '0q9wudf09asdf'
       inboundSymbol = 'LTC'
+      outboundSymbol = 'BTC'
+      outboundFillAmount = '10000'
+      takerAddress = '1233aosifdjasoidfj'
 
       setSettledParams = sinon.stub()
 
@@ -713,17 +753,12 @@ describe('OrderStateMachine', () => {
         orderId,
         swapHash,
         inboundSymbol,
-        paramsForGetPreimage: {
-          swapHash,
-          symbol: inboundSymbol
-        },
-        paramsForComplete: {
-          swapPreimage: preimage,
-          orderId: orderId
-        },
+        outboundSymbol,
+        outboundFillAmount,
+        takerAddress,
         setSettledParams
       }
-      engine = { getSettledSwapPreimage: getSettledSwapPreimageStub }
+
       relayer = {
         makerService: {
           completeOrder: completeOrderStub
@@ -733,20 +768,29 @@ describe('OrderStateMachine', () => {
         }
       }
 
-      let engines = new Map([ [inboundSymbol, engine] ])
+      forwardSwapStub = sinon.stub().resolves(preimage)
+      OrderStateMachine.__set__('forwardSwap', forwardSwapStub)
 
       osm = new OrderStateMachine({ store, logger, relayer, engines })
       osm.order = fakeOrder
       osm.tryTo = sinon.stub()
 
       await osm.goto('executing')
+
+      // We need to set this property after the state transition,
+      // otherwise `dates` won't exist.
+      osm.dates.filled = new Date('2019-06-21T00:03:26.503Z')
     })
 
-    it('gets the preimage from the engine', async () => {
+    it('translates cross-chain', async () => {
       await osm.complete()
 
-      expect(getSettledSwapPreimageStub).to.have.been.calledOnce()
-      expect(getSettledSwapPreimageStub).to.have.been.calledWith(swapHash)
+      expect(forwardSwapStub).to.have.been.calledOnce()
+      expect(forwardSwapStub).to.have.been.calledWith(
+        swapHash,
+        sinon.match({ engine: engines.get('LTC') }),
+        { engine: engines.get('BTC'), amount: outboundFillAmount, address: takerAddress }
+      )
     })
 
     it('puts the preimage on the order', async () => {
@@ -887,12 +931,26 @@ describe('OrderStateMachine', () => {
       value = JSON.stringify(valueObject)
     })
 
+    it('attempts to execute the order if it is in an filled state', async () => {
+      valueObject.state = 'filled'
+      value = JSON.stringify(valueObject)
+      const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
+      osm.tryTo = sinon.stub()
+      osm.triggerState()
+      await delay(5)
+
+      expect(osm.tryTo).to.have.been.calledOnce()
+      expect(osm.tryTo).to.have.been.calledWith('execute')
+    })
+
     it('attempts to complete the order if it is in an executing state', async () => {
       const osm = await OrderStateMachine.fromStore({ store, logger, relayer, engines }, { key, value })
-      osm.triggerComplete = sinon.stub()
+      osm.tryTo = sinon.stub()
       osm.triggerState()
+      await delay(5)
 
-      expect(osm.triggerComplete).to.have.been.calledOnce()
+      expect(osm.tryTo).to.have.been.calledOnce()
+      expect(osm.tryTo).to.have.been.calledWith('complete')
     })
 
     it('cancels the order if it is in a created state', async () => {

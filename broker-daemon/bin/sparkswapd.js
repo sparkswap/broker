@@ -37,7 +37,6 @@ program
   // Broker configuration options
   .option('--data-dir [data-dir]', 'Location to store SparkSwap data', validations.isFormattedPath, config.dataDir)
   .option('--network [network]', 'The current blockchain network. (mainnet, testnet, or regtest)', validations.isBlockchainNetwork, null, true)
-  .option('--interchain-router-address [interchain-router-address]', 'Add a host/port to listen for interchain router RPC connections', validations.isHost, config.interchainRouterAddress)
   .option('--id-pub-key-path [id-pub-key-path]', 'Location of the public key for the broker\'s identity', validations.isFormattedPath, config.idPubKeyPath)
   .option('--id-priv-key-path [id-priv-key-path]', 'Location of private key for the broker\'s identity', validations.isFormattedPath, config.idPrivKeyPath)
   // TODO: Make this a list instead of string
@@ -77,7 +76,6 @@ program
     const {
       dataDir,
       network,
-      interchainRouterAddress,
       idPubKeyPath: pubIdKeyPath,
       idPrivKeyPath: privIdKeyPath,
       markets,
@@ -130,7 +128,6 @@ program
       rpcInternalProxyAddress,
       rpcHttpProxyAddress,
       rpcHttpProxyMethods,
-      interchainRouterAddress,
       dataDir,
       marketNames,
       engines,
