@@ -268,18 +268,11 @@ describe('OrderStateMachine', () => {
       await osm.create(blockOrderId, params)
 
       expect(Order).to.have.been.calledWith(blockOrderId, sinon.match(params))
-    })
-
-    it('gets the makerAddress for the order', async () => {
-      await osm.create(blockOrderId, params)
-
       expect(getPaymentChannelNetworkAddressStub).to.have.been.calledTwice()
-      expect(osm.order.makerBaseAddress).to.be.equal('bolt:adsfsdf')
-      expect(osm.order.makerCounterAddress).to.be.equal('bolt:adsfsdf')
     })
 
     it('throws if no engine exists for the inbound symbol', () => {
-      Order.prototype.baseSymbol = 'XYZ'
+      params.baseSymbol = 'XYZ'
       return expect(osm.create(blockOrderId, params)).to.eventually.be.rejectedWith('No engine available')
     })
 
