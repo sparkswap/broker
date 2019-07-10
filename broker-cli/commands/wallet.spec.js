@@ -986,4 +986,69 @@ describe('cli wallet', () => {
       expect(tablePushStub).to.not.have.been.called()
     })
   })
+
+  describe('recover', () => {
+    let args
+    let opts
+    let logger
+    let reverts
+    let daemonStub
+    let errorStub
+    let client
+    let recoverWalletStub
+    let askQuestionStub
+    let password
+    let seed
+    let backup
+
+    const recover = program.__get__('recover')
+
+    beforeEach(() => {
+      password = 'SPARKSWAP'
+      seed = 'above oak opera my test seed'
+      backup = true
+      reverts = []
+      recoverWalletStub = sinon.stub()
+      client = {
+        walletService: {
+          recoverWallet: recoverWalletStub
+        }
+      }
+      daemonStub = sinon.stub().returns(client)
+      askQuestionStub = sinon.stub()
+      askQuestionStub.onFirstCall().resolves(password)
+      askQuestionStub.onSecondCall().resolves(seed)
+      askQuestionStub.onLastCall().resolves(backup)
+
+      errorStub = sinon.stub()
+      args = { symbol: 'BTC/LTC' }
+      reverts.push(program.__set__('BrokerDaemonClient', daemonStub))
+      reverts.push(program.__set__('handleError', errorStub))
+      reverts.push(program.__set__('askQuestion', askQuestionStub))
+    })
+
+    it('create a broker daemon client', async () => {
+      await recover(args, opts, logger)
+      expect(daemonStub).to.have.been.calledOnce()
+    })
+
+    it('asks the user for a wallet password', async () => {
+      await recover(args, opts, logger)
+      expect(askQuestionStub).to.have.been.called()
+    })
+
+    it('asks the user for a static channel backup file path', () => {
+
+    })
+
+    it('asks the user for a recovery seed', () => {
+
+    })
+
+    it('makes a call to recoverWallet', async () => {
+      await recover(args, opts, logger)
+      const expectedParams = {}
+      expect(client.walletService.recoverWallet).to.have.been.calledWith(expectedParams)
+    })
+  })
 })

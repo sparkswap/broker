@@ -1,5 +1,3 @@
-const fs = require('fs')
-
 /**
  * Attempts to recover a wallet for a new lnd instance
  *
@@ -20,7 +18,7 @@ async function recoverWallet ({ logger, params, engines }, { EmptyResponse }) {
     symbol,
     password,
     seed,
-    backupPath
+    backup
   } = params
 
   const engine = engines.get(symbol)
@@ -30,11 +28,13 @@ async function recoverWallet ({ logger, params, engines }, { EmptyResponse }) {
     throw new Error(`Unable to recover wallet for engine: ${symbol}`)
   }
 
-  if (!password) throw new Error('Password is required to recover wallet')
-  if (!seed) throw new Error('Recovery seed is required to recover wallet')
-  if (!backupPath) throw new Error('Backup path is required to recover wallet')
+  if (!password) {
+    throw new Error('Password is required to recover wallet')
+  }
 
-  const backup = fs.readFileSync(backupPath)
+  if (!seed) {
+    throw new Error('Recovery seed is required to recover wallet')
+  }
 
   await engine.recoverWallet(password, seed, backup)
 

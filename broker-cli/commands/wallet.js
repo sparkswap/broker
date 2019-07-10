@@ -551,9 +551,15 @@ async function recover (args, opts, logger) {
 
     const password = await askQuestion(`Please enter your wallet password:`, { silent: true })
     const seed = await askQuestion(`Please enter your 24 word recover seed, with each word separated by spaces`)
-    const backupPath = await askQuestion(`Enter the path to your backup file`)
+    const shouldUseBackup = await askQuestion('Recover with backup file? Y/N')
 
-    await client.walletService.recoverWallet({ symbol, password, seed, backupPath })
+    let backup = true
+
+    if (ACCEPTED_ANSWERS.includes(shouldUseBackup.toLowerCase())) {
+      backup = false
+    }
+
+    await client.walletService.recoverWallet({ symbol, password, seed, backup })
   } catch (e) {
     logger.error(handleError(e))
   }

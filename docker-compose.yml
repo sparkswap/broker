@@ -24,6 +24,8 @@ services:
       - 'shared:/shared'
       # Persistent certs/keys for broker
       - '${SECURE_PATH}:/secure'
+      # Backups folder
+      - './backup:/backup'
     environment:
       - DEBUG=info
       - NODE_ENV=production
@@ -46,7 +48,7 @@ services:
     working_dir: '/home/app'
 
   lnd_btc:
-    image: sparkswap/lnd_btc:0.6.0-beta-rc1
+    image: sparkswap/lnd_btc:0.6.0-beta-rc3
     ports:
       - '10113:9735'
     environment:
@@ -57,12 +59,12 @@ services:
       - EXTERNAL_PORT=10113
       - NETWORK=${NETWORK}
       - DEBUG=info
-      - EXTPREIMAGE_HOST=sparkswapd:40369
       - ZMQPUBRAWBLOCK=${BTC_ZMQPUBRAWBLOCK:-}
       - ZMQPUBRAWTX=${BTC_ZMQPUBRAWTX:-}
     volumes:
       - 'shared:/shared'
       - 'lnd_btc:/data'
+      - './backup:/backup'
     networks:
       - broker
     logging:
@@ -71,7 +73,7 @@ services:
     restart: on-failure
 
   lnd_ltc:
-    image: sparkswap/lnd_ltc:0.6.0-beta-rc1
+    image: sparkswap/lnd_ltc:0.6.0-beta-rc3
     ports:
       - '10114:9735'
     environment:
@@ -82,12 +84,12 @@ services:
       - EXTERNAL_PORT=10114
       - NETWORK=${NETWORK}
       - DEBUG=info
-      - EXTPREIMAGE_HOST=sparkswapd:40369
       - ZMQPUBRAWBLOCK=${LTC_ZMQPUBRAWBLOCK:-}
       - ZMQPUBRAWTX=${LTC_ZMQPUBRAWTX:-}
     volumes:
       - 'shared:/shared'
       - 'lnd_ltc:/data'
+      - './backup:/backup'
     networks:
       - broker
     logging:
