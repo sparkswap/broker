@@ -65,7 +65,6 @@ const OrderStateMachine = StateMachine.factory({
     }),
     new StateMachineEvents(),
     new StateMachinePersistence({
-      storeName: 'this',
       /**
        * @param {string}   key - Unique key for the stored state machine
        * @returns {string}     Unique key for the state machine
