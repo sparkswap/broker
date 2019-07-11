@@ -65,3 +65,6 @@ typings/
 
 # Temp proto folder used for validating our proto files
 ./proto-temp
+
+# Backup file storage
+backup/

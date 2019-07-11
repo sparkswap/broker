@@ -39,7 +39,7 @@ function suppressInput (message, char) {
       break
     default:
       process.stdout.clearLine()
-      readline.cursorTo(process.stdout, 0, 0)
+      readline.cursorTo(process.stdout, 0)
       process.stdout.write(`${message} `)
       break
   }
