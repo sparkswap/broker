@@ -29,7 +29,7 @@ const SENSITIVE_PROP_LIST = Object.freeze([
 /**
  * String to replace sensitive data with.
  * @constant
- * @type {String}
+ * @type {string}
  */
 const SENSITIVE_REPLACEMENT = '***FILTERED***'
 

@@ -3,11 +3,11 @@
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Logger} request.logger
- * @param {Object<string>} request.params
+ * @param {object<string>} request.params
  * @param {string} request.params.symbol - currency symbol of the wallet e.g. `BTC`
  * @param {string} request.params.password - password for the newly created wallet
  * @param {Map<Engine>} request.engines
- * @param {Object} responses
+ * @param {object} responses
  * @param {Function} responses.CreateWalletResponse
  * @returns {CreateWalletResponse}
  */

@@ -38,10 +38,10 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Create a new BlockOrderWorker instance
    *
-   * @param {Object} args
+   * @param {object} args
    * @param {Map<string, Orderbook>} args.orderbooks - Collection of all active Orderbooks
    * @param {sublevel}               args.store - Sublevel in which to store block orders and child orders
-   * @param {Object}                 args.logger
+   * @param {object}                 args.logger
    * @param {RelayerClient}          args.relayer
    * @param {Map<string, Engine>}    args.engines - Collection of all available engines
    * @returns {void}
@@ -204,7 +204,7 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Creates a new block order and registers events for all orders under a block order
    *
-   * @param {Object} options
+   * @param {object} options
    * @param  {string} options.marketName  - Name of the market to creat the block order in (e.g. BTC/LTC)
    * @param  {string} options.side        - Side of the market to take (e.g. BID or ASK)
    * @param  {string} options.amount      - Amount of base currency (in base units) to transact
@@ -342,12 +342,10 @@ class BlockOrderWorker extends EventEmitter {
    *
    * @todo Change return value from Big to String
    * @param {string} market
-   * @param {Object} symbols
+   * @param {object} symbols
    * @param {string} symbols.inboundSymbol
    * @param {string} symbols.outboundSymbol
-   * @returns {Promise<Object>} res
-   * @returns {string} res.inbound - int64 string of active inbound amount
-   * @returns {string} res.outbound - int64 string of active outbound amount
+   * @returns {Promise<{inbound: string, outbound: string}>} res
    */
   async calculateActiveFunds (market, { inboundSymbol, outboundSymbol }) {
     const [
@@ -495,7 +493,7 @@ class BlockOrderWorker extends EventEmitter {
    * Get existing block orders
    *
    * @param {string} market - to filter by
-   * @param {Object} options - options for the query
+   * @param {object} options - options for the query
    * @param {number} options.limit - number of records to return
    * @param {boolean} options.active - filter for active records
    * @param {boolean} options.cancelled - filter for cancelled records
@@ -972,7 +970,7 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Get all completed trade info
-   * @returns {Promise<{orders: Array<Object>, fills: Array<Object>}>} result
+   * @returns {Promise<{orders: Array<object>, fills: Array<object>}>} result
    *         result.orders all completed orders for a user
    *         result.fills all completed fills for a user
    */

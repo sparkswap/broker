@@ -19,7 +19,7 @@ const DELIMITER = ':'
  */
 const LOWER_BOUND = '\x00'
 
-/** @type {Object<string, string>} */
+/** @type {object<string, string>} */
 const TYPES = Object.freeze({
   PLACED: 'PLACED',
   FILLED: 'FILLED',

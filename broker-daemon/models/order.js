@@ -37,7 +37,7 @@ class Order {
   /**
    * Create a new order representation
    * @param {string} blockOrderId          - Id of the block order that this order belongs to
-   * @param {Object} args
+   * @param {object} args
    * @param {string} args.baseSymbol    - Currency symbol for the base currency in the market, e.g. BTC
    * @param {string} args.counterSymbol - Currency symbol for the counter or quote currency in the market, e.g. LTC
    * @param {string} args.side          - Side of the transaction that the order is on, either BID or ASK
@@ -64,7 +64,7 @@ class Order {
 
   /**
    * Add parameters to the order from its creation on the Relayer
-   * @param {Object} params
+   * @param {object} params
    * @param {string} params.orderId               - Unique identifier for the order as assigned by the Relayer
    * @param {string} params.feePaymentRequest     - Payment channel network payment request for the order fee
    * @param {string} params.feeRequired           - Whether the order fee is required
@@ -81,7 +81,7 @@ class Order {
 
   /**
    * Add parameters to the order from it being filled on the Relayer
-   * @param {Object} params
+   * @param {object} params
    * @param {string} params.swapHash   - Base64 string of the swap hash being used for the fill
    * @param {string} params.fillAmount - Int64 String of the amount, in base currency's base units, of the fill
    * @param {string} params.takerAddress - String of payment channel network address of the taker
@@ -94,7 +94,7 @@ class Order {
 
   /**
    * Add parameters to the order from it being settled on the Payment Channel Network
-   * @param {Object} params
+   * @param {object} params
    * @param {string} params.swapPreimage - Base64 string of the preimage associated with the swap hash
    */
   setSettledParams ({ swapPreimage }) {
@@ -103,7 +103,7 @@ class Order {
 
   /**
    * serialize an order for transmission via grpc
-   * @returns {Object} serialzed order to send in a GRPC message
+   * @returns {object} serialzed order to send in a GRPC message
    */
   serialize () {
     const currencies = CONFIG.currencies || []
@@ -253,7 +253,7 @@ class Order {
 
   /**
    * Params required to create an order on the relayer
-   * @returns {Object} Object of parameters the relayer expects
+   * @returns {object} Object of parameters the relayer expects
    */
   get paramsForCreate () {
     const {
@@ -282,7 +282,7 @@ class Order {
    * It includes parameters for the payment requests for fees and deposits
    * which are used to pay fees prior to placing an order rather than
    * actually sent to the relayer.
-   * @returns {Object} Object of parameters need to place an order
+   * @returns {object} Object of parameters need to place an order
    */
   get paramsForPlace () {
     const {
@@ -322,7 +322,7 @@ class Order {
 
   /**
    * Params required to prepare a swap in  an engine
-   * @returns {Object} Object of parameters the engine expects
+   * @returns {object} Object of parameters the engine expects
    */
   get paramsForPrepareSwap () {
     const { orderId, swapHash, inboundSymbol, inboundFillAmount } = this
@@ -405,7 +405,7 @@ class Order {
 
   /**
    * Get the store-able object
-   * @returns {Object} Store-able version of the object
+   * @returns {object} Store-able version of the object
    */
   get valueObject () {
     const {
@@ -456,7 +456,7 @@ class Order {
   /**
    * Create an instance of an order from an object representation
    * @param {string} key         - Unique key for the order, i.e. its `blockOrderId` and `orderId`
-   * @param {Object} valueObject - Plain object representation of the order
+   * @param {object} valueObject - Plain object representation of the order
    * @returns {Order}              Inflated order object
    */
   static fromObject (key, valueObject) {
@@ -517,7 +517,7 @@ class Order {
    * This works because all orders are prefixed with their blockOrderId and the Delimiter.
    * @param {string} startId - id of the block order to start the range
    * @param {string} endId - id of the block order to end the range
-   * @returns {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
+   * @returns {object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
    */
   static rangeForBlockOrderIds (startId, endId) {
     return {
@@ -529,7 +529,7 @@ class Order {
   /**
    * Grabs all orders
    * @param {Sublevel} store
-   * @returns {Promise<Array<Object>>} array of order representation (includes order model)
+   * @returns {Promise<Array<object>>} array of order representation (includes order model)
    */
   static async getAllOrders (store) {
     return getRecords(

@@ -8,8 +8,8 @@ const getSupportedMarkets = require('./get-supported-markets')
 class OrderBookService {
   /**
    * @param {string} protoPath
-   * @param {Object} opts
-   * @param {Object} opts.logger
+   * @param {object} opts
+   * @param {object} opts.logger
    * @param {RelayerClient} opts.relayer
    * @param {Map} opts.orderbooks
    * @param {Function} opts.auth

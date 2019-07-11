@@ -3,11 +3,11 @@
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Logger} request.logger
- * @param {Object<string>} request.params
+ * @param {object<string>} request.params
  * @param {string} request.params.symbol - currency symbol of the wallet e.g. `BTC`
  * @param {string} request.params.password - password for the specified engine's wallet
  * @param {Map<Engine>} request.engines
- * @param {Object} responses
+ * @param {object} responses
  * @param {Function} responses.EmptyResponse
  * @throws {Error} If Engine does not exist for the given symbol
  * @throws {Error} If Engine is not in a LOCKED state

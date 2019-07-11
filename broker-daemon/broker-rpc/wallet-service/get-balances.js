@@ -2,12 +2,12 @@ const { Big } = require('../../utils')
 
 /**
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const BALANCE_PRECISION = 16
 
-/** @typedef {Object} GetEngineBalancesResponse
+/** @typedef {object} GetEngineBalancesResponse
  *  @property {string} uncommiittedBalance
  *  @property {string} uncommittedPendingBalance
  *  @property {string} totalChannelBalance
@@ -58,7 +58,7 @@ async function getEngineBalances (symbol, engine, logger) {
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Map} request.engines
  * @param {Logger} request.logger
- * @param {Object} responses
+ * @param {object} responses
  * @param {Function} responses.GetBalanceResponse
  * @returns {GetBalanceResponse}
  */

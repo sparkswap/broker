@@ -16,7 +16,7 @@ const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 class BlockOrder {
   /**
    * Instantiate a new Block Order
-   * @param {Object} args
+   * @param {object} args
    * @param {string} args.id          - Unique id for the block order
    * @param {string} args.marketName  - Market name (e.g. BTC/LTC)
    * @param {string} args.side        - Side of the market being taken (i.e. BID or ASK)
@@ -99,7 +99,7 @@ class BlockOrder {
 
   /**
    * Get configuration for the baseSymbol
-   * @returns {Object} Currency configuration
+   * @returns {object} Currency configuration
    */
   get baseCurrencyConfig () {
     return CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
@@ -107,7 +107,7 @@ class BlockOrder {
 
   /**
    * Get configuration for the counterSymbol
-   * @returns {Object} Currency configuration
+   * @returns {object} Currency configuration
    */
   get counterCurrencyConfig () {
     return CONFIG.currencies.find(({ symbol }) => symbol === this.counterSymbol)
@@ -336,7 +336,7 @@ class BlockOrder {
 
   /**
    * serialize a block order for transmission via grpc
-   * @returns {Object} Object to be serialized into a GRPC message
+   * @returns {object} Object to be serialized into a GRPC message
    */
   serialize () {
     const orders = this.orders.map((orderObject) => {
@@ -370,7 +370,7 @@ class BlockOrder {
 
   /**
    * Returns a serialized summary of a block order
-   * @returns {Object}
+   * @returns {object}
    */
   serializeSummary () {
     const serialized = {

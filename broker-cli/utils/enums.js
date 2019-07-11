@@ -15,7 +15,7 @@
  * PO - post only
  *
  * @constant
- * @type {Object<key, String>}
+ * @type {object<key, string>}
  * @default
  */
 const TIME_IN_FORCE = Object.freeze({
@@ -30,7 +30,7 @@ const TIME_IN_FORCE = Object.freeze({
  * ORDER TYPES (bid/sell)
  *
  * @constant
- * @type {Object<key, String>}
+ * @type {object<key, string>}
  * @default
  */
 const ORDER_TYPES = Object.freeze({

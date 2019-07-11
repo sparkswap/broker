@@ -10,7 +10,7 @@ const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../../util
  * Supported commands for `sparkswap market`
  *
  * @constant
- * @type {Object<key, String>}
+ * @type {object<key, string>}
  * @default
  */
 const SUPPORTED_COMMANDS = Object.freeze({

@@ -43,7 +43,7 @@ const DEFAULT_RPC_PORT = 27492
  * NOTE: This object will be mutated by gRPC (do not use Object.freeze)
  *
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const GRPC_STREAM_OPTIONS = {
@@ -75,7 +75,7 @@ class BrokerDaemonClient {
      * Port defaults to DEFAULT_RPC_PORT if tld is passed in
      *
      * @see {DEFAULT_RPC_PORT}
-     * @type {String}
+     * @type {string}
      */
     this.address = rpcAddress || this.config.rpcAddress
     this.certPath = this.config.rpcCertPath

@@ -3,9 +3,9 @@
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {Logger} request.logger
- * @param {Object<string>} request.params
+ * @param {object<string>} request.params
  * @param {Array<Engine>} request.engines
- * @param {Object} responses
+ * @param {object} responses
  * @param {Function} responses.GetPaymentChannelNetworkAddressResponse - constructor
  * @returns {GetPaymentChannelNetworkAddressResponse}
  */

@@ -3,7 +3,7 @@
  * Prevents code execution for a designated amount of milliseconds
  *
  * @param {number} ms - milliseconds
- * @return {Promise<void>}
+ * @returns {Promise<void>}
  */
 
 function delay (ms) {

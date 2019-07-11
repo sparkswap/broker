@@ -9,7 +9,7 @@ const CONFIG = require('../config.json')
 class MarketEventOrder {
   /**
    * Create a MarketEventOrder
-   * @param {Object} order
+   * @param {object} order
    * @param {string} order.orderId       - Unique ID assigned by the relayer to identify an order
    * @param {string} order.createdAt     - When the order was created
    * @param {string} order.baseAmount    - Amount, represented as an integer in the base currency's smallest unit, to be transacted
@@ -83,7 +83,7 @@ class MarketEventOrder {
 
   /**
    * Serialize the market event order for use by end users
-   * @returns {Object}
+   * @returns {object}
    */
   serialize () {
     const { orderId, side, price, amount } = this
@@ -96,7 +96,7 @@ class MarketEventOrder {
   }
 
   /**
-   * @param {Object} event
+   * @param {object} event
    * @param {string} marketName
    * @returns {MarketEventOrder}
    */

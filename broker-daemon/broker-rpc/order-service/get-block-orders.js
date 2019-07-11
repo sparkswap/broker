@@ -2,10 +2,10 @@
  * Retrieve all block orders for the given market
  *
  * @param {GrpcUnaryMethod~request} request - request object
- * @param {Object} request.params - Request parameters from the client
+ * @param {object} request.params - Request parameters from the client
  * @param {BlockOrderWorker} request.blockOrderWorker
- * @param {Object} request.logger
- * @param {Object} responses
+ * @param {object} request.logger
+ * @param {object} responses
  * @param {Function} responses.GetBlockOrdersResponse - constructor for GetBlockOrdersResponse messages
  * @returns {Promise<GetBlockOrdersResponse>}
  */

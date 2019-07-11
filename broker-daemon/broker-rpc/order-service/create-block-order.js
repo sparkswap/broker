@@ -2,11 +2,11 @@
  * Creates an order with the relayer
  *
  * @param {GrpcUnaryMethod~request} request - request object
- * @param {Object} request.params - Request parameters from the client
- * @param {Object} request.blockOrderWorker
- * @param {Object} responses
+ * @param {object} request.params - Request parameters from the client
+ * @param {object} request.blockOrderWorker
+ * @param {object} responses
  * @param {Function} responses.CreateBlockOrderResponse - constructor for CreateBlockOrderResponse messages
- * @param {Object} responses.TimeInForce - Time In Force enum
+ * @param {object} responses.TimeInForce - Time In Force enum
  * @returns {Promise<CreateBlockOrderResponse>}
  */
 async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce }) {
