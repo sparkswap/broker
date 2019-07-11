@@ -27,8 +27,12 @@ describe('WalletService', () => {
   let auth
   let blockOrderWorker
   let changeWalletPassword
+  let recoverWallet
+
+  let reverts
 
   before(() => {
+    reverts = []
     responseStub = sinon.stub()
     protoPath = 'example/path.proto'
     loadProtoStub = sinon.stub().returns({
@@ -63,6 +67,7 @@ describe('WalletService', () => {
     withdrawFunds = sinon.stub()
     createWallet = sinon.stub()
     unlockWallet = sinon.stub()
+    recoverWallet = sinon.stub()
     changeWalletPassword = sinon.stub()
     walletHistory = sinon.stub()
     balanceSpy = sinon.spy()
@@ -72,21 +77,26 @@ describe('WalletService', () => {
     blockOrderWorker = sinon.stub()
     unaryMethodStub.prototype.register = registerSpy
 
-    WalletService.__set__('loadProto', loadProtoStub)
-    WalletService.__set__('GrpcUnaryMethod', unaryMethodStub)
-    WalletService.__set__('newDepositAddress', newDepositAddress)
-    WalletService.__set__('getBalances', balanceSpy)
-    WalletService.__set__('commit', commitSpy)
-    WalletService.__set__('getPaymentChannelNetworkAddress', getPaymentChannelNetworkAddress)
-    WalletService.__set__('getTradingCapacities', getTradingCapacities)
-    WalletService.__set__('releaseChannels', releaseChannels)
-    WalletService.__set__('withdrawFunds', withdrawFunds)
-    WalletService.__set__('createWallet', createWallet)
-    WalletService.__set__('unlockWallet', unlockWallet)
-    WalletService.__set__('changeWalletPassword', changeWalletPassword)
-    WalletService.__set__('walletHistory', walletHistory)
+    reverts.push(WalletService.__set__('loadProto', loadProtoStub))
+    reverts.push(WalletService.__set__('GrpcUnaryMethod', unaryMethodStub))
+    reverts.push(WalletService.__set__('newDepositAddress', newDepositAddress))
+    reverts.push(WalletService.__set__('getBalances', balanceSpy))
+    reverts.push(WalletService.__set__('commit', commitSpy))
+    reverts.push(WalletService.__set__('getPaymentChannelNetworkAddress', getPaymentChannelNetworkAddress))
+    reverts.push(WalletService.__set__('getTradingCapacities', getTradingCapacities))
+    reverts.push(WalletService.__set__('releaseChannels', releaseChannels))
+    reverts.push(WalletService.__set__('withdrawFunds', withdrawFunds))
+    reverts.push(WalletService.__set__('createWallet', createWallet))
+    reverts.push(WalletService.__set__('unlockWallet', unlockWallet))
+    reverts.push(WalletService.__set__('changeWalletPassword', changeWalletPassword))
+    reverts.push(WalletService.__set__('walletHistory', walletHistory))
+    reverts.push(WalletService.__set__('recoverWallet', recoverWallet))
 
     wallet = new WalletService(protoPath, { logger, engines, relayer, orderbooks, auth, blockOrderWorker })
+  })
+
+  afterEach(() => {
+    reverts.forEach(r => r())
   })
 
   it('sets a protoPath', () => expect(wallet.protoPath).to.eql(protoPath))
@@ -216,6 +226,17 @@ describe('WalletService', () => {
         expectedMessageId,
         { logger, engines, auth },
         { WalletHistoryResponse: responseStub }
+      )
+    })
+
+    it('creates a unary method for recoverWallet', () => {
+      const expectedMessageId = '[WalletService:recoverWallet]'
+
+      expect(unaryMethodStub).to.have.been.calledWith(
+        recoverWallet,
+        expectedMessageId,
+        { logger, engines, auth },
+        { EmptyResponse: responseStub }
       )
     })
   })

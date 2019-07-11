@@ -70,12 +70,17 @@ function askQuestion (message, { silent = false } = {}) {
   return new Promise((resolve, reject) => {
     try {
       rl.question(`${message} `, (answer) => {
+        // Remove the data listener that we had added so that we are not adding
+        // multiple listeners on stdin which causes weird side-effects when using
+        // `askQuestion` multiple times in the same command
         process.stdin.removeListener('data', dataHandler)
+
         // If the process is interactive (non-TTY) then we can remove the history.
         // If the terminal is TTY then rl.history is not defined
         if (rl.history) {
           rl.history = rl.history.slice(1)
         }
+
         rl.close()
         return resolve(answer)
       })
