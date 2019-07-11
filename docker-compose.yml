@@ -13,7 +13,7 @@ version: '2.4'
 
 services:
   sparkswapd:
-    image: sparkswap/broker:0.7.4-beta
+    image: sparkswap/broker:0.8.0-beta-rc1
     depends_on:
       - lnd_btc
       - lnd_ltc
@@ -48,7 +48,7 @@ services:
     working_dir: '/home/app'
 
   lnd_btc:
-    image: sparkswap/lnd_btc:0.6.0-beta-rc3
+    image: sparkswap/lnd_btc:0.6.0-beta-rc4
     ports:
       - '10113:9735'
     environment:
@@ -73,7 +73,7 @@ services:
     restart: on-failure
 
   lnd_ltc:
-    image: sparkswap/lnd_ltc:0.6.0-beta-rc3
+    image: sparkswap/lnd_ltc:0.6.0-beta-rc4
     ports:
       - '10114:9735'
     environment:
