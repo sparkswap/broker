@@ -43,7 +43,7 @@ class BlockOrderWorker extends EventEmitter {
    * @param {sublevel}               args.store - Sublevel in which to store block orders and child orders
    * @param {Object}                 args.logger
    * @param {RelayerClient}          args.relayer
-   * @param {Map<Symbol, Engine>}    args.engines - Collection of all available engines
+   * @param {Map<string, Engine>}    args.engines - Collection of all available engines
    * @returns {void}
    */
   constructor ({ orderbooks, store, logger, relayer, engines }) {

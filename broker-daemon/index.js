@@ -8,7 +8,7 @@ const Orderbook = require('./orderbook')
 const BlockOrderWorker = require('./block-order-worker')
 const BrokerRPCServer = require('./broker-rpc/broker-rpc-server')
 const { logger } = require('./utils')
-const CONFIG = require('./config')
+const CONFIG = require('./config.json')
 
 /** @typedef {import('lnd-engine')} Engine */
 /** @typedef {Object} Logger */
@@ -37,7 +37,7 @@ const DEFAULT_DATA_DIR = '~/.sparkswap/data'
  * Default host and port that the Relayer is set up on
  *
  * @constant
- * @type {number}
+ * @type {string}
  * @default
  */
 const DEFAULT_RELAYER_HOST = 'localhost:28492'
@@ -48,7 +48,7 @@ const DEFAULT_RELAYER_HOST = 'localhost:28492'
  * @param {Object} engineConfig   - Configuration object for this engine
  * @param {Object} options
  * @param {Logger} options.logger - Logger that this engine should use
- * @returns {LndEngine}
+ * @returns {Engine}
  * @throws {Error} Unknown engine type
  */
 function createEngineFromConfig (symbol, engineConfig, { logger }) {
@@ -76,25 +76,32 @@ class BrokerDaemon {
   /**
    * @param {Object} opts
    * @param {string} opts.network - current blockchain network of the daemon
-   * @param {string} opts.privKeyPath - Path to private key for broker's identity
-   * @param {string} opts.pubKeyPath - Path to public key for broker's identity
+   * @param {string} opts.privRpcKeyPath
+   * @param {string} opts.pubRpcKeyPath
+   * @param {string} opts.privIdKeyPath - Path to private key for broker's identity
+   * @param {string} opts.pubIdKeyPath - Path to public key for broker's identity
    * @param {string} opts.rpcAddress - Host and port where the user-facing RPC server should listen
    * @param {string} opts.dataDir - Relative path to a directory where application data should be stored
    * @param {Array}  opts.marketNames - List of market names (e.g. 'BTC/LTC') to support
    * @param {Object} opts.engines - Configuration for all the engines to instantiate
    * @param {boolean} [opts.disableAuth=false] - Disable SSL for the daemon
    * @param {boolean} [opts.enableCors=false] - Enable CORS for the HTTP Proxy
-   * @param {string} [opts.rpcUser] - RPC username, only used when auth is enabled
-   * @param {string} [opts.rpcPass] - RPC password, only used when auth is enabled
-   * @param {Object} [opts.relayerOptions={}]
+   * @param {boolean} opts.isCertSelfSigned
+   * @param {?string} [opts.rpcUser] - RPC username, only used when auth is enabled
+   * @param {?string} [opts.rpcPass] - RPC password, only used when auth is enabled
+   * @param {Object} opts.relayerOptions
    * @param {string} opts.relayerOptions.relayerRpcHost - Host and port for the Relayer RPC
-   * @param {string} opts.relayerOptions.certPath - Absolute path to the root certificate for the relayer
-   * @returns {BrokerDaemon}
+   * @param {string} opts.relayerOptions.relayerCertPath - Absolute path to the root certificate for the relayer
+   * @param {string} opts.rpcInternalProxyAddress
+   * @param {string} opts.rpcHttpProxyAddress
+   * @param {Array<string>} opts.rpcHttpProxyMethods
    */
-  constructor ({ network, privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, dataDir, marketNames, engines, disableAuth = false, enableCors = false, isCertSelfSigned, rpcUser = null, rpcPass = null, relayerOptions = {}, rpcInternalProxyAddress, rpcHttpProxyAddress, rpcHttpProxyMethods }) {
+  constructor ({ network, privRpcKeyPath, pubRpcKeyPath, privIdKeyPath, pubIdKeyPath, rpcAddress, dataDir, marketNames, engines, disableAuth = false, enableCors = false, isCertSelfSigned, rpcUser = null, rpcPass = null, relayerOptions, rpcInternalProxyAddress, rpcHttpProxyAddress, rpcHttpProxyMethods }) {
     // Set a global namespace for sparkswap that we can use for properties not
     // related to application configuration
+    // @ts-ignore
     if (!global.sparkswap) {
+      // @ts-ignore
       global.sparkswap = {}
     }
 
@@ -103,6 +110,7 @@ class BrokerDaemon {
     if (!pubIdKeyPath) throw new Error('Public Key path is required to create a BrokerDaemon')
 
     // Set the network in the global sparkswap namespace
+    // @ts-ignore
     global.sparkswap.network = network
 
     const { relayerRpcHost, relayerCertPath } = relayerOptions
@@ -127,7 +135,7 @@ class BrokerDaemon {
     this.eventHandler = new EventEmitter()
     this.relayer = new RelayerClient(this.idKeyPath, { host: this.relayerRpcHost, certPath: this.relayerCertPath }, this.logger)
 
-    this.engines = new Map(Object.entries(engines || {}).map(([ symbol, engineConfig ]) => {
+    this.engines = new Map(Object.entries(engines || {}).map(([ symbol, _engineConfig ]) => {
       return [ symbol, createEngineFromConfig(symbol, engines[symbol], { logger: this.logger }) ]
     }))
 
@@ -228,7 +236,8 @@ class BrokerDaemon {
    */
   async initializeMarket (marketName) {
     const symbols = marketName.split('/')
-    if (!symbols.every(sym => CONFIG.currencies.find(({ symbol }) => symbol === sym.toUpperCase()))) {
+    if (!symbols.every(sym =>
+      CONFIG.currencies.find(({ symbol }) => symbol === sym.toUpperCase()) !== undefined)) {
       throw new Error(`Currency config is required for both symbols of ${marketName}`)
     }
 
@@ -247,7 +256,7 @@ class BrokerDaemon {
 
   /**
    * Validates engines
-   * @returns {void}
+   * @returns {Promise<Array<void>>}
    */
   validateEngines () {
     return Promise.all(

@@ -57,6 +57,11 @@ class MarketEventOrder {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
     const counterCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === this.counterSymbol)
 
+    if (!baseCurrencyConfig || !counterCurrencyConfig ||
+      !baseCurrencyConfig.quantumsPerCommon || !counterCurrencyConfig.quantumsPerCommon) {
+      throw new Error('Invalid currency config')
+    }
+
     const baseCommonAmount = Big(this.baseAmount).div(baseCurrencyConfig.quantumsPerCommon)
     const counterCommonAmount = Big(this.counterAmount).div(counterCurrencyConfig.quantumsPerCommon)
 
@@ -70,6 +75,9 @@ class MarketEventOrder {
   get amount () {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
 
+    if (!baseCurrencyConfig || !baseCurrencyConfig.quantumsPerCommon) {
+      throw new Error('Invalid currency config')
+    }
     return Big(this.baseAmount).div(baseCurrencyConfig.quantumsPerCommon).toFixed(16)
   }
 
@@ -108,6 +116,7 @@ class MarketEventOrder {
       })
     }
 
+    // @ts-ignore
     return new this(params)
   }
 

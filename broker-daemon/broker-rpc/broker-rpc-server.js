@@ -64,11 +64,18 @@ class BrokerRPCServer {
    * @param {Map<string, Engine>} opts.engines
    * @param {RelayerClient} opts.relayer
    * @param {BlockOrderWorker} opts.blockOrderWorker
-   * @param {Sublevel} opts.store - BrokerDaemon sublevel store
    * @param {Map<Orderbook>} opts.orderbooks
-   * @param {string} opts.privKeyPath - Path to private key for broker rpc
+   * @param {Sublevel} opts.store - BrokerDaemon sublevel store
    * @param {string} opts.pubKeyPath - Path to public key for broker rpc
+   * @param {string} opts.privKeyPath - Path to private key for broker rpc
    * @param {boolean} [opts.disableAuth=false]
+   * @param {boolean} [opts.enableCors=false]
+   * @param {boolean} opts.isCertSelfSigned
+   * @param {?string} opts.rpcUser
+   * @param {?string} opts.rpcPass
+   * @param {string} opts.rpcHttpProxyAddress
+   * @param {Array<string>} opts.rpcHttpProxyMethods
+   * @param {string} opts.rpcAddress
    */
   constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, store, pubKeyPath, privKeyPath, disableAuth = false, enableCors = false, isCertSelfSigned, rpcUser = null, rpcPass = null, rpcHttpProxyAddress, rpcHttpProxyMethods, rpcAddress } = {}) {
     this.logger = logger
