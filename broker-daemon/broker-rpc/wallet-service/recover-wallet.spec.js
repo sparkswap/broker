@@ -26,7 +26,7 @@ describe('recover-wallet', () => {
       symbol: 'BTC',
       password: 'SPARKSWAP',
       seed: ['my', 'test', 'seed'],
-      backup: true
+      useBackupFile: true
     }
     engines = new Map([['BTC', engine]])
   })
@@ -48,6 +48,6 @@ describe('recover-wallet', () => {
 
   it('recovers a wallet', async () => {
     await recoverWallet({ logger, engines, params }, { EmptyResponse })
-    expect(engine.recoverWallet).to.have.been.calledWith(params.password, params.seed, params.backup)
+    expect(engine.recoverWallet).to.have.been.calledWith(params.password, params.seed, params.useBackupFile)
   })
 })

@@ -1057,7 +1057,7 @@ describe('cli wallet', () => {
         password,
         seed: seed.split(' '),
         symbol: args.symbol,
-        backup: true
+        useBackupFile: true
       }
       expect(client.walletService.recoverWallet).to.have.been.calledWith(sinon.match(expectedParams))
     })

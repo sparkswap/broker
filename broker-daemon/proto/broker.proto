@@ -1797,8 +1797,8 @@ message RecoverWalletRequest {
   string password = 2;
   // 24 word mnemonic seed
   repeated string seed = 3;
-  // The path of the backup file
-  bool backup = 4;
+  // True/False signifying the use of a backup file for committed funds
+  bool use_backup_file = 4;
 }
 
 /**
@@ -2308,7 +2308,7 @@ service WalletService {
    * ```shell
    * Please enter your wallet password:
    * Please enter your 24 word recovery seed, with each word separated by spaces:
-   * Recover with backup file? Y/N:
+   * Recover committed funds with backup file? Y/N:
    *
    * Wallet recovery process started successfully!
    *

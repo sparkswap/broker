@@ -551,19 +551,19 @@ async function recover (args, opts, logger) {
 
     const password = await askQuestion(`Please enter your wallet password:`, { silent: true })
     let seed = await askQuestion('Please enter your 24 word recovery seed, with each word separated by spaces:')
-    const shouldUseBackup = await askQuestion('Recover with backup file? Y/N:')
+    const shouldUseBackup = await askQuestion('Recover committed funds with backup file? Y/N:')
 
-    let backup = false
+    let useBackupFile = false
 
     if (ACCEPTED_ANSWERS.includes(shouldUseBackup.toLowerCase())) {
-      backup = true
+      useBackupFile = true
     }
 
     // seed will be returned from the question as a string which needs to be converted
     // to an array for the recoverWallet endpoint
     seed = seed.split(' ')
 
-    await client.walletService.recoverWallet({ symbol, password, seed, backup })
+    await client.walletService.recoverWallet({ symbol, password, seed, useBackupFile })
 
     logger.info('Wallet recovery process started successfully!'.green)
   } catch (e) {
