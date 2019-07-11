@@ -311,7 +311,6 @@ class BlockOrder {
       Order.rangeForBlockOrderIds(this.id, this.id)
     )
     this.orders = orders
-    return undefined
   }
 
   /**
@@ -331,7 +330,6 @@ class BlockOrder {
       Fill.rangeForBlockOrderIds(this.id, this.id)
     )
     this.fills = fills
-    return undefined
   }
 
   /**

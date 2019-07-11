@@ -104,7 +104,6 @@ class BlockOrderWorker extends EventEmitter {
     // which can be a long process, to be awaited on start, but prevents locking
     // the event loop if our engines are not validated.
     this.settleIndeterminateOrdersFills(enginesAreValidated)
-    return undefined
   }
 
   /**
@@ -139,7 +138,6 @@ class BlockOrderWorker extends EventEmitter {
         fsm.triggerState()
       })
     }
-    return undefined
   }
 
   /**
@@ -334,7 +332,6 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`Insufficient funds in a single inbound ${blockOrder.inboundSymbol} channel to create order. ` +
         `Requested Inbound Amount: ${inboundAmount}, Max Inbound Capacity: ${maxInboundCapacity}`)
     }
-    return undefined
   }
 
   /**
@@ -428,7 +425,6 @@ class BlockOrderWorker extends EventEmitter {
     }))
 
     this.logger.info(`Cancelled ${openOrders.length} underlying orders for ${blockOrder.id}`)
-    return undefined
   }
 
   /**
@@ -563,7 +559,6 @@ class BlockOrderWorker extends EventEmitter {
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
     this.logger.info('Moved block order to failed state', { id: blockOrderId })
-    return undefined
   }
 
   /**
@@ -595,7 +590,6 @@ class BlockOrderWorker extends EventEmitter {
     } else {
       await this.workLimitBlockOrder(blockOrder, targetDepth)
     }
-    return undefined
   }
 
   /**
@@ -649,7 +643,6 @@ class BlockOrderWorker extends EventEmitter {
       // place an order for the remaining depth that we could not fill
       this._placeOrders(blockOrder, targetDepth.minus(availableDepth).toString())
     }
-    return undefined
   }
 
   /**
@@ -850,7 +843,6 @@ class BlockOrderWorker extends EventEmitter {
     this.applyOsmListeners(osm, blockOrder)
 
     this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: osm.order.orderId })
-    return undefined
   }
 
   /**

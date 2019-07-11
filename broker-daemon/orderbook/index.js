@@ -65,7 +65,6 @@ class Orderbook {
     await this.bidIndex.ensureIndex()
 
     await this.watchMarket()
-    return undefined
   }
 
   /**
@@ -131,7 +130,6 @@ class Orderbook {
       await watcher.migrate()
       await this.index.ensureIndex()
       this.watchMarket()
-      return undefined
     }
 
     watcher.once('sync', onWatcherSync)

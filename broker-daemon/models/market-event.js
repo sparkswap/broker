@@ -19,7 +19,9 @@ const DELIMITER = ':'
  */
 const LOWER_BOUND = '\x00'
 
-/** @type {object<string, string>} */
+/** @typedef {{[k: string]: string}} Dictionary */
+
+/** @type {Dictionary} */
 const TYPES = Object.freeze({
   PLACED: 'PLACED',
   FILLED: 'FILLED',
