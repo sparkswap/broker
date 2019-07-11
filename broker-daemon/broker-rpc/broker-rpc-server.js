@@ -12,6 +12,23 @@ const {
   createHttpServer
 } = require('../utils')
 
+/** @typedef {import('../').Logger} Logger */
+/** @typedef {import('../').Engine} Engine */
+/** @typedef {import('../relayer')} RelayerClient */
+/** @typedef {import('../orderbook')} Orderbook */
+/** @typedef {import('../block-order-worker')} BlockOrderWorker */
+/** @typedef {import('level-sublevel')} Sublevel */
+
+/** @typedef {Object} GrpcUnaryMethodRequest
+ * @property {Object} request.params - Request parameters from the client
+ * @property {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
+ * @property {Logger} request.logger - logger for messages about the method
+ * @property {Map<string, Engine>} request.engines - Map of all available Payment Channel Network Engines
+ * @property {Map<string, Orderbook>} request.orderbooks
+ * @property {BlockOrderWorker} request.blockOrderWorker
+ * @property {Sublevel} request.store
+ */
+
 /**
  * @constant
  * @type {string}
@@ -65,12 +82,19 @@ class BrokerRPCServer {
    * @param {RelayerClient} opts.relayer
    * @param {BlockOrderWorker} opts.blockOrderWorker
    * @param {Sublevel} opts.store - BrokerDaemon sublevel store
-   * @param {Map<Orderbook>} opts.orderbooks
+   * @param {Map<string, Orderbook>} opts.orderbooks
    * @param {string} opts.privKeyPath - Path to private key for broker rpc
    * @param {string} opts.pubKeyPath - Path to public key for broker rpc
    * @param {boolean} [opts.disableAuth=false]
+   * @param {boolean} [opts.enableCors=false]
+   * @param {boolean} opts.isCertSelfSigned
+   * @param {string} opts.rpcUser
+   * @param {string} opts.rpcPass
+   * @param {string} opts.rpcHttpProxyAddress
+   * @param {Array<string>} opts.rpcHttpProxyMethods
+   * @param {string} opts.rpcAddress
    */
-  constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, store, pubKeyPath, privKeyPath, disableAuth = false, enableCors = false, isCertSelfSigned, rpcUser = null, rpcPass = null, rpcHttpProxyAddress, rpcHttpProxyMethods, rpcAddress } = {}) {
+  constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, store, pubKeyPath, privKeyPath, disableAuth = false, enableCors = false, isCertSelfSigned, rpcUser, rpcPass, rpcHttpProxyAddress, rpcHttpProxyMethods, rpcAddress }) {
     this.logger = logger
     this.engines = engines
     this.relayer = relayer

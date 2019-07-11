@@ -1,4 +1,12 @@
-const { eachRecord } = require('../../utils')
+const {
+  eachRecord,
+  GrpcResponse: HealthCheckResponse
+} = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+/** @typedef {import('../broker-rpc-server').RelayerClient} RelayerClient */
+/** @typedef {import('../broker-rpc-server').Logger} Logger */
+/** @typedef {import('level-sublevel')} Sublevel */
 
 /**
  * @constant
@@ -71,18 +79,10 @@ async function getRecordCounts (store, name = 'store', parentName = '', stores =
 /**
  * Check the health of all the system components
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {Object} request.params
- * @param {RelayerClient} request.relayer - gRPC Client for interacting with the Relayer
- * @param {Object} request.logger
- * @param {Map<string, Engine>} request.engines - all available Payment Channel Network engines in the Broker
- * @param {Map<string, Orderbook>} request.orderbooks
- * @param {Sublevel} request.store
- * @param {Object} responses
- * @param {Function} responses.HealthCheckResponse - constructor for HealthCheckResponse messages
+ * @param {GrpcUnaryMethodRequest} request - request object
  * @returns {Promise<HealthCheckResponse>}
  */
-async function healthCheck ({ params, relayer, logger, engines, orderbooks, store }, { HealthCheckResponse }) {
+async function healthCheck ({ params, relayer, logger, engines, orderbooks, store }) {
   const { includeRecordCounts = false } = params
 
   const engineStatus = Array.from(engines).map(([ symbol, engine ]) => {

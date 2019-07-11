@@ -1,15 +1,12 @@
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+
 /**
  * Retrieve all block orders for the given market
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {Object} request.params - Request parameters from the client
- * @param {BlockOrderWorker} request.blockOrderWorker
- * @param {Object} request.logger
- * @param {Object} responses
- * @param {Function} responses.GetBlockOrdersResponse - constructor for GetBlockOrdersResponse messages
- * @returns {Promise<GetBlockOrdersResponse>}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<Object>}
  */
-async function getBlockOrders ({ params, logger, blockOrderWorker }, { GetBlockOrdersResponse }) {
+async function getBlockOrders ({ params, logger, blockOrderWorker }) {
   let { options } = params
 
   // If no options are passed, then we'll make sure to default the options arg to

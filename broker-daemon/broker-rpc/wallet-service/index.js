@@ -21,9 +21,9 @@ class WalletService {
    * @class
    * @param {String} protoPath
    * @param {Object} options
-   * @param {Map<String, LndEngine>} options.engines
+   * @param {Map<string, Engine>} options.engines
    * @param {RelayerClient} options.relayer
-   * @param {Map<String, Orderbook>} options.orderbooks - Collection of all active Orderbooks
+   * @param {Map<string, Orderbook>} options.orderbooks - Collection of all active Orderbooks
    * @param {BlockOrderWorker} opts.blockOrderWorker
    * @param {Function} options.auth
    * @param {Logger} options.logger
