@@ -7,7 +7,7 @@
  * @param {string} request.params.symbol - currency symbol of the wallet e.g. `BTC`
  * @param {string} request.params.password - password for the existing wallet
  * @param {string} request.params.seed - string representation of 24 word mnemonic seed delimited by spaces
- * @param {string} request.params.backupPath - backup path file
+ * @param {string} request.params.backup - backup path file
  * @param {Map<Engine>} request.engines
  * @param {Object} responses
  * @param {Function} responses.EmptyResponse

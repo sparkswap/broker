@@ -550,7 +550,7 @@ async function recover (args, opts, logger) {
     const client = new BrokerDaemonClient(rpcAddress)
 
     const password = await askQuestion(`Please enter your wallet password:`, { silent: true })
-    const seed = await askQuestion(`Please enter your 24 word recover seed, with each word separated by spaces`)
+    let seed = await askQuestion('Please enter your 24 word recover seed, with each word separated by spaces:')
     const shouldUseBackup = await askQuestion('Recover with backup file? Y/N')
 
     let backup = true
@@ -558,6 +558,10 @@ async function recover (args, opts, logger) {
     if (ACCEPTED_ANSWERS.includes(shouldUseBackup.toLowerCase())) {
       backup = false
     }
+
+    // seed will be returned from the question as a string which needs to be converted
+    // to an array for the recoverWallet endpoint
+    seed = seed.split(' ')
 
     await client.walletService.recoverWallet({ symbol, password, seed, backup })
   } catch (e) {

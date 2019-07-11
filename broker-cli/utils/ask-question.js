@@ -39,7 +39,7 @@ function suppressInput (message, char) {
       break
     default:
       process.stdout.clearLine()
-      readline.cursorTo(process.stdout, 0)
+      readline.cursorTo(process.stdout, 0, 0)
       process.stdout.write(`${message} `)
       break
   }
@@ -59,16 +59,23 @@ function askQuestion (message, { silent = false } = {}) {
     output: process.stdout
   })
 
+  const dataHandler = (char) => suppressInput(message, char)
+
   // If `silent` is set to true, we open stdin and suppress all output until we
   // receive an 'end of data' command such as enter/return
   if (silent) {
-    process.stdin.on('data', char => suppressInput(message, char))
+    process.stdin.on('data', dataHandler)
   }
 
   return new Promise((resolve, reject) => {
     try {
       rl.question(`${message} `, (answer) => {
-        rl.history = rl.history.slice(1)
+        process.stdin.removeListener('data', dataHandler)
+        // If the process is interactive (non-TTY) then we can remove the history.
+        // If the terminal is TTY then rl.history is not defined
+        if (rl.history) {
+          rl.history = rl.history.slice(1)
+        }
         rl.close()
         return resolve(answer)
       })

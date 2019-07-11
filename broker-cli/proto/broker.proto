@@ -1799,7 +1799,7 @@ message RecoverWalletRequest {
   // 24 word mnemonic seed
   repeated string seed = 3;
   // The path of the backup file
-  string backup_path = 4;
+  bool backup = 4;
 }
 
 /**
@@ -2284,7 +2284,7 @@ service WalletService {
    * This RPC can only be used if the specified engine's wallet does not exist (new broker)
    *
    * ```javascript
-   * await walletService.recoverWallet({ symbol: 'BTC', password: 'your-password', seed: ['array', 'of', 'strings'], backupPath: '/backup/lnd-btc.backup')
+   * await walletService.recoverWallet({ symbol: 'BTC', password: 'your-password', seed: ['array', 'of', 'strings'], backup: true)
    * ```
    *
    * ```shell
