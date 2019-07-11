@@ -1,9 +1,14 @@
 const { MarketEvent } = require('../../models')
-const { Big } = require('../../utils')
+const {
+  Big,
+  GrpcResponse: GetTradesResponse
+} = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
 
 /**
  * Default limit for number of records returned per call
- * @type {Integer}
+ * @type {typeof Big}
  * @constant
  */
 const DEFAULT_LIMIT = Big(50)
@@ -11,19 +16,11 @@ const DEFAULT_LIMIT = Big(50)
 /**
  * Retrieve information about trades (filled orders) since a specified date.
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {object} request.params - Request parameters from the client
- * @param {string} request.params.market - market symbol e.g. BTC/LTC
- * @param {string} request.params.since - ISO8601 millisecond timestamp
- * @param {string} request.params.limit
- * @param {object} request.logger
- * @param  {Map<string, Orderbook>} request.orderbooks - Collection of all active Orderbooks
- * @param {object} responses
- * @param {Function} responses.GetTradesResponse - constructor for GetTradesResponse messages
- * @returns {responses.GetTradesResponse}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<GetTradesResponse>}
  */
 
-async function getTrades ({ params, logger, orderbooks }, { GetTradesResponse }) {
+async function getTrades ({ params, logger, orderbooks }) {
   try {
     const { market, since } = params
     const orderbook = orderbooks.get(market.toUpperCase())

@@ -310,7 +310,7 @@ class Orderbook {
    * Gets MarketEvents by timestamp
    *
    * @param {string} timestamp - timestamp in nano-seconds
-   * @returns {Promise<Array<MarketEventOrder>>}
+   * @returns {Promise<Array<MarketEvent>>}
    */
   async getMarketEventsByTimestamp (timestamp) {
     this.assertSynced()

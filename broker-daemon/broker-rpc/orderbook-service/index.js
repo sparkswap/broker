@@ -7,13 +7,16 @@ const getSupportedMarkets = require('./get-supported-markets')
 const getMarketStats = require('./get-market-stats')
 const getTrades = require('./get-trades')
 
+/** @typedef {import('../broker-rpc-server').RelayerClient} RelayerClient */
+/** @typedef {import('../broker-rpc-server').Orderbook} Orderbook */
+
 class OrderBookService {
   /**
    * @param {string} protoPath
    * @param {object} opts
    * @param {object} opts.logger
    * @param {RelayerClient} opts.relayer
-   * @param {Map} opts.orderbooks
+   * @param {Map<string, Orderbook>} opts.orderbooks
    * @param {Function} opts.auth
    */
   constructor (protoPath, { logger, relayer, orderbooks, auth }) {
@@ -24,20 +27,12 @@ class OrderBookService {
     this.definition = this.proto.broker.rpc.OrderBookService.service
     this.serviceName = 'OrderBookService'
 
-    const {
-      WatchMarketResponse,
-      GetOrderbookResponse,
-      GetSupportedMarketsResponse,
-      GetMarketStatsResponse,
-      GetTradesResponse
-    } = this.proto.broker.rpc
-
     this.implementation = {
-      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks, auth }, { WatchMarketResponse }).register(),
-      getOrderbook: new GrpcUnaryMethod(getOrderbook, this.messageId('getOrderbook'), { logger, relayer, orderbooks, auth }, { GetOrderbookResponse }).register(),
-      getSupportedMarkets: new GrpcUnaryMethod(getSupportedMarkets, this.messageId('getSupportedMarkets'), { logger, relayer, orderbooks }, { GetSupportedMarketsResponse }).register(),
-      getMarketStats: new GrpcUnaryMethod(getMarketStats, this.messageId('getMarketStats'), { logger, orderbooks }, { GetMarketStatsResponse }).register(),
-      getTrades: new GrpcUnaryMethod(getTrades, this.messageId('getTrades'), { logger, relayer, orderbooks }, { GetTradesResponse }).register()
+      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks, auth }).register(),
+      getOrderbook: new GrpcUnaryMethod(getOrderbook, this.messageId('getOrderbook'), { logger, relayer, orderbooks, auth }).register(),
+      getSupportedMarkets: new GrpcUnaryMethod(getSupportedMarkets, this.messageId('getSupportedMarkets'), { logger, relayer, orderbooks }).register(),
+      getMarketStats: new GrpcUnaryMethod(getMarketStats, this.messageId('getMarketStats'), { logger, orderbooks }).register(),
+      getTrades: new GrpcUnaryMethod(getTrades, this.messageId('getTrades'), { logger, relayer, orderbooks }).register()
     }
   }
 
