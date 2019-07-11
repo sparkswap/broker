@@ -12,6 +12,10 @@ const { grpcDeadlineInterceptor } = require('../../broker-cli/utils')
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
 
+/** @typedef {import('events')} EventEmitter */
+/** @typedef {import('level-sublevel')} Sublevel */
+/** @typedef {import('..').Logger} Logger */
+
 /**
  * Path for the Proto files for the Relayer
  * @type {string}
@@ -22,7 +26,7 @@ const RELAYER_PROTO_PATH = './proto/relayer.proto'
 
 /**
  * @constant
- * @type {string}
+ * @type {boolean}
  * @default
  */
 const PRODUCTION = process.env.NODE_ENV === 'production'
@@ -105,7 +109,7 @@ class RelayerClient {
   /**
    * Opens a stream with the exchange to watch for market events
    *
-   * @param {LevelUP} store
+   * @param {Sublevel} store
    * @param {Object} params
    * @param {string} params.baseSymbol
    * @param {string} params.counterSymbol
