@@ -564,6 +564,8 @@ async function recover (args, opts, logger) {
     seed = seed.split(' ')
 
     await client.walletService.recoverWallet({ symbol, password, seed, backup })
+
+    logger.info('Wallet recovery process started successfully')
   } catch (e) {
     logger.error(handleError(e))
   }
