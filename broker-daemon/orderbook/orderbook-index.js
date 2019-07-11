@@ -1,14 +1,16 @@
 const { MarketEvent, MarketEventOrder } = require('../models')
 const { SubsetStore } = require('../utils')
 
+/** @typedef {import('level-sublevel')} Sublevel */
+
 /**
  * @class Index of active orders based on events received from the Relayer
  */
 class OrderbookIndex extends SubsetStore {
   /**
    * Create a new index from a base store and a store of Market Events
-   * @param {sublevel} store      - Base store to sublevel from
-   * @param {sublevel} eventStore - Store of MarketEvents to index
+   * @param {Sublevel} store      - Base store to sublevel from
+   * @param {Sublevel} eventStore - Store of MarketEvents to index
    * @param {string} marketName   - Name of the market to index
    */
   constructor (store, eventStore, marketName) {

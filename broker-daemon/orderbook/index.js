@@ -292,7 +292,7 @@ class Orderbook {
     this.assertSynced()
     return getRecords(
       this.store,
-      (key, value) => JSON.parse(value),
+      (_key, value) => JSON.parse(value),
       // Limits the query to gte to a specific timestamp
       MarketEvent.rangeFromTimestamp(timestamp)
     )
@@ -308,7 +308,7 @@ class Orderbook {
     this.assertSynced()
     return getRecords(
       this.eventStore,
-      (key, value) => JSON.parse(value),
+      (_key, value) => JSON.parse(value),
       // Limits the query to gte to a specific timestamp
       MarketEvent.rangeFromTimestamp(timestamp)
     )

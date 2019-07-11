@@ -40,8 +40,7 @@ function createLogger () {
   const filterSensitive = winston.format((info) => {
     const updatedInfo = Object.assign({}, info)
 
-    Object.entries(updatedInfo).forEach(([key, value]) => {
-      void value
+    Object.entries(updatedInfo).forEach(([key, _value]) => {
       if (SENSITIVE_PROP_LIST.includes(key)) {
         updatedInfo[key] = SENSITIVE_REPLACEMENT
       }

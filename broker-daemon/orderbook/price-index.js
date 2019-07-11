@@ -1,16 +1,19 @@
 const { SublevelIndex } = require('../utils')
 const { MarketEventOrder } = require('../models')
 
+/** @typedef {import('level-sublevel')} Sublevel */
+
 /**
  * @class Index by price for a side of the market
  */
 class PriceIndex extends SublevelIndex {
   /**
    * Create an index by price for a side of the market
-   * @param  {sublevel} store    - Store with the underlying orders
-   * @param  {string}   side     - Side of the market to index (i.e. `BID` or `ASK`)
+   * @param {Sublevel} store    - Store with the underlying orders
+   * @param {string}   side     - Side of the market to index (i.e. `BID` or `ASK`)
    */
   constructor (store, side) {
+    // @ts-ignore
     super(store, side)
     this.side = side
     this.getValue = this._getValue.bind(this)
@@ -42,11 +45,15 @@ class PriceIndex extends SublevelIndex {
 
   /**
    * Placeholder for implementations of the price index
-   * @param {string} quantumPrice - Decimal of the quantumPrice
+   * @param {string} _quantumPrice - Decimal of the quantumPrice
+   * @returns {string}
    * @throws {Error} keyForPrice must be implemented by child class
    */
-  keyForPrice (quantumPrice) {
-    throw new Error('`keyForPrice` must be implemented by child classes.')
+  keyForPrice (_quantumPrice) {
+    if (_quantumPrice || !_quantumPrice) {
+      throw new Error('`keyForPrice` must be implemented by child classes.')
+    }
+    return ''
   }
 
   /**

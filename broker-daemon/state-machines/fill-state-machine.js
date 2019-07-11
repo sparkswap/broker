@@ -176,7 +176,7 @@ const FillStateMachine = StateMachine.factory({
      * Actual creation is done in `onBeforeCreate` so that the transition can be cancelled if creation
      * on the Relayer fails.
      *
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @param  {string} blockOrderId - Id of the block order that this fill belongs to
      * @param {Object} order
      * @param {string} order.orderId       - Relayer-assigned unique ID for the order being filled
@@ -189,8 +189,7 @@ const FillStateMachine = StateMachine.factory({
      * @param {string} fill.fillAmount     - Amount of base currency (in base units) of the order to fill
      * @returns {Promise<void>}
      */
-    onBeforeCreate: async function (lifecycle, blockOrderId, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
-      void lifecycle
+    onBeforeCreate: async function (_lifecycle, blockOrderId, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
       this.fill = new Fill(blockOrderId, {
         orderId,
         baseSymbol,
@@ -253,11 +252,10 @@ const FillStateMachine = StateMachine.factory({
 
     /**
      * Attempt to fill the order as soon as the fill is created
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {void}
      */
-    onAfterCreate: function (lifecycle) {
-      void lifecycle
+    onAfterCreate: function (_lifecycle) {
       this.logger.info(`Create transition completed, triggering fill`)
 
       // you can't start a transition while in another one,
@@ -275,11 +273,10 @@ const FillStateMachine = StateMachine.factory({
      * Actual filling on the relayer is done in `onBeforeFill` so that the transition can be cancelled
      * if filling on the Relayer fails.
      *
-     * @param {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {Promise<void>} promise that rejects if filling on the relayer fails
      */
-    onBeforeFillOrder: async function (lifecycle) {
-      void lifecycle
+    onBeforeFillOrder: async function (_lifecycle) {
       const {
         feePaymentRequest,
         feeRequired,
@@ -349,11 +346,10 @@ const FillStateMachine = StateMachine.factory({
     },
     /**
      * Listen for order executions
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {void}
      */
-    triggerExecute: function (lifecycle) {
-      void lifecycle
+    triggerExecute: function (_lifecycle) {
       const { fillId } = this.fill
       this.logger.info(`In filled state, attempting to listen for executions on fill ${fillId}`)
 
@@ -401,11 +397,10 @@ const FillStateMachine = StateMachine.factory({
      * This function gets called before the `execute` transition (triggered by a call to `execute`)
      * Actual execution is done in `onBeforeFill` so that the transition can be cancelled if execution fails
      *
-     * @param {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {Promise<void>}          Promise that rejects if execution fails
      */
-    onBeforeExecute: async function (lifecycle) {
-      void lifecycle
+    onBeforeExecute: async function (_lifecycle) {
       const { makerAddress, swapHash, symbol, amount } = this.fill.paramsForSwap
       const engine = this.engines.get(symbol)
       if (!engine) {
@@ -418,12 +413,11 @@ const FillStateMachine = StateMachine.factory({
 
     /**
      * Log errors from rejection
-     * @param {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @param {Error}  error     - Error that caused the rejection
      * @returns {void}
      */
-    onBeforeReject: function (lifecycle, error) {
-      void lifecycle
+    onBeforeReject: function (_lifecycle, error) {
       this.logger.error(`Encountered error during transition, rejecting`, error)
       this.fill.error = error
     },

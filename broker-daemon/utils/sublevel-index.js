@@ -105,8 +105,7 @@ class Index {
     // reference the Index context in a local variable
     const index = this
 
-    return stream.pipe(through.obj(function ({ key, value }, encoding, callback) {
-      void encoding
+    return stream.pipe(through.obj(function ({ key, value }, _encoding, callback) {
       // skip objects that are marked for deletion
       if (index._isMarkedForDeletion(key)) {
         return callback()
