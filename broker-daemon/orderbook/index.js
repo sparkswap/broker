@@ -3,7 +3,6 @@ const AskIndex = require('./ask-index')
 const BidIndex = require('./bid-index')
 const OrderbookIndex = require('./orderbook-index')
 const { getRecords, Big } = require('../utils')
-const nano = require('nano-seconds')
 
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)

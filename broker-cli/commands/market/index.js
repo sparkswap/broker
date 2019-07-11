@@ -30,7 +30,7 @@ module.exports = (program) => {
     .option('--market <marketName>', MARKET_NAME_HELP_STRING, validations.isMarketName, null, true)
     .option('--rpc-address [rpc-address]', RPC_ADDRESS_HELP_STRING, validations.isHost)
     .action(async (args, opts, logger) => {
-      const { command, subArguments } = args
+      const { command } = args
       const { market } = opts
 
       switch (command) {

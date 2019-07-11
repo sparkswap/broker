@@ -27,8 +27,7 @@ class OrderBookService {
       WatchMarketResponse,
       GetOrderbookResponse,
       GetSupportedMarketsResponse,
-      GetMarketStatsResponse,
-      GetTradesResponse
+      GetMarketStatsResponse
     } = this.proto.broker.rpc
 
     this.implementation = {
