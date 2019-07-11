@@ -43,8 +43,7 @@ class StateMachineRejection extends StateMachinePlugin {
     const capitalizedRejectName = `${plugin.rejectName.charAt(0).toUpperCase()}${plugin.rejectName.slice(1)}`
 
     return {
-      [`onBefore${capitalizedRejectName}`]: function (lifecycle, err) {
-        void lifecycle
+      [`onBefore${capitalizedRejectName}`]: function (_lifecycle, err) {
         this[plugin.errorName] = err
       }
     }

@@ -238,7 +238,7 @@ const OrderStateMachine = StateMachine.factory({
      * Actual creation is done in `onBeforeCreate` so that the transition can be cancelled if creation
      * on the Relayer fails.
      *
-     * @param {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @param {string} blockOrderid - Id of the block order that the order belongs to
      * @param {Object} opts
      * @param {string} opts.side          - Side of the market being taken (i.e. BID or ASK)
@@ -249,8 +249,7 @@ const OrderStateMachine = StateMachine.factory({
      * @returns {Promise<void>}
      */
 
-    onBeforeCreate: async function (lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
-      void lifecycle
+    onBeforeCreate: async function (_lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
       const baseEngine = this.engines.get(baseSymbol)
       if (!baseEngine) {
         throw new Error(`No engine available for ${baseSymbol}`)
@@ -298,11 +297,10 @@ const OrderStateMachine = StateMachine.factory({
 
     /**
      * Attempt to place the order as soon as its created
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {void}
      */
-    onAfterCreate: function (lifecycle) {
-      void lifecycle
+    onAfterCreate: function (_lifecycle) {
       this.logger.info(`Create transition completed, triggering place`)
 
       // you can't start a transition while in another one,
@@ -322,11 +320,10 @@ const OrderStateMachine = StateMachine.factory({
      * Listen for order fills when in the `placed` state
      * This is done based on the state and not the transition so that it gets actioned when being re-hydrated from storage
      * [is that the right thing to do?]
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {Promise<void>}
      */
-    onBeforePlace: async function (lifecycle) {
-      void lifecycle
+    onBeforePlace: async function (_lifecycle) {
       const {
         feePaymentRequest,
         feeRequired,
@@ -431,8 +428,7 @@ const OrderStateMachine = StateMachine.factory({
       return undefined
     },
 
-    onBeforeFill: function (lifecycle, fill) {
-      void lifecycle
+    onBeforeFill: function (_lifecycle, fill) {
       const { orderId } = this.order
 
       this.logger.info(`Order ${orderId} is being filled`, { orderId })
@@ -441,8 +437,7 @@ const OrderStateMachine = StateMachine.factory({
       this.order.setFilledParams({ swapHash, fillAmount, takerAddress })
     },
 
-    onAfterFill: function (lifecycle) {
-      void lifecycle
+    onAfterFill: function (_lifecycle) {
       // you can't start a transition while in another one,
       // so we `nextTick` our way out of the current transition
       // @see {@link https://github.com/jakesgordon/javascript-state-machine/issues/143}
@@ -454,11 +449,10 @@ const OrderStateMachine = StateMachine.factory({
      * This function gets called before the `execute` transition (triggered by a call to `execute`)
      * Action is taken in `onBeforeExecute` so that the transition will fail if this function rejects its promise
      *
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {Promise<void>} Promise that rejects if execution prep or notification fails
      */
-    onBeforeExecute: async function (lifecycle) {
-      void lifecycle
+    onBeforeExecute: async function (_lifecycle) {
       const { orderId, swapHash } = this.order
       const inboundPayment = this.inboundPayment()
       const timeout = new Date(this.dates.filled.getTime() + SWAP_TIMEOUT)
@@ -472,11 +466,10 @@ const OrderStateMachine = StateMachine.factory({
 
     /**
      * Trigger settle after execution
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {void}
      */
-    onAfterExecute: function (lifecycle) {
-      void lifecycle
+    onAfterExecute: function (_lifecycle) {
       // you can't start a transition while in another one,
       // so we `nextTick` our way out of the current transition
       // @see {@link https://github.com/jakesgordon/javascript-state-machine/issues/143}
@@ -488,11 +481,10 @@ const OrderStateMachine = StateMachine.factory({
      * to the Relayer so we can reimbursed for our deposit.
      * We perform the settlement monitoring and order completion in the same action
      * since settlement monitoring can be repeated with no issue.
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {Promise}
      */
-    onBeforeComplete: async function (lifecycle) {
-      void lifecycle
+    onBeforeComplete: async function (_lifecycle) {
       const { swapHash } = this.order
       const inboundPayment = this.inboundPayment()
       const outboundPayment = this.outboundPayment()
@@ -517,11 +509,10 @@ const OrderStateMachine = StateMachine.factory({
 
     /**
      * Trigger settle if we are re-hydrating state into the executing state
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {void}
      */
-    triggerState: function (lifecycle) {
-      void lifecycle
+    triggerState: function (_lifecycle) {
       const nextState = {
         [STATES.FILLED]: 'execute',
         [STATES.EXECUTING]: 'complete',
@@ -541,12 +532,11 @@ const OrderStateMachine = StateMachine.factory({
 
     /**
      * Log errors from rejection
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @param  {Error}  error     - Error that caused the rejection
      * @returns {void}
      */
-    onBeforeReject: function (lifecycle, error) {
-      void lifecycle
+    onBeforeReject: function (_lifecycle, error) {
       this.logger.error(`Encountered error during transition, rejecting`, error)
       this.order.error = error
     }
