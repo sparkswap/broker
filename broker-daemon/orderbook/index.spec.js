@@ -525,14 +525,14 @@ describe('Orderbook', () => {
       getRecords.resolves(orders)
     })
 
-    it('makes sure the orderbook is synced', () => {
-      orderbook.getOrders({ side: 'ASK', limit: '100' })
+    it('makes sure the orderbook is synced', async () => {
+      await orderbook.getOrders({ side: 'ASK', limit: '100' })
 
       expect(orderbook.assertSynced).to.have.been.calledOnce()
     })
 
     it('throws if using an invalid side', () => {
-      expect(() => orderbook.getOrders({ side: 'UGH', limit: '100' })).to.throw(Error)
+      expect(orderbook.getOrders({ side: 'UGH', limit: '100' })).to.be.rejectedWith(Error)
     })
 
     it('returns asks when specified', async () => {
@@ -746,7 +746,8 @@ describe('Orderbook', () => {
     it('gets the best orders given the side and depth', async () => {
       await orderbook.getAveragePrice(side, targetDepth)
       expect(orderbook.getBestOrders).to.have.been.called()
-      expect(orderbook.getBestOrders).to.have.been.calledWith({ side, depth: targetDepth })
+      expect(orderbook.getBestOrders).to.have.been.calledWith(
+        { side, depth: targetDepth, quantumPrice: null })
     })
 
     it('throws an error if there is not sufficient depth in the orderbook', () => {

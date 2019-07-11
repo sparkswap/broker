@@ -1,6 +1,6 @@
 const MarketEvent = require('./market-event')
 const Big = require('../utils/big')
-const CONFIG = require('../config')
+const CONFIG = require('../config.json')
 
 /**
  * Class representation from market events that are used for the orderbook. This model
@@ -88,7 +88,6 @@ class MarketEventOrder {
   }
 
   /**
-   * Serialize the market event order for use by end users
    * @param {Object} event
    * @param {string} marketName
    * @returns {MarketEventOrder}

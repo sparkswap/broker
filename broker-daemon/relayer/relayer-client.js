@@ -115,7 +115,7 @@ class RelayerClient {
    * @param {string} params.counterSymbol
    * @param {string} params.lastUpdated - nanosecond timestamp
    * @param {string} params.sequence
-   * @returns {EventEmitter} An event emitter that emits `sync` when the market is up to date and `end` when the stream ends (by error or otherwise)
+   * @returns {MarketWatcher} An event emitter that emits `sync` when the market is up to date and `end` when the stream ends (by error or otherwise)
    */
   watchMarket (store, { baseSymbol, counterSymbol, lastUpdated, sequence }) {
     const RESPONSE_TYPES = this.proto.WatchMarketResponse.ResponseType
