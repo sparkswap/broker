@@ -61,9 +61,6 @@ class StateMachineAbstractPlugin {
    * @returns {Array} Array of JSM-compatible transitions
    */
   get transitions () {
-    // @ts-ignore
-    const plugin = this // eslint-disable-line
-
     return []
   }
 
@@ -72,9 +69,6 @@ class StateMachineAbstractPlugin {
    * @returns {object} Key value of lifecycle events and functions to be called during them
    */
   get observers () {
-    // @ts-ignore
-    const plugin = this // eslint-disable-line
-
     return {}
   }
 
@@ -83,9 +77,6 @@ class StateMachineAbstractPlugin {
    * @returns {object} Object of all methods to be mixed in
    */
   get methods () {
-    // @ts-ignore
-    const plugin = this // eslint-disable-line
-
     return {}
   }
 
@@ -95,9 +86,6 @@ class StateMachineAbstractPlugin {
    * @returns {object} Property definitions that can be used with `Object.defineProperties`
    */
   get properties () {
-    // @ts-ignore
-    const plugin = this // eslint-disable-line
-
     return {}
   }
 
@@ -107,9 +95,6 @@ class StateMachineAbstractPlugin {
    * @returns {object} Object of all static methods to be mixed in
    */
   get staticMethods () {
-    // @ts-ignore
-    const plugin = this // eslint-disable-line
-
     return {}
   }
 }

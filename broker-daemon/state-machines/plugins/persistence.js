@@ -127,7 +127,6 @@ class StateMachinePersistence extends StateMachinePlugin {
           let key
 
           if (typeof plugin.key === 'function') {
-            // @ts-ignore
             key = plugin.key.call(this)
           } else {
             key = this[plugin.key]
@@ -197,7 +196,6 @@ class StateMachinePersistence extends StateMachinePlugin {
 
         // set the key
         if (typeof plugin.key === 'function') {
-          // @ts-ignore
           plugin.key.call(instance, key, parsedValue)
         } else {
           instance[plugin.key] = key
