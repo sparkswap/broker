@@ -551,7 +551,7 @@ async function recover (args, opts, logger) {
 
     const password = await askQuestion(`Please enter your wallet password:`, { silent: true })
     let seed = await askQuestion('Please enter your 24 word recovery seed, with each word separated by spaces:')
-    const shouldUseBackup = await askQuestion('Recover with backup file? Y/N')
+    const shouldUseBackup = await askQuestion('Recover with backup file? Y/N:')
 
     let backup = false
 
@@ -565,7 +565,7 @@ async function recover (args, opts, logger) {
 
     await client.walletService.recoverWallet({ symbol, password, seed, backup })
 
-    logger.info('Wallet recovery process started successfully')
+    logger.info('Wallet recovery process started successfully!'.green)
   } catch (e) {
     console.log(e.message)
     logger.error(handleError(e))
