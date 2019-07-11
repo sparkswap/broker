@@ -1,8 +1,13 @@
 const nano = require('nano-seconds')
 
 const { BlockOrder, MarketEvent } = require('../../models')
-const { Big } = require('../../utils')
+const {
+  Big,
+  GrpcResponse: GetMarketStatsResponse
+} = require('../../utils')
 const MarketStats = require('./market-stats')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
 
 /**
  * @constant
@@ -14,15 +19,10 @@ const ONE_DAY_IN_NANOSECONDS = Big('86400000000000')
 /**
  * Gets price ticker (stats) information about a specified market
  *
- * @param {Object} request - request object
- * @param {Object} request.params
- * @param {Logger} request.logger
- * @param {Map<Orderbook>} request.orderbooks
- * @param {Object} responses
- * @param {Function} responses.GetMarketStatsResponse
+ * @param {GrpcUnaryMethodRequest} request - request object
  * @returns {Promise<GetMarketStatsResponse>}
  */
-async function getMarketStats ({ params, logger, orderbooks }, { GetMarketStatsResponse }) {
+async function getMarketStats ({ params, logger, orderbooks }) {
   const { market } = params
   const orderbook = orderbooks.get(market)
 
