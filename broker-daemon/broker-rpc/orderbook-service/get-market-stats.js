@@ -6,7 +6,7 @@ const MarketStats = require('./market-stats')
 
 /**
  * @constant
- * @type {Big}
+ * @type {typeof Big}
  * @default
  */
 const ONE_DAY_IN_NANOSECONDS = Big('86400000000000')
