@@ -1,6 +1,6 @@
 const MarketEvent = require('./market-event')
 const Big = require('../utils/big')
-const CONFIG = require('../config')
+const CONFIG = require('../config.json')
 
 /**
  * Class representation from market events that are used for the orderbook. This model
@@ -9,7 +9,7 @@ const CONFIG = require('../config')
 class MarketEventOrder {
   /**
    * Create a MarketEventOrder
-   * @param {Object} order
+   * @param {object} order
    * @param {string} order.orderId       - Unique ID assigned by the relayer to identify an order
    * @param {string} order.createdAt     - When the order was created
    * @param {string} order.baseAmount    - Amount, represented as an integer in the base currency's smallest unit, to be transacted
@@ -57,6 +57,11 @@ class MarketEventOrder {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
     const counterCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === this.counterSymbol)
 
+    if (!baseCurrencyConfig || !counterCurrencyConfig ||
+      !baseCurrencyConfig.quantumsPerCommon || !counterCurrencyConfig.quantumsPerCommon) {
+      throw new Error('Invalid currency config')
+    }
+
     const baseCommonAmount = Big(this.baseAmount).div(baseCurrencyConfig.quantumsPerCommon)
     const counterCommonAmount = Big(this.counterAmount).div(counterCurrencyConfig.quantumsPerCommon)
 
@@ -70,12 +75,15 @@ class MarketEventOrder {
   get amount () {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
 
+    if (!baseCurrencyConfig || !baseCurrencyConfig.quantumsPerCommon) {
+      throw new Error('Invalid currency config')
+    }
     return Big(this.baseAmount).div(baseCurrencyConfig.quantumsPerCommon).toFixed(16)
   }
 
   /**
    * Serialize the market event order for use by end users
-   * @returns {Object}
+   * @returns {object}
    */
   serialize () {
     const { orderId, side, price, amount } = this
@@ -88,8 +96,7 @@ class MarketEventOrder {
   }
 
   /**
-   * Serialize the market event order for use by end users
-   * @param {Object} event
+   * @param {object} event
    * @param {string} marketName
    * @returns {MarketEventOrder}
    */
@@ -109,6 +116,7 @@ class MarketEventOrder {
       })
     }
 
+    // @ts-ignore
     return new this(params)
   }
 

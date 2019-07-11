@@ -4,7 +4,7 @@
  * Retrieve all block orders for the given market
  *
  * @param {GrpcUnaryMethodRequest} request - request object
- * @returns {Promise<Object>}
+ * @returns {Promise<object>}
  */
 async function getBlockOrders ({ params, logger, blockOrderWorker }) {
   let { options } = params

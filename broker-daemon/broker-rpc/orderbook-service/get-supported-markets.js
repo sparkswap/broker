@@ -1,13 +1,13 @@
 /**
  * Gets valid markets from the relayer and populates market information for these markets
  *
- * @param {Object} request - request object
- * @param {Object} request.params
+ * @param {object} request - request object
+ * @param {object} request.params
  * @param {RelayerClient} request.relayer
  * @param {Logger} request.logger
  * @param {Engine} request.engines
  * @param {Map<Orderbook>} request.orderbooks
- * @param {Object} responses
+ * @param {object} responses
  * @param {Function} responses.GetSupportedMarketsResponse
  * @returns {Promise<GetSupportedMarketsResponse>}
  */

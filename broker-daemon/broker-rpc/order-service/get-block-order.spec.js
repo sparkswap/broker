@@ -28,7 +28,7 @@ describe('getBlockOrder', () => {
       blockOrderId: 'fakeID'
     }
 
-    return expect(getBlockOrder({ params, blockOrderWorker }, { GetBlockOrderResponse })).to.eventually.be.rejectedWith(Error, 'Block Order with ID fakeID was not found.')
+    return expect(getBlockOrder({ params, blockOrderWorker }, { GetBlockOrderResponse })).to.eventually.be.rejectedWith(Error, 'Block Order with ID fakeID was not found: Error: fake error')
   })
 
   it('retrieves the block order by id', async () => {

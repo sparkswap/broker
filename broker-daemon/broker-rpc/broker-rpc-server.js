@@ -52,7 +52,7 @@ const IS_PRODUCTION = (process.env.NODE_ENV === 'production')
  * NOTE: This object will be mutated by gRPC (do not use Object.freeze)
  *
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const GRPC_SERVER_OPTIONS = {
@@ -76,7 +76,7 @@ const GRPC_SERVER_OPTIONS = {
  */
 class BrokerRPCServer {
   /**
-   * @param {Object} opts
+   * @param {object} opts
    * @param {Logger} opts.logger
    * @param {Map<string, Engine>} opts.engines
    * @param {RelayerClient} opts.relayer
@@ -85,6 +85,7 @@ class BrokerRPCServer {
    * @param {Map<string, Orderbook>} opts.orderbooks
    * @param {string} opts.privKeyPath - Path to private key for broker rpc
    * @param {string} opts.pubKeyPath - Path to public key for broker rpc
+   * @param {string} opts.privKeyPath - Path to private key for broker rpc
    * @param {boolean} [opts.disableAuth=false]
    * @param {boolean} [opts.enableCors=false]
    * @param {boolean} opts.isCertSelfSigned
@@ -157,7 +158,7 @@ class BrokerRPCServer {
   /**
    * Creates gRPC server credentials for the broker rpc server
    *
-   * @returns {Object} grpc credentials
+   * @returns {object} grpc credentials
    */
   createCredentials () {
     if (this.disableAuth) {

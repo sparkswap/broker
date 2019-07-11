@@ -17,8 +17,8 @@ class MarketWatcher extends EventEmitter {
    * Set up the watcher
    * @param  {GrpcServerStreaming}  watcher        - Stream of events from the Relayer
    * @param  {Sublevel}             store          - Leveldb compatible store
-   * @param  {Object}               RESPONSE_TYPES - Response types from the proto file
-   * @param  {Object} logger
+   * @param  {object}               RESPONSE_TYPES - Response types from the proto file
+   * @param  {object} logger
    */
   constructor (watcher, store, RESPONSE_TYPES, logger) {
     super()
@@ -94,7 +94,7 @@ class MarketWatcher extends EventEmitter {
   /**
    * Handle an inbound event from the Relayer
    * @private
-   * @param  {Object} response - Response from the Relayer stream
+   * @param  {object} response - Response from the Relayer stream
    * @returns {Promise<void>}
    */
   async handleResponse (response) {
@@ -154,8 +154,8 @@ class MarketWatcher extends EventEmitter {
   /**
    * Store a market event
    * @private
-   * @param {Object} response - Response from the Relayer
-   * @param {Object} response.marketEvent - Market Event to be created
+   * @param {object} response - Response from the Relayer
+   * @param {object} response.marketEvent - Market Event to be created
    * @returns {Promise<void>}
    */
   async createMarketEvent ({ marketEvent }) {
@@ -183,7 +183,7 @@ class MarketWatcher extends EventEmitter {
   /**
    * Emit an event when the watcher is up to date
    * @private
-   * @param {Object} args
+   * @param {object} args
    * @param {string} args.checksum - base64 string
    * @returns {void}
    */

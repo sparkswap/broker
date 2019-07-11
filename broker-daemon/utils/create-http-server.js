@@ -14,8 +14,8 @@ const corsMiddleware = require('./enable-cors')
  * http 404 handler for our http (express) server
  *
  * @param {Logger} logger
- * @param {Object} req - request object
- * @param {Object} res - response object
+ * @param {object} req - request object
+ * @param {object} res - response object
  */
 function handle404 (logger, req, res) {
   logger.debug('Received request but had no route', { url: req.url })
@@ -27,7 +27,7 @@ function handle404 (logger, req, res) {
  *
  * @param {string} protoPath
  * @param {string} rpcAddress
- * @param {Object} opts
+ * @param {object} opts
  * @param {boolean} [opts.disableAuth=false]
  * @param {boolean} [opts.enableCors=false]
  * @param {boolean} [opts.isCertSelfSigned=true]
@@ -35,7 +35,7 @@ function handle404 (logger, req, res) {
  * @param {string} opts.pubKeyPath
  * @param {Array<string>} opts.httpMethods
  * @param {Logger} opts.logger
- * @returns {Object}
+ * @returns {object}
  */
 function createHttpServer (protoPath, rpcAddress, { disableAuth = false, enableCors = false, isCertSelfSigned = true, privKeyPath, pubKeyPath, httpMethods, logger }) {
   const app = express()

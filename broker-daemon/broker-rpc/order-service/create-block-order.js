@@ -6,8 +6,8 @@ const { GrpcResponse: CreateBlockOrderResponse } = require('../../utils')
  * Creates an order with the relayer
  *
  * @param {GrpcUnaryMethodRequest} request - request object
- * @param {Object} responses
- * @param {Object} responses.TimeInForce - Time In Force enum
+ * @param {object} responses
+ * @param {object} responses.TimeInForce - Time In Force enum
  * @returns {Promise<CreateBlockOrderResponse>}
  */
 async function createBlockOrder ({ params, blockOrderWorker }, { TimeInForce }) {

@@ -40,7 +40,7 @@ const PRODUCTION = process.env.NODE_ENV === 'production'
  * NOTE: This object will be mutated by gRPC (do not use Object.freeze)
  *
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const GRPC_STREAM_OPTIONS = {
@@ -63,14 +63,14 @@ const GRPC_STREAM_OPTIONS = {
  */
 class RelayerClient {
   /**
-   * @typedef {Object} KeyPath
-   * @property {String} privKeyPath Path to a private key
-   * @property {String} pubKeyPath  Path to the public key corresponding to the private key
+   * @typedef {object} KeyPath
+   * @property {string} privKeyPath Path to a private key
+   * @property {string} pubKeyPath  Path to the public key corresponding to the private key
    */
 
   /**
    * @param {KeyPath} idKeyPath            - Path to public and private key for the broker's identity
-   * @param {Object}  relayerOpts
+   * @param {object}  relayerOpts
    * @param {string}  relayerOpts.host     - Hostname and port of the Relayer RPC server
    * @param {string}  relayerOpts.certPath - Absolute path to the root certificate for the Relayer
    * @param {Logger}  logger
@@ -110,12 +110,12 @@ class RelayerClient {
    * Opens a stream with the exchange to watch for market events
    *
    * @param {Sublevel} store
-   * @param {Object} params
+   * @param {object} params
    * @param {string} params.baseSymbol
    * @param {string} params.counterSymbol
    * @param {string} params.lastUpdated - nanosecond timestamp
    * @param {string} params.sequence
-   * @returns {EventEmitter} An event emitter that emits `sync` when the market is up to date and `end` when the stream ends (by error or otherwise)
+   * @returns {MarketWatcher} An event emitter that emits `sync` when the market is up to date and `end` when the stream ends (by error or otherwise)
    */
   watchMarket (store, { baseSymbol, counterSymbol, lastUpdated, sequence }) {
     const RESPONSE_TYPES = this.proto.WatchMarketResponse.ResponseType

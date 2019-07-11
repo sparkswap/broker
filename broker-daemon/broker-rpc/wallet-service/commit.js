@@ -16,12 +16,12 @@ const SMALL_CHAN_ERR = 'too small'
 /**
  * Grabs public lightning network information from relayer and opens a channel
  *
- * @param {Object} request - request object
- * @param {Object} request.params
+ * @param {object} request - request object
+ * @param {object} request.params
  * @param {RelayerClient} request.relayer
  * @param {Logger} request.logger
  * @param {Engine} request.engines
- * @param {Object} responses
+ * @param {object} responses
  * @param {Function} responses.EmptyResponse
  * @returns {Promise<EmptyResponse>}
  */

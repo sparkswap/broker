@@ -9,7 +9,7 @@ const { ERRORS: ENGINE_ERRORS } = require('lnd-engine')
 
 /**
  * A description of a payment on a Payment Channel Network
- * @typedef {Object} Payment
+ * @typedef {object} Payment
  * @property {Engine} engine      - Engine for interacting with the payment
  * @property {string} amount      - Amount, in the smallest unit, of the payment
  * @property {string} address     - Payment Channel Network address of the node
@@ -33,7 +33,7 @@ const RETRY_DELAY = 30000
  *
  * @todo Make this amount dynamic and determined with the price/amount or
  *       determined from the channel graph
- * @type {Number}
+ * @type {number}
  * @constant
  */
 const DEFAULT_MAKER_FWD_DELTA = 86400
@@ -45,7 +45,7 @@ const DEFAULT_MAKER_FWD_DELTA = 86400
  *
  * @todo Make this amount dynamic and published by the Relayer or determined
  *       from the channel graph
- * @type {Number}
+ * @type {number}
  * @constant
  */
 const DEFAULT_RELAYER_FWD_DELTA = 86400
@@ -57,7 +57,7 @@ const DEFAULT_RELAYER_FWD_DELTA = 86400
  *
  * @see {@link https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md}
  * @todo Make this amount dynamic and set by the broker/user
- * @type {Number}
+ * @type {number}
  * @constant
  */
 const DEFAULT_MIN_FINAL_DELTA = 86400
@@ -69,7 +69,7 @@ const DEFAULT_MIN_FINAL_DELTA = 86400
  * mainnet.
  *
  * @see {@link https://github.com/lightningnetwork/lnd/issues/535}
- * @type {Number}
+ * @type {number}
  * @constant
  */
 const BLOCK_BUFFER = 1200

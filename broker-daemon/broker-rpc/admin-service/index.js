@@ -10,9 +10,9 @@ const register = require('./register')
 class AdminService {
   /**
    * @param {string} protoPath
-   * @param {Object} opts
-   * @param {Object} opts.logger
-   * @param {Object} opts.relayer
+   * @param {object} opts
+   * @param {object} opts.logger
+   * @param {object} opts.relayer
    * @param {Map} opts.engines
    * @param {Map} opts.orderbooks
    * @param {Sublevel} opts.store

@@ -25,12 +25,8 @@ describe('BlockOrderNotFoundError', () => {
     expect(blockOrderError.stack).to.eql(err.stack)
   })
 
-  it('defaults to the caller stack if no error argument exists', () => {
-    expect(new BlockOrderNotFoundError(id).stack).to.not.eql(err.stack)
-  })
-
   it('provides an error message using the ID', () => {
-    expect(blockOrderError.message).to.be.eql('Block Order with ID fakeID was not found.')
+    expect(blockOrderError.message).to.be.eql('Block Order with ID fakeID was not found: Error: test error')
   })
 
   it('sets a notFound parameter for easy checking', () => {

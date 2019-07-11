@@ -4,7 +4,7 @@ const os = require('os')
 /**
  * Default configuration is in the root directory for the SparkSwap CLI
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const DEFAULT_CONFIG = require('../default-config.js')
@@ -30,7 +30,7 @@ const USER_CONFIG_FILEPATH = '.sparkswap/config.js'
  * We attempt to load the file and set default configuration values. We will also
  * warn the user if we have failed to parse their user config file.
  *
- * @returns {Object} config
+ * @returns {object} config
  */
 function loadConfig () {
   try {

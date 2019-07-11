@@ -34,7 +34,7 @@ const EXPONENTIAL_BACKOFF_DELAY = 5000
  * @param {Function} callFunction - function to be called
  * @param {number} attempts - number of retry attempts left
  * @param {number} delayTime - in milliseconds between calls
- * @param {Object} logOptions - if you want to pass information to log in the error log
+ * @param {object} logOptions - if you want to pass information to log in the error log
  * @returns {Promise}
  */
 async function exponentialBackoff (callFunction, attempts = EXPONENTIAL_BACKOFF_ATTEMPTS, delayTime = EXPONENTIAL_BACKOFF_DELAY, logOptions = {}) {

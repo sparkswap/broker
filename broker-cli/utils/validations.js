@@ -19,7 +19,7 @@ const MAX_VALUE = '9223372036854775807'
 
 /**
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const BLOCKCHAIN_NETWORKS = Object.freeze([
@@ -131,8 +131,8 @@ function isHost (str) {
 /**
  * Checks if a specified string is a valid path.
  *
- * @param {String} str - path to file
- * @returns {String} the path
+ * @param {string} str - path to file
+ * @returns {string} the path
  * @throws {Error} returns an error if the given string is not a valid path
  */
 // TODO: better path checking

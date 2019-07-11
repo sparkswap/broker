@@ -49,8 +49,8 @@ function suppressInput (message, char) {
  * Asks a question to a user through readline
  *
  * @param {string} message
- * @param {Object} options
- * @param {Object} [options.silent=false] - suppress typing for answer
+ * @param {object} options
+ * @param {object} [options.silent=false] - suppress typing for answer
  * @returns {Promise<string>} answer
  */
 function askQuestion (message, { silent = false } = {}) {

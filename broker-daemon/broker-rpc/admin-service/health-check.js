@@ -10,7 +10,7 @@ const {
 
 /**
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const ORDERBOOK_STATUS_CODES = Object.freeze({
@@ -20,7 +20,7 @@ const ORDERBOOK_STATUS_CODES = Object.freeze({
 
 /**
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const RELAYER_STATUS_CODES = Object.freeze({
@@ -32,7 +32,7 @@ const RELAYER_STATUS_CODES = Object.freeze({
  * Gets the relayer status through relayer's health check
  *
  * @param {RelayerClient} relayer - gRPC Client for interacting with the Relayer
- * @param {Object} opts
+ * @param {object} opts
  * @param {Logger} opts.logger
  * @returns {Promise<string>} status - either 'OK' or an error message if the call fails
  */

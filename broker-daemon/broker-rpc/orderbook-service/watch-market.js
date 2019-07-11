@@ -15,13 +15,13 @@ const neverResolve = new Promise(() => {})
  *
  * @function
  * @param {GrpcServerStreamingMethod~request} request - request object
- * @param {Object} request.params - Request parameters from the client
+ * @param {object} request.params - Request parameters from the client
  * @param {Function} request.send - Send a chunk of data to the client
  * @param {Function} request.onCancel - Handle cancelled streams
- * @param {Object} request.logger - logger for messages about the method
- * @param {Object} request.orderbooks - initialized orderbooks
+ * @param {object} request.logger - logger for messages about the method
+ * @param {object} request.orderbooks - initialized orderbooks
  * @param {RelayerClient} request.relayer - grpc Client for interacting with the relayer
- * @param {Object} responses
+ * @param {object} responses
  * @param {Function} responses.WatchMarketResponse - constructor for WatchMarketResponse messages
  * @returns {Promise<void>}
  */
@@ -40,7 +40,7 @@ async function watchMarket ({ params, send, onCancel, logger, orderbooks }, { Wa
 
   /**
    * Send market events to clients when records are added/deleted in the orderbook data store
-   * @param  {Object}  opts       - Database operation from LevelDb
+   * @param  {object}  opts       - Database operation from LevelDb
    * @param  {string}  opts.type  - type of database operation, i.e. `put` or `del`
    * @param  {string}  opts.key   - Key of the database object being `put`ed or `del`ed
    * @param  {string}  opts.value - Value of the database object to be `put` (undefined for `del`)

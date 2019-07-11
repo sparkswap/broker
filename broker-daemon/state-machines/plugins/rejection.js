@@ -6,7 +6,7 @@ const StateMachinePlugin = require('./abstract')
 class StateMachineRejection extends StateMachinePlugin {
   /**
    * Set up configuration for the rejection plugin, controlling which properties on the host object to use
-   * @param {Object} [options={}]
+   * @param {object} [options={}]
    * @param {string} options.errorName    - Property of the host state machine to hold any errors that lead to rejectino
    * @param {string} options.rejectName   - Property of the host state machine for the method to move to rejected state
    * @param {string} options.rejectedName - Name of rejected state
@@ -22,7 +22,7 @@ class StateMachineRejection extends StateMachinePlugin {
   /**
    * Transitions object to inject new transitions/states to the state machine
    * Use to add our custom `rejected` state to the state machine and its corresponding `reject` method
-   * @returns {Array<Object>} New transitions to be added
+   * @returns {Array<object>} New transitions to be added
    */
   get transitions () {
     const plugin = this
@@ -35,7 +35,7 @@ class StateMachineRejection extends StateMachinePlugin {
   /**
    * Observers object to add additional lifecycle observers
    * Used to add our `onBeforeReject` observer to add the error to the state machine property
-   * @returns {Object} Key value of observers
+   * @returns {object} Key value of observers
    */
   get observers () {
     const plugin = this
@@ -51,7 +51,7 @@ class StateMachineRejection extends StateMachinePlugin {
 
   /**
    * Add a `tryTo` method to the state machine to use the plugin
-   * @returns {Object} methods
+   * @returns {object} methods
    */
   get methods () {
     const plugin = this

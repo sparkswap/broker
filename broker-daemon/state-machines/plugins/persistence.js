@@ -33,17 +33,17 @@ const StateMachinePlugin = require('./abstract')
 /**
  * Field accessor for saving and inflating state machines
  * @typedef {Function} StateMachinePersistenceFieldAccessor
- * @param {*}      val   Value to be set. Will be undefined if the accessor is being used as a getter.
- * @param {String} key   Key being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
- * @param {Object} value Object being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
+ * @param {*}      val   - Value to be set. Will be undefined if the accessor is being used as a getter.
+ * @param {string} key   - Key being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
+ * @param {object} value - Object being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
  */
 
 /**
  * Unique key accessor for saving and inflating state machines
- * @typedef {(Function|String)} StateMachinePersistenceKeyAccessor
+ * @typedef {(Function|string)} StateMachinePersistenceKeyAccessor
  *     If a string is passed, the accessor will act as an accessor on property specified by the string.
- * @param {String}      key   Key being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
- * @param {Object}      value Object being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
+ * @param {string}      key   - Key being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
+ * @param {object}      value - Object being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
  */
 
 /**
@@ -52,9 +52,9 @@ const StateMachinePlugin = require('./abstract')
 class StateMachinePersistence extends StateMachinePlugin {
   /**
    * Set up the persistence plugin with user-defined attributes to save additional fields and avoid naming conflicts
-   * @param {Object} options
+   * @param {object} options
    * @param {StateMachinePersistenceKeyAccessor} options.key - Name of the property on the state machine instance with the unique key, or a function that derives the key from the instance
-   * @param {Object<string, StateMachinePersistenceFieldAccessor>} options.additionalFields - List of additional properties on the instance to be persisted
+   * @param {object<string, StateMachinePersistenceFieldAccessor>} options.additionalFields - List of additional properties on the instance to be persisted
    * @param {string} [options.storeName] - Name of the property on the state machine where the StateMachinePersistenceStore is located
    */
   constructor ({ key = 'id', additionalFields = {}, storeName = 'store' } =
@@ -67,8 +67,8 @@ class StateMachinePersistence extends StateMachinePlugin {
 
   /**
    * Check that the instance has a valid StateMachinePersistenceStore
-   * @param  {Object} instance - State machine instance being initialized
-   * @param  {Object} instance.store - Compatible store
+   * @param  {object} instance - State machine instance being initialized
+   * @param  {object} instance.store - Compatible store
    * @returns {void}
    */
   init (instance) {
@@ -81,7 +81,7 @@ class StateMachinePersistence extends StateMachinePlugin {
 
   /**
    * Properties of the state machine that are persisted
-   * @returns {Object} Object of property names to persist with a setter and getter
+   * @returns {object} Object of property names to persist with a setter and getter
    */
   get persistedFields () {
     const fields = {
@@ -98,7 +98,7 @@ class StateMachinePersistence extends StateMachinePlugin {
 
   /**
    * Custom transitions that get applied during configuration
-   * @returns {Array<Object>} List of JSM compatible transitions
+   * @returns {Array<object>} List of JSM compatible transitions
    */
   get transitions () {
     return [
@@ -109,7 +109,7 @@ class StateMachinePersistence extends StateMachinePlugin {
 
   /**
    * Our custom lifecycle observers to be added to every instance
-   * @returns {Object} Key value of lifecycle events and functions to be called during them
+   * @returns {object} Key value of lifecycle events and functions to be called during them
    */
   get observers () {
     const plugin = this
@@ -117,7 +117,7 @@ class StateMachinePersistence extends StateMachinePlugin {
     return {
       /**
        * Trigger our custom persist method any time we enter a state (unless re-inflating or merely instantiating)
-       * @param {Object} lifecycle - State machine lifecycle object
+       * @param {object} lifecycle - State machine lifecycle object
        * @returns {Promise<void>} Promise that resolves when persist resolves, allowing the transition to continue
        */
       onEnterState: async function (lifecycle) {
@@ -139,7 +139,7 @@ class StateMachinePersistence extends StateMachinePlugin {
 
   /**
    * State machine plugins define `methods` to be mixed into the state machine prototype
-   * @returns {Object} Object of all methods to be mixed in
+   * @returns {object} Object of all methods to be mixed in
    */
   get methods () {
     const plugin = this
@@ -174,7 +174,7 @@ class StateMachinePersistence extends StateMachinePlugin {
 
   /**
    * State machine doesn't support adding static methods, but this getter defines them so we can apply them manually
-   * @returns {Object} Object of all static methods to be mixed in
+   * @returns {object} Object of all static methods to be mixed in
    */
   get staticMethods () {
     const plugin = this
@@ -182,11 +182,11 @@ class StateMachinePersistence extends StateMachinePlugin {
     return {
       /**
        * Re-hydrate an OrderStateMachine from storage
-       * @param  {Object} initParams    - Params to pass to the state machine constructor (also to the `data` function)
-       * @param  {Object} options
+       * @param  {object} initParams    - Params to pass to the state machine constructor (also to the `data` function)
+       * @param  {object} options
        * @param  {string} options.key   - Stored key
        * @param  {string} options.value - Plain object of the Order State Machine object
-       * @returns {Object} - OrderStateMachine
+       * @returns {object} - OrderStateMachine
        */
       fromStore: function (initParams, { key, value }) {
         const fields = plugin.persistedFields || {}
@@ -215,8 +215,8 @@ class StateMachinePersistence extends StateMachinePlugin {
       /**
        * Retrieve a single state machine from a given store
        * @param {string}                        key                - Unique key for the state machine in the store
-       * @param {...Object}                     initParams         - Other parameters to initialize the state machines with
-       * @returns {Promise<Object>}                            Re-inflated state machine
+       * @param {...object}                     initParams         - Other parameters to initialize the state machines with
+       * @returns {Promise<object>}                            Re-inflated state machine
        */
       get: async function (key, initParams) {
         const store = initParams[plugin.storeName]

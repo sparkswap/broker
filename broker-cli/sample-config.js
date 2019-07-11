@@ -12,32 +12,32 @@
 module.exports = {
   /**
    * Address of the host for the Broker Daemon gRPC Server
-   * @type {String}
+   * @type {string}
    */
   rpcAddress: 'localhost:27492',
 
   /**
    * Default path of the Broker Daemons RPC Public Cert
-   * @type {String}
+   * @type {string}
    */
   rpcCertPath: '~/.sparkswap/secure/broker-rpc-tls.cert',
 
   /**
    * Configuration for SSL between the CLI and Daemon. This setting is only required
    * if you will be hosting the daemon remotely
-   * @type {Boolean}
+   * @type {boolean}
    */
   disableAuth: false,
 
   /**
    * The username specified on the remote Broker Daemon RPC
-   * @type {String}
+   * @type {string}
    */
   rpcUser: 'sparkswap',
 
   /**
    * The password specified on the remote Broker Daemon RPC
-   * @type {String}
+   * @type {string}
    */
   rpcPass: 'sparkswap'
 }

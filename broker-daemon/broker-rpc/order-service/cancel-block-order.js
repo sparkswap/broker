@@ -4,7 +4,7 @@
  * Cancels a block order in progress
  *
  * @param {GrpcUnaryMethodRequest} request - request object
- * @returns {Promise<Object>}
+ * @returns {Promise<object>}
  */
 async function cancelBlockOrder ({ params, blockOrderWorker }) {
   const {

@@ -18,7 +18,7 @@ class ActiveFillsIndex extends SubsetStore {
    * @private
    * @param {string} key   - Key of the record to create an index op for
    * @param {string} value - Value of the record being added to the events store to create an index op for
-   * @returns {Object} object for create/delete for use with sublevel
+   * @returns {object} object for create/delete for use with sublevel
    */
   addToIndexOperation (key, value) {
     const { state } = JSON.parse(value)

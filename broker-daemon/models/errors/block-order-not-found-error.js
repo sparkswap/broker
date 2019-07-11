@@ -7,7 +7,7 @@ class BlockOrderNotFoundError extends Error {
    * @param {Error} err
    */
   constructor (id, err) {
-    super(`Block Order with ID ${id} was not found.`, err)
+    super(`Block Order with ID ${id} was not found: ` + err.toString())
 
     this.name = this.constructor.name
     this.notFound = true

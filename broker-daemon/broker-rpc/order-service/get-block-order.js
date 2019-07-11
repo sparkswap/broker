@@ -4,7 +4,7 @@
  * Check on the status of a block order
  *
  * @param {GrpcUnaryMethodRequest} request - request object
- * @returns {Promise<Object>}
+ * @returns {Promise<object>}
  */
 async function getBlockOrder ({ params, blockOrderWorker }) {
   const {

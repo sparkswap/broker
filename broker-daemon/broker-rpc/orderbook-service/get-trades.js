@@ -12,15 +12,15 @@ const DEFAULT_LIMIT = Big(50)
  * Retrieve information about trades (filled orders) since a specified date.
  *
  * @param {GrpcUnaryMethod~request} request - request object
- * @param {Object} request.params - Request parameters from the client
- * @param {String} request.params.market - market symbol e.g. BTC/LTC
- * @param {String} request.params.since - ISO8601 millisecond timestamp
- * @param {String} request.params.limit
- * @param {Object} request.logger
- * @param  {Map<String, Orderbook>} request.orderbooks Collection of all active Orderbooks
- * @param {Object} responses
- * @param {function} responses.GetTradesResponse - constructor for GetTradesResponse messages
- * @return {responses.GetTradesResponse}
+ * @param {object} request.params - Request parameters from the client
+ * @param {string} request.params.market - market symbol e.g. BTC/LTC
+ * @param {string} request.params.since - ISO8601 millisecond timestamp
+ * @param {string} request.params.limit
+ * @param {object} request.logger
+ * @param  {Map<string, Orderbook>} request.orderbooks - Collection of all active Orderbooks
+ * @param {object} responses
+ * @param {Function} responses.GetTradesResponse - constructor for GetTradesResponse messages
+ * @returns {responses.GetTradesResponse}
  */
 
 async function getTrades ({ params, logger, orderbooks }, { GetTradesResponse }) {

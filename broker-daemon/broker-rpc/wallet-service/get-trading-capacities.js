@@ -3,7 +3,7 @@ const { Big } = require('../../utils')
 
 /**
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const CAPACITY_STATE = Object.freeze({
@@ -11,7 +11,7 @@ const CAPACITY_STATE = Object.freeze({
   FAILED: 'FAILED'
 })
 
-/** @typedef {Object} GetCapacitiesResponse
+/** @typedef {object} GetCapacitiesResponse
  * @property {string} symbol - currency symbol e.g. BTC
  * @property {string} status - OK for success or FAILED if engine call fails
  * @property {boolean} error - true if errors occurred during request for capacities
@@ -32,7 +32,7 @@ const CAPACITY_STATE = Object.freeze({
  * @param {string} symbol
  * @param {string} outstandingSendCapacity - amount of outstanding send capacity for the given currency
  * @param {string} outstandingReceiveCapacity - amount of outstanding receive capacity for the given currency
- * @param {Object} opts
+ * @param {object} opts
  * @param {Logger} opts.logger
  * @returns {Promise<GetCapacitiesResponse>}
  */
@@ -85,12 +85,12 @@ async function getCapacities (engine, symbol, outstandingSendCapacity, outstandi
  *
  * @function
  * @param {GrpcUnaryMethod~request} request - request object
- * @param {Object} request.params
+ * @param {object} request.params
  * @param {Map<symbol, Engine>} request.engines
- * @param {Object} request.orderbooks - initialized orderbooks
+ * @param {object} request.orderbooks - initialized orderbooks
  * @param {BlockOrderWorker} request.blockOrderWorker
  * @param {Logger} request.logger
- * @param {Object} responses
+ * @param {object} responses
  * @param {Function} responses.GetTradingCapacitiesResponse
  * @returns {Promise<GetTradingCapacitiesResponse>}
  */

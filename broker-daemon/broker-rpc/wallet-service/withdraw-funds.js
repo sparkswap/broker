@@ -4,15 +4,15 @@ const { Big } = require('../../utils')
 /**
  * Withdraws funds from the wallet to specified address
  *
- * @param {Object} request - request object
- * @param {Object} request.params
+ * @param {object} request - request object
+ * @param {object} request.params
  * @param {string} request.params.symbol
  * @param {string} request.params.amount
  * @param {string} request.params.address
  * @param {RelayerClient} request.relayer
  * @param {Logger} request.logger
  * @param {Map<Symbol, Engine>} request.engines
- * @param {Object} responses
+ * @param {object} responses
  * @param {Function} responses.WithdrawFundsResponse
  * @returns {Promise<WithdrawFundsResponse>}
  */
