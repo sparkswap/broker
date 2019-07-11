@@ -55,7 +55,7 @@ class StateMachinePersistence extends StateMachinePlugin {
    * @param {Object} options
    * @param {StateMachinePersistenceKeyAccessor} options.key - Name of the property on the state machine instance with the unique key, or a function that derives the key from the instance
    * @param {Object<string, StateMachinePersistenceFieldAccessor>} options.additionalFields - List of additional properties on the instance to be persisted
-   * @param {string} options.storeName - Name of the property on the state machine where the StateMachinePersistenceStore is located
+   * @param {string} [options.storeName] - Name of the property on the state machine where the StateMachinePersistenceStore is located
    */
   constructor ({ key = 'id', additionalFields = {}, storeName = 'store' } =
   { key: 'id', additionalFields: {}, storeName: 'store' }) {

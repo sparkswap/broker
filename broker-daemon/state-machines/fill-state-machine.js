@@ -181,7 +181,14 @@ const FillStateMachine = StateMachine.factory({
      * @returns {Promise<void>}
      */
     onBeforeCreate: async function (lifecycle, blockOrderId, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
-      this.fill = new Fill(blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount })
+      this.fill = new Fill(blockOrderId, {
+        orderId,
+        baseSymbol,
+        counterSymbol,
+        side,
+        baseAmount,
+        counterAmount
+      }, { fillAmount })
 
       const { inboundAmount, inboundSymbol } = this.fill
 
@@ -240,6 +247,7 @@ const FillStateMachine = StateMachine.factory({
      * @returns {void}
      */
     onAfterCreate: function (lifecycle) {
+      void lifecycle
       this.logger.info(`Create transition completed, triggering fill`)
 
       // you can't start a transition while in another one,
@@ -261,6 +269,7 @@ const FillStateMachine = StateMachine.factory({
      * @returns {Promise<void>} promise that rejects if filling on the relayer fails
      */
     onBeforeFillOrder: async function (lifecycle) {
+      void lifecycle
       const {
         feePaymentRequest,
         feeRequired,
@@ -297,6 +306,7 @@ const FillStateMachine = StateMachine.factory({
       const [
         feeRefundPaymentRequest,
         depositRefundPaymentRequest
+        // @ts-ignore
       ] = await Promise.all([
         payFeeInvoice,
         payDepositInvoice
@@ -385,6 +395,7 @@ const FillStateMachine = StateMachine.factory({
      * @returns {Promise<void>}          Promise that rejects if execution fails
      */
     onBeforeExecute: async function (lifecycle) {
+      void lifecycle
       const { makerAddress, swapHash, symbol, amount } = this.fill.paramsForSwap
       const engine = this.engines.get(symbol)
       if (!engine) {
@@ -402,6 +413,7 @@ const FillStateMachine = StateMachine.factory({
      * @returns {void}
      */
     onBeforeReject: function (lifecycle, error) {
+      void lifecycle
       this.logger.error(`Encountered error during transition, rejecting`, error)
       this.fill.error = error
     },
@@ -422,7 +434,7 @@ const FillStateMachine = StateMachine.factory({
       if (this.state === 'created') {
         process.nextTick(() => this.tryTo('cancel'))
       } else if (this.state === 'filled') {
-        this.triggerExecute()
+        this.triggerExecute(lifecycle)
       }
     }
   }

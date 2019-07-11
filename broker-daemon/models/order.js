@@ -161,6 +161,13 @@ class Order {
   }
 
   /**
+   * @returns {string} maker's address on the inbound engine
+   */
+  get makerInboundAddress () {
+    return this.side === Order.SIDES.BID ? this.makerBaseAddress : this.makerCounterAddress
+  }
+
+  /**
    * Get the symbol of the currency we will send outbound
    * @returns {string} Currency symbol
    */
