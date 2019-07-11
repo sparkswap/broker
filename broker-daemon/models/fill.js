@@ -3,7 +3,9 @@ const {
   Big,
   getRecords
 } = require('../utils')
-const CONFIG = require('../config')
+const CONFIG = require('../config.json')
+
+/** @typedef {import('level-sublevel')} Sublevel */
 
 /**
  * Delimiter for the block order id and fill id when storing fills
@@ -109,8 +111,15 @@ class Fill {
    * @returns {Object} Object to be serialized into a GRPC message
    */
   serialize () {
-    const baseAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.order.baseSymbol).quantumsPerCommon
-    const counterAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.order.counterSymbol).quantumsPerCommon
+    const currencies = CONFIG.currencies || []
+    const baseCurrency = currencies.find(({ symbol }) => symbol === this.order.baseSymbol)
+    const counterCurrency = currencies.find(({ symbol }) => symbol === this.order.counterSymbol)
+    if (!baseCurrency || !counterCurrency ||
+      !baseCurrency.quantumsPerCommon || !counterCurrency.quantumsPerCommon) {
+      throw new Error('Invalid currency config')
+    }
+    const baseAmountFactor = baseCurrency.quantumsPerCommon
+    const counterAmountFactor = counterCurrency.quantumsPerCommon
     const baseCommonAmount = Big(this.order.baseAmount).div(baseAmountFactor)
     const counterCommonAmount = Big(this.order.counterAmount).div(counterAmountFactor)
 
@@ -131,7 +140,7 @@ class Fill {
    * @returns {string} market
    */
   get market () {
-    return `${this.baseSymbol}/${this.counterSymbol}`
+    return `${this.order.baseSymbol}/${this.order.counterSymbol}`
   }
 
   /**
@@ -290,7 +299,7 @@ class Fill {
   /**
    * Get the unique key that this object can be stored with
    * It is prefixed by the blockOrderId so that it can be retrieved easily
-   * @returns {string} Unique key for storage. In the case of a fill it is a combination of the blockOrderId and Relayer-assigned fillId
+   * @returns {string | undefined} Unique key for storage. In the case of a fill it is a combination of the blockOrderId and Relayer-assigned fillId
    */
   get key () {
     // if either part of our key is undefined we return undefined so as not to create
@@ -449,7 +458,7 @@ class Fill {
 
   /**
    * Grabs all fills
-   * @param {sublevel} store
+   * @param {Sublevel} store
    * @returns {Promise<Array<Object>>} array of fill representations (includes fill model)
    */
   static async getAllFills (store) {
