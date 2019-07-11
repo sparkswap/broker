@@ -5,7 +5,6 @@ const watchMarket = require('./watch-market')
 const getOrderbook = require('./get-orderbook')
 const getSupportedMarkets = require('./get-supported-markets')
 const getMarketStats = require('./get-market-stats')
-const getTrades = require('./get-trades')
 
 class OrderBookService {
   /**
@@ -37,7 +36,6 @@ class OrderBookService {
       getOrderbook: new GrpcUnaryMethod(getOrderbook, this.messageId('getOrderbook'), { logger, relayer, orderbooks, auth }, { GetOrderbookResponse }).register(),
       getSupportedMarkets: new GrpcUnaryMethod(getSupportedMarkets, this.messageId('getSupportedMarkets'), { logger, relayer, orderbooks }, { GetSupportedMarketsResponse }).register(),
       getMarketStats: new GrpcUnaryMethod(getMarketStats, this.messageId('getMarketStats'), { logger, orderbooks }, { GetMarketStatsResponse }).register(),
-      getTrades: new GrpcUnaryMethod(getTrades, this.messageId('getTrades'), { logger, relayer, orderbooks }, { GetTradesResponse }).register()
     }
   }
 

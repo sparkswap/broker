@@ -136,24 +136,6 @@ class Orderbook {
   }
 
   /**
-   * Gets all trades for a specific timestamp
-   *
-   * @param {string} since - ISO8601 datetime lowerbound
-   * @param {number} limit - limit of records returned
-   * @returns {Array<Object>} trades
-   */
-  async getTrades (since, limit) {
-    this.assertSynced()
-    const params = { limit }
-    if (since) {
-      const sinceDate = new Date(since).toISOString()
-      params.gte = nano.toString(nano.fromISOString(sinceDate))
-    }
-    const trades = await getRecords(this.eventStore, MarketEvent.fromStorage.bind(MarketEvent), params)
-    return trades
-  }
-
-  /**
    * Get orders in the orderbook for a given side up to a given limit. If no limit is provided, gets all orders
    * @param {Object} args
    * @param {string} args.side - Side of the orderbook to get orders for (i.e. `BID` or `ASK`)
