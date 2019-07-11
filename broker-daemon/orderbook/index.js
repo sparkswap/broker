@@ -260,13 +260,13 @@ class Orderbook {
         targetDepth
       }
       this.logger.error('Insufficient depth to find averagePrice', params)
-      throw new Error('Insufficient depth to find averagePrice', params)
+      throw new Error('Insufficient depth to find averagePrice:' + params.toString())
     }
-    targetDepth = Big(targetDepth)
+    const targetDepthBig = Big(targetDepth)
     let currentDepth = Big(0)
     let weightedPrice = Big(0)
     orders.forEach((order) => {
-      const depthRemaining = targetDepth.minus(currentDepth)
+      const depthRemaining = targetDepthBig.minus(currentDepth)
 
       // if we have already reached our target depth, return
       if (depthRemaining.lte(0)) {
@@ -279,7 +279,7 @@ class Orderbook {
       currentDepth = currentDepth.plus(fillAmount)
       weightedPrice = weightedPrice.plus(Big(order.price).times(fillAmount))
     })
-    return Big(weightedPrice).div(targetDepth)
+    return Big(weightedPrice).div(targetDepthBig)
   }
 
   /**
