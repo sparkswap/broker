@@ -13,6 +13,10 @@ const {
   StateMachineDates
 } = require('./plugins')
 
+/** @typedef {import('..').Engine} Engine */
+/** @typedef {import('../relayer')} RelayerClient */
+/** @typedef {import('level-sublevel')} Sublevel */
+
 /**
  * If Fills are saved in the database before they are created on the remote, they lack an ID
  * This string indicates an order that does not have an assigned remote ID
@@ -50,62 +54,67 @@ const FillStateMachine = StateMachine.factory({
     }),
     new StateMachinePersistence({
       /**
-       * @type {StateMachinePersistence~KeyAccessor}
        * @param {string}   key - Unique key for the stored state machine
        * @returns {string}     Unique key for the state machine
        */
       key: function (key) {
         // this only defines a getter - it will be set by the `fill` setter
         if (!key) {
+          // @ts-ignore
           return this.fill.key || `${UNASSIGNED_PREFIX}${generateId()}`
         }
+        return key
       },
       additionalFields: {
         /**
-         * @type {StateMachinePersistence~FieldAccessor}
          * @param {Object}   fillObject - Stored plain object description of the Fill associated with the State machine
          * @param {string}   key         - Unique key for the fill/state machine
          * @returns {Object}             Plain object description of the Fill associated with the State machine
          */
         fill: function (fillObject, key) {
           if (fillObject) {
+            // @ts-ignore
             this.fill = Fill.fromObject(key, fillObject)
           }
 
+          // @ts-ignore
           return this.fill.valueObject
         },
         /**
-         * @type  {StateMachinePersistence~FieldAccessor}
          * @param {Array<string>}   history - Stored history of states for this state machine
          * @returns {Array<string>}         History of states for this state machine
          */
         history: function (history) {
           if (history) {
             this.clearHistory()
+            // @ts-ignore
             this.history = history
           }
 
+          // @ts-ignore
           return this.history
         },
         /**
-         * @type {StateMachinePersistence~FieldAccessor}
          * @param {string}   errorMessage - Stored error message for a state machine in an errored state
          * @returns {string}              Error message for a state machine in an errored state
          */
         error: function (errorMessage) {
           if (errorMessage) {
+            // @ts-ignore
             this.error = new Error(errorMessage)
           }
 
           if (this.error) {
+            // @ts-ignore
             return this.error.message
           }
+          return errorMessage
         },
         /**
-         * @type {StateMachinePersistence~FieldAccessor}
          * @param {Object}   dates - Stored plain object of dates for the states that have been entered on the State machine
          * @returns {Object} dates - Plain object of dates for the states that have been entered on the State machine
          */
+        // @ts-ignore
         dates: function (dates) {
           if (dates) {
             this.dates = dates
@@ -149,7 +158,7 @@ const FillStateMachine = StateMachine.factory({
    * So we pass it all the objects we'll need later.
    *
    * @param {Object} options
-   * @param {sublevel} options.store - Sublevel partition for storing this fill in
+   * @param {Sublevel} options.store - Sublevel partition for storing this fill in
    * @param {Object} options.logger
    * @param {RelayerClient} options.relayer
    * @param {Map<string, Engine>} options.engines - Collection of all avialable engines
@@ -181,6 +190,7 @@ const FillStateMachine = StateMachine.factory({
      * @returns {Promise<void>}
      */
     onBeforeCreate: async function (lifecycle, blockOrderId, { orderId, side, baseSymbol, counterSymbol, baseAmount, counterAmount }, { fillAmount }) {
+      void lifecycle
       this.fill = new Fill(blockOrderId, {
         orderId,
         baseSymbol,

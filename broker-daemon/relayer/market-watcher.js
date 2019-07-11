@@ -3,6 +3,9 @@ const { promisify } = require('util')
 const { MarketEvent } = require('../models')
 const { migrateStore, eachRecord, Checksum } = require('../utils')
 
+/** @typedef {import('level-sublevel')} Sublevel */
+/** @typedef {import('..').GrpcServerStreaming} GrpcServerStreaming */
+
 /**
  * @class Watch a relayer market and put the events into a data store
  * It emits two events:
@@ -12,8 +15,8 @@ const { migrateStore, eachRecord, Checksum } = require('../utils')
 class MarketWatcher extends EventEmitter {
   /**
    * Set up the watcher
-   * @param  {grpc.ServerStreaming} watcher        - Stream of events from the Relayer
-   * @param  {sublevel}             store          - Leveldb compatible store
+   * @param  {GrpcServerStreaming}  watcher        - Stream of events from the Relayer
+   * @param  {Sublevel}             store          - Leveldb compatible store
    * @param  {Object}               RESPONSE_TYPES - Response types from the proto file
    * @param  {Object} logger
    */
@@ -32,9 +35,9 @@ class MarketWatcher extends EventEmitter {
 
   /**
    * Delete every event in the store and delay further event processing until its complete
-   * @returns {void} resolves when migration is complete
+   * @returns {Promise<void>} resolves when migration is complete
    */
-  migrate () {
+  async migrate () {
     this.logger.debug(`Removing existing orderbook events as part of migration`)
     const migration = migrateStore(this.store, this.store, (key) => { return { type: 'del', key } })
     this.delayProcessingFor(migration)
@@ -107,7 +110,7 @@ class MarketWatcher extends EventEmitter {
     this.logger.debug(`response type is ${response.type}`)
 
     if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.START_OF_EVENTS) {
-      this.migrate()
+      await this.migrate()
     } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENT) {
       this.createMarketEvent(response)
     } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {

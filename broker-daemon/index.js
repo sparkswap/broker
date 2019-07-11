@@ -12,6 +12,8 @@ const CONFIG = require('./config')
 
 /** @typedef {import('lnd-engine')} Engine */
 /** @typedef {Object} Logger */
+/** @typedef {Object} GrpcServerStreaming */
+/** @typedef {Object} GrpcMetadata */
 
 /**
  * Default host and port for the BrokerRPCServer to listen on
