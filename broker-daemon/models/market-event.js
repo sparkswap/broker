@@ -63,7 +63,7 @@ class MarketEvent {
   amount (baseSymbol) {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === baseSymbol)
 
-    if (!baseCurrencyConfig || !baseCurrencyConfig.quantumsPerCommon) {
+    if (!baseCurrencyConfig) {
       throw new Error('Invalid currency config')
     }
 
