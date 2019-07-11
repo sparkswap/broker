@@ -5,12 +5,12 @@ const { SIDES } = require('../../models/market-event-order')
  * Retrieve price and amount information for current orderbook state
  *
  * @param {GrpcUnaryMethod~request} request - request object
- * @param {Object} request.params - Request parameters from the client
+ * @param {object} request.params - Request parameters from the client
  * @param {string} request.params.market - market symbol e.g. BTC/LTC
  * @param {string} request.params.limitPerSide - limit for number of orders for each side of orderbook
- * @param {Object} request.logger
+ * @param {object} request.logger
  * @param {Map<Orderbook>} request.orderbooks
- * @param {Object} responses
+ * @param {object} responses
  * @param {Function} responses.GetOrderbookResponse - constructor for GetOrderbookResponse messages
  * @returns {GetOrderbookResponse}
  */

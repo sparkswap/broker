@@ -11,9 +11,9 @@ const { logger } = require('./utils')
 const CONFIG = require('./config.json')
 
 /** @typedef {import('lnd-engine')} Engine */
-/** @typedef {Object} Logger */
-/** @typedef {Object} GrpcServerStreaming */
-/** @typedef {Object} GrpcMetadata */
+/** @typedef {object} Logger */
+/** @typedef {object} GrpcServerStreaming */
+/** @typedef {object} GrpcMetadata */
 
 /**
  * Default host and port for the BrokerRPCServer to listen on
@@ -45,8 +45,8 @@ const DEFAULT_RELAYER_HOST = 'localhost:28492'
 /**
  * Create an instance of an engine from provided configuration
  * @param {string} symbol         - Symbol that this engine is responsible for
- * @param {Object} engineConfig   - Configuration object for this engine
- * @param {Object} options
+ * @param {object} engineConfig   - Configuration object for this engine
+ * @param {object} options
  * @param {Logger} options.logger - Logger that this engine should use
  * @returns {Engine}
  * @throws {Error} Unknown engine type
@@ -74,7 +74,7 @@ function createEngineFromConfig (symbol, engineConfig, { logger }) {
  */
 class BrokerDaemon {
   /**
-   * @param {Object} opts
+   * @param {object} opts
    * @param {string} opts.network - current blockchain network of the daemon
    * @param {string} opts.privRpcKeyPath
    * @param {string} opts.pubRpcKeyPath
@@ -83,13 +83,13 @@ class BrokerDaemon {
    * @param {string} opts.rpcAddress - Host and port where the user-facing RPC server should listen
    * @param {string} opts.dataDir - Relative path to a directory where application data should be stored
    * @param {Array}  opts.marketNames - List of market names (e.g. 'BTC/LTC') to support
-   * @param {Object} opts.engines - Configuration for all the engines to instantiate
+   * @param {object} opts.engines - Configuration for all the engines to instantiate
    * @param {boolean} [opts.disableAuth=false] - Disable SSL for the daemon
    * @param {boolean} [opts.enableCors=false] - Enable CORS for the HTTP Proxy
    * @param {boolean} opts.isCertSelfSigned
    * @param {?string} [opts.rpcUser] - RPC username, only used when auth is enabled
    * @param {?string} [opts.rpcPass] - RPC password, only used when auth is enabled
-   * @param {Object} opts.relayerOptions
+   * @param {object} opts.relayerOptions
    * @param {string} opts.relayerOptions.relayerRpcHost - Host and port for the Relayer RPC
    * @param {string} opts.relayerOptions.relayerCertPath - Absolute path to the root certificate for the relayer
    * @param {string} opts.rpcInternalProxyAddress

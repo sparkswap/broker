@@ -4,10 +4,10 @@ const { handleError } = require('../../utils')
 /**
  * ex: `sparkswap market trades'
  *
- * @param {Object} args
+ * @param {object} args
  * @param {string} args.since - timestamp for lower bound of records, '2018-09-21T10:58:58.0131174Z'
  * @param {number} args.limit - number of records to retrieve
- * @param {Object} opts
+ * @param {object} opts
  * @param {string} opts.rpcAddress
  * @param {string} opts.market
  * @param {Logger} logger

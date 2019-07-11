@@ -11,8 +11,8 @@ const getTradeHistory = require('./get-trade-history')
 class OrderService {
   /**
    * @param {string} protoPath
-   * @param {Object} opts
-   * @param {Object} opts.logger
+   * @param {object} opts
+   * @param {object} opts.logger
    * @param {BlockOrderWorker} opts.blockOrderWorker
    * @param {Function} opts.auth
    */

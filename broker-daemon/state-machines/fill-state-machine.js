@@ -29,7 +29,7 @@ const UNASSIGNED_PREFIX = 'NO_ASSIGNED_ID_'
 /**
  * Error codes that can come back from relayer
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const FILL_ERROR_CODES = Object.freeze({
@@ -67,9 +67,9 @@ const FillStateMachine = StateMachine.factory({
       },
       additionalFields: {
         /**
-         * @param {Object}   fillObject - Stored plain object description of the Fill associated with the State machine
+         * @param {object}   fillObject - Stored plain object description of the Fill associated with the State machine
          * @param {string}   key         - Unique key for the fill/state machine
-         * @returns {Object}             Plain object description of the Fill associated with the State machine
+         * @returns {object}             Plain object description of the Fill associated with the State machine
          */
         fill: function (fillObject, key) {
           if (fillObject) {
@@ -111,8 +111,8 @@ const FillStateMachine = StateMachine.factory({
           return errorMessage
         },
         /**
-         * @param {Object}   dates - Stored plain object of dates for the states that have been entered on the State machine
-         * @returns {Object} dates - Plain object of dates for the states that have been entered on the State machine
+         * @param {object}   dates - Stored plain object of dates for the states that have been entered on the State machine
+         * @returns {object} dates - Plain object of dates for the states that have been entered on the State machine
          */
         // @ts-ignore
         dates: function (dates) {
@@ -132,23 +132,23 @@ const FillStateMachine = StateMachine.factory({
   transitions: [
     /**
      * create transition: the first transition, from 'none' (the default state) to 'created'
-     * @type {Object}
+     * @type {object}
      */
     { name: 'create', from: 'none', to: 'created' },
     /**
      * fillOrder transition: second transition in the order lifecycle
-     * @type {Object}
+     * @type {object}
      */
     { name: 'fillOrder', from: 'created', to: 'filled' },
 
     /**
      * execute transition: execute the swap itself
-     * @type {Object}
+     * @type {object}
      */
     { name: 'execute', from: 'filled', to: 'executed' },
     /**
      * cancel transition: cancel the fill
-     * @type {Object}
+     * @type {object}
      */
     { name: 'cancel', from: 'created', to: 'cancelled' }
   ],
@@ -157,14 +157,14 @@ const FillStateMachine = StateMachine.factory({
    * This function is effectively a constructor for the state machine
    * So we pass it all the objects we'll need later.
    *
-   * @param {Object} options
+   * @param {object} options
    * @param {Sublevel} options.store - Sublevel partition for storing this fill in
-   * @param {Object} options.logger
+   * @param {object} options.logger
    * @param {RelayerClient} options.relayer
    * @param {Map<string, Engine>} options.engines - Collection of all avialable engines
    * @param {Function} options.onRejection - A function to handle rejections of the fill
    * @param {Function} options.onCompletion - A function to handle the completion of the fill
-   * @returns {Object} Data to attach to the state machine
+   * @returns {object} Data to attach to the state machine
    */
   data: function ({ store, logger, relayer, engines }) {
     return { store, logger, relayer, engines, fill: {} }
@@ -176,16 +176,16 @@ const FillStateMachine = StateMachine.factory({
      * Actual creation is done in `onBeforeCreate` so that the transition can be cancelled if creation
      * on the Relayer fails.
      *
-     * @param  {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @param  {string} blockOrderId - Id of the block order that this fill belongs to
-     * @param {Object} order
+     * @param {object} order
      * @param {string} order.orderId       - Relayer-assigned unique ID for the order being filled
      * @param {string} order.side          - Side of the market the order is on (i.e. BID or ASK)
      * @param {string} order.baseSymbol    - Base symbol (e.g. BTC)
      * @param {string} order.counterSymbol - Counter symbol (e.g. LTC)
      * @param {string} order.baseAmount    - Amount of base currency (in base units) on the order
      * @param {string} order.counterAmount - Amount of counter currency (in base units) on the order
-     * @param {Object} fill
+     * @param {object} fill
      * @param {string} fill.fillAmount     - Amount of base currency (in base units) of the order to fill
      * @returns {Promise<void>}
      */
@@ -252,7 +252,7 @@ const FillStateMachine = StateMachine.factory({
 
     /**
      * Attempt to fill the order as soon as the fill is created
-     * @param  {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {void}
      */
     onAfterCreate: function (_lifecycle) {
@@ -273,7 +273,7 @@ const FillStateMachine = StateMachine.factory({
      * Actual filling on the relayer is done in `onBeforeFill` so that the transition can be cancelled
      * if filling on the Relayer fails.
      *
-     * @param {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param {object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {Promise<void>} promise that rejects if filling on the relayer fails
      */
     onBeforeFillOrder: async function (_lifecycle) {
@@ -338,7 +338,7 @@ const FillStateMachine = StateMachine.factory({
     /**
      * Call the trigger execution function. This is done this way so that we do not execute automatically if we are rehydrating
      * a fill state machine in a filled state
-     * @param {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param {object} lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {void}
      */
     onAfterFillOrder: function (lifecycle) {
@@ -346,7 +346,7 @@ const FillStateMachine = StateMachine.factory({
     },
     /**
      * Listen for order executions
-     * @param  {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {void}
      */
     triggerExecute: function (_lifecycle) {
@@ -397,7 +397,7 @@ const FillStateMachine = StateMachine.factory({
      * This function gets called before the `execute` transition (triggered by a call to `execute`)
      * Actual execution is done in `onBeforeFill` so that the transition can be cancelled if execution fails
      *
-     * @param {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param {object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {Promise<void>}          Promise that rejects if execution fails
      */
     onBeforeExecute: async function (_lifecycle) {
@@ -413,7 +413,7 @@ const FillStateMachine = StateMachine.factory({
 
     /**
      * Log errors from rejection
-     * @param {Object} _lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param {object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @param {Error}  error     - Error that caused the rejection
      * @returns {void}
      */
@@ -431,7 +431,7 @@ const FillStateMachine = StateMachine.factory({
     },
     /**
      * Trigger settle if we are re-hydrating state into the executing state
-     * @param {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param {object} lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {void}
      */
     triggerState: function (lifecycle) {
@@ -446,8 +446,8 @@ const FillStateMachine = StateMachine.factory({
 
 /**
  * serialize an fill for transmission via grpc
- * @param {Object} fillObject - Plain object representation of the fill, state, dates
- * @returns {Object} Object to be serialized into a GRPC message
+ * @param {object} fillObject - Plain object representation of the fill, state, dates
+ * @returns {object} Object to be serialized into a GRPC message
  */
 FillStateMachine.serialize = function (fillObject) {
   const {
@@ -471,8 +471,8 @@ FillStateMachine.serialize = function (fillObject) {
  * Instantiate and create a fill
  * This method is a pure pass through to the state machine, so any parameter checking should happen in
  * `data` and `onBeforeCreate`, respectively.
- * @param {Object} initParams - Params to pass to the FillStateMachine constructor (also to the `data` function)
- * @param {Object} createParams - Params to pass to the `create` method (also to the `onBeforeCreate` method)
+ * @param {object} initParams - Params to pass to the FillStateMachine constructor (also to the `data` function)
+ * @param {object} createParams - Params to pass to the `create` method (also to the `onBeforeCreate` method)
  * @returns {Promise<FillStateMachine>}
  */
 FillStateMachine.create = async function (initParams, ...createParams) {

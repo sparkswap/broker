@@ -14,11 +14,11 @@ const ONE_DAY_IN_NANOSECONDS = Big('86400000000000')
 /**
  * Gets price ticker (stats) information about a specified market
  *
- * @param {Object} request - request object
- * @param {Object} request.params
+ * @param {object} request - request object
+ * @param {object} request.params
  * @param {Logger} request.logger
  * @param {Map<Orderbook>} request.orderbooks
- * @param {Object} responses
+ * @param {object} responses
  * @param {Function} responses.GetMarketStatsResponse
  * @returns {Promise<GetMarketStatsResponse>}
  */

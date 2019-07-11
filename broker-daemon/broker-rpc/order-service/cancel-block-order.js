@@ -2,10 +2,10 @@
  * Cancels a block order in progress
  *
  * @param {GrpcUnaryMethod~request} request - request object
- * @param {Object} request.params - Request parameters from the client
+ * @param {object} request.params - Request parameters from the client
  * @param {BlockOrderWorker} request.blockOrderWorker
- * @param {Object} request.logger
- * @returns {Promise<Object>}
+ * @param {object} request.logger
+ * @returns {Promise<object>}
  */
 async function cancelBlockOrder ({ params, logger, blockOrderWorker }) {
   const {

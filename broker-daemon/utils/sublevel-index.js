@@ -72,8 +72,8 @@ class Index {
 
   /**
    * Build a sublevel-compatible option range for this index
-   * @param {Object} opts - Options from which to build a range
-   * @returns {Object} Sublevel readStream options
+   * @param {object} opts - Options from which to build a range
+   * @returns {object} Sublevel readStream options
    */
   range (opts = {}) {
     if (opts.gt) {
@@ -93,7 +93,7 @@ class Index {
 
   /**
    * Create a read stream of the index, filtering out those keys marked for deletion and transforming index keys into base keys
-   * @param {Object} opts - Sublevel readStream options
+   * @param {object} opts - Sublevel readStream options
    * @returns {ReadableStream}
    */
   createReadStream (opts) {
@@ -229,7 +229,7 @@ class Index {
    * Create a database operation to add an object to the index
    * @param {string}   baseKey    - Key of the object in the base store
    * @param {string}   baseValue  - Value of the object in the base store
-   * @returns {Object} Sublevel compatible database batch operation
+   * @returns {object} Sublevel compatible database batch operation
    */
   _addToIndexOperation (baseKey, baseValue) {
     const indexKey = this._createIndexKey(baseKey, baseValue)

@@ -2,7 +2,7 @@ const { eachRecord } = require('../../utils')
 
 /**
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const ORDERBOOK_STATUS_CODES = Object.freeze({
@@ -12,7 +12,7 @@ const ORDERBOOK_STATUS_CODES = Object.freeze({
 
 /**
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const RELAYER_STATUS_CODES = Object.freeze({
@@ -24,7 +24,7 @@ const RELAYER_STATUS_CODES = Object.freeze({
  * Gets the relayer status through relayer's health check
  *
  * @param {RelayerClient} relayer - gRPC Client for interacting with the Relayer
- * @param {Object} opts
+ * @param {object} opts
  * @param {Logger} opts.logger
  * @returns {Promise<string>} status - either 'OK' or an error message if the call fails
  */
@@ -72,13 +72,13 @@ async function getRecordCounts (store, name = 'store', parentName = '', stores =
  * Check the health of all the system components
  *
  * @param {GrpcUnaryMethod~request} request - request object
- * @param {Object} request.params
+ * @param {object} request.params
  * @param {RelayerClient} request.relayer - gRPC Client for interacting with the Relayer
- * @param {Object} request.logger
+ * @param {object} request.logger
  * @param {Map<string, Engine>} request.engines - all available Payment Channel Network engines in the Broker
  * @param {Map<string, Orderbook>} request.orderbooks
  * @param {Sublevel} request.store
- * @param {Object} responses
+ * @param {object} responses
  * @param {Function} responses.HealthCheckResponse - constructor for HealthCheckResponse messages
  * @returns {Promise<HealthCheckResponse>}
  */

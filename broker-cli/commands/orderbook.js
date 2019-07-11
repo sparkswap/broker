@@ -10,7 +10,7 @@ require('colors')
 
 /**
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const EVENT_TYPES = Object.freeze({
@@ -19,7 +19,7 @@ const EVENT_TYPES = Object.freeze({
 
 /**
  * @constant
- * @type {Object}
+ * @type {object}
  */
 const FORMAT_TYPES = Object.freeze({
   ASK: 'ASK',
@@ -50,8 +50,8 @@ const NON_MARKET_INFO = 12
  *
  * @todo Use a util like cli/smart-table to represent columns/rows
  * @param {string} market
- * @param {Array<Object>} asks - an array of objects with price and depth
- * @param {Array<Object>} bids - an array of object with price and depth
+ * @param {Array<object>} asks - an array of objects with price and depth
+ * @param {Array<object>} bids - an array of object with price and depth
  */
 function createUI (market, asks, bids) {
   console.clear()
@@ -192,8 +192,8 @@ function createUI (market, asks, bids) {
  *
  * ex: `sparkswap orderbook --market 'BTC/LTC'
  *
- * @param {Object} args
- * @param {Object} opts
+ * @param {object} args
+ * @param {object} opts
  * @param {string} opts.market
  * @param {string} opts.rpcaddress
  * @param {Logger} logger
@@ -318,8 +318,8 @@ function findFirstNonSigZero (text) {
 /**
  * Takes an array of order objects and adds the formatted orders to the given orders table.
  *
- * @param {Array<Object>} orders - the orders to format, given as an object with price and depth
- * @param {Object} ordersTable - table to add formatted orders to
+ * @param {Array<object>} orders - the orders to format, given as an object with price and depth
+ * @param {object} ordersTable - table to add formatted orders to
  * @param {string} type - represents whether to format as bids or asks
  * @param {number} maxLength - maximum number of orders that can be displayed
  * @returns {void}

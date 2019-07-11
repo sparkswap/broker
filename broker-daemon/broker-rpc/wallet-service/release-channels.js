@@ -1,6 +1,6 @@
 /**
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const RELEASE_STATE = Object.freeze({
@@ -8,7 +8,7 @@ const RELEASE_STATE = Object.freeze({
   FAILED: 'FAILED'
 })
 
-/** @typedef {Object} CloseChannelsResponse
+/** @typedef {object} CloseChannelsResponse
  *  @property {string} symbol
  *  @property {string} status - RELEASED or FAILED
  *  @property {string} [error=undefined] - only present if status is FAILED
@@ -48,16 +48,16 @@ async function closeChannels (engine, symbol, force, logger) {
 /**
  * Grabs public lightning network information from relayer and opens a channel
  *
- * @param {Object} request - request object
- * @param {Object} request.params
+ * @param {object} request - request object
+ * @param {object} request.params
  * @param {string} request.params.market - Market name (e.g. BTC/LTC)
  * @param {boolean} request.params.force - if channels should be force closed
  * @param {RelayerClient} request.relayer
  * @param {Logger} request.logger
  * @param {Engine} request.engines
  * @param {Map<Orderbook>} request.orderbooks
- * @param {Object} responses
- * @param {Object} responses.ReleaseChannelsResponse
+ * @param {object} responses
+ * @param {object} responses.ReleaseChannelsResponse
  * @returns {Promise<ReleaseChannelsResponse>}
  */
 async function releaseChannels ({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse }) {

@@ -5,8 +5,8 @@ const { registerUrls } = require('../../config')
  *
  * @param {GrpcUnaryMethod~request} request - request object
  * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
- * @param {Object} request.logger
- * @param {Object} responses
+ * @param {object} request.logger
+ * @param {object} responses
  * @param {Function} responses.RegisterResponse - constructor for RegisterResponse messages
  * @returns {RegisterResponse}
  * @throws {Error} Unable to find registration url

@@ -29,7 +29,7 @@ class Orderbook {
    * @param  {string}        marketName - Name of the market to track, e.g. `BTC/LTC`
    * @param  {RelayerClient} relayer    - Client to connect to the Relayer
    * @param  {Sublevel}      store      - Sublevel-compatible data store
-   * @param  {Object}        logger
+   * @param  {object}        logger
    */
   constructor (marketName, relayer, store, logger = consoleLogger) {
     this.marketName = marketName
@@ -145,7 +145,7 @@ class Orderbook {
    *
    * @param {string} since - ISO8601 datetime lowerbound
    * @param {number} limit - limit of records returned
-   * @returns {Promise<Array<Object>>} trades
+   * @returns {Promise<Array<object>>} trades
    */
   async getTrades (since, limit) {
     this.assertSynced()
@@ -160,7 +160,7 @@ class Orderbook {
 
   /**
    * Get orders in the orderbook for a given side up to a given limit. If no limit is provided, gets all orders
-   * @param {Object} args
+   * @param {object} args
    * @param {string} args.side - Side of the orderbook to get orders for (i.e. `BID` or `ASK`)
    * @param {string} args.limit - int64 String of the the amount of orders to return.
    * @returns {Promise<Array<MarketEventOrder>>} A promise that resolves MarketEventOrders
@@ -187,14 +187,14 @@ class Orderbook {
   }
 
   /**
-   * @typedef {Object} BestOrders
-   * @property {String} depth Int64 string of the total depth represented by the orders
+   * @typedef {object} BestOrders
+   * @property {string} depth Int64 string of the total depth represented by the orders
    * @property {Array<MarketEventOrder>} orders Array of the best market event orders
    */
 
   /**
    * get the best price orders in the orderbook
-   * @param {Object} args
+   * @param {object} args
    * @param {string} args.side  - Side of the orderbook to get the best priced orders for (i.e. `BID` or `ASK`)
    * @param {string} args.depth - int64 String of the amount, in base currency base units to ge the best prices up to
    * @param {?string} args.quantumPrice - Decimal String of the price that all orders should be better than
@@ -337,7 +337,7 @@ class Orderbook {
   /**
    * Gets the last record in an event store
    * @private
-   * @returns {Promise<MarketEvent | Object>} - empty object if no record exists
+   * @returns {Promise<MarketEvent|object>} - empty object if no record exists
    */
   async getLastRecord () {
     const [ lastEvent = {} ] = await getRecords(
@@ -351,7 +351,7 @@ class Orderbook {
     return lastEvent
   }
 
-  /** @typedef {Object} LastUpdateResponse
+  /** @typedef {object} LastUpdateResponse
    *  @property {string} [lastUpdated=0] - nanosecond timestamp
    *  @property {string} [sequence=0] - event version for a given timestamp
    */

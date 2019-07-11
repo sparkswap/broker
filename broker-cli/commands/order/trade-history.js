@@ -6,8 +6,8 @@ const { handleError } = require('../../utils')
  *
  * ex: `sparkswap order trade-history'
  *
- * @param {Object} args
- * @param {Object} opts
+ * @param {object} args
+ * @param {object} opts
  * @param {string} opts.rpcaddress
  * @param {Logger} logger
  */

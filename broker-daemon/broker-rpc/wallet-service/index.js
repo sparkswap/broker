@@ -19,11 +19,11 @@ const changeWalletPassword = require('./change-wallet-password')
 class WalletService {
   /**
    * @class
-   * @param {String} protoPath
-   * @param {Object} options
-   * @param {Map<String, LndEngine>} options.engines
+   * @param {string} protoPath
+   * @param {object} options
+   * @param {Map<string, LndEngine>} options.engines
    * @param {RelayerClient} options.relayer
-   * @param {Map<String, Orderbook>} options.orderbooks - Collection of all active Orderbooks
+   * @param {Map<string, Orderbook>} options.orderbooks - Collection of all active Orderbooks
    * @param {BlockOrderWorker} opts.blockOrderWorker
    * @param {Function} options.auth
    * @param {Logger} options.logger

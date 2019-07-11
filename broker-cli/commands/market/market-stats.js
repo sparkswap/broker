@@ -5,7 +5,7 @@ const { handleError } = require('../../utils')
  * Market Stats
  * @example
  * // sparkswap market market-stats --market btc/ltc
- * @param {Object} opts
+ * @param {object} opts
  * @param {string} opts.market
  * @param {string} opts.rpcaddress
  * @param {Logger} logger

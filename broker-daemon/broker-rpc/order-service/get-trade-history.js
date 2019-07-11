@@ -2,11 +2,11 @@
  * Retrieve information about completed trades
  *
  * @param {GrpcUnaryMethod~request} request - request object
- * @param {Object} request.logger
+ * @param {object} request.logger
  * @param {BlockOrderWorker} request.blockOrderWorker
- * @param {Object} responses
- * @param {function} responses.GetTradeHistoryResponse - constructor for GetTradeHistoryResponse messages
- * @return {responses.GetTradeHistoryResponse}
+ * @param {object} responses
+ * @param {Function} responses.GetTradeHistoryResponse - constructor for GetTradeHistoryResponse messages
+ * @returns {responses.GetTradeHistoryResponse}
  */
 
 async function getTradeHistory ({ logger, blockOrderWorker }, { GetTradeHistoryResponse }) {

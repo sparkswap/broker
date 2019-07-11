@@ -2,10 +2,10 @@
  * Check on the status of a block order
  *
  * @param {GrpcUnaryMethod~request} request - request object
- * @param {Object} request.params - Request parameters from the client
+ * @param {object} request.params - Request parameters from the client
  * @param {BlockOrderWorker} request.blockOrderWorker
- * @param {Object} request.logger
- * @param {Object} responses
+ * @param {object} request.logger
+ * @param {object} responses
  * @param {Function} responses.GetBlockOrderResponse - constructor for GetBlockOrderResponse messages
  * @returns {Promise<GetBlockOrderResponse>}
  */

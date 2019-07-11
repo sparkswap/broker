@@ -10,10 +10,10 @@ const { ORDER_TYPES, TIME_IN_FORCE } = ENUMS
  * ex: `sparkswap buy 10 100 --market 'BTC/LTC'
  * ex: `sparkswap buy 10 100 --market 'BTC/LTC' --timeinforce GTC --rpc-address localhost:10009`
  *
- * @param {Object} args
+ * @param {object} args
  * @param {string} args.amount
  * @param {string} args.price
- * @param {Object} opts
+ * @param {object} opts
  * @param {string} opts.market
  * @param {string} opts.timeinforce
  * @param {string} opts.rpcaddress

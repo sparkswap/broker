@@ -6,7 +6,7 @@ const grpcDeadline = require('./grpc-deadline')
  * gRPC client interceptor that allows us to set a deadline for all calls in a
  * service
  *
- * @param {Object} options
+ * @param {object} options
  * @param {Function} nextCall
  * @returns {grpc.InterceptingCall}
  */

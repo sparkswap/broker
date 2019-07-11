@@ -38,14 +38,14 @@ class Fill {
   /**
    * Create a fill for an existing order
    * @param {string} blockOrderId        - Id of the block order this fill is associated with
-   * @param {Object} order
+   * @param {object} order
    * @param {string} order.orderId       - Unique ID assigned by the relayer to identify an order
    * @param {string} order.baseSymbol    - Currency symbol for the base currency in the market, e.g. BTC
    * @param {string} order.counterSymbol - Currency symbol for the counter or quote currency in the market, e.g. LTC
    * @param {string} order.side          - Side of the transaction that the order is on, either BID or ASK
    * @param {string} order.baseAmount    - Amount, represented as an integer in the base currency's smallest unit, to be transacted
    * @param {string} order.counterAmount - Amount, represented as an integer in the counter currency's smallest unit, to be transacted
-   * @param {Object} fill
+   * @param {object} fill
    * @param {string} fill.fillAmount     - Amount, represented as an integer in the base currency's smallets unit, that the order is filled with
    * @param {string} [fill.takerBaseAddress]   - address for the taker base symbol
    * @param {string} [fill.takerCounterAddress]   - address for the taker counter symbol
@@ -82,7 +82,7 @@ class Fill {
 
   /**
    * Add parameters to the fill from its creation on the Relayer
-   * @param {Object} params
+   * @param {object} params
    * @param {string}  params.fillId                - Unique identifier for the fill as assigned by the Relayer
    * @param {string}  params.feePaymentRequest     - Payment channel network payment request for the fill fee
    * @param {boolean} params.feeRequired           - Whether the fee is required
@@ -99,7 +99,7 @@ class Fill {
 
   /**
    * Set params from execution on an order
-   * @param {Object} params
+   * @param {object} params
    * @param {string} params.makerAddress - Address of the counterparty for the swap
    */
   setExecuteParams ({ makerAddress }) {
@@ -108,7 +108,7 @@ class Fill {
 
   /**
    * serialize an fill for transmission via grpc
-   * @returns {Object} Object to be serialized into a GRPC message
+   * @returns {object} Object to be serialized into a GRPC message
    */
   serialize () {
     const currencies = CONFIG.currencies || []
@@ -145,7 +145,7 @@ class Fill {
 
   /**
    * Params required to create an order on the relayer
-   * @returns {Object} Object of parameters the relayer expects
+   * @returns {object} Object of parameters the relayer expects
    */
   get paramsForCreate () {
     const {
@@ -169,7 +169,7 @@ class Fill {
 
   /**
    * Params required to fill an order on the relayer
-   * @returns {Object} Object of parameters the relayer expects
+   * @returns {object} Object of parameters the relayer expects
    */
   get paramsForFill () {
     const {
@@ -209,7 +209,7 @@ class Fill {
 
   /**
    * Params required to execute a swap on the payment channel network
-   * @returns {Object} Object of parameters an engine expects
+   * @returns {object} Object of parameters an engine expects
    */
   get paramsForSwap () {
     const {
@@ -320,7 +320,7 @@ class Fill {
 
   /**
    * Get the store-able object
-   * @returns {Object} Store-able version of the object
+   * @returns {object} Store-able version of the object
    */
   get valueObject () {
     const {
@@ -368,7 +368,7 @@ class Fill {
    * Create an instance of an fill object from a stored copy
    * @param  {string} key   - Unique key for the order, i.e. its `fillId`
    * @param  {string} fillStateMachineRecord - Stringified representation of the order
-   * @returns {Object} Inflated fill object
+   * @returns {object} Inflated fill object
    */
   static fromStorage (key, fillStateMachineRecord) {
     return this.fromObject(key, JSON.parse(fillStateMachineRecord).fill)
@@ -377,7 +377,7 @@ class Fill {
   /**
    * Create an instance of an fill from an object representation
    * @param  {string} key         - Unique key for the fill, i.e. its `blockOrderId` and `fillId`
-   * @param  {Object} valueObject - Plain object representation of the fill
+   * @param  {object} valueObject - Plain object representation of the fill
    * @returns {Fill}              Inflated fill object
    */
   static fromObject (key, valueObject) {
@@ -447,7 +447,7 @@ class Fill {
    * This works because all fills are prefixed with their blockOrderId and the Delimiter.
    * @param {string} startId - id of the block order to start the range
    * @param {string} endId - id of the block order to end the range
-   * @returns {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
+   * @returns {object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
    */
   static rangeForBlockOrderIds (startId, endId) {
     return {
@@ -459,7 +459,7 @@ class Fill {
   /**
    * Grabs all fills
    * @param {Sublevel} store
-   * @returns {Promise<Array<Object>>} array of fill representations (includes fill model)
+   * @returns {Promise<Array<object>>} array of fill representations (includes fill model)
    */
   static async getAllFills (store) {
     return getRecords(
