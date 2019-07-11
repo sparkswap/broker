@@ -637,6 +637,7 @@ describe('OrderStateMachine', () => {
     let outboundFillAmount
     let takerAddress
     let prepareSwapStub
+    let makerInboundAddress
 
     beforeEach(async () => {
       executeOrderStub = sinon.stub().resolves()
@@ -647,6 +648,7 @@ describe('OrderStateMachine', () => {
       outboundSymbol = 'BTC'
       outboundFillAmount = '100'
       takerAddress = 'asdofijasodfij'
+      makerInboundAddress = '130494055'
 
       fakeOrder = {
         orderId,
@@ -655,7 +657,8 @@ describe('OrderStateMachine', () => {
         inboundSymbol,
         outboundSymbol,
         outboundFillAmount,
-        takerAddress
+        takerAddress,
+        makerInboundAddress
       }
       relayer = {
         makerService: {
@@ -687,6 +690,7 @@ describe('OrderStateMachine', () => {
 
       expect(prepareSwapStub).to.have.been.calledOnce()
       expect(prepareSwapStub).to.have.been.calledWith(swapHash, {
+        address: makerInboundAddress,
         engine: engines.get('LTC'),
         amount: inboundFillAmount
       }, new Date('2019-06-21T00:03:31.503Z'))

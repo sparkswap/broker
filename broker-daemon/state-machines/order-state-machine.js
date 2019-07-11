@@ -208,7 +208,8 @@ const OrderStateMachine = StateMachine.factory({
 
       return {
         engine: inboundEngine,
-        amount: inboundFillAmount
+        amount: inboundFillAmount,
+        address: this.order.makerInboundAddress
       }
     },
 
@@ -431,6 +432,7 @@ const OrderStateMachine = StateMachine.factory({
     },
 
     onBeforeFill: function (lifecycle, fill) {
+      void lifecycle
       const { orderId } = this.order
 
       this.logger.info(`Order ${orderId} is being filled`, { orderId })
@@ -440,6 +442,7 @@ const OrderStateMachine = StateMachine.factory({
     },
 
     onAfterFill: function (lifecycle) {
+      void lifecycle
       // you can't start a transition while in another one,
       // so we `nextTick` our way out of the current transition
       // @see {@link https://github.com/jakesgordon/javascript-state-machine/issues/143}
@@ -455,6 +458,7 @@ const OrderStateMachine = StateMachine.factory({
      * @returns {Promise<void>} Promise that rejects if execution prep or notification fails
      */
     onBeforeExecute: async function (lifecycle) {
+      void lifecycle
       const { orderId, swapHash } = this.order
       const inboundPayment = this.inboundPayment()
       const timeout = new Date(this.dates.filled.getTime() + SWAP_TIMEOUT)
@@ -472,6 +476,7 @@ const OrderStateMachine = StateMachine.factory({
      * @returns {void}
      */
     onAfterExecute: function (lifecycle) {
+      void lifecycle
       // you can't start a transition while in another one,
       // so we `nextTick` our way out of the current transition
       // @see {@link https://github.com/jakesgordon/javascript-state-machine/issues/143}
@@ -487,6 +492,7 @@ const OrderStateMachine = StateMachine.factory({
      * @returns {Promise}
      */
     onBeforeComplete: async function (lifecycle) {
+      void lifecycle
       const { swapHash } = this.order
       const inboundPayment = this.inboundPayment()
       const outboundPayment = this.outboundPayment()
@@ -515,6 +521,7 @@ const OrderStateMachine = StateMachine.factory({
      * @returns {void}
      */
     triggerState: function (lifecycle) {
+      void lifecycle
       const nextState = {
         [STATES.FILLED]: 'execute',
         [STATES.EXECUTING]: 'complete',

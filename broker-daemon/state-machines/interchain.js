@@ -5,6 +5,8 @@ const {
 
 const { ERRORS: ENGINE_ERRORS } = require('lnd-engine')
 
+/** @typedef {import('..').Engine} Engine */
+
 /**
  * A description of a payment on a Payment Channel Network
  * @typedef {Object} Payment
@@ -131,7 +133,7 @@ async function prepareSwap (hash, { engine, amount }, timeout) {
  *                                            swap
  * @param {Payment} inboundPayment
  * @param {Payment} outboundPayment
- * @returns {string}                          Base64 encoded preimage for the
+ * @returns {Promise<string>}                 Base64 encoded preimage for the
  *                                            swap.
  */
 async function translateIdempotent (
@@ -179,7 +181,7 @@ async function translateIdempotent (
  * @param   {Engine} engine
  * @param   {string} hash     - Base64 string of the swap hash
  * @param   {Error}  error    - Error that caused the cancel
- * @returns {void}
+ * @returns {Promise<void>}
  */
 async function cancelSwap (engine, hash, error) {
   logger.error('Permanent Error encountered while translating swap, ' +
@@ -196,12 +198,13 @@ async function cancelSwap (engine, hash, error) {
  * @param   {Engine} engine
  * @param   {string} hash     - Base64 string of the swap hash
  * @param   {string} preimage - Base64 string of the swap preimage
- * @returns {void}
+ * @returns {Promise<void>}
  */
 async function settleSwap (engine, hash, preimage) {
   logger.debug(`Settling upstream payment for ${hash}`)
   await engine.settleSwap(preimage)
   logger.debug(`Successfully settled upstream payment for ${hash}`)
+  return undefined
 }
 
 /**
@@ -215,7 +218,7 @@ async function settleSwap (engine, hash, preimage) {
  * @param {Payment} outboundPayment       - Outbound payment we will make to
  *                                          retrieve the preimage.
  * @param {Error}   error                 - Error that caused the retry
- * @returns {string}                        Base64 encoded preimage for the swap
+ * @returns {Promise<string>}               Base64 encoded preimage for the swap
  */
 async function retryForward (hash, inboundPayment, outboundPayment, error) {
   logger.error('Temporary Error encountered while forwarding swap',
@@ -242,7 +245,7 @@ async function retryForward (hash, inboundPayment, outboundPayment, error) {
  * @param {Payment} inboundPayment        - Expected inbound payment
  * @param {Payment} outboundPayment       - Outbound payment we will make to
  *                                          retrieve the preimage.
- * @returns {string}                        Base64 encoded preimage for the swap
+ * @returns {Promise<string>}               Base64 encoded preimage for the swap
  * @throws {Error} If a permanent error is encountered and the swap is cancelled
  */
 async function forwardSwap (hash, inboundPayment, outboundPayment) {

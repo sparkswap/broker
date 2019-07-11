@@ -45,8 +45,8 @@ class Fill {
    * @param {string} order.counterAmount - Amount, represented as an integer in the counter currency's smallest unit, to be transacted
    * @param {Object} fill
    * @param {string} fill.fillAmount     - Amount, represented as an integer in the base currency's smallets unit, that the order is filled with
-   * @param {string} fill.takerBaseAddress   - address for the taker base symbol
-   * @param {string} fill.takerCounterAddress   - address for the taker counter symbol
+   * @param {string} [fill.takerBaseAddress]   - address for the taker base symbol
+   * @param {string} [fill.takerCounterAddress]   - address for the taker counter symbol
    */
   constructor (blockOrderId, { orderId, baseSymbol, counterSymbol, side, baseAmount, counterAmount }, { fillAmount, takerBaseAddress, takerCounterAddress }) {
     this.blockOrderId = blockOrderId
