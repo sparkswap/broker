@@ -5,6 +5,9 @@ const OrderbookIndex = require('./orderbook-index')
 const { getRecords, Big } = require('../utils')
 const nano = require('nano-seconds')
 
+/** @typedef {import('level-sublevel')} Sublevel */
+/** @typedef {import('../relayer')} RelayerClient */
+
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
 
@@ -160,9 +163,10 @@ class Orderbook {
    * @param {Object} args
    * @param {string} args.side - Side of the orderbook to get orders for (i.e. `BID` or `ASK`)
    * @param {string} args.limit - int64 String of the the amount of orders to return.
-   * @returns {Array<MarketEventOrder>} A promise that resolves MarketEventOrders for the limited records
+   * @returns {Promise<Array<MarketEventOrder>>} A promise that resolves MarketEventOrders
+   *                                             for the limited records
    */
-  getOrders ({ side, limit }) {
+  async getOrders ({ side, limit }) {
     this.assertSynced()
     this.logger.info('Retrieving records from orderbook', { side, limit })
 
@@ -193,7 +197,7 @@ class Orderbook {
    * @param {Object} args
    * @param {string} args.side  - Side of the orderbook to get the best priced orders for (i.e. `BID` or `ASK`)
    * @param {string} args.depth - int64 String of the amount, in base currency base units to ge the best prices up to
-   * @param {string} args.quantumPrice - Decimal String of the price that all orders should be better than
+   * @param {?string} args.quantumPrice - Decimal String of the price that all orders should be better than
    * @returns {Promise<BestOrders>} A promise that resolves MarketEventOrders of the best priced orders
    */
   getBestOrders ({ side, depth, quantumPrice }) {
@@ -251,11 +255,15 @@ class Orderbook {
    * @returns {Promise<number>} The weighted average price
    */
   async getAveragePrice (side, targetDepth) {
-    const { orders, depth } = await this.getBestOrders({ side, depth: targetDepth })
+    const { orders, depth } = await this.getBestOrders({
+      side,
+      depth: targetDepth,
+      quantumPrice: null
+    })
     if (Big(depth).lt(targetDepth)) {
       const params = {
         market: this.marketName,
-        side: this.side,
+        side,
         depth,
         targetDepth
       }

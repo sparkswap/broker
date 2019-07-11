@@ -2,7 +2,10 @@ const {
   Big,
   getRecords
 } = require('../utils')
-const CONFIG = require('../config')
+const CONFIG = require('../config.json')
+
+/** @typedef {import('level-sublevel')} Sublevel */
+
 /**
  * Delimiter for the block order id and order when storing orders
  * @constant
@@ -103,8 +106,15 @@ class Order {
    * @returns {Object} serialzed order to send in a GRPC message
    */
   serialize () {
-    const baseAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol).quantumsPerCommon
-    const counterAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.counterSymbol).quantumsPerCommon
+    const currencies = CONFIG.currencies || []
+    const baseCurrency = currencies.find(({ symbol }) => symbol === this.baseSymbol)
+    const counterCurrency = currencies.find(({ symbol }) => symbol === this.counterSymbol)
+    if (!baseCurrency || !counterCurrency ||
+      !baseCurrency.quantumsPerCommon || !counterCurrency.quantumsPerCommon) {
+      throw new Error('Invalid currency config')
+    }
+    const baseAmountFactor = baseCurrency.quantumsPerCommon
+    const counterAmountFactor = counterCurrency.quantumsPerCommon
     const baseCommonAmount = Big(this.baseAmount).div(baseAmountFactor)
     const counterCommonAmount = Big(this.counterAmount).div(counterAmountFactor)
     const fillCommonAmount = this.fillAmount ? Big(this.fillAmount).div(baseAmountFactor).toFixed(16) : this.fillAmount
@@ -134,7 +144,7 @@ class Order {
    * @returns {string} 64-bit integer represented as a string
    */
   get baseFillAmount () {
-    return this.fillAmount
+    return this.fillAmount || '0'
   }
 
   /**
@@ -374,7 +384,7 @@ class Order {
   /**
    * Get the unique key that this object can be stored with
    * It is prefixed by the blockOrderId so that it can be retrieved easily
-   * @returns {string} Unique key for storage. In the case of an order, it is a combination of the blockOrderId and Relayer-assigned orderId
+   * @returns {string | undefined} Unique key for storage. In the case of an order, it is a combination of the blockOrderId and Relayer-assigned orderId
    */
   get key () {
     // if either part of our key is undefined we return undefined so as not to create
@@ -518,7 +528,7 @@ class Order {
 
   /**
    * Grabs all orders
-   * @param {sublevel} store
+   * @param {Sublevel} store
    * @returns {Promise<Array<Object>>} array of order representation (includes order model)
    */
   static async getAllOrders (store) {
