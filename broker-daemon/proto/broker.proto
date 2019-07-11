@@ -2292,7 +2292,7 @@ service WalletService {
    * recovery
    *
    * ```javascript
-   * await walletService.recoverWallet({ symbol: 'BTC', password: 'your-password', seed: ['array', 'of', 'strings'], backup: true)
+   * await walletService.recoverWallet({ symbol: 'BTC', password: 'your-password', seed: ['array', 'of', 'strings'], useBackupFile: true)
    * ```
    *
    * ```shell
