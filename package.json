@@ -17,7 +17,7 @@
     "lint": "eslint broker-cli broker-daemon test --ext .js --max-warnings=0",
     "lint-watch": "esw -f simple -w --clear",
     "mocha-test": "NODE_PATH=. mocha 'broker-cli/{,!(node_modules)/**}/**/*.spec.js' 'broker-daemon/**/**/*.spec.js'",
-    "test": "npm run check-for-cycles && npm run check-unused && npm run mocha-test",
+    "test": "npm run check-for-cycles && npm run check-unused && npm run typecheck && npm run mocha-test",
     "coverage": "nyc npm test",
     "ci-test": "npm run format && npm test",
     "start-sparkswapd": "pm2-docker pm2.json",
