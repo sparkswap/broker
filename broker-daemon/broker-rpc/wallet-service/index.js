@@ -13,24 +13,24 @@ const unlockWallet = require('./unlock-wallet')
 const walletHistory = require('./wallet-history')
 const changeWalletPassword = require('./change-wallet-password')
 
+/** @typedef {import('../broker-rpc-server').RelayerClient} RelayerClient */
+/** @typedef {import('../broker-rpc-server').Logger} Logger */
+/** @typedef {import('../broker-rpc-server').BlockOrderWorker} BlockOrderWorker */
+/** @typedef {import('../broker-rpc-server').Orderbook} Orderbook */
+/** @typedef {import('../broker-rpc-server').Engine} Engine */
+
 /**
  * WalletService provides interactions with an engine's crypto wallet
  */
 class WalletService {
   /**
    * @class
-<<<<<<< HEAD
-   * @param {String} protoPath
-   * @param {Object} options
-   * @param {Map<string, Engine>} options.engines
-=======
    * @param {string} protoPath
    * @param {object} options
-   * @param {Map<string, LndEngine>} options.engines
->>>>>>> typescript
+   * @param {Map<string, Engine>} options.engines
    * @param {RelayerClient} options.relayer
    * @param {Map<string, Orderbook>} options.orderbooks - Collection of all active Orderbooks
-   * @param {BlockOrderWorker} opts.blockOrderWorker
+   * @param {BlockOrderWorker} options.blockOrderWorker
    * @param {Function} options.auth
    * @param {Logger} options.logger
    */

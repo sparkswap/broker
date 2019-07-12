@@ -10,7 +10,6 @@ describe('new-deposit-address', () => {
   let engines
   let newAddressStub
   let newAddressResponse
-  let responseStub
 
   before(() => {
     logger = {
@@ -21,14 +20,15 @@ describe('new-deposit-address', () => {
     }
     newAddressResponse = '12345'
     newAddressStub = sinon.stub().returns(newAddressResponse)
-    responseStub = sinon.stub()
     engine = { createNewAddress: newAddressStub }
     engines = new Map([['BTC', engine]])
   })
 
   describe('newDepositAddress', () => {
+    let res
+
     beforeEach(async () => {
-      await newDepositAddress({ logger, engines, params }, { NewDepositAddressResponse: responseStub })
+      res = await newDepositAddress({ logger, engines, params })
     })
 
     it('calls an engine with createNewAddress', () => {
@@ -37,7 +37,7 @@ describe('new-deposit-address', () => {
 
     it('constructs a NewAddressResponse', () => {
       const address = newAddressResponse
-      expect(responseStub).to.have.been.calledWith({ address })
+      expect(res).to.be.eql({ address })
     })
   })
 
@@ -45,7 +45,7 @@ describe('new-deposit-address', () => {
     const badParams = { symbol: 'BAD' }
 
     it('throws an error', () => {
-      return expect(newDepositAddress({ logger, engines, params: badParams }, { NewDepositAddressResponse: responseStub })).to.eventually.be.rejectedWith('Unable to generate address')
+      return expect(newDepositAddress({ logger, engines, params: badParams })).to.eventually.be.rejectedWith('Unable to generate address')
     })
   })
 })

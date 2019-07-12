@@ -29,6 +29,15 @@ const {
  * @property {Sublevel} request.store
  */
 
+/** @typedef {Object} GrpcServerStreamingMethodRequest
+ *  @property {Object} request.params - Request parameters from the client
+ *  @property {Function} request.send - Send a chunk of data to the client
+ *  @property {Function} request.onCancel
+ *  @property {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
+ *  @property {Logger} request.logger - logger for messages about the method
+ *  @property {Map<string, Orderbook>} request.orderbooks
+ */
+
 /**
  * @constant
  * @type {string}

@@ -10,7 +10,6 @@ const walletHistory = rewire(path.resolve(__dirname, 'wallet-history'))
 describe('wallet-history', () => {
   let logger
   let params
-  let WalletHistoryResponse
   let symbol
   let engine
   let engines
@@ -30,18 +29,16 @@ describe('wallet-history', () => {
     engines = new Map([
       ['BTC', engine]
     ])
-
-    WalletHistoryResponse = sinon.stub()
   })
 
   it('throws an error is engine could not be found', () => {
     params = { symbol: 'LTC' }
-    return expect(walletHistory({ logger, params, engines }, { WalletHistoryResponse })).to.eventually.be.rejected('No engine found for symbol')
+    return expect(walletHistory({ logger, params, engines })).to.eventually.be.rejected('No engine found for symbol')
   })
 
   it('logs a transaction count', async () => {
-    await walletHistory({ logger, params, engines }, { WalletHistoryResponse })
-    expect(WalletHistoryResponse).to.have.been.calledWith({ transactions: [] })
+    const res = await walletHistory({ logger, params, engines })
+    expect(res).to.be.eql({ transactions: [] })
     expect(logger.debug).to.have.been.calledWith(sinon.match('0 transactions'))
   })
 
@@ -73,7 +70,6 @@ describe('wallet-history', () => {
     }]
 
     engine.getChainTransactions.resolves(expectedTransactions)
-    await walletHistory({ logger, params, engines }, { WalletHistoryResponse })
-    expect(WalletHistoryResponse).to.have.been.calledWith({ transactions: expectedTransactions })
+    expect(await walletHistory({ logger, params, engines })).to.be.eql({ transactions: expectedTransactions })
   })
 })

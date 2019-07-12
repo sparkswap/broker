@@ -1,15 +1,14 @@
+const { GrpcResponse: WalletHistoryResponse } = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+
 /**
  * Returns a summary of a wallet
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {Logger} request.logger
- * @param {object<string>} request.params
- * @param {Array<Engine>} request.engines
- * @param {object} responses
- * @param {Function} responses.EmptyResponse
- * @returns {EmptyResponse}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<WalletHistoryResponse>}
  */
-async function walletHistory ({ logger, params, engines }, { WalletHistoryResponse }) {
+async function walletHistory ({ logger, params, engines }) {
   const { symbol } = params
   const engine = engines.get(symbol)
 

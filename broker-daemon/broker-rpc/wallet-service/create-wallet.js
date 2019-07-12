@@ -1,17 +1,14 @@
+const { GrpcResponse: CreateWalletResponse } = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+
 /**
  * Creates a new wallet for a specific engine
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {Logger} request.logger
- * @param {object<string>} request.params
- * @param {string} request.params.symbol - currency symbol of the wallet e.g. `BTC`
- * @param {string} request.params.password - password for the newly created wallet
- * @param {Map<Engine>} request.engines
- * @param {object} responses
- * @param {Function} responses.CreateWalletResponse
- * @returns {CreateWalletResponse}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<CreateWalletResponse>}
  */
-async function createWallet ({ logger, params, engines }, { CreateWalletResponse }) {
+async function createWallet ({ logger, params, engines }) {
   const { symbol, password } = params
   const engine = engines.get(symbol)
 

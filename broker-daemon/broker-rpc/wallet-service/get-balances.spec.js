@@ -17,7 +17,6 @@ describe('get-balances', () => {
   describe('getBalances', () => {
     let engineStub
     let engines
-    let GetBalancesResponse
     let balancesStub
     let balance
     let revert
@@ -33,7 +32,6 @@ describe('get-balances', () => {
       engineStub = sinon.stub()
       engines = new Map([['BTC', engineStub]])
       balancesStub = sinon.stub().resolves(balance)
-      GetBalancesResponse = sinon.stub()
 
       revert = getBalances.__set__('getEngineBalances', balancesStub)
     })
@@ -46,7 +44,7 @@ describe('get-balances', () => {
     })
 
     it('gets the balances from a particular engine', async () => {
-      await getBalances({ logger, engines }, { GetBalancesResponse })
+      await getBalances({ logger, engines })
       // The next line gets the first engine value
       const [symbol, engine] = engines.entries().next().value
       expect(balancesStub).to.have.been.calledOnce()
@@ -54,27 +52,27 @@ describe('get-balances', () => {
     })
 
     it('returns all balances for the broker daemon', async () => {
-      await getBalances({ logger, engines }, { GetBalancesResponse })
+      const res = await getBalances({ logger, engines })
       const expectedBalances = [
         sinon.match({
           symbol: 'BTC',
           ...balance
         })
       ]
-      expect(GetBalancesResponse).to.have.been.calledWith({ balances: expectedBalances })
+      expect(res).to.be.eql({ balances: expectedBalances })
     })
 
     it('returns a blank payload if an engine is unavailable', async () => {
       const error = 'Engine not available'
       balancesStub.rejects(error)
-      await getBalances({ logger, engines }, { GetBalancesResponse })
+      const res = await getBalances({ logger, engines })
       const expectedBalances = [
         sinon.match({
           symbol: 'BTC',
           error
         })
       ]
-      expect(GetBalancesResponse).to.have.been.calledWith({ balances: expectedBalances })
+      expect(res).to.be.eql({ balances: expectedBalances })
     })
   })
 

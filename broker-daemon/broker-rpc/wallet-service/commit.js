@@ -1,4 +1,9 @@
-const { Big } = require('../../utils')
+const {
+  Big,
+  GrpcResponse: EmptyResponse
+} = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
 
 /**
  * Relevant fragment of the message generated on LND Engine when our
@@ -16,16 +21,10 @@ const SMALL_CHAN_ERR = 'too small'
 /**
  * Grabs public lightning network information from relayer and opens a channel
  *
- * @param {object} request - request object
- * @param {object} request.params
- * @param {RelayerClient} request.relayer
- * @param {Logger} request.logger
- * @param {Engine} request.engines
- * @param {object} responses
- * @param {Function} responses.EmptyResponse
+ * @param {GrpcUnaryMethodRequest} request - request object
  * @returns {Promise<EmptyResponse>}
  */
-async function commit ({ params, relayer, logger, engines, orderbooks }, { EmptyResponse }) {
+async function commit ({ params, relayer, logger, engines, orderbooks }) {
   const { balance: balanceCommon, symbol, market } = params
 
   const orderbook = orderbooks.get(market)

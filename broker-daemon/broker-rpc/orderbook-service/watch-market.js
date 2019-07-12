@@ -1,5 +1,8 @@
 const createLiveStream = require('level-live-stream')
 const { MarketEventOrder } = require('../../models')
+const { GrpcResponse: WatchMarketResponse } = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcServerStreamingMethodRequest} GrpcServerStreamingMethodRequest */
 
 /**
  * Promise that never resolves to keep open the watchMarket stream
@@ -14,18 +17,12 @@ const neverResolve = new Promise(() => {})
  * Creates a stream with the exchange that watches for market events
  *
  * @function
- * @param {GrpcServerStreamingMethod~request} request - request object
- * @param {object} request.params - Request parameters from the client
- * @param {Function} request.send - Send a chunk of data to the client
- * @param {Function} request.onCancel - Handle cancelled streams
- * @param {object} request.logger - logger for messages about the method
- * @param {object} request.orderbooks - initialized orderbooks
- * @param {RelayerClient} request.relayer - grpc Client for interacting with the relayer
+ * @param {GrpcServerStreamingMethodRequest} request - request object
  * @param {object} responses
- * @param {Function} responses.WatchMarketResponse - constructor for WatchMarketResponse messages
+ * @param {object} responses.EventType - Valid event types for WatchMarketResponses
  * @returns {Promise<void>}
  */
-async function watchMarket ({ params, send, onCancel, logger, orderbooks }, { WatchMarketResponse }) {
+async function watchMarket ({ params, send, onCancel, logger, orderbooks }, { EventType }) {
   // TODO: Some validation on here. Maybe the client can call out for valid markets
   // from the relayer so we dont event make a request if it is invalid
   const { market } = params
@@ -59,12 +56,12 @@ async function watchMarket ({ params, send, onCancel, logger, orderbooks }, { Wa
       logger.info('New event being added to stream, event info', opts)
       if (opts.type === DB_ACTIONS.DELETE) {
         params = {
-          type: WatchMarketResponse.EventType.DELETE,
+          type: EventType.DELETE,
           marketEvent: { orderId: opts.key }
         }
       } else {
         params = {
-          type: WatchMarketResponse.EventType.ADD,
+          type: EventType.ADD,
           marketEvent: MarketEventOrder.fromStorage(opts.key, opts.value).serialize()
         }
       }

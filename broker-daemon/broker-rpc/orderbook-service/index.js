@@ -27,8 +27,10 @@ class OrderBookService {
     this.definition = this.proto.broker.rpc.OrderBookService.service
     this.serviceName = 'OrderBookService'
 
+    const { EventType } = this.proto.broker.rpc.WatchMarketResponse
+
     this.implementation = {
-      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks, auth }).register(),
+      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks, auth }, { EventType }).register(),
       getOrderbook: new GrpcUnaryMethod(getOrderbook, this.messageId('getOrderbook'), { logger, relayer, orderbooks, auth }).register(),
       getSupportedMarkets: new GrpcUnaryMethod(getSupportedMarkets, this.messageId('getSupportedMarkets'), { logger, relayer, orderbooks }).register(),
       getMarketStats: new GrpcUnaryMethod(getMarketStats, this.messageId('getMarketStats'), { logger, orderbooks }).register(),

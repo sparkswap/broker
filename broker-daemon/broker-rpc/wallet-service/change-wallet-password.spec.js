@@ -10,7 +10,6 @@ describe('change-wallet-password', () => {
   let engines
   let engine
   let logger
-  let EmptyResponse
   let params
 
   beforeEach(() => {
@@ -31,19 +30,18 @@ describe('change-wallet-password', () => {
       symbol,
       currentPassword,
       newPassword
-    }
-    EmptyResponse = sinon.stub()
+    } 
   })
 
   it('errors if engine could not be found', () => {
     params.symbol = 'LTC'
-    return expect(changeWalletPassword({ logger, params, engines }, { EmptyResponse })).to.eventually.be.rejectedWith('Unable to change wallet password')
+    return expect(changeWalletPassword({ logger, params, engines })).to.eventually.be.rejectedWith('Unable to change wallet password')
   })
 
   it('logs an error if engine could not be found', async () => {
     params.symbol = 'LTC'
     try {
-      await changeWalletPassword({ logger, params, engines }, { EmptyResponse })
+      await changeWalletPassword({ logger, params, engines })
     } catch (e) {
       expect(logger.error).to.have.been.calledOnce()
     }
@@ -51,16 +49,15 @@ describe('change-wallet-password', () => {
 
   it('errors if the wallet is not locked', () => {
     engine.isLocked = false
-    return expect(changeWalletPassword({ logger, params, engines }, { EmptyResponse })).to.eventually.be.rejectedWith('Unable to change your wallet password')
+    return expect(changeWalletPassword({ logger, params, engines })).to.eventually.be.rejectedWith('Unable to change your wallet password')
   })
 
   it('changes a wallet password for a specific engine', async () => {
-    await changeWalletPassword({ logger, params, engines }, { EmptyResponse })
+    await changeWalletPassword({ logger, params, engines })
     expect(engine.changeWalletPassword).to.have.been.calledWith(currentPassword, newPassword)
   })
 
   it('returns an empty response', async () => {
-    await changeWalletPassword({ logger, params, engines }, { EmptyResponse })
-    expect(EmptyResponse).to.have.been.calledOnce()
+    expect(await changeWalletPassword({ logger, params, engines })).to.be.eql({})
   })
 })

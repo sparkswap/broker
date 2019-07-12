@@ -4,7 +4,6 @@ const { Big } = require('../../utils')
 const withdrawFunds = rewire(path.resolve(__dirname, 'withdraw-funds'))
 
 describe('withdrawFunds', () => {
-  let WithdrawFundsResponse
   let params
   let relayer
   let logger
@@ -17,7 +16,6 @@ describe('withdrawFunds', () => {
 
   beforeEach(() => {
     txid = 'asdf'
-    WithdrawFundsResponse = sinon.stub()
     withdrawFundsStub = sinon.stub().resolves(txid)
     logger = {
       info: sinon.stub()
@@ -53,8 +51,9 @@ describe('withdrawFunds', () => {
   })
 
   describe('withdrawFunds', () => {
+    let res
     beforeEach(async () => {
-      await withdrawFunds({ params, relayer, logger, engines }, { WithdrawFundsResponse })
+      res = await withdrawFunds({ params, relayer, logger, engines })
     })
 
     it('makes a request to the engine to withdrawFunds to the address specified', () => {
@@ -65,7 +64,7 @@ describe('withdrawFunds', () => {
     })
 
     it('returns an WithdrawFundsResponse', () => {
-      expect(WithdrawFundsResponse).to.have.been.calledWith({ txid })
+      expect(res).to.be.eql({ txid })
     })
   })
 
@@ -73,7 +72,7 @@ describe('withdrawFunds', () => {
     it('throws an error if engine is not found', () => {
       const badEngines = new Map([['BTC', undefined]])
       return expect(
-        withdrawFunds({ params, relayer, logger, engines: badEngines }, { WithdrawFundsResponse })
+        withdrawFunds({ params, relayer, logger, engines: badEngines })
       ).to.be.rejectedWith(Error, `No engine available for ${params.symbol}`)
     })
   })
@@ -83,7 +82,7 @@ describe('withdrawFunds', () => {
       withdrawFundsStub.throws('Error', 'Insufficient Funds')
 
       return expect(
-        withdrawFunds({ params, relayer, logger, engines }, { WithdrawFundsResponse })
+        withdrawFunds({ params, relayer, logger, engines })
       ).to.be.rejectedWith(Error, 'Insufficient Funds')
     })
   })
@@ -94,7 +93,7 @@ describe('withdrawFunds', () => {
     })
     it('throws an error currency multiplier does not exist', () => {
       return expect(
-        withdrawFunds({ params, relayer, logger, engines }, { WithdrawFundsResponse })
+        withdrawFunds({ params, relayer, logger, engines })
       ).to.be.rejectedWith(Error, `Invalid configuration: missing quantumsPerCommon for ${params.symbol}`)
     })
   })

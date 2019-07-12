@@ -1,15 +1,14 @@
+const { GrpcResponse: NewDepositAddressResponse } = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+
 /**
  * Generates a new wallet address from the specified engine
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {Logger} request.logger
- * @param {object<string>} request.params
- * @param {Array<Engine>} request.engines
- * @param {object} responses
- * @param {Function} responses.NewDepositAddressResponse
- * @returns {NewDepositAddressResponse}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<NewDepositAddressResponse>}
  */
-async function newDepositAddress ({ logger, params, engines }, { NewDepositAddressResponse }) {
+async function newDepositAddress ({ logger, params, engines }) {
   const { symbol } = params
   const engine = engines.get(symbol)
 
