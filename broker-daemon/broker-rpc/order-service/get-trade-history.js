@@ -6,7 +6,7 @@ const { GrpcResponse: GetTradeHistoryResponse } = require('../../utils')
  * Retrieve information about completed trades
  *
  * @param {GrpcUnaryMethodRequest} request - request object
- * @return {Promise<GetTradeHistoryResponse>}
+ * @returns {Promise<GetTradeHistoryResponse>}
  */
 
 async function getTradeHistory ({ logger, blockOrderWorker }) {

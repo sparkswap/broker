@@ -11,8 +11,6 @@ describe('withdrawFunds', () => {
   let engines
   let withdrawFundsStub
   let txid
-  let currencies
-  let revert
 
   beforeEach(() => {
     txid = 'asdf'
@@ -20,7 +18,10 @@ describe('withdrawFunds', () => {
     logger = {
       info: sinon.stub()
     }
-    btcEngine = { withdrawFunds: withdrawFundsStub }
+    btcEngine = {
+      withdrawFunds: withdrawFundsStub,
+      quantumsPerCommon: '100000000'
+    }
 
     engines = new Map([
       ['BTC', btcEngine]
@@ -30,24 +31,6 @@ describe('withdrawFunds', () => {
       symbol: 'BTC',
       address: 'asdf'
     }
-
-    currencies = [
-      {
-        'name': 'Bitcoin',
-        'symbol': 'BTC',
-        'quantumsPerCommon': '100000000'
-      },
-      {
-        'name': 'Litecoin',
-        'symbol': 'LTC',
-        'quantumsPerCommon': '100000000'
-      }
-    ]
-    revert = withdrawFunds.__set__('currencies', currencies)
-  })
-
-  afterEach(() => {
-    revert()
   })
 
   describe('withdrawFunds', () => {
@@ -89,7 +72,7 @@ describe('withdrawFunds', () => {
 
   describe('invalid currency multiplier', () => {
     beforeEach(() => {
-      revert = withdrawFunds.__set__('currencies', [])
+      btcEngine.quantumsPerCommon = null
     })
     it('throws an error currency multiplier does not exist', () => {
       return expect(

@@ -6,7 +6,6 @@ const getTrades = rewire(path.resolve(__dirname, 'get-trades'))
 
 describe('getTrades', () => {
   let logger
-  let GetTradesResponse
   let orderbooks
   let market
   let since
@@ -48,28 +47,27 @@ describe('getTrades', () => {
     trades = [{ eventType: 'FILLED', tradeInfo: filledTradeInfoStub }, { eventType: 'PLACED', tradeInfo: placedTradeInfoStub }]
     orderbookStub = { getTrades: sinon.stub().resolves(trades) }
     orderbooks = new Map([['BTC/LTC', orderbookStub]])
-    GetTradesResponse = sinon.stub()
   })
 
   it('throws if the market is not supported', () => {
     params.market = 'ABC/XYZ'
-    return expect(getTrades({ params, logger, orderbooks }, { GetTradesResponse })).to.be.rejectedWith('is not being tracked as a market')
+    return expect(getTrades({ params, logger, orderbooks })).to.be.rejectedWith('is not being tracked as a market')
   })
 
   it('retrieves trades from the orderbook', async () => {
-    await getTrades({ params, logger, orderbooks }, { GetTradesResponse })
+    await getTrades({ params, logger, orderbooks })
     expect(orderbookStub.getTrades).to.have.been.calledWith(since, Big(limit))
   })
 
   it('filters the trades to only filled orders', async () => {
-    await getTrades({ params, logger, orderbooks }, { GetTradesResponse })
+    await getTrades({ params, logger, orderbooks })
     expect(filledTradeInfoStub).to.have.been.calledOnce()
     expect(placedTradeInfoStub).to.not.have.been.called()
   })
 
   it('returns trades in the GetTradesResponse', async () => {
-    await getTrades({ params, logger, orderbooks }, { GetTradesResponse })
-    expect(GetTradesResponse).to.have.been.calledWith({
+    const res = await getTrades({ params, logger, orderbooks })
+    expect(res).to.be.eql({
       trades: [tradeInfo]
     })
   })
@@ -77,7 +75,7 @@ describe('getTrades', () => {
   it('sets the limit to the default of 50 if no limit is specified', async () => {
     // '0' is the default protobuf value when no limit is provided
     params.limit = '0'
-    await getTrades({ params, logger, orderbooks }, { GetTradesResponse })
+    await getTrades({ params, logger, orderbooks })
     expect(orderbookStub.getTrades).to.have.been.calledWith(since, Big(50))
   })
 })

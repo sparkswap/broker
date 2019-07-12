@@ -33,11 +33,6 @@ describe('OrderService', () => {
           OrderService: {
             service: 'fakeService'
           },
-          CreateBlockOrderResponse: sinon.stub(),
-          GetBlockOrderResponse: sinon.stub(),
-          GetBlockOrdersResponse: sinon.stub(),
-          CancelAllBlockOrdersResponse: sinon.stub(),
-          GetTradeHistoryResponse: sinon.stub(),
           TimeInForce: {
             GTC: 0
           }
@@ -160,11 +155,6 @@ describe('OrderService', () => {
       })
     })
 
-    it('passes in the response', () => {
-      expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('CreateBlockOrderResponse', proto.broker.rpc.CreateBlockOrderResponse)
-    })
-
     it('passes in the enum', () => {
       expect(callArgs[3]).to.be.an('object')
       expect(callArgs[3]).to.have.property('TimeInForce', proto.broker.rpc.TimeInForce)
@@ -210,11 +200,6 @@ describe('OrderService', () => {
       it('passes in auth', () => {
         expect(callArgs[2]).to.have.property('auth', auth)
       })
-    })
-
-    it('passes in the response', () => {
-      expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('GetBlockOrderResponse', proto.broker.rpc.GetBlockOrderResponse)
     })
   })
 
@@ -300,11 +285,6 @@ describe('OrderService', () => {
         expect(callArgs[2]).to.have.property('auth', auth)
       })
     })
-
-    it('passes in the response', () => {
-      expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('GetBlockOrdersResponse', proto.broker.rpc.GetBlockOrdersResponse)
-    })
   })
 
   describe('#cancelAllBlockOrders', () => {
@@ -347,11 +327,6 @@ describe('OrderService', () => {
         expect(callArgs[2]).to.have.property('auth', auth)
       })
     })
-
-    it('passes in the response', () => {
-      expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('CancelAllBlockOrdersResponse', proto.broker.rpc.CancelAllBlockOrdersResponse)
-    })
   })
 
   describe('#getTradeHistory', () => {
@@ -393,11 +368,6 @@ describe('OrderService', () => {
       it('passes in auth', () => {
         expect(callArgs[2]).to.have.property('auth', auth)
       })
-    })
-
-    it('passes in the response', () => {
-      expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('GetTradeHistoryResponse', proto.broker.rpc.GetTradeHistoryResponse)
     })
   })
 })

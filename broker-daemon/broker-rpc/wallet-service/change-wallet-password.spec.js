@@ -30,7 +30,7 @@ describe('change-wallet-password', () => {
       symbol,
       currentPassword,
       newPassword
-    } 
+    }
   })
 
   it('errors if engine could not be found', () => {

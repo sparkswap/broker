@@ -19,8 +19,8 @@ const {
 /** @typedef {import('../block-order-worker')} BlockOrderWorker */
 /** @typedef {import('level-sublevel')} Sublevel */
 
-/** @typedef {Object} GrpcUnaryMethodRequest
- * @property {Object} request.params - Request parameters from the client
+/** @typedef {object} GrpcUnaryMethodRequest
+ * @property {object} request.params - Request parameters from the client
  * @property {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
  * @property {Logger} request.logger - logger for messages about the method
  * @property {Map<string, Engine>} request.engines - Map of all available Payment Channel Network Engines
@@ -29,8 +29,8 @@ const {
  * @property {Sublevel} request.store
  */
 
-/** @typedef {Object} GrpcServerStreamingMethodRequest
- *  @property {Object} request.params - Request parameters from the client
+/** @typedef {object} GrpcServerStreamingMethodRequest
+ *  @property {object} request.params - Request parameters from the client
  *  @property {Function} request.send - Send a chunk of data to the client
  *  @property {Function} request.onCancel
  *  @property {RelayerClient} request.relayer - grpc Client for interacting with the Relayer

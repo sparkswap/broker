@@ -23,20 +23,20 @@ describe('OrderBookService', () => {
   let relayer
   let orderbooks
   let server
+  let EventType
 
   beforeEach(() => {
     protoPath = 'fakePath'
+    EventType = sinon.stub()
     proto = {
       broker: {
         rpc: {
           OrderBookService: {
             service: 'fakeService'
           },
-          WatchMarketResponse: sinon.stub(),
-          GetOrderbookResponse: sinon.stub(),
-          GetSupportedMarketsResponse: sinon.stub(),
-          GetMarketStatsResponse: sinon.stub(),
-          GetTradesResponse: sinon.stub()
+          WatchMarketResponse: {
+            EventType
+          }
         }
       }
     }
@@ -162,7 +162,7 @@ describe('OrderBookService', () => {
     })
 
     it('passes in the response', () => {
-      expect(callArgs[3]).to.be.eql({ WatchMarketResponse: proto.broker.rpc.WatchMarketResponse })
+      expect(callArgs[3]).to.be.eql({ EventType })
     })
   })
 
@@ -205,10 +205,6 @@ describe('OrderBookService', () => {
       it('passes in auth', () => {
         expect(callArgs[2]).to.have.property('auth', auth)
       })
-    })
-
-    it('passes in the response', () => {
-      expect(callArgs[3]).to.be.eql({ GetOrderbookResponse: proto.broker.rpc.GetOrderbookResponse })
     })
   })
 
@@ -255,11 +251,6 @@ describe('OrderBookService', () => {
         expect(callArgs[2].orderbooks).to.be.equal(orderbooks)
       })
     })
-
-    it('passes in the response', () => {
-      expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('GetSupportedMarketsResponse', proto.broker.rpc.GetSupportedMarketsResponse)
-    })
   })
 
   describe('#getMarketStatsMarkets', () => {
@@ -300,11 +291,6 @@ describe('OrderBookService', () => {
         expect(callArgs[2].orderbooks).to.be.equal(orderbooks)
       })
     })
-
-    it('passes in the response', () => {
-      expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('GetMarketStatsResponse', proto.broker.rpc.GetMarketStatsResponse)
-    })
   })
 
   describe('#getTrades', () => {
@@ -344,11 +330,6 @@ describe('OrderBookService', () => {
         expect(callArgs[2]).to.have.property('orderbooks')
         expect(callArgs[2].orderbooks).to.be.equal(orderbooks)
       })
-    })
-
-    it('passes in the response', () => {
-      expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('GetTradesResponse', proto.broker.rpc.GetTradesResponse)
     })
   })
 })

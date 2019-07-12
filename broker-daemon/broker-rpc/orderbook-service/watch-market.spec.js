@@ -88,8 +88,7 @@ describe('watchMarket', () => {
     expect(MarketEventOrder.fromStorage).to.have.been.calledWith(fakeOrder.key, fakeOrder.value)
     expect(serialize).to.have.been.calledOnce()
     expect(sendStub).to.have.been.calledOnce()
-    expect(EventType).to.have.been.calledOnce()
-    expect(EventType).to.have.been.calledWith({ type: 'ADD', marketEvent: fakeSerialized })
+    expect(sendStub).to.have.been.calledWith({ type: 'ADD', marketEvent: fakeSerialized })
   })
 
   it('sends delete events if type is del', async () => {
@@ -104,7 +103,6 @@ describe('watchMarket', () => {
 
     await delay(10)
     expect(sendStub).to.have.been.calledOnce()
-    expect(EventType).to.have.been.calledOnce()
-    expect(EventType).to.have.been.calledWith({ type: 'DELETE', marketEvent: marketEvent })
+    expect(sendStub).to.have.been.calledWith({ type: 'DELETE', marketEvent: marketEvent })
   })
 })

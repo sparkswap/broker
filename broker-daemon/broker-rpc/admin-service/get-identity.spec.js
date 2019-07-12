@@ -9,7 +9,6 @@ const getIdentity = rewire(path.resolve(__dirname, 'get-identity'))
 
 describe('get-identity', () => {
   describe('getIdentity', () => {
-    let GetIdentityResponse
     let relayerStub
     let pubKey
     let loggerStub
@@ -26,18 +25,14 @@ describe('get-identity', () => {
         info: sinon.stub(),
         debug: sinon.stub()
       }
-      GetIdentityResponse = sinon.stub()
     })
 
     beforeEach(async () => {
-      result = await getIdentity({ relayer: relayerStub, logger: loggerStub }, { GetIdentityResponse })
+      result = await getIdentity({ relayer: relayerStub, logger: loggerStub })
     })
 
     it('returns the public key', async () => {
-      expect(result).to.be.an.instanceOf(GetIdentityResponse)
-      expect(GetIdentityResponse).to.have.been.calledOnce()
-      expect(GetIdentityResponse).to.have.been.calledWithNew()
-      expect(GetIdentityResponse).to.have.been.calledWith(sinon.match({ publicKey: pubKey }))
+      expect(result).to.be.eql({ publicKey: pubKey })
     })
   })
 })

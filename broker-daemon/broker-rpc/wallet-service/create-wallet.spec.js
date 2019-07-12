@@ -27,6 +27,7 @@ describe('create-wallet', () => {
     }
   })
 
+  it('errors if we could not find a valid engine', async () => {
     params.symbol = 'LTC'
     expect(createWallet({ logger, params, engines })).to.eventually.be.rejectedWith('Unable to create wallet')
   })

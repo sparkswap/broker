@@ -4,7 +4,7 @@
 class GrpcResponse {
   /**
    * Create a new grpc response representation
-   * @param {Object} params - to set on the constructor
+   * @param {object} params - to set on the constructor
    */
   constructor (params = {}) {
     Object.assign(this, params)
