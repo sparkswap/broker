@@ -18,7 +18,7 @@ async function recoverWallet ({ logger, params, engines }, { EmptyResponse }) {
     symbol,
     password,
     seed,
-    useBackupFile
+    useBackup
   } = params
 
   const engine = engines.get(symbol)
@@ -36,7 +36,7 @@ async function recoverWallet ({ logger, params, engines }, { EmptyResponse }) {
     throw new Error('Recovery seed is required to recover wallet')
   }
 
-  await engine.recoverWallet(password, seed, useBackupFile)
+  await engine.recoverWallet(password, seed, useBackup)
 
   return new EmptyResponse({})
 }
