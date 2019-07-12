@@ -124,6 +124,7 @@ class MarketWatcher extends EventEmitter {
     } else {
       this.logger.debug(`Unknown response type: ${response.type}`)
     }
+    return undefined
   }
 
   /**
@@ -147,6 +148,7 @@ class MarketWatcher extends EventEmitter {
     await Promise.all(promises)
     // clean up our finishBeforeProcessing by removing these resolved promises
     promises.forEach(promise => this.finishBeforeProcessing.delete(promise))
+    return undefined
   }
 
   /**
@@ -175,6 +177,7 @@ class MarketWatcher extends EventEmitter {
       this.logger.error('Saving market event failed, invalidating sync', { orderId })
       this.emit('error', e)
     }
+    return undefined
   }
 
   /**

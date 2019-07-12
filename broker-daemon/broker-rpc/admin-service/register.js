@@ -1,17 +1,16 @@
-const { registerUrls } = require('../../config')
+const { registerUrls } = require('../../config.json')
+const { GrpcResponse: RegisterResponse } = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
 
 /**
  * Register the publicKey with the Relayer
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
- * @param {object} request.logger
- * @param {object} responses
- * @param {Function} responses.RegisterResponse - constructor for RegisterResponse messages
- * @returns {RegisterResponse}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<RegisterResponse>}
  * @throws {Error} Unable to find registration url
  */
-async function register ({ relayer, logger }, { RegisterResponse }) {
+async function register ({ relayer, logger }) {
   const publicKey = relayer.identity.pubKeyBase64
 
   // Currently we don't do anything with this entityId but we will need it in the future
@@ -19,13 +18,16 @@ async function register ({ relayer, logger }, { RegisterResponse }) {
 
   logger.info('Successfully registered Broker with relayer', { entityId })
 
+  // @ts-ignore
   if (!global.sparkswap || !global.sparkswap.network) {
     throw new Error('Configuration error: Could not find network for broker')
   }
 
+  // @ts-ignore
   const registerUrl = registerUrls[global.sparkswap.network]
 
   if (!registerUrl) {
+    // @ts-ignore
     throw new Error(`Could not find registration url for network ${global.sparkswap.network}, please check broker configuration`)
   }
 

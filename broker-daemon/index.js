@@ -209,6 +209,7 @@ class BrokerDaemon {
     this.logger.info(`Initializing BlockOrderWorker`)
     await this.blockOrderWorker.initialize(enginesAreValidated)
     this.logger.info('BlockOrderWorker initialized')
+    return undefined
   }
 
   /**
@@ -224,6 +225,7 @@ class BrokerDaemon {
       return this.initializeMarket(marketName)
     }))
     this.logger.info(`Caught up to ${markets.length} markets`)
+    return undefined
   }
 
   /**

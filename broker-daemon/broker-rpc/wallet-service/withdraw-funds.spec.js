@@ -4,7 +4,6 @@ const { Big } = require('../../utils')
 const withdrawFunds = rewire(path.resolve(__dirname, 'withdraw-funds'))
 
 describe('withdrawFunds', () => {
-  let WithdrawFundsResponse
   let params
   let relayer
   let logger
@@ -12,17 +11,17 @@ describe('withdrawFunds', () => {
   let engines
   let withdrawFundsStub
   let txid
-  let currencies
-  let revert
 
   beforeEach(() => {
     txid = 'asdf'
-    WithdrawFundsResponse = sinon.stub()
     withdrawFundsStub = sinon.stub().resolves(txid)
     logger = {
       info: sinon.stub()
     }
-    btcEngine = { withdrawFunds: withdrawFundsStub }
+    btcEngine = {
+      withdrawFunds: withdrawFundsStub,
+      quantumsPerCommon: '100000000'
+    }
 
     engines = new Map([
       ['BTC', btcEngine]
@@ -32,29 +31,12 @@ describe('withdrawFunds', () => {
       symbol: 'BTC',
       address: 'asdf'
     }
-
-    currencies = [
-      {
-        'name': 'Bitcoin',
-        'symbol': 'BTC',
-        'quantumsPerCommon': '100000000'
-      },
-      {
-        'name': 'Litecoin',
-        'symbol': 'LTC',
-        'quantumsPerCommon': '100000000'
-      }
-    ]
-    revert = withdrawFunds.__set__('currencies', currencies)
-  })
-
-  afterEach(() => {
-    revert()
   })
 
   describe('withdrawFunds', () => {
+    let res
     beforeEach(async () => {
-      await withdrawFunds({ params, relayer, logger, engines }, { WithdrawFundsResponse })
+      res = await withdrawFunds({ params, relayer, logger, engines })
     })
 
     it('makes a request to the engine to withdrawFunds to the address specified', () => {
@@ -65,7 +47,7 @@ describe('withdrawFunds', () => {
     })
 
     it('returns an WithdrawFundsResponse', () => {
-      expect(WithdrawFundsResponse).to.have.been.calledWith({ txid })
+      expect(res).to.be.eql({ txid })
     })
   })
 
@@ -73,7 +55,7 @@ describe('withdrawFunds', () => {
     it('throws an error if engine is not found', () => {
       const badEngines = new Map([['BTC', undefined]])
       return expect(
-        withdrawFunds({ params, relayer, logger, engines: badEngines }, { WithdrawFundsResponse })
+        withdrawFunds({ params, relayer, logger, engines: badEngines })
       ).to.be.rejectedWith(Error, `No engine available for ${params.symbol}`)
     })
   })
@@ -83,18 +65,18 @@ describe('withdrawFunds', () => {
       withdrawFundsStub.throws('Error', 'Insufficient Funds')
 
       return expect(
-        withdrawFunds({ params, relayer, logger, engines }, { WithdrawFundsResponse })
+        withdrawFunds({ params, relayer, logger, engines })
       ).to.be.rejectedWith(Error, 'Insufficient Funds')
     })
   })
 
   describe('invalid currency multiplier', () => {
     beforeEach(() => {
-      revert = withdrawFunds.__set__('currencies', [])
+      btcEngine.quantumsPerCommon = null
     })
     it('throws an error currency multiplier does not exist', () => {
       return expect(
-        withdrawFunds({ params, relayer, logger, engines }, { WithdrawFundsResponse })
+        withdrawFunds({ params, relayer, logger, engines })
       ).to.be.rejectedWith(Error, `Invalid configuration: missing quantumsPerCommon for ${params.symbol}`)
     })
   })

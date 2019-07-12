@@ -1,15 +1,16 @@
+const { GrpcResponse: CreateBlockOrderResponse } = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+
 /**
  * Creates an order with the relayer
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {object} request.params - Request parameters from the client
- * @param {object} request.blockOrderWorker
+ * @param {GrpcUnaryMethodRequest} request - request object
  * @param {object} responses
- * @param {Function} responses.CreateBlockOrderResponse - constructor for CreateBlockOrderResponse messages
  * @param {object} responses.TimeInForce - Time In Force enum
  * @returns {Promise<CreateBlockOrderResponse>}
  */
-async function createBlockOrder ({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce }) {
+async function createBlockOrder ({ params, blockOrderWorker }, { TimeInForce }) {
   const {
     amount,
     limitPrice,

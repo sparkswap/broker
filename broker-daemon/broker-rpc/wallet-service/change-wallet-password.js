@@ -1,20 +1,16 @@
+const { GrpcResponse: EmptyResponse } = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+
 /**
  * Change a wallet password for a specific engine
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {Logger} request.logger
- * @param {object<string>} request.params
- * @param {string} request.params.symbol - currency symbol of the wallet e.g. `BTC`
- * @param {string} request.params.currentPassword - password for the engine's wallet
- * @param {string} request.params.newPassword - new password for the engine's wallet
- * @param {Map<Engine>} request.engines
- * @param {object} responses
- * @param {Function} responses.EmptyResponse
+ * @param {GrpcUnaryMethodRequest} request - request object
  * @throws {Error} If Engine does not exist for the given symbol
  * @throws {Error} If Engine is not in a LOCKED state
- * @returns {EmptyResponse}
+ * @returns {Promise<EmptyResponse>}
  */
-async function changeWalletPassword ({ logger, params, engines }, { EmptyResponse }) {
+async function changeWalletPassword ({ logger, params, engines }) {
   const {
     symbol,
     currentPassword,

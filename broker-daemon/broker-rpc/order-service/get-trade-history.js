@@ -1,15 +1,15 @@
+const { GrpcResponse: GetTradeHistoryResponse } = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+
 /**
  * Retrieve information about completed trades
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {object} request.logger
- * @param {BlockOrderWorker} request.blockOrderWorker
- * @param {object} responses
- * @param {Function} responses.GetTradeHistoryResponse - constructor for GetTradeHistoryResponse messages
- * @returns {responses.GetTradeHistoryResponse}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<GetTradeHistoryResponse>}
  */
 
-async function getTradeHistory ({ logger, blockOrderWorker }, { GetTradeHistoryResponse }) {
+async function getTradeHistory ({ logger, blockOrderWorker }) {
   try {
     const { orders, fills } = await blockOrderWorker.getTrades()
 

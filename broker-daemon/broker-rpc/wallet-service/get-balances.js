@@ -1,4 +1,11 @@
-const { Big } = require('../../utils')
+const {
+  Big,
+  GrpcResponse: GetBalancesResponse
+} = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+/** @typedef {import('../broker-rpc-server').Engine} Engine */
+/** @typedef {import('../broker-rpc-server').Logger} Logger */
 
 /**
  * @constant
@@ -8,10 +15,11 @@ const { Big } = require('../../utils')
 const BALANCE_PRECISION = 16
 
 /** @typedef {object} GetEngineBalancesResponse
- *  @property {string} uncommiittedBalance
+ *  @property {string} uncommittedBalance
  *  @property {string} uncommittedPendingBalance
  *  @property {string} totalChannelBalance
  *  @property {string} totalPendingChannelBalance
+ *  @property {string} totalReservedChannelBalance
  */
 
 /**
@@ -55,14 +63,10 @@ async function getEngineBalances (symbol, engine, logger) {
  * Grabs the daemons lnd wallet balance
  *
  * @function
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {Map} request.engines
- * @param {Logger} request.logger
- * @param {object} responses
- * @param {Function} responses.GetBalanceResponse
- * @returns {GetBalanceResponse}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<GetBalancesResponse>}
  */
-async function getBalances ({ logger, engines }, { GetBalancesResponse }) {
+async function getBalances ({ logger, engines }) {
   logger.info(`Checking wallet balances for ${engines.size} engines`)
 
   // We convert the engines map to an array and run balance engine commands

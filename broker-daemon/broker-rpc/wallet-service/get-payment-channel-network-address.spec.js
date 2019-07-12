@@ -10,7 +10,6 @@ describe('get-payment-channel-network-address', () => {
   let engines
   let getNetworkAddressStub
   let getNetworkAddressResponse
-  let responseStub
 
   before(() => {
     logger = {
@@ -21,14 +20,15 @@ describe('get-payment-channel-network-address', () => {
     }
     getNetworkAddressResponse = '12345'
     getNetworkAddressStub = sinon.stub().returns(getNetworkAddressResponse)
-    responseStub = sinon.stub()
     engine = { getPaymentChannelNetworkAddress: getNetworkAddressStub }
     engines = new Map([['BTC', engine]])
   })
 
   describe('getPaymentChannelNetworkAddress', () => {
+    let res
+
     beforeEach(async () => {
-      await getPaymentChannelNetworkAddress({ logger, engines, params }, { GetPaymentChannelNetworkAddressResponse: responseStub })
+      res = await getPaymentChannelNetworkAddress({ logger, engines, params })
     })
 
     it('calls an engine with getPaymentChannelNetworkAddress', () => {
@@ -37,7 +37,7 @@ describe('get-payment-channel-network-address', () => {
 
     it('constructs a Response', () => {
       const paymentChannelNetworkAddress = getNetworkAddressResponse
-      expect(responseStub).to.have.been.calledWith({ paymentChannelNetworkAddress })
+      expect(res).to.be.eql({ paymentChannelNetworkAddress })
     })
   })
 
@@ -45,7 +45,7 @@ describe('get-payment-channel-network-address', () => {
     const badParams = { symbol: 'BAD' }
 
     it('throws an error', () => {
-      return expect(getPaymentChannelNetworkAddress({ logger, engines, params: badParams }, { GetPaymentChannelNetworkAddressResponse: responseStub })).to.eventually.be.rejectedWith('Unable to get network address')
+      return expect(getPaymentChannelNetworkAddress({ logger, engines, params: badParams })).to.eventually.be.rejectedWith('Unable to get network address')
     })
   })
 })

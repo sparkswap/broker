@@ -28,6 +28,7 @@ class SubsetStore {
     await this.rebuildIndex()
     this.addIndexHook()
     logger.debug(`${this.constructor.name} index rebuilt.`)
+    return undefined
   }
 
   /**

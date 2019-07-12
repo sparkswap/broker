@@ -1,3 +1,9 @@
+const { GrpcResponse: ReleaseChannelsResponse } = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+/** @typedef {import('../broker-rpc-server').Engine} Engine */
+/** @typedef {import('../broker-rpc-server').Logger} Logger */
+
 /**
  * @constant
  * @type {object}
@@ -48,19 +54,10 @@ async function closeChannels (engine, symbol, force, logger) {
 /**
  * Grabs public lightning network information from relayer and opens a channel
  *
- * @param {object} request - request object
- * @param {object} request.params
- * @param {string} request.params.market - Market name (e.g. BTC/LTC)
- * @param {boolean} request.params.force - if channels should be force closed
- * @param {RelayerClient} request.relayer
- * @param {Logger} request.logger
- * @param {Engine} request.engines
- * @param {Map<Orderbook>} request.orderbooks
- * @param {object} responses
- * @param {object} responses.ReleaseChannelsResponse
+ * @param {GrpcUnaryMethodRequest} request - request object
  * @returns {Promise<ReleaseChannelsResponse>}
  */
-async function releaseChannels ({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse }) {
+async function releaseChannels ({ params, logger, engines, orderbooks, blockOrderWorker }) {
   const { market, force } = params
 
   const orderbook = orderbooks.get(market)

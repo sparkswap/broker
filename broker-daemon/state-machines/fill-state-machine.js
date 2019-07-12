@@ -247,6 +247,7 @@ const FillStateMachine = StateMachine.factory({
       })
 
       this.logger.info(`Created fill ${this.fill.fillId} on the relayer`)
+      return undefined
     },
 
     /**
@@ -331,6 +332,7 @@ const FillStateMachine = StateMachine.factory({
       }
 
       this.logger.info(`Filled order ${fillId} on the relayer`)
+      return undefined
     },
 
     /**
@@ -406,6 +408,7 @@ const FillStateMachine = StateMachine.factory({
       }
 
       await engine.executeSwap(makerAddress, swapHash, amount)
+      return undefined
     },
 
     /**

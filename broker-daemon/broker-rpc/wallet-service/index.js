@@ -13,6 +13,12 @@ const unlockWallet = require('./unlock-wallet')
 const walletHistory = require('./wallet-history')
 const changeWalletPassword = require('./change-wallet-password')
 
+/** @typedef {import('../broker-rpc-server').RelayerClient} RelayerClient */
+/** @typedef {import('../broker-rpc-server').Logger} Logger */
+/** @typedef {import('../broker-rpc-server').BlockOrderWorker} BlockOrderWorker */
+/** @typedef {import('../broker-rpc-server').Orderbook} Orderbook */
+/** @typedef {import('../broker-rpc-server').Engine} Engine */
+
 /**
  * WalletService provides interactions with an engine's crypto wallet
  */
@@ -21,10 +27,10 @@ class WalletService {
    * @class
    * @param {string} protoPath
    * @param {object} options
-   * @param {Map<string, LndEngine>} options.engines
+   * @param {Map<string, Engine>} options.engines
    * @param {RelayerClient} options.relayer
    * @param {Map<string, Orderbook>} options.orderbooks - Collection of all active Orderbooks
-   * @param {BlockOrderWorker} opts.blockOrderWorker
+   * @param {BlockOrderWorker} options.blockOrderWorker
    * @param {Function} options.auth
    * @param {Logger} options.logger
    */
@@ -37,34 +43,18 @@ class WalletService {
     this.serviceName = 'WalletService'
     this.engines = engines
 
-    const {
-      NewDepositAddressResponse,
-      GetBalancesResponse,
-      GetPaymentChannelNetworkAddressResponse,
-      GetTradingCapacitiesResponse,
-      WithdrawFundsResponse,
-      CreateWalletResponse,
-      ReleaseChannelsResponse,
-      WalletHistoryResponse,
-      google: {
-        protobuf: {
-          Empty: EmptyResponse
-        }
-      }
-    } = this.proto.broker.rpc
-
     this.implementation = {
-      newDepositAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engines, auth }, { NewDepositAddressResponse }).register(),
-      getBalances: new GrpcUnaryMethod(getBalances, this.messageId('getBalances'), { logger, engines, auth }, { GetBalancesResponse }).register(),
-      commit: new GrpcUnaryMethod(commit, this.messageId('commit'), { logger, engines, relayer, orderbooks, auth }, { EmptyResponse }).register(),
-      getPaymentChannelNetworkAddress: new GrpcUnaryMethod(getPaymentChannelNetworkAddress, this.messageId('getPaymentChannelNetworkAddress'), { logger, engines, auth }, { GetPaymentChannelNetworkAddressResponse }).register(),
-      getTradingCapacities: new GrpcUnaryMethod(getTradingCapacities, this.messageId('getTradingCapacities'), { logger, engines, orderbooks, blockOrderWorker, auth }, { GetTradingCapacitiesResponse }).register(),
-      releaseChannels: new GrpcUnaryMethod(releaseChannels, this.messageId('releaseChannels'), { logger, engines, orderbooks, blockOrderWorker, auth }, { ReleaseChannelsResponse }).register(),
-      withdrawFunds: new GrpcUnaryMethod(withdrawFunds, this.messageId('withdrawFunds'), { logger, engines, auth }, { WithdrawFundsResponse }).register(),
-      createWallet: new GrpcUnaryMethod(createWallet, this.messageId('createWallet'), { logger, engines, auth }, { CreateWalletResponse }).register(),
-      unlockWallet: new GrpcUnaryMethod(unlockWallet, this.messageId('unlockWallet'), { logger, engines, auth }, { EmptyResponse }).register(),
-      changeWalletPassword: new GrpcUnaryMethod(changeWalletPassword, this.messageId('changeWalletPassword'), { logger, engines, auth }, { EmptyResponse }).register(),
-      walletHistory: new GrpcUnaryMethod(walletHistory, this.messageId('walletHistory'), { logger, engines, auth }, { WalletHistoryResponse }).register()
+      newDepositAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engines, auth }).register(),
+      getBalances: new GrpcUnaryMethod(getBalances, this.messageId('getBalances'), { logger, engines, auth }).register(),
+      commit: new GrpcUnaryMethod(commit, this.messageId('commit'), { logger, engines, relayer, orderbooks, auth }).register(),
+      getPaymentChannelNetworkAddress: new GrpcUnaryMethod(getPaymentChannelNetworkAddress, this.messageId('getPaymentChannelNetworkAddress'), { logger, engines, auth }).register(),
+      getTradingCapacities: new GrpcUnaryMethod(getTradingCapacities, this.messageId('getTradingCapacities'), { logger, engines, orderbooks, blockOrderWorker, auth }).register(),
+      releaseChannels: new GrpcUnaryMethod(releaseChannels, this.messageId('releaseChannels'), { logger, engines, orderbooks, blockOrderWorker, auth }).register(),
+      withdrawFunds: new GrpcUnaryMethod(withdrawFunds, this.messageId('withdrawFunds'), { logger, engines, auth }).register(),
+      createWallet: new GrpcUnaryMethod(createWallet, this.messageId('createWallet'), { logger, engines, auth }).register(),
+      unlockWallet: new GrpcUnaryMethod(unlockWallet, this.messageId('unlockWallet'), { logger, engines, auth }).register(),
+      changeWalletPassword: new GrpcUnaryMethod(changeWalletPassword, this.messageId('changeWalletPassword'), { logger, engines, auth }).register(),
+      walletHistory: new GrpcUnaryMethod(walletHistory, this.messageId('walletHistory'), { logger, engines, auth }).register()
     }
   }
 

@@ -1,20 +1,16 @@
 const nano = require('nano-seconds')
 const { SIDES } = require('../../models/market-event-order')
+const { GrpcResponse: GetOrderbookResponse } = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
 
 /**
  * Retrieve price and amount information for current orderbook state
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {object} request.params - Request parameters from the client
- * @param {string} request.params.market - market symbol e.g. BTC/LTC
- * @param {string} request.params.limitPerSide - limit for number of orders for each side of orderbook
- * @param {object} request.logger
- * @param {Map<Orderbook>} request.orderbooks
- * @param {object} responses
- * @param {Function} responses.GetOrderbookResponse - constructor for GetOrderbookResponse messages
- * @returns {GetOrderbookResponse}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<GetOrderbookResponse>}
  */
-async function getOrderbook ({ params, logger, orderbooks }, { GetOrderbookResponse }) {
+async function getOrderbook ({ params, logger, orderbooks }) {
   const { market } = params
   const orderbook = orderbooks.get(market)
 

@@ -4,14 +4,12 @@ const { expect, rewire, sinon } = require('test/test-helper')
 const createBlockOrder = rewire(path.resolve(__dirname, 'create-block-order'))
 
 describe('createBlockOrder', () => {
-  let CreateBlockOrderResponse
   let blockOrderWorker
   let TimeInForce
   let CONFIG
   let revert
 
   beforeEach(() => {
-    CreateBlockOrderResponse = sinon.stub()
     TimeInForce = {
       GTC: 0,
       PO: 3
@@ -45,7 +43,7 @@ describe('createBlockOrder', () => {
       limitPrice: '1000.678',
       timeInForce: 'FOK'
     }
-    return expect(createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })).to.be.rejectedWith('Only Good-til-cancelled and Post Only limit orders are currently supported.')
+    return expect(createBlockOrder({ params, blockOrderWorker }, { TimeInForce })).to.be.rejectedWith('Only Good-til-cancelled and Post Only limit orders are currently supported.')
   })
 
   it('creates a block order on the BlockOrderWorker', async () => {
@@ -56,7 +54,7 @@ describe('createBlockOrder', () => {
       side: 'BID',
       timeInForce: 'GTC'
     }
-    await createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })
+    await createBlockOrder({ params, blockOrderWorker }, { TimeInForce })
 
     expect(blockOrderWorker.createBlockOrder).to.have.been.calledOnce()
     expect(blockOrderWorker.createBlockOrder).to.have.been.calledWith({ marketName: 'XYZ/ABC', side: 'BID', amount: '100', price: '1000.678', timeInForce: 'GTC' })
@@ -70,25 +68,10 @@ describe('createBlockOrder', () => {
       side: 'BID',
       timeInForce: 'GTC'
     }
-    await createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })
+    await createBlockOrder({ params, blockOrderWorker }, { TimeInForce })
 
     expect(blockOrderWorker.createBlockOrder).to.have.been.calledOnce()
     expect(blockOrderWorker.createBlockOrder).to.have.been.calledWith({ marketName: 'XYZ/ABC', price: null, side: 'BID', amount: '100', timeInForce: 'GTC' })
-  })
-
-  it('returns a block order response', async () => {
-    const params = {
-      amount: '100',
-      limitPrice: '1000.678',
-      market: 'XYZ/ABC',
-      side: 'BID',
-      timeInForce: 'GTC'
-    }
-    const response = await createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })
-
-    expect(CreateBlockOrderResponse).to.have.been.calledOnce()
-    expect(CreateBlockOrderResponse).to.have.been.calledWithNew()
-    expect(response).to.be.instanceOf(CreateBlockOrderResponse)
   })
 
   it('returns the block order id', async () => {
@@ -102,9 +85,8 @@ describe('createBlockOrder', () => {
       side: 'BID',
       timeInForce: 'GTC'
     }
-    await createBlockOrder({ params, blockOrderWorker }, { CreateBlockOrderResponse, TimeInForce })
+    const res = await createBlockOrder({ params, blockOrderWorker }, { TimeInForce })
 
-    expect(CreateBlockOrderResponse).to.have.been.calledOnce()
-    expect(CreateBlockOrderResponse).to.have.been.calledWith({ blockOrderId: fakeOrderId })
+    expect(res).to.be.eql({ blockOrderId: fakeOrderId })
   })
 })

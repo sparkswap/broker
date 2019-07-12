@@ -1,17 +1,14 @@
+const { GrpcResponse: GetSupportedMarketsResponse } = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+
 /**
  * Gets valid markets from the relayer and populates market information for these markets
  *
- * @param {object} request - request object
- * @param {object} request.params
- * @param {RelayerClient} request.relayer
- * @param {Logger} request.logger
- * @param {Engine} request.engines
- * @param {Map<Orderbook>} request.orderbooks
- * @param {object} responses
- * @param {Function} responses.GetSupportedMarketsResponse
+ * @param {GrpcUnaryMethodRequest} request - request object
  * @returns {Promise<GetSupportedMarketsResponse>}
  */
-async function getSupportedMarkets ({ params, relayer, logger, engines, orderbooks }, { GetSupportedMarketsResponse }) {
+async function getSupportedMarkets ({ relayer, orderbooks }) {
   try {
     var { markets } = await relayer.adminService.getMarkets({})
   } catch (e) {

@@ -5,13 +5,16 @@ const watchMarket = require('./watch-market')
 const getOrderbook = require('./get-orderbook')
 const getSupportedMarkets = require('./get-supported-markets')
 
+/** @typedef {import('../broker-rpc-server').RelayerClient} RelayerClient */
+/** @typedef {import('../broker-rpc-server').Orderbook} Orderbook */
+
 class OrderBookService {
   /**
    * @param {string} protoPath
    * @param {object} opts
    * @param {object} opts.logger
    * @param {RelayerClient} opts.relayer
-   * @param {Map} opts.orderbooks
+   * @param {Map<string, Orderbook>} opts.orderbooks
    * @param {Function} opts.auth
    */
   constructor (protoPath, { logger, relayer, orderbooks, auth }) {
@@ -22,16 +25,12 @@ class OrderBookService {
     this.definition = this.proto.broker.rpc.OrderBookService.service
     this.serviceName = 'OrderBookService'
 
-    const {
-      WatchMarketResponse,
-      GetOrderbookResponse,
-      GetSupportedMarketsResponse
-    } = this.proto.broker.rpc
+    const { EventType } = this.proto.broker.rpc.WatchMarketResponse
 
     this.implementation = {
-      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks, auth }, { WatchMarketResponse }).register(),
-      getOrderbook: new GrpcUnaryMethod(getOrderbook, this.messageId('getOrderbook'), { logger, relayer, orderbooks, auth }, { GetOrderbookResponse }).register(),
-      getSupportedMarkets: new GrpcUnaryMethod(getSupportedMarkets, this.messageId('getSupportedMarkets'), { logger, relayer, orderbooks }, { GetSupportedMarketsResponse }).register()
+      watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks, auth }, { EventType }).register(),
+      getOrderbook: new GrpcUnaryMethod(getOrderbook, this.messageId('getOrderbook'), { logger, relayer, orderbooks, auth }).register(),
+      getSupportedMarkets: new GrpcUnaryMethod(getSupportedMarkets, this.messageId('getSupportedMarkets'), { logger, relayer, orderbooks }).register()
     }
   }
 

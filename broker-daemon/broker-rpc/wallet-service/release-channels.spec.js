@@ -10,12 +10,10 @@ describe('releaseChannels', () => {
   let blockOrderWorker
   let baseEngineStub
   let counterEngineStub
-  let ReleaseChannelsResponse
   let cancelledOrders
   let failedToCancelOrders
 
   beforeEach(() => {
-    ReleaseChannelsResponse = sinon.stub()
     logger = {
       info: sinon.stub(),
       error: sinon.stub()
@@ -34,8 +32,10 @@ describe('releaseChannels', () => {
   })
 
   describe('release channels from a specific market', () => {
+    let res
+
     beforeEach(async () => {
-      await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
+      res = await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker })
     })
 
     it('attempts to close channels on the base engine', async () => {
@@ -52,25 +52,25 @@ describe('releaseChannels', () => {
         base: { symbol: 'BTC', status: RELEASED },
         counter: { symbol: 'LTC', status: RELEASED }
       }
-      expect(ReleaseChannelsResponse).to.have.been.calledWith(expectedRes)
+      expect(res).to.be.eql(expectedRes)
     })
   })
 
   describe('cancelling orders on the market', () => {
     it('cancels all orders on the market', async () => {
-      await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
+      await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker })
       expect(blockOrderWorker.cancelActiveOrders).to.have.been.calledWith(params.market)
     })
 
     context('logging cancelled orders', async () => {
       it('logs successfully cancelled orders', async () => {
-        await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
+        await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker })
         expect(logger.info).to.have.been.calledWith('Successfully cancelled orders', { orders: cancelledOrders })
       })
 
       it('does not log success if none were successfully cancelled', async () => {
         blockOrderWorker.cancelActiveOrders.resolves({ cancelledOrders: [], failedToCancelOrders })
-        await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
+        await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker })
 
         expect(logger.info).to.not.have.been.calledWith('Successfully cancelled orders', { orders: [] })
       })
@@ -78,14 +78,14 @@ describe('releaseChannels', () => {
 
     context('logging failed to cancel orders', async () => {
       it('logs orders that could not be cancelled', async () => {
-        await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
+        await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker })
 
         expect(logger.info).to.have.been.calledWith('Failed to cancel orders', { orders: failedToCancelOrders })
       })
 
       it('does not log failure if no orders failed to cancel', async () => {
         blockOrderWorker.cancelActiveOrders.resolves({ cancelledOrders, failedToCancelOrders: [] })
-        await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
+        await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker })
 
         expect(logger.info).to.not.have.been.calledWith('Failed to cancel orders', { orders: [] })
       })
@@ -95,7 +95,7 @@ describe('releaseChannels', () => {
   describe('force releasing channels from a specific market', () => {
     beforeEach(async () => {
       params.force = true
-      await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
+      await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker })
     })
 
     it('force closes channels on the base engine', async () => {
@@ -112,20 +112,20 @@ describe('releaseChannels', () => {
       orderbooks = new Map([['ABC/DXS', { store: sinon.stub() }]])
 
       const errorMessage = `${params.market} is not being tracked as a market.`
-      return expect(releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })).to.eventually.be.rejectedWith(errorMessage)
+      return expect(releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker })).to.eventually.be.rejectedWith(errorMessage)
     })
 
     it('throws an error if the base engine does not exist for symbol', () => {
       engines = new Map([['LTC', counterEngineStub]])
       return expect(
-        releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
+        releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker })
       ).to.eventually.be.rejectedWith(Error, `No engine available for BTC`)
     })
 
     it('throws an error if the counter engine does not exist for symbol', () => {
       engines = new Map([['BTC', baseEngineStub]])
       return expect(
-        releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
+        releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker })
       ).to.be.rejectedWith(Error, `No engine available for LTC`)
     })
   })
@@ -135,13 +135,13 @@ describe('releaseChannels', () => {
       const { RELEASED, FAILED } = releaseChannels.__get__('RELEASE_STATE')
       const error = new Error('BTC engine is locked')
       baseEngineStub.closeChannels.rejects(error)
-      await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse })
+      const res = await releaseChannels({ params, logger, engines, orderbooks, blockOrderWorker })
 
       const expectedResponse = {
         base: { symbol: 'BTC', error: error.message, status: FAILED },
         counter: { symbol: 'LTC', status: RELEASED }
       }
-      expect(ReleaseChannelsResponse).to.have.been.calledWith(expectedResponse)
+      expect(res).to.be.eql(expectedResponse)
     })
   })
 })

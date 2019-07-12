@@ -1,5 +1,11 @@
-const { currencies } = require('../../config')
-const { Big } = require('../../utils')
+const {
+  Big,
+  GrpcResponse: GetTradingCapacitiesResponse
+} = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+/** @typedef {import('../broker-rpc-server').Engine} Engine */
+/** @typedef {import('../broker-rpc-server').Logger} Logger */
 
 /**
  * @constant
@@ -11,10 +17,16 @@ const CAPACITY_STATE = Object.freeze({
   FAILED: 'FAILED'
 })
 
-/** @typedef {object} GetCapacitiesResponse
+/**
+ * @typedef {object} GetCapacitiesErrorResponse
  * @property {string} symbol - currency symbol e.g. BTC
- * @property {string} status - OK for success or FAILED if engine call fails
- * @property {boolean} error - true if errors occurred during request for capacities
+ * @property {string} status - 'FAILED' since the engine call failed
+ * @property {string} error - Error message that caused the failure
+ */
+
+/** @typedef {object} GetCapacitiesSuccessResponse
+ * @property {string} symbol - currency symbol e.g. BTC
+ * @property {string} status - 'OK' for success
  * @property {string} availableReceiveCapacity
  * @property {string} availableSendCapacity
  * @property {string} pendingSendCapacity
@@ -23,6 +35,9 @@ const CAPACITY_STATE = Object.freeze({
  * @property {string} inactiveReceiveCapacity
  * @property {string} outstandingReceiveCapacity
  * @property {string} outstandingSendCapacity
+ */
+
+/** @typedef {GetCapacitiesErrorResponse | GetCapacitiesSuccessResponse} GetCapacitiesResponse
  */
 
 /**
@@ -37,10 +52,9 @@ const CAPACITY_STATE = Object.freeze({
  * @returns {Promise<GetCapacitiesResponse>}
  */
 async function getCapacities (engine, symbol, outstandingSendCapacity, outstandingReceiveCapacity, { logger }) {
-  const { quantumsPerCommon } = currencies.find(({ symbol: configSymbol }) => configSymbol === symbol) || {}
-
+  const { quantumsPerCommon } = engine
   if (!quantumsPerCommon) {
-    throw new Error(`Currency was not found when trying to get trading capacities: ${this.symbol}`)
+    throw new Error(`Invalid configuration: missing quantumsPerCommon for ${symbol}`)
   }
 
   try {
@@ -84,17 +98,10 @@ async function getCapacities (engine, symbol, outstandingSendCapacity, outstandi
  * Grabs the remote and local capacities from the requested engines and orders/fills store available, pending, outstanding, and inactive channels
  *
  * @function
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {object} request.params
- * @param {Map<symbol, Engine>} request.engines
- * @param {object} request.orderbooks - initialized orderbooks
- * @param {BlockOrderWorker} request.blockOrderWorker
- * @param {Logger} request.logger
- * @param {object} responses
- * @param {Function} responses.GetTradingCapacitiesResponse
+ * @param {GrpcUnaryMethodRequest} request - request object
  * @returns {Promise<GetTradingCapacitiesResponse>}
  */
-async function getTradingCapacities ({ params, engines, orderbooks, blockOrderWorker, logger }, { GetTradingCapacitiesResponse }) {
+async function getTradingCapacities ({ params, engines, orderbooks, blockOrderWorker, logger }) {
   const { market } = params
   const orderbook = orderbooks.get(market)
 

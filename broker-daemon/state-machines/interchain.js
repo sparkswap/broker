@@ -204,6 +204,7 @@ async function settleSwap (engine, hash, preimage) {
   logger.debug(`Settling upstream payment for ${hash}`)
   await engine.settleSwap(preimage)
   logger.debug(`Successfully settled upstream payment for ${hash}`)
+  return undefined
 }
 
 /**

@@ -23,6 +23,9 @@ describe('BrokerRPCServer', () => {
   let grpcGateway
   let router
   let httpServerStub
+  let rpcUser
+  let rpcPass
+  let createBasicAuth
 
   beforeEach(() => {
     adminService = {
@@ -67,8 +70,10 @@ describe('BrokerRPCServer', () => {
     httpServerStub = { listen: sinon.stub() }
     httpServer = sinon.stub().returns(httpServerStub)
     grpcGateway = sinon.stub().returns(router)
+    createBasicAuth = sinon.stub()
     BrokerRPCServer.__set__('grpcGateway', grpcGateway)
     BrokerRPCServer.__set__('createHttpServer', httpServer)
+    BrokerRPCServer.__set__('createBasicAuth', createBasicAuth)
 
     engines = new Map()
 
@@ -84,6 +89,17 @@ describe('BrokerRPCServer', () => {
   })
 
   describe('new', () => {
+    it('creates basic auth', () => {
+      rpcUser = 'sparkswap'
+      rpcPass = 'sparkswap'
+
+      createBasicAuth.withArgs(rpcUser, rpcPass).returns('fake auth')
+
+      const server = new BrokerRPCServer({ rpcUser, rpcPass })
+
+      expect(server).to.have.property('auth', 'fake auth')
+    })
+
     it('assigns a logger', () => {
       const logger = 'mylogger'
       const server = new BrokerRPCServer({ logger })
@@ -118,7 +134,7 @@ describe('BrokerRPCServer', () => {
     it('assigns the proto path', () => {
       const BROKER_PROTO_PATH = BrokerRPCServer.__get__('BROKER_PROTO_PATH')
 
-      const server = new BrokerRPCServer()
+      const server = new BrokerRPCServer({})
 
       expect(pathResolve).to.have.been.calledOnce()
       expect(pathResolve).to.have.been.calledWith(BROKER_PROTO_PATH)
@@ -131,7 +147,7 @@ describe('BrokerRPCServer', () => {
         addService
       }
       rpcServer.returns(instanceServer)
-      const server = new BrokerRPCServer()
+      const server = new BrokerRPCServer({})
       const serverOptions = BrokerRPCServer.__get__('GRPC_SERVER_OPTIONS')
 
       expect(rpcServer).to.have.been.calledOnce()
@@ -201,7 +217,7 @@ describe('BrokerRPCServer', () => {
     })
 
     it('adds the admin service', () => {
-      const server = new BrokerRPCServer()
+      const server = new BrokerRPCServer({})
 
       expect(server).to.have.property('server')
       expect(server.server.addService).to.be.equal(addService)
@@ -222,7 +238,7 @@ describe('BrokerRPCServer', () => {
     })
 
     it('adds the order service', () => {
-      const server = new BrokerRPCServer()
+      const server = new BrokerRPCServer({})
 
       expect(server).to.have.property('server')
       expect(server.server.addService).to.be.equal(addService)
@@ -243,7 +259,7 @@ describe('BrokerRPCServer', () => {
     })
 
     it('adds the wallet service', () => {
-      const server = new BrokerRPCServer()
+      const server = new BrokerRPCServer({})
 
       expect(server).to.have.property('server')
       expect(server.server.addService).to.be.equal(addService)
@@ -265,7 +281,7 @@ describe('BrokerRPCServer', () => {
     })
 
     it('adds the orderBook service', () => {
-      const server = new BrokerRPCServer()
+      const server = new BrokerRPCServer({})
 
       expect(server).to.have.property('server')
       expect(server.server.addService).to.be.equal(addService)
@@ -273,7 +289,7 @@ describe('BrokerRPCServer', () => {
     })
 
     it('defines a #listen method', () => {
-      const server = new BrokerRPCServer()
+      const server = new BrokerRPCServer({})
 
       expect(server).to.have.property('listen')
       expect(server.listen).to.be.a('function')

@@ -11,7 +11,6 @@ describe('getOrderbook', () => {
   let asks
   let orderbook
   let orderbooks
-  let GetOrderbookResponse
   let params
   let logger
   let nanoStub
@@ -45,40 +44,38 @@ describe('getOrderbook', () => {
 
     nanoStub = { now: nowStub, toString: toStringStub, toISOString: toISOString }
     getOrderbook.__set__('nano', nanoStub)
-    GetOrderbookResponse = sinon.stub()
   })
 
   it('throws an error if the orderbook for the specified market cannot be found', () => {
     const badOrderbooks = new Map()
-    return expect(getOrderbook({ params, logger, orderbooks: badOrderbooks }, { GetOrderbookResponse })).to.eventually.be.rejectedWith(`${market} is not being tracked as a market.`)
+    return expect(getOrderbook({ params, logger, orderbooks: badOrderbooks })).to.eventually.be.rejectedWith(`${market} is not being tracked as a market.`)
   })
 
   it('gets all orders from the orderbook', async () => {
-    await getOrderbook({ params, logger, orderbooks }, { GetOrderbookResponse })
+    await getOrderbook({ params, logger, orderbooks })
 
     expect(orderbook.getOrders).to.have.been.calledTwice()
   })
 
   it('converts the current time to nanoseconds', async () => {
-    await getOrderbook({ params, logger, orderbooks }, { GetOrderbookResponse })
+    await getOrderbook({ params, logger, orderbooks })
     expect(nanoStub.now).to.have.been.calledOnce()
   })
 
   it('converts the time in nanoseconds to a string', async () => {
-    await getOrderbook({ params, logger, orderbooks }, { GetOrderbookResponse })
+    await getOrderbook({ params, logger, orderbooks })
     expect(nanoStub.toString).to.have.been.calledWith([ 1537487044, 158465755 ])
   })
 
   it('converts the time in nanoseconds to an ISO string', async () => {
-    await getOrderbook({ params, logger, orderbooks }, { GetOrderbookResponse })
+    await getOrderbook({ params, logger, orderbooks })
     expect(nanoStub.toISOString).to.have.been.calledWith([ 1537487044, 158465755 ])
   })
 
   it('returns bids, asks, timestamp and datetime', async () => {
-    await getOrderbook({ params, logger, orderbooks }, { GetOrderbookResponse })
+    const res = await getOrderbook({ params, logger, orderbooks })
 
-    expect(GetOrderbookResponse).to.have.been.calledOnce()
-    expect(GetOrderbookResponse).to.have.been.calledWith(
+    expect(res).to.be.eql(
       { bids: [{ price: '0.001', amount: '0.003' }],
         asks: [{ price: '0.0031', amount: '0.0004' }, { price: '0.005', amount: '0.0001' }],
         datetime: '2018-09-20T23:51:11.431784972Z',
@@ -103,12 +100,12 @@ describe('getOrderbook', () => {
     orderbook.getOrders.withArgs({ side: 'BID', limit: params.limitPerSide }).resolves(bids)
     orderbook.getOrders.withArgs({ side: 'ASK', limit: params.limitPerSide }).resolves(asks)
     orderbooks = new Map([['BTC/LTC', orderbook]])
-    await getOrderbook({ params, logger, orderbooks }, { GetOrderbookResponse })
+    const res = await getOrderbook({ params, logger, orderbooks })
 
     expect(orderbook.getOrders).to.have.been.calledTwice()
     expect(orderbook.getOrders.firstCall).to.have.been.calledWith({ side: 'BID', limit: params.limitPerSide })
     expect(orderbook.getOrders.secondCall).to.have.been.calledWith({ side: 'ASK', limit: params.limitPerSide })
-    expect(GetOrderbookResponse).to.have.been.calledWith(
+    expect(res).to.be.eql(
       {
         bids: [
           { price: '0.0021', amount: '0.003' },
