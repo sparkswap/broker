@@ -54,10 +54,10 @@ describe('get-balances', () => {
     it('returns all balances for the broker daemon', async () => {
       const res = await getBalances({ logger, engines })
       const expectedBalances = [
-        sinon.match({
+        {
           symbol: 'BTC',
           ...balance
-        })
+        }
       ]
       expect(res).to.be.eql({ balances: expectedBalances })
     })
@@ -67,10 +67,10 @@ describe('get-balances', () => {
       balancesStub.rejects(error)
       const res = await getBalances({ logger, engines })
       const expectedBalances = [
-        sinon.match({
+        {
           symbol: 'BTC',
           error
-        })
+        }
       ]
       expect(res).to.be.eql({ balances: expectedBalances })
     })
