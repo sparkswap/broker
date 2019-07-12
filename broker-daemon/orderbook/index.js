@@ -3,7 +3,6 @@ const AskIndex = require('./ask-index')
 const BidIndex = require('./bid-index')
 const OrderbookIndex = require('./orderbook-index')
 const { getRecords, Big } = require('../utils')
-const nano = require('nano-seconds')
 
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
@@ -133,24 +132,6 @@ class Orderbook {
     watcher.once('sync', onWatcherSync)
     watcher.once('end', onWatcherEnd)
     watcher.once('error', onWatcherError)
-  }
-
-  /**
-   * Gets all trades for a specific timestamp
-   *
-   * @param {string} since - ISO8601 datetime lowerbound
-   * @param {number} limit - limit of records returned
-   * @returns {Array<Object>} trades
-   */
-  async getTrades (since, limit) {
-    this.assertSynced()
-    const params = { limit }
-    if (since) {
-      const sinceDate = new Date(since).toISOString()
-      params.gte = nano.toString(nano.fromISOString(sinceDate))
-    }
-    const trades = await getRecords(this.eventStore, MarketEvent.fromStorage.bind(MarketEvent), params)
-    return trades
   }
 
   /**

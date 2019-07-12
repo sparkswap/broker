@@ -4,7 +4,6 @@ const { loadProto } = require('../../utils')
 const watchMarket = require('./watch-market')
 const getOrderbook = require('./get-orderbook')
 const getSupportedMarkets = require('./get-supported-markets')
-const getTrades = require('./get-trades')
 
 class OrderBookService {
   /**
@@ -26,15 +25,13 @@ class OrderBookService {
     const {
       WatchMarketResponse,
       GetOrderbookResponse,
-      GetSupportedMarketsResponse,
-      GetTradesResponse
+      GetSupportedMarketsResponse
     } = this.proto.broker.rpc
 
     this.implementation = {
       watchMarket: new GrpcServerStreamingMethod(watchMarket, this.messageId('watchMarket'), { logger, relayer, orderbooks, auth }, { WatchMarketResponse }).register(),
       getOrderbook: new GrpcUnaryMethod(getOrderbook, this.messageId('getOrderbook'), { logger, relayer, orderbooks, auth }, { GetOrderbookResponse }).register(),
-      getSupportedMarkets: new GrpcUnaryMethod(getSupportedMarkets, this.messageId('getSupportedMarkets'), { logger, relayer, orderbooks }, { GetSupportedMarketsResponse }).register(),
-      getTrades: new GrpcUnaryMethod(getTrades, this.messageId('getTrades'), { logger, relayer, orderbooks }, { GetTradesResponse }).register()
+      getSupportedMarkets: new GrpcUnaryMethod(getSupportedMarkets, this.messageId('getSupportedMarkets'), { logger, relayer, orderbooks }, { GetSupportedMarketsResponse }).register()
     }
   }
 

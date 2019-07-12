@@ -7,7 +7,6 @@ describe('OrderBookService', () => {
   let watchMarketStub
   let getOrderbookStub
   let getSupportedMarketsStub
-  let getTradesStub
 
   let GrpcMethod
   let register
@@ -66,9 +65,6 @@ describe('OrderBookService', () => {
 
     getSupportedMarketsStub = sinon.stub()
     OrderBookService.__set__('getSupportedMarkets', getSupportedMarketsStub)
-
-    getTradesStub = sinon.stub()
-    OrderBookService.__set__('getTrades', getTradesStub)
   })
 
   beforeEach(() => {
@@ -254,51 +250,6 @@ describe('OrderBookService', () => {
     it('passes in the response', () => {
       expect(callArgs[3]).to.be.an('object')
       expect(callArgs[3]).to.have.property('GetSupportedMarketsResponse', proto.broker.rpc.GetSupportedMarketsResponse)
-    })
-  })
-
-  describe('#getTrades', () => {
-    let callOrder = 3
-    let callArgs
-
-    beforeEach(() => {
-      callArgs = GrpcMethod.args[callOrder]
-    })
-
-    it('exposes an implementation', () => {
-      expect(server.implementation).to.have.property('getTrades')
-      expect(server.implementation.getTrades).to.be.a('function')
-    })
-
-    it('creates a GrpcMethod', () => {
-      expect(GrpcMethod).to.have.been.called()
-      expect(GrpcMethod).to.have.been.calledWithNew()
-      expect(server.implementation.getTrades).to.be.equal(fakeRegistered)
-    })
-
-    it('provides the method', () => {
-      expect(callArgs[0]).to.be.equal(getTradesStub)
-    })
-
-    it('provides a message id', () => {
-      expect(callArgs[1]).to.be.equal('[OrderBookService:getTrades]')
-    })
-
-    describe('request options', () => {
-      it('passes in the logger', () => {
-        expect(callArgs[2]).to.have.property('logger', logger)
-        expect(callArgs[2].logger).to.be.equal(logger)
-      })
-
-      it('passes in the orderbooks', () => {
-        expect(callArgs[2]).to.have.property('orderbooks')
-        expect(callArgs[2].orderbooks).to.be.equal(orderbooks)
-      })
-    })
-
-    it('passes in the response', () => {
-      expect(callArgs[3]).to.be.an('object')
-      expect(callArgs[3]).to.have.property('GetTradesResponse', proto.broker.rpc.GetTradesResponse)
     })
   })
 })
