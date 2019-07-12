@@ -779,56 +779,6 @@ describe('Orderbook', () => {
     })
   })
 
-  describe('getTrades', () => {
-    let orderbook
-    let marketName
-    let timestamp
-    let limit
-    let revert
-    let getRecordsStub
-    let bound
-
-    beforeEach(() => {
-      marketName = 'BTC/LTC'
-      timestamp = '2018-09-21T10:40:31.0342339Z'
-      limit = 5
-      getRecordsStub = sinon.stub()
-      orderbook = new Orderbook(marketName, relayer, baseStore, logger)
-      orderbook.assertSynced = sinon.stub()
-      bound = 'mybind'
-      EventFromStorageBind.returns(bound)
-      revert = Orderbook.__set__('getRecords', getRecordsStub)
-    })
-
-    afterEach(() => {
-      revert()
-    })
-
-    it('makes sure the orderbook is synced', async () => {
-      await orderbook.getTrades(timestamp, limit)
-      expect(orderbook.assertSynced).to.have.been.calledOnce()
-    })
-
-    it('does not add a lowerbound if no since date is provided', async () => {
-      timestamp = undefined
-      await orderbook.getTrades(timestamp, limit)
-      expect(getRecordsStub).to.have.been.calledWith(
-        eventStore,
-        bound,
-        { limit }
-      )
-    })
-
-    it('calls get records with a timestamp', async () => {
-      await orderbook.getTrades(timestamp, limit)
-      expect(getRecordsStub).to.have.been.calledWith(
-        eventStore,
-        bound,
-        { gte: '1537526431034000000', limit }
-      )
-    })
-  })
-
   describe('getOrderbookEventsByTimestamp', () => {
     let orderbook
     let marketName
