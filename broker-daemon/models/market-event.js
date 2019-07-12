@@ -80,8 +80,7 @@ class MarketEvent {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === baseSymbol)
     const counterCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === counterSymbol)
 
-    if (!baseCurrencyConfig || !counterCurrencyConfig ||
-      !baseCurrencyConfig.quantumsPerCommon || !counterCurrencyConfig.quantumsPerCommon) {
+    if (!baseCurrencyConfig || !counterCurrencyConfig) {
       throw new Error('Invalid currency config')
     }
     const baseCommonAmount = Big(this.payload.baseAmount).div(baseCurrencyConfig.quantumsPerCommon)
