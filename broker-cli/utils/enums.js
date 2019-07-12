@@ -5,6 +5,8 @@
  * @author SparkSwap
  */
 
+/** @typedef {{[k: string]: string}} Dictionary */
+
 /**
  * TIME IN FORCE
  *
@@ -15,7 +17,7 @@
  * PO - post only
  *
  * @constant
- * @type {object<key, string>}
+ * @type {Dictionary}
  * @default
  */
 const TIME_IN_FORCE = Object.freeze({
@@ -30,7 +32,7 @@ const TIME_IN_FORCE = Object.freeze({
  * ORDER TYPES (bid/sell)
  *
  * @constant
- * @type {object<key, string>}
+ * @type {Dictionary}
  * @default
  */
 const ORDER_TYPES = Object.freeze({

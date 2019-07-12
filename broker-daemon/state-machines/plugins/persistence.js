@@ -46,6 +46,8 @@ const StateMachinePlugin = require('./abstract')
  * @param {object}      value - Object being used to inflate the state machine for which this accessor is being set. Will be undefined if being used as a getter.
  */
 
+/** @typedef {{[k: string]: StateMachinePersistenceFieldAccessor}} AdditionalFields */
+
 /**
  * @class Store state machine data and state using a LevelUp compatible store
  */
@@ -54,7 +56,7 @@ class StateMachinePersistence extends StateMachinePlugin {
    * Set up the persistence plugin with user-defined attributes to save additional fields and avoid naming conflicts
    * @param {object} options
    * @param {StateMachinePersistenceKeyAccessor} options.key - Name of the property on the state machine instance with the unique key, or a function that derives the key from the instance
-   * @param {object<string, StateMachinePersistenceFieldAccessor>} options.additionalFields - List of additional properties on the instance to be persisted
+   * @param {AdditionalFields} options.additionalFields - List of additional properties on the instance to be persisted
    * @param {string} [options.storeName] - Name of the property on the state machine where the StateMachinePersistenceStore is located
    */
   constructor ({ key = 'id', additionalFields = {}, storeName = 'store' } =
@@ -125,7 +127,6 @@ class StateMachinePersistence extends StateMachinePlugin {
           let key
 
           if (typeof plugin.key === 'function') {
-            // @ts-ignore
             key = plugin.key.call(this)
           } else {
             key = this[plugin.key]
@@ -167,7 +168,6 @@ class StateMachinePersistence extends StateMachinePlugin {
 
         // somehow spit an error if this fails?
         await promisify(this[plugin.storeName].put)(key, JSON.stringify(data))
-        return undefined
       }
     }
   }
@@ -196,7 +196,6 @@ class StateMachinePersistence extends StateMachinePlugin {
 
         // set the key
         if (typeof plugin.key === 'function') {
-          // @ts-ignore
           plugin.key.call(instance, key, parsedValue)
         } else {
           instance[plugin.key] = key

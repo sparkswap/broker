@@ -15,6 +15,12 @@ const {
   CachedCall
 } = require('../utils')
 
+/** @typedef {import('../orderbook')} Orderbook */
+/** @typedef {import('level-sublevel')} Sublevel */
+/** @typedef {import('../relayer')} RelayerClient */
+/** @typedef {import('..').Engine} Engine */
+/** @typedef {import('../models/market-event-order')} MarketEventOrder */
+
 /**
  * Number of attempts to retry a block order when connection with relayer goes down
  * @constant
@@ -40,11 +46,10 @@ class BlockOrderWorker extends EventEmitter {
    *
    * @param {object} args
    * @param {Map<string, Orderbook>} args.orderbooks - Collection of all active Orderbooks
-   * @param {sublevel}               args.store - Sublevel in which to store block orders and child orders
+   * @param {Sublevel}               args.store - Sublevel in which to store block orders and child orders
    * @param {object}                 args.logger
    * @param {RelayerClient}          args.relayer
    * @param {Map<string, Engine>}    args.engines - Collection of all available engines
-   * @returns {void}
    */
   constructor ({ orderbooks, store, logger, relayer, engines }) {
     super()
@@ -104,7 +109,6 @@ class BlockOrderWorker extends EventEmitter {
     // which can be a long process, to be awaited on start, but prevents locking
     // the event loop if our engines are not validated.
     this.settleIndeterminateOrdersFills(enginesAreValidated)
-    return undefined
   }
 
   /**
@@ -139,13 +143,12 @@ class BlockOrderWorker extends EventEmitter {
         fsm.triggerState()
       })
     }
-    return undefined
   }
 
   /**
    * Given a blockOrder, return associated OrderStateMachines
    * @param {BlockOrder} blockOrder
-   * @returns {Promise<Array<OrderStateMachine>>}
+   * @returns {Promise<Array<typeof OrderStateMachine>>}
    */
   async getOrderStateMachines (blockOrder) {
     const osms = await getRecords(
@@ -174,7 +177,7 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Given a blockOrder, return associated FillStateMachines
    * @param {BlockOrder} blockOrder
-   * @returns {Promise<Array<FillStateMachine>>}
+   * @returns {Promise<Array<typeof FillStateMachine>>}
    */
   async getFillStateMachines (blockOrder) {
     const fsms = await getRecords(
@@ -334,7 +337,6 @@ class BlockOrderWorker extends EventEmitter {
       throw new Error(`Insufficient funds in a single inbound ${blockOrder.inboundSymbol} channel to create order. ` +
         `Requested Inbound Amount: ${inboundAmount}, Max Inbound Capacity: ${maxInboundCapacity}`)
     }
-    return undefined
   }
 
   /**
@@ -428,7 +430,6 @@ class BlockOrderWorker extends EventEmitter {
     }))
 
     this.logger.info(`Cancelled ${openOrders.length} underlying orders for ${blockOrder.id}`)
-    return undefined
   }
 
   /**
@@ -494,11 +495,11 @@ class BlockOrderWorker extends EventEmitter {
    *
    * @param {string} market - to filter by
    * @param {object} options - options for the query
-   * @param {number} options.limit - number of records to return
-   * @param {boolean} options.active - filter for active records
-   * @param {boolean} options.cancelled - filter for cancelled records
-   * @param {boolean} options.completed - filter for completed records
-   * @param {boolean} options.failed - filter for failed records
+   * @param {number} [options.limit] - number of records to return
+   * @param {boolean} [options.active] - filter for active records
+   * @param {boolean} [options.cancelled] - filter for cancelled records
+   * @param {boolean} [options.completed] - filter for completed records
+   * @param {boolean} [options.failed] - filter for failed records
    * @returns {Promise<Array<BlockOrder>>}
    */
   async getBlockOrders (market, options = {}) {
@@ -563,13 +564,12 @@ class BlockOrderWorker extends EventEmitter {
     await promisify(this.store.put)(blockOrder.key, blockOrder.value)
 
     this.logger.info('Moved block order to failed state', { id: blockOrderId })
-    return undefined
   }
 
   /**
    * work a block order that gets created
-   * @param  {string} blockOrderId - ID of block order to work
-   * @param  {Big}    targetDepth  - Depth, in base currency, to reach with this work
+   * @param  {{id: string}} blockOrderId - ID of block order to work
+   * @param  {typeof Big}    targetDepth  - Depth, in base currency, to reach with this work
    * @returns {Promise<void>}
    */
   async workBlockOrder ({ id: blockOrderId }, targetDepth) {
@@ -595,19 +595,22 @@ class BlockOrderWorker extends EventEmitter {
     } else {
       await this.workLimitBlockOrder(blockOrder, targetDepth)
     }
-    return undefined
   }
 
   /**
    * Work market block order
    * @param {BlockOrder} blockOrder  - BlockOrder without a limit price, i.e. a market order
-   * @param {Big}        targetDepth - Depth, in base currency, to reach with this work
-   * @returns {Promise<void>}
+   * @param {typeof Big}        targetDepth - Depth, in base currency, to reach with this work
+   * @returns {Promise<Array<typeof FillStateMachine>>}
    */
   async workMarketBlockOrder (blockOrder, targetDepth) {
     const orderbook = this.orderbooks.get(blockOrder.marketName)
 
-    const { orders, depth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString() })
+    if (!orderbook) {
+      throw new Error(`No orderbook is initialized for created order in the ${blockOrder.marketName} market.`)
+    }
+
+    const { orders, depth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString(), quantumPrice: null })
 
     if (Big(depth).lt(targetDepth)) {
       this.logger.error(`Insufficient depth in ${blockOrder.inverseSide} to fill ${targetDepth.toString()}`, { depth, targetDepth })
@@ -621,14 +624,18 @@ class BlockOrderWorker extends EventEmitter {
    * Work limit block order
    * @todo make limit orders more sophisticated than just sending a single limit order to the relayer
    * @param {BlockOrder} blockOrder  - BlockOrder with a limit price
-   * @param {Big}        targetDepth - Depth, in base currency, to reach with this work
+   * @param {typeof Big}        targetDepth - Depth, in base currency, to reach with this work
    * @returns {Promise<void>}
    */
   async workLimitBlockOrder (blockOrder, targetDepth) {
     const orderbook = this.orderbooks.get(blockOrder.marketName)
 
+    if (!orderbook) {
+      throw new Error(`No orderbook is initialized for created order in the ${blockOrder.marketName} market.`)
+    }
+
     // get available orders for the requested depth and price
-    const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString(), quantumPrice: blockOrder.quantumPrice })
+    const { orders, depth: availableDepth } = await orderbook.getBestOrders({ side: blockOrder.inverseSide, depth: targetDepth.toString(), quantumPrice: blockOrder.quantumPrice || null })
 
     if (blockOrder.timeInForce === BlockOrder.TIME_RESTRICTIONS.GTC) {
       // Good-til-Cancelled orders will take any available liquidity that is at
@@ -639,7 +646,8 @@ class BlockOrderWorker extends EventEmitter {
       // price, we move the order to a cancelled state
       if (Big(availableDepth).gt(0)) {
         this.logger.info('Place Only block order would take liquidity. Moving to cancelled state.', { id: blockOrder.id })
-        return this.cancelBlockOrder(blockOrder.id)
+        await this.cancelBlockOrder(blockOrder.id)
+        return
       }
     } else {
       throw new Error(`Only Good-til-cancelled and Post Only limit orders are currently supported. Unsupported time restriction: ${blockOrder.timeInForce}`)
@@ -649,7 +657,6 @@ class BlockOrderWorker extends EventEmitter {
       // place an order for the remaining depth that we could not fill
       this._placeOrders(blockOrder, targetDepth.minus(availableDepth).toString())
     }
-    return undefined
   }
 
   /**
@@ -692,9 +699,9 @@ class BlockOrderWorker extends EventEmitter {
   /**
    * Applies listeners to a created OrderStateMachine
    * @private
-   * @param {OrderStateMachine} osm        - State machine to apply listeners to
+   * @param {typeof OrderStateMachine} osm        - State machine to apply listeners to
    * @param {BlockOrder} blockOrder - Block Order associated with the state machine
-   * @returns {OrderStateMachine}
+   * @returns {typeof OrderStateMachine}
    */
   applyOsmListeners (osm, blockOrder) {
     // Try to complete the entire block order once an underlying order completes
@@ -850,7 +857,6 @@ class BlockOrderWorker extends EventEmitter {
     this.applyOsmListeners(osm, blockOrder)
 
     this.logger.info('Created order for BlockOrder', { blockOrderId: blockOrder.id, orderId: osm.order.orderId })
-    return undefined
   }
 
   /**
@@ -858,12 +864,12 @@ class BlockOrderWorker extends EventEmitter {
    * @param {BlockOrder}              blockOrder  - BlockOrder that the orders are being filled on behalf of
    * @param {Array<MarketEventOrder>} orders      - Orders to be filled
    * @param {string}                  targetDepth - Int64 string of the maximum depth to fill
-   * @returns {Promise<Array<FillStateMachine>>}    Promise that resolves the array of Fill State Machines for these fills
+   * @returns {Promise<Array<typeof FillStateMachine>>}    Promise that resolves the array of Fill State Machines for these fills
    */
   async _fillOrders (blockOrder, orders, targetDepth) {
     this.logger.info(`Filling ${orders.length} orders for ${blockOrder.id} up to depth of ${targetDepth}`)
 
-    targetDepth = Big(targetDepth)
+    const targetDepthBig = Big(targetDepth)
     let currentDepth = Big('0')
 
     // state machine params
@@ -891,7 +897,7 @@ class BlockOrderWorker extends EventEmitter {
     const ownOrderIds = ordersFromStore.filter(matchedOrders => matchedOrders && matchedOrders.length > 0).map(([order]) => order.orderId)
 
     const promisedFills = orders.map((order) => {
-      const depthRemaining = targetDepth.minus(currentDepth)
+      const depthRemaining = targetDepthBig.minus(currentDepth)
 
       // if we have already reached our target depth, create no further fills
       if (depthRemaining.lte(0)) {
@@ -899,7 +905,7 @@ class BlockOrderWorker extends EventEmitter {
       }
 
       if (ownOrderIds.includes(order.orderId)) {
-        throw new Error(`Cannot fill own order ${order.orderId}. Current BlockOrderId: ${blockOrder.id}, Own Order BlockOrderId: ${order.blockOrderId}`)
+        throw new Error(`Cannot fill own order ${order.orderId}. Current BlockOrderId: ${blockOrder.id}`)
       }
 
       // Take the smaller of the remaining desired depth or the base amount of the order
@@ -930,7 +936,7 @@ class BlockOrderWorker extends EventEmitter {
 
   /**
    * Applies listeners to the fill state machine
-   * @param {FillStateMachine} fsm - state machine to apply the listeners to
+   * @param {typeof FillStateMachine} fsm - state machine to apply the listeners to
    * @param {BlockOrder} blockOrder  - BlockOrder that the orders are being filled on behalf of
    * @returns {void}
    */

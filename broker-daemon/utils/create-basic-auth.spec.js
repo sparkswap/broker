@@ -8,37 +8,41 @@ describe('createBasicAuth', () => {
   let logger
   let credentialsToBasicAuth
   let grpcAuthHandler
+  let rpcUser
+  let rpcPass
 
   beforeEach(() => {
     logger = {
       debug: sinon.stub()
     }
 
+    rpcUser = 'sparkswap'
+    rpcPass = 'sparkswap'
+
     credentialsToBasicAuth = credentialGenerator.__get__('credentialsToBasicAuth')
   })
 
+  it('errors if auth is enabled and there are no credentials', () => {
+    expect(() => {
+      createBasicAuth(null, null, false)
+    }).to.throw('rpcUser and rpcPass are required if auth is enabled')
+  })
+
   it('does not error if auth is disabled', async () => {
-    const disableAuth = true
-    const rpcUser = 'sparkswap'
-    const rpcPass = 'sparkswap'
     const token = credentialsToBasicAuth(rpcUser, rpcPass)
     const metadata = { authorization: token }
-    grpcAuthHandler = createBasicAuth(rpcUser, rpcPass, disableAuth)
+    grpcAuthHandler = createBasicAuth(null, null, true)
     const res = await grpcAuthHandler({ metadata, logger })
     expect(res).to.be.undefined()
   })
 
   it('errors if no authorization token is available', () => {
     const metadata = {}
-    const rpcUser = 'sparkswap'
-    const rpcPass = 'sparkswap'
     grpcAuthHandler = createBasicAuth(rpcUser, rpcPass)
     return expect(grpcAuthHandler({ metadata, logger })).to.eventually.be.rejectedWith(Error)
   })
 
   it('does not error if credentials are verified', async () => {
-    const rpcUser = 'sparkswap'
-    const rpcPass = 'sparkswap'
     const disableAuth = true
     const token = credentialsToBasicAuth(rpcUser, rpcPass)
     const metadata = { authorization: token }
@@ -48,8 +52,6 @@ describe('createBasicAuth', () => {
   })
 
   it('errors if username is incorrect', () => {
-    const rpcUser = 'sparkswap'
-    const rpcPass = 'sparkswap'
     const token = credentialsToBasicAuth(rpcUser, rpcPass)
     const metadata = { authorization: token }
     const badUser = 'sperkswap'
@@ -58,8 +60,6 @@ describe('createBasicAuth', () => {
   })
 
   it('errors if password is incorrect', () => {
-    const rpcUser = 'sparkswap'
-    const rpcPass = 'sparkswap'
     const token = credentialsToBasicAuth(rpcUser, rpcPass)
     const metadata = { authorization: token }
     const badPass = 'sperkswap'
@@ -68,8 +68,6 @@ describe('createBasicAuth', () => {
   })
 
   it('errors if username and password are incorrect', () => {
-    const rpcUser = 'sparkswap'
-    const rpcPass = 'sparkswap'
     const token = credentialsToBasicAuth(rpcUser, rpcPass)
     const metadata = { authorization: token }
     const badUser = 'sperkswap'

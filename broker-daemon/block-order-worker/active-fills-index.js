@@ -1,13 +1,15 @@
 const { FillStateMachine } = require('../state-machines')
 const { SubsetStore } = require('../utils')
 
+/** @typedef {import('level-sublevel')} Sublevel */
+
 /**
  * @class Index of of our own fills currently in an active state
  */
 class ActiveFillsIndex extends SubsetStore {
   /**
    * Create a new index of a subset of only active fills
-   * @param {sublevel} store - Store of fills to create an active subset of
+   * @param {Sublevel} store - Store of fills to create an active subset of
    */
   constructor (store) {
     super(store.sublevel('activeFills'), store)

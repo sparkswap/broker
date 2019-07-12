@@ -19,7 +19,9 @@ const DELIMITER = ':'
  */
 const LOWER_BOUND = '\x00'
 
-/** @type {object<string, string>} */
+/** @typedef {{[k: string]: string}} Dictionary */
+
+/** @type {Dictionary} */
 const TYPES = Object.freeze({
   PLACED: 'PLACED',
   FILLED: 'FILLED',
@@ -61,7 +63,7 @@ class MarketEvent {
   amount (baseSymbol) {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === baseSymbol)
 
-    if (!baseCurrencyConfig || !baseCurrencyConfig.quantumsPerCommon) {
+    if (!baseCurrencyConfig) {
       throw new Error('Invalid currency config')
     }
 
@@ -78,8 +80,7 @@ class MarketEvent {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === baseSymbol)
     const counterCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === counterSymbol)
 
-    if (!baseCurrencyConfig || !counterCurrencyConfig ||
-      !baseCurrencyConfig.quantumsPerCommon || !counterCurrencyConfig.quantumsPerCommon) {
+    if (!baseCurrencyConfig || !counterCurrencyConfig) {
       throw new Error('Invalid currency config')
     }
     const baseCommonAmount = Big(this.payload.baseAmount).div(baseCurrencyConfig.quantumsPerCommon)
@@ -137,7 +138,7 @@ class MarketEvent {
    * Returns a range query for leveldb from a given timestamp
    *
    * @param {string} startTime - time in nanoseconds
-   * @returns {{ gte: string}} range
+   * @returns {{ gte: string }} range
    */
   static rangeFromTimestamp (startTime) {
     return {

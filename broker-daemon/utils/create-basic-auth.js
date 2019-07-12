@@ -10,12 +10,16 @@ const BASIC_AUTH_DELIMITER = ':'
  * called from inside the grpc-methods authorization hook.
  *
  * @see https://github.com/sparkswap/grpc-methods
- * @param {string} rpcUser
- * @param {string} rpcPass
+ * @param {?string} [rpcUser]
+ * @param {?string} [rpcPass]
  * @param {boolean} [disableAuth=false]
  * @returns {Function}
  */
 function createBasicAuth (rpcUser, rpcPass, disableAuth = false) {
+  if (!disableAuth && (!rpcUser || !rpcPass)) {
+    throw new Error('rpcUser and rpcPass are required if auth is enabled')
+  }
+
   return async ({ metadata, logger }) => {
     if (disableAuth === true) return
 

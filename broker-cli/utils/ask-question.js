@@ -38,7 +38,7 @@ function suppressInput (message, char) {
       process.stdin.pause()
       break
     default:
-      process.stdout.clearLine()
+      readline.clearLine(process.stdout, 0)
       readline.cursorTo(process.stdout, 0)
       process.stdout.write(`${message} `)
       break
@@ -56,7 +56,8 @@ function suppressInput (message, char) {
 function askQuestion (message, { silent = false } = {}) {
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
+    historySize: 1
   })
 
   // If `silent` is set to true, we open stdin and suppress all output until we
@@ -68,7 +69,6 @@ function askQuestion (message, { silent = false } = {}) {
   return new Promise((resolve, reject) => {
     try {
       rl.question(`${message} `, (answer) => {
-        rl.history = rl.history.slice(1)
         rl.close()
         return resolve(answer)
       })

@@ -23,6 +23,9 @@ describe('BrokerRPCServer', () => {
   let grpcGateway
   let router
   let httpServerStub
+  let rpcUser
+  let rpcPass
+  let createBasicAuth
 
   beforeEach(() => {
     adminService = {
@@ -67,8 +70,10 @@ describe('BrokerRPCServer', () => {
     httpServerStub = { listen: sinon.stub() }
     httpServer = sinon.stub().returns(httpServerStub)
     grpcGateway = sinon.stub().returns(router)
+    createBasicAuth = sinon.stub()
     BrokerRPCServer.__set__('grpcGateway', grpcGateway)
     BrokerRPCServer.__set__('createHttpServer', httpServer)
+    BrokerRPCServer.__set__('createBasicAuth', createBasicAuth)
 
     engines = new Map()
 
@@ -84,6 +89,17 @@ describe('BrokerRPCServer', () => {
   })
 
   describe('new', () => {
+    it('creates basic auth', () => {
+      rpcUser = 'sparkswap'
+      rpcPass = 'sparkswap'
+
+      createBasicAuth.withArgs(rpcUser, rpcPass).returns('fake auth')
+
+      const server = new BrokerRPCServer({ rpcUser, rpcPass })
+
+      expect(server).to.have.property('auth', 'fake auth')
+    })
+
     it('assigns a logger', () => {
       const logger = 'mylogger'
       const server = new BrokerRPCServer({ logger })

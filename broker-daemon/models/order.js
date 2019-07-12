@@ -109,8 +109,7 @@ class Order {
     const currencies = CONFIG.currencies || []
     const baseCurrency = currencies.find(({ symbol }) => symbol === this.baseSymbol)
     const counterCurrency = currencies.find(({ symbol }) => symbol === this.counterSymbol)
-    if (!baseCurrency || !counterCurrency ||
-      !baseCurrency.quantumsPerCommon || !counterCurrency.quantumsPerCommon) {
+    if (!baseCurrency || !counterCurrency) {
       throw new Error('Invalid currency config')
     }
     const baseAmountFactor = baseCurrency.quantumsPerCommon

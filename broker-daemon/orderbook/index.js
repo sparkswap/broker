@@ -65,7 +65,6 @@ class Orderbook {
     await this.bidIndex.ensureIndex()
 
     await this.watchMarket()
-    return undefined
   }
 
   /**
@@ -131,7 +130,6 @@ class Orderbook {
       await watcher.migrate()
       await this.index.ensureIndex()
       this.watchMarket()
-      return undefined
     }
 
     watcher.once('sync', onWatcherSync)
@@ -233,7 +231,7 @@ class Orderbook {
    * get the average weighted price given the side and depth
    * @param {string} side  - Side of the orderbook to get the best priced orders for (i.e. `BID` or `ASK`)
    * @param {string} targetDepth - int64 String of the amount, in base currency base units to ge the best prices up to
-   * @returns {Promise<number>} The weighted average price
+   * @returns {Promise<typeof Big>} The weighted average price
    */
   async getAveragePrice (side, targetDepth) {
     const { orders, depth } = await this.getBestOrders({
@@ -291,7 +289,7 @@ class Orderbook {
    * Gets MarketEvents by timestamp
    *
    * @param {string} timestamp - timestamp in nano-seconds
-   * @returns {Promise<Array<MarketEvent>>}
+   * @returns {Promise<Array<MarketEventOrder>>}
    */
   async getMarketEventsByTimestamp (timestamp) {
     this.assertSynced()
