@@ -1,6 +1,8 @@
 const { promisify } = require('util')
 const StateMachinePlugin = require('./abstract')
 
+/** @typedef {import('../order-state-machine')} OrderStateMachine */
+
 /* // JSDoc disabled due to Typescript errors
  * @class A store compatible with the StateMachinePersistence plugin
  * @name StateMachinePersistenceStore
@@ -186,7 +188,7 @@ class StateMachinePersistence extends StateMachinePlugin {
        * @param  {object} options
        * @param  {string} options.key   - Stored key
        * @param  {string} options.value - Plain object of the Order State Machine object
-       * @returns {object} - OrderStateMachine
+       * @returns {OrderStateMachine} - OrderStateMachine
        */
       fromStore: function (initParams, { key, value }) {
         const fields = plugin.persistedFields || {}

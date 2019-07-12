@@ -50,6 +50,9 @@ class PriceIndex extends SublevelIndex {
    * @throws {Error} keyForPrice must be implemented by child class
    */
   keyForPrice (_quantumPrice) {
+    // have to trick the linter to let us always throw but not trip
+    // the unreachable code error and not have a constant expression in the
+    // if condition
     if (_quantumPrice || !_quantumPrice) {
       throw new Error('`keyForPrice` must be implemented by child classes.')
     }
