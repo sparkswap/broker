@@ -23,8 +23,8 @@ class BlockOrder {
    * @param {string} args.amount      - Size of the order in base currency (e.g. '10000')
    * @param {string} args.price       - Limit price for the order (e.g. '100.1')
    * @param {string} args.timeInForce - Time restriction on the order (e.g. GTC, FOK)
-   * @param {string} args.timestamp
-   * @param {string} args.status      - Block Order status
+   * @param {string} [args.timestamp]
+   * @param {string} [args.status]      - Block Order status
    */
   constructor ({ id, marketName, side, amount, price, timeInForce, timestamp, status = BlockOrder.STATUSES.ACTIVE }) {
     this.id = id

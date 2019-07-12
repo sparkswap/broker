@@ -47,7 +47,7 @@ function isDecimal (str) {
  * Checks the provided marketName's length
  *
  * @param {string} marketName
- * @returns {Bool} returns true if specified market name is valid
+ * @returns {boolean} returns true if specified market name is valid
  */
 function validMarketNameLength (marketName) {
   return (marketName.length >= 2 && marketName.length <= 5)
@@ -83,10 +83,14 @@ function isMarketName (str) {
  * Checks the provided list of marketnames lengths
  *
  * @param {string} marketNames - comma separated
- * @returns {Bool} returns true if all market names are valid
+ * @returns {boolean} returns true if all market names are valid
  */
 function validMarketNames (marketNames) {
-  return marketNames.split(',').every(isMarketName)
+  try {
+    return marketNames.split(',').every(name => isMarketName(name) !== '')
+  } catch (e) {
+    return false
+  }
 }
 
 /**
@@ -101,6 +105,7 @@ function areValidMarketNames (marketNames) {
     if (marketNames === '' || validMarketNames(marketNames)) {
       return marketNames
     }
+    throw new Error('[empty error to trigger the catch]')
   } catch (e) {
     throw new ValidationError('One or more market names is invalid')
   }
@@ -167,7 +172,7 @@ function isBlockOrderId (str) {
  * @throws {Error} If string cannot be parsed into a date
  */
 function isDate (str) {
-  if (new Date(str) !== 'Invalid Date' && !isNaN(new Date(str))) {
+  if ((new Date(str)).toString() !== 'Invalid Date' && !isNaN((new Date(str)).getTime())) {
     if (str === new Date(str).toISOString()) {
       return str
     }

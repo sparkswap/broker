@@ -1,6 +1,14 @@
 require('colors')
 const { status } = require('grpc')
 
+class CodedError extends Error {
+  constructor (message, code, details) {
+    super(message)
+    this.code = code
+    this.details = details
+  }
+}
+
 /**
  * String to match errors for unregistered entity IDs on the Relayer.
  * @constant
@@ -11,8 +19,8 @@ const NOT_REGISTERED_ERROR = 'not registered'
 /**
  * Takes in an error object and throws a friendly error if the broker daemon is down
  *
- * @param {Error} error
- * @returns {string}
+ * @param {CodedError} error
+ * @returns {string | Error}
  */
 function handleError (error) {
   if (error.code === status.UNAVAILABLE) {
@@ -27,7 +35,7 @@ function handleError (error) {
 /**
  * Handling for internal error messages. Adds action item for user if Relayer encounters an unregistered Broker.
  *
- * @param {Error} error
+ * @param {CodedError} error
  * @returns {string}
  */
 function handleInternalError (error) {
@@ -39,4 +47,6 @@ function handleInternalError (error) {
   }
   return message
 }
+
+void CodedError
 module.exports = handleError

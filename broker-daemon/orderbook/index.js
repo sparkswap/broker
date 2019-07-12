@@ -231,7 +231,7 @@ class Orderbook {
    * get the average weighted price given the side and depth
    * @param {string} side  - Side of the orderbook to get the best priced orders for (i.e. `BID` or `ASK`)
    * @param {string} targetDepth - int64 String of the amount, in base currency base units to ge the best prices up to
-   * @returns {Promise<number>} The weighted average price
+   * @returns {Promise<typeof Big>} The weighted average price
    */
   async getAveragePrice (side, targetDepth) {
     const { orders, depth } = await this.getBestOrders({

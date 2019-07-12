@@ -3,7 +3,7 @@ const grpc = require('grpc')
 
 /**
  * @constant
- * @type {string}
+ * @type {'json' | 'proto' | undefined}
  * @default
  */
 const PROTO_FILE_TYPE = 'proto'
