@@ -14,7 +14,7 @@ const { RPC_ADDRESS_HELP_STRING, MARKET_NAME_HELP_STRING } = require('../../util
  * @default
  */
 const SUPPORTED_COMMANDS = Object.freeze({
-  SUPPORTED_MARKETS: 'supported-markets',
+  SUPPORTED_MARKETS: 'supported-markets'
 })
 
 const supportedMarkets = require('./supported-markets')
