@@ -73,7 +73,6 @@ class StateMachineRejection extends StateMachinePlugin {
         } catch (e) {
           this[plugin.rejectName](e)
         }
-        return undefined
       }
     }
   }

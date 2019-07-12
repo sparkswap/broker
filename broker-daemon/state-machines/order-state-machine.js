@@ -292,7 +292,6 @@ const OrderStateMachine = StateMachine.factory({
       })
 
       this.logger.info(`Created order ${this.order.orderId} on the relayer`)
-      return undefined
     },
 
     /**
@@ -425,7 +424,6 @@ const OrderStateMachine = StateMachine.factory({
       call.on('data', dataHandler)
 
       this.logger.info(`Placed order ${orderId} on the relayer`, { orderId })
-      return undefined
     },
 
     onBeforeFill: function (_lifecycle, fill) {
@@ -461,7 +459,6 @@ const OrderStateMachine = StateMachine.factory({
 
       const authorization = this.relayer.identity.authorize()
       await this.relayer.makerService.executeOrder({ orderId }, authorization)
-      return undefined
     },
 
     /**

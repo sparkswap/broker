@@ -75,7 +75,6 @@ async function watchMarket ({ params, send, onCancel, logger, orderbooks }, { Ev
     .on('data', onData)
 
   await neverResolve
-  return undefined
 }
 
 module.exports = watchMarket
