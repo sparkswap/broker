@@ -61,8 +61,7 @@ class StateMachinePersistence extends StateMachinePlugin {
    * @param {AdditionalFields} options.additionalFields - List of additional properties on the instance to be persisted
    * @param {string} [options.storeName] - Name of the property on the state machine where the StateMachinePersistenceStore is located
    */
-  constructor ({ key = 'id', additionalFields = {}, storeName = 'store' } =
-  { key: 'id', additionalFields: {}, storeName: 'store' }) {
+  constructor ({ key = 'id', additionalFields = {}, storeName = 'store' }) {
     super()
     this.key = key
     this.additionalFields = additionalFields
