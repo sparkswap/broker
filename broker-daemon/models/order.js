@@ -140,10 +140,10 @@ class Order {
 
   /**
    * Alias for .fillAmount that pairs better with `counterFillAmount`
-   * @returns {string} 64-bit integer represented as a string
+   * @returns {string | undefined} 64-bit integer represented as a string
    */
   get baseFillAmount () {
-    return this.fillAmount || '0'
+    return this.fillAmount
   }
 
   /**
@@ -186,7 +186,7 @@ class Order {
 
   /**
    * Get the amount (as an integer in its currency's smallest units) that we will receive inbound for this order
-   * @returns {string} 64-bit integer represented as a string
+   * @returns {string | undefined} 64-bit integer represented as a string
    */
   get inboundAmount () {
     if (this.fillAmount) {
@@ -198,7 +198,7 @@ class Order {
 
   /**
    * Get the amount (as an integer in its currency's smallest units) that we will send outbound for this order
-   * @returns {string} 64-bit integer represented as a string
+   * @returns {string | undefined} 64-bit integer represented as a string
    */
   get outboundAmount () {
     if (this.fillAmount) {
@@ -228,7 +228,7 @@ class Order {
 
   /**
    * Get the amount (as an integer in its currency's smallest units) that we will receive inbound for this order
-   * @returns {string} 64-bit integer represented as a string
+   * @returns {string | undefined} 64-bit integer represented as a string
    */
   get inboundFillAmount () {
     if (!this.fillAmount) {
@@ -240,7 +240,7 @@ class Order {
 
   /**
    * Get the amount (as an integer in its currency's smallest units) that we will send outbound for this order
-   * @returns {string} 64-bit integer represented as a string
+   * @returns {string | undefined} 64-bit integer represented as a string
    */
   get outboundFillAmount () {
     if (!this.fillAmount) {
