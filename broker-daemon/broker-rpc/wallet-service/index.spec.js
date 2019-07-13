@@ -10,7 +10,6 @@ describe('WalletService', () => {
   let engines
   let relayer
   let unaryMethodStub
-  let responseStub
   let wallet
   let registerSpy
   let newDepositAddress
@@ -29,25 +28,11 @@ describe('WalletService', () => {
   let changeWalletPassword
 
   before(() => {
-    responseStub = sinon.stub()
     protoPath = 'example/path.proto'
     loadProtoStub = sinon.stub().returns({
       broker: {
         rpc: {
-          WalletService: { service: sinon.stub() },
-          NewDepositAddressResponse: responseStub,
-          GetBalancesResponse: responseStub,
-          GetPaymentChannelNetworkAddressResponse: responseStub,
-          GetTradingCapacitiesResponse: responseStub,
-          WithdrawFundsResponse: responseStub,
-          CreateWalletResponse: responseStub,
-          ReleaseChannelsResponse: responseStub,
-          WalletHistoryResponse: responseStub,
-          google: {
-            protobuf: {
-              Empty: responseStub
-            }
-          }
+          WalletService: { service: sinon.stub() }
         }
       }
     })
@@ -104,8 +89,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         newDepositAddress,
         expectedMessageId,
-        { logger, engines, auth },
-        { NewDepositAddressResponse: responseStub }
+        { logger, engines, auth }
       )
     })
 
@@ -115,8 +99,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         balanceSpy,
         expectedMessageId,
-        { logger, engines, auth },
-        { GetBalancesResponse: responseStub }
+        { logger, engines, auth }
       )
     })
 
@@ -126,8 +109,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         commitSpy,
         expectedMessageId,
-        { logger, engines, relayer, orderbooks, auth },
-        { EmptyResponse: responseStub }
+        { logger, engines, relayer, orderbooks, auth }
       )
     })
 
@@ -137,8 +119,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         getPaymentChannelNetworkAddress,
         expectedMessageId,
-        { logger, engines, auth },
-        { GetPaymentChannelNetworkAddressResponse: responseStub }
+        { logger, engines, auth }
       )
     })
 
@@ -148,8 +129,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         getTradingCapacities,
         expectedMessageId,
-        { logger, engines, orderbooks, auth, blockOrderWorker },
-        { GetTradingCapacitiesResponse: responseStub }
+        { logger, engines, orderbooks, auth, blockOrderWorker }
       )
     })
 
@@ -159,8 +139,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         releaseChannels,
         expectedMessageId,
-        { logger, engines, orderbooks, blockOrderWorker, auth },
-        { ReleaseChannelsResponse: responseStub }
+        { logger, engines, orderbooks, blockOrderWorker, auth }
       )
     })
 
@@ -170,8 +149,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         withdrawFunds,
         expectedMessageId,
-        { logger, engines, auth },
-        { WithdrawFundsResponse: responseStub }
+        { logger, engines, auth }
       )
     })
 
@@ -181,8 +159,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         createWallet,
         expectedMessageId,
-        { logger, engines, auth },
-        { CreateWalletResponse: responseStub }
+        { logger, engines, auth }
       )
     })
 
@@ -192,8 +169,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         unlockWallet,
         expectedMessageId,
-        { logger, engines, auth },
-        { EmptyResponse: responseStub }
+        { logger, engines, auth }
       )
     })
 
@@ -203,8 +179,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         changeWalletPassword,
         expectedMessageId,
-        { logger, engines, auth },
-        { EmptyResponse: responseStub }
+        { logger, engines, auth }
       )
     })
 
@@ -214,8 +189,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         walletHistory,
         expectedMessageId,
-        { logger, engines, auth },
-        { WalletHistoryResponse: responseStub }
+        { logger, engines, auth }
       )
     })
   })

@@ -5,9 +5,11 @@ const {
 
 const { ERRORS: ENGINE_ERRORS } = require('lnd-engine')
 
+/** @typedef {import('..').Engine} Engine */
+
 /**
  * A description of a payment on a Payment Channel Network
- * @typedef {Object} Payment
+ * @typedef {object} Payment
  * @property {Engine} engine      - Engine for interacting with the payment
  * @property {string} amount      - Amount, in the smallest unit, of the payment
  * @property {string} address     - Payment Channel Network address of the node
@@ -31,7 +33,7 @@ const RETRY_DELAY = 30000
  *
  * @todo Make this amount dynamic and determined with the price/amount or
  *       determined from the channel graph
- * @type {Number}
+ * @type {number}
  * @constant
  */
 const DEFAULT_MAKER_FWD_DELTA = 86400
@@ -43,7 +45,7 @@ const DEFAULT_MAKER_FWD_DELTA = 86400
  *
  * @todo Make this amount dynamic and published by the Relayer or determined
  *       from the channel graph
- * @type {Number}
+ * @type {number}
  * @constant
  */
 const DEFAULT_RELAYER_FWD_DELTA = 86400
@@ -55,7 +57,7 @@ const DEFAULT_RELAYER_FWD_DELTA = 86400
  *
  * @see {@link https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md}
  * @todo Make this amount dynamic and set by the broker/user
- * @type {Number}
+ * @type {number}
  * @constant
  */
 const DEFAULT_MIN_FINAL_DELTA = 86400
@@ -67,7 +69,7 @@ const DEFAULT_MIN_FINAL_DELTA = 86400
  * mainnet.
  *
  * @see {@link https://github.com/lightningnetwork/lnd/issues/535}
- * @type {Number}
+ * @type {number}
  * @constant
  */
 const BLOCK_BUFFER = 1200
@@ -131,7 +133,7 @@ async function prepareSwap (hash, { engine, amount }, timeout) {
  *                                            swap
  * @param {Payment} inboundPayment
  * @param {Payment} outboundPayment
- * @returns {string}                          Base64 encoded preimage for the
+ * @returns {Promise<string>}                 Base64 encoded preimage for the
  *                                            swap.
  */
 async function translateIdempotent (
@@ -179,7 +181,7 @@ async function translateIdempotent (
  * @param   {Engine} engine
  * @param   {string} hash     - Base64 string of the swap hash
  * @param   {Error}  error    - Error that caused the cancel
- * @returns {void}
+ * @returns {Promise<void>}
  */
 async function cancelSwap (engine, hash, error) {
   logger.error('Permanent Error encountered while translating swap, ' +
@@ -196,7 +198,7 @@ async function cancelSwap (engine, hash, error) {
  * @param   {Engine} engine
  * @param   {string} hash     - Base64 string of the swap hash
  * @param   {string} preimage - Base64 string of the swap preimage
- * @returns {void}
+ * @returns {Promise<void>}
  */
 async function settleSwap (engine, hash, preimage) {
   logger.debug(`Settling upstream payment for ${hash}`)
@@ -215,7 +217,7 @@ async function settleSwap (engine, hash, preimage) {
  * @param {Payment} outboundPayment       - Outbound payment we will make to
  *                                          retrieve the preimage.
  * @param {Error}   error                 - Error that caused the retry
- * @returns {string}                        Base64 encoded preimage for the swap
+ * @returns {Promise<string>}               Base64 encoded preimage for the swap
  */
 async function retryForward (hash, inboundPayment, outboundPayment, error) {
   logger.error('Temporary Error encountered while forwarding swap',
@@ -242,7 +244,7 @@ async function retryForward (hash, inboundPayment, outboundPayment, error) {
  * @param {Payment} inboundPayment        - Expected inbound payment
  * @param {Payment} outboundPayment       - Outbound payment we will make to
  *                                          retrieve the preimage.
- * @returns {string}                        Base64 encoded preimage for the swap
+ * @returns {Promise<string>}               Base64 encoded preimage for the swap
  * @throws {Error} If a permanent error is encountered and the swap is cancelled
  */
 async function forwardSwap (hash, inboundPayment, outboundPayment) {

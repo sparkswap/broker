@@ -10,29 +10,29 @@ describe('ask-question', () => {
 
     let processStub
     let stdinPauseStub
-    let stdoutClearLineStub
     let stdoutWriteStub
     let suppressInput
     let cursorStub
+    let clearLineStub
 
     beforeEach(() => {
       cursorStub = sinon.stub()
+      clearLineStub = sinon.stub()
       stdinPauseStub = sinon.stub()
-      stdoutClearLineStub = sinon.stub()
       stdoutWriteStub = sinon.stub()
       processStub = {
         stdin: {
           pause: stdinPauseStub
         },
         stdout: {
-          clearLine: stdoutClearLineStub,
           write: stdoutWriteStub
         }
       }
 
       reverts.push(askQuestion.__set__('process', processStub))
       reverts.push(askQuestion.__set__('readline', {
-        cursorTo: cursorStub
+        cursorTo: cursorStub,
+        clearLine: clearLineStub
       }))
     })
 
@@ -67,7 +67,7 @@ describe('ask-question', () => {
 
       it('clears stdout', () => {
         suppressInput(message, input)
-        expect(stdoutClearLineStub).to.have.been.calledOnce()
+        expect(clearLineStub).to.have.been.calledOnce()
       })
 
       it('returns the cursor to the beginning of the line', () => {

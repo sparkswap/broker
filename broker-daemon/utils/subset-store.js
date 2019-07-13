@@ -1,14 +1,16 @@
 const migrateStore = require('./migrate-store')
 const logger = require('./logger')
 
+/** @typedef {import('level-sublevel')} Sublevel */
+
 /**
  * @class Subset of another sublevel store
  */
 class SubsetStore {
   /**
    * Create a new subset from a target store and a source store
-   * @param {sublevel} targetStore - store to keep the subset in
-   * @param {sublevel} sourceStore - Store of records to create a subset of
+   * @param {Sublevel} targetStore - store to keep the subset in
+   * @param {Sublevel} sourceStore - Store of records to create a subset of
    */
   constructor (targetStore, sourceStore) {
     this.store = targetStore
@@ -18,7 +20,7 @@ class SubsetStore {
   /**
    * Rebuild the index and add hooks for new events
    * @public
-   * @returns {void} resolves when the index is rebuilt and ready for new events
+   * @returns {Promise<void>} resolves when the index is rebuilt and ready for new events
    */
   async ensureIndex () {
     logger.debug(`Rebuilding ${this.constructor.name} index...`)
@@ -34,7 +36,7 @@ class SubsetStore {
    * @private
    * @param {string} key   - Key of the record to create an index op for
    * @param {string} value - Value of the record being added to the events store to create an index op for
-   * @returns {Object} object for create/delete for use with sublevel
+   * @returns {object} object for create/delete for use with sublevel
    */
   addToIndexOperation (key, value) {
     logger.warn(`SubsetStore#addToIndexOperation was called with its default function. ` +

@@ -3,14 +3,14 @@ const grpc = require('grpc')
 
 /**
  * @constant
- * @type {string}
+ * @type {'json' | 'proto' | undefined}
  * @default
  */
 const PROTO_FILE_TYPE = 'proto'
 
 /**
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const PROTO_OPTIONS = {
@@ -24,7 +24,7 @@ const PROTO_OPTIONS = {
  * Loads a given proto file path into a grpc proto definition
  *
  * @param {string} protoPath
- * @returns {Object} loaded grpc proto object
+ * @returns {object} loaded grpc proto object
  * @throws {Error} proto does not exist
  */
 function loadGrpcProto (protoPath) {

@@ -7,6 +7,8 @@ const PUB_KEY_MARKERS = {
   END: '-----END PUBLIC KEY-----'
 }
 
+/** @typedef {import('..').GrpcMetadata} GrpcMetadata */
+
 class Identity {
   /**
    * Create a new identity for a broker to use with the Relayer
@@ -61,7 +63,7 @@ class Identity {
    * This payload is joined by commas (','), and signed using the public key of the broker.
    *
    * The request can then be validated by the Relayer as being genuine from the owner of the public key.
-   * @returns {grpc.Metadata} Metadata object with necessary items to verify it
+   * @returns {GrpcMetadata} Metadata object with necessary items to verify it
    */
   authorize () {
     const timestamp = nowInSeconds().toString()
@@ -69,7 +71,7 @@ class Identity {
     const signature = this.sign(`${timestamp},${nonce}`)
 
     const metadata = new Metadata()
-    metadata.set('pubkey', this.pubKeyBase64)
+    metadata.set('pubkey', this.pubKeyBase64 || '')
     metadata.set('timestamp', timestamp)
     metadata.set('nonce', nonce)
     metadata.set('signature', signature)

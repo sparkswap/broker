@@ -19,6 +19,7 @@ const payInvoice = require('./pay-invoice')
 const retry = require('./retry')
 const CachedCall = require('./cached-call')
 const SubsetStore = require('./subset-store')
+const GrpcResponse = require('./grpc-response')
 
 module.exports = {
   getRecords,
@@ -41,5 +42,6 @@ module.exports = {
   payInvoice,
   retry,
   CachedCall,
-  SubsetStore
+  SubsetStore,
+  GrpcResponse
 }

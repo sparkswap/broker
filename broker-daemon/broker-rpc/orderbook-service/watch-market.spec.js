@@ -17,7 +17,7 @@ describe('watchMarket', () => {
   let onCancelStub
   let logger
   let orderbooks
-  let WatchMarketResponse
+  let EventType
   let createLiveStream
   let liveStream
   let MarketEventOrder
@@ -38,8 +38,7 @@ describe('watchMarket', () => {
     }
     store = sinon.stub()
     orderbooks = new Map([['BTC/LTC', { store: store }]])
-    WatchMarketResponse = sinon.stub()
-    WatchMarketResponse.EventType = { ADD: 'ADD', DELETE: 'DELETE' }
+    EventType = { ADD: 'ADD', DELETE: 'DELETE' }
     createLiveStream = sinon.stub().returns(liveStream)
     watchMarket.__set__('createLiveStream', createLiveStream)
     watchMarket.__set__('MarketEventOrder', MarketEventOrder)
@@ -48,17 +47,17 @@ describe('watchMarket', () => {
   it('throws if there is no orderbook', () => {
     params.market = 'ABC/XYZ'
 
-    return expect(watchMarket({ params, send: sendStub, onCancel: onCancelStub, logger, orderbooks }, { WatchMarketResponse })).to.eventually.be.rejectedWith('not being tracked as a market')
+    return expect(watchMarket({ params, send: sendStub, onCancel: onCancelStub, logger, orderbooks }, { EventType })).to.eventually.be.rejectedWith('not being tracked as a market')
   })
 
   it('creates a liveStream from the store', () => {
-    watchMarket({ params, send: sendStub, onCancel: onCancelStub, logger, orderbooks }, { WatchMarketResponse })
+    watchMarket({ params, send: sendStub, onCancel: onCancelStub, logger, orderbooks }, { EventType })
 
     expect(createLiveStream).to.have.been.calledWith(store)
   })
 
   it('stops sending data if the stream is cancelled', () => {
-    watchMarket({ params, send: sendStub, onCancel: onCancelStub, logger, orderbooks }, { WatchMarketResponse })
+    watchMarket({ params, send: sendStub, onCancel: onCancelStub, logger, orderbooks }, { EventType })
 
     onCancelStub.args[0][0]()
 
@@ -67,7 +66,7 @@ describe('watchMarket', () => {
   })
 
   it('sets an data handler', () => {
-    watchMarket({ params, send: sendStub, onCancel: onCancelStub, logger, orderbooks }, { WatchMarketResponse })
+    watchMarket({ params, send: sendStub, onCancel: onCancelStub, logger, orderbooks }, { EventType })
 
     expect(liveStream.on).to.have.been.calledWith('data', sinon.match.func)
   })
@@ -82,15 +81,14 @@ describe('watchMarket', () => {
       serialize
     })
 
-    watchMarket({ params, send: sendStub, onCancel: onCancelStub, logger, orderbooks }, { WatchMarketResponse })
+    watchMarket({ params, send: sendStub, onCancel: onCancelStub, logger, orderbooks }, { EventType })
 
     await delay(10)
     expect(MarketEventOrder.fromStorage).to.have.been.calledOnce()
     expect(MarketEventOrder.fromStorage).to.have.been.calledWith(fakeOrder.key, fakeOrder.value)
     expect(serialize).to.have.been.calledOnce()
     expect(sendStub).to.have.been.calledOnce()
-    expect(WatchMarketResponse).to.have.been.calledOnce()
-    expect(WatchMarketResponse).to.have.been.calledWith({ type: 'ADD', marketEvent: fakeSerialized })
+    expect(sendStub).to.have.been.calledWith(sinon.match({ type: 'ADD', marketEvent: fakeSerialized }))
   })
 
   it('sends delete events if type is del', async () => {
@@ -101,11 +99,10 @@ describe('watchMarket', () => {
 
     liveStream.on.withArgs('data').callsArgWithAsync(1, fakeOrder)
 
-    watchMarket({ params, send: sendStub, onCancel: onCancelStub, logger, orderbooks }, { WatchMarketResponse })
+    watchMarket({ params, send: sendStub, onCancel: onCancelStub, logger, orderbooks }, { EventType })
 
     await delay(10)
     expect(sendStub).to.have.been.calledOnce()
-    expect(WatchMarketResponse).to.have.been.calledOnce()
-    expect(WatchMarketResponse).to.have.been.calledWith({ type: 'DELETE', marketEvent: marketEvent })
+    expect(sendStub).to.have.been.calledWith(sinon.match({ type: 'DELETE', marketEvent: marketEvent }))
   })
 })

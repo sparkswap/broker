@@ -9,26 +9,26 @@ module.exports = {
   /**
    * Address of the host for the Broker Daemon gRPC Server
    * Because we are inside the container, the address will be localhost and the port is hardcoded to 27492
-   * @type {String}
+   * @type {string}
    */
   rpcAddress: 'localhost:27492',
 
   /**
    * Default path of the Broker Daemons RPC Public Cert
    * The cert will always be at this path because that is where it is mounted in the container.
-   * @type {String}
+   * @type {string}
    */
   rpcCertPath: '/secure/broker-rpc-tls.cert',
 
   /**
    * The username specified on the remote Broker Daemon RPC
-   * @type {String}
+   * @type {string}
    */
   rpcUser: process.env.RPC_USER || 'sparkswap',
 
   /**
    * The password specified on the remote Broker Daemon RPC
-   * @type {String}
+   * @type {string}
    */
   rpcPass: process.env.RPC_PASS || 'sparkswap'
 }

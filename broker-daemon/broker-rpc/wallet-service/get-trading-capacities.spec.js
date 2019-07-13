@@ -9,7 +9,6 @@ describe('get-trading-capacities', () => {
     let baseEngineStub
     let counterEngineStub
     let engines
-    let GetTradingCapacitiesResponse
     let getCapacitiesStub
     let params
     let orderbooks
@@ -32,7 +31,6 @@ describe('get-trading-capacities', () => {
       counterEngineStub = sinon.stub()
       engines = new Map([['BTC', baseEngineStub], ['LTC', counterEngineStub]])
       getCapacitiesStub = sinon.stub().resolves({})
-      GetTradingCapacitiesResponse = sinon.stub()
       blockOrderWorker = {
         calculateActiveFunds: sinon.stub()
       }
@@ -66,25 +64,25 @@ describe('get-trading-capacities', () => {
       orderbooks = new Map([['ABC/DXS', { store: sinon.stub() }]])
 
       const errorMessage = `${params.market} is not being tracked as a market.`
-      return expect(getTradingCapacities({ params, logger, engines, orderbooks, blockOrderWorker }, GetTradingCapacitiesResponse)).to.eventually.be.rejectedWith(errorMessage)
+      return expect(getTradingCapacities({ params, logger, engines, orderbooks, blockOrderWorker })).to.eventually.be.rejectedWith(errorMessage)
     })
 
     it('throws an error if the base engine does not exist for symbol', () => {
       engines = new Map([['LTC', counterEngineStub]])
       return expect(
-        getTradingCapacities({ params, logger, engines, orderbooks, blockOrderWorker }, GetTradingCapacitiesResponse)
+        getTradingCapacities({ params, logger, engines, orderbooks, blockOrderWorker })
       ).to.eventually.be.rejectedWith(`No engine available for BTC`)
     })
 
     it('throws an error if the counter engine does not exist for symbol', () => {
       engines = new Map([['BTC', baseEngineStub]])
       return expect(
-        getTradingCapacities({ params, logger, engines, orderbooks, blockOrderWorker }, GetTradingCapacitiesResponse)
+        getTradingCapacities({ params, logger, engines, orderbooks, blockOrderWorker })
       ).to.be.rejectedWith(`No engine available for LTC`)
     })
 
     it('gets the outstanding funds', async () => {
-      await getTradingCapacities({ params, logger, engines, orderbooks, blockOrderWorker }, { GetTradingCapacitiesResponse })
+      await getTradingCapacities({ params, logger, engines, orderbooks, blockOrderWorker })
 
       expect(blockOrderWorker.calculateActiveFunds).to.have.been.calledTwice()
       expect(blockOrderWorker.calculateActiveFunds).to.have.been.calledWith(params.market, {
@@ -98,7 +96,7 @@ describe('get-trading-capacities', () => {
     })
 
     it('gets the balances from a particular engine', async () => {
-      await getTradingCapacities({ params, logger, engines, orderbooks, blockOrderWorker }, { GetTradingCapacitiesResponse })
+      await getTradingCapacities({ params, logger, engines, orderbooks, blockOrderWorker })
 
       expect(getCapacitiesStub).to.have.been.calledTwice()
       expect(getCapacitiesStub).to.have.been.calledWith(baseEngineStub, 'BTC', committedBaseSendCapacity, committedBaseReceiveCapacity)
@@ -106,12 +104,9 @@ describe('get-trading-capacities', () => {
     })
 
     it('returns all channel balances for the broker daemon', async () => {
-      const result = await getTradingCapacities({ params, logger, engines, orderbooks, blockOrderWorker }, { GetTradingCapacitiesResponse })
+      const result = await getTradingCapacities({ params, logger, engines, orderbooks, blockOrderWorker })
 
-      expect(result).to.be.an.instanceOf(GetTradingCapacitiesResponse)
-      expect(GetTradingCapacitiesResponse).to.have.been.calledOnce()
-      expect(GetTradingCapacitiesResponse).to.have.been.calledWithNew()
-      expect(GetTradingCapacitiesResponse).to.have.been.calledWith({ baseSymbolCapacities: {}, counterSymbolCapacities: {} })
+      expect(result).to.be.eql({ baseSymbolCapacities: {}, counterSymbolCapacities: {} })
     })
   })
 })
@@ -125,8 +120,6 @@ describe('getCapacities', () => {
   let getCapacities
   let openChannelCapacities
   let pendingChannelCapacities
-  let currencies
-  let revert
   let logger
 
   beforeEach(() => {
@@ -135,31 +128,15 @@ describe('getCapacities', () => {
     pendingChannelCapacities = { localBalance: 500, remoteBalance: 1000 }
     engineStub = {
       getOpenChannelCapacities: sinon.stub().resolves(openChannelCapacities),
-      getPendingChannelCapacities: sinon.stub().resolves(pendingChannelCapacities)
+      getPendingChannelCapacities: sinon.stub().resolves(pendingChannelCapacities),
+      quantumsPerCommon: '100000000'
     }
-    currencies = [{
-      name: 'Bitcoin',
-      symbol: 'BTC',
-      quantumsPerCommon: '100000000'
-    }, {
-      name: 'Litecoin',
-      symbol: 'LTC',
-      quantumsPerCommon: '100000000'
-    }]
+
     logger = {
       debug: sinon.stub()
     }
 
-    revert = getTradingCapacities.__set__('currencies', currencies)
-
     getCapacities = getTradingCapacities.__get__('getCapacities')
-  })
-
-  beforeEach(async () => {
-  })
-
-  afterEach(() => {
-    revert()
   })
 
   it('gets the total balance of an engine', async () => {

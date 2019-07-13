@@ -1,15 +1,14 @@
+const { GrpcResponse: GetPaymentChannelNetworkAddressResponse } = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+
 /**
  * Gets the payment channel network address from the specified engine
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {Logger} request.logger
- * @param {Object<string>} request.params
- * @param {Array<Engine>} request.engines
- * @param {Object} responses
- * @param {Function} responses.GetPaymentChannelNetworkAddressResponse - constructor
- * @returns {GetPaymentChannelNetworkAddressResponse}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<GetPaymentChannelNetworkAddressResponse>}
  */
-async function getPaymentChannelNetworkAddress ({ logger, params, engines }, { GetPaymentChannelNetworkAddressResponse }) {
+async function getPaymentChannelNetworkAddress ({ logger, params, engines }) {
   const { symbol } = params
   const engine = engines.get(symbol)
 

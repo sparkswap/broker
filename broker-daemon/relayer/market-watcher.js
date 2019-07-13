@@ -3,6 +3,9 @@ const { promisify } = require('util')
 const { MarketEvent } = require('../models')
 const { migrateStore, eachRecord, Checksum } = require('../utils')
 
+/** @typedef {import('level-sublevel')} Sublevel */
+/** @typedef {import('..').GrpcServerStreaming} GrpcServerStreaming */
+
 /**
  * @class Watch a relayer market and put the events into a data store
  * It emits two events:
@@ -12,10 +15,10 @@ const { migrateStore, eachRecord, Checksum } = require('../utils')
 class MarketWatcher extends EventEmitter {
   /**
    * Set up the watcher
-   * @param  {grpc.ServerStreaming} watcher        - Stream of events from the Relayer
-   * @param  {sublevel}             store          - Leveldb compatible store
-   * @param  {Object}               RESPONSE_TYPES - Response types from the proto file
-   * @param  {Object} logger
+   * @param  {GrpcServerStreaming}  watcher        - Stream of events from the Relayer
+   * @param  {Sublevel}             store          - Leveldb compatible store
+   * @param  {object}               RESPONSE_TYPES - Response types from the proto file
+   * @param  {object} logger
    */
   constructor (watcher, store, RESPONSE_TYPES, logger) {
     super()
@@ -32,9 +35,9 @@ class MarketWatcher extends EventEmitter {
 
   /**
    * Delete every event in the store and delay further event processing until its complete
-   * @returns {void} resolves when migration is complete
+   * @returns {Promise<void>} resolves when migration is complete
    */
-  migrate () {
+  async migrate () {
     this.logger.debug(`Removing existing orderbook events as part of migration`)
     const migration = migrateStore(this.store, this.store, (key) => { return { type: 'del', key } })
     this.delayProcessingFor(migration)
@@ -91,8 +94,8 @@ class MarketWatcher extends EventEmitter {
   /**
    * Handle an inbound event from the Relayer
    * @private
-   * @param  {Object} response - Response from the Relayer stream
-   * @returns {void}
+   * @param  {object} response - Response from the Relayer stream
+   * @returns {Promise<void>}
    */
   async handleResponse (response) {
     const { RESPONSE_TYPES } = this
@@ -107,7 +110,7 @@ class MarketWatcher extends EventEmitter {
     this.logger.debug(`response type is ${response.type}`)
 
     if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.START_OF_EVENTS) {
-      this.migrate()
+      this.migrate() // don't await, just kick off migration
     } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENT) {
       this.createMarketEvent(response)
     } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
@@ -136,7 +139,7 @@ class MarketWatcher extends EventEmitter {
   /**
    * Helper promise to await to ensure that any outstanding promises are complete before proceeding
    * @private
-   * @returns {void} Resolves when there are no in-progress promises
+   * @returns {Promise<void>} Resolves when there are no in-progress promises
    */
   async delayProcessing () {
     this.logger.debug(`Waiting for promises to resolve before acting on new response`)
@@ -149,9 +152,9 @@ class MarketWatcher extends EventEmitter {
   /**
    * Store a market event
    * @private
-   * @param {Object} response - Response from the Relayer
-   * @param {Object} response.marketEvent - Market Event to be created
-   * @returns {void}
+   * @param {object} response - Response from the Relayer
+   * @param {object} response.marketEvent - Market Event to be created
+   * @returns {Promise<void>}
    */
   async createMarketEvent ({ marketEvent }) {
     this.logger.debug('Creating a market event', marketEvent)
@@ -177,7 +180,7 @@ class MarketWatcher extends EventEmitter {
   /**
    * Emit an event when the watcher is up to date
    * @private
-   * @param {Object} args
+   * @param {object} args
    * @param {string} args.checksum - base64 string
    * @returns {void}
    */

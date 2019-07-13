@@ -4,13 +4,11 @@ const { expect, rewire, sinon } = require('test/test-helper')
 const getTradeHistory = rewire(path.resolve(__dirname, 'get-trade-history'))
 
 describe('getTradeHistory', () => {
-  let GetTradeHistoryResponse
   let blockOrderWorker
   let orders
   let fills
 
   beforeEach(() => {
-    GetTradeHistoryResponse = sinon.stub()
     orders = [
       {
         orderId: 'orderId',
@@ -44,24 +42,21 @@ describe('getTradeHistory', () => {
   it('throws an Error if retreiving trades fails', () => {
     blockOrderWorker.getTrades.rejects(new Error('error'))
 
-    return expect(getTradeHistory({ blockOrderWorker }, { GetTradeHistoryResponse })).to.eventually.be.rejectedWith(Error, 'error')
+    return expect(getTradeHistory({ blockOrderWorker })).to.eventually.be.rejectedWith(Error, 'error')
   })
 
   it('retrieves the trades', async () => {
-    await getTradeHistory({ blockOrderWorker }, { GetTradeHistoryResponse })
+    await getTradeHistory({ blockOrderWorker })
 
     expect(blockOrderWorker.getTrades).to.have.been.calledOnce()
   })
 
   it('returns trades', async () => {
-    const res = await getTradeHistory({ blockOrderWorker }, { GetTradeHistoryResponse })
+    const res = await getTradeHistory({ blockOrderWorker })
 
-    expect(GetTradeHistoryResponse).to.have.been.calledOnce()
-    expect(GetTradeHistoryResponse).to.have.been.calledWithNew()
-    expect(GetTradeHistoryResponse).to.have.been.calledWith({
+    expect(res).to.be.eql({
       orders,
       fills
     })
-    expect(res).to.be.instanceOf(GetTradeHistoryResponse)
   })
 })

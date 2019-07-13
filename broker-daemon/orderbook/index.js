@@ -4,6 +4,9 @@ const BidIndex = require('./bid-index')
 const OrderbookIndex = require('./orderbook-index')
 const { getRecords, Big } = require('../utils')
 
+/** @typedef {import('level-sublevel')} Sublevel */
+/** @typedef {import('../relayer')} RelayerClient */
+
 const consoleLogger = console
 consoleLogger.debug = console.log.bind(console)
 
@@ -25,7 +28,7 @@ class Orderbook {
    * @param  {string}        marketName - Name of the market to track, e.g. `BTC/LTC`
    * @param  {RelayerClient} relayer    - Client to connect to the Relayer
    * @param  {Sublevel}      store      - Sublevel-compatible data store
-   * @param  {Object}        logger
+   * @param  {object}        logger
    */
   constructor (marketName, relayer, store, logger = consoleLogger) {
     this.marketName = marketName
@@ -50,7 +53,7 @@ class Orderbook {
   /**
    * Initialize the orderbook by syncing its state to the Relayer and indexing
    * the orders.
-   * @returns {void}
+   * @returns {Promise<void>}
    */
   async initialize () {
     this.logger.info(`Initializing market ${this.marketName}...`)
@@ -115,7 +118,7 @@ class Orderbook {
     /**
      * Handle error events from the watcher by clearing our store and retrying
      * @param {Error} error
-     * @returns {void}
+     * @returns {Promise<void>}
      */
     const onWatcherError = async (error) => {
       this.synced = false
@@ -136,12 +139,13 @@ class Orderbook {
 
   /**
    * Get orders in the orderbook for a given side up to a given limit. If no limit is provided, gets all orders
-   * @param {Object} args
+   * @param {object} args
    * @param {string} args.side - Side of the orderbook to get orders for (i.e. `BID` or `ASK`)
    * @param {string} args.limit - int64 String of the the amount of orders to return.
-   * @returns {Array<MarketEventOrder>} A promise that resolves MarketEventOrders for the limited records
+   * @returns {Promise<Array<MarketEventOrder>>} A promise that resolves MarketEventOrders
+   *                                             for the limited records
    */
-  getOrders ({ side, limit }) {
+  async getOrders ({ side, limit }) {
     this.assertSynced()
     this.logger.info('Retrieving records from orderbook', { side, limit })
 
@@ -162,17 +166,17 @@ class Orderbook {
   }
 
   /**
-   * @typedef {Object} BestOrders
-   * @property {String} depth Int64 string of the total depth represented by the orders
+   * @typedef {object} BestOrders
+   * @property {string} depth Int64 string of the total depth represented by the orders
    * @property {Array<MarketEventOrder>} orders Array of the best market event orders
    */
 
   /**
    * get the best price orders in the orderbook
-   * @param {Object} args
+   * @param {object} args
    * @param {string} args.side  - Side of the orderbook to get the best priced orders for (i.e. `BID` or `ASK`)
    * @param {string} args.depth - int64 String of the amount, in base currency base units to ge the best prices up to
-   * @param {string} args.quantumPrice - Decimal String of the price that all orders should be better than
+   * @param {?string} args.quantumPrice - Decimal String of the price that all orders should be better than
    * @returns {Promise<BestOrders>} A promise that resolves MarketEventOrders of the best priced orders
    */
   getBestOrders ({ side, depth, quantumPrice }) {
@@ -208,6 +212,7 @@ class Orderbook {
         finish()
       })
 
+      // @ts-ignore
       stream.on('data', ({ key, value }) => {
         if (resolved) return
 
@@ -227,25 +232,29 @@ class Orderbook {
    * get the average weighted price given the side and depth
    * @param {string} side  - Side of the orderbook to get the best priced orders for (i.e. `BID` or `ASK`)
    * @param {string} targetDepth - int64 String of the amount, in base currency base units to ge the best prices up to
-   * @returns {number} The weighted average price
+   * @returns {Promise<typeof Big>} The weighted average price
    */
   async getAveragePrice (side, targetDepth) {
-    const { orders, depth } = await this.getBestOrders({ side, depth: targetDepth })
+    const { orders, depth } = await this.getBestOrders({
+      side,
+      depth: targetDepth,
+      quantumPrice: null
+    })
     if (Big(depth).lt(targetDepth)) {
       const params = {
         market: this.marketName,
-        side: this.side,
+        side,
         depth,
         targetDepth
       }
       this.logger.error('Insufficient depth to find averagePrice', params)
-      throw new Error('Insufficient depth to find averagePrice', params)
+      throw new Error('Insufficient depth to find averagePrice:' + params.toString())
     }
-    targetDepth = Big(targetDepth)
+    const targetDepthBig = Big(targetDepth)
     let currentDepth = Big(0)
     let weightedPrice = Big(0)
     orders.forEach((order) => {
-      const depthRemaining = targetDepth.minus(currentDepth)
+      const depthRemaining = targetDepthBig.minus(currentDepth)
 
       // if we have already reached our target depth, return
       if (depthRemaining.lte(0)) {
@@ -258,20 +267,20 @@ class Orderbook {
       currentDepth = currentDepth.plus(fillAmount)
       weightedPrice = weightedPrice.plus(Big(order.price).times(fillAmount))
     })
-    return Big(weightedPrice).div(targetDepth)
+    return Big(weightedPrice).div(targetDepthBig)
   }
 
   /**
    * Gets current orderbook events by timestamp
    *
    * @param {string} timestamp - timestamp in nano-seconds
-   * @returns {Array<MarketEventOrder>}
+   * @returns {Promise<Array<MarketEventOrder>>}
    */
   async getOrderbookEventsByTimestamp (timestamp) {
     this.assertSynced()
     return getRecords(
       this.store,
-      (key, value) => JSON.parse(value),
+      (_key, value) => JSON.parse(value),
       // Limits the query to gte to a specific timestamp
       MarketEvent.rangeFromTimestamp(timestamp)
     )
@@ -281,13 +290,13 @@ class Orderbook {
    * Gets MarketEvents by timestamp
    *
    * @param {string} timestamp - timestamp in nano-seconds
-   * @returns {Array<MarketEventOrder>}
+   * @returns {Promise<Array<MarketEventOrder>>}
    */
   async getMarketEventsByTimestamp (timestamp) {
     this.assertSynced()
     return getRecords(
       this.eventStore,
-      (key, value) => JSON.parse(value),
+      (_key, value) => JSON.parse(value),
       // Limits the query to gte to a specific timestamp
       MarketEvent.rangeFromTimestamp(timestamp)
     )
@@ -308,8 +317,7 @@ class Orderbook {
   /**
    * Gets the last record in an event store
    * @private
-   * @returns {MarketEvent}
-   * @returns {Object} empty object if no record exists
+   * @returns {Promise<MarketEvent|object>} - empty object if no record exists
    */
   async getLastRecord () {
     const [ lastEvent = {} ] = await getRecords(
@@ -323,12 +331,15 @@ class Orderbook {
     return lastEvent
   }
 
+  /** @typedef {object} LastUpdateResponse
+   *  @property {string} [lastUpdated=0] - nanosecond timestamp
+   *  @property {string} [sequence=0] - event version for a given timestamp
+   */
+
   /**
    * Gets the last time this market was updated with data from the relayer
    * @private
-   * @returns {Object} res
-   * @returns {string} [lastUpdated=0] - nanosecond timestamp
-   * @returns {string} [sequence=0] - event version for a given timestamp
+   * @returns {Promise<LastUpdateResponse>}
    */
   async lastUpdate () {
     this.logger.info(`Retrieving last update from store for ${this.marketName}`)

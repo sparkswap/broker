@@ -9,7 +9,6 @@ describe('unlock-wallet', () => {
   let engines
   let engine
   let logger
-  let EmptyResponse
   let params
 
   beforeEach(() => {
@@ -29,18 +28,17 @@ describe('unlock-wallet', () => {
       symbol,
       password
     }
-    EmptyResponse = sinon.stub()
   })
 
   it('errors if engine could not be found', () => {
     params.symbol = 'LTC'
-    return expect(unlockWallet({ logger, params, engines }, { EmptyResponse })).to.eventually.be.rejectedWith('Unable to unlock wallet')
+    return expect(unlockWallet({ logger, params, engines })).to.eventually.be.rejectedWith('Unable to unlock wallet')
   })
 
   it('logs an error if engine could not be found', async () => {
     params.symbol = 'LTC'
     try {
-      await unlockWallet({ logger, params, engines }, { EmptyResponse })
+      await unlockWallet({ logger, params, engines })
     } catch (e) {
       expect(logger.error).to.have.been.calledOnce()
     }
@@ -49,16 +47,15 @@ describe('unlock-wallet', () => {
   it('errors if the wallet is not locked', () => {
     engine.isLocked = false
 
-    return expect(unlockWallet({ logger, params, engines }, { EmptyResponse })).to.eventually.be.rejectedWith('Unable to unlock wallet')
+    return expect(unlockWallet({ logger, params, engines })).to.eventually.be.rejectedWith('Unable to unlock wallet')
   })
 
   it('unlocks a wallet', async () => {
-    await unlockWallet({ logger, params, engines }, { EmptyResponse })
+    await unlockWallet({ logger, params, engines })
     expect(engine.unlockWallet).to.have.been.calledWith(password)
   })
 
   it('returns an empty response', async () => {
-    await unlockWallet({ logger, params, engines }, { EmptyResponse })
-    expect(EmptyResponse).to.have.been.calledOnce()
+    expect(await unlockWallet({ logger, params, engines })).to.be.eql({})
   })
 })

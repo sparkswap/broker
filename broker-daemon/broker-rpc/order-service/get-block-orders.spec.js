@@ -8,7 +8,6 @@ const {
 const getBlockOrders = rewire(path.resolve(__dirname, 'get-block-orders'))
 
 describe('getBlockOrders', () => {
-  let GetBlockOrdersResponse
   let blockOrderWorker
   let blockOrder
   let anotherBlockOrder
@@ -27,7 +26,6 @@ describe('getBlockOrders', () => {
       }
     }
     logger = { info: sinon.stub() }
-    GetBlockOrdersResponse = sinon.stub()
 
     blockOrder = {
       serializeSummary: sinon.stub()
@@ -43,11 +41,11 @@ describe('getBlockOrders', () => {
   it('throws a non-public error if another error is encountered', () => {
     blockOrderWorker.getBlockOrders.rejects()
 
-    return expect(getBlockOrders({ params, logger, blockOrderWorker }, { GetBlockOrdersResponse })).to.eventually.be.rejectedWith(Error)
+    return expect(getBlockOrders({ params, logger, blockOrderWorker })).to.eventually.be.rejectedWith(Error)
   })
 
   it('retrieves all block orders for the specified market', async () => {
-    await getBlockOrders({ params, logger, blockOrderWorker }, { GetBlockOrdersResponse })
+    await getBlockOrders({ params, logger, blockOrderWorker })
 
     expect(blockOrderWorker.getBlockOrders).to.have.been.calledOnce()
     expect(blockOrderWorker.getBlockOrders).to.have.been.calledWith('BTC/LTC', params.options)
@@ -58,7 +56,7 @@ describe('getBlockOrders', () => {
     const secondSerialized = { another: 'object' }
     blockOrder.serializeSummary.returns(firstSerialized)
     anotherBlockOrder.serializeSummary.returns(secondSerialized)
-    const response = await getBlockOrders({ params, logger, blockOrderWorker }, { GetBlockOrdersResponse })
+    const response = await getBlockOrders({ params, logger, blockOrderWorker })
 
     expect(blockOrder.serializeSummary).to.have.been.calledOnce()
     expect(anotherBlockOrder.serializeSummary).to.have.been.calledOnce()

@@ -19,6 +19,10 @@ const {
   StateMachineDates
 } = require('./plugins')
 
+/** @typedef {import('..').Engine} Engine */
+/** @typedef {import('../relayer')} RelayerClient */
+/** @typedef {import('level-sublevel')} Sublevel */
+
 /**
  * If Orders are saved in the database before they are created on the remote, they lack an ID
  * This string indicates an order that does not have an assigned remote ID
@@ -32,7 +36,7 @@ const UNASSIGNED_PREFIX = 'NO_ASSIGNED_ID_'
 /**
  * Error codes that can come back from the relayer
  * Note: Error code 14 is associated with gRPC status code 14, the service is UNAVAILABLE
- * @type {Object}
+ * @type {object}
  */
 const ORDER_ERROR_CODES = Object.freeze({
   RELAYER_UNAVAILABLE: 'RELAYER_UNAVAILABLE'
@@ -61,69 +65,74 @@ const OrderStateMachine = StateMachine.factory({
     }),
     new StateMachineEvents(),
     new StateMachinePersistence({
-      /**
-       * @type {StateMachinePersistence~KeyAccessor}
+      /** StateMachinePersistence~KeyAccessor
        * @param {string}   key - Unique key for the stored state machine
        * @returns {string}     Unique key for the state machine
        */
       key: function (key) {
         // this only defines a getter - it will be set by the `order` setter
         if (!key) {
+          // @ts-ignore
           return this.order.key || `${UNASSIGNED_PREFIX}${generateId()}`
         }
+        return key
       },
       additionalFields: {
-        /**
-         * @type {StateMachinePersistence~FieldAccessor}
-         * @param {Object}   orderObject - Stored plain object description of the Order associated with the State machine
+        /** StateMachinePersistence~FieldAccessor
+         * @param {object}   orderObject - Stored plain object description of the Order associated with the State machine
          * @param {string}   key         - Unique key for the order/state machine
-         * @returns {Object}             Plain object description of the Order associated with the State machine
+         * @returns {object}             Plain object description of the Order associated with the State machine
          */
         order: function (orderObject, key) {
           if (orderObject) {
+            // @ts-ignore
             this.order = Order.fromObject(key, orderObject)
           }
 
+          // @ts-ignore
           return this.order.valueObject
         },
-        /**
-         * @type  {StateMachinePersistence~FieldAccessor}
+        /** StateMachinePersistence~FieldAccessor
          * @param {Array<string>}   history - Stored history of states for this state machine
          * @returns {Array<string>}         History of states for this state machine
          */
         history: function (history) {
           if (history) {
             this.clearHistory()
+            // @ts-ignore
             this.history = history
           }
 
+          // @ts-ignore
           return this.history
         },
-        /**
-         * @type {StateMachinePersistence~FieldAccessor}
-         * @param {Object}   dates - Stored plain object of dates for the states that have been entered on the State machine
-         * @returns {Object} dates - Plain object of dates for the states that have been entered on the State machine
+        /** StateMachinePersistence~FieldAccessor
+         * @param {object}   dates - Stored plain object of dates for the states that have been entered on the State machine
+         * @returns {object} dates - Plain object of dates for the states that have been entered on the State machine
          */
         dates: function (dates) {
           if (dates) {
+            // @ts-ignore
             this.dates = dates
           }
 
           return this.dates
         },
-        /**
-         * @type {StateMachinePersistence~FieldAccessor}
+        /** StateMachinePersistence~FieldAccessor
          * @param {string}   errorMessage - Stored error message for a state machine in an errored state
          * @returns {string}              Error message for a state machine in an errored state
          */
         error: function (errorMessage) {
           if (errorMessage) {
+            // @ts-ignore
             this.error = new Error(errorMessage)
           }
 
           if (this.error) {
+            // @ts-ignore
             return this.error.message
           }
+          return errorMessage
         }
       }
     })
@@ -135,38 +144,38 @@ const OrderStateMachine = StateMachine.factory({
   transitions: [
     /**
      * create transition: the first transition, from 'none' (the default state) to 'created'
-     * @type {Object}
+     * @type {object}
      */
     { name: 'create', from: 'none', to: 'created' },
     /**
      * place transition: second transition in the order lifecycle
-     * @type {Object}
+     * @type {object}
      */
     { name: 'place', from: 'created', to: 'placed' },
 
     /**
      * cancel transition: cancel an outstanding created or placed order
      * @todo monitor for refunds from the relayer
-     * @type {Object}
+     * @type {object}
      */
     { name: 'cancel', from: 'placed', to: 'cancelled' },
 
     /**
      * fill transition: mark an order as filled
-     * @type {Object}
+     * @type {object}
      */
     { name: 'fill', from: 'placed', to: 'filled' },
 
     /**
      * execute transition: prepare the swap for execution, and tell the relayer
-     * @type {Object}
+     * @type {object}
      */
     { name: 'execute', from: 'filled', to: 'executing' },
 
     /**
      * complete transition: monitor the payment channel network for settlement,
      * and provide the preimage to the Relayer to get our deposit back.
-     * @type {Object}
+     * @type {object}
      */
     { name: 'complete', from: 'executing', to: 'completed' }
   ],
@@ -175,12 +184,12 @@ const OrderStateMachine = StateMachine.factory({
    * This function is effectively a constructor for the state machine
    * So we pass it all the objects we'll need later.
    *
-   * @param  {Object} options
-   * @param  {sublevel}            options.store       - Sublevel partition for storing this order in
-   * @param  {Object}              options.logger
+   * @param  {object} options
+   * @param  {Sublevel}            options.store       - Sublevel partition for storing this order in
+   * @param  {object}              options.logger
    * @param  {RelayerClient}       options.relayer
    * @param  {Map<string, Engine>} options.engines     - Map of all available engines
-   * @returns {Object}                                  Data to attach to the state machine
+   * @returns {object}                                  Data to attach to the state machine
    */
   data: function ({ store, logger, relayer, engines }) {
     return { store, logger, relayer, engines, order: {} }
@@ -199,7 +208,8 @@ const OrderStateMachine = StateMachine.factory({
 
       return {
         engine: inboundEngine,
-        amount: inboundFillAmount
+        amount: inboundFillAmount,
+        address: this.order.makerInboundAddress
       }
     },
 
@@ -228,33 +238,40 @@ const OrderStateMachine = StateMachine.factory({
      * Actual creation is done in `onBeforeCreate` so that the transition can be cancelled if creation
      * on the Relayer fails.
      *
-     * @param {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param {object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @param {string} blockOrderid - Id of the block order that the order belongs to
-     * @param {Object} opts
+     * @param {object} opts
      * @param {string} opts.side          - Side of the market being taken (i.e. BID or ASK)
      * @param {string} opts.baseSymbol    - Base symbol (e.g. BTC)
      * @param {string} opts.counterSymbol - Counter symbol (e.g. LTC)
      * @param {string} opts.baseAmount    - Amount of base currency (in base units) to be traded
      * @param {string} opts.counterAmount - Amount of counter currency (in base units) to be traded
-     * @returns {void}
+     * @returns {Promise<void>}
      */
 
-    onBeforeCreate: async function (lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
-      this.order = new Order(blockOrderId, { baseSymbol, counterSymbol, side, baseAmount, counterAmount })
-
-      const baseEngine = this.engines.get(this.order.baseSymbol)
+    onBeforeCreate: async function (_lifecycle, blockOrderId, { side, baseSymbol, counterSymbol, baseAmount, counterAmount }) {
+      const baseEngine = this.engines.get(baseSymbol)
       if (!baseEngine) {
-        throw new Error(`No engine available for ${this.order.baseSymbol}`)
+        throw new Error(`No engine available for ${baseSymbol}`)
       }
 
-      const counterEngine = this.engines.get(this.order.counterSymbol)
+      const counterEngine = this.engines.get(counterSymbol)
       if (!counterEngine) {
-        throw new Error(`No engine available for ${this.order.counterSymbol}`)
+        throw new Error(`No engine available for ${counterSymbol}`)
       }
 
       // TODO: figure out a way to cache the maker address instead of making a request
-      this.order.makerBaseAddress = await baseEngine.getPaymentChannelNetworkAddress()
-      this.order.makerCounterAddress = await counterEngine.getPaymentChannelNetworkAddress()
+      const makerBaseAddress = await baseEngine.getPaymentChannelNetworkAddress()
+      const makerCounterAddress = await counterEngine.getPaymentChannelNetworkAddress()
+      this.order = new Order(blockOrderId, {
+        baseSymbol,
+        counterSymbol,
+        side,
+        baseAmount,
+        counterAmount,
+        makerBaseAddress,
+        makerCounterAddress
+      })
 
       const authorization = this.relayer.identity.authorize()
 
@@ -279,10 +296,10 @@ const OrderStateMachine = StateMachine.factory({
 
     /**
      * Attempt to place the order as soon as its created
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {void}
      */
-    onAfterCreate: function (lifecycle) {
+    onAfterCreate: function (_lifecycle) {
       this.logger.info(`Create transition completed, triggering place`)
 
       // you can't start a transition while in another one,
@@ -302,10 +319,10 @@ const OrderStateMachine = StateMachine.factory({
      * Listen for order fills when in the `placed` state
      * This is done based on the state and not the transition so that it gets actioned when being re-hydrated from storage
      * [is that the right thing to do?]
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
-     * @returns {void}
+     * @param  {object} _lifecycle - Lifecycle object passed by javascript-state-machine
+     * @returns {Promise<void>}
      */
-    onBeforePlace: async function (lifecycle) {
+    onBeforePlace: async function (_lifecycle) {
       const {
         feePaymentRequest,
         feeRequired,
@@ -342,6 +359,7 @@ const OrderStateMachine = StateMachine.factory({
       const [
         feeRefundPaymentRequest,
         depositRefundPaymentRequest
+      // @ts-ignore
       ] = await Promise.all([
         payFeeInvoice,
         payDepositInvoice
@@ -408,7 +426,7 @@ const OrderStateMachine = StateMachine.factory({
       this.logger.info(`Placed order ${orderId} on the relayer`, { orderId })
     },
 
-    onBeforeFill: function (lifecycle, fill) {
+    onBeforeFill: function (_lifecycle, fill) {
       const { orderId } = this.order
 
       this.logger.info(`Order ${orderId} is being filled`, { orderId })
@@ -417,7 +435,7 @@ const OrderStateMachine = StateMachine.factory({
       this.order.setFilledParams({ swapHash, fillAmount, takerAddress })
     },
 
-    onAfterFill: function (lifecycle) {
+    onAfterFill: function (_lifecycle) {
       // you can't start a transition while in another one,
       // so we `nextTick` our way out of the current transition
       // @see {@link https://github.com/jakesgordon/javascript-state-machine/issues/143}
@@ -429,10 +447,10 @@ const OrderStateMachine = StateMachine.factory({
      * This function gets called before the `execute` transition (triggered by a call to `execute`)
      * Action is taken in `onBeforeExecute` so that the transition will fail if this function rejects its promise
      *
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
-     * @returns {void} Promise that rejects if execution prep or notification fails
+     * @param  {object} _lifecycle - Lifecycle object passed by javascript-state-machine
+     * @returns {Promise<void>} Promise that rejects if execution prep or notification fails
      */
-    onBeforeExecute: async function (lifecycle) {
+    onBeforeExecute: async function (_lifecycle) {
       const { orderId, swapHash } = this.order
       const inboundPayment = this.inboundPayment()
       const timeout = new Date(this.dates.filled.getTime() + SWAP_TIMEOUT)
@@ -445,10 +463,10 @@ const OrderStateMachine = StateMachine.factory({
 
     /**
      * Trigger settle after execution
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {void}
      */
-    onAfterExecute: function (lifecycle) {
+    onAfterExecute: function (_lifecycle) {
       // you can't start a transition while in another one,
       // so we `nextTick` our way out of the current transition
       // @see {@link https://github.com/jakesgordon/javascript-state-machine/issues/143}
@@ -460,10 +478,10 @@ const OrderStateMachine = StateMachine.factory({
      * to the Relayer so we can reimbursed for our deposit.
      * We perform the settlement monitoring and order completion in the same action
      * since settlement monitoring can be repeated with no issue.
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {Promise}
      */
-    onBeforeComplete: async function (lifecycle) {
+    onBeforeComplete: async function (_lifecycle) {
       const { swapHash } = this.order
       const inboundPayment = this.inboundPayment()
       const outboundPayment = this.outboundPayment()
@@ -488,10 +506,10 @@ const OrderStateMachine = StateMachine.factory({
 
     /**
      * Trigger settle if we are re-hydrating state into the executing state
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @returns {void}
      */
-    triggerState: function (lifecycle) {
+    triggerState: function (_lifecycle) {
       const nextState = {
         [STATES.FILLED]: 'execute',
         [STATES.EXECUTING]: 'complete',
@@ -511,11 +529,11 @@ const OrderStateMachine = StateMachine.factory({
 
     /**
      * Log errors from rejection
-     * @param  {Object} lifecycle - Lifecycle object passed by javascript-state-machine
+     * @param  {object} _lifecycle - Lifecycle object passed by javascript-state-machine
      * @param  {Error}  error     - Error that caused the rejection
      * @returns {void}
      */
-    onBeforeReject: function (lifecycle, error) {
+    onBeforeReject: function (_lifecycle, error) {
       this.logger.error(`Encountered error during transition, rejecting`, error)
       this.order.error = error
     }
@@ -524,8 +542,8 @@ const OrderStateMachine = StateMachine.factory({
 
 /**
  * serialize an order, its state and dates for transmission via grpc
- * @param {Object} orderObject - Plain object representation of the order, state, dates
- * @returns {Object} Object (order) to be serialized into a GRPC message
+ * @param {object} orderObject - Plain object representation of the order, state, dates
+ * @returns {object} Object (order) to be serialized into a GRPC message
  */
 OrderStateMachine.serialize = function (orderObject) {
   const {
@@ -549,8 +567,8 @@ OrderStateMachine.serialize = function (orderObject) {
  * Instantiate and create an order
  * This method is a pure pass through to the state machine, so any parameter checking should happen in
  * `data` and `onBeforeCreate`, respectively.
- * @param  {Object} initParams   - Params to pass to the OrderStateMachine constructor (also to the `data` function)
- * @param  {Object} createParams - Params to pass to the create method (also to the `onBeforeCreate` method)
+ * @param  {object} initParams   - Params to pass to the OrderStateMachine constructor (also to the `data` function)
+ * @param  {object} createParams - Params to pass to the create method (also to the `onBeforeCreate` method)
  * @returns {Promise<OrderStateMachine>}
  */
 OrderStateMachine.create = async function (initParams, ...createParams) {

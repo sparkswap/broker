@@ -14,7 +14,7 @@ const DELAY_MULTIPLIER = 1.5
  * Max attempts for retries during exponential backoff
  *
  * @constant
- * @type {string}
+ * @type {number}
  * @default
  */
 const EXPONENTIAL_BACKOFF_ATTEMPTS = 24
@@ -34,7 +34,7 @@ const EXPONENTIAL_BACKOFF_DELAY = 5000
  * @param {Function} callFunction - function to be called
  * @param {number} attempts - number of retry attempts left
  * @param {number} delayTime - in milliseconds between calls
- * @param {Object} logOptions - if you want to pass information to log in the error log
+ * @param {object} logOptions - if you want to pass information to log in the error log
  * @returns {Promise}
  */
 async function exponentialBackoff (callFunction, attempts = EXPONENTIAL_BACKOFF_ATTEMPTS, delayTime = EXPONENTIAL_BACKOFF_DELAY, logOptions = {}) {
@@ -47,7 +47,7 @@ async function exponentialBackoff (callFunction, attempts = EXPONENTIAL_BACKOFF_
       await delay(delayTime)
       res = await exponentialBackoff(callFunction, attemptsLeft, delayTime * DELAY_MULTIPLIER, logOptions)
     } else {
-      throw new Error(error, `Error with ${callFunction}, no retry attempts left`)
+      throw new Error(`Error with ${callFunction}, no retry attempts left: ` + error.toString())
     }
   }
   return res

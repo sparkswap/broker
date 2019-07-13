@@ -1,11 +1,26 @@
-const { Big } = require('../../utils')
+const {
+  Big,
+  GrpcResponse: GetBalancesResponse
+} = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+/** @typedef {import('../broker-rpc-server').Engine} Engine */
+/** @typedef {import('../broker-rpc-server').Logger} Logger */
 
 /**
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const BALANCE_PRECISION = 16
+
+/** @typedef {object} GetEngineBalancesResponse
+ *  @property {string} uncommittedBalance
+ *  @property {string} uncommittedPendingBalance
+ *  @property {string} totalChannelBalance
+ *  @property {string} totalPendingChannelBalance
+ *  @property {string} totalReservedChannelBalance
+ */
 
 /**
  * Grabs all balances from a specific engine (total and pending). If a particular
@@ -14,11 +29,7 @@ const BALANCE_PRECISION = 16
  * @param {string} symbol
  * @param {Engine} engine - SparkSwap Payment Channel Network Engine
  * @param {Logger} logger
- * @returns {Object} res
- * @returns {string} res.uncommittedBalance
- * @returns {string} res.uncommittedPendingBalance
- * @returns {string} res.totalChannelBalance
- * @returns {string} res.totalPendingChannelBalance
+ * @returns {Promise<GetEngineBalancesResponse>}
  */
 async function getEngineBalances (symbol, engine, logger) {
   const { quantumsPerCommon } = engine
@@ -52,14 +63,10 @@ async function getEngineBalances (symbol, engine, logger) {
  * Grabs the daemons lnd wallet balance
  *
  * @function
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {Map} request.engines
- * @param {Logger} request.logger
- * @param {Object} responses
- * @param {Function} responses.GetBalanceResponse
- * @returns {GetBalanceResponse}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<GetBalancesResponse>}
  */
-async function getBalances ({ logger, engines }, { GetBalancesResponse }) {
+async function getBalances ({ logger, engines }) {
   logger.info(`Checking wallet balances for ${engines.size} engines`)
 
   // We convert the engines map to an array and run balance engine commands

@@ -44,7 +44,7 @@ async function retry (callFunction, message, attempts = RETRY_ATTEMPTS, delayTim
       await delay(delayTime)
       res = await retry(callFunction, message, attemptsLeft, delayTime)
     } else {
-      throw new Error(error, `Error with ${callFunction}, no retry attempts left`)
+      throw new Error(`Error with ${callFunction}, no retry attempts left: ` + error.toString())
     }
   }
   return res

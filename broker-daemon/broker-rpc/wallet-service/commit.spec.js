@@ -5,7 +5,6 @@ const { Big } = require('../../utils')
 const commit = rewire(path.resolve(__dirname, 'commit'))
 
 describe('commit', () => {
-  let EmptyResponse
   let params
   let relayer
   let logger
@@ -24,7 +23,6 @@ describe('commit', () => {
   let relayerInverseAddress
 
   beforeEach(() => {
-    EmptyResponse = sinon.stub()
     outboundPaymentNetworkAddress = 'asdf12345@localhost'
     inboundPaymentNetworkAddress = 'hgfd56775@localhost'
     relayerAddress = 'qwerty@localhost'
@@ -82,7 +80,7 @@ describe('commit', () => {
     createChannelsStub.rejects(new Error('channels cannot be created before the wallet is fully synced'))
 
     return expect(
-      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+      commit({ params, relayer, logger, engines, orderbooks })
     ).to.be.rejectedWith(Error, 'Funding error')
   })
 
@@ -91,7 +89,7 @@ describe('commit', () => {
     getTotalBalanceForAddressStub.resolves('100000')
 
     return expect(
-      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+      commit({ params, relayer, logger, engines, orderbooks })
     ).to.not.be.rejected()
   })
 
@@ -99,7 +97,7 @@ describe('commit', () => {
     createChannelsStub.rejects(new Error('Funding amount 0.1 BTC too small for minimum channel balance of 0.00002 BTC.'))
 
     return expect(
-      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+      commit({ params, relayer, logger, engines, orderbooks })
     ).to.be.rejectedWith('Funding error: Funding amount 0.1 BTC too small for minimum channel balance of 0.00002 BTC')
   })
 
@@ -107,7 +105,7 @@ describe('commit', () => {
     createChannelRelayerStub.rejects(new Error('fake relayer error'))
 
     return expect(
-      commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+      commit({ params, relayer, logger, engines, orderbooks })
     ).to.be.rejectedWith(Error, 'Error requesting inbound channel')
   })
 
@@ -117,7 +115,7 @@ describe('commit', () => {
     beforeEach(async () => {
       fakeAuth = 'fake auth'
       relayer.identity.authorize.returns(fakeAuth)
-      res = await commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+      res = await commit({ params, relayer, logger, engines, orderbooks })
     })
 
     it('receives a payment channel network address from the relayer', () => {
@@ -162,12 +160,8 @@ describe('commit', () => {
       }, fakeAuth)
     })
 
-    it('constructs a EmptyResponse', () => {
-      expect(EmptyResponse).to.have.been.calledWith({})
-    })
-
     it('returns a EmptyResponse', () => {
-      expect(res).to.be.eql(new EmptyResponse())
+      expect(res).to.be.eql({})
     })
   })
 
@@ -175,7 +169,7 @@ describe('commit', () => {
     it('throws an error if market is not being tracked', () => {
       const badParams = { symbol: 'BTC', market: 'BTC/BAD' }
       const errorMessage = `${badParams.market} is not being tracked as a market.`
-      return expect(commit({ params: badParams, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
+      return expect(commit({ params: badParams, relayer, logger, engines, orderbooks })).to.eventually.be.rejectedWith(errorMessage)
     })
   })
 
@@ -184,13 +178,13 @@ describe('commit', () => {
       const badParams = { symbol: 'BAD', market: 'BTC/LTC' }
       const errorMessage = `No engine is configured for symbol: ${badParams.symbol}`
       getAddressStub.withArgs({ symbol: 'BAD' }).resolves({ address: relayerAddress })
-      return expect(commit({ params: badParams, relayer, logger, engines, orderbooks }, { EmptyResponse })).to.eventually.be.rejectedWith(errorMessage)
+      return expect(commit({ params: badParams, relayer, logger, engines, orderbooks })).to.eventually.be.rejectedWith(errorMessage)
     })
 
     it('throws an error if inverse engine is not found', () => {
       const badEngines = new Map([['BTC', btcEngine]])
       return expect(
-        commit({ params, relayer, logger, engines: badEngines, orderbooks }, { EmptyResponse })
+        commit({ params, relayer, logger, engines: badEngines, orderbooks })
       ).to.be.rejectedWith(Error, 'No engine is configured for symbol')
     })
   })
@@ -200,14 +194,14 @@ describe('commit', () => {
       getTotalBalanceForAddressStub.resolves('10000001')
 
       return expect(
-        commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+        commit({ params, relayer, logger, engines, orderbooks })
       ).to.not.be.rejected()
     })
 
     it('opens outbound channels if no outbound channels exist', async () => {
       getTotalBalanceForAddressStub.resolves('0')
 
-      await commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+      await commit({ params, relayer, logger, engines, orderbooks })
 
       expect(btcEngine.createChannels).to.have.been.calledOnce()
       expect(btcEngine.createChannels).to.have.been.calledWith(relayerAddress, '10000000')
@@ -216,7 +210,7 @@ describe('commit', () => {
     it('opens outbound channels if the existing channels are not large enough', async () => {
       getTotalBalanceForAddressStub.resolves('5000000')
 
-      await commit({ params, relayer, logger, engines, orderbooks }, { EmptyResponse })
+      await commit({ params, relayer, logger, engines, orderbooks })
 
       expect(btcEngine.createChannels).to.have.been.calledOnce()
       expect(btcEngine.createChannels).to.have.been.calledWith(relayerAddress, '5000000')

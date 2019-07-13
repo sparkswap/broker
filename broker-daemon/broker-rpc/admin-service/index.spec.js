@@ -32,10 +32,7 @@ describe('AdminService', () => {
         rpc: {
           AdminService: {
             service: 'fakeService'
-          },
-          HealthCheckResponse: sinon.stub(),
-          GetIdentityResponse: sinon.stub(),
-          RegisterResponse: sinon.stub()
+          }
         }
       }
     }
@@ -158,10 +155,6 @@ describe('AdminService', () => {
         expect(callArgs[2]).to.have.property('auth', auth)
       })
     })
-
-    it('passes in the response', () => {
-      expect(callArgs[3]).to.be.eql({ HealthCheckResponse: proto.broker.rpc.HealthCheckResponse })
-    })
   })
 
   describe('#getIdentity', () => {
@@ -204,10 +197,6 @@ describe('AdminService', () => {
         expect(callArgs[2]).to.have.property('auth', auth)
       })
     })
-
-    it('passes in the response', () => {
-      expect(callArgs[3]).to.be.eql({ GetIdentityResponse: proto.broker.rpc.GetIdentityResponse })
-    })
   })
 
   describe('#register', () => {
@@ -245,10 +234,6 @@ describe('AdminService', () => {
       it('passes in a relayer', () => {
         expect(callArgs[2]).to.have.property('relayer', relayer)
       })
-    })
-
-    it('passes in the response', () => {
-      expect(callArgs[3]).to.be.eql({ RegisterResponse: proto.broker.rpc.RegisterResponse })
     })
   })
 })

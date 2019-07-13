@@ -1,9 +1,12 @@
+
+/** @typedef {{[k: string]: string}} Dictionary */
+
 /**
  * Table that defines the conversion from a Base64 encoded character to a
  * character that is URL safe and preserves lexicographic ordering as defined
  * by the ASCII character code.
  *
- * @type {string}
+ * @type {Dictionary}
  * @constant
  */
 const ENCODE_TABLE = {

@@ -7,7 +7,7 @@ const Table = require('cli-table2')
 
 /**
  * @constant
- * @type {Object<key, String>}
+ * @type {object<key, string>}
  * @default
  */
 const STATUS_CODES = Object.freeze({
@@ -17,7 +17,7 @@ const STATUS_CODES = Object.freeze({
 
 /**
  * @constant
- * @type {Object<key, String>}
+ * @type {object<key, string>}
  * @default
  */
 const RELAYER_STATUS_CODES = Object.freeze({
@@ -26,7 +26,7 @@ const RELAYER_STATUS_CODES = Object.freeze({
 
 /**
  * @constant
- * @type {Object<key, String>}
+ * @type {object<key, string>}
  * @default
  */
 const ORDERBOOK_STATUS_CODES = Object.freeze({
@@ -37,7 +37,7 @@ const ORDERBOOK_STATUS_CODES = Object.freeze({
  * Engine status codes we expect to be returned from the engine, defined in:
  * https://github.com/sparkswap/lnd-engine/blob/master/src/constants/engine-statuses.js
  * @constant
- * @type {Object<key, String>}
+ * @type {object<key, string>}
  * @default
  */
 const ENGINE_STATUS_CODES = Object.freeze({
@@ -51,9 +51,9 @@ const ENGINE_STATUS_CODES = Object.freeze({
  *
  * ex: `sparkswap healthcheck`
  *
- * @param {Object} args
- * @param {Object} opts
- * @param {String} [rpcAddress] broker rpc address
+ * @param {object} args
+ * @param {object} opts
+ * @param {string} [rpcAddress] - broker rpc address
  * @param {Logger} logger
  */
 

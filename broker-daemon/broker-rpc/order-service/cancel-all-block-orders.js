@@ -1,13 +1,12 @@
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+
 /**
  * Cancels a block order in progress
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {Object} request.params - Request parameters from the client
- * @param {BlockOrderWorker} request.blockOrderWorker
- * @param {Object} request.logger
- * @returns {Object}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<object>}
  */
-async function cancelAllBlockOrders ({ params, logger, blockOrderWorker }) {
+async function cancelAllBlockOrders ({ params, blockOrderWorker }) {
   const { market } = params
 
   const {

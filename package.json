@@ -17,7 +17,7 @@
     "lint": "eslint broker-cli broker-daemon test --ext .js --max-warnings=0",
     "lint-watch": "esw -f simple -w --clear",
     "mocha-test": "NODE_PATH=. mocha 'broker-cli/{,!(node_modules)/**}/**/*.spec.js' 'broker-daemon/**/**/*.spec.js'",
-    "test": "npm run check-for-cycles && npm run check-unused && npm run mocha-test",
+    "test": "npm run check-for-cycles && npm run check-unused && npm run typecheck && npm run mocha-test",
     "coverage": "nyc npm test",
     "ci-test": "npm run format && npm test",
     "start-sparkswapd": "pm2-docker pm2.json",
@@ -27,7 +27,8 @@
     "validate-proto": "mkdir ./proto-tmp && protoc --proto_path=./broker-daemon/proto --proto_path=./broker-daemon/proto/google/api ./broker-daemon/proto/broker.proto --js_out ./proto-tmp && rm -rf ./proto-tmp",
     "check-for-cycles": "madge --circular broker-daemon/",
     "check-unused": "node ./scripts/check-unused.js",
-    "env-setup": "bash ./scripts/env-setup.sh"
+    "env-setup": "bash ./scripts/env-setup.sh",
+    "typecheck": "tsc --alwaysStrict --allowJs --checkJs --noEmit --resolveJsonModule --downlevelIteration --noImplicitReturns --noUnusedLocals --noUnusedParameters --strictFunctionTypes --strictNullChecks --target es2018 --moduleResolution node broker-daemon/index.js"
   },
   "bin": {
     "sparkswapd": "./broker-daemon/bin/sparkswapd",
@@ -80,7 +81,7 @@
     "eslint": "5.14.0",
     "eslint-config-standard": "12.0.0",
     "eslint-plugin-import": "2.16.0",
-    "eslint-plugin-jsdoc": "4.1.0",
+    "eslint-plugin-jsdoc": "15.3.5",
     "eslint-plugin-node": "8.0.1",
     "eslint-plugin-promise": "4.0.1",
     "eslint-plugin-standard": "4.0.0",

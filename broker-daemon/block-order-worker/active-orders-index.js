@@ -1,13 +1,15 @@
 const { OrderStateMachine } = require('../state-machines')
 const { SubsetStore } = require('../utils')
 
+/** @typedef {import('level-sublevel')} Sublevel */
+
 /**
  * @class Index of of our own orders currently in an active state
  */
 class ActiveOrdersIndex extends SubsetStore {
   /**
    * Create a new index of a subset of only active orders
-   * @param {sublevel} store - Store of orders to create an active subset of
+   * @param {Sublevel} store - Store of orders to create an active subset of
    */
   constructor (store) {
     super(store.sublevel('activeOrders'), store)
@@ -18,7 +20,7 @@ class ActiveOrdersIndex extends SubsetStore {
    * @private
    * @param {string} key   - Key of the record to create an index op for
    * @param {string} value - Value of the record being added to the events store to create an index op for
-   * @returns {Object} object for create/delete for use with sublevel
+   * @returns {object} object for create/delete for use with sublevel
    */
   addToIndexOperation (key, value) {
     const { state } = JSON.parse(value)
