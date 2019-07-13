@@ -53,7 +53,7 @@ const FillStateMachine = StateMachine.factory({
       skipTransitions: [ 'goto' ]
     }),
     new StateMachinePersistence({
-      /**
+      /** StateMachinePersistence~KeyAccessor
        * @param {string}   key - Unique key for the stored state machine
        * @returns {string}     Unique key for the state machine
        */
@@ -66,7 +66,7 @@ const FillStateMachine = StateMachine.factory({
         return key
       },
       additionalFields: {
-        /**
+        /** StateMachinePersistence~FieldAccessor
          * @param {object}   fillObject - Stored plain object description of the Fill associated with the State machine
          * @param {string}   key         - Unique key for the fill/state machine
          * @returns {object}             Plain object description of the Fill associated with the State machine
@@ -80,7 +80,7 @@ const FillStateMachine = StateMachine.factory({
           // @ts-ignore
           return this.fill.valueObject
         },
-        /**
+        /** StateMachinePersistence~FieldAccessor
          * @param {Array<string>}   history - Stored history of states for this state machine
          * @returns {Array<string>}         History of states for this state machine
          */
@@ -94,7 +94,7 @@ const FillStateMachine = StateMachine.factory({
           // @ts-ignore
           return this.history
         },
-        /**
+        /** StateMachinePersistence~FieldAccessor
          * @param {string}   errorMessage - Stored error message for a state machine in an errored state
          * @returns {string}              Error message for a state machine in an errored state
          */
@@ -110,7 +110,7 @@ const FillStateMachine = StateMachine.factory({
           }
           return errorMessage
         },
-        /**
+        /** StateMachinePersistence~FieldAccessor
          * @param {object}   dates - Stored plain object of dates for the states that have been entered on the State machine
          * @returns {object} dates - Plain object of dates for the states that have been entered on the State machine
          */

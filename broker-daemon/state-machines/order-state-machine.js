@@ -65,7 +65,7 @@ const OrderStateMachine = StateMachine.factory({
     }),
     new StateMachineEvents(),
     new StateMachinePersistence({
-      /**
+      /** StateMachinePersistence~KeyAccessor
        * @param {string}   key - Unique key for the stored state machine
        * @returns {string}     Unique key for the state machine
        */
@@ -78,7 +78,7 @@ const OrderStateMachine = StateMachine.factory({
         return key
       },
       additionalFields: {
-        /**
+        /** StateMachinePersistence~FieldAccessor
          * @param {object}   orderObject - Stored plain object description of the Order associated with the State machine
          * @param {string}   key         - Unique key for the order/state machine
          * @returns {object}             Plain object description of the Order associated with the State machine
@@ -92,7 +92,7 @@ const OrderStateMachine = StateMachine.factory({
           // @ts-ignore
           return this.order.valueObject
         },
-        /**
+        /** StateMachinePersistence~FieldAccessor
          * @param {Array<string>}   history - Stored history of states for this state machine
          * @returns {Array<string>}         History of states for this state machine
          */
@@ -106,7 +106,7 @@ const OrderStateMachine = StateMachine.factory({
           // @ts-ignore
           return this.history
         },
-        /**
+        /** StateMachinePersistence~FieldAccessor
          * @param {object}   dates - Stored plain object of dates for the states that have been entered on the State machine
          * @returns {object} dates - Plain object of dates for the states that have been entered on the State machine
          */
@@ -118,7 +118,7 @@ const OrderStateMachine = StateMachine.factory({
 
           return this.dates
         },
-        /**
+        /** StateMachinePersistence~FieldAccessor
          * @param {string}   errorMessage - Stored error message for a state machine in an errored state
          * @returns {string}              Error message for a state machine in an errored state
          */
