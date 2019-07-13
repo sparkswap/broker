@@ -1,3 +1,8 @@
+
+/** @typedef {import('../order-state-machine')} OrderStateMachine */
+/** @typedef {import('../fill-state-machine')} FillStateMachine */
+/** @typedef {OrderStateMachine | FillStateMachine} StateMachine */
+
 /**
  * @class Abstract class for creating StateMachine Plugins
  */
@@ -10,7 +15,7 @@ class StateMachineAbstractPlugin {
 
   /**
    * A copy of StateMachinePlugin, which is not exposed
-   * @param  {object}       instance       - State machine instance to be hooked
+   * @param  {StateMachine} instance       - State machine instance to be hooked
    * @param  {string}       event          - Name of the event (e.g. `persist`)
    * @param  {Array}        additionalArgs - Additional arguments to be applied to the hooked functions
    * @returns {void}
