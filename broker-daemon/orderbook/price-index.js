@@ -63,7 +63,7 @@ class PriceIndex extends SublevelIndex {
    * Create a read stream of orders with prices at least as good as the given one
    * Note: If no quantumPrice is provided, creates a read stream of all records
    * @param {?string} quantumPrice - Decimal of the price
-   * @returns {Sublevel}
+   * @returns {import('stream').Readable}
    */
   streamOrdersAtPriceOrBetter (quantumPrice) {
     const opts = {}

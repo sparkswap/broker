@@ -94,7 +94,7 @@ class Index {
   /**
    * Create a read stream of the index, filtering out those keys marked for deletion and transforming index keys into base keys
    * @param {object} opts - Sublevel readStream options
-   * @returns {ReadableStream}
+   * @returns {import('stream').Readable}
    */
   createReadStream (opts) {
     const optionsToUpdate = Object.assign({}, opts)

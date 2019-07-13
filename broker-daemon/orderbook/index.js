@@ -212,6 +212,7 @@ class Orderbook {
         finish()
       })
 
+      // @ts-ignore
       stream.on('data', ({ key, value }) => {
         if (resolved) return
 
