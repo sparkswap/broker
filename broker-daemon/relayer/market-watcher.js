@@ -110,7 +110,7 @@ class MarketWatcher extends EventEmitter {
     this.logger.debug(`response type is ${response.type}`)
 
     if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.START_OF_EVENTS) {
-      await this.migrate()
+      this.migrate() // don't await, just kick off migration
     } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENT) {
       this.createMarketEvent(response)
     } else if (RESPONSE_TYPES[response.type] === RESPONSE_TYPES.EXISTING_EVENTS_DONE) {
