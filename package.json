@@ -87,7 +87,7 @@
     "madge": "3.3.0",
     "mocha": "5.1.1",
     "mock-require": "3.0.2",
-    "nyc": "13.1.0",
+    "nyc": "14.1.1",
     "protobufjs": "6.8.6",
     "rewire": "4.0.1",
     "sinon": "7.2.3",
