@@ -664,8 +664,32 @@ message GetTradeHistoryResponse {
  * ```
  */
 service OrderService {
+  rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
+
+  enum RoleRestriction {
+    NO_RESTRICTION = 0;
+    MAKER_ONLY = 1;
+  }
+
+  message Amount {
+    string symbol = 1;
+    string value = 2;
+  }
+
+  message CreateOrderRequest {
+    Amount source_amount = 1;
+    string source_address = 2;
+    Amount destination_amount = 3;
+    string destination_address = 4;
+    RoleRestriction role_restriction = 10;
+  }
+
+  message CreateOrderResponse {
+    string order_id = 1;
+  }
+
   /**
-   * CreateBlockOrder creates new block orders on the Broker. This is the only way to initiate a trade on the broker.
+   * CreateBlockOrder creates new block orders on the Broker.
    * Creating a block order returns a block order ID immediately, but that is not necessarily an indication that the block order has been successfully executed.
    * The user should check on the block order's status after it is created to understand if it has been completed.
    *

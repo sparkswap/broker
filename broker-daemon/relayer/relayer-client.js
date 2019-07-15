@@ -90,6 +90,10 @@ class RelayerClient {
 
     this.credentials = channelCredentials
 
+    const orderServiceClient = new this.proto.OrderService(this.address,
+      this.credentials, GRPC_STREAM_OPTIONS)
+    this.orderService = caller.wrap(orderServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+
     const makerServiceClient = new this.proto.MakerService(this.address, this.credentials, GRPC_STREAM_OPTIONS)
     this.makerService = caller.wrap(makerServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
 

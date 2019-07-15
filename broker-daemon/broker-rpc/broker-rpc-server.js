@@ -124,7 +124,7 @@ class BrokerRPCServer {
     this.adminService = new AdminService(this.protoPath, { logger, relayer, engines, orderbooks, store, auth: this.auth })
     this.server.addService(this.adminService.definition, this.adminService.implementation)
 
-    this.orderService = new OrderService(this.protoPath, { logger, blockOrderWorker, auth: this.auth })
+    this.orderService = new OrderService(this.protoPath, { logger, relayer, blockOrderWorker, auth: this.auth, store })
     this.server.addService(this.orderService.definition, this.orderService.implementation)
 
     this.orderBookService = new OrderBookService(this.protoPath, { logger, relayer, orderbooks, auth: this.auth })
