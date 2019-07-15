@@ -258,7 +258,7 @@ describe('StateMachinePersistence', () => {
     beforeEach(() => {
       Machine = StateMachine.factory({
         plugins: [
-          new StateMachinePersistence()
+          new StateMachinePersistence({})
         ],
         transitions: [
           { name: 'step', from: 'none', to: 'first' }

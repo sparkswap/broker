@@ -4,9 +4,11 @@ const Order = require('./order')
 const Fill = require('./fill')
 
 const { Big, nanoToDatetime, getRecords } = require('../utils')
-const CONFIG = require('../config')
+const CONFIG = require('../config.json')
 const { BlockOrderNotFoundError } = require('./errors')
 const { OrderStateMachine, FillStateMachine } = require('../state-machines')
+
+/** @typedef {import('level-sublevel')} Sublevel */
 
 /**
  * @class Model representing Block Orders
@@ -14,14 +16,15 @@ const { OrderStateMachine, FillStateMachine } = require('../state-machines')
 class BlockOrder {
   /**
    * Instantiate a new Block Order
-   * @param {Object} args
+   * @param {object} args
    * @param {string} args.id          - Unique id for the block order
    * @param {string} args.marketName  - Market name (e.g. BTC/LTC)
    * @param {string} args.side        - Side of the market being taken (i.e. BID or ASK)
    * @param {string} args.amount      - Size of the order in base currency (e.g. '10000')
    * @param {string} args.price       - Limit price for the order (e.g. '100.1')
    * @param {string} args.timeInForce - Time restriction on the order (e.g. GTC, FOK)
-   * @param {string} args.status      - Block Order status
+   * @param {string} [args.timestamp]
+   * @param {string} [args.status]      - Block Order status
    */
   constructor ({ id, marketName, side, amount, price, timeInForce, timestamp, status = BlockOrder.STATUSES.ACTIVE }) {
     this.id = id
@@ -96,7 +99,7 @@ class BlockOrder {
 
   /**
    * Get configuration for the baseSymbol
-   * @returns {Object} Currency configuration
+   * @returns {object} Currency configuration
    */
   get baseCurrencyConfig () {
     return CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol)
@@ -104,7 +107,7 @@ class BlockOrder {
 
   /**
    * Get configuration for the counterSymbol
-   * @returns {Object} Currency configuration
+   * @returns {object} Currency configuration
    */
   get counterCurrencyConfig () {
     return CONFIG.currencies.find(({ symbol }) => symbol === this.counterSymbol)
@@ -120,7 +123,7 @@ class BlockOrder {
 
   /**
    * Convenience getter for counterAmount calculated using the block order price
-   * @returns {string} String representation of the amount of currency to be transacted in counter currency's smallest unit
+   * @returns {string | undefined} String representation of the amount of currency to be transacted in counter currency's smallest unit
    */
   get counterAmount () {
     if (!this.price) {
@@ -134,7 +137,7 @@ class BlockOrder {
 
   /**
   * Convenience getter for outboundAmount
-  * @returns {string} String representation of the amount of currency we will send outbound for the order
+  * @returns {string | undefined} String representation of the amount of currency we will send outbound for the order
   */
   get outboundAmount () {
     return this.isBid ? this.counterAmount : this.baseAmount
@@ -142,7 +145,7 @@ class BlockOrder {
 
   /**
   * Convenience getter for inboundAmount
-  * @returns {string} String representation of the amount of currency we will receive inbound for the order
+  * @returns {string | undefined} String representation of the amount of currency we will receive inbound for the order
   */
   get inboundAmount () {
     return this.isBid ? this.baseAmount : this.counterAmount
@@ -166,7 +169,7 @@ class BlockOrder {
 
   /**
    * Price of an order expressed in terms of the smallest unit of each currency
-   * @returns {string} Decimal of the price expressed as a string with 16 decimal places
+   * @returns {string | undefined} Decimal of the price expressed as a string with 16 decimal places
    */
   get quantumPrice () {
     if (!this.counterAmount) return
@@ -293,8 +296,8 @@ class BlockOrder {
 
   /**
    * Populates orders on a block order
-   * @param {sublevel} store
-   * @returns {void}
+   * @param {Sublevel} store
+   * @returns {Promise<void>}
    */
   async populateOrders (store) {
     const orders = await getRecords(
@@ -312,8 +315,8 @@ class BlockOrder {
 
   /**
    * Populates fills on a block order
-   * @param {sublevel} store
-   * @returns {void}
+   * @param {Sublevel} store
+   * @returns {Promise<void>}
    */
   async populateFills (store) {
     const fills = await getRecords(
@@ -331,7 +334,7 @@ class BlockOrder {
 
   /**
    * serialize a block order for transmission via grpc
-   * @returns {Object} Object to be serialized into a GRPC message
+   * @returns {object} Object to be serialized into a GRPC message
    */
   serialize () {
     const orders = this.orders.map((orderObject) => {
@@ -365,7 +368,7 @@ class BlockOrder {
 
   /**
    * Returns a serialized summary of a block order
-   * @returns {Object}
+   * @returns {object}
    */
   serializeSummary () {
     const serialized = {
@@ -418,9 +421,9 @@ class BlockOrder {
   /**
    * Grab a block order from a given sublevel
    *
-   * @param {sublevel} store - block order sublevel store
+   * @param {Sublevel} store - block order sublevel store
    * @param {string} blockOrderId
-   * @returns {BlockOrder} BlockOrder instance
+   * @returns {Promise<BlockOrder>} BlockOrder instance
    * @throws {Error} store is null
    * @throws {BlockOrderNotFoundError} block order could not be found
    */

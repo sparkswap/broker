@@ -2,7 +2,10 @@ const {
   Big,
   getRecords
 } = require('../utils')
-const CONFIG = require('../config')
+const CONFIG = require('../config.json')
+
+/** @typedef {import('level-sublevel')} Sublevel */
+
 /**
  * Delimiter for the block order id and order when storing orders
  * @constant
@@ -34,7 +37,7 @@ class Order {
   /**
    * Create a new order representation
    * @param {string} blockOrderId          - Id of the block order that this order belongs to
-   * @param {Object} args
+   * @param {object} args
    * @param {string} args.baseSymbol    - Currency symbol for the base currency in the market, e.g. BTC
    * @param {string} args.counterSymbol - Currency symbol for the counter or quote currency in the market, e.g. LTC
    * @param {string} args.side          - Side of the transaction that the order is on, either BID or ASK
@@ -61,7 +64,7 @@ class Order {
 
   /**
    * Add parameters to the order from its creation on the Relayer
-   * @param {Object} params
+   * @param {object} params
    * @param {string} params.orderId               - Unique identifier for the order as assigned by the Relayer
    * @param {string} params.feePaymentRequest     - Payment channel network payment request for the order fee
    * @param {string} params.feeRequired           - Whether the order fee is required
@@ -78,7 +81,7 @@ class Order {
 
   /**
    * Add parameters to the order from it being filled on the Relayer
-   * @param {Object} params
+   * @param {object} params
    * @param {string} params.swapHash   - Base64 string of the swap hash being used for the fill
    * @param {string} params.fillAmount - Int64 String of the amount, in base currency's base units, of the fill
    * @param {string} params.takerAddress - String of payment channel network address of the taker
@@ -91,7 +94,7 @@ class Order {
 
   /**
    * Add parameters to the order from it being settled on the Payment Channel Network
-   * @param {Object} params
+   * @param {object} params
    * @param {string} params.swapPreimage - Base64 string of the preimage associated with the swap hash
    */
   setSettledParams ({ swapPreimage }) {
@@ -100,11 +103,17 @@ class Order {
 
   /**
    * serialize an order for transmission via grpc
-   * @returns {Object} serialzed order to send in a GRPC message
+   * @returns {object} serialzed order to send in a GRPC message
    */
   serialize () {
-    const baseAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.baseSymbol).quantumsPerCommon
-    const counterAmountFactor = CONFIG.currencies.find(({ symbol }) => symbol === this.counterSymbol).quantumsPerCommon
+    const currencies = CONFIG.currencies || []
+    const baseCurrency = currencies.find(({ symbol }) => symbol === this.baseSymbol)
+    const counterCurrency = currencies.find(({ symbol }) => symbol === this.counterSymbol)
+    if (!baseCurrency || !counterCurrency) {
+      throw new Error('Invalid currency config')
+    }
+    const baseAmountFactor = baseCurrency.quantumsPerCommon
+    const counterAmountFactor = counterCurrency.quantumsPerCommon
     const baseCommonAmount = Big(this.baseAmount).div(baseAmountFactor)
     const counterCommonAmount = Big(this.counterAmount).div(counterAmountFactor)
     const fillCommonAmount = this.fillAmount ? Big(this.fillAmount).div(baseAmountFactor).toFixed(16) : this.fillAmount
@@ -131,7 +140,7 @@ class Order {
 
   /**
    * Alias for .fillAmount that pairs better with `counterFillAmount`
-   * @returns {string} 64-bit integer represented as a string
+   * @returns {string | undefined} 64-bit integer represented as a string
    */
   get baseFillAmount () {
     return this.fillAmount
@@ -161,6 +170,13 @@ class Order {
   }
 
   /**
+   * @returns {string} maker's address on the inbound engine
+   */
+  get makerInboundAddress () {
+    return this.side === Order.SIDES.BID ? this.makerBaseAddress : this.makerCounterAddress
+  }
+
+  /**
    * Get the symbol of the currency we will send outbound
    * @returns {string} Currency symbol
    */
@@ -170,7 +186,7 @@ class Order {
 
   /**
    * Get the amount (as an integer in its currency's smallest units) that we will receive inbound for this order
-   * @returns {string} 64-bit integer represented as a string
+   * @returns {string | undefined} 64-bit integer represented as a string
    */
   get inboundAmount () {
     if (this.fillAmount) {
@@ -182,7 +198,7 @@ class Order {
 
   /**
    * Get the amount (as an integer in its currency's smallest units) that we will send outbound for this order
-   * @returns {string} 64-bit integer represented as a string
+   * @returns {string | undefined} 64-bit integer represented as a string
    */
   get outboundAmount () {
     if (this.fillAmount) {
@@ -212,7 +228,7 @@ class Order {
 
   /**
    * Get the amount (as an integer in its currency's smallest units) that we will receive inbound for this order
-   * @returns {string} 64-bit integer represented as a string
+   * @returns {string | undefined} 64-bit integer represented as a string
    */
   get inboundFillAmount () {
     if (!this.fillAmount) {
@@ -224,7 +240,7 @@ class Order {
 
   /**
    * Get the amount (as an integer in its currency's smallest units) that we will send outbound for this order
-   * @returns {string} 64-bit integer represented as a string
+   * @returns {string | undefined} 64-bit integer represented as a string
    */
   get outboundFillAmount () {
     if (!this.fillAmount) {
@@ -236,7 +252,7 @@ class Order {
 
   /**
    * Params required to create an order on the relayer
-   * @returns {Object} Object of parameters the relayer expects
+   * @returns {object} Object of parameters the relayer expects
    */
   get paramsForCreate () {
     const {
@@ -265,7 +281,7 @@ class Order {
    * It includes parameters for the payment requests for fees and deposits
    * which are used to pay fees prior to placing an order rather than
    * actually sent to the relayer.
-   * @returns {Object} Object of parameters need to place an order
+   * @returns {object} Object of parameters need to place an order
    */
   get paramsForPlace () {
     const {
@@ -305,7 +321,7 @@ class Order {
 
   /**
    * Params required to prepare a swap in  an engine
-   * @returns {Object} Object of parameters the engine expects
+   * @returns {object} Object of parameters the engine expects
    */
   get paramsForPrepareSwap () {
     const { orderId, swapHash, inboundSymbol, inboundFillAmount } = this
@@ -367,7 +383,7 @@ class Order {
   /**
    * Get the unique key that this object can be stored with
    * It is prefixed by the blockOrderId so that it can be retrieved easily
-   * @returns {string} Unique key for storage. In the case of an order, it is a combination of the blockOrderId and Relayer-assigned orderId
+   * @returns {string | undefined} Unique key for storage. In the case of an order, it is a combination of the blockOrderId and Relayer-assigned orderId
    */
   get key () {
     // if either part of our key is undefined we return undefined so as not to create
@@ -388,7 +404,7 @@ class Order {
 
   /**
    * Get the store-able object
-   * @returns {Object} Store-able version of the object
+   * @returns {object} Store-able version of the object
    */
   get valueObject () {
     const {
@@ -439,7 +455,7 @@ class Order {
   /**
    * Create an instance of an order from an object representation
    * @param {string} key         - Unique key for the order, i.e. its `blockOrderId` and `orderId`
-   * @param {Object} valueObject - Plain object representation of the order
+   * @param {object} valueObject - Plain object representation of the order
    * @returns {Order}              Inflated order object
    */
   static fromObject (key, valueObject) {
@@ -500,7 +516,7 @@ class Order {
    * This works because all orders are prefixed with their blockOrderId and the Delimiter.
    * @param {string} startId - id of the block order to start the range
    * @param {string} endId - id of the block order to end the range
-   * @returns {Object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
+   * @returns {object} Options object that can be used in {@link https://github.com/Level/levelup#createReadStream}
    */
   static rangeForBlockOrderIds (startId, endId) {
     return {
@@ -511,8 +527,8 @@ class Order {
 
   /**
    * Grabs all orders
-   * @param {sublevel} store
-   * @returns {Array<Object>} array of order representation (includes order model)
+   * @param {Sublevel} store
+   * @returns {Promise<Array<object>>} array of order representation (includes order model)
    */
   static async getAllOrders (store) {
     return getRecords(

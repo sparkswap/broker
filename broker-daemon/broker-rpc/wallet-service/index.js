@@ -14,18 +14,24 @@ const walletHistory = require('./wallet-history')
 const changeWalletPassword = require('./change-wallet-password')
 const recoverWallet = require('./recover-wallet')
 
+/** @typedef {import('../broker-rpc-server').RelayerClient} RelayerClient */
+/** @typedef {import('../broker-rpc-server').Logger} Logger */
+/** @typedef {import('../broker-rpc-server').BlockOrderWorker} BlockOrderWorker */
+/** @typedef {import('../broker-rpc-server').Orderbook} Orderbook */
+/** @typedef {import('../broker-rpc-server').Engine} Engine */
+
 /**
  * WalletService provides interactions with an engine's crypto wallet
  */
 class WalletService {
   /**
    * @class
-   * @param {String} protoPath
-   * @param {Object} options
-   * @param {Map<String, LndEngine>} options.engines
+   * @param {string} protoPath
+   * @param {object} options
+   * @param {Map<string, Engine>} options.engines
    * @param {RelayerClient} options.relayer
-   * @param {Map<String, Orderbook>} options.orderbooks - Collection of all active Orderbooks
-   * @param {BlockOrderWorker} opts.blockOrderWorker
+   * @param {Map<string, Orderbook>} options.orderbooks - Collection of all active Orderbooks
+   * @param {BlockOrderWorker} options.blockOrderWorker
    * @param {Function} options.auth
    * @param {Logger} options.logger
    */
@@ -37,22 +43,6 @@ class WalletService {
     this.definition = this.proto.broker.rpc.WalletService.service
     this.serviceName = 'WalletService'
     this.engines = engines
-
-    const {
-      NewDepositAddressResponse,
-      GetBalancesResponse,
-      GetPaymentChannelNetworkAddressResponse,
-      GetTradingCapacitiesResponse,
-      WithdrawFundsResponse,
-      CreateWalletResponse,
-      ReleaseChannelsResponse,
-      WalletHistoryResponse,
-      google: {
-        protobuf: {
-          Empty: EmptyResponse
-        }
-      }
-    } = this.proto.broker.rpc
 
     this.implementation = {
       newDepositAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engines, auth }, { NewDepositAddressResponse }).register(),

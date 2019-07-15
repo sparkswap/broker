@@ -1152,53 +1152,6 @@ message GetSupportedMarketsResponse {
   repeated SupportedMarket supported_markets = 1;
 }
 
-message GetMarketStatsRequest {
-  // Market to commit the amount in currency to. e.g. `BTC/LTC`
-  string market = 1;
-}
-
-message GetMarketStatsResponse {
-  // symbol of the market. e.g. `BTC/LTC`
-  string symbol = 1;
-
-  // 64-bit Unix nano-second timestamp
-  int64 timestamp = 2;
-
-  // ISO8601 datetime string (nano-seconds)
-  string datetime = 3;
-
-  // NOTE:
-  // The following parameters are all float-value strings
-  //
-
-  // highest price in past 24 hours
-  string high = 4;
-
-  // lowest price in past 24 hours
-  string low = 5;
-
-  // current best bid
-  string bid = 6;
-
-  // current best bid's amount
-  string bidVolume = 7;
-
-  // current best ask
-  string ask = 8;
-
-  // current best ask's amount
-  string askVolume = 9;
-
-  // volume weighed average price (vwap) for the past 24 hours
-  string vwap = 10;
-
-  // volume of base currency in past 24 hours
-  string baseVolume = 11;
-
-  // volume of counter (quote) currency in past 24 hours
-  string counterVolume = 12;
-}
-
 /**
  * Trade exposes all relevant information about a filled order
  */
@@ -1371,61 +1324,6 @@ service OrderBookService {
   rpc getSupportedMarkets (google.protobuf.Empty) returns (GetSupportedMarketsResponse) {
     option (.google.api.http) = {
       get: "/v1/markets"
-    };
-  }
-   /**
-   * getMarketStats returns statistics (price ticker information) for a particular market/symbol for a period of the last 24 hours
-   *
-   * ```javascript
-   * const deadline = new Date().setSeconds(new Date().getSeconds() + 5)
-   * const market = "BTC/LTC"
-   * orderbookService.getMarketStats({ market }, { deadline }, (err, res) => {
-   *   if (err) return console.error(err)
-   *   console.log(res)
-   * })
-   * ```
-   *
-   * ```shell
-   * > sparkswap market market-stats --market BTC/LTC
-   * ```
-   *
-   * > The above command will print:
-   *
-   * ```javascript
-   * {
-   *   "symbol": "BTC/LTC",
-   *   "timestamp": "1537386049351518282",
-   *   "datetime": "2018-09-19T19:40:49.350111174Z",
-   *   "high": "59.313",
-   *   "low": "59.212",
-   *   "bid": "0.0001",
-   *   "bidVolume": "59.311",
-   *   "ask": "0.0001",
-   *   "askVolume": "59.32",
-   *   "vwap": "59.324",
-   *   "baseVolume": "20.1233",
-   *   "counterVolume": "1207.398"
-   * }
-   * ```
-   *
-   * ```shell
-   * { "symbol": "BTC/LTC",
-   *   "timestamp": "1537386049351518282",
-   *   "datetime": "2018-09-19T19:40:49.350111174Z",
-   *   "high": "59.313",
-   *   "low": "59.212",
-   *   "bid": "0.0001",
-   *   "bidVolume": "59.311",
-   *   "ask": "0.0001",
-   *   "askVolume": "59.32",
-   *   "vwap": "59.324",
-   *   "baseVolume": "20.1233",
-   *   "counterVolume": "1207.398" }
-   * ```
-   */
-  rpc getMarketStats (GetMarketStatsRequest) returns (GetMarketStatsResponse) {
-    option (.google.api.http) = {
-      get: "/v1/market_stats"
     };
   }
 }

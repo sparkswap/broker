@@ -34,7 +34,7 @@ function credentialsToBasicAuth (username, password) {
  *
  * @param {string} username
  * @param {string} password
- * @returns {Object} grpc credentials
+ * @returns {object} grpc credentials
  */
 function generateBasicAuthCredentials (username, password) {
   return grpc.credentials.createFromMetadataGenerator((_, callback) => {

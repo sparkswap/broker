@@ -38,7 +38,7 @@ function suppressInput (message, char) {
       process.stdin.pause()
       break
     default:
-      process.stdout.clearLine()
+      readline.clearLine(process.stdout, 0)
       readline.cursorTo(process.stdout, 0)
       process.stdout.write(`${message} `)
       break
@@ -49,14 +49,15 @@ function suppressInput (message, char) {
  * Asks a question to a user through readline
  *
  * @param {string} message
- * @param {Object} options
- * @param {Object} [options.silent=false] - suppress typing for answer
+ * @param {object} options
+ * @param {object} [options.silent=false] - suppress typing for answer
  * @returns {Promise<string>} answer
  */
 function askQuestion (message, { silent = false } = {}) {
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
+    historySize: 1
   })
 
   const dataHandler = (char) => suppressInput(message, char)
@@ -74,12 +75,6 @@ function askQuestion (message, { silent = false } = {}) {
         // multiple listeners on stdin which causes weird side-effects when using
         // `askQuestion` multiple times in the same command
         process.stdin.removeListener('data', dataHandler)
-
-        // If the process is interactive (non-TTY) then we can remove the history.
-        // If the terminal is TTY then rl.history is not defined
-        if (rl.history) {
-          rl.history = rl.history.slice(1)
-        }
 
         rl.close()
         return resolve(answer)

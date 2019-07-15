@@ -1,15 +1,12 @@
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+
 /**
  * Check on the status of a block order
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {Object} request.params - Request parameters from the client
- * @param {BlockOrderWorker} request.blockOrderWorker
- * @param {Object} request.logger
- * @param {Object} responses
- * @param {Function} responses.GetBlockOrderResponse - constructor for GetBlockOrderResponse messages
- * @returns {GetBlockOrderResponse}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<object>}
  */
-async function getBlockOrder ({ params, logger, blockOrderWorker }, { GetBlockOrderResponse }) {
+async function getBlockOrder ({ params, blockOrderWorker }) {
   const {
     blockOrderId
   } = params

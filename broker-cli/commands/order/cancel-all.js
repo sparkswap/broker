@@ -12,9 +12,9 @@ const ACCEPTED_ANSWERS = Object.freeze(['y', 'yes'])
  *
  * ex: `sparkswap order cancel-all --market btc/ltc'
  *
- * @param {Object} args
+ * @param {object} args
  * @param {string} args.market
- * @param {Object} opts
+ * @param {object} opts
  * @param {string} opts.rpcAddress
  * @param {string} opts.market
  * @param {Logger} logger

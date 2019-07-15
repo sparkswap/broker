@@ -5,12 +5,14 @@ const healthCheck = require('./health-check')
 const getIdentity = require('./get-identity')
 const register = require('./register')
 
+/** @typedef {import('level-sublevel')} Sublevel */
+
 class AdminService {
   /**
    * @param {string} protoPath
-   * @param {Object} opts
-   * @param {Object} opts.logger
-   * @param {Object} opts.relayer
+   * @param {object} opts
+   * @param {object} opts.logger
+   * @param {object} opts.relayer
    * @param {Map} opts.engines
    * @param {Map} opts.orderbooks
    * @param {Sublevel} opts.store
@@ -24,16 +26,10 @@ class AdminService {
     this.definition = this.proto.broker.rpc.AdminService.service
     this.serviceName = 'AdminService'
 
-    const {
-      HealthCheckResponse,
-      GetIdentityResponse,
-      RegisterResponse
-    } = this.proto.broker.rpc
-
     this.implementation = {
-      healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer, engines, orderbooks, store, auth }, { HealthCheckResponse }).register(),
-      getIdentity: new GrpcUnaryMethod(getIdentity, this.messageId('getIdentity'), { logger, relayer, auth }, { GetIdentityResponse }).register(),
-      register: new GrpcUnaryMethod(register, this.messageId('register'), { logger, relayer }, { RegisterResponse }).register()
+      healthCheck: new GrpcUnaryMethod(healthCheck, this.messageId('healthCheck'), { logger, relayer, engines, orderbooks, store, auth }).register(),
+      getIdentity: new GrpcUnaryMethod(getIdentity, this.messageId('getIdentity'), { logger, relayer, auth }).register(),
+      register: new GrpcUnaryMethod(register, this.messageId('register'), { logger, relayer }).register()
     }
   }
 

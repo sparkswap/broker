@@ -8,11 +8,13 @@ const getBlockOrders = require('./get-block-orders')
 const cancelAllBlockOrders = require('./cancel-all-block-orders')
 const getTradeHistory = require('./get-trade-history')
 
+/** @typedef {import('../broker-rpc-server').BlockOrderWorker} BlockOrderWorker */
+
 class OrderService {
   /**
    * @param {string} protoPath
-   * @param {Object} opts
-   * @param {Object} opts.logger
+   * @param {object} opts
+   * @param {object} opts.logger
    * @param {BlockOrderWorker} opts.blockOrderWorker
    * @param {Function} opts.auth
    */
@@ -25,21 +27,16 @@ class OrderService {
     this.serviceName = 'OrderService'
 
     const {
-      CreateBlockOrderResponse,
-      TimeInForce,
-      GetBlockOrderResponse,
-      GetBlockOrdersResponse,
-      CancelAllBlockOrdersResponse,
-      GetTradeHistoryResponse
+      TimeInForce
     } = this.proto.broker.rpc
 
     this.implementation = {
-      createBlockOrder: new GrpcUnaryMethod(createBlockOrder, this.messageId('createBlockOrder'), { logger, blockOrderWorker, auth }, { CreateBlockOrderResponse, TimeInForce }).register(),
-      getBlockOrder: new GrpcUnaryMethod(getBlockOrder, this.messageId('getBlockOrder'), { logger, blockOrderWorker, auth }, { GetBlockOrderResponse }).register(),
+      createBlockOrder: new GrpcUnaryMethod(createBlockOrder, this.messageId('createBlockOrder'), { logger, blockOrderWorker, auth }, { TimeInForce }).register(),
+      getBlockOrder: new GrpcUnaryMethod(getBlockOrder, this.messageId('getBlockOrder'), { logger, blockOrderWorker, auth }).register(),
       cancelBlockOrder: new GrpcUnaryMethod(cancelBlockOrder, this.messageId('cancelBlockOrder'), { logger, blockOrderWorker, auth }).register(),
-      getBlockOrders: new GrpcUnaryMethod(getBlockOrders, this.messageId('getBlockOrders'), { logger, blockOrderWorker, auth }, { GetBlockOrdersResponse }).register(),
-      cancelAllBlockOrders: new GrpcUnaryMethod(cancelAllBlockOrders, this.messageId('cancelAllBlockOrders'), { logger, blockOrderWorker, auth }, { CancelAllBlockOrdersResponse }).register(),
-      getTradeHistory: new GrpcUnaryMethod(getTradeHistory, this.messageId('getTradeHistory'), { logger, blockOrderWorker, auth }, { GetTradeHistoryResponse }).register()
+      getBlockOrders: new GrpcUnaryMethod(getBlockOrders, this.messageId('getBlockOrders'), { logger, blockOrderWorker, auth }).register(),
+      cancelAllBlockOrders: new GrpcUnaryMethod(cancelAllBlockOrders, this.messageId('cancelAllBlockOrders'), { logger, blockOrderWorker, auth }).register(),
+      getTradeHistory: new GrpcUnaryMethod(getTradeHistory, this.messageId('getTradeHistory'), { logger, blockOrderWorker, auth }).register()
     }
   }
 

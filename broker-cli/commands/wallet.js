@@ -47,7 +47,7 @@ const NETWORK_STATUS_GRPC_DEADLINE = 30
  * Supported commands for `sparkswap wallet`
  *
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const SUPPORTED_COMMANDS = Object.freeze({
@@ -70,8 +70,8 @@ const SUPPORTED_COMMANDS = Object.freeze({
  *
  * @see SUPPORTED_COMMANDS
  * @function
- * @param {Object} args
- * @param {Object} opts
+ * @param {object} args
+ * @param {object} opts
  * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {boolean} [opts.reserved] - whether total reserved balance should be included
  * @param {Logger} logger
@@ -139,8 +139,8 @@ async function balance (args, opts, logger) {
  * ex: `sparkswap wallet new-deposit-address`
  *
  * @function
- * @param {Object} args
- * @param {Object} opts
+ * @param {object} args
+ * @param {object} opts
  * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {Logger} logger
  * @returns {void}
@@ -165,9 +165,9 @@ async function newDepositAddress (args, opts, logger) {
  * ex: `sparkswap wallet commit`
  *
  * @function
- * @param {Object} args
- * @param {Object} args.symbol
- * @param {Object} opts
+ * @param {object} args
+ * @param {object} args.symbol
+ * @param {object} opts
  * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {string} [opts.market] - market to commit funds to
  * @param {Logger} logger
@@ -215,9 +215,9 @@ async function commit (args, opts, logger) {
  * ex: `sparkswap wallet network-address BTC`
  *
  * @function
- * @param {Object} args
- * @param {Object} args.symbol
- * @param {Object} opts
+ * @param {object} args
+ * @param {object} args.symbol
+ * @param {object} opts
  * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {Logger} logger
  * @returns {void}
@@ -240,7 +240,7 @@ async function networkAddress (args, opts, logger) {
 /**
  * Different network statuses
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const NETWORK_STATUSES = Object.freeze({
@@ -287,7 +287,7 @@ function formatBalance (balance, status) {
 
 /**
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const CAPACITY_STATUSES = Object.freeze({
@@ -300,8 +300,8 @@ const CAPACITY_STATUSES = Object.freeze({
  * ex: `sparkswap wallet network-status`
  *
  * @function
- * @param {Object} args
- * @param {Object} opts
+ * @param {object} args
+ * @param {object} opts
  * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {string} [opts.market] - market name
  * @param {Logger} logger
@@ -365,9 +365,9 @@ async function networkStatus (args, opts, logger) {
  * ex: `sparkswap wallet release`
  *
  * @function
- * @param {Object} args
- * @param {Object} args.symbol
- * @param {Object} opts
+ * @param {object} args
+ * @param {object} args.symbol
+ * @param {object} opts
  * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {string} [opts.market] - market name, i.e BTC/LTC
  * @param {Logger} logger
@@ -436,11 +436,11 @@ async function release (args, opts, logger) {
  * ex: `sparkswap wallet withdraw`
  *
  * @function
- * @param {Object} args
+ * @param {object} args
  * @param {string} args.symbol
  * @param {string} args.address
  * @param {string} args.amount
- * @param {Object} opts
+ * @param {object} opts
  * @param {string} [opts.rpcAddress] - broker rpc address
  * @param {string} [opts.walletAddress] - wallet address to move funds to
  * @param {Logger} logger
@@ -470,9 +470,9 @@ async function withdraw (args, opts, logger) {
  * ex: `sparkswap wallet create`
  *
  * @function
- * @param {Object} args
+ * @param {object} args
  * @param {string} args.symbol
- * @param {Object} opts
+ * @param {object} opts
  * @param {Logger} logger
  * @returns {void}
  */
@@ -509,9 +509,9 @@ async function create (args, opts, logger) {
  * ex: `sparkswap wallet unlock`
  *
  * @function
- * @param {Object} args
+ * @param {object} args
  * @param {string} args.symbol
- * @param {Object} opts
+ * @param {object} opts
  * @param {string} [opts.rpcAddress=null]
  * @param {Logger} logger
  * @returns {void}
@@ -574,9 +574,9 @@ async function recover (args, opts, logger) {
 
 /**
  * Returns all on-chain history of a specific wallet
- * @param {Object} args
+ * @param {object} args
  * @param {string} args.symbol
- * @param {Object} opts
+ * @param {object} opts
  * @param {string} opts.rpcAddress
  * @param {Logger} logger
  * @returns {void}
@@ -621,9 +621,9 @@ async function history (args, opts, logger) {
  * ex: `sparkswap wallet change-password <symbol>`
  *
  * @function
- * @param {Object} args
+ * @param {object} args
  * @param {string} args.symbol
- * @param {Object} opts
+ * @param {object} opts
  * @param {string} [opts.rpcAddress=null]
  * @param {Logger} logger
  * @returns {void}

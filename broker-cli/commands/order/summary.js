@@ -57,8 +57,8 @@ function createUI (market, orders) {
  *
  * ex: `sparkswap order summary --market 'BTC/LTC'
  *
- * @param {Object} args
- * @param {Object} opts
+ * @param {object} args
+ * @param {object} opts
  * @param {string} opts.market
  * @param {string} opts.rpcaddress
  * @param {Logger} logger

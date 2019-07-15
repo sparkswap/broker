@@ -3,6 +3,8 @@ const through = require('through2')
 const migrateStore = require('./migrate-store')
 const logger = require('./logger')
 
+/** @typedef {import('level-sublevel')} Sublevel */
+
 /**
  * Return true for every call
  * Used to create a non-filtering filter
@@ -40,12 +42,11 @@ const UPPER_BOUND = '\uffff'
 class Index {
   /**
    * Create a new index for sublevel store
-   * @param  {sublevel} store                 - Sublevel of the base store
+   * @param  {Sublevel} store                 - Sublevel of the base store
    * @param  {string}   name                  - Name of the index
    * @param  {Function} getValue              - User-passed function that returns the indexed value
    * @param  {Function} [filter=returnTrue]   - Filter for items to not index
    * @param  {string}   [delimiter=DELIMITER] - Delimiter between the index value and the base key. It may appear in the base key, but cannot appear in the index value produced by `getValue`.
-   * @returns {Index}
    */
   constructor (store, name, getValue, filter = returnTrue, delimiter = DELIMITER) {
     this.store = store
@@ -71,8 +72,8 @@ class Index {
 
   /**
    * Build a sublevel-compatible option range for this index
-   * @param {Object} opts - Options from which to build a range
-   * @returns {Object} Sublevel readStream options
+   * @param {object} opts - Options from which to build a range
+   * @returns {object} Sublevel readStream options
    */
   range (opts = {}) {
     if (opts.gt) {
@@ -92,8 +93,8 @@ class Index {
 
   /**
    * Create a read stream of the index, filtering out those keys marked for deletion and transforming index keys into base keys
-   * @param {Object} opts - Sublevel readStream options
-   * @returns {Readable}    Readable stream
+   * @param {object} opts - Sublevel readStream options
+   * @returns {import('stream').Readable}
    */
   createReadStream (opts) {
     const optionsToUpdate = Object.assign({}, opts)
@@ -104,7 +105,7 @@ class Index {
     // reference the Index context in a local variable
     const index = this
 
-    return stream.pipe(through.obj(function ({ key, value }, encoding, callback) {
+    return stream.pipe(through.obj(function ({ key, value }, _encoding, callback) {
       // skip objects that are marked for deletion
       if (index._isMarkedForDeletion(key)) {
         return callback()
@@ -206,7 +207,8 @@ class Index {
     this.store.get(baseKey, async (err, value) => {
       if (err) {
         // TODO: error handling on index removal
-        return logger.error(`Error trying to get key when removing ${baseKey} from ${this.name} index`, { err: err.toString() })
+        logger.error(`Error trying to get key when removing ${baseKey} from ${this.name} index`, { err: err.toString() })
+        return
       }
 
       try {
@@ -218,7 +220,7 @@ class Index {
         this._finishDeletion(baseKey)
       } catch (e) {
         // TODO: error handling on index removal
-        return logger.error(`Error while removing ${baseKey} from ${this.name} index`, { err: e.toString() })
+        logger.error(`Error while removing ${baseKey} from ${this.name} index`, { err: e.toString() })
       }
     })
   }
@@ -227,7 +229,7 @@ class Index {
    * Create a database operation to add an object to the index
    * @param {string}   baseKey    - Key of the object in the base store
    * @param {string}   baseValue  - Value of the object in the base store
-   * @returns {Object} Sublevel compatible database batch operation
+   * @returns {object} Sublevel compatible database batch operation
    */
   _addToIndexOperation (baseKey, baseValue) {
     const indexKey = this._createIndexKey(baseKey, baseValue)

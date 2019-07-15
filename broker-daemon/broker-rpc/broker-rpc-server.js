@@ -12,6 +12,32 @@ const {
   createHttpServer
 } = require('../utils')
 
+/** @typedef {import('../').Logger} Logger */
+/** @typedef {import('../').Engine} Engine */
+/** @typedef {import('../relayer')} RelayerClient */
+/** @typedef {import('../orderbook')} Orderbook */
+/** @typedef {import('../block-order-worker')} BlockOrderWorker */
+/** @typedef {import('level-sublevel')} Sublevel */
+
+/** @typedef {object} GrpcUnaryMethodRequest
+ * @property {object} request.params - Request parameters from the client
+ * @property {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
+ * @property {Logger} request.logger - logger for messages about the method
+ * @property {Map<string, Engine>} request.engines - Map of all available Payment Channel Network Engines
+ * @property {Map<string, Orderbook>} request.orderbooks
+ * @property {BlockOrderWorker} request.blockOrderWorker
+ * @property {Sublevel} request.store
+ */
+
+/** @typedef {object} GrpcServerStreamingMethodRequest
+ *  @property {object} request.params - Request parameters from the client
+ *  @property {Function} request.send - Send a chunk of data to the client
+ *  @property {Function} request.onCancel
+ *  @property {RelayerClient} request.relayer - grpc Client for interacting with the Relayer
+ *  @property {Logger} request.logger - logger for messages about the method
+ *  @property {Map<string, Orderbook>} request.orderbooks
+ */
+
 /**
  * @constant
  * @type {string}
@@ -35,7 +61,7 @@ const IS_PRODUCTION = (process.env.NODE_ENV === 'production')
  * NOTE: This object will be mutated by gRPC (do not use Object.freeze)
  *
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const GRPC_SERVER_OPTIONS = {
@@ -59,18 +85,25 @@ const GRPC_SERVER_OPTIONS = {
  */
 class BrokerRPCServer {
   /**
-   * @param {Object} opts
+   * @param {object} opts
    * @param {Logger} opts.logger
    * @param {Map<string, Engine>} opts.engines
    * @param {RelayerClient} opts.relayer
    * @param {BlockOrderWorker} opts.blockOrderWorker
    * @param {Sublevel} opts.store - BrokerDaemon sublevel store
-   * @param {Map<Orderbook>} opts.orderbooks
-   * @param {string} opts.privKeyPath - Path to private key for broker rpc
+   * @param {Map<string, Orderbook>} opts.orderbooks
    * @param {string} opts.pubKeyPath - Path to public key for broker rpc
+   * @param {string} opts.privKeyPath - Path to private key for broker rpc
    * @param {boolean} [opts.disableAuth=false]
+   * @param {boolean} [opts.enableCors=false]
+   * @param {boolean} opts.isCertSelfSigned
+   * @param {?string} [opts.rpcUser]
+   * @param {?string} [opts.rpcPass]
+   * @param {string} opts.rpcHttpProxyAddress
+   * @param {Array<string>} opts.rpcHttpProxyMethods
+   * @param {string} opts.rpcAddress
    */
-  constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, store, pubKeyPath, privKeyPath, disableAuth = false, enableCors = false, isCertSelfSigned, rpcUser = null, rpcPass = null, rpcHttpProxyAddress, rpcHttpProxyMethods, rpcAddress } = {}) {
+  constructor ({ logger, engines, relayer, blockOrderWorker, orderbooks, store, pubKeyPath, privKeyPath, disableAuth = false, enableCors = false, isCertSelfSigned, rpcUser = null, rpcPass = null, rpcHttpProxyAddress, rpcHttpProxyMethods, rpcAddress }) {
     this.logger = logger
     this.engines = engines
     this.relayer = relayer
@@ -133,7 +166,7 @@ class BrokerRPCServer {
   /**
    * Creates gRPC server credentials for the broker rpc server
    *
-   * @returns {Object} grpc credentials
+   * @returns {object} grpc credentials
    */
   createCredentials () {
     if (this.disableAuth) {

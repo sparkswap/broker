@@ -10,9 +10,9 @@ require('colors')
  *
  * ex: `sparkswap register`
  *
- * @param {Object} args
- * @param {Object} opts
- * @param {String} [rpcAddress=null] broker rpc address
+ * @param {object} args
+ * @param {object} opts
+ * @param {string} [rpcAddress=null] - broker rpc address
  * @param {Logger} logger
  */
 

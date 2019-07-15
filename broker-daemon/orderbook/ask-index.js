@@ -2,6 +2,8 @@ const PriceIndex = require('./price-index')
 const { MarketEventOrder } = require('../models')
 const { Big } = require('../utils')
 
+/** @typedef {import('level-sublevel')} Sublevel */
+
 /**
  * Total size of keys for price-based indexes, indicating 16 digits to the left and right of the decimal
  * Used for zero-filling so we can lexicographically sort correctly
@@ -24,7 +26,7 @@ const DECIMAL_PLACES = 19
 class AskIndex extends PriceIndex {
   /**
    * Create an index for ask orders in an underlying store
-   * @param  {sublevel} store - Underlying store with the orders
+   * @param {Sublevel} store - Underlying store with the orders
    */
   constructor (store) {
     super(store, MarketEventOrder.SIDES.ASK)

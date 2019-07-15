@@ -1,12 +1,24 @@
+const { GrpcResponse: ReleaseChannelsResponse } = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+/** @typedef {import('../broker-rpc-server').Engine} Engine */
+/** @typedef {import('../broker-rpc-server').Logger} Logger */
+
 /**
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const RELEASE_STATE = Object.freeze({
   RELEASED: 'RELEASED',
   FAILED: 'FAILED'
 })
+
+/** @typedef {object} CloseChannelsResponse
+ *  @property {string} symbol
+ *  @property {string} status - RELEASED or FAILED
+ *  @property {string} [error=undefined] - only present if status is FAILED
+ */
 
 /**
  * Close channels on a specific engine
@@ -16,10 +28,7 @@ const RELEASE_STATE = Object.freeze({
  * @param {string} symbol - e.g. BTC or LTC
  * @param {boolean} force
  * @param {Logger} logger
- * @returns {Object} res
- * @returns {string} res.symbol
- * @returns {string} res.status - RELEASED or FAILED
- * @returns {string} [res.error=undefined] - only present if status is FAILED
+ * @returns {Promise<CloseChannelsResponse>}
  */
 async function closeChannels (engine, symbol, force, logger) {
   try {
@@ -45,19 +54,10 @@ async function closeChannels (engine, symbol, force, logger) {
 /**
  * Grabs public lightning network information from relayer and opens a channel
  *
- * @param {Object} request - request object
- * @param {Object} request.params
- * @param {string} request.params.market - Market name (e.g. BTC/LTC)
- * @param {boolean} request.params.force - if channels should be force closed
- * @param {RelayerClient} request.relayer
- * @param {Logger} request.logger
- * @param {Engine} request.engines
- * @param {Map<Orderbook>} request.orderbooks
- * @param {Object} responses
- * @param {Object} responses.ReleaseChannelsResponse
- * @returns {ReleaseChannelsResponse}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<ReleaseChannelsResponse>}
  */
-async function releaseChannels ({ params, logger, engines, orderbooks, blockOrderWorker }, { ReleaseChannelsResponse }) {
+async function releaseChannels ({ params, logger, engines, orderbooks, blockOrderWorker }) {
   const { market, force } = params
 
   const orderbook = orderbooks.get(market)

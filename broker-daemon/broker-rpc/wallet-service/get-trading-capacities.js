@@ -1,9 +1,15 @@
-const { currencies } = require('../../config')
-const { Big } = require('../../utils')
+const {
+  Big,
+  GrpcResponse: GetTradingCapacitiesResponse
+} = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+/** @typedef {import('../broker-rpc-server').Engine} Engine */
+/** @typedef {import('../broker-rpc-server').Logger} Logger */
 
 /**
  * @constant
- * @type {Object}
+ * @type {object}
  * @default
  */
 const CAPACITY_STATE = Object.freeze({
@@ -12,32 +18,43 @@ const CAPACITY_STATE = Object.freeze({
 })
 
 /**
+ * @typedef {object} GetCapacitiesErrorResponse
+ * @property {string} symbol - currency symbol e.g. BTC
+ * @property {string} status - 'FAILED' since the engine call failed
+ * @property {string} error - Error message that caused the failure
+ */
+
+/** @typedef {object} GetCapacitiesSuccessResponse
+ * @property {string} symbol - currency symbol e.g. BTC
+ * @property {string} status - 'OK' for success
+ * @property {string} availableReceiveCapacity
+ * @property {string} availableSendCapacity
+ * @property {string} pendingSendCapacity
+ * @property {string} pendingReceiveCapacity
+ * @property {string} inactiveSendCapacity
+ * @property {string} inactiveReceiveCapacity
+ * @property {string} outstandingReceiveCapacity
+ * @property {string} outstandingSendCapacity
+ */
+
+/** @typedef {GetCapacitiesErrorResponse | GetCapacitiesSuccessResponse} GetCapacitiesResponse
+ */
+
+/**
  * Grabs the total balance and total channel balance from a specified engine
  *
  * @param {Engine} engine - Sparkswap Payment Channel Network Engine
  * @param {string} symbol
  * @param {string} outstandingSendCapacity - amount of outstanding send capacity for the given currency
  * @param {string} outstandingReceiveCapacity - amount of outstanding receive capacity for the given currency
- * @param {Object} opts
+ * @param {object} opts
  * @param {Logger} opts.logger
- * @returns {Object} res
- * @returns {string} res.symbol - currency symbol e.g. BTC
- * @returns {string} res.status - OK for success or FAILED if engine call fails
- * @returns {boolean} res.error - true if errors occurred during request for capacities
- * @returns {string} res.availableReceiveCapacity
- * @returns {string} res.availableSendCapacity
- * @returns {string} res.pendingSendCapacity
- * @returns {string} res.pendingReceiveCapacity
- * @returns {string} res.inactiveSendCapacity
- * @returns {string} res.inactiveReceiveCapacity
- * @returns {string} res.outstandingReceiveCapacity
- * @returns {string} res.outstandingSendCapacity
+ * @returns {Promise<GetCapacitiesResponse>}
  */
 async function getCapacities (engine, symbol, outstandingSendCapacity, outstandingReceiveCapacity, { logger }) {
-  const { quantumsPerCommon } = currencies.find(({ symbol: configSymbol }) => configSymbol === symbol) || {}
-
+  const { quantumsPerCommon } = engine
   if (!quantumsPerCommon) {
-    throw new Error(`Currency was not found when trying to get trading capacities: ${this.symbol}`)
+    throw new Error(`Invalid configuration: missing quantumsPerCommon for ${symbol}`)
   }
 
   try {
@@ -81,17 +98,10 @@ async function getCapacities (engine, symbol, outstandingSendCapacity, outstandi
  * Grabs the remote and local capacities from the requested engines and orders/fills store available, pending, outstanding, and inactive channels
  *
  * @function
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {Object} request.params
- * @param {Map<symbol, Engine>} request.engines
- * @param {Object} request.orderbooks - initialized orderbooks
- * @param {BlockOrderWorker} request.blockOrderWorker
- * @param {Logger} request.logger
- * @param {Object} responses
- * @param {Function} responses.GetTradingCapacitiesResponse
- * @returns {GetTradingCapacitiesResponse}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<GetTradingCapacitiesResponse>}
  */
-async function getTradingCapacities ({ params, engines, orderbooks, blockOrderWorker, logger }, { GetTradingCapacitiesResponse }) {
+async function getTradingCapacities ({ params, engines, orderbooks, blockOrderWorker, logger }) {
   const { market } = params
   const orderbook = orderbooks.get(market)
 

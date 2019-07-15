@@ -2,6 +2,8 @@ const PriceIndex = require('./price-index')
 const { Big } = require('../utils')
 const { MarketEventOrder } = require('../models')
 
+/** @typedef {import('level-sublevel')} Sublevel */
+
 /**
  * Largest int64, also the maximum value of prices and amounts
  * @constant
@@ -32,7 +34,7 @@ const DECIMAL_PLACES = 19
 class BidIndex extends PriceIndex {
   /**
    * Create an index for bid orders in an underlying store
-   * @param  {sublevel} store - Underlying store with the orders
+   * @param {Sublevel} store - Underlying store with the orders
    */
   constructor (store) {
     super(store, MarketEventOrder.SIDES.BID)

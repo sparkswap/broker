@@ -9,7 +9,6 @@ const healthCheck = rewire(path.resolve(__dirname, 'health-check'))
 
 describe('health-check', () => {
   describe('healthCheck', () => {
-    let HealthCheckResponse
     let relayerStub
     let loggerStub
     let relayerStatusStub
@@ -56,7 +55,6 @@ describe('health-check', () => {
         info: sinon.stub(),
         debug: sinon.stub()
       }
-      HealthCheckResponse = sinon.stub()
       orderbookStatusOK = healthCheck.__get__('ORDERBOOK_STATUS_CODES').ORDERBOOK_OK
       relayerStatusOK = healthCheck.__get__('RELAYER_STATUS_CODES').RELAYER_OK
       relayerStatusStub = sinon.stub().returns(relayerStatusOK)
@@ -85,8 +83,7 @@ describe('health-check', () => {
           logger: loggerStub,
           engines,
           orderbooks
-        },
-        { HealthCheckResponse }
+        }
       )
     })
 
@@ -100,9 +97,7 @@ describe('health-check', () => {
     })
 
     it('returns status values', async () => {
-      expect(result).to.be.an.instanceOf(HealthCheckResponse)
-      expect(HealthCheckResponse).to.have.been.calledOnce()
-      expect(HealthCheckResponse).to.have.been.calledWith(sinon.match(
+      expect(result).to.deep.include(
         {
           engineStatus: [
             { symbol: 'BTC', status: 'OK' },
@@ -112,11 +107,12 @@ describe('health-check', () => {
           orderbookStatus: [
             { market: 'BTC/LTC', status: orderbookStatusOK }
           ]
-        }))
+        }
+      )
     })
 
     it('includes record counts if the flag is passed', async () => {
-      await healthCheck(
+      const res = await healthCheck(
         {
           params: { includeRecordCounts: true },
           relayer: relayerStub,
@@ -124,11 +120,10 @@ describe('health-check', () => {
           engines,
           orderbooks,
           store
-        },
-        { HealthCheckResponse }
+        }
       )
 
-      expect(HealthCheckResponse).to.have.been.calledWith(sinon.match(
+      expect(res).to.deep.include(
         {
           recordCounts: [
             {
@@ -143,7 +138,7 @@ describe('health-check', () => {
             }
           ]
         }
-      ))
+      )
     })
   })
 

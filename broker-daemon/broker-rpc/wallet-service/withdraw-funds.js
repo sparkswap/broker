@@ -1,22 +1,17 @@
-const { currencies } = require('../../config')
-const { Big } = require('../../utils')
+const {
+  Big,
+  GrpcResponse: WithdrawFundsResponse
+} = require('../../utils')
+
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
 
 /**
  * Withdraws funds from the wallet to specified address
  *
- * @param {Object} request - request object
- * @param {Object} request.params
- * @param {string} request.params.symbol
- * @param {string} request.params.amount
- * @param {string} request.params.address
- * @param {RelayerClient} request.relayer
- * @param {Logger} request.logger
- * @param {Map<Symbol, Engine>} request.engines
- * @param {Object} responses
- * @param {Function} responses.WithdrawFundsResponse
- * @returns {WithdrawFundsResponse}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<WithdrawFundsResponse>}
  */
-async function withdrawFunds ({ params, relayer, logger, engines }, { WithdrawFundsResponse }) {
+async function withdrawFunds ({ params, logger, engines }) {
   const { symbol, amount, address } = params
 
   const engine = engines.get(symbol)
@@ -24,7 +19,7 @@ async function withdrawFunds ({ params, relayer, logger, engines }, { WithdrawFu
     throw new Error(`No engine available for ${symbol}`)
   }
 
-  const { quantumsPerCommon: multiplier } = currencies.find(({ symbol: configSymbol }) => configSymbol === symbol) || {}
+  const multiplier = engine.quantumsPerCommon
   if (!multiplier) {
     throw new Error(`Invalid configuration: missing quantumsPerCommon for ${symbol}`)
   }

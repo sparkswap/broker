@@ -1,7 +1,7 @@
 const nano = require('nano-seconds')
 
 const { Big, timestampToNano } = require('../utils')
-const CONFIG = require('../config')
+const CONFIG = require('../config.json')
 
 /**
  * Delimiter for MarketEvent keys
@@ -19,12 +19,21 @@ const DELIMITER = ':'
  */
 const LOWER_BOUND = '\x00'
 
+/** @typedef {{[k: string]: string}} Dictionary */
+
+/** @type {Dictionary} */
+const TYPES = Object.freeze({
+  PLACED: 'PLACED',
+  FILLED: 'FILLED',
+  CANCELLED: 'CANCELLED'
+})
+
 /**
  * Class representation from watchMarket events coming from the relayer.
  */
 class MarketEvent {
   constructor ({ eventId, orderId, timestamp, eventType, sequence, ...payload }) {
-    if (!Object.keys(this.constructor.TYPES).includes(eventType)) {
+    if (!Object.keys(TYPES).includes(eventType)) {
       throw new Error(`MarketEvents do not support a "${eventType}" type.`)
     }
 
@@ -34,7 +43,7 @@ class MarketEvent {
     this.eventType = eventType
     this.sequence = sequence
     this.payload = payload
-    this.sep = this.constructor.sep
+    this.sep = DELIMITER
   }
 
   get key () {
@@ -54,6 +63,10 @@ class MarketEvent {
   amount (baseSymbol) {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === baseSymbol)
 
+    if (!baseCurrencyConfig) {
+      throw new Error('Invalid currency config')
+    }
+
     return Big(this.payload.fillAmount).div(baseCurrencyConfig.quantumsPerCommon).toFixed(16)
   }
 
@@ -67,6 +80,9 @@ class MarketEvent {
     const baseCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === baseSymbol)
     const counterCurrencyConfig = CONFIG.currencies.find(({ symbol }) => symbol === counterSymbol)
 
+    if (!baseCurrencyConfig || !counterCurrencyConfig) {
+      throw new Error('Invalid currency config')
+    }
     const baseCommonAmount = Big(this.payload.baseAmount).div(baseCurrencyConfig.quantumsPerCommon)
     const counterCommonAmount = Big(this.payload.counterAmount).div(counterCurrencyConfig.quantumsPerCommon)
 
@@ -110,7 +126,7 @@ class MarketEvent {
    * Given key/value data from the db, return a MarketEvent
    *
    * @param {string} key
-   * @param {Value} value
+   * @param {string} value
    * @returns {MarketEvent}
    */
   static fromStorage (key, value) {
@@ -122,8 +138,7 @@ class MarketEvent {
    * Returns a range query for leveldb from a given timestamp
    *
    * @param {string} startTime - time in nanoseconds
-   * @returns {Object} range
-   * @returns {string} range.gte
+   * @returns {{ gte: string }} range
    */
   static rangeFromTimestamp (startTime) {
     return {
@@ -132,12 +147,8 @@ class MarketEvent {
   }
 }
 
-MarketEvent.TYPES = Object.freeze({
-  PLACED: 'PLACED',
-  FILLED: 'FILLED',
-  CANCELLED: 'CANCELLED'
-})
+MarketEvent.TYPES = TYPES
 
-MarketEvent.sep = ':'
+MarketEvent.sep = DELIMITER
 
 module.exports = MarketEvent
