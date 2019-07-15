@@ -536,9 +536,9 @@ async function unlock (args, opts, logger) {
  * ex: `sparkswap wallet recover <symbol>`
  *
  * @function
- * @param {Object} args
+ * @param {object} args
  * @param {string} args.symbol
- * @param {Object} opts
+ * @param {object} opts
  * @param {Logger} logger
  * @returns {void}
  */

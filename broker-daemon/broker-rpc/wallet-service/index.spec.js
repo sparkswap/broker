@@ -27,13 +27,11 @@ describe('WalletService', () => {
   let blockOrderWorker
   let changeWalletPassword
   let recoverWallet
-  let responseStub
 
   let reverts
 
   before(() => {
     reverts = []
-    responseStub = sinon.stub()
     protoPath = 'example/path.proto'
     loadProtoStub = sinon.stub().returns({
       broker: {
@@ -211,8 +209,7 @@ describe('WalletService', () => {
       expect(unaryMethodStub).to.have.been.calledWith(
         recoverWallet,
         expectedMessageId,
-        { logger, engines, auth },
-        { EmptyResponse: responseStub }
+        { logger, engines, auth }
       )
     })
   })

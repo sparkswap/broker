@@ -11,11 +11,9 @@ describe('recover-wallet', () => {
   let logger
   let params
   let engines
-  let EmptyResponse
   let engine
 
   beforeEach(() => {
-    EmptyResponse = sinon.stub()
     engine = {
       recoverWallet: sinon.stub()
     }
@@ -33,21 +31,21 @@ describe('recover-wallet', () => {
 
   it('errors if password is missing', () => {
     params.password = null
-    return expect(recoverWallet({ logger, engines, params }, { EmptyResponse })).to.eventually.be.rejectedWith('Password is required')
+    return expect(recoverWallet({ logger, engines, params })).to.eventually.be.rejectedWith('Password is required')
   })
 
   it('errors if seed is missing', () => {
     params.seed = null
-    return expect(recoverWallet({ logger, engines, params }, { EmptyResponse })).to.eventually.be.rejectedWith('seed is required')
+    return expect(recoverWallet({ logger, engines, params })).to.eventually.be.rejectedWith('seed is required')
   })
 
   it('throws an error for an invalid engine type', () => {
     const badParams = { symbol: 'BAD' }
-    return expect(recoverWallet({ logger, engines, params: badParams }, { EmptyResponse })).to.eventually.be.rejectedWith('Unable to recover wallet')
+    return expect(recoverWallet({ logger, engines, params: badParams })).to.eventually.be.rejectedWith('Unable to recover wallet')
   })
 
   it('recovers a wallet', async () => {
-    await recoverWallet({ logger, engines, params }, { EmptyResponse })
+    await recoverWallet({ logger, engines, params })
     expect(engine.recoverWallet).to.have.been.calledWith(params.password, params.seed, params.useBackup)
   })
 })

@@ -1,19 +1,12 @@
+/** @typedef {import('../broker-rpc-server').GrpcUnaryMethodRequest} GrpcUnaryMethodRequest */
+
 /**
  * Attempts to recover a wallet for a new lnd instance
  *
- * @param {GrpcUnaryMethod~request} request - request object
- * @param {Logger} request.logger
- * @param {Object<string>} request.params
- * @param {string} request.params.symbol - currency symbol of the wallet e.g. `BTC`
- * @param {string} request.params.password - password for the existing wallet
- * @param {string} request.params.seed - string representation of 24 word mnemonic seed delimited by spaces
- * @param {string} request.params.backup - backup path file
- * @param {Map<Engine>} request.engines
- * @param {Object} responses
- * @param {Function} responses.EmptyResponse
- * @returns {EmptyResponse}
+ * @param {GrpcUnaryMethodRequest} request - request object
+ * @returns {Promise<object>}
  */
-async function recoverWallet ({ logger, params, engines }, { EmptyResponse }) {
+async function recoverWallet ({ logger, params, engines }) {
   const {
     symbol,
     password,
@@ -38,7 +31,7 @@ async function recoverWallet ({ logger, params, engines }, { EmptyResponse }) {
 
   await engine.recoverWallet(password, seed, useBackup)
 
-  return new EmptyResponse({})
+  return {}
 }
 
 module.exports = recoverWallet

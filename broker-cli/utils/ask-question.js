@@ -57,7 +57,7 @@ function askQuestion (message, { silent = false } = {}) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    historySize: 1
+    historySize: 0
   })
 
   const dataHandler = (char) => suppressInput(message, char)

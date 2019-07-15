@@ -45,18 +45,18 @@ class WalletService {
     this.engines = engines
 
     this.implementation = {
-      newDepositAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engines, auth }, { NewDepositAddressResponse }).register(),
-      getBalances: new GrpcUnaryMethod(getBalances, this.messageId('getBalances'), { logger, engines, auth }, { GetBalancesResponse }).register(),
-      commit: new GrpcUnaryMethod(commit, this.messageId('commit'), { logger, engines, relayer, orderbooks, auth }, { EmptyResponse }).register(),
-      getPaymentChannelNetworkAddress: new GrpcUnaryMethod(getPaymentChannelNetworkAddress, this.messageId('getPaymentChannelNetworkAddress'), { logger, engines, auth }, { GetPaymentChannelNetworkAddressResponse }).register(),
-      getTradingCapacities: new GrpcUnaryMethod(getTradingCapacities, this.messageId('getTradingCapacities'), { logger, engines, orderbooks, blockOrderWorker, auth }, { GetTradingCapacitiesResponse }).register(),
-      releaseChannels: new GrpcUnaryMethod(releaseChannels, this.messageId('releaseChannels'), { logger, engines, orderbooks, blockOrderWorker, auth }, { ReleaseChannelsResponse }).register(),
-      withdrawFunds: new GrpcUnaryMethod(withdrawFunds, this.messageId('withdrawFunds'), { logger, engines, auth }, { WithdrawFundsResponse }).register(),
-      createWallet: new GrpcUnaryMethod(createWallet, this.messageId('createWallet'), { logger, engines, auth }, { CreateWalletResponse }).register(),
-      unlockWallet: new GrpcUnaryMethod(unlockWallet, this.messageId('unlockWallet'), { logger, engines, auth }, { EmptyResponse }).register(),
-      changeWalletPassword: new GrpcUnaryMethod(changeWalletPassword, this.messageId('changeWalletPassword'), { logger, engines, auth }, { EmptyResponse }).register(),
-      walletHistory: new GrpcUnaryMethod(walletHistory, this.messageId('walletHistory'), { logger, engines, auth }, { WalletHistoryResponse }).register(),
-      recoverWallet: new GrpcUnaryMethod(recoverWallet, this.messageId('recoverWallet'), { logger, engines, auth }, { EmptyResponse }).register()
+      newDepositAddress: new GrpcUnaryMethod(newDepositAddress, this.messageId('newDepositAddress'), { logger, engines, auth }).register(),
+      getBalances: new GrpcUnaryMethod(getBalances, this.messageId('getBalances'), { logger, engines, auth }).register(),
+      commit: new GrpcUnaryMethod(commit, this.messageId('commit'), { logger, engines, relayer, orderbooks, auth }).register(),
+      getPaymentChannelNetworkAddress: new GrpcUnaryMethod(getPaymentChannelNetworkAddress, this.messageId('getPaymentChannelNetworkAddress'), { logger, engines, auth }).register(),
+      getTradingCapacities: new GrpcUnaryMethod(getTradingCapacities, this.messageId('getTradingCapacities'), { logger, engines, orderbooks, blockOrderWorker, auth }).register(),
+      releaseChannels: new GrpcUnaryMethod(releaseChannels, this.messageId('releaseChannels'), { logger, engines, orderbooks, blockOrderWorker, auth }).register(),
+      withdrawFunds: new GrpcUnaryMethod(withdrawFunds, this.messageId('withdrawFunds'), { logger, engines, auth }).register(),
+      createWallet: new GrpcUnaryMethod(createWallet, this.messageId('createWallet'), { logger, engines, auth }).register(),
+      unlockWallet: new GrpcUnaryMethod(unlockWallet, this.messageId('unlockWallet'), { logger, engines, auth }).register(),
+      changeWalletPassword: new GrpcUnaryMethod(changeWalletPassword, this.messageId('changeWalletPassword'), { logger, engines, auth }).register(),
+      walletHistory: new GrpcUnaryMethod(walletHistory, this.messageId('walletHistory'), { logger, engines, auth }).register(),
+      recoverWallet: new GrpcUnaryMethod(recoverWallet, this.messageId('recoverWallet'), { logger, engines, auth }).register()
     }
   }
 
