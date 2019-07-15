@@ -2098,8 +2098,8 @@ service WalletService {
    *
    * *** Off-chain recovery
    *
-   * When a backup is present, this RPC allows the user to recover any funds that were deposited to the exchange, as well as
-   * any funds that have been committed to the exchange.
+   * When a backup is present, this RPC also allows the user to recover funds that have been committed
+   * to the exchange.
    *
    * If a backup does not exist then wallet recovery will only cover on-chain funds.
    *
