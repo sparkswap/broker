@@ -26,8 +26,8 @@ function normalizeOrder (order) {
  * @returns {Promise<GrpcResponse>}
  */
 async function createOrder ({ params, relayer, store }) {
-  const authorization = relayer.identity.authorize()
   const timestamp = nano.toString(nano.now())
+  const authorization = relayer.identity.authorize()
   const { orderId } = await relayer.orderService.createOrder(params, authorization)
   const order = Object.assign({}, normalizeOrder(params), { timestamp })
   await promisify(store.sublevel('orders2').put)(orderId, order)
