@@ -57,18 +57,25 @@ function askQuestion (message, { silent = false } = {}) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
-    historySize: 1
+    historySize: 0
   })
+
+  const dataHandler = (char) => suppressInput(message, char)
 
   // If `silent` is set to true, we open stdin and suppress all output until we
   // receive an 'end of data' command such as enter/return
   if (silent) {
-    process.stdin.on('data', char => suppressInput(message, char))
+    process.stdin.on('data', dataHandler)
   }
 
   return new Promise((resolve, reject) => {
     try {
       rl.question(`${message} `, (answer) => {
+        // Remove the data listener that we had added so that we are not adding
+        // multiple listeners on stdin which causes weird side-effects when using
+        // `askQuestion` multiple times in the same command
+        process.stdin.removeListener('data', dataHandler)
+
         rl.close()
         return resolve(answer)
       })

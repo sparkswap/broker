@@ -95,10 +95,13 @@ describe('ask-question', () => {
       rlStub = {
         close: sinon.stub(),
         question: sinon.stub(),
-        history: []
+        history: {
+          slice: sinon.stub()
+        }
       }
       stdinStub = {
-        on: sinon.stub()
+        on: sinon.stub(),
+        removeListener: sinon.stub()
       }
       stdoutStub = sinon.stub()
       createInterfaceStub = sinon.stub().returns(rlStub)
@@ -143,6 +146,13 @@ describe('ask-question', () => {
         const call = rlStub.question.args[0][1]
         call()
         expect(rlStub.close).to.have.been.calledOnce()
+      })
+
+      it('removes stdin data listener', () => {
+        askQuestion(message)
+        const call = rlStub.question.args[0][1]
+        call()
+        expect(stdinStub.removeListener).to.have.been.calledOnceWith('data', sinon.match.func)
       })
 
       it('closes a stream if an error occurred', () => {

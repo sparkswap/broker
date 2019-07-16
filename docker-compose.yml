@@ -24,6 +24,8 @@ services:
       - 'shared:/shared'
       # Persistent certs/keys for broker
       - '${SECURE_PATH}:/secure'
+      # Backups folder
+      - './backup:/backup'
     environment:
       - DEBUG=info
       - NODE_ENV=production
@@ -62,6 +64,7 @@ services:
     volumes:
       - 'shared:/shared'
       - 'lnd_btc:/data'
+      - './backup:/backup'
     networks:
       - broker
     logging:
@@ -86,6 +89,7 @@ services:
     volumes:
       - 'shared:/shared'
       - 'lnd_ltc:/data'
+      - './backup:/backup'
     networks:
       - broker
     logging:
