@@ -54,6 +54,9 @@ jobs:
       - image: docker:18.09.7
     steps:
       - setup_remote_docker
+      - run: docker-compose -v
+      # Set up docker-compose on this image to make sure we are not going crazy
+      - run: |
   publish-cli:
     docker:
       - image: node:8.11
