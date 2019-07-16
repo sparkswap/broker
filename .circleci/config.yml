@@ -81,7 +81,7 @@ workflows:
   build-and-test:
     jobs:
       - build
-      - run-integration-tests:
+      - integration-tests:
           requires:
             - build
           filters:
