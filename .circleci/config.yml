@@ -50,6 +50,8 @@ jobs:
 
       - run: npm run ci-test
   integration-tests:
+    docker:
+      - image: docker:18.09.7
     steps:
       - setup_remote_docker
   publish-cli:
