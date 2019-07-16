@@ -686,6 +686,26 @@ message CreateOrderResponse {
  * ```
  */
 service OrderService {
+  /** CreateOrder creates a new order that gets passed directly to the Relayer,
+   * which returns an order ID and then the order gets saved to the local
+   * database with the order ID as key.
+   *
+   * ```javascript
+   * const { orderId } = await orderService.createOrder({
+   *   sourceAmount: {
+   *     symbol: 'BTC',
+   *     value: '0.01'
+   *   },
+   *   sourceAddress: 'sb1qsakedujs4exdq5dz2cpldcph6hlvf82l8mn8uk',
+   *   destinationAmount: {
+   *     symbol: 'LTC',
+   *     value: '1.1'
+   *   },
+   *   destinationAddress: 'sb1qsakedujs4exdq5dz2cpldcph6hlvf82l8mn8uk'
+   *   roleRestriction: 'NO_RESTRICTION'
+   * })
+   * ```
+   */
   rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
 
   /**
