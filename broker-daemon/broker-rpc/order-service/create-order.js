@@ -1,3 +1,4 @@
+const nano = require('nano-seconds')
 const { promisify } = require('util')
 const { GrpcResponse, Big } = require('../../utils')
 
@@ -26,7 +27,7 @@ function normalizeOrder (order) {
  */
 async function createOrder ({ params, relayer, store }) {
   const authorization = relayer.identity.authorize()
-  const timestamp = (new Date()).getTime().toString()
+  const timestamp = nano.toString(nano.now())
   const { orderId } = await relayer.orderService.createOrder(params, authorization)
   const order = Object.assign({}, normalizeOrder(params), { timestamp })
   await promisify(store.sublevel('orders2').put)(orderId, order)
