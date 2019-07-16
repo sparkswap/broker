@@ -90,9 +90,6 @@ workflows:
       - integration-tests:
           requires:
             - build
-          filters:
-            branches:
-              only: feature/ci-integration
   master-publish-cli:
     jobs:
       - publish-cli:
