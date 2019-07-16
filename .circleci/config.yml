@@ -50,7 +50,8 @@ jobs:
 
       - run: npm run ci-test
   integration-tests:
-    - setup_remote_docker
+    steps:
+      - setup_remote_docker
   publish-cli:
     docker:
       - image: node:8.11
