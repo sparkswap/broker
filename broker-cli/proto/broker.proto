@@ -1592,6 +1592,20 @@ message ChangeWalletPasswordRequest {
 }
 
 /**
+ * Request to recover a wallet
+ */
+message RecoverWalletRequest {
+  // Currency of wallet
+  string symbol = 1;
+  // Password from the existing wallet
+  string password = 2;
+  // 24 word mnemonic seed
+  repeated string seed = 3;
+  // Specifies the use of a backup to recover a wallet
+  bool use_backup = 4;
+}
+
+/**
  * The WalletService is for interacting with the wallets managed by the Broker on behalf of the user.
  *
  * It is used primarily during set up (e.g. making deposits) of a Broker.
@@ -2063,6 +2077,60 @@ service WalletService {
   rpc ChangeWalletPassword (ChangeWalletPasswordRequest) returns (google.protobuf.Empty) {
     option (.google.api.http) = {
       post: "/v1/wallet/change-password"
+      body: "*"
+    };
+  }
+  /**
+   * RecoverWallet sends a request to a specified engine to restore an engine's wallet.
+   *
+   * This RPC should only be used on a fresh install of the broker to guarentee a stable wallet
+   * recovery
+   *
+   * A user will need to supply the following information for successful wallet recovery:
+   * 1. Wallet password
+   * 2. 24-word mnemonic recovery seed (this should have been written down during the creation of the wallet)
+   * 3. A backup file (optional, required for off-chain recovery)
+   *
+   * *** On-chain recovery
+   *
+   * This RPC allows the user to recover any funds that have NOT been committed to the exchange with the
+   * use of only your wallet password and 24-word recovery seed.
+   *
+   * *** Off-chain recovery
+   *
+   * When a backup is present, this RPC also allows the user to recover funds that have been committed
+   * to the exchange.
+   *
+   * If a backup does not exist then wallet recovery will only cover on-chain funds.
+   *
+   * Backup files are expected at the following paths in your broker folder:
+   * - `./backup/lnd_btc.backup` (LND BTC engine)
+   * - `./backup/lnd_ltc.backup` (LND LTC engine)
+   *
+   * ```javascript
+   * await walletService.recoverWallet({ symbol: 'BTC', password: 'your-password', seed: ['array', 'of', 'strings'], useBackup: true)
+   * ```
+   *
+   * ```shell
+   * > sparkswap wallet recover BTC
+   * ```
+   *
+   * > The above command will print:
+   *
+   * ```javascript
+   * {}
+   * ```
+   *
+   * ```shell
+   * Please enter your wallet password:
+   * Please enter your 24 word recovery seed, with each word separated by spaces:
+   * Recover committed funds with backup file? Y/N:
+   * Wallet recovery process started successfully!
+   * ```
+   */
+  rpc RecoverWallet (RecoverWalletRequest) returns (google.protobuf.Empty) {
+    option (.google.api.http) = {
+      post: "/v1/wallet/recover"
       body: "*"
     };
   }

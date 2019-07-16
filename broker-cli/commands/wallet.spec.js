@@ -986,4 +986,86 @@ describe('cli wallet', () => {
       expect(tablePushStub).to.not.have.been.called()
     })
   })
+
+  describe('recover', () => {
+    let args
+    let logger
+    let reverts
+    let daemonStub
+    let errorStub
+    let client
+    let recoverWalletStub
+    let askQuestionStub
+    let password
+    let seed
+    let backup
+
+    const recover = program.__get__('recover')
+    const opts = {}
+
+    beforeEach(() => {
+      logger = {
+        info: sinon.stub(),
+        error: sinon.stub()
+      }
+      password = 'SPARKSWAP'
+      seed = 'above oak opera my test seed'
+      backup = 'Y'
+      reverts = []
+      recoverWalletStub = sinon.stub()
+      client = {
+        walletService: {
+          recoverWallet: recoverWalletStub
+        }
+      }
+      daemonStub = sinon.stub().returns(client)
+      askQuestionStub = sinon.stub()
+      askQuestionStub.onFirstCall().resolves(password)
+      askQuestionStub.onSecondCall().resolves(seed)
+      askQuestionStub.onThirdCall().resolves(backup)
+
+      errorStub = sinon.stub()
+      args = { symbol: 'BTC/LTC' }
+      reverts.push(program.__set__('BrokerDaemonClient', daemonStub))
+      reverts.push(program.__set__('handleError', errorStub))
+      reverts.push(program.__set__('askQuestion', askQuestionStub))
+    })
+
+    it('create a broker daemon client', async () => {
+      await recover(args, opts, logger)
+      expect(daemonStub).to.have.been.calledOnce()
+    })
+
+    it('asks the user for a wallet password', async () => {
+      await recover(args, opts, logger)
+      expect(askQuestionStub).to.have.been.calledWith(sinon.match('wallet password'))
+    })
+
+    it('asks the user if they are using a backup file', async () => {
+      await recover(args, opts, logger)
+      expect(askQuestionStub).to.have.been.calledWith(sinon.match('24 word recovery seed'))
+    })
+
+    it('asks the user for a recovery seed', async () => {
+      await recover(args, opts, logger)
+      expect(askQuestionStub).to.have.been.calledWith(sinon.match('backup file?'))
+    })
+
+    it('makes a call to recoverWallet', async () => {
+      await recover(args, opts, logger)
+      const expectedParams = {
+        password,
+        seed: seed.split(' '),
+        symbol: args.symbol,
+        useBackup: true
+      }
+      expect(client.walletService.recoverWallet).to.have.been.calledWith(sinon.match(expectedParams))
+    })
+
+    it('seed is converted to an array', async () => {
+      await recover(args, opts, logger)
+      const { seed } = client.walletService.recoverWallet.args[0][0]
+      expect(Array.isArray(seed)).to.be.true()
+    })
+  })
 })
