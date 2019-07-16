@@ -650,6 +650,28 @@ message GetTradeHistoryResponse {
   repeated Fill fills = 2;
 }
 
+enum RoleRestriction {
+  NO_RESTRICTION = 0;
+  MAKER_ONLY = 1;
+}
+
+message Amount {
+  string symbol = 1;
+  string value = 2;
+}
+
+message CreateOrderRequest {
+  Amount source_amount = 1;
+  string source_address = 2;
+  Amount destination_amount = 3;
+  string destination_address = 4;
+  RoleRestriction role_restriction = 10;
+}
+
+message CreateOrderResponse {
+  string order_id = 1;
+}
+
 /**
  * The OrderService manages all trading activity on the Broker.
  * It is the primary way that users interact with the Broker on a day-to-day basis.
@@ -665,28 +687,6 @@ message GetTradeHistoryResponse {
  */
 service OrderService {
   rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
-
-  enum RoleRestriction {
-    NO_RESTRICTION = 0;
-    MAKER_ONLY = 1;
-  }
-
-  message Amount {
-    string symbol = 1;
-    string value = 2;
-  }
-
-  message CreateOrderRequest {
-    Amount source_amount = 1;
-    string source_address = 2;
-    Amount destination_amount = 3;
-    string destination_address = 4;
-    RoleRestriction role_restriction = 10;
-  }
-
-  message CreateOrderResponse {
-    string order_id = 1;
-  }
 
   /**
    * CreateBlockOrder creates new block orders on the Broker.
