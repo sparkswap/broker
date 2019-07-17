@@ -54,7 +54,7 @@ jobs:
       - image: docker:18.09.7
     steps:
       - setup_remote_docker
-      - run: apk add --update python python-dev py-pip build-base
+      - run: apk add --update py-pip python-dev libffi-dev openssl-dev gcc libc-dev make
       - run: pip install docker-compose
       - run: docker-compose -v
       # Set up docker-compose on this image to make sure we are not going crazy
