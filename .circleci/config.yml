@@ -55,8 +55,8 @@ jobs:
     steps:
       - setup_remote_docker
       - run: |
-          sudo apt-get update
-          sudo apt-get install python-pip python-setuptools -y
+          apt-get update
+          apt-get install python-pip python-setuptools -y
       - run: pip install docker-compose
       - run: docker-compose -v
       # Set up docker-compose on this image to make sure we are not going crazy
