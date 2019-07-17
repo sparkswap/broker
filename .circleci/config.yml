@@ -59,6 +59,7 @@ jobs:
       - run: pip install docker-compose
       - run: docker-compose -v
       - run: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+      - run: source ~/.nvm/nvm.sh --no-use
       - run: nvm version
       - run: |
           mkdir -p ~/sparkswap/lnd-engine
