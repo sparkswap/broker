@@ -61,7 +61,7 @@ jobs:
       - run: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
       - run: |
           mkdir -p ~/sparkswap/lnd-engine
-          git clone https://github.com/sparkswap/lnd-engine.git ~/sparkswap
+          git clone https://github.com/sparkswap/lnd-engine.git ~/sparkswap/lnd-engine
           (cd lnd-engine && nvm use && npm run build)
       # Set up docker-compose on this image to make sure we are not going crazy
   publish-cli:
