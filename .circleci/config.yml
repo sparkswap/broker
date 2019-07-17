@@ -56,20 +56,15 @@ jobs:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-      - add_ssh_keys:
-          fingerprints:
-            - "c9:87:ad:a1:25:d7:58:81:47:4f:32:f7:fa:d7:c4:49"
       - run: apk add --update bash nodejs nodejs-npm git curl ssh
       # Relayer setup
       - run: |
           mkdir -p ~/sparkswap/relayer
           git clone git@github.com:sparkswap/relayer.git ~/sparkswap/relayer
-          (
-            cd ~/sparkswap/relayer &&
-            cp .env-regtest-local-sample .env &&
-            npm run build-local &&
-            docker-compose up -d
-          )
+          cd ~/sparkswap/relayer
+          cp .env-regtest-local-sample .env
+          npm run build-local
+          docker-compose up -d
       - run: |
           bash -c "npm run build"
           cp .env-regtest-sample .env
