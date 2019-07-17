@@ -94,8 +94,6 @@ workflows:
   build-and-test:
     jobs:
       - integration-tests:
-          requires:
-            - build
   master-publish-cli:
     jobs:
       - publish-cli:
