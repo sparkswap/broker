@@ -56,7 +56,7 @@ jobs:
       - checkout
       - setup_remote_docker:
           docker_layer_caching: true
-      - run: apk add --update bash nodejs nodejs-npm git curl ssh
+      - run: apk add --update --no-cache openssh bash nodejs nodejs-npm git curl ssh
       # Relayer setup
       - run: |
           mkdir -p ~/sparkswap/relayer
