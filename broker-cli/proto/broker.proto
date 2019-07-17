@@ -696,12 +696,12 @@ service OrderService {
    *     symbol: 'BTC',
    *     value: '0.01'
    *   },
-   *   sourceAddress: 'sb1qsakedujs4exdq5dz2cpldcph6hlvf82l8mn8uk',
+   *   sourceAddress: 'bolt:alice@example.net:100789',
    *   destinationAmount: {
    *     symbol: 'LTC',
    *     value: '1.1'
    *   },
-   *   destinationAddress: 'sb1qsakedujs4exdq5dz2cpldcph6hlvf82l8mn8uk'
+   *   destinationAddress: 'bolt:bob@example.net:100789',
    *   roleRestriction: 'NO_RESTRICTION'
    * })
    * ```
