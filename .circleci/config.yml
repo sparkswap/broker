@@ -53,10 +53,16 @@ jobs:
     docker:
       - image: docker:18.09.7
     steps:
-      - setup_remote_docker
-      - run: apk add --update py-pip python-dev libffi-dev openssl-dev gcc libc-dev make
+      - setup_remote_docker:
+        docker_layer_caching: true
+      - run: apk add --update py-pip python-dev libffi-dev openssl-dev gcc libc-dev make git curl bash
       - run: pip install docker-compose
       - run: docker-compose -v
+      - run: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+      - run: |
+          mkdir -p ~/sparkswap
+          git clone https://github.com/sparkswap/lnd-engine.git ~/sparkswap
+          (cd lnd-engine && nvm use && npm run build)
       # Set up docker-compose on this image to make sure we are not going crazy
   publish-cli:
     docker:
