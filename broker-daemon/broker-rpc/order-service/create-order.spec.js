@@ -47,4 +47,11 @@ describe('createOrder', () => {
     const order = Object.assign({}, params, { timestamp })
     expect(put).to.have.been.calledWith(orderId, order)
   })
+
+  it('handles a rejection by the relayer', () => {
+    const params = { sourceAmount: 'malformed' }
+    const error = new Error('error')
+    relayer.orderService.createOrder = sinon.stub().throws(error)
+    return expect(createOrder({ params, relayer, store })).to.be.rejectedWith(error)
+  })
 })
