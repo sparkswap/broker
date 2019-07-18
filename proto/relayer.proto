@@ -241,3 +241,32 @@ service AdminService {
     rpc HealthCheck (google.protobuf.Empty) returns (HealthCheckResponse);
     rpc GetMarkets (google.protobuf.Empty) returns (GetMarketsResponse);
 }
+
+message Amount {
+
+    string symbol = 1;
+    string value = 2;
+}
+service OrderService {
+    rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
+
+    enum RoleRestriction {
+
+        NO_RESTRICITON = 0;
+        MAKER_ONLY = 1;
+    }
+
+    message CreateOrderRequest {
+
+        Amount source_amount = 1;
+        string source_address = 2;
+        Amount destination_amount = 3;
+        string destination_address = 4;
+        RoleRestriction role_restriction = 10;
+    }
+
+    message CreateOrderResponse {
+
+        string order_id = 1;
+    }
+}

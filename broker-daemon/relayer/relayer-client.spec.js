@@ -14,11 +14,13 @@ describe('RelayerClient', () => {
   let MarketWatcher
   let loadProto
   let proto
+  let OrderService
   let MakerService
   let TakerService
   let OrderBookService
   let PaymentChannelNetworkService
   let AdminService
+  let orderServiceInstance
   let makerServiceInstance
   let takerServiceInstance
   let orderBookServiceInstance
@@ -66,6 +68,8 @@ describe('RelayerClient', () => {
     MarketWatcher = sinon.stub()
     RelayerClient.__set__('MarketWatcher', MarketWatcher)
 
+    orderServiceInstance = { name: 'OrderService' }
+    OrderService = sinon.stub().returns(orderServiceInstance)
     // All of these stubs are called with `new`, but in order to stub the return
     // value, we must use an Object or else we cannot match the values correctly.
     // see: https://github.com/sinonjs/sinon/issues/1676
@@ -87,6 +91,7 @@ describe('RelayerClient', () => {
     RelayerClient.__set__('readFileSync', readFileSync)
 
     proto = {
+      OrderService,
       MakerService,
       TakerService,
       OrderBookService,

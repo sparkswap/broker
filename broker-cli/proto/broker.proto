@@ -650,6 +650,28 @@ message GetTradeHistoryResponse {
   repeated Fill fills = 2;
 }
 
+enum RoleRestriction {
+  NO_RESTRICTION = 0;
+  MAKER_ONLY = 1;
+}
+
+message Amount {
+  string symbol = 1;
+  string value = 2;
+}
+
+message CreateOrderRequest {
+  Amount source_amount = 1;
+  string source_address = 2;
+  Amount destination_amount = 3;
+  string destination_address = 4;
+  RoleRestriction role_restriction = 10;
+}
+
+message CreateOrderResponse {
+  string order_id = 1;
+}
+
 /**
  * The OrderService manages all trading activity on the Broker.
  * It is the primary way that users interact with the Broker on a day-to-day basis.
@@ -664,8 +686,30 @@ message GetTradeHistoryResponse {
  * ```
  */
 service OrderService {
+  /** CreateOrder creates a new order that gets passed directly to the Relayer,
+   * which returns an order ID and then the order gets saved to the local
+   * database with the order ID as key.
+   *
+   * ```javascript
+   * const { orderId } = await orderService.createOrder({
+   *   sourceAmount: {
+   *     symbol: 'BTC',
+   *     value: '0.01'
+   *   },
+   *   sourceAddress: 'bolt:alice@example.net:100789',
+   *   destinationAmount: {
+   *     symbol: 'LTC',
+   *     value: '1.1'
+   *   },
+   *   destinationAddress: 'bolt:bob@example.net:100789',
+   *   roleRestriction: 'NO_RESTRICTION'
+   * })
+   * ```
+   */
+  rpc CreateOrder (CreateOrderRequest) returns (CreateOrderResponse);
+
   /**
-   * CreateBlockOrder creates new block orders on the Broker. This is the only way to initiate a trade on the broker.
+   * CreateBlockOrder creates new block orders on the Broker.
    * Creating a block order returns a block order ID immediately, but that is not necessarily an indication that the block order has been successfully executed.
    * The user should check on the block order's status after it is created to understand if it has been completed.
    *

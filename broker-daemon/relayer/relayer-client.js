@@ -89,21 +89,33 @@ class RelayerClient {
     }
 
     this.credentials = channelCredentials
+    const options = { interceptors: [grpcDeadlineInterceptor] }
 
-    const makerServiceClient = new this.proto.MakerService(this.address, this.credentials, GRPC_STREAM_OPTIONS)
-    this.makerService = caller.wrap(makerServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+    const orderServiceClient = new this.proto.OrderService(
+      this.address, this.credentials, GRPC_STREAM_OPTIONS)
+    this.orderService = caller.wrap(orderServiceClient, {}, options)
 
-    const takerServiceClient = new this.proto.TakerService(this.address, this.credentials, GRPC_STREAM_OPTIONS)
-    this.takerService = caller.wrap(takerServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+    const makerServiceClient = new this.proto.MakerService(
+      this.address, this.credentials, GRPC_STREAM_OPTIONS)
+    this.makerService = caller.wrap(makerServiceClient, {}, options)
 
-    const orderBookServiceClient = new this.proto.OrderBookService(this.address, this.credentials, GRPC_STREAM_OPTIONS)
-    this.orderBookService = caller.wrap(orderBookServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+    const takerServiceClient = new this.proto.TakerService(
+      this.address, this.credentials, GRPC_STREAM_OPTIONS)
+    this.takerService = caller.wrap(takerServiceClient, {}, options)
 
-    const paymentChannelNetworkServiceClient = new this.proto.PaymentChannelNetworkService(this.address, this.credentials)
-    this.paymentChannelNetworkService = caller.wrap(paymentChannelNetworkServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+    const orderBookServiceClient = new this.proto.OrderBookService(
+      this.address, this.credentials, GRPC_STREAM_OPTIONS)
+    this.orderBookService = caller.wrap(orderBookServiceClient, {}, options)
 
-    const adminServiceClient = new this.proto.AdminService(this.address, this.credentials)
-    this.adminService = caller.wrap(adminServiceClient, {}, { interceptors: [grpcDeadlineInterceptor] })
+    const paymentChannelNetworkServiceClient =
+      new this.proto.PaymentChannelNetworkService(
+        this.address, this.credentials)
+    this.paymentChannelNetworkService =
+      caller.wrap(paymentChannelNetworkServiceClient, {}, options)
+
+    const adminServiceClient = new this.proto.AdminService(
+      this.address, this.credentials)
+    this.adminService = caller.wrap(adminServiceClient, {}, options)
   }
 
   /**
